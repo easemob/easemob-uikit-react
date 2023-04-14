@@ -1,0 +1,32 @@
+@import '../../../src/style/index.scss';
+$contact-prefix-cls: #{$cui-prefix}-contactItem;
+
+.#{$contact-prefix-cls}{
+    height: 74px;
+    // background: #E6F5FF;
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    box-sizing: border-box;
+    &-nickname{
+        margin: 0 12px;
+        font-size: 16px;
+        line-height: 24px;
+        /* identical to box height, or 150% */
+        color: #171A1C;
+        flex: 1;
+        overflow: hidden;
+    }
+    &:hover{
+        background: #F9FAFA;
+    }
+    &:active{
+        background-color: #E3E6E8;;
+    }
+    &-selected{
+        background-color: #E6F5FF !important;
+        .#{$contact-prefix-cls}-nickname{
+            color: #009EFF;
+        }
+    }
+}

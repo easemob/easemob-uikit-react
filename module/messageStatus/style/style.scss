@@ -1,0 +1,16 @@
+@import '../../../src/style/index.scss';
+
+$status-prefix-cls: #{$cui-prefix}-message-status;
+
+.#{$status-prefix-cls} {
+    padding: 3px;
+    &-icon{
+        img{
+            width: 20px;
+        }
+    }
+    &-text{
+        font-size: 12px;
+        color: #ACB4B9;
+    }
+}

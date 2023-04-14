@@ -1,0 +1,39 @@
+@import '../../../src/style/index.scss';
+$header-prefix-cls: #{$cui-prefix}-header;
+
+.#{$header-prefix-cls} {
+    height: 60px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    justify-content: space-between;
+    flex-shrink: 0;
+    &-content{
+        display: flex;
+        align-items: center;
+
+        &-text{
+            margin-left: 12px;
+        }
+    }
+
+    &-more{
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        width: max-content;
+        li{
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            padding: 0 12px;
+            height: 36px;
+            line-height: 36px;
+            cursor: pointer;
+        }
+        li:hover{
+            background: #F1F2F3;
+        }
+    }
+}

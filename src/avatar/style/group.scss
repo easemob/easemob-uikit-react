@@ -1,0 +1,34 @@
+@import './style.scss';
+
+.#{$avatar-prefix-cls}-group {
+    display: inline-block;
+    @include avatar-size($avatar-size-base, $avatar-font-size-base);
+    &-lg {
+        @include avatar-size($avatar-size-lg, $avatar-font-size-lg);
+    }
+    
+    &-sm {
+        @include avatar-size($avatar-size-sm, $avatar-font-size-sm);
+    }
+
+    vertical-align: middle;
+    position: relative;
+    overflow: hidden;
+    &-square {
+        border-radius: $avatar-border-radius;
+    }
+    .#{$avatar-prefix-cls}:nth-child(1){
+        scale: 0.75;
+        border: 1px solid #fff;
+        position: absolute;
+        z-index: 9;
+        transform-origin: 5% 75%;
+    };
+    .#{$avatar-prefix-cls}:nth-child(2){
+        position: absolute;
+        scale: 0.75;
+        right: 0px;
+        top: 0px;
+        transform-origin: 90% 25%;
+    };
+}

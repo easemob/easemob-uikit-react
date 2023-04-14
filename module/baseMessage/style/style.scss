@@ -1,0 +1,90 @@
+@import '../../../src/style/index.scss';
+
+$status-prefix-cls: #{$cui-prefix}-message-base;
+
+.#{$status-prefix-cls} {
+    width: 100%;
+    font-size: 16px;
+    line-height: 24px;
+    color: #171A1C;
+    order: 0;
+
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 0;
+    box-sizing: border-box;
+    padding: 0 24px;
+    &-left{
+        direction: ltr;
+        .#{$status-prefix-cls}-content{
+            border-radius: 12px 16px 16px 4px;
+            &::before{
+                border: 6px solid transparent;
+                border-right: 6px solid #E6F5FF;
+                content: " ";
+                position: absolute;
+                pointer-events: none;
+                left: -11px;
+                bottom: 8px;
+            }
+        }
+    }
+    &-right{
+        direction: rtl;
+        .#{$status-prefix-cls}-content{
+            border-radius: 12px 16px 4px 16px;
+            &::after{
+                border: 6px solid transparent;
+                border-left: 6px solid #E6F5FF;
+                content: " ";
+                position: absolute;
+                pointer-events: none;
+                bottom: 8px;
+                right: -11px;
+            }
+        }
+    }
+    &-box{
+        max-width: 100%;
+        overflow: hidden;
+    }
+    &-body{
+        flex-grow: 0;
+        display: flex;
+        align-items: flex-end;
+    }
+    &-content{
+        // flex: 1;
+        margin: 0 8px 0 12px;
+        padding: 8px 16px;
+        gap: 10px;
+        min-height: 24px;
+        position: relative;
+        /* color_primary/95 */
+        background: #E6F5FF;
+    }
+
+    &-info{
+        margin-left: 12px;
+        display: flex;
+    }
+    &-nickname{
+        display: inline-block;
+        height: 16px;
+        font-weight: 500;
+        font-size: 12px;
+        line-height: 16px;
+        color: #5270AD;
+    }
+    &-time{
+        display: inline-block;
+        width: 106px;
+        height: 16px;
+        margin-left: 4px;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 16px;
+
+        color: #ACB4B9;
+    }
+}

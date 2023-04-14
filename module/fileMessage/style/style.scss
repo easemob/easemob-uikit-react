@@ -1,0 +1,53 @@
+@import '../../../src/style/index.scss';
+.file-message-content{
+    height: 44px;
+    width: 268px;
+    display: flex;
+    justify-content: space-between;
+    // background-color: green;
+}
+.file-message-icon{
+    width: 44px;
+    height: 44px;
+    background: #fff;
+    border-radius: 9px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.file-message-info{
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    width: calc(100% - 54px);
+    span:nth-child(1){
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 24px;
+        /* identical to box height, or 150% */
+        color: #171A1C;
+        white-space: nowrap;
+        text-align: left;
+
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: left;
+        direction: ltr;
+
+        &:hover{
+            color: $blue-5;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    }
+    span:nth-child(2){
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 20px;
+        /* identical to box height, or 143% */
+        /* color_neutral_special/5 */
+        color: #5270AD;
+        text-align: left;
+    }
+}

@@ -1,0 +1,37 @@
+
+@mixin modal-mask(){
+    pointer-events: none;
+
+    &.#{$cui-prefix}-zoom-enter,
+    &.#{$cui-prefix}-zoom-appear {
+        transform: none; // reset scale avoid mousePosition bug
+        // opacity: 0;
+        animation-duration: $animation-duration-slow;
+        user-select: none;
+    }
+
+    &-mask {
+        @include box(fixed);
+        z-index: $zindex-modal-mask;
+        height: 100%;
+        background-color: $modal-mask-bg;
+
+        &-hidden {
+            display: none;
+        }
+    }
+
+    &-wrap {
+        @include box(fixed);
+        overflow: auto;
+        outline: 0;
+    }
+}
+
+@mixin box($position: absolute) {
+    position: $position;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+}

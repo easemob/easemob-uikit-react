@@ -1,0 +1,40 @@
+// Vitest Snapshot v1
+
+exports[`ui/Checkbox > should do a snapshot test of the checked Checkbox DOM 1`] = `
+<DocumentFragment>
+  <label
+    class="cui-checkbox-wrapper"
+  >
+    <span
+      class="cui-checkbox"
+    >
+      <input
+        checked=""
+        type="checkbox"
+      />
+      <span
+        class="cui-checkbox--mark"
+      />
+    </span>
+  </label>
+</DocumentFragment>
+`;
+
+exports[`ui/Checkbox > should do a snapshot test of the default Checkbox DOM 1`] = `
+<DocumentFragment>
+  <label
+    class="cui-checkbox-wrapper"
+  >
+    <span
+      class="cui-checkbox"
+    >
+      <input
+        type="checkbox"
+      />
+      <span
+        class="cui-checkbox--mark"
+      />
+    </span>
+  </label>
+</DocumentFragment>
+`;

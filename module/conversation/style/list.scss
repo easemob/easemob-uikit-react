@@ -1,0 +1,12 @@
+@import '../../../src/style/index.scss';
+$conversation-prefix-cls: #{$cui-prefix}-conversationList;
+
+
+.#{$conversation-prefix-cls}{
+    background: #F1F2F3;
+    height: 100%;
+    position: relative;
+    &-search{
+        margin: 8px 12px;
+    }
+}

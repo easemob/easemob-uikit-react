@@ -1,0 +1,17 @@
+.message-notice-content{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 8px 0;
+    span{
+        font-family: 'SF Pro';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 20px;
+        display: inline-block;
+        text-align: center;
+        /* color_neutral/7 */
+        color: #ACB4B9;
+    }
+}

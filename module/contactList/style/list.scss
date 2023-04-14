@@ -1,0 +1,7 @@
+@import '../../../src/style/index.scss';
+$contact-prefix-cls: #{$cui-prefix}-contactList;
+
+.#{$contact-prefix-cls}{
+    height: 100%;
+    overflow-y: hidden;
+}

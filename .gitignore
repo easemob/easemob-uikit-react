@@ -1,0 +1,12 @@
+node_modules/
+.DS_Store
+dist
+build
+yarn.lock
+package-lock.json
+*.log
+*.log.*
+/coverage
+/.history
+*.tmp
+/.vscode/

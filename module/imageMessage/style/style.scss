@@ -1,0 +1,22 @@
+.message-image-content{
+    max-width: 100%;
+    overflow: hidden;
+    img{
+        width: 100%;
+        display: block;
+        max-width: 374px;
+        max-width: 374px;
+    }
+}
+
+.message-image-preview-wrap{
+    .cui-modal-body{
+        padding: 0;
+    }
+
+    .message-image-big{
+        width: 100%;
+        display: block;
+    }
+}
+

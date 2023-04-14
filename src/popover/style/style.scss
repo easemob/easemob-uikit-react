@@ -1,0 +1,26 @@
+@import '../../style/index.scss';
+
+
+.#{$cui-prefix}-popover {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  max-width: 150px;
+  border-radius: 6px;
+  padding: 8px 12px;
+  background-color: $gray-1;
+  color: $gray-10;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    width: 12px;
+    height: 12px;
+    transform: rotate(45deg);
+    background-color: $gray-1;
+  }
+}

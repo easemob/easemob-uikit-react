@@ -1,0 +1,13 @@
+{
+    "hello": "hello word",
+    "module": {
+        "conversationTitle": "Conversation List",
+        "deleteCvs": "Delete Conversation",
+        "clearMsgs": "Clear Messages",
+        "image": "Picture",
+        "audio": "Audio message",
+        "video": "Video message",
+        "file": "File",
+        "custom": "Custom message"
+    }
+}

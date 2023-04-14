@@ -1,0 +1,36 @@
+$contact-prefix-cls: #{$cui-prefix}-contactGroup;
+
+.#{$contact-prefix-cls}{
+    padding-top: 2px;
+    &-title{
+        display: flex;
+        justify-content: space-between;
+        background-color: #fff;
+        box-sizing: border-box;
+        height: 54px;
+
+        background: #F9FAFA;
+        border-radius: 8px;
+        align-items: center;
+        padding: 0 14px;
+
+        div:nth-child(2){
+            display: flex;
+            align-items: center;
+
+            div:nth-child(2){
+                margin: 2px;
+                transition: transform .3s ease;
+            }
+
+        }
+    }
+
+
+    &-children{
+        overflow: hidden;
+        transition: height .3s ease;
+        height: 0;
+        box-sizing: border-box;
+    }
+}

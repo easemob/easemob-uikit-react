@@ -1,0 +1,35 @@
+@import '../../../src/style/index.scss';
+
+$status-prefix-cls: #{$cui-prefix}-message-audio-player;
+
+.#{$status-prefix-cls} {
+    display: inline-block;
+    position: relative;
+    &-play{
+        div:nth-child(1){
+            animation: fadeInOut 1s infinite 0.2s;
+        }
+        div:nth-child(2){
+            animation: fadeInOut 1s infinite 0.3s;
+        }
+        div:nth-child(3){
+            animation: fadeInOut 1s infinite 0.4s;
+        }
+    }
+    &-reverse{
+        transform: rotate(180deg);
+    }
+    >div{
+        position: absolute;
+    }
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}

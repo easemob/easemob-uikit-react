@@ -1,0 +1,93 @@
+@import '../color/color.scss';
+
+$theme: dark;
+// The prefix to use on all css classes from Chat UI.
+$cui-prefix: cui;
+
+$white: #fff;
+$black: #000;
+// Base background color for most components
+$component-background: #fff;
+
+// height rules
+$height-base: 36px;
+$height-lg: 48px;
+$height-sm: 28px;
+
+// vertical margins
+$margin-lg: 24px; // containers
+$margin-md: 16px; // small containers and buttons
+$margin-sm: 12px; // Form controls and items
+$margin-xs: 8px; // small items
+$margin-xss: 4px; // more small
+
+// vertical paddings
+$padding-lg: 24px; // containers
+$padding-md: 20px; // small containers and buttons
+$padding-sm: 16px; // Form controls and items
+$padding-s: 12px; // small items
+$padding-xs: 8px; // small items
+$padding-xss: 4px; // more small
+// font
+$font-size-base: 14px;
+$font-size-lg: $font-size-base + 2px;
+$font-size-sm: 12px;
+
+$line-height-base: 1.5715;
+
+$text-color: fade($black, 85%);
+
+// -------- Colors -----------
+// >>> Primary
+$primary-color: $blue-6;
+// $primary-color-hover: color(~`colorPalette('@{primary-color}', 5) `);
+// $primary-color-active: color(~`colorPalette('@{primary-color}', 7) `);
+// $primary-color-outline: fade(@primary-color, @outline-fade);
+
+
+
+// Animation
+$ease-base-out: cubic-bezier(0.7, 0.3, 0.1, 1);
+$ease-base-in: cubic-bezier(0.9, 0, 0.3, 0.7);
+$ease-out: cubic-bezier(0.215, 0.61, 0.355, 1);
+$ease-in: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+$ease-in-out: cubic-bezier(0.645, 0.045, 0.355, 1);
+$ease-out-back: cubic-bezier(0.12, 0.4, 0.29, 1.46);
+$ease-in-back: cubic-bezier(0.71, -0.46, 0.88, 0.6);
+$ease-in-out-back: cubic-bezier(0.71, -0.46, 0.29, 1.46);
+$ease-out-circ: cubic-bezier(0.08, 0.82, 0.17, 1);
+$ease-in-circ: cubic-bezier(0.6, 0.04, 0.98, 0.34);
+$ease-in-out-circ: cubic-bezier(0.78, 0.14, 0.15, 0.86);
+$ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
+$ease-in-quint: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+$ease-in-out-quint: cubic-bezier(0.86, 0, 0.07, 1);
+
+/** Border */
+$border-width-base: 1px; // width of the border for a component
+$border-style-base: solid; // style of a components border
+$border-radius-base: 2px;
+$border-color-base: hsv(0, 0, 85%); // base border outline a component
+$border-color-split: hsv(0, 0, 94%); // split border inside a component
+$border-color-inverse: $white;
+
+$background-color-light: hsv(0, 0, 98%); // background of header and selected item
+$background-color-base: hsv(0, 0, 96%); // Default grey background color
+
+// Disabled states
+$disabled-color: $gray-7;
+$disabled-bg: $gray-95;
+$disabled-active-bg: $gray-95;
+$disabled-color-dark: fade(#fff, 35%);
+
+/** Button */
+$btn-shadow: 0 2px 0 rgba(0, 0, 0, 0.015);
+$btn-primary-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
+$btn-text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.12);
+$btn-default-bg: transparent;
+$btn-default-ghost-color: $text-color;
+$btn-default-ghost-border: fade($white, 25%);
+$btn-text-hover-bg: rgba(255, 255, 255, 0.03);
+
+$btn-default-color: $gray-98;
+$btn-default-bg: $black;
+$btn-default-border: $gray-4;
