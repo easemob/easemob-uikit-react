@@ -1,8 +1,8 @@
-# Agora ui kits
+# Easemob UI Kits
 
 ## 介绍
 
-agora-chat-uikit 是基于声网 IM SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含业务逻辑的 module，包括聊天、会话、搜索、通讯录等 module 组件，这些组件允许用户自定义和使用通用 UI 组件来自定义更小级别的子组件，agora-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
+easemob-uikit-web 是基于环信 IM SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含业务逻辑的 module，包括聊天、会话、搜索、通讯录等 module 组件，这些组件允许用户自定义和使用通用 UI 组件来自定义更小级别的子组件，easemob-uikit-web 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
 
 ## 功能
 
@@ -186,11 +186,7 @@ agora-chat-uikit 是基于声网 IM SDK 的一款 UI 组件库，提供通用的
 
 单独提供，或者在 Provider 提供
 
-sendMessage
-recallMessage
-setCurrentConversation
-login
-logout
+sendMessage recallMessage setCurrentConversation login logout
 
 ## 使用示例
 

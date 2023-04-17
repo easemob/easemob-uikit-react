@@ -49,28 +49,27 @@ $red-10: adjusted-color($red-base, 40);
 
 
 $gray-base: hsla(203, 8%, 60%, 1);
-$gray-1: hsla(203, 8%, 10%, 1);
-$gray-2: hsla(203, 8%, 20%, 1);
-$gray-3: hsla(203, 8%, 30%, 1);
-$gray-4: hsla(203, 8%, 40%, 1);
-$gray-5: hsla(203, 8%, 50%, 1);
+$gray-1: adjusted-color($gray-base, -50);
+$gray-2: adjusted-color($gray-base, -40);
+$gray-3: adjusted-color($gray-base, -30);
+$gray-4: adjusted-color($gray-base, -20);
+$gray-5: adjusted-color($gray-base, -10);
 $gray-6: $gray-base;
-$gray-7: hsla(203, 8%, 70%, 1);
-$gray-8: hsla(203, 8%, 80%, 1);
-$gray-9: hsla(203, 8%, 90%, 1);
-$gray-95: hsla(203, 8%, 95%, 1);
-$gray-98: hsla(203, 8%, 98%, 1);
-$gray-10: hsla(203, 8%, 100%, 1);
-
+$gray-7: adjusted-color($gray-base, 10);
+$gray-8: adjusted-color($gray-base, 20);
+$gray-9: adjusted-color($gray-base, 30);
+$gray-95: adjusted-color($gray-base, 35);
+$gray-98: adjusted-color($gray-base, 38);
+$gray-10: adjusted-color($gray-base, 40);
 
 $special-base: hsla(220, 36%, 60%, 1);
-$special-1: hsla(220, 36%, 10%, 1);
-$special-2: hsla(220, 36%, 20%, 1);
-$special-3: hsla(220, 36%, 30%, 1);
-$special-4: hsla(220, 36%, 40%, 1);
-$special-5: hsla(220, 36%, 50%, 1);
+$special-1: adjusted-color($special-base, -50);
+$special-2: adjusted-color($special-base, -40);
+$special-3: adjusted-color($special-base, -30);
+$special-4: adjusted-color($special-base, -20);
+$special-5: adjusted-color($special-base, -10);
 $special-6: $special-base;
-$special-7: hsla(220, 36%, 70%, 1);
-$special-8: hsla(220, 36%, 80%, 1);
-$special-9: hsla(220, 36%, 90%, 1);
-$special-10: hsla(220, 36%, 100%, 1);
+$special-7: adjusted-color($special-base, 10);
+$special-8: adjusted-color($special-base, -20);
+$special-9: adjusted-color($special-base, -30);
+$special-10: adjusted-color($special-base, -40);
