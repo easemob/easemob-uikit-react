@@ -1,3 +1,4 @@
+@use "sass:math";
 @import '../../style/index.scss';
 @import './mixin.scss';
 
@@ -108,7 +109,7 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
 
         &-content {
         box-shadow: $tooltip-arrow-shadow-width $tooltip-arrow-shadow-width 7px fade($black, 7%);
-        transform: translateY((-$tooltip-arrow-rotate-width / 2)) rotate(45deg);
+        transform: translateY(math.div(-$tooltip-arrow-rotate-width, 2)) rotate(45deg);
         }
     }
 
@@ -132,8 +133,8 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
         transform: translateX(100%);
 
         &-content {
-        box-shadow: $tooltip-arrow-shadow-width -$tooltip-arrow-shadow-width 7px fade($black, 7%);
-        transform: translateX((-$tooltip-arrow-rotate-width / 2)) rotate(315deg);
+        box-shadow: $tooltip-arrow-shadow-width - $tooltip-arrow-shadow-width 7px fade($black, 7%);
+        transform: translateX(math.div(-$tooltip-arrow-rotate-width, 2)) rotate(315deg);
         }
     }
 
@@ -157,8 +158,8 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
         transform: translateY(-100%);
 
         &-content {
-        box-shadow: -$tooltip-arrow-shadow-width -$tooltip-arrow-shadow-width 7px fade($black, 7%);
-        transform: translateY(($tooltip-arrow-rotate-width / 2)) rotate(225deg);
+        box-shadow: - $tooltip-arrow-shadow-width - $tooltip-arrow-shadow-width 7px fade($black, 7%);
+        transform: translateY(math.div($tooltip-arrow-rotate-width, 2)) rotate(225deg);
         }
     }
 
