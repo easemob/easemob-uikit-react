@@ -28,7 +28,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     prefix: customizePrefixCls,
     className,
     nickname,
-    avatarShape = 'square',
+    avatarShape = 'circle',
     avatarSize = 50,
     onClick,
     isActive = false,
@@ -135,7 +135,9 @@ const ConversationItem: FC<ConversationItemProps> = props => {
       onMouseOver={handleMouseOver}
       onMouseLeave={handleMouseLeave}
     >
-      <Avatar size={avatarSize} shape={avatarShape}></Avatar>
+      <Avatar size={avatarSize} shape={avatarShape}>
+        {data.name || data.conversationId}
+      </Avatar>
       <div className={`${prefixCls}-content`}>
         <span className={`${prefixCls}-nickname`}>{data.name || data.conversationId}</span>
         <span className={`${prefixCls}-message`}>{lastMsg}</span>

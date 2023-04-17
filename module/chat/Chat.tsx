@@ -118,7 +118,7 @@ const Chat: FC<ChatProps> = props => {
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text="No Conversation"></Empty>
+          <Empty text={t('module.noConversation')}></Empty>
         )
       ) : (
         <>
@@ -137,7 +137,6 @@ const Chat: FC<ChatProps> = props => {
                     content: t('module.clearMsgs'),
                     onClick: () => {
                       rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
-                      console.log('我要清空消息', CVS);
                       rootStore.client
                         .removeHistoryMessages({
                           targetId: CVS.conversationId,

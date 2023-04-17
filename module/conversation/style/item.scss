@@ -3,7 +3,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
 
 .#{$conversation-prefix-cls}{
     height: 74px;
-    background: #F1F2F3;
+    // background: $gray-98;
     display: flex;
     align-items: center;
     padding: 12px;
@@ -14,14 +14,14 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     &-selected{
         background-color: #E6F5FF !important;
         .#{$conversation-prefix-cls}-nickname{
-            color: #009EFF;
+            color: $blue-6;
         }
     }
     &:hover{
-        background: #F9FAFA;
+        background: $gray-98;
     }
     &:active{
-        background-color: #E3E6E8;;
+        background-color: $gray-9;
     }
     &-content, &-info{
         display: flex;
@@ -44,7 +44,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         font-size: 16px;
         line-height: 24px;
         /* identical to box height, or 150% */
-        color: #171A1C;
+        color: $title-color;;
         flex: 1;
         overflow: hidden;
         font-weight: 500;
@@ -54,7 +54,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         margin-left: 12px;
         font-size: 14px;
         font-weight: 400;
-        color: #464E53;
+        color: $font-color;
         white-space: nowrap;
     }
 
@@ -62,7 +62,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         font-weight: 400;
         font-size: 12px;
         line-height: 16px;
-        color: #75828A;
+        color: $gray-5;
         margin-bottom: 9px;
     }
 }

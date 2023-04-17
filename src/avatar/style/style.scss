@@ -44,7 +44,12 @@ $avatar-prefix-cls: #{$cui-prefix}-avatar;
     font-feature-settings: 'tnum';
     cursor: pointer;
     user-select: none;
-
+    
+    overflow: hidden;
+    display: inline-block;
+    word-wrap: break-word;
+    white-space: break-spaces;
+    
     &-image {
         background: transparent;
     }

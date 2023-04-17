@@ -9,7 +9,7 @@
 .file-message-icon{
     width: 44px;
     height: 44px;
-    background: #fff;
+    background: $component-background;
     border-radius: 9px;
     display: flex;
     justify-content: center;
@@ -26,7 +26,7 @@
         font-size: 16px;
         line-height: 24px;
         /* identical to box height, or 150% */
-        color: #171A1C;
+        color: $font-color;
         white-space: nowrap;
         text-align: left;
 
@@ -47,7 +47,7 @@
         line-height: 20px;
         /* identical to box height, or 143% */
         /* color_neutral_special/5 */
-        color: #5270AD;
+        color: $special-5;
         text-align: left;
     }
 }

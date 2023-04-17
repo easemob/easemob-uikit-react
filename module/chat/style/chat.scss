@@ -6,7 +6,7 @@ $chat-prefix-cls: #{$cui-prefix}-chat;
     height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: #fff;
+    background-color: $component-background;
     &-messageList{
         flex: 1;
     }

@@ -3,7 +3,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationList;
 
 
 .#{$conversation-prefix-cls}{
-    background: #F1F2F3;
+    background: $gray-95;
     height: 100%;
     position: relative;
     &-search{

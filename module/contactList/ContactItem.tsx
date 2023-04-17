@@ -24,7 +24,7 @@ const ContactItem: FC<ContactItemProps> = props => {
   const {
     prefix: customizePrefixCls,
     className,
-    avatarShape = 'square',
+    avatarShape = 'circle',
     avatarSize = 50,
     onClick,
     isActive = false,

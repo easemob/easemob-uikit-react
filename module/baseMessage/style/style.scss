@@ -6,7 +6,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     width: 100%;
     font-size: 16px;
     line-height: 24px;
-    color: #171A1C;
+    color: $font-color;
     order: 0;
 
     display: flex;

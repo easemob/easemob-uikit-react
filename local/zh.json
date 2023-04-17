@@ -8,6 +8,7 @@
         "audio": "语音消息",
         "video": "视频消息",
         "file": "附件",
-        "custom": "自定义消息"
+        "custom": "自定义消息",
+        "noConversation": "没有会话"
     }
 }
