@@ -23,8 +23,9 @@ import VideoMessage from '../videoMessage';
 import { RootContext } from '../store/rootContext';
 import AC, { AgoraChat } from 'agora-chat';
 import { cloneElement } from '../../src/_utils/reactNode';
+import { areEqual } from 'react-window';
 //计算好准确的高度和宽度
-const textSize = (fontSize: number, text: string) => {
+const textSize = (fontSize: number, text: string, hasStatus: boolean) => {
   const container = document.getElementById('listContainer');
   let span = document.createElement('span');
   let result: any = {};
@@ -34,7 +35,9 @@ const textSize = (fontSize: number, text: string) => {
   //@ts-ignore
   span.style.fontSize = fontSize;
   span.style.lineHeight = '24px'; //最好设置行高 方便项目中计算
-  span.style.width = 'calc(100% - 48px - 32px - 20px - 32px - 26px - 15px)';
+  span.style.width = hasStatus
+    ? 'calc(100% - 48px - 32px - 20px - 32px - 26px - 15px)'
+    : 'calc(100% - 48px - 32px - 20px - 32px - 6px - 15px)';
   span.style.wordBreak = 'break-all';
   span.style.fontFamily = 'Roboto'; //字体 可以替换为项目中自己的字体
   span.style.display = 'inline-block';
@@ -80,15 +83,6 @@ let MessageList: FC<MsgListProps> = props => {
 
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
 
-  // messageData = useMemo(() => {
-  // 	return (
-  // 		messageStore.message[currentCVS.chatType]?.[
-  // 			currentCVS.conversationId
-  // 		] || []
-  // 	);
-  // }, [
-  // 	messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId],
-  // ]);
   const [imageInfo, setImageInfo] = useState<{
     visible: boolean;
     url: string;
@@ -153,19 +147,21 @@ let MessageList: FC<MsgListProps> = props => {
   const msgCount = messageData.length;
 
   // 每次发消息滚动到最新的一条
-  const listRef = React.useRef();
+  const listRef = React.useRef<List>(null);
   useEffect(() => {
     // @ts-ignore
-    listRef?.current?.scrollToItem(10000);
+    setTimeout(() => {
+      (listRef?.current as any)?.scrollToItem(msgCount, 'end');
+    }, 10);
   }, [msgCount]);
 
   const getItemSize = (index: number) => {
     let size = 74;
     switch (messageData[index]?.type) {
       case 'txt':
-        let r = textSize(16, (messageData[index] as AgoraChat.TextMsgBody).msg);
+        const hasStatus = !!(messageData[index] as any)?.status;
+        let r = textSize(16, (messageData[index] as AgoraChat.TextMsgBody).msg, hasStatus);
         size = 74 - 24 + r.height;
-        console.log('size', r, size);
         break;
       case 'img':
         size = 107;
@@ -178,6 +174,16 @@ let MessageList: FC<MsgListProps> = props => {
         break;
     }
     return size;
+  };
+
+  useEffect(() => {
+    currentCVS && refreshVirtualTable();
+  }, [currentCVS]);
+
+  const refreshVirtualTable = () => {
+    if (listRef?.current) {
+      (listRef.current as any)?.resetAfterIndex(0);
+    }
   };
 
   return (
@@ -208,5 +214,5 @@ let MessageList: FC<MsgListProps> = props => {
   );
 };
 
-MessageList = memo(observer(MessageList));
+MessageList = memo(observer(MessageList), areEqual);
 export { MessageList };
