@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useRef, useContext } from 'react';
+import React, { useState, ReactNode, useRef, useContext, MouseEventHandler } from 'react';
 import classNames from 'classnames';
 import './style/style.scss';
 import { ConfigContext } from '../../../src/config/index';
@@ -61,9 +61,6 @@ let MoreAction = (props: MoreActionProps) => {
     { key: 'file', title: t('module.file'), onClick: sendFile, icon: null },
   ];
 
-  const handleClick = e => {
-    console.log(e);
-  };
   const menu = (
     <ul className={classString}>
       {actions2.map((item, index) => {
@@ -76,7 +73,7 @@ let MoreAction = (props: MoreActionProps) => {
     </ul>
   );
   const { currentCVS } = messageStore;
-  const handleImageChange = e => {
+  const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = e => {
     let file = AC.utils.getFileUrl(e.target);
     if (!file.filename) {
       return false;
@@ -93,8 +90,8 @@ let MoreAction = (props: MoreActionProps) => {
       file: file,
       onFileUploadComplete: data => {
         let sendMsg = messageStore.message.byId[imageMessage.id];
-        sendMsg.thumb = data.thumb;
-        sendMsg.url = data.url;
+        (sendMsg as any).thumb = data.thumb;
+        (sendMsg as any).url = data.url;
         messageStore.modifyMessage(imageMessage.id, sendMsg);
       },
     } as AgoraChat.CreateImgMsgParameters;
@@ -103,7 +100,7 @@ let MoreAction = (props: MoreActionProps) => {
     messageStore.sendMessage(imageMessage);
   };
 
-  const handleFileChange = e => {
+  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = e => {
     let file = AC.utils.getFileUrl(e.target);
     if (!file.filename) {
       return false;

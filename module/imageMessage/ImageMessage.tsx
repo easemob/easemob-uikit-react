@@ -58,13 +58,13 @@ let ImageMessage = (props: ImageMessageProps) => {
       // callback(base64);
     };
   };
-  const handleClickImg = url => {
+  const handleClickImg = (url: string) => {
     setPreviewVisible(true);
     canvasDataURL(url, { quality: 1 });
     onClickImage?.(url);
   };
 
-  let renderImgUrl = bySelf ? message.file.url : message.thumb;
+  let renderImgUrl = bySelf ? message.file.url : (message.thumb as string);
 
   const img = useRef(
     <img
@@ -105,7 +105,13 @@ let ImageMessage = (props: ImageMessageProps) => {
   );
 };
 
-export const ImagePreview = props => {
+export interface ImagePreviewProps {
+  visible: boolean;
+  previewImageUrl: string;
+  alt?: string;
+  onCancel?: () => void;
+}
+export const ImagePreview = (props: ImagePreviewProps) => {
   const { visible, previewImageUrl, alt, onCancel } = props;
   const [previewVisible, setPreviewVisible] = useState(false);
 

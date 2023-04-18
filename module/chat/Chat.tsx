@@ -60,12 +60,10 @@ const Chat: FC<ChatProps> = props => {
   const prefixCls = getPrefixCls('chat', customizePrefixCls);
 
   const [isEmpty, setIsEmpty] = useState(false);
-  // const [activeKey, setActiveKey] = useState();
   const classString = classNames(prefixCls, className);
 
   const rootStore = useContext(RootContext).rootStore;
 
-  // useEventHandler();
   const CVS = rootStore.conversationStore.currentCvs;
   const historyMsgs = useHistoryMessages(CVS);
   const userId = rootStore.client.context.userId;
@@ -76,7 +74,7 @@ const Chat: FC<ChatProps> = props => {
     const currentMsgs = rootStore.messageStore.message[CVS.chatType]?.[CVS.conversationId];
     if (
       !CVS.chatType ||
-      (currentMsgs?.length >= 0 && currentMsgs?.[0]?.time <= msg.time) ||
+      (currentMsgs?.length >= 0 && (currentMsgs?.[0] as any)?.time <= msg.time) ||
       cvsId != CVS.conversationId
     ) {
       // length >= 0 没拉取过的是 undefined， length == 0 是清空过的， length > 0 是拉取过了

@@ -34,76 +34,76 @@ export interface ContactListProps {
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean;
 }
 
-function getBrands(members) {
-  const reg = /[a-z]/i;
-  members.forEach(item => {
-    item.name = item.nickname || item.groupName || item.chatroomName || item.name;
-    if (reg.test(item.name.substring(0, 1))) {
-      item.initial = item.name.substring(0, 1).toUpperCase();
-    } else {
-      item.initial = '#';
-    }
-  });
+// function getBrands(members) {
+//   const reg = /[a-z]/i;
+//   members.forEach(item => {
+//     item.name = item.nickname || item.groupName || item.chatroomName || item.name;
+//     if (reg.test(item.name.substring(0, 1))) {
+//       item.initial = item.name.substring(0, 1).toUpperCase();
+//     } else {
+//       item.initial = '#';
+//     }
+//   });
 
-  members.sort((a, b) => a.initial.charCodeAt(0) - b.initial.charCodeAt(0));
+//   members.sort((a, b) => a.initial.charCodeAt(0) - b.initial.charCodeAt(0));
 
-  let someTitle = null;
-  let someArr: Array<{
-    id: number;
-    region: string;
-    brands: Array<{
-      brandId: string;
-      name: string;
-    }>;
-  }> = [];
+//   let someTitle = null;
+//   let someArr: Array<{
+//     id: number;
+//     region: string;
+//     brands: Array<{
+//       brandId: string;
+//       name: string;
+//     }>;
+//   }> = [];
 
-  let lastObj;
-  let newObj;
+//   let lastObj;
+//   let newObj;
 
-  for (var i = 0; i < members.length; i++) {
-    var newBrands = {
-      brandId: members[i].userId || members[i].groupId,
-      name: members[i].nickname || members[i].groupName,
-    };
+//   for (var i = 0; i < members.length; i++) {
+//     var newBrands = {
+//       brandId: members[i].userId || members[i].groupId,
+//       name: members[i].nickname || members[i].groupName,
+//     };
 
-    if (members[i].initial === '#') {
-      if (!lastObj) {
-        lastObj = {
-          id: i,
-          region: '#',
-          brands: [],
-        };
-      }
-      lastObj.brands.push(newBrands);
-    } else {
-      if (members[i].initial !== someTitle) {
-        someTitle = members[i].initial;
-        newObj = {
-          id: i,
-          region: someTitle,
-          brands: [],
-        };
-        someArr.push(newObj);
-      }
-      newObj.brands.push(newBrands);
-    }
-  }
-  someArr.sort((a, b) => a.region.charCodeAt(0) - b.region.charCodeAt(0));
-  if (lastObj) {
-    someArr.push(lastObj);
-  }
-  // someArr.forEach((item) => {
-  // 	item.brands.forEach((val) => {
-  // 		presenceList.length &&
-  // 			presenceList.forEach((innerItem) => {
-  // 				if (val.name === innerItem.uid) {
-  // 					val.presence = innerItem;
-  // 				}
-  // 			});
-  // 	});
-  // });
-  return someArr;
-}
+//     if (members[i].initial === '#') {
+//       if (!lastObj) {
+//         lastObj = {
+//           id: i,
+//           region: '#',
+//           brands: [],
+//         };
+//       }
+//       lastObj.brands.push(newBrands);
+//     } else {
+//       if (members[i].initial !== someTitle) {
+//         someTitle = members[i].initial;
+//         newObj = {
+//           id: i,
+//           region: someTitle,
+//           brands: [],
+//         };
+//         someArr.push(newObj);
+//       }
+//       newObj.brands.push(newBrands);
+//     }
+//   }
+//   someArr.sort((a, b) => a.region.charCodeAt(0) - b.region.charCodeAt(0));
+//   if (lastObj) {
+//     someArr.push(lastObj);
+//   }
+//   // someArr.forEach((item) => {
+//   // 	item.brands.forEach((val) => {
+//   // 		presenceList.length &&
+//   // 			presenceList.forEach((innerItem) => {
+//   // 				if (val.name === innerItem.uid) {
+//   // 					val.presence = innerItem;
+//   // 				}
+//   // 			});
+//   // 	});
+//   // });
+//   return someArr;
+// }
 
 let ContactList: FC<ContactListProps> = props => {
   const { prefix: customizePrefixCls, className, onSearch } = props;
@@ -140,9 +140,9 @@ let ContactList: FC<ContactListProps> = props => {
     setListHeight(height);
   }, [size]);
 
-  const groupTag = tagName => {
-    return <span>{tagName}</span>;
-  };
+  //   const groupTag = tagName => {
+  //     return <span>{tagName}</span>;
+  //   };
 
   const [activeKey, setActiveKey] = useState<number>(9999);
   const [itemActiveKey, setItemActiveKey] = useState('');
@@ -159,23 +159,25 @@ let ContactList: FC<ContactListProps> = props => {
 
     let menu = Object.keys(renderData).map((menuItem, index2) => {
       // mockDatas[menuItem] = getBrands(mockDatas[menuItem]);
-      let contacts = renderData[menuItem].map(contactItem => {
-        const id = contactItem.userId || contactItem.groupid;
-        const name = contactItem.nickname || contactItem.groupname;
-        return (
-          <ContactItem
-            contactId={id}
-            onClick={e => {
-              console.log('setItemActiveKey', id);
-              setItemActiveKey(id);
-            }}
-            key={id + Math.random().toString()}
-            isActive={id == itemActiveKey}
-          >
-            {name || id}
-          </ContactItem>
-        );
-      });
+      let contacts = renderData[menuItem as 'contact' | 'groups']?.map(
+        (contactItem: { userId: string; groupid: string; nickname: string; groupname: string }) => {
+          const id = contactItem.userId || contactItem.groupid;
+          const name = contactItem.nickname || contactItem.groupname;
+          return (
+            <ContactItem
+              contactId={id}
+              onClick={e => {
+                console.log('setItemActiveKey', id);
+                setItemActiveKey(id);
+              }}
+              key={id + Math.random().toString()}
+              isActive={id == itemActiveKey}
+            >
+              {name || id}
+            </ContactItem>
+          );
+        },
+      );
       return (
         <ContactGroup
           onclickTitle={title => {
@@ -219,7 +221,7 @@ let ContactList: FC<ContactListProps> = props => {
     addressStore.setSearchList(contactSearchList.concat(groupSearchList));
   };
 
-  const [searchNode, setSearchNode] = useState<JSX.Element>();
+  const [searchNode, setSearchNode] = useState<JSX.Element[]>();
 
   // 渲染搜索列表
   useEffect(() => {

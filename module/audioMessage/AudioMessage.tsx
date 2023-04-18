@@ -57,7 +57,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       time={messageTime}
       nickName={from}
       status={status}
-      type={bySelf ? 'primary' : 'secondly'}
+      bubbleType={bySelf ? 'primary' : 'secondly'}
     >
       <div className="message-audio-content" onClick={playAudio} style={{ ...style }}>
         <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>

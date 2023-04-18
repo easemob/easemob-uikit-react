@@ -80,7 +80,7 @@ const Header: FC<HeaderProps> = props => {
             avatar
           ) : (
             <Avatar
-              onClick={e => {
+              onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
                 onAvatarClick?.(e);
               }}
             >

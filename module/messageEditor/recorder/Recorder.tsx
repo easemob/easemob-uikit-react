@@ -16,9 +16,9 @@ export interface RecorderProps {
   onSend?: (message: AgoraChat.MessageBody) => void;
 }
 
-let MediaStream;
-let recorder;
-let timer;
+let MediaStream: any;
+let recorder: typeof HZRecorder;
+let timer: number;
 const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const rootStore = useContext(RootContext).rootStore;
   const { messageStore, client } = rootStore;
@@ -32,22 +32,22 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const [duration, setDuration] = useState(0);
 
   const setDurationInterval = () => {
-    timer = setInterval(() => {
+    timer = window.setInterval(() => {
       setDuration(duration => duration + 1);
     }, 1000);
   };
 
   const startRecording = () => {
-    HZRecorder.get((rec, val) => {
+    HZRecorder.get((rec: typeof HZRecorder, val: any) => {
       recorder = rec;
       MediaStream = val;
-      rec.start();
+      (rec as any).start();
     });
   };
 
   const stopRecording = () => {
     if (recorder) {
-      recorder.stop();
+      (recorder as any).stop();
       // 重置说话时间
 
       // 获取语音二进制文件
@@ -86,9 +86,9 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       return;
     }
     if (recorder) {
-      recorder.stop();
+      (recorder as any).stop();
       // 获取语音二进制文件
-      let blob = recorder.getBlob();
+      let blob = (recorder as any).getBlob();
       const uri = {
         url: AC.utils.parseDownloadResponse.call(client, blob),
         filename: 'audio-message.wav',
