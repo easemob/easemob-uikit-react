@@ -13,7 +13,6 @@ export interface BaseMessageProps {
   direction?: 'ltr' | 'rtl'; // 左侧布局/右侧布局
   prefix?: string;
 
-  type?: 'primary' | 'secondly'; // 气泡颜色种类
   shape?: 'ground' | 'square'; // 气泡形状
   arrow?: boolean; // 气泡是否有箭头
   nickName?: string; // 昵称
@@ -50,6 +49,7 @@ const BaseMessage = (props: BaseMessageProps) => {
       [`${prefixCls}-left`]: direction == 'ltr',
       [`${prefixCls}-right`]: direction == 'rtl',
       [`${prefixCls}-hasAvatar`]: !!avatar,
+      [`${prefixCls}-${bubbleType}`]: !!bubbleType,
     },
     className,
   );

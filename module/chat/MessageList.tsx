@@ -34,10 +34,9 @@ const textSize = (fontSize: number, text: string) => {
   //@ts-ignore
   span.style.fontSize = fontSize;
   span.style.lineHeight = '24px'; //最好设置行高 方便项目中计算
-  span.style.width = 'calc(100% - 48px - 32px - 20px - 32px)';
+  span.style.width = 'calc(100% - 48px - 32px - 20px - 32px - 26px - 15px)';
   span.style.wordBreak = 'break-all';
-  span.style.fontFamily =
-    '-apple-system, "PingFang SC", "Helvetica Neue", Helvetica,\n' + 'STHeiTi, sans-serif'; //字体 可以替换为项目中自己的字体
+  span.style.fontFamily = 'Roboto'; //字体 可以替换为项目中自己的字体
   span.style.display = 'inline-block';
   container!.appendChild(span);
   if (typeof span.textContent !== 'undefined') {
@@ -166,6 +165,7 @@ let MessageList: FC<MsgListProps> = props => {
       case 'txt':
         let r = textSize(16, (messageData[index] as AgoraChat.TextMsgBody).msg);
         size = 74 - 24 + r.height;
+        console.log('size', r, size);
         break;
       case 'img':
         size = 107;

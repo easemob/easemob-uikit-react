@@ -14,13 +14,14 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     padding: 8px 0;
     box-sizing: border-box;
     padding: 0 24px;
+    
     &-left{
         direction: ltr;
         .#{$status-prefix-cls}-content{
             border-radius: 12px 16px 16px 4px;
             &::before{
                 border: 6px solid transparent;
-                border-right: 6px solid #E6F5FF;
+                border-right: 6px solid $blue-5;
                 content: " ";
                 position: absolute;
                 pointer-events: none;
@@ -35,7 +36,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
             border-radius: 12px 16px 4px 16px;
             &::after{
                 border: 6px solid transparent;
-                border-left: 6px solid #E6F5FF;
+                border-left: 6px solid $blue-5;
                 content: " ";
                 position: absolute;
                 pointer-events: none;
@@ -61,7 +62,41 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         min-height: 24px;
         position: relative;
         /* color_primary/95 */
-        background: #E6F5FF;
+        background: $blue-5;
+        color: $gray-98;
+    }
+
+    &-primary {
+        .#{$status-prefix-cls}-content{
+            background: $blue-5;
+            color: $gray-98;
+            &::before{
+                border-right: 6px solid $blue-5;
+            }
+        }
+    }
+    &-secondly {
+        .#{$status-prefix-cls}-content{
+            background: $blue-95;
+            color: $font-color;
+            &::before{
+                border-right: 6px solid $blue-95;
+            }
+        }
+    }
+    &-none {
+        .#{$status-prefix-cls}-content{
+            background: transparent;
+            color: $font-color;
+            &::before{
+                border: none;
+                content: "";
+                position: absolute;
+                pointer-events: none;
+                left: 0px;
+                bottom: 0px;
+            }
+        }
     }
 
     &-info{

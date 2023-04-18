@@ -14,6 +14,10 @@ $btn-prefix-cls: #{$cui-prefix}-button;
         @include btn-ghost();
     }
 
+    &-text {
+        @include btn-text();
+    }
+
     &-round {
         @include btn-round($btn-prefix-cls);
     }

@@ -116,6 +116,21 @@
 @mixin btn-ghost {
     @include button-variant-other($btn-ghost-color, $btn-ghost-bg, $btn-ghost-border);
 }
+@mixin btn-text {
+    @include button-variant-other($btn-ghost-bg, unset, $btn-ghost-bg);
+    text-align: center;
+    &:hover,
+    &:focus{
+        background: $gray-95;
+        border: 1px solid transparent;
+    };
+    &:active {
+        text-decoration: none;
+        background: $gray-9;
+        border: 1px solid transparent;
+    }
+}
+
 
 @mixin button-color($color, $background, $border) {
     color: $color;
