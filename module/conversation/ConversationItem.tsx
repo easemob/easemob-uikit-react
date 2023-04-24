@@ -16,6 +16,7 @@ export interface ConversationItemProps {
   nickname?: string;
   avatarShape?: 'circle' | 'square';
   avatarSize?: number;
+  avatar?: ReactNode;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   style?: React.CSSProperties;
   badgeColor?: string; // 未读数气泡颜色
@@ -30,6 +31,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     nickname,
     avatarShape = 'circle',
     avatarSize = 50,
+    avatar,
     onClick,
     isActive = false,
     data,
@@ -135,9 +137,14 @@ const ConversationItem: FC<ConversationItemProps> = props => {
       onMouseOver={handleMouseOver}
       onMouseLeave={handleMouseLeave}
     >
-      <Avatar size={avatarSize} shape={avatarShape}>
-        {data.name || data.conversationId}
-      </Avatar>
+      {avatar ? (
+        avatar
+      ) : (
+        <Avatar size={avatarSize} shape={avatarShape}>
+          {data.name || data.conversationId}
+        </Avatar>
+      )}
+
       <div className={`${prefixCls}-content`}>
         <span className={`${prefixCls}-nickname`}>{data.name || data.conversationId}</span>
         <span className={`${prefixCls}-message`}>{lastMsg}</span>

@@ -69,6 +69,7 @@ let Conversations: FC<ConversationListProps> = props => {
 
   const [isSearch, setIsSearch] = useState(false);
   const [renderData, setRenderData] = useState<ConversationData>([]);
+  const [initRenderData, setInitRenderData] = useState<ConversationData>([]);
   const rootStore = useContext(RootContext).rootStore;
   const cvsStore = rootStore.conversationStore;
 
@@ -117,9 +118,10 @@ let Conversations: FC<ConversationListProps> = props => {
     rootStore.addressStore.setGroups(groupData);
   }, [groupData]);
 
+  let iniRenderData: any[] = [];
   // 获取加入群组，把群组名放在 conversationList
   useEffect(() => {
-    if (cvsStore.searchList.length > 0 || isSearch) {
+    if (isSearch) {
       // @ts-ignore
       setRenderData(cvsStore.searchList);
     } else {
@@ -138,9 +140,12 @@ let Conversations: FC<ConversationListProps> = props => {
       });
       // @ts-ignore
       setRenderData(renderData);
+      // @ts-ignore
+      setInitRenderData(renderData);
     }
   }, [cvsStore.conversationList, cvsStore.searchList, groupData, userInfo]);
 
+  // 获取会话列表数据，格式化后setConversation
   useEffect(() => {
     const conversation = cvsData.map(cvs => {
       const { chatType, conversationId } = parseChannel(cvs.channel_id);
@@ -158,8 +163,7 @@ let Conversations: FC<ConversationListProps> = props => {
     const value = e.target.value;
     const returnValue = onSearch?.(e);
     if (returnValue === false) return;
-
-    const searchList = cvsStore.conversationList.filter(cvs => {
+    const searchList = initRenderData.filter(cvs => {
       if (cvs.conversationId.includes(value) || cvs.name?.includes(value)) {
         return true;
       }
@@ -167,7 +171,7 @@ let Conversations: FC<ConversationListProps> = props => {
     });
 
     setIsSearch(value.length > 0 ? true : false);
-
+    // @ts-ignore
     cvsStore.setSearchList(searchList);
   };
 
