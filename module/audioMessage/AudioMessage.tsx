@@ -11,15 +11,33 @@ export interface AudioMessageProps extends BaseMessageProps {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
   style?: React.CSSProperties;
+  className?: string;
+  type?: 'primary' | 'secondly';
 }
 
 const AudioMessage = (props: AudioMessageProps) => {
   const [isPlaying, setPlayStatus] = useState(false);
-  const { audioMessage, direction, style: customStyle } = props;
+  const {
+    audioMessage,
+    direction,
+    style: customStyle,
+    prefix: customizePrefixCls,
+    className,
+    type = 'primary',
+  } = props;
 
   const audioRef = useRef(null);
   const { url, file_length, length, file, time: messageTime, from, status } = audioMessage;
   // const duration = body.length
+  const { getPrefixCls } = React.useContext(ConfigContext);
+  const prefixCls = getPrefixCls('message-audio', customizePrefixCls);
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${type}`]: !!type,
+    },
+    className,
+  );
 
   const playAudio = () => {
     setPlayStatus(true);
@@ -59,9 +77,9 @@ const AudioMessage = (props: AudioMessageProps) => {
       status={status}
       bubbleType={bySelf ? 'primary' : 'secondly'}
     >
-      <div className="message-audio-content" onClick={playAudio} style={{ ...style }}>
+      <div className={classString} onClick={playAudio} style={{ ...style }}>
         <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
-        <span className="message-audio-duration">{duration + '"' || 0}</span>
+        <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
         <audio
           src={file.url || url}
           ref={audioRef}

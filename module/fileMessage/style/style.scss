@@ -1,53 +1,112 @@
 @import '../../../src/style/index.scss';
-.file-message-content{
+$file-prefix-cls: #{$cui-prefix}-message-file;
+.#{$file-prefix-cls}{
     height: 44px;
     width: 268px;
     display: flex;
     justify-content: space-between;
-    // background-color: green;
-}
-.file-message-icon{
-    width: 44px;
-    height: 44px;
-    background: $component-background;
-    border-radius: 9px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.file-message-info{
-    display: flex;
-    flex-shrink: 0;
-    flex-direction: column;
-    width: calc(100% - 54px);
-    span:nth-child(1){
-        font-weight: 500;
-        font-size: 16px;
-        line-height: 24px;
-        /* identical to box height, or 150% */
-        color: $font-color;
-        white-space: nowrap;
-        text-align: left;
-
-        overflow: hidden;
-        text-overflow: ellipsis;
-        text-align: left;
-        direction: ltr;
-
-        &:hover{
-            color: $blue-5;
-            cursor: pointer;
-            text-decoration: underline;
+    &-secondly{
+        .#{$file-prefix-cls}-info{
+            span:nth-child(1){
+                color: $font-color;
+                &:hover{
+                    color: $blue-5;
+                }
+            }
+            span:nth-child(2){
+                color: $special-5;
+            }
         }
     }
-    span:nth-child(2){
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 20px;
-        /* identical to box height, or 143% */
-        /* color_neutral_special/5 */
-        color: $special-5;
-        text-align: left;
+    &-icon{
+        width: 44px;
+        height: 44px;
+        background: $component-background;
+        border-radius: 9px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    };
+
+    &-info{
+        display: flex;
+        flex-shrink: 0;
+        flex-direction: column;
+        width: calc(100% - 54px);
+        span:nth-child(1){
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 24px;
+            /* identical to box height, or 150% */
+            color: $gray-98;
+            white-space: nowrap;
+            text-align: left;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+            direction: ltr;
+
+            &:hover{
+                color: $gray-9;
+                cursor: pointer;
+                text-decoration: underline;
+            }
+        }
+        span:nth-child(2){
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+            /* identical to box height, or 143% */
+            /* color_neutral_special/5 */
+            color: $gray-95;
+            text-align: left;
+        }
     }
 }
+
+// .file-message-icon{
+//     width: 44px;
+//     height: 44px;
+//     background: $component-background;
+//     border-radius: 9px;
+//     display: flex;
+//     justify-content: center;
+//     align-items: center;
+// }
+
+// .file-message-info{
+//     display: flex;
+//     flex-shrink: 0;
+//     flex-direction: column;
+//     width: calc(100% - 54px);
+//     span:nth-child(1){
+//         font-weight: 500;
+//         font-size: 16px;
+//         line-height: 24px;
+//         /* identical to box height, or 150% */
+//         color: $gray-98;
+//         white-space: nowrap;
+//         text-align: left;
+
+//         overflow: hidden;
+//         text-overflow: ellipsis;
+//         text-align: left;
+//         direction: ltr;
+
+//         &:hover{
+//             color: $gray-9;
+//             cursor: pointer;
+//             text-decoration: underline;
+//         }
+//     }
+//     span:nth-child(2){
+//         font-weight: 400;
+//         font-size: 14px;
+//         line-height: 20px;
+//         /* identical to box height, or 143% */
+//         /* color_neutral_special/5 */
+//         color: $special-5;
+//         text-align: left;
+//     }
+// }

@@ -1,15 +1,25 @@
 @import '../../../src/style/index.scss';
-.message-audio-content{
+$audio-prefix-cls: #{$cui-prefix}-message-audio;
+
+.#{$audio-prefix-cls}{
     display: flex;
     align-items: center;
     cursor: pointer;
     display: flex;
     justify-content: space-between;
-}
-
-.message-audio-duration{
-    direction: ltr;
-    font-size: 16px;
-    line-height: 24px;
-    color: $font-color;
+    &-primary{
+        .#{$audio-prefix-cls}-duration{
+            color: $gray-98
+        }
+    }
+    &-secondly{
+        .#{$audio-prefix-cls}-duration{
+            color: $font-color
+        }
+    }
+    &-duration{
+        direction: ltr;
+        font-size: 16px;
+        line-height: 24px;
+    }
 }

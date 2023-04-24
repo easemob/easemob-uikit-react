@@ -12,6 +12,8 @@ export interface FileMessageProps extends BaseMessageProps {
   fileMessage: FileMessageType; // 从SDK收到的文件消息
   iconType?: IconProps['type'];
   prefix?: string;
+  className?: string;
+  type?: 'primary' | 'secondly';
 }
 
 const FileMessage = (props: FileMessageProps) => {
@@ -21,13 +23,22 @@ const FileMessage = (props: FileMessageProps) => {
     shape,
     prefix: customizePrefixCls,
     style,
+    type = 'primary',
+    className,
     ...baseMsgProps
   } = props;
 
   const { filename, file_length } = fileMessage;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
-  const classString = classNames();
+
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${type}`]: !!type,
+    },
+    className,
+  );
 
   const handleClick = () => {
     fetch(fileMessage.url)
@@ -52,14 +63,13 @@ const FileMessage = (props: FileMessageProps) => {
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
       {...baseMsgProps}
-      avatar={<Avatar>12</Avatar>}
     >
-      <div className="file-message-content">
-        <div className="file-message-info">
+      <div className={classString}>
+        <div className={`${prefixCls}-info`}>
           <span onClick={handleClick}>{filename}</span>
           <span>{(file_length / 1024).toFixed(2)}kb</span>
         </div>
-        <div className="file-message-icon">
+        <div className={`${prefixCls}-icon`}>
           <Icon type={iconType} height="32px" width="32px" color="#ACB4B9"></Icon>
         </div>
       </div>
