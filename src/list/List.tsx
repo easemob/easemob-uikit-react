@@ -22,8 +22,8 @@ interface ListProps {
   width?: number | string; // List 宽度
   itemData?: any; // list item 数据
   children: ({ index, style }: { index: number; style: React.CSSProperties }) => JSX.Element;
-
-  onItemRendered: (index: number) => boolean;
+  isItemLoaded: (index: number) => boolean;
+  onItemRendered?: (index: number) => boolean;
   loadMoreItems: (startIndex: number, stopIndex: number) => void | Promise<void>;
 }
 
@@ -40,6 +40,7 @@ const List = React.forwardRef<any, ListProps>((props, ref) => {
     children,
     loadMoreItems,
     onItemRendered,
+    isItemLoaded,
     itemData,
     ...others
   } = props;
@@ -50,12 +51,20 @@ const List = React.forwardRef<any, ListProps>((props, ref) => {
   } else {
     myItemSize = itemSize;
   }
+  const infiniteLoaderRef = useRef(null);
 
+  //   useEffect(() => {
+  //     //@ts-ignore
+  //     infiniteLoaderRef.current?.resetloadMoreItemsCache();
+  //     console.log('刷新了');
+  //   }, [itemData]);
   return (
     <InfiniteLoader
-      isItemLoaded={onItemRendered}
+      isItemLoaded={isItemLoaded}
       itemCount={itemCount}
       loadMoreItems={loadMoreItems}
+      ref={infiniteLoaderRef}
+      threshold={5}
     >
       {({ onItemsRendered }: { onItemsRendered: any }) => (
         <RWList

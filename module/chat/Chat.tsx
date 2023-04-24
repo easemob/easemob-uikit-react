@@ -65,30 +65,27 @@ const Chat: FC<ChatProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
 
   const CVS = rootStore.conversationStore.currentCvs;
-  const historyMsgs = useHistoryMessages(CVS);
+  //   const { historyMsgs, loadMore } = useHistoryMessages(CVS);
   const userId = rootStore.client.context.userId;
-  useEffect(() => {
-    let msg = historyMsgs[0] || {};
-    const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
+  //   useEffect(() => {
+  //     console.log('历史消息变了');
+  //     let msg = historyMsgs[0] || {};
+  //     const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
 
-    const currentMsgs = rootStore.messageStore.message[CVS.chatType]?.[CVS.conversationId];
-    if (
-      !CVS.chatType ||
-      (currentMsgs?.length >= 0 && (currentMsgs?.[0] as any)?.time <= msg.time) ||
-      cvsId != CVS.conversationId
-    ) {
-      // length >= 0 没拉取过的是 undefined， length == 0 是清空过的， length > 0 是拉取过了
-      console.log('不符合条件', CVS.chatType, CVS.conversationId, historyMsgs, cvsId);
-      return;
-    }
+  //     const currentMsgs = rootStore.messageStore.message[CVS.chatType]?.[CVS.conversationId];
+  //     if (
+  //       !CVS.chatType ||
+  //       (currentMsgs?.length >= 0 && (currentMsgs?.[0] as any)?.time <= msg.time) ||
+  //       cvsId != CVS.conversationId
+  //     ) {
+  //       // length >= 0 没拉取过的是 undefined， length == 0 是清空过的， length > 0 是拉取过了
+  //       console.log('不符合条件', CVS.chatType, CVS.conversationId, historyMsgs, cvsId);
+  //       return;
+  //     }
 
-    console.log(
-      '添加历史消息',
-      CVS,
-      rootStore.messageStore.message[CVS.chatType]?.[CVS.conversationId],
-    );
-    rootStore.messageStore.addHistoryMsgs(rootStore.conversationStore.currentCvs, historyMsgs);
-  }, [CVS.conversationId, historyMsgs]);
+  //     console.log('添加历史消息', historyMsgs);
+  //     rootStore.messageStore.addHistoryMsgs(rootStore.conversationStore.currentCvs, historyMsgs);
+  //   }, [CVS.conversationId, historyMsgs]);
 
   useEffect(() => {
     if (!rootStore.conversationStore.currentCvs.conversationId) {

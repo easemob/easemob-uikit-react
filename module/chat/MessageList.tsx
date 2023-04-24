@@ -24,6 +24,7 @@ import { RootContext } from '../store/rootContext';
 import AC, { AgoraChat } from 'agora-chat';
 import { cloneElement } from '../../src/_utils/reactNode';
 import { areEqual } from 'react-window';
+import { useHistoryMessages } from '../hooks/useHistoryMsg';
 //计算好准确的高度和宽度
 const textSize = (fontSize: number, text: string, hasStatus: boolean) => {
   const container = document.getElementById('listContainer');
@@ -74,12 +75,39 @@ let MessageList: FC<MsgListProps> = props => {
   const size = useSize(msgContainerRef);
 
   const [msgListHeight, setMsgListHeight] = useState(msgContainerRef?.current?.clientHeight || 0);
+
   useEffect(() => {
     setMsgListHeight(msgContainerRef.current!.clientHeight);
   }, [size]);
 
   // const messageData = messageStore.currentCvsMsgs;
   const currentCVS = messageStore.currentCVS || {};
+  console;
+  const { historyMsgs, loadMore } = useHistoryMessages(currentCVS);
+  const userId = rootStore.client.context.userId;
+  useEffect(() => {
+    console.log('渲染历史消息');
+    let msg = historyMsgs[0] || {};
+    const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
+
+    const currentMsgs = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId];
+    if (
+      !currentCVS.chatType ||
+      (currentMsgs?.length >= 0 && (currentMsgs?.[0] as any)?.time <= msg.time) ||
+      cvsId != currentCVS.conversationId
+    ) {
+      // length >= 0 没拉取过的是 undefined， length == 0 是清空过的， length > 0 是拉取过了
+      console.log('不符合条件', currentCVS.chatType, currentCVS.conversationId, historyMsgs, cvsId);
+      return;
+    }
+
+    console.log('添加历史消息', historyMsgs);
+    rootStore.messageStore.addHistoryMsgs(rootStore.conversationStore.currentCvs, historyMsgs);
+
+    setTimeout(() => {
+      refreshVirtualTable();
+    }, 10);
+  }, [currentCVS.conversationId, historyMsgs]);
 
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
 
@@ -149,6 +177,9 @@ let MessageList: FC<MsgListProps> = props => {
   // 每次发消息滚动到最新的一条
   const listRef = React.useRef<List>(null);
   useEffect(() => {
+    if (msgCount > 50) {
+      return;
+    }
     // @ts-ignore
     setTimeout(() => {
       (listRef?.current as any)?.scrollToItem(msgCount, 'end');
@@ -178,6 +209,7 @@ let MessageList: FC<MsgListProps> = props => {
 
   useEffect(() => {
     currentCVS && refreshVirtualTable();
+    (listRef?.current as any)?.scrollToItem(msgCount, 'end');
   }, [currentCVS]);
 
   const refreshVirtualTable = () => {
@@ -189,10 +221,12 @@ let MessageList: FC<MsgListProps> = props => {
   return (
     <div className={classString} ref={msgContainerRef} id="listContainer">
       <List
-        onItemRendered={index => {
+        isItemLoaded={index => {
           return index > 5;
         }}
         loadMoreItems={(a, b) => {
+          loadMore();
+
           console.log('加载更多', a, b);
         }}
         ref={listRef}
