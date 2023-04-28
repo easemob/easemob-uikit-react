@@ -7,7 +7,7 @@ import type { AudioMessageType } from '../types/messageType';
 import Avatar from '../../src/avatar';
 import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
-export interface AudioMessageProps extends BaseMessageProps {
+export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType' | 'status'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
   style?: React.CSSProperties;
@@ -68,6 +68,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   if (typeof bySelf == 'undefined') {
     bySelf = from == rootStore.client.context.userId;
   }
+  const bubbleType = type ? type : bySelf ? 'primary' : 'secondly';
   return (
     <BaseMessage
       direction={bySelf ? 'rtl' : 'ltr'}
@@ -75,7 +76,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       time={messageTime}
       nickName={from}
       status={status}
-      bubbleType={bySelf ? 'primary' : 'secondly'}
+      bubbleType={bubbleType}
     >
       <div className={classString} onClick={playAudio} style={{ ...style }}>
         <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
