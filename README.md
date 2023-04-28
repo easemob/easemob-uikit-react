@@ -14,7 +14,7 @@ npm i chatuim2 -S
 
 UIKIt consists of three parts: UI component, mobx store for managing data, chat SDK. UI components include container components, composite Components module, and pure UI components. These components at different levels are exposed to the outside world. Users can reference any of these components to build their own applications. UIkit uses mobx to manage global data, and users can reference the rootStore to get all the data and the action method, which can be used to manipulate the data. UIKit integrates chat SDK internally and interacts with the server through chat SDK.
 
-<div align=center> <img src="./uikit.png" width = "400" height = "450" /></div>
+<div align=center> <img src="./docs/uikit.png" width = "400" height = "450" /></div>
 
 ## Function
 
@@ -420,7 +420,7 @@ npm run start
 
 Now, you can see your app in the browser.
 
-<div align=center style="background: #ddd; padding-top: 8px"> <img src="./chat.png" width = "480" height = "350" /></div>
+<div align=center style="background: #ddd; padding-top: 8px"> <img src="./docs/chat.png" width = "480" height = "350" /></div>
 
 In the default App Key situation, for the convenience of quick experience, we support several types of message distribution by default. After clicking to select a member, enter your first message and send it.
 
