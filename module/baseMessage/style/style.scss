@@ -14,7 +14,17 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     padding: 8px 0;
     box-sizing: border-box;
     padding: 0 24px;
-    
+    &-arrow{
+        .#{$status-prefix-cls}-content{
+            // border-radius: 12px 16px 16px 4px;
+            &::before{
+                content: " ";
+            }
+            &::after{
+                content: " ";
+            }
+        }
+    }
     &-left{
         direction: ltr;
         .#{$status-prefix-cls}-content{
@@ -22,7 +32,6 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
             &::before{
                 border: 6px solid transparent;
                 border-right: 6px solid $blue-5;
-                content: " ";
                 position: absolute;
                 pointer-events: none;
                 left: -11px;
@@ -37,7 +46,6 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
             &::after{
                 border: 6px solid transparent;
                 border-left: 6px solid $blue-5;
-                content: " ";
                 position: absolute;
                 pointer-events: none;
                 bottom: 8px;
@@ -79,8 +87,11 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         .#{$status-prefix-cls}-content{
             background: $blue-95;
             color: $font-color;
+            &::after{
+                border-left: 6px solid $blue-95!important;
+            }
             &::before{
-                border-right: 6px solid $blue-95;
+                border-right: 6px solid $blue-95!important;
             }
         }
     }
@@ -98,7 +109,11 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
             }
         }
     }
-
+    &-square{
+        .#{$status-prefix-cls}-content{
+            border-radius: 4px;
+        }
+    }
     &-info{
         margin-left: 12px;
         display: flex;

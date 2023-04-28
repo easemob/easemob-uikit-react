@@ -33,6 +33,8 @@ const BaseMessage = (props: BaseMessageProps) => {
     style,
     time,
     nickName,
+    shape = 'ground',
+    arrow = false,
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -50,6 +52,8 @@ const BaseMessage = (props: BaseMessageProps) => {
       [`${prefixCls}-right`]: direction == 'rtl',
       [`${prefixCls}-hasAvatar`]: !!avatar,
       [`${prefixCls}-${bubbleType}`]: !!bubbleType,
+      [`${prefixCls}-${shape}`]: !!shape,
+      [`${prefixCls}-arrow`]: !!arrow,
     },
     className,
   );

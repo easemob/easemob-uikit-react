@@ -119,6 +119,7 @@
 @mixin btn-text {
     @include button-variant-other($btn-ghost-bg, unset, $btn-ghost-bg);
     text-align: center;
+    padding: 6px;
     &:hover,
     &:focus{
         background: $gray-95;
