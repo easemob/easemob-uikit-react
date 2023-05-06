@@ -15,16 +15,23 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     box-sizing: border-box;
     padding: 0 24px;
     &-arrow{
-        .#{$status-prefix-cls}-content{
-            // border-radius: 12px 16px 16px 4px;
-            &::before{
-                content: " ";
+        &.#{$status-prefix-cls}-left{
+            .#{$status-prefix-cls}-content{
+                &::before{
+                    content: " ";
+                }
             }
-            &::after{
-                content: " ";
+        }
+        &.#{$status-prefix-cls}-right{
+            .#{$status-prefix-cls}-content{
+                &::after{
+                    content: " ";
+                }
             }
         }
     }
+
+
     &-left{
         direction: ltr;
         .#{$status-prefix-cls}-content{
