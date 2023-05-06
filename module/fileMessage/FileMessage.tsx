@@ -13,24 +13,33 @@ export interface FileMessageProps extends BaseMessageProps {
   iconType?: IconProps['type'];
   prefix?: string;
   className?: string;
+  nickName?: string;
   type?: 'primary' | 'secondly';
 }
 
 const FileMessage = (props: FileMessageProps) => {
-  const {
+  let {
     iconType = 'DOC',
     fileMessage,
     shape,
     prefix: customizePrefixCls,
     style,
-    type = 'primary',
+    type,
     className,
+    nickName,
     ...baseMsgProps
   } = props;
 
-  const { filename, file_length } = fileMessage;
+  const { filename, file_length, from } = fileMessage;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
+  let { bySelf } = fileMessage;
+  if (typeof bySelf == 'undefined') {
+    bySelf = fileMessage.from === rootStore.client.context.userId;
+  }
+  if (!type) {
+    type = bySelf ? 'primary' : 'secondly';
+  }
 
   const classString = classNames(
     prefixCls,
@@ -52,16 +61,14 @@ const FileMessage = (props: FileMessageProps) => {
         return false;
       });
   };
-  let { bySelf } = fileMessage;
-  if (typeof bySelf == 'undefined') {
-    bySelf = fileMessage.from === rootStore.client.context.userId;
-  }
+
   return (
     <BaseMessage
-      bubbleType={bySelf ? 'primary' : 'secondly'}
+      bubbleType={type}
       style={style}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
+      nickName={nickName || from}
       {...baseMsgProps}
     >
       <div className={classString}>

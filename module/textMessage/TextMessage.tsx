@@ -14,6 +14,7 @@ export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
   // color?: string; // 字体颜色
   // backgroundColor?: string; // 气泡背景颜色
+  type?: 'primary' | 'secondly';
   prefix?: string;
   nickName?: string; // 昵称
   className?: string;
@@ -60,7 +61,15 @@ const renderTxt = (txt: string | undefined | null) => {
 };
 
 export const TextMessage = (props: TextMessageProps) => {
-  const { prefix: customizePrefixCls, textMessage, className, style, nickName, ...others } = props;
+  let {
+    prefix: customizePrefixCls,
+    textMessage,
+    className,
+    style,
+    nickName,
+    type,
+    ...others
+  } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-text', customizePrefixCls);
   let { bySelf, time, from, msg } = textMessage;
@@ -70,13 +79,16 @@ export const TextMessage = (props: TextMessageProps) => {
   if (typeof bySelf == 'undefined') {
     bySelf = from == rootStore.client.context.userId;
   }
+  if (!type) {
+    type = bySelf ? 'primary' : 'secondly';
+  }
   return (
     <BaseMessage
       direction={bySelf ? 'rtl' : 'ltr'}
       style={style}
       time={time}
       nickName={nickName || from}
-      bubbleType={bySelf ? 'primary' : 'secondly'}
+      bubbleType={type}
       {...others}
     >
       <span className={classString}>{renderTxt(msg)}</span>
