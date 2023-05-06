@@ -8,30 +8,13 @@ import { emoji } from '../messageEditor/emoji/emojiConfig';
 import { getConversationTime } from '../utils';
 import BaseMessage, { BaseMessageProps } from '../baseMessage';
 import rootStore from '../store/index';
-export interface TextMessage {
-  from: string;
-  to: string;
-  time: number;
-  msg: string;
-  chatType: 'singleChat' | 'groupChat' | 'chatRoom';
-  status: MessageStatusProps['status'];
-  bySelf: boolean;
-}
+import type { TextMessageType } from '../types/messageType';
 
-export interface TextMessageProps {
-  textMessage: TextMessage;
+export interface TextMessageProps extends BaseMessageProps {
+  textMessage: TextMessageType;
   // color?: string; // 字体颜色
   // backgroundColor?: string; // 气泡背景颜色
-  bubbleType?: 'primary' | 'secondly' | 'none'; // 气泡类型
-  showCheck?: boolean; // 展示消息选择 check box
-  status?: 'received' | 'read' | 'sent' | 'sending';
-  avatar?: ReactNode;
-  position?: 'left' | 'right'; // 左侧布局/右侧布局
   prefix?: string;
-
-  type?: 'primary' | 'default'; // 气泡颜色种类
-  shape?: 'ground' | 'square'; // 气泡形状
-  arrow?: boolean; // 气泡是否有箭头
   nickName?: string; // 昵称
   className?: string;
   children?: string;
@@ -77,30 +60,13 @@ const renderTxt = (txt: string | undefined | null) => {
 };
 
 export const TextMessage = (props: TextMessageProps) => {
-  const {
-    // color,
-    // backgroundColor,
-    avatar = true,
-    position = 'right',
-    status = 'default',
-    prefix: customizePrefixCls,
-    textMessage,
-    className,
-    style,
-    nickName,
-  } = props;
+  const { prefix: customizePrefixCls, textMessage, className, style, nickName, ...others } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-text', customizePrefixCls);
-  let avatarToShow: ReactNode;
-  if (avatar) {
-    avatarToShow = <Avatar>{nickName}</Avatar>;
-  }
+  let { bySelf, time, from, msg } = textMessage;
 
   const classString = classNames(prefixCls, className);
 
-  const MessageInfo = () => {};
-
-  let { bySelf, time, from } = textMessage;
   if (typeof bySelf == 'undefined') {
     bySelf = from == rootStore.client.context.userId;
   }
@@ -109,11 +75,11 @@ export const TextMessage = (props: TextMessageProps) => {
       direction={bySelf ? 'rtl' : 'ltr'}
       style={style}
       time={time}
-      nickName={from}
-      status={status}
+      nickName={nickName || from}
       bubbleType={bySelf ? 'primary' : 'secondly'}
+      {...others}
     >
-      <span className={classString}>{renderTxt(props.children)}</span>
+      <span className={classString}>{renderTxt(msg)}</span>
     </BaseMessage>
   );
 };
