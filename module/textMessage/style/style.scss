@@ -12,3 +12,83 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
     direction: ltr !important;
     display: inline-block;
 }
+.message-text-url{
+    &::after{
+        content: '';
+        height: 8px;
+        width: 300px;
+        background-color: $gray-95;
+        display: block;
+        position: relative;
+        bottom: -8px;
+    }
+    background-color: $gray-95;
+    position: relative;
+    width: 300px;
+    left: $padding-sm;
+    &-link{
+        color: inherit;
+    }
+    &-img{
+        width: 300px;
+        height: 154px;
+        position: relative;
+        // left: -$padding-sm;
+        // float: left;
+    }
+    &-info{
+        overflow: hidden;
+        padding: 0 $padding-sm;
+    }
+    &-title{
+        font-style: normal;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 24px;
+        color: $gray-1;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        direction: ltr;
+    };
+
+    &-desc{
+        color: $gray-3;
+        font-style: normal;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 20px;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        direction: ltr;
+    };
+    &-loading{
+        color: #808080;
+        direction: ltr;
+        font-family: 'SF Pro';
+        font-style: normal;
+        font-weight: 400;
+        font-size: 12px;
+        line-height: 22px;
+    }
+
+}
+
+.message-text-url-loading{
+    color: #808080;
+    direction: ltr;
+    font-family: 'SF Pro';
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: 22px;
+}
+
+.message-text-hasImage{
+    .cui-message-base-content{
+        width: 268px;
+    }
+}

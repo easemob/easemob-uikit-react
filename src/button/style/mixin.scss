@@ -1,4 +1,4 @@
-@import '../../style/index.scss';
+
 
 @mixin btn {
     @include button-size($btn-height-base, $btn-padding-horizontal-base, $font-size-base, $btn-border-radius-base );
@@ -222,3 +222,5 @@
         border-radius: 50%;
     }
 }
+
+@import '../../style/index.scss';

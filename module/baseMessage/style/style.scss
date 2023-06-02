@@ -8,12 +8,11 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     line-height: 24px;
     color: $font-color;
     order: 0;
-
     display: flex;
     align-items: flex-end;
-    padding: 8px 0;
+    margin: $margin-xs 0;
     box-sizing: border-box;
-    padding: 0 24px;
+    padding: 0 $padding-lg;
     &-arrow{
         &.#{$status-prefix-cls}-left{
             .#{$status-prefix-cls}-content{
@@ -71,14 +70,15 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     }
     &-content{
         // flex: 1;
-        margin: 0 8px 0 12px;
-        padding: 8px 16px;
+        margin: 0 $margin-xs 0 $margin-sm;
+        padding: $padding-xs $padding-sm;
         gap: 10px;
         min-height: 24px;
         position: relative;
         /* color_primary/95 */
         background: $blue-5;
         color: $gray-98;
+        overflow: hidden;
     }
 
     &-primary {
@@ -122,7 +122,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         }
     }
     &-info{
-        margin-left: 12px;
+        margin-left: $margin-sm;
         display: flex;
     }
     &-nickname{
@@ -137,7 +137,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         display: inline-block;
         width: 106px;
         height: 16px;
-        margin: 0 4px;
+        margin: 0 $margin-xss;
         font-weight: 400;
         font-size: 12px;
         line-height: 16px;
