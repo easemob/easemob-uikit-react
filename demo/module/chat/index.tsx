@@ -14,7 +14,10 @@ import rootStore from '../../../module/store/index';
 import { ConversationList } from '../../../module/conversation';
 import Provider from '../../../module/store/Provider';
 import { useClient } from '../../../module/hooks/useClient';
-
+import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
+import Button from '../../../src/button';
+import Avatar from '../../../src/avatar';
+import { MessageList } from '../../../module/chat/MessageList';
 // import {
 // 	Chat,
 // 	rootStore,
@@ -23,45 +26,62 @@ import { useClient } from '../../../module/hooks/useClient';
 // 	useClient,
 // } from 'chatuim2';
 // import 'chatuim2/style.css';
-class Test extends React.Component {
-  state: { num: { a: number } };
-  constructor(props) {
-    super(props);
-    this.state = {
-      num: { a: 1 },
-    };
-  }
-  handleClick() {
-    let num2 = this.state.num;
-    num2.a++;
-    this.setState({
-      num: num2,
-    });
-  }
 
-  render() {
-    return (
-      <div>
-        <span>{this.state.num.a}</span>
-        <button onClick={this.handleClick.bind(this)}></button>
-      </div>
-    );
-  }
-}
-
-const Entry = () => {
+const ChatApp = () => {
   const client = useClient();
   useEffect(() => {
     client &&
       client
         .open({
-          user: 'zd2',
-          pwd: '1',
+          user: '13681272809',
+          pwd: '272809',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
         });
   }, [client]);
+
+  const getUrlPreviewInfo = () => {
+    getLinkPreview(
+      'https://api-ref.agora.io/en/chat-sdk/ios/1.x/interface_agora_chat_client.html#a3e0c211f850af4dfe61c0581f3b7aea7',
+    )
+      .then(data => console.log(123, data))
+      .catch(e => {
+        console.log(22, e);
+      });
+  };
+  console.log('rootStore', rootStore);
+  const topConversation = () => {
+    rootStore.conversationStore.topConversation({
+      chatType: 'singleChat',
+      conversationId: '9a0dac930f',
+      lastMessage: {},
+    });
+  };
+
+  let TxtMsg = msg => (
+    <TextMessage
+      bubbleType="secondly"
+      bubbleStyle={{ background: 'hsl(135.79deg 88.79% 36.46%)' }}
+      shape="square"
+      arrow={false}
+      avatar={<Avatar style={{ background: 'pink' }}>zhangdong</Avatar>}
+      textMessage={{
+        msg: msg.msg || 'hello',
+        type: 'txt',
+        id: '1234',
+        to: 'zd5',
+        from: 'zd2',
+        chatType: 'singleChat',
+        time: Date.now(),
+        status: 'read',
+        bySelf: true,
+      }}
+    ></TextMessage>
+  );
+
+  let MsgList = <MessageList renderMessage={msg => TxtMsg(msg)}></MessageList>;
+
   return (
     <>
       <div
@@ -76,6 +96,11 @@ const Entry = () => {
       </div>
       <div style={{ width: '65%', borderLeft: '1px solid transparent' }}>
         <Chat></Chat>
+      </div>
+      <div>
+        <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
+        <Button onClick={topConversation}>top 2808</Button>
+        <br />
       </div>
     </>
   );
@@ -108,7 +133,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         // },
       }}
     >
-      <Entry></Entry>
+      <ChatApp></ChatApp>
     </Provider>
   </div>,
 );

@@ -3,6 +3,7 @@ import { VariableSizeList as RWList } from 'react-window';
 import { types } from 'sass';
 // @ts-ignore
 import InfiniteLoader from 'react-window-infinite-loader';
+
 const Row = ({
   index,
   style,

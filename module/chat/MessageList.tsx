@@ -14,6 +14,7 @@ import { useSize } from 'ahooks';
 import { ConfigContext } from '../../src/config/index';
 import './style/style.scss';
 import List from '../../src/list';
+import ScrollList from '../../src/scrollList';
 
 import TextMessage from '../textMessage';
 import AudioMessage from '../audioMessage';
@@ -23,42 +24,13 @@ import VideoMessage from '../videoMessage';
 import { RootContext } from '../store/rootContext';
 import AC, { AgoraChat } from 'agora-chat';
 import { cloneElement } from '../../src/_utils/reactNode';
-import { areEqual } from 'react-window';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
-//计算好准确的高度和宽度
-const textSize = (fontSize: number, text: string, hasStatus: boolean) => {
-  const container = document.getElementById('listContainer');
-  let span = document.createElement('span');
-  let result: any = {};
-  result.width = span.offsetWidth;
-  result.height = span.offsetHeight;
-  span.style.visibility = 'hidden';
-  //@ts-ignore
-  span.style.fontSize = fontSize;
-  span.style.lineHeight = '24px'; //最好设置行高 方便项目中计算
-  span.style.width = hasStatus
-    ? 'calc(100% - 48px - 32px - 20px - 32px - 26px - 15px)'
-    : 'calc(100% - 48px - 32px - 20px - 32px - 6px - 15px)';
-  span.style.wordBreak = 'break-all';
-  span.style.fontFamily = 'Roboto'; //字体 可以替换为项目中自己的字体
-  span.style.display = 'inline-block';
-  container!.appendChild(span);
-  if (typeof span.textContent !== 'undefined') {
-    span.textContent = text;
-  } else {
-    span.innerText = text;
-  }
-  result.width = parseFloat(window.getComputedStyle(span).width) - result.width;
-  result.height = parseFloat(window.getComputedStyle(span).height) - result.height;
-  span.parentNode?.removeChild(span); //删除节点
-  return result;
-};
 
 export interface MsgListProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
-  renderMessage?: (message: AgoraChat.MessageBody) => JSX.Element;
+  renderMessage?: (message: AgoraChat.MessageBody) => ReactNode;
 }
 
 let MessageList: FC<MsgListProps> = props => {
@@ -72,45 +44,10 @@ let MessageList: FC<MsgListProps> = props => {
 
   const msgContainerRef = useRef<HTMLDivElement>(null);
 
-  const size = useSize(msgContainerRef);
-
-  const [msgListHeight, setMsgListHeight] = useState(msgContainerRef?.current?.clientHeight || 0);
-
-  useEffect(() => {
-    setMsgListHeight(msgContainerRef.current!.clientHeight);
-  }, [size]);
-
-  // const messageData = messageStore.currentCvsMsgs;
   const currentCVS = messageStore.currentCVS || {};
-  console;
-  const { historyMsgs, loadMore } = useHistoryMessages(currentCVS);
-  const userId = rootStore.client.context.userId;
-  useEffect(() => {
-    console.log('渲染历史消息');
-    let msg = historyMsgs[0] || {};
-    const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
-
-    const currentMsgs = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId];
-    if (
-      !currentCVS.chatType ||
-      (currentMsgs?.length >= 0 && (currentMsgs?.[0] as any)?.time <= msg.time) ||
-      cvsId != currentCVS.conversationId
-    ) {
-      // length >= 0 没拉取过的是 undefined， length == 0 是清空过的， length > 0 是拉取过了
-      console.log('不符合条件', currentCVS.chatType, currentCVS.conversationId, historyMsgs, cvsId);
-      return;
-    }
-
-    console.log('添加历史消息', historyMsgs);
-    rootStore.messageStore.addHistoryMsgs(rootStore.conversationStore.currentCvs, historyMsgs);
-
-    setTimeout(() => {
-      refreshVirtualTable();
-    }, 10);
-  }, [currentCVS.conversationId, historyMsgs]);
+  const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
-
   const [imageInfo, setImageInfo] = useState<{
     visible: boolean;
     url: string;
@@ -130,6 +67,7 @@ let MessageList: FC<MsgListProps> = props => {
     if (messageData[data.index].type == 'audio') {
       return (
         <AudioMessage
+          key={messageData[data.index].id}
           //@ts-ignore
           audioMessage={messageData[data.index] as AgoraChat.AudioMsgBody}
           style={data.style}
@@ -138,6 +76,7 @@ let MessageList: FC<MsgListProps> = props => {
     } else if (messageData[data.index].type == 'img') {
       return (
         <ImageMessage
+          key={messageData[data.index].id}
           onClickImage={url => {
             setImageInfo({
               visible: true,
@@ -152,6 +91,7 @@ let MessageList: FC<MsgListProps> = props => {
     } else if (messageData[data.index].type == 'file') {
       return (
         <FileMessage
+          key={messageData[data.index].id}
           //@ts-ignore
           fileMessage={messageData[data.index]}
           style={data.style}
@@ -160,6 +100,7 @@ let MessageList: FC<MsgListProps> = props => {
     } else {
       return (
         <TextMessage
+          key={messageData[data.index].id}
           style={data.style}
           //@ts-ignore
           status={messageData[data.index].status}
@@ -172,71 +113,35 @@ let MessageList: FC<MsgListProps> = props => {
     }
   };
 
-  const msgCount = messageData.length;
-
+  let lastMsgId = messageData[messageData.length - 1]?.id || '';
   // 每次发消息滚动到最新的一条
   const listRef = React.useRef<List>(null);
   useEffect(() => {
-    if (msgCount > 50) {
-      return;
-    }
-    // @ts-ignore
     setTimeout(() => {
-      (listRef?.current as any)?.scrollToItem(msgCount, 'end');
+      (listRef?.current as any)?.scrollTo('bottom');
     }, 10);
-  }, [msgCount]);
-
-  const getItemSize = (index: number) => {
-    let size = 74;
-    switch (messageData[index]?.type) {
-      case 'txt':
-        const hasStatus = !!(messageData[index] as any)?.status;
-        let r = textSize(16, (messageData[index] as AgoraChat.TextMsgBody).msg, hasStatus);
-        size = 74 - 24 + r.height;
-        break;
-      case 'img':
-        size = 107;
-        break;
-      case 'file':
-        size = 90;
-        break;
-      case 'audio':
-        size = 90;
-        break;
-    }
-    return size;
-  };
+  }, [lastMsgId]);
 
   useEffect(() => {
-    currentCVS && refreshVirtualTable();
-    (listRef?.current as any)?.scrollToItem(msgCount, 'end');
+    (listRef?.current as any)?.scrollTo('bottom');
   }, [currentCVS]);
-
-  const refreshVirtualTable = () => {
-    if (listRef?.current) {
-      (listRef.current as any)?.resetAfterIndex(0);
-    }
-  };
 
   return (
     <div className={classString} ref={msgContainerRef} id="listContainer">
-      <List
-        isItemLoaded={index => {
-          return index > 5;
-        }}
-        loadMoreItems={(a, b) => {
-          loadMore();
-
-          console.log('加载更多', a, b);
-        }}
+      <ScrollList
         ref={listRef}
-        height={msgListHeight}
-        itemCount={msgCount}
-        itemSize={getItemSize}
-        itemData={messageData}
-      >
-        {data => renderMsg(data)}
-      </List>
+        hasMore={true}
+        data={messageData}
+        loading={isLoading}
+        loadMoreItems={loadMore}
+        renderItem={(itemData, index) => {
+          return (
+            <div key={(itemData as { id: string }).id} className={`${classString}-msgItem`}>
+              {renderMsg({ index, style: {} })}
+            </div>
+          );
+        }}
+      ></ScrollList>
       <ImagePreview
         onCancel={() => {
           setImageInfo({ visible: false, url: '' });
@@ -248,5 +153,5 @@ let MessageList: FC<MsgListProps> = props => {
   );
 };
 
-MessageList = memo(observer(MessageList), areEqual);
+MessageList = observer(MessageList);
 export { MessageList };

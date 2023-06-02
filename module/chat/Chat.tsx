@@ -65,27 +65,6 @@ const Chat: FC<ChatProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
 
   const CVS = rootStore.conversationStore.currentCvs;
-  //   const { historyMsgs, loadMore } = useHistoryMessages(CVS);
-  const userId = rootStore.client.context.userId;
-  //   useEffect(() => {
-  //     console.log('历史消息变了');
-  //     let msg = historyMsgs[0] || {};
-  //     const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
-
-  //     const currentMsgs = rootStore.messageStore.message[CVS.chatType]?.[CVS.conversationId];
-  //     if (
-  //       !CVS.chatType ||
-  //       (currentMsgs?.length >= 0 && (currentMsgs?.[0] as any)?.time <= msg.time) ||
-  //       cvsId != CVS.conversationId
-  //     ) {
-  //       // length >= 0 没拉取过的是 undefined， length == 0 是清空过的， length > 0 是拉取过了
-  //       console.log('不符合条件', CVS.chatType, CVS.conversationId, historyMsgs, cvsId);
-  //       return;
-  //     }
-
-  //     console.log('添加历史消息', historyMsgs);
-  //     rootStore.messageStore.addHistoryMsgs(rootStore.conversationStore.currentCvs, historyMsgs);
-  //   }, [CVS.conversationId, historyMsgs]);
 
   useEffect(() => {
     if (!rootStore.conversationStore.currentCvs.conversationId) {
@@ -94,18 +73,6 @@ const Chat: FC<ChatProps> = props => {
       setIsEmpty(false);
     }
   }, [rootStore.conversationStore.currentCvs]);
-
-  // const msgContainerRef = useRef<HTMLDivElement>(null);
-
-  // const size = useSize(msgContainerRef);
-
-  // const [msgListHeight, setMsgListHeight] = useState(
-  // 	msgContainerRef?.current?.clientHeight || 0
-  // );
-  // useEffect(() => {
-  // 	console.log(msgContainerRef.current!.clientHeight);
-  // 	setMsgListHeight(msgContainerRef.current!.clientHeight);
-  // }, [size]);
 
   return (
     <div className={classString}>
