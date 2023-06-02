@@ -18,7 +18,7 @@ export interface ImageMessageProps extends BaseMessageProps {
 let ImageMessage = (props: ImageMessageProps) => {
   const { imageMessage: message, shape, style, onClickImage } = props;
 
-  let { bySelf } = message;
+  let { bySelf, from } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message.file.url || message.thumb);
   const [previewVisible, setPreviewVisible] = useState(false);
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
@@ -80,7 +80,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   }
   return (
     <div style={style}>
-      <BaseMessage bubbleType="none" direction={bySelf ? 'rtl' : 'ltr'}>
+      <BaseMessage bubbleType="none" direction={bySelf ? 'rtl' : 'ltr'} nickName={from}>
         <div className="message-image-content">{img.current}</div>
       </BaseMessage>
       {/* <Mask prefixCls="" visible={true}></Mask>
