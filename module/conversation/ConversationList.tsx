@@ -40,6 +40,7 @@ export type ServerCvs = Array<{
 export interface ConversationListProps {
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
   // data?: ConversationData;
   onItemClick?: (data: ConversationData[0]) => void; // 点击会话事件
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean; // search 组件 change 事件，默认根据 会话 Id和name搜索， 如果返回 false， 会阻止默认行为
@@ -61,6 +62,7 @@ let Conversations: FC<ConversationListProps> = props => {
     renderItem,
     headerProps = {},
     itemProps = {},
+    style = {},
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationList', customizePrefixCls);
@@ -177,7 +179,7 @@ let Conversations: FC<ConversationListProps> = props => {
 
   const { t } = useTranslation();
   return (
-    <div className={classString}>
+    <div className={classString} style={style}>
       {renderHeader ? (
         renderHeader()
       ) : (

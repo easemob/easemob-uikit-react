@@ -98,7 +98,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
   );
 
   let lastMsg = '';
-  switch (data.lastMessage.type) {
+  switch (data.lastMessage?.type) {
     case 'txt':
       lastMsg = data.lastMessage?.msg as string;
       break;
@@ -118,7 +118,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
       lastMsg = `/${t('module.custom')}/`;
       break;
     default:
-      console.warn('unexpected message type:', data.lastMessage.type);
+      console.warn('unexpected message type:', data.lastMessage?.type);
       break;
   }
   if (data.chatType == 'groupChat') {
