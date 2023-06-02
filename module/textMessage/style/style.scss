@@ -3,7 +3,7 @@
 $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
 .#{$text-msg-prefix-cls} {
-    font-size: 16px;
+    font-size: $font-size-lg;
     line-height: 24px;
     font-family: 'Roboto';
     font-style: normal;
@@ -43,7 +43,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
     &-title{
         font-style: normal;
         font-weight: 500;
-        font-size: 16px;
+        font-size: $font-size-lg;
         line-height: 24px;
         color: $gray-1;
         overflow: hidden;
@@ -57,7 +57,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         color: $gray-3;
         font-style: normal;
         font-weight: 400;
-        font-size: 14px;
+        font-size: $font-size-base;
         line-height: 20px;
         overflow: hidden;
         display: -webkit-box;
@@ -66,19 +66,19 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         direction: ltr;
     };
     &-loading{
-        color: #808080;
+        color: $gray-5;
         direction: ltr;
         font-family: 'SF Pro';
         font-style: normal;
         font-weight: 400;
-        font-size: 12px;
+        font-size: $font-size-sm;
         line-height: 22px;
     }
 
 }
 
 .message-text-url-loading{
-    color: #808080;
+    color: $gray-5;
     direction: ltr;
     font-family: 'SF Pro';
     font-style: normal;

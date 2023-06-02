@@ -10,7 +10,7 @@ $status-prefix-cls: #{$cui-prefix}-message-status;
         }
     }
     &-text{
-        font-size: 12px;
+        font-size: $font-size-sm;
         color: #ACB4B9;
     }
 }

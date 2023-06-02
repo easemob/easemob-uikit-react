@@ -6,7 +6,7 @@ $header-prefix-cls: #{$cui-prefix}-header;
     // background-color: #fff;
     display: flex;
     align-items: center;
-    padding: 0 12px;
+    padding: 0 $padding-s;
     justify-content: space-between;
     flex-shrink: 0;
     &-content{
@@ -14,7 +14,7 @@ $header-prefix-cls: #{$cui-prefix}-header;
         align-items: center;
 
         &-text{
-            margin-left: 12px;
+            margin-left: $margin-sm;
         }
     }
 
@@ -25,9 +25,9 @@ $header-prefix-cls: #{$cui-prefix}-header;
         width: max-content;
         li{
             font-weight: 500;
-            font-size: 14px;
+            font-size: $font-size-base;
             line-height: 20px;
-            padding: 0 12px;
+            padding: 0 $padding-s;
             height: 36px;
             line-height: 36px;
             cursor: pointer;

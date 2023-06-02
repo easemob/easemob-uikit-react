@@ -35,7 +35,7 @@ $file-prefix-cls: #{$cui-prefix}-message-file;
         width: calc(100% - 54px);
         span:nth-child(1){
             font-weight: 500;
-            font-size: 16px;
+            font-size: $font-size-lg;
             line-height: 24px;
             /* identical to box height, or 150% */
             color: $gray-98;
@@ -55,7 +55,7 @@ $file-prefix-cls: #{$cui-prefix}-message-file;
         }
         span:nth-child(2){
             font-weight: 400;
-            font-size: 14px;
+            font-size: $font-size-base;
             line-height: 20px;
             /* identical to box height, or 143% */
             /* color_neutral_special/5 */

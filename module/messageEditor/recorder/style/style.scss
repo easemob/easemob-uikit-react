@@ -26,19 +26,19 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
             }
 
             .#{$recorder-prefix-cls}-time{
-                margin-left: 22px;
-                margin-right: 4px;
+                margin-left: $margin-lg - 2px;
+                margin-right: $margin-xss;
                 span{
                     position: relative;
                     position: relative;
                     color: $font-color;
-                    font-size: 16px;
+                    font-size: $font-size-lg;
                 }
                 span::before{
                     top: -2px;
                     position: relative;
                     display: inline-block;
-                    margin-right: 8px;
+                    margin-right: $margin-xs;
                     content: ' ';
                     width: 8px;
                     height: 8px;
@@ -56,11 +56,11 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
             align-items: center;
             justify-content: flex-end;
             span{
-                font-size: 16px;
+                font-size: $font-size-lg;
                 line-height: 24px;
                 text-align: right;
                 color: $gray-6;
-                margin-right: 16px;
+                margin-right: $margin-md;
             }
             &>div{
                 width: 36px;
@@ -85,6 +85,6 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
     }
 }
 .icon-container{
-    margin: 8px;
+    margin: $margin-xs;
     cursor: pointer;
 }

@@ -9,7 +9,7 @@ $empty-prefix-cls: #{$cui-prefix}-empty;
     flex-direction: column;
 
     font-weight: 600;
-    font-size: 18px;
+    font-size: $font-size-lg + 2px;
     line-height: 26px;
     color: $gray-8;
     user-select: none;

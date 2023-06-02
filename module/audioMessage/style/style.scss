@@ -19,7 +19,7 @@ $audio-prefix-cls: #{$cui-prefix}-message-audio;
     }
     &-duration{
         direction: ltr;
-        font-size: 16px;
+        font-size: $font-size-lg;
         line-height: 24px;
     }
 }

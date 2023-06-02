@@ -1,5 +1,6 @@
+@import '../../../../src/style/index.scss';
 .icon-container{
-    margin: 8px;
+    margin: $margin-xs;
     cursor: pointer;
     line-height: 100%;
 }

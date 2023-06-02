@@ -9,17 +9,17 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         list-style: none;
         height: 36px;
         border-radius: 8px;
-        padding: 0 8px;
+        padding: 0 $padding-xs;
         line-height: 36px;
         cursor: pointer;
     }
     li:hover{
         /* color_neutral/95 */
-        background-color: #F1F2F3;
+        background-color: $gray-95;
     }
 }
 .icon-container{
-    margin: 8px;
+    margin: $margin-xs;
     cursor: pointer;
     line-height: 100%;
 }

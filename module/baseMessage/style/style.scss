@@ -129,7 +129,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         display: inline-block;
         height: 16px;
         font-weight: 500;
-        font-size: 12px;
+        font-size: $font-size-sm;
         line-height: 16px;
         color: #5270AD;
     }
@@ -139,7 +139,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         height: 16px;
         margin: 0 $margin-xss;
         font-weight: 400;
-        font-size: 12px;
+        font-size: $font-size-sm;
         line-height: 16px;
         color: $gray-7;
     }
