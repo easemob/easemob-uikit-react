@@ -8,6 +8,7 @@ import { getConversationTime } from '../utils';
 import Avatar from '../../src/avatar';
 export interface BaseMessageProps {
   bubbleType?: 'primary' | 'secondly' | 'none'; // 气泡类型
+  bubbleStyle?: React.CSSProperties;
   status?: MessageStatusProps['status'];
   avatar?: ReactNode;
   direction?: 'ltr' | 'rtl'; // 左侧布局/右侧布局
@@ -24,13 +25,14 @@ export interface BaseMessageProps {
 
 const BaseMessage = (props: BaseMessageProps) => {
   const {
-    avatar = true,
+    avatar,
     direction = 'ltr',
     status = 'default',
     prefix: customizePrefixCls,
     className,
     bubbleType = 'primary',
     style,
+    bubbleStyle,
     time,
     nickName,
     shape = 'ground',
@@ -42,6 +44,8 @@ const BaseMessage = (props: BaseMessageProps) => {
   let avatarToShow: ReactNode = avatar;
 
   if (avatar) {
+    avatarToShow = avatar;
+  } else {
     avatarToShow = <Avatar>{nickName}</Avatar>;
   }
 
@@ -61,7 +65,9 @@ const BaseMessage = (props: BaseMessageProps) => {
   const hasBubble = bubbleType !== 'none';
 
   const contentNode = hasBubble ? (
-    <div className={`${prefixCls}-content`}>{props.children}</div>
+    <div className={`${prefixCls}-content`} style={bubbleStyle}>
+      {props.children}
+    </div>
   ) : (
     cloneElement(props.children, oriProps => ({
       style: {
