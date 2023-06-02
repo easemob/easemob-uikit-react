@@ -140,6 +140,7 @@ class MessageStore {
     if (!this.message[message.chatType][conversationId]) {
       // @ts-ignore
       this.message[message.chatType][conversationId] = [message];
+    } else {
       // @ts-ignore
       this.message[message.chatType][conversationId].push(message);
     }
