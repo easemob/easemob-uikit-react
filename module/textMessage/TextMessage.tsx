@@ -165,7 +165,7 @@ export const TextMessage = (props: TextMessageProps) => {
     }
   }, [detectedUrl]);
   let urlTxtClass = '';
-  if (urlData?.images.length > 0) {
+  if (urlData?.images?.length > 0) {
     urlTxtClass = 'message-text-hasImage';
   }
   return (
@@ -179,7 +179,9 @@ export const TextMessage = (props: TextMessageProps) => {
       {...others}
     >
       <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
-      {!!detectedUrl && <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>}
+      {!!(urlData?.title || urlData?.description) && (
+        <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
+      )}
     </BaseMessage>
   );
 };
