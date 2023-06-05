@@ -6,11 +6,11 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     // background: $gray-98;
     display: flex;
     align-items: center;
-    padding: 12px;
+    padding: $padding-s;
     box-sizing: border-box;
     position: relative;
     border-radius: 16px;
-    margin: 4px 8px;
+    margin: $margin-xss $margin-xs;
     &-selected{
         background-color: #E6F5FF !important;
         .#{$conversation-prefix-cls}-nickname{
@@ -40,8 +40,8 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         align-items: end;
     }
     &-nickname{
-        margin: 0 12px;
-        font-size: 16px;
+        margin: 0 $margin-sm;
+        font-size: $font-size-lg;
         line-height: 24px;
         /* identical to box height, or 150% */
         color: $title-color;;
@@ -51,8 +51,8 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         white-space: nowrap;
     }
     &-message{
-        margin-left: 12px;
-        font-size: 14px;
+        margin-left: $margin-sm;
+        font-size: $font-size-base;
         font-weight: 400;
         color: $font-color;
         white-space: nowrap;
@@ -60,7 +60,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
 
     &-time{
         font-weight: 400;
-        font-size: 12px;
+        font-size: $font-size-sm;
         line-height: 16px;
         color: $gray-5;
         margin-bottom: 9px;

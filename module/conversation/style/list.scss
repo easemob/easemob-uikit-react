@@ -7,6 +7,6 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationList;
     height: 100%;
     position: relative;
     &-search{
-        margin: 8px 12px;
+        margin: $margin-xs $margin-sm;
     }
 }

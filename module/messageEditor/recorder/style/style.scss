@@ -5,6 +5,7 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
     padding: 0 5px;
     display: flex;
     align-items: center;
+    height: 36px;
     // border: 1px solid #FF002B;
     &-content{
         display: flex;
@@ -85,6 +86,7 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
     }
 }
 .icon-container{
+    height: 20px;
     margin: $margin-xs;
     cursor: pointer;
 }
