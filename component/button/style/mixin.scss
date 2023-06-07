@@ -1,0 +1,226 @@
+
+
+@mixin btn {
+    @include button-size($btn-height-base, $btn-padding-horizontal-base, $font-size-base, $btn-border-radius-base );
+    position: relative;
+    display: inline-block;
+    font-weight: $btn-font-weight;
+    white-space: nowrap;
+    text-align: center;
+    background-image: none;
+    border: $btn-border-width $btn-border-style transparent;
+    box-shadow: $btn-shadow;
+    cursor: pointer;
+    transition: all 0.3s $ease-in-out;
+    user-select: none;
+    touch-action: manipulation;
+
+    &,
+    &:active,
+    &:focus {
+        outline: 0;
+    }
+
+    ;
+
+    &:not([disabled]):hover {
+        text-decoration: none;
+    }
+
+    ;
+
+    &:not([disabled]):active {
+        outline: 0;
+        box-shadow: none;
+    }
+
+    ;
+
+    &[disabled] {
+        cursor: not-allowed;
+
+        >* {
+            pointer-events: none;
+        }
+    }
+
+    ;
+
+    &-lg {
+        @include button-size($btn-height-lg, $btn-padding-horizontal-lg, $btn-font-size-lg, $btn-border-radius-base );
+    }
+
+    ;
+
+    &-sm {
+        @include button-size($btn-height-sm, $btn-padding-horizontal-sm, $btn-font-size-sm, $btn-border-radius-sm );
+    }
+}
+
+@mixin button-size($height, $padding-horizontal, $font-size, $border-radius) {
+    $padding-vertical: max(
+        calc(round(calc(calc($height - $font-size * $line-height-base) / 2) * 10) / 10) - $border-width-base,
+        0
+    );
+    height: $height;
+    padding: $padding-vertical $padding-horizontal;
+    font-size: $font-size;
+    border-radius: $border-radius;
+}
+
+@mixin button-variant-primary($color, $background, $backgroundHover: yellow, $backgroundActive: yellow) {
+    @include button-color($color, $background, $background);
+    text-shadow: $btn-text-shadow;
+    box-shadow: $btn-primary-shadow;
+
+    &:hover,
+    &:focus {
+        @if $theme ==dark {
+            @include button-color($color, $blue-7, $blue-7)
+        }
+        @else if $theme == light {
+            @include button-color($color, $blue-7, $blue-7)
+        }
+    }
+
+    &:active {
+        @if $theme ==dark {
+            @include button-color($color, $blue-5, $blue-5)
+        }
+        @else if $theme == light {
+            @include button-color($color, $blue-5, $blue-5)
+        }
+    }
+
+    @include button-disabled()
+}
+
+
+// default button style
+@mixin btn-default {
+    @include button-variant-other($btn-default-color, $btn-default-bg, $btn-default-border);
+    &:hover,
+    &:focus,
+    &:active {
+        text-decoration: none;
+        background: $btn-default-bg;
+    }
+}
+
+// primary button style
+@mixin btn-primary {
+    @include button-variant-primary($btn-primary-color, $btn-primary-bg, $primary-color-hover, $primary-color-active);
+}
+
+// ghost button style
+@mixin btn-ghost {
+    @include button-variant-other($btn-ghost-color, $btn-ghost-bg, $btn-ghost-border);
+}
+@mixin btn-text {
+    @include button-variant-other($btn-ghost-bg, unset, $btn-ghost-bg);
+    text-align: center;
+    padding: 6px;
+    &:hover,
+    &:focus{
+        background: $gray-95;
+        border: 1px solid transparent;
+    };
+    &:active {
+        text-decoration: none;
+        background: $gray-9;
+        border: 1px solid transparent;
+    }
+}
+
+
+@mixin button-color($color, $background, $border) {
+    color: $color;
+    border-color: $border;
+    @if not($background == null) {
+        background: $background;
+    }
+}
+
+@mixin button-disabled($color: $btn-disable-color, $background: $btn-disable-bg, $border: $btn-disable-border) {
+    &[disabled] {
+        @if $theme == light {
+            &,
+            &:hover,
+            &:focus,
+            &:active {
+                @include button-color($color, $background, $border);
+                text-shadow: none;
+                box-shadow: none;
+            }
+        }
+        @else if $theme == dark {
+            &,
+            &:hover,
+            &:focus,
+            &:active {
+                @include button-color($gray-4, $gray-2, $gray-2);
+                text-shadow: none;
+                box-shadow: none;
+            }
+        }
+    }
+}
+
+@mixin button-variant-other($color, $background, $border) {
+    @include button-color($color, $background, $border);
+
+    &:hover,
+    &:focus {
+        @if $theme == dark{
+            @include button-color($blue-7, $background, $blue-7);
+        }
+        @else if $theme == light {
+            @include button-color($blue-7, $background, $blue-7)
+        }
+    }
+
+    &:active {
+        @if $theme == dark{
+            @include button-color($blue-5, $background, $blue-5);
+        }
+        @else if $theme == light {
+            @include button-color($blue-5, $background, $blue-5)
+        }
+    }
+  @include button-disabled();
+}
+
+@mixin btn-round($btnClassName: btn) {
+    @include button-size($btn-circle-size, calc($btn-circle-size / 2), $font-size-base, $btn-circle-size);
+
+    &.#{$btnClassName}-large {
+        @include button-size(
+          $btn-circle-size-lg, calc($btn-circle-size-lg / 2), $btn-font-size-lg, $btn-circle-size-lg
+        );
+    }
+    &.#{$btnClassName}-small {
+        @include button-size(
+          $btn-circle-size-sm, calc($btn-circle-size-sm / 2), $font-size-base, $btn-circle-size-sm
+        );
+    }
+}
+
+@mixin btn-circle($btnClassName: btn) {
+    min-width: $btn-height-base;
+    padding-right: 0;
+    padding-left: 0;
+    text-align: center;
+    border-radius: 50%;
+    &.#{$btnClassName}-large {
+        min-width: $btn-height-lg;
+        height: $btn-height-lg;
+        border-radius: 50%;
+    }
+    &.#{$btnClassName}-small {
+        min-width: $btn-height-sm;
+        height: $btn-height-sm;
+        border-radius: 50%;
+    }
+}
+
+@import '~/common/style/index.scss';

@@ -1,0 +1,50 @@
+
+$textarea-prefix-cls: #{$cui-prefix}-textarea;
+
+$lineHeight: 24px;
+
+.#{$textarea-prefix-cls}{
+    flex: 1;
+    display: flex;
+    position: relative;
+    &-input{
+        flex: 1;
+        font-size: $font-size-lg;
+        text-align: left;
+        line-height: $lineHeight;
+        color: $font-color;
+        max-height: $lineHeight * 4;
+        overflow: auto;
+        padding: $padding-xss + 2px $padding-sm;
+        background-color: $gray-95;
+        border-radius: 18px;
+        outline: 0 none;
+        min-height: 24px;
+        word-break: break-all;
+    };
+
+    &-sendBtn{
+        position: absolute;
+        right: 12px;
+        bottom: 7px;
+        cursor: pointer;
+        line-height: 100%;
+    }
+   
+    &-empty{
+        #{$textarea-prefix-cls}-input::before{
+            content: attr(data-before);
+            color: #919BA1;
+            position: absolute;
+        }
+    };
+
+    &-hasBtn{
+        .#{$textarea-prefix-cls}-input{
+            padding-right: $padding-sm * 2;
+        }
+    }
+    
+}
+
+

@@ -1,8 +1,0 @@
-@import '../../style/index.scss';
-
-$scrollList-prefix-cls: #{$cui-prefix}-scrollList;
-
-.#{$scrollList-prefix-cls} {
-    height: 100%;
-    overflow-y: auto;
-}

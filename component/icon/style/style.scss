@@ -1,0 +1,15 @@
+@import '~/common/style/index.scss';
+
+.#{$cui-prefix}-icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.#{$cui-prefix}-primary-icon {
+  fill: $blue-6;
+}

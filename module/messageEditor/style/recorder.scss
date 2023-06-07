@@ -1,0 +1,91 @@
+$recorder-prefix-cls: #{$cui-prefix}-recorder;
+
+.#{$recorder-prefix-cls} {
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    height: 36px;
+    // border: 1px solid #FF002B;
+    &-content{
+        display: flex;
+        flex: 1;
+        background-color: $component-background;
+        justify-content: space-between;
+        &-left{
+            display: flex;
+            align-items: center;
+            .#{$recorder-prefix-cls}-iconBox{
+                width: 36px;
+                height: 36px;
+                background-color: transparent;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: $red-5;
+                border-radius: 4px;
+            }
+
+            .#{$recorder-prefix-cls}-time{
+                margin-left: $margin-lg - 2px;
+                margin-right: $margin-xss;
+                span{
+                    position: relative;
+                    position: relative;
+                    color: $font-color;
+                    font-size: $font-size-lg;
+                }
+                span::before{
+                    top: -2px;
+                    position: relative;
+                    display: inline-block;
+                    margin-right: $margin-xs;
+                    content: ' ';
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 4px;
+                    background-color: $red-5;
+                    animation: fadeInOut 1s infinite 0.2s;
+                }
+            }
+        }
+
+        &-right{
+            flex: 1;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            span{
+                font-size: $font-size-lg;
+                line-height: 24px;
+                text-align: right;
+                color: $gray-6;
+                margin-right: $margin-md;
+            }
+            &>div{
+                width: 36px;
+                height: 36px;
+                border-radius: 18px;
+                // background-color: $blue-5;
+                justify-content: center;
+                align-items: center;
+                display: flex;
+            }
+        }
+    }
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+.icon-container{
+    height: 20px;
+    margin: $margin-xs;
+    cursor: pointer;
+}
