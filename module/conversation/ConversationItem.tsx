@@ -7,9 +7,10 @@ import Avatar from '../../component/avatar';
 import Badge from '../../component/badge';
 import { getConversationTime } from '../utils/index';
 import type { ConversationData } from './ConversationList';
-import { Tooltip } from '../../component/tooltip/Tooltip';
+import { RenderFunction, Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
+import { JSX } from 'react/jsx-runtime';
 export interface ConversationItemProps {
   className?: string;
   prefix?: string;
@@ -22,6 +23,15 @@ export interface ConversationItemProps {
   badgeColor?: string; // 未读数气泡颜色
   isActive?: boolean; // 是否被选中
   data: ConversationData[0];
+  // 右侧更多按钮配置
+  moreAction?: {
+    visible?: boolean;
+    icon?: ReactNode;
+    actions: Array<{
+      content: ReactNode;
+      onClick?: () => void;
+    }>;
+  };
 }
 
 const ConversationItem: FC<ConversationItemProps> = props => {
@@ -36,6 +46,14 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     isActive = false,
     data,
     badgeColor,
+    moreAction = {
+      visible: true,
+      actions: [
+        {
+          content: 'DELETE',
+        },
+      ],
+    },
     ...others
   } = props;
   const { t } = useTranslation();
@@ -60,7 +78,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
   };
 
   const handleMouseOver = () => {
-    setShowMore(true);
+    moreAction.visible && setShowMore(true);
   };
   const handleMouseLeave = () => {
     setShowMore(false);
@@ -85,17 +103,33 @@ const ConversationItem: FC<ConversationItemProps> = props => {
       });
   };
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
-  const menu = (
-    <ul className={morePrefixCls}>
-      {[t('module.deleteCvs')].map((item, index) => {
-        return (
-          <li key={index} onClick={deleteCvs}>
-            {item}
-          </li>
-        );
-      })}
-    </ul>
-  );
+
+  let menuNode: ReactNode | undefined;
+  if (moreAction?.visible) {
+    menuNode = (
+      <ul className={morePrefixCls}>
+        {moreAction.actions.map((item, index) => {
+          if (item.content === 'DELETE') {
+            return (
+              <li key={index} onClick={deleteCvs}>
+                {t('module.deleteCvs')}
+              </li>
+            );
+          }
+          return (
+            <li
+              key={index}
+              onClick={() => {
+                item.onClick?.();
+              }}
+            >
+              {item.content}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
 
   let lastMsg = '';
   switch (data.lastMessage?.type) {
@@ -152,8 +186,8 @@ const ConversationItem: FC<ConversationItemProps> = props => {
       <div className={`${prefixCls}-info`}>
         <span className={`${prefixCls}-time`}>{getConversationTime(data.lastMessage.time)}</span>
         {showMore ? (
-          <Tooltip title={menu} trigger="click" placement="bottom" arrow>
-            {<Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>}
+          <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
+            {moreAction.icon || <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>}
           </Tooltip>
         ) : (
           <div
