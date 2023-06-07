@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import TextMessage from '../../../module/textMessage';
 
-import List from '../../../src/list';
+import List from '../../../component/list';
 import Header from '../../../module/header';
 import { ContactItem, ContactList } from '../../../module/contactList';
-import { Search } from '../../../src/input/Search';
+import { Search } from '../../../component/input/Search';
 import Chat from '../../../module/chat';
-import Icon from '../../../src/icon';
+import Icon from '../../../component/icon';
 import AC from 'agora-chat';
 import { RootProvider } from '../../../module/store/rootContext';
 import rootStore from '../../../module/store/index';
@@ -15,9 +15,10 @@ import { ConversationList } from '../../../module/conversation';
 import Provider from '../../../module/store/Provider';
 import { useClient } from '../../../module/hooks/useClient';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
-import Button from '../../../src/button';
-import Avatar from '../../../src/avatar';
+import Button from '../../../component/button';
+import Avatar from '../../../component/avatar';
 import { MessageList } from '../../../module/chat/MessageList';
+import './index.css';
 // import {
 // 	Chat,
 // 	rootStore,
@@ -91,7 +92,7 @@ const ChatApp = () => {
           background: '#fff',
         }}
       >
-        <ConversationList></ConversationList>
+        <ConversationList className="conversation"></ConversationList>
         {/* <ContactList></ContactList> */}
       </div>
       <div style={{ width: '65%', borderLeft: '1px solid transparent' }}>

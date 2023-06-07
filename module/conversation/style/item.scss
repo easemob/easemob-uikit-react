@@ -1,4 +1,4 @@
-@import '../../../src/style/index.scss';
+@import '~/common/style/index.scss';
 $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
 
 .#{$conversation-prefix-cls}{

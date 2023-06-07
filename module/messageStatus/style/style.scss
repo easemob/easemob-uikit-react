@@ -1,5 +1,4 @@
-@import '../../../src/style/index.scss';
-
+@import '~/common/style/index.scss';
 $status-prefix-cls: #{$cui-prefix}-message-status;
 
 .#{$status-prefix-cls} {

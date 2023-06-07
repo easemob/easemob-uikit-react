@@ -1,4 +1,4 @@
-@import '../../../src/style/index.scss';
+@import '~/common/style/index.scss';
 $file-prefix-cls: #{$cui-prefix}-message-file;
 .#{$file-prefix-cls}{
     height: 44px;

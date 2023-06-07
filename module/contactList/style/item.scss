@@ -1,4 +1,4 @@
-@import '../../../src/style/index.scss';
+@import '~/common/style/index.scss';
 $contact-prefix-cls: #{$cui-prefix}-contactItem;
 
 .#{$contact-prefix-cls}{

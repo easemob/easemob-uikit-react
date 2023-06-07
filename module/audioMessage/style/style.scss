@@ -1,4 +1,4 @@
-@import '../../../src/style/index.scss';
+@import '~/common/style/index.scss';
 $audio-prefix-cls: #{$cui-prefix}-message-audio;
 
 .#{$audio-prefix-cls}{
