@@ -1,13 +1,13 @@
 import React, { FC, useState, ReactNode, useContext, MouseEventHandler } from 'react';
 import classNames from 'classnames';
-import { ConfigContext } from '../../src/config/index';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import Icon from '../../src/icon';
-import Avatar from '../../src/avatar';
-import Badge from '../../src/badge';
+import Icon from '../../component/icon';
+import Avatar from '../../component/avatar';
+import Badge from '../../component/badge';
 import { getConversationTime } from '../utils/index';
 import type { ConversationData } from './ConversationList';
-import { Tooltip } from '../../src/tooltip/Tooltip';
+import { Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 export interface ConversationItemProps {

@@ -1,44 +1,44 @@
 import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
-
+//@ts-ignore
 class AddressStore {
-	rootStore;
-	contacts;
-	groups;
-	chatroom;
-	searchList;
-	constructor(rootStore) {
-		this.rootStore = rootStore;
+  rootStore;
+  contacts: any;
+  groups: any;
+  chatroom: any;
+  searchList: any;
+  constructor(rootStore: any) {
+    this.rootStore = rootStore;
 
-		this.contacts = [];
-		this.groups = [];
-		this.chatroom = [];
-		this.searchList = [];
-		makeObservable(this, {
-			contacts: observable,
-			groups: observable,
-			chatroom: observable,
-			searchList: observable,
-			setContacts: action,
-			setGroups: action,
-			setChatroom: action,
-		});
-	}
+    this.contacts = [];
+    this.groups = [];
+    this.chatroom = [];
+    this.searchList = [];
+    makeObservable(this, {
+      contacts: observable,
+      groups: observable,
+      chatroom: observable,
+      searchList: observable,
+      setContacts: action,
+      setGroups: action,
+      setChatroom: action,
+    });
+  }
 
-	setContacts(contacts) {
-		this.contacts = contacts;
-	}
+  setContacts(contacts: any) {
+    this.contacts = contacts;
+  }
 
-	setGroups(groups) {
-		this.groups = groups;
-	}
+  setGroups(groups: any) {
+    this.groups = groups;
+  }
 
-	setChatroom(chatroom) {
-		this.chatroom = chatroom;
-	}
+  setChatroom(chatroom: any) {
+    this.chatroom = chatroom;
+  }
 
-	setSearchList(searchList) {
-		this.searchList = searchList;
-	}
+  setSearchList(searchList: any) {
+    this.searchList = searchList;
+  }
 }
 
 export default AddressStore;

@@ -1,11 +1,11 @@
 import React, { FC, ReactNode } from 'react';
 import classNames from 'classnames';
-import { ConfigContext } from '../../src/config/index';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import Icon from '../../src/icon';
-import Avatar from '../../src/avatar';
-import Button from '../../src/button';
-import { Tooltip } from '../../src/tooltip/Tooltip';
+import Icon from '../../component/icon';
+import Avatar from '../../component/avatar';
+import Button from '../../component/button';
+import { Tooltip } from '../../component/tooltip/Tooltip';
 export interface HeaderProps {
   className?: string;
   prefix?: string;

@@ -2,16 +2,16 @@ import React, { FC, useEffect, useRef, useState, useContext, ReactNode } from 'r
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { useSize } from 'ahooks';
-import { ConfigContext } from '../../src/config/index';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import Icon from '../../src/icon';
-import Avatar from '../../src/avatar';
-import Badge from '../../src/badge';
-import Button from '../../src/button';
-import { Search } from '../../src/input/Search';
+import Icon from '../../component/icon';
+import Avatar from '../../component/avatar';
+import Badge from '../../component/badge';
+import Button from '../../component/button';
+import { Search } from '../../component/input/Search';
 import Header, { HeaderProps } from '../header';
 import MessageEditor, { MessageEditorProps } from '../messageEditor';
-import List from '../../src/list';
+import List from '../../component/list';
 import { MessageList, MsgListProps } from './MessageList';
 
 import { RootContext } from '../store/rootContext';

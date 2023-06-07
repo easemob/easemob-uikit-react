@@ -3,9 +3,9 @@ import classNames from 'classnames';
 import AC, { AgoraChat } from 'agora-chat';
 import { useKeyPress } from 'ahooks';
 import './style/style.scss';
-import Button from '../../../src/button';
-import Icon from '../../../src/icon';
-import { ConfigContext } from '../../../src/config/index';
+import Button from '../../../component/button';
+import Icon from '../../../component/icon';
+import { ConfigContext } from '../../../component/config/index';
 import HZRecorder from './recorderFun';
 import { RootContext } from '../../store/rootContext';
 export interface RecorderProps {

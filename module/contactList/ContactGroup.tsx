@@ -1,10 +1,10 @@
 import React, { FC, useState, ReactNode, useEffect } from 'react';
 import classNames from 'classnames';
-import { ConfigContext } from '../../src/config/index';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import Icon from '../../src/icon';
-import Avatar from '../../src/avatar';
-import Badge from '../../src/badge';
+import Icon from '../../component/icon';
+import Avatar from '../../component/avatar';
+import Badge from '../../component/badge';
 import { string } from 'prop-types';
 import { Sticky } from 'react-sticky';
 export interface ContactGroupProps {

@@ -2,12 +2,12 @@ import React, { FC, useEffect, useRef, useState, useContext } from 'react';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 import { ContactItem } from './ContactItem';
-import List from '../../src/list';
-import { ConfigContext } from '../../src/config/index';
+import List from '../../component/list';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import { useParentName } from '../hooks/dom';
 import { useSize } from 'ahooks';
-import { Search } from '../../src/input/Search';
+import { Search } from '../../component/input/Search';
 import Header from '../header';
 import { ContactGroup } from './ContactGroup';
 import { RootContext } from '../store/rootContext';
@@ -202,19 +202,23 @@ let ContactList: FC<ContactListProps> = props => {
     const returnValue = onSearch?.(e);
     if (returnValue === false) return;
 
-    const contactSearchList = addressStore.contacts.filter(user => {
-      if (user.userId.includes(value) || user.nickname.includes(value)) {
-        return true;
-      }
-      return false;
-    });
+    const contactSearchList = addressStore.contacts.filter(
+      (user: { userId: string | string[]; nickname: string | string[] }) => {
+        if (user.userId.includes(value) || user.nickname.includes(value)) {
+          return true;
+        }
+        return false;
+      },
+    );
 
-    const groupSearchList = addressStore.groups.filter(group => {
-      if (group.groupid.includes(value) || group.groupname.includes(value)) {
-        return true;
-      }
-      return false;
-    });
+    const groupSearchList = addressStore.groups.filter(
+      (group: { groupid: string | string[]; groupname: string | string[] }) => {
+        if (group.groupid.includes(value) || group.groupname.includes(value)) {
+          return true;
+        }
+        return false;
+      },
+    );
 
     setIsSearch(value.length > 0 ? true : false);
 
@@ -225,24 +229,26 @@ let ContactList: FC<ContactListProps> = props => {
 
   // 渲染搜索列表
   useEffect(() => {
-    const searchList = addressStore.searchList.map(item => {
-      // console.log('contactItem', contactItem);
-      const id = item.userId || item.groupid;
-      const name = item.nickname || item.groupname;
-      return (
-        <ContactItem
-          contactId={id}
-          onClick={e => {
-            console.log('setItemActiveKey', id);
-            setItemActiveKey(id);
-          }}
-          key={id + Math.random().toString()}
-          isActive={id == itemActiveKey}
-        >
-          {name || id}
-        </ContactItem>
-      );
-    });
+    const searchList = addressStore.searchList.map(
+      (item: { userId: any; groupid: any; nickname: any; groupname: any }) => {
+        // console.log('contactItem', contactItem);
+        const id = item.userId || item.groupid;
+        const name = item.nickname || item.groupname;
+        return (
+          <ContactItem
+            contactId={id}
+            onClick={e => {
+              console.log('setItemActiveKey', id);
+              setItemActiveKey(id);
+            }}
+            key={id + Math.random().toString()}
+            isActive={id == itemActiveKey}
+          >
+            {name || id}
+          </ContactItem>
+        );
+      },
+    );
 
     setSearchNode(searchList);
   }, [addressStore.searchList]);

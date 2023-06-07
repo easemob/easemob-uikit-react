@@ -1,8 +1,8 @@
 import React, { ReactNode, useState } from 'react';
-import { Tooltip } from '../../../src/tooltip/Tooltip';
-import Button from '../../../src/button';
+import { Tooltip } from '../../../component/tooltip/Tooltip';
+import Button from '../../../component/button';
 import { emoji } from './emojiConfig';
-import Icon from '../../../src/icon';
+import Icon from '../../../component/icon';
 import './style/style.scss';
 const emojiWidth = 25;
 const emojiPadding = 5;

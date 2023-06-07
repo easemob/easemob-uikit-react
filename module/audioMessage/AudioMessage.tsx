@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps } from '../baseMessage';
-import { ConfigContext } from '../../src/config/index';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import type { AudioMessageType } from '../types/messageType';
-import Avatar from '../../src/avatar';
+import Avatar from '../../component/avatar';
 import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {

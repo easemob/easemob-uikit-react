@@ -1,12 +1,12 @@
 import React, { useRef, useState, memo, useEffect } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps } from '../baseMessage';
-import { ConfigContext } from '../../src/config/index';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import type { ImageMessageType } from '../types/messageType';
-import Avatar from '../../src/avatar';
-import Mask from '../../src/modal/Mast';
-import Modal from '../../src/modal';
+import Avatar from '../../component/avatar';
+import Mask from '../../component/modal/Mast';
+import Modal from '../../component/modal';
 import rootStore from '../store/index';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息

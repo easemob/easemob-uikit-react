@@ -1,4 +1,4 @@
-@import '../../../src/style/index.scss';
+@import '~/common/style/index.scss';
 $chat-prefix-cls: #{$cui-prefix}-messageList;
 
 .#{$chat-prefix-cls}{

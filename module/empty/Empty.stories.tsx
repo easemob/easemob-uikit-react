@@ -2,7 +2,7 @@ import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import Empty from './index';
-import Icon, { IconProps } from '../../src/icon';
+import Icon, { IconProps } from '../../component/icon';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
   title: 'Module/Empty',

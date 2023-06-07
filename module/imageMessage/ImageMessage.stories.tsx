@@ -2,7 +2,7 @@ import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import ImageMessage, { ImagePreview } from './index';
-import Icon, { IconProps } from '../../src/icon';
+import Icon, { IconProps } from '../../component/icon';
 import { FileObj } from '../types/messageType';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {

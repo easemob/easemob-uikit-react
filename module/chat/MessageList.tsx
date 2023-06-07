@@ -11,10 +11,10 @@ import React, {
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { useSize } from 'ahooks';
-import { ConfigContext } from '../../src/config/index';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import List from '../../src/list';
-import ScrollList from '../../src/scrollList';
+import List from '../../component/list';
+import ScrollList from '../../component/scrollList';
 
 import TextMessage from '../textMessage';
 import AudioMessage from '../audioMessage';
@@ -23,7 +23,7 @@ import ImageMessage, { ImagePreview } from '../imageMessage';
 import VideoMessage from '../videoMessage';
 import { RootContext } from '../store/rootContext';
 import AC, { AgoraChat } from 'agora-chat';
-import { cloneElement } from '../../src/_utils/reactNode';
+import { cloneElement } from '../../component/_utils/reactNode';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 
 export interface MsgListProps {

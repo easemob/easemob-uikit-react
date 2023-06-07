@@ -1,8 +1,8 @@
 import React, { memo, ReactNode, useEffect } from 'react';
 import classNames from 'classnames';
-import Avatar from '../../src/avatar';
-import MessageStatus, { MessageStatusProps } from '../messageStatus/MessageStatus';
-import { ConfigContext } from '../../src/config/index';
+import Avatar from '../../component/avatar';
+import MessageStatus, { MessageStatusProps } from '../messageStatus';
+import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 
 export interface UrlMessageProps {

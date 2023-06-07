@@ -1,10 +1,10 @@
 import React, { useState, ReactNode, useRef, useContext, MouseEventHandler } from 'react';
 import classNames from 'classnames';
 import './style/style.scss';
-import { ConfigContext } from '../../../src/config/index';
-import Dropdown from '../../../src/dropdown';
-import { Tooltip } from '../../../src/tooltip/Tooltip';
-import Icon from '../../../src/icon';
+import { ConfigContext } from '../../../component/config/index';
+import Dropdown from '../../../component/dropdown';
+import { Tooltip } from '../../../component/tooltip/Tooltip';
+import Icon from '../../../component/icon';
 import AC, { AgoraChat } from 'agora-chat';
 import { RootContext } from '../../store/rootContext';
 import { observer } from 'mobx-react-lite';

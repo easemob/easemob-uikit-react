@@ -1,11 +1,11 @@
 import React, { ReactNode } from 'react';
 import classNames from 'classnames';
-import { ConfigContext } from '../../src/config/index';
-import MessageStatus, { MessageStatusProps } from '../messageStatus/MessageStatus';
+import { ConfigContext } from '../../component/config/index';
+import MessageStatus, { MessageStatusProps } from '../messageStatus';
 import './style/style.scss';
-import { cloneElement } from '../../src/_utils/reactNode';
+import { cloneElement } from '../../component/_utils/reactNode';
 import { getConversationTime } from '../utils';
-import Avatar from '../../src/avatar';
+import Avatar from '../../component/avatar';
 export interface BaseMessageProps {
   bubbleType?: 'primary' | 'secondly' | 'none'; // 气泡类型
   bubbleStyle?: React.CSSProperties;

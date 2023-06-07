@@ -1,7 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
-import { ConfigContext } from '../../src/config/index';
-import Icon, { IconProps } from '../../src/icon';
+import { ConfigContext } from '../../component/config/index';
+import Icon, { IconProps } from '../../component/icon';
 import './style/audioPlayer.scss';
 
 export interface AudioPlayerProps {}

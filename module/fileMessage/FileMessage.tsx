@@ -1,11 +1,11 @@
 import React from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps } from '../baseMessage';
-import { ConfigContext } from '../../src/config/index';
-import Icon, { IconProps } from '../../src/icon';
+import { ConfigContext } from '../../component/config/index';
+import Icon, { IconProps } from '../../component/icon';
 import './style/style.scss';
 import type { FileMessageType } from '../types/messageType';
-import Avatar from '../../src/avatar';
+import Avatar from '../../component/avatar';
 import download from '../utils/download';
 import rootStore from '../store/index';
 export interface FileMessageProps extends BaseMessageProps {
