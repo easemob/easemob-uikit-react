@@ -77,7 +77,7 @@ let Conversations: FC<ConversationListProps> = props => {
 
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
     setActiveKey(index);
-
+    console.log('handleItemClick', index);
     cvsStore.setCurrentCvs({
       chatType: cvs.chatType,
       conversationId: cvs.conversationId,
@@ -98,6 +98,8 @@ let Conversations: FC<ConversationListProps> = props => {
   }, [cvsStore.currentCvs]);
 
   const content = renderData.map((cvs, index) => {
+    console.log('activeKey', activeKey);
+    // TODO: 复制renderItem的内容， 把isActive onClick的实现加进去，否则用户需要自己实现这些
     return renderItem ? (
       renderItem(cvs, index)
     ) : (
@@ -132,11 +134,11 @@ let Conversations: FC<ConversationListProps> = props => {
         if (item.chatType == 'groupChat') {
           groupData.forEach(group => {
             if (item.conversationId == group.groupid) {
-              renderItem.name = group.groupname;
+              renderItem.name = renderItem.name || group.groupname;
             }
           });
         } else if (item.chatType == 'singleChat') {
-          renderItem.name = userInfo?.[item.conversationId as string]?.nickname;
+          renderItem.name = renderItem.name || userInfo?.[item.conversationId as string]?.nickname;
         }
         return renderItem;
       });

@@ -11,6 +11,7 @@ import Provider from '../../module/store/Provider';
 import { useClient } from '../../module/hooks/useClient';
 import Button from '../../component/button';
 import Avatar from '../../component/avatar';
+import Icon from '../../component/icon';
 import { MessageList } from '../../module/chat/MessageList';
 import './index.css';
 // import {
@@ -40,8 +41,17 @@ const ChatApp = () => {
   const topConversation = () => {
     rootStore.conversationStore.topConversation({
       chatType: 'singleChat',
-      conversationId: '9a0dac930f',
+      conversationId: '9a0dac930f', // Enter a conversation ID from your conversation list.
       lastMessage: {},
+    });
+  };
+
+  const createConversation = () => {
+    rootStore.conversationStore.addConversation({
+      chatType: 'singleChat',
+      conversationId: 'conversationId',
+      lastMessage: {},
+      unreadCount: 3,
     });
   };
 
@@ -62,6 +72,7 @@ const ChatApp = () => {
             <Header
               avatar={<Avatar>D</Avatar>}
               content="custom header"
+              icon={<Icon type="PLUS_CIRCLE" height={34} width={34} />}
               moreAction={{
                 visible: true,
                 actions: [
@@ -88,15 +99,26 @@ const ChatApp = () => {
                   </Avatar>
                 }
                 data={{ ...cvs, name: idToName[cvs.conversationId] || cvs.conversationId }}
+                moreAction={{
+                  visible: true,
+                  actions: [
+                    {
+                      // Uikit provides default deletion conversation event
+                      content: 'DELETE',
+                    },
+                    {
+                      content: 'Top Conversation',
+                      onClick: topConversation,
+                    },
+                  ],
+                }}
               />
             );
           }}
         ></ConversationList>
-      </div>
-
-      <div>
-        <Button onClick={topConversation}>top 2808</Button>
-        <br />
+        <div>
+          <Button onClick={createConversation}>create conversation</Button>
+        </div>
       </div>
     </>
   );
