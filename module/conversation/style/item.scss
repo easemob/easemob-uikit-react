@@ -2,19 +2,19 @@
 $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
 
 .#{$conversation-prefix-cls}{
-    height: 74px;
+    height: $cvs-item-height;
     // background: $gray-98;
     display: flex;
     align-items: center;
-    padding: $padding-s;
+    padding: $cvs-item-padding;
     box-sizing: border-box;
     position: relative;
-    border-radius: 16px;
-    margin: $margin-xss $margin-xs;
+    border-radius: $cvs-item-border-radius;
+    margin: $cvs-item-margin;
     &-selected{
-        background-color: #E6F5FF !important;
+        background-color: $cvs-item-selected-bg-color !important;
         .#{$conversation-prefix-cls}-nickname{
-            color: $blue-6;
+            color: $cvs-item-selected-name-color;
         }
     }
     &:hover{
@@ -36,33 +36,33 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     
     &-info{
         position: absolute;
-        right: 16px;
+        right: $cvs-item-info-right;
         align-items: end;
     }
     &-nickname{
-        margin: 0 $margin-sm;
-        font-size: $font-size-lg;
+        margin: $cvs-item-name-margin;
+        font-size: $cvs-item-name-font-size;
         line-height: 24px;
         /* identical to box height, or 150% */
-        color: $title-color;;
+        color: $cvs-item-name-color;
         flex: 1;
         overflow: hidden;
-        font-weight: 500;
+        font-weight: $cvs-item-name-font-weight;
         white-space: nowrap;
     }
     &-message{
-        margin-left: $margin-sm;
-        font-size: $font-size-base;
-        font-weight: 400;
+        margin-left: $cvs-item-message-margin-left;
+        font-size: $cvs-item-message-font-size;
+        font-weight: $cvs-item-message-font-weight;
         color: $font-color;
         white-space: nowrap;
     }
 
     &-time{
-        font-weight: 400;
-        font-size: $font-size-sm;
+        font-weight: $cvs-item-time-font-weight;
+        font-size: $cvs-item-time-font-size;
         line-height: 16px;
         color: $gray-5;
-        margin-bottom: 9px;
+        margin-bottom: $cvs-item-time-margin-bottom;
     }
 }
