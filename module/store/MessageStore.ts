@@ -70,7 +70,7 @@ class MessageStore {
       this.message[chatType][to].push(this.message.byId[message.id]);
     }
 
-    this.rootStore.client
+    return this.rootStore.client
       .send(message)
       .then((data: { serverMsgId: string }) => {
         console.log('send success', data);
