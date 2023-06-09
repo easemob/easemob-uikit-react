@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useRef } from 'react';
+import React, { ReactNode, useState, useRef, useEffect } from 'react';
 import classNames from 'classnames';
 import Emoji from './emoji';
 import Recorder from './recorder';
@@ -6,13 +6,15 @@ import Textarea from './textarea';
 import './style/style.scss';
 import { emoji } from './emoji/emojiConfig';
 import MoreAction from './moreAction';
+
+export type Actions = {
+  name: string;
+  visible: boolean;
+  icon?: ReactNode;
+}[];
+
 export interface MessageEditorProps {
-  actions?: {
-    name: string;
-    visible: boolean;
-    icon: ReactNode;
-    onClick: (name: string) => void;
-  }[];
+  actions?: Actions;
   onSend?: (message: any) => void; // 消息发送的回调
   className?: string; // wrap 的 class
   showSendButton?: boolean; // 是否展示发送按钮
@@ -46,9 +48,33 @@ function converToMessage(e: string) {
   return t.replace(/&nbsp;/g, ' ').trim();
 }
 
+const defaultActions: Actions = [
+  {
+    name: 'RECORDER',
+    visible: true,
+    icon: '',
+  },
+  {
+    name: 'TEXTAREA',
+    visible: true,
+    icon: '',
+  },
+  {
+    name: 'EMOJI',
+    visible: true,
+    icon: '',
+  },
+  {
+    name: 'MORE',
+    visible: true,
+    icon: '',
+  },
+];
+
 const MessageEditor = (props: MessageEditorProps) => {
   const [isShowTextarea, setTextareaShow] = useState(true);
-
+  const [isShowRecorder, setShowRecorder] = useState(false);
+  const [editorNode, setEditorNode] = useState<null | React.ReactFragment>(null);
   const textareaRef = useRef(null);
 
   const insertCustomHtml = (t: string, e: keyof typeof emoji.map) => {
@@ -117,22 +143,56 @@ const MessageEditor = (props: MessageEditorProps) => {
     // setInputHaveValue(false);
   };
 
+  const { actions = defaultActions } = props;
+
+  useEffect(() => {
+    let node = actions.map((item, index) => {
+      if (item.name === 'RECORDER' && item.visible) {
+        setShowRecorder(true);
+        return null;
+      }
+      if (item.name === 'TEXTAREA' && item.visible) {
+        return (
+          <Textarea
+            key={item.name}
+            ref={textareaRef}
+            hasSendButton
+            placeholder="Say something"
+          ></Textarea>
+        );
+      } else if (item.name === 'EMOJI' && item.visible) {
+        return (
+          <Emoji
+            key={item.name}
+            onSelected={handleSelectEmoji}
+            onClick={handleClickEmojiIcon}
+          ></Emoji>
+        );
+      } else if (item.name === 'MORE' && item.visible) {
+        return <MoreAction key={item.name}></MoreAction>;
+      } else {
+        return (
+          <span key={item.name} className="icon-container">
+            {item.icon}
+          </span>
+        );
+      }
+    });
+    setEditorNode(node);
+  }, []);
   return (
     <div className="editor-container">
-      <Recorder
-        onShow={() => setTextareaShow(false)}
-        onHide={() => setTextareaShow(true)}
-        onSend={() => setTextareaShow(true)}
-      ></Recorder>
-      {isShowTextarea ? (
-        <>
-          <Textarea ref={textareaRef} hasSendButton placeholder="Say something"></Textarea>{' '}
-          <Emoji onSelected={handleSelectEmoji} onClick={handleClickEmojiIcon}></Emoji>
-          <MoreAction></MoreAction>
-        </>
-      ) : null}
+      {isShowRecorder && (
+        <Recorder
+          onShow={() => setTextareaShow(false)}
+          onHide={() => setTextareaShow(true)}
+          onSend={() => setTextareaShow(true)}
+        ></Recorder>
+      )}
+
+      {isShowTextarea && <>{editorNode}</>}
     </div>
   );
 };
-
+MessageEditor.defaultActions = defaultActions;
 export { MessageEditor };
