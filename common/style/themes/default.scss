@@ -310,6 +310,41 @@ $cvs-item-time-font-size: $font-size-sm;
 $cvs-item-time-color: $gray-5;
 $cvs-item-time-margin-bottom: 9px;
 
+// Chat
+$chat-bg: $component-background;
+$msg-base-font-size: $font-size-lg;
+$msg-base-color: $font-color;
+$msg-base-margin: $margin-xs 0;
+$msg-base-padding: 0 $padding-lg;
+$msg-bubble-border-radius-left: 12px 16px 16px 4px;
+$msg-bubble-border-radius-right: 16px 12px 4px 16px;
+$msg-bubble-arrow-border-size: 6px;
+$msg-bubble-arrow-bottom: 8px;
+$msg-bubble-arrow-left: -11px;
+$msg-bubble-arrow-right: -11px;
+$msg-bubble-color-secondly: $blue-95;
+$msg-bubble-color-primary: $blue-5;
+$msg-bubble-font-color-secondly: $font-color;
+$msg-bubble-font-color-primary: $gray-98;
+$msg-base-content-margin: 0 $margin-xs 0 $margin-sm;
+$msg-base-content-padding: $padding-xs $padding-sm;
+$msg-base-content-minheight: 24px;
+$msg-bubble-none-bg: transparent;
+$msg-bubble-none-color: $font-color;
+$msg-bubble-square-border-radius: 4px;
+$msg-info-margin-left:  $margin-sm;
+$msg-nickname-font-size: $font-size-sm;
+$msg-nickname-font-weight: 500;
+$msg-nickname-font-color: #5270AD;
+$msg-nickname-height: 16px;
+$msg-time-font-size: $font-size-sm;
+$msg-time-font-weight: 400;
+$msg-time-font-color: $gray-7;
+$msg-time-height: 16px;
+$msg-time-margin: 0 $margin-xss;
+$msg-time-width: 106px;
+
+
 
 
 
