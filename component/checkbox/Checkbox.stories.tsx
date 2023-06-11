@@ -3,13 +3,11 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Checkbox } from './Checkbox';
 
 export default {
-	title: 'UI/Checkbox',
-	component: Checkbox,
+  title: 'pure component/Checkbox',
+  component: Checkbox,
 } as ComponentMeta<typeof Checkbox>;
 
-const Template: ComponentStory<typeof Checkbox> = (args) => (
-	<Checkbox {...args} />
-);
+const Template: ComponentStory<typeof Checkbox> = args => <Checkbox {...args} />;
 
 export const WithControl = Template.bind({});
 

@@ -1,38 +1,33 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
-import Button from './index';
+import { ConversationItem } from './index';
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
-  title: 'pure component/Button',
-  component: Button,
+  title: 'Module/ConversationItem',
+  component: ConversationItem,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-  argTypes: {
-    backgroundColor: { control: 'color' },
-  },
-} as ComponentMeta<typeof Button>;
+  argTypes: {},
+} as ComponentMeta<typeof ConversationItem>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof Button> = args => <Button {...args} />;
+const Template: ComponentStory<typeof ConversationItem> = args => <ConversationItem {...args} />;
 
 export const Primary = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
 Primary.args = {
-  type: 'primary',
-};
-
-export const Secondary = Template.bind({});
-Secondary.args = {
-  size: 'medium',
-};
-
-export const Large = Template.bind({});
-Large.args = {
-  size: 'large',
-};
-
-export const Small = Template.bind({});
-Small.args = {
-  size: 'small',
+  data: {
+    chatType: 'singleChat',
+    conversationId: 'user2',
+    name: 'Henry',
+    unreadCount: 3,
+    lastMessage: {
+      type: 'txt',
+      msg: 'hello',
+      chatType: 'singleChat',
+      from: 'user1',
+      time: Date.now(),
+    },
+  },
 };

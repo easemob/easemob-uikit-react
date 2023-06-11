@@ -3,11 +3,11 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 import { Switch } from './Switch';
 
 export default {
-	title: 'UI/Switch',
-	component: Switch,
+  title: 'pure component/Switch',
+  component: Switch,
 } as ComponentMeta<typeof Switch>;
 
-const Template: ComponentStory<typeof Switch> = (args) => <Switch {...args} />;
+const Template: ComponentStory<typeof Switch> = args => <Switch {...args} />;
 
 export const WithControl = Template.bind({});
 

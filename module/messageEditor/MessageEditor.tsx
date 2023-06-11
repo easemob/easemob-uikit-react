@@ -143,7 +143,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     // setInputHaveValue(false);
   };
 
-  const { actions = defaultActions } = props;
+  const { actions = defaultActions, placeHolder } = props;
 
   useEffect(() => {
     let node = actions.map((item, index) => {
@@ -157,7 +157,7 @@ const MessageEditor = (props: MessageEditorProps) => {
             key={item.name}
             ref={textareaRef}
             hasSendButton
-            placeholder="Say something"
+            placeholder={placeHolder}
           ></Textarea>
         );
       } else if (item.name === 'EMOJI' && item.visible) {

@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useContext } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
@@ -6,7 +6,10 @@ import './style/style.scss';
 import { cloneElement } from '../../component/_utils/reactNode';
 import { getConversationTime } from '../utils';
 import Avatar from '../../component/avatar';
+import { Tooltip } from '../../component/tooltip/Tooltip';
+import { RootContext } from '../store/rootContext';
 export interface BaseMessageProps {
+  // messageId: string; // 消息 id
   bubbleType?: 'primary' | 'secondly' | 'none'; // 气泡类型
   bubbleStyle?: React.CSSProperties;
   status?: MessageStatusProps['status'];
@@ -25,6 +28,7 @@ export interface BaseMessageProps {
 
 const BaseMessage = (props: BaseMessageProps) => {
   const {
+    // messageId,
     avatar,
     direction = 'ltr',
     status = 'default',
@@ -76,7 +80,18 @@ const BaseMessage = (props: BaseMessageProps) => {
       },
     }))
   );
-
+  const rootStore = useContext(RootContext).rootStore;
+  // const recallMessage = () => {
+  //   console.log('recallMessage', messageId);
+  //   rootStore.messageStore.modifyMessage(messageId, {
+  //     type: 'txt',
+  //     msg: '已撤回',
+  //     id: messageId,
+  //     chatType: 'singleChat',
+  //     to: 'zd2',
+  //     time: Date.now(),
+  //   });
+  // };
   return (
     <div className={classString} style={{ ...style }}>
       {avatarToShow}
@@ -87,7 +102,18 @@ const BaseMessage = (props: BaseMessageProps) => {
         </div>
 
         <div className={`${prefixCls}-body`}>
+          {/* <Tooltip
+            title={
+              <ul className="cui-moreAction">
+                <li onClick={recallMessage}>撤回</li>
+              </ul>
+            }
+            trigger="contextMenu"
+            placement="bottom"
+            arrow
+          > */}
           {contentNode}
+          {/* </Tooltip> */}
           <MessageStatus status={status} type="icon"></MessageStatus>
         </div>
       </div>
