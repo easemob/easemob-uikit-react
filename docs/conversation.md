@@ -1,8 +1,6 @@
 # ConversationList
 
-ConversationList component to display the current user's conversation (single chat, group chat, excluding chat rooms), and provides search and delete conversation functions
-
-会话列表显示的会话名字，单聊优先显示用户属性中设置的 nickname, 没有设置用户属性时显示用户 id， 群组显示群组名称
+ConversationList component to display the current user's conversation (single chat, group chat, excluding chat rooms), and provides search and delete conversation functions. The conversation name displayed in the conversation list is prioritized for single chats, and the nickname set in the user attribute is displayed first. If no user attribute is set, the user ID is displayed, and the group name is displayed in group chats.
 
 ## usage example
 

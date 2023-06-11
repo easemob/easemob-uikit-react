@@ -1,0 +1,12 @@
+.container{
+    display: flex;
+    position: absolute;
+    width: 90%;
+    height: 90%;
+    margin-left: 5%;
+}
+.conversation{
+    background-color: green;
+    height: 100%;
+    width: 100%;
+}
