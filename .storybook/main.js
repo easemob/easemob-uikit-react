@@ -1,9 +1,11 @@
 const svgr = require('vite-plugin-svgr');
+const path = require('path');
+// const __dirname = path.resolve();
 
 module.exports = {
 	stories: [
-		'../src/**/*.stories.mdx',
-		'../src/**/*.stories.@(js|jsx|ts|tsx)',
+		'../component/**/*.stories.mdx',
+		'../component/**/*.stories.@(js|jsx|ts|tsx)',
 		'../module/**/*.stories.mdx',
 		'../module/**/*.stories.@(js|jsx|ts|tsx)',
 	],
@@ -25,10 +27,17 @@ module.exports = {
 				},
 			}),
 		];
+
 		return {
 			...config,
 			define: {
 				...config.define,
+			},
+			resolve: {
+				// 配置路径别名
+				alias: {
+					'~': path.resolve(__dirname, '../'),
+				},
 			},
 		};
 	},
