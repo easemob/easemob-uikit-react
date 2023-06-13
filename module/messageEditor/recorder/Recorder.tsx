@@ -8,6 +8,7 @@ import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
 import HZRecorder from './recorderFun';
 import { RootContext } from '../../store/rootContext';
+import { useTranslation } from 'react-i18next';
 export interface RecorderProps {
   prefix?: string;
   cancelBtnShape?: 'circle' | 'square';
@@ -21,6 +22,7 @@ let recorder: typeof HZRecorder;
 let timer: number;
 const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const rootStore = useContext(RootContext).rootStore;
+  const { t } = useTranslation();
   const { messageStore, client } = rootStore;
   const { prefix: customizePrefixCls, onShow, onHide, onSend } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -146,7 +148,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         </div>
       </div>
       <div className={`${prefixCls}-content-right`}>
-        <span>Recording...</span>
+        <span>{t('module.recording')}...</span>
         <div onClick={sendAudio} className={`${prefixCls}-send`}>
           <Icon type="AIR_PLANE" width={20} height={20} color="#fff"></Icon>
         </div>

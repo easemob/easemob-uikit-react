@@ -9,6 +9,7 @@
         "video": "Video message",
         "file": "File",
         "custom": "Custom message",
-        "noConversation": "No Conversation"
+        "noConversation": "No Conversation",
+        "recording": "Recording"
     }
 }
