@@ -8,11 +8,11 @@ npm i chatuim2 -S
 
 ## Overview
 
-`agora-chat-uikit` is a UI component library based on the Chat SDK. It provides common UI components, module components containing chat business logic, and container components, which allows users to customize using renderX method. `agora-chat-uikit` provides a provider to manage data. The provider automatically listens for chat SDK events to update data and drive UI updates. Developers can use the library to quickly build custom IM applications based on actual business requirements.
+`agora-chat-uikit` is a UI component library based on the Chat SDK. It provides pure UI components, module components containing chat business logic, and container components, which allows users to customize using renderX method. `agora-chat-uikit` provides a provider to manage data. The provider automatically listens for chat SDK events to update data and drive UI updates. Developers can use the library to quickly build custom IM applications based on actual business requirements.
 
 ## Technical principles
 
-UIKIt consists of three parts: UI component, mobx store for managing data, chat SDK. UI components include container components, composite Components module, and pure UI components. These components at different levels are exposed to the outside world. Users can reference any of these components to build their own applications. UIkit uses mobx to manage global data, and users can reference the rootStore to get all the data and the action method, which can be used to manipulate the data. UIKit integrates chat SDK internally and interacts with the server through chat SDK.
+UIKIt consists of three parts: UI component, mobx store for managing data, chat SDK. UI components include container components, composite Components module, and pure UI components. These components at different levels are exposed to the outside world. Users can reference any of these components to build their own applications. UIkit uses mobx to manage global data, and users can reference the rootStore to get all the data and the action method, which can be used to modify the data. UIKit integrates chat SDK internally and interacts with the server through chat SDK.
 
 <div align=center> <img src="./docs/uikit.png" width = "400" height = "450" /></div>
 
@@ -20,7 +20,7 @@ UIKIt consists of three parts: UI component, mobx store for managing data, chat 
 
 The `agora-chat-uikit` library provides the following functions:
 
-- Automatic layout to match the width and height of the container;;
+- Automatic layout to match the width and height of the container;
 - Send and receive messages, message display, message unread count, clear messages, message types include: (text, picture, file, expression, audio, video message);
 - Search for and delete conversation.
 - Customize the UI.
@@ -61,20 +61,6 @@ The `agora-chat-uikit` library provides the following functions:
       <td>Display message </td>
       <td style=font-size:10px>Single or group chat message display, including profile avatar, nickname, message content, time, sent status, and read status. Message types include text, picture, video, file, and voice</td>
    </tr>
-   <tr>
-      <td>Recall the message (in development)</td>
-      <td style=font-size:10px>Sent messages can be recall within 2 minutes</td>
-   </tr>
-   <tr>
-      <td>reaction (in development)）</td>
-      <td style=font-size:10px>Reply to a message with a custom emoji</td>
-   </tr>
-   <tr>
-   <td colspan="3">
-     More features in development...
-	 </td>
-   </tr>
-
 </table>
 
 ## Component
@@ -165,7 +151,7 @@ Container components introduction:
 	  </tr>
 	  <tr>
 	    <td style=font-size:10px>headerProps: HeaderProps</td>
-		<td style=font-size:10px>Header组件的props</td>
+		<td style=font-size:10px>props for Header</td>
 	  </tr>
 	  <tr>
 	    <td style=font-size:10px>messageListProps: MsgListProps</td>
@@ -379,6 +365,7 @@ const ChatApp = () => {
             chatType: '', // 'singleChat' || 'groupChat'
             conversationId: '', // target user id or group id
             name: '', // target user nickname or group name
+            lastMessage: {},
           });
         });
   }, [client]);
@@ -511,7 +498,9 @@ $font-size-sm: 12px;
 $text-color: fade($black, 85%);
 ```
 
-Use webpack for variable coverage:
+All variables can be viewed here ''
+
+1. Use webpack for variable coverage:
 
 ```javascript
 module.exports = {
@@ -535,7 +524,17 @@ module.exports = {
 };
 ```
 
-If these cannot meet the customization requirements, you can also check the elements to cover the style of UIKit.
+2. Customize in create-react-app
+
+creating a scss file within variables to override style.scss. Need to ensure the order of importing files
+
+```scss
+@import 'agora-chat-uikit/style.scss'; // agora-chat-uikit theme
+@import 'your-theme.scss'; // your theme
+@import 'agora-chat-uikit/components.scss'; // components style
+```
+
+If these cannot meet the customization requirements, you can also find the elements to cover the style of UIKit.
 
 ## Community Contribution
 
