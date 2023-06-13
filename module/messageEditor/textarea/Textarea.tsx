@@ -80,6 +80,7 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
     messageStore.sendMessage(message);
     divRef.current!.innerHTML = '';
     setTextValue('');
+    setIsEmpty(true);
   };
 
   // 发送按钮
@@ -110,8 +111,16 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
     }
   };
 
+  const setTextareaValue = (value: string) => {
+    setTextValue(value);
+    if (value.length > 0) {
+      setIsEmpty(false);
+    } else {
+      setIsEmpty(true);
+    }
+  };
   useImperativeHandle(ref, () => ({
-    setTextValue,
+    setTextareaValue,
     divRef,
   }));
   return (

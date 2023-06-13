@@ -117,7 +117,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     }
     const str = converToMessage(i.innerHTML).trim();
     // @ts-ignore
-    textareaRef.current.setTextValue(str);
+    textareaRef.current.setTextareaValue(str);
   };
 
   const handleClickEmojiIcon = () => {
@@ -135,7 +135,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     if (!emojiString) return;
 
     // @ts-ignore
-    textareaRef.current.setTextValue(value => value + emojiString);
+    textareaRef.current.setTextareaValue(value => value + emojiString);
 
     const src = new URL(`/module/assets/reactions/${emoji.map[emojiString]}`, import.meta.url).href;
     insertCustomHtml(src, emojiString);

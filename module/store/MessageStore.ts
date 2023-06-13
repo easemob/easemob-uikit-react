@@ -2,13 +2,15 @@
 import AC, { AgoraChat } from 'agora-chat';
 import { makeAutoObservable, observable, action, computed, makeObservable, autorun } from 'mobx';
 import { CurrentConversation } from './ConversationStore';
+
+export interface Message {
+  singleChat: { [key: string]: AgoraChat.MessageBody[] };
+  groupChat: { [key: string]: AgoraChat.MessageBody[] };
+  byId: { [key: string]: AgoraChat.MessageBody };
+}
 class MessageStore {
   rootStore;
-  message: {
-    singleChat: { [key: string]: AgoraChat.MessageBody[] };
-    groupChat: { [key: string]: AgoraChat.MessageBody[] };
-    byId: { [key: string]: AgoraChat.MessageBody };
-  };
+  message: Message;
   currentCVS: CurrentConversation;
   constructor(rootStore: any) {
     this.rootStore = rootStore;
