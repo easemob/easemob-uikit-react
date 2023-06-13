@@ -1,4 +1,8 @@
 @import '~/common/style/index.scss';
+@import './emoji.scss';
+@import './moreAction.scss';
+@import './recorder.scss';
+@import './textarea.scss';
 .editor-container{
     display: flex;
     padding: $padding-s 0;

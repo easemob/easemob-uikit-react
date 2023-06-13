@@ -20,10 +20,11 @@ export interface TextareaProps {
   className?: string;
   placeholder?: string;
   hasSendButton?: boolean;
+  sendButtonActiveColor?: string;
 }
 
 let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
-  let { placeholder, hasSendButton } = props;
+  let { placeholder, hasSendButton, sendButtonActiveColor = '#009EFF' } = props;
   const [isEmpty, setIsEmpty] = useState(false);
   const [textValue, setTextValue] = useState('');
 
@@ -84,7 +85,13 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
   // 发送按钮
   const btnNode = hasSendButton ? (
     <div className={`${prefixCls}-sendBtn`}>
-      <Icon type="AIR_PLANE" width={20} height={20} color="#009EFF" onClick={sendMessage}></Icon>
+      <Icon
+        type="AIR_PLANE"
+        width={20}
+        height={20}
+        color={isEmpty ? '#464E53' : sendButtonActiveColor}
+        onClick={sendMessage}
+      ></Icon>
     </div>
   ) : null;
 

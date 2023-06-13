@@ -29,6 +29,7 @@ import { ReactComponent as ArrowUp } from '../svgs/icons/chevron_up.svg';
 import { ReactComponent as ArrowDown } from '../svgs/icons/chevron_down.svg';
 import { ReactComponent as PlusCircle } from '../svgs/icons/plus_in_circle.svg';
 import { ReactComponent as Search } from '../svgs/icons/magnifier.svg';
+import { ReactComponent as Delete } from '../svgs/icons/trashdelete.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -113,6 +114,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'SEARCH':
       return <Search></Search>;
+      break;
+    case 'DELETE':
+      return <Delete></Delete>;
       break;
     default:
       return '';

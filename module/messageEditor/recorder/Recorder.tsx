@@ -134,7 +134,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       <div className={`${prefixCls}-content-left`}>
         <div className={`${prefixCls}-iconBox`}>
           <Icon
-            type="CROSS"
+            type="DELETE"
             width={20}
             height={20}
             color="#fff"
@@ -142,12 +142,12 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
           ></Icon>
         </div>
         <div className={`${prefixCls}-time`}>
-          <span>{duration}</span>
+          <span>{duration + "''"}</span>
         </div>
       </div>
       <div className={`${prefixCls}-content-right`}>
-        <span>Press Enter</span>
-        <div onClick={sendAudio}>
+        <span>Recording...</span>
+        <div onClick={sendAudio} className={`${prefixCls}-send`}>
           <Icon type="AIR_PLANE" width={20} height={20} color="#fff"></Icon>
         </div>
       </div>
