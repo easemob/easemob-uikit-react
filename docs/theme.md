@@ -16,6 +16,13 @@ In the project you created with create-react-app, you can create an scss file to
 @import 'agora-chat-uikit/components.scss'; // components style
 ```
 
+```scss
+// your-theme.scss
+$component-background: green;
+$primary-color: pink;
+// ...
+```
+
 2. Webpack
 
 Configure scss loader to automatically import style.scss files.
@@ -32,7 +39,7 @@ module.exports = {
           {
             loader: 'sass-loader',
             options: {
-              additionalData: `@import "@/styles/index.scss";`,
+              additionalData: `@import "./src/scss-vars.scss";`,
             },
           },
         ],
@@ -40,4 +47,13 @@ module.exports = {
     ],
   },
 };
+```
+
+```scss
+// scss-vars.scss
+@import 'agora-chat-uikit/style.scss';
+$component-background: green;
+$primary-color: pink;
+// ...
+@import 'agora-chat-uikit/components.scss';
 ```
