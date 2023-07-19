@@ -72,6 +72,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     &-box{
         max-width: 100%;
         overflow: hidden;
+        width: 100%;
     }
     &-body{
         flex-grow: 0;
@@ -80,6 +81,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     }
     &-content{
         // flex: 1;
+        max-width: calc(100% - 100px);
         margin: $msg-base-content-margin;
         padding: $msg-base-content-padding;
         gap: 10px;

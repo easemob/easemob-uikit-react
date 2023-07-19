@@ -27,8 +27,11 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
     &-box{
         display: flex;
         align-items: center;
+        width: 100%;
     }
     &-content{
+        max-width: calc(100% - 76px);
+
         display: flex;
         padding: $padding-xs $padding-s;
         // align-items: flex-start;
