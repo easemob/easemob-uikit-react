@@ -12,6 +12,7 @@ class MessageStore {
   rootStore;
   message: Message;
   currentCVS: CurrentConversation;
+  repliedMessage: AgoraChat.MessageBody | null;
   constructor(rootStore: any) {
     this.rootStore = rootStore;
 
@@ -21,9 +22,11 @@ class MessageStore {
       byId: {},
     };
     this.currentCVS = {} as CurrentConversation;
+    this.repliedMessage = null;
     makeObservable(this, {
       currentCVS: observable,
       message: observable,
+      repliedMessage: observable,
       setCurrentCVS: action,
       currentCvsMsgs: computed,
       sendMessage: action,
@@ -32,6 +35,7 @@ class MessageStore {
       sendChannelAck: action,
       updateMessageStatus: action,
       clearMessage: action,
+      setRepliedMessage: action,
     });
 
     autorun(() => {
@@ -62,6 +66,50 @@ class MessageStore {
     message.status = 'sending';
     // @ts-ignore
     message.mid = '';
+    message.from = this.rootStore.client.context.userId;
+    // 添加引用消息
+    if (
+      this.repliedMessage != null &&
+      message.type != 'read' &&
+      message.type != 'delivery' &&
+      message.type != 'channel'
+    ) {
+      let ext = message.ext || {};
+      let msgPreview = '';
+      switch (this.repliedMessage.type) {
+        case 'txt':
+          msgPreview = this.repliedMessage.msg;
+          break;
+        case 'img':
+          msgPreview = '[Image]';
+          break;
+        case 'audio':
+          msgPreview = '[Voice]';
+          break;
+        case 'video':
+          msgPreview = '[Video]';
+          break;
+        case 'file':
+          msgPreview = '[File]';
+          break;
+        case 'custom':
+          msgPreview = '[Custom]';
+          break;
+        default:
+          msgPreview = '[unknown]';
+          break;
+      }
+      ext.msgQuote = {
+        // @ts-ignore
+        msgID: this.repliedMessage.mid || this.repliedMessage.id,
+        msgPreview: msgPreview,
+        msgSender: this.repliedMessage.from || this.rootStore.client.user,
+        msgType: this.repliedMessage.type,
+      };
+      message.ext = ext;
+      console.log('---', message, ext);
+    }
+
     this.message.byId[message.id] = message;
     // @ts-ignore
     if (!this.message[chatType][to]) {
@@ -72,6 +120,9 @@ class MessageStore {
       this.message[chatType][to].push(this.message.byId[message.id]);
     }
 
+    if (this.repliedMessage != null) {
+      this.setRepliedMessage(null);
+    }
     return this.rootStore.client
       .send(message)
       .then((data: { serverMsgId: string }) => {
@@ -242,6 +293,29 @@ class MessageStore {
   clearMessage(cvs: CurrentConversation) {
     if (!cvs) return;
     this.message[cvs.chatType][cvs.conversationId] = [];
+  }
+
+  setRepliedMessage(message: AgoraChat.MessageBody | null) {
+    if (typeof message === 'undefined') return;
+    this.repliedMessage = message;
+  }
+
+  deleteMessage(cvs: CurrentConversation, messageId: string) {
+    if (!cvs) return;
+    return this.rootStore.client
+      .removeHistoryMessages({
+        targetId: cvs.conversationId,
+        chatType: cvs.chatType,
+        messageIds: [messageId],
+      })
+      .then(() => {
+        const messages = this.message[cvs.chatType][cvs.conversationId];
+        const filterMsgs = messages.filter(msg => {
+          // @ts-ignore
+          return msg.id != messageId && msg.mid != messageId;
+        });
+        this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+      });
   }
 }
 

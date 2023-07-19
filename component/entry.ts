@@ -1,8 +1,8 @@
-import './style/index.scss';
+// import './style/index.scss';
 import Avatar from './avatar';
-import './avatar/style/style.scss';
+// import './avatar/style/style.scss';
 import Button from './button';
-import './button/style/style.scss';
+// import './button/style/style.scss';
 import Input from './input/Input';
 import Badge from './badge';
 import Checkbox from './checkbox';

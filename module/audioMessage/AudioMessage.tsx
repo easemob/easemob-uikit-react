@@ -7,6 +7,7 @@ import type { AudioMessageType } from '../types/messageType';
 import Avatar from '../../component/avatar';
 import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
+import { AgoraChat } from 'agora-chat';
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -70,14 +71,33 @@ const AudioMessage = (props: AudioMessageProps) => {
     bySelf = from == rootStore.client.context.userId;
   }
   const bubbleType = type ? type : bySelf ? 'primary' : 'secondly';
+
+  const handleReplyMsg = () => {
+    rootStore.messageStore.setRepliedMessage(audioMessage);
+  };
+
+  const handleDeleteMsg = () => {
+    rootStore.messageStore.deleteMessage(
+      {
+        chatType: audioMessage.chatType,
+        conversationId: audioMessage.to,
+      },
+      // @ts-ignore
+      audioMessage.mid || audioMessage.id,
+    );
+  };
+
   return (
     <BaseMessage
+      id={audioMessage.id}
       direction={bySelf ? 'rtl' : 'ltr'}
       style={customStyle}
       time={messageTime}
       nickName={from}
       status={status}
       bubbleType={bubbleType}
+      onReplyMessage={handleReplyMsg}
+      onDeleteMessage={handleDeleteMsg}
       {...others}
     >
       <div className={classString} onClick={playAudio} style={{ ...style }}>

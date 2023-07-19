@@ -61,14 +61,31 @@ const FileMessage = (props: FileMessageProps) => {
         return false;
       });
   };
+  const handleReplyMsg = () => {
+    rootStore.messageStore.setRepliedMessage(fileMessage);
+  };
+
+  const handleDeleteMsg = () => {
+    rootStore.messageStore.deleteMessage(
+      {
+        chatType: fileMessage.chatType,
+        conversationId: fileMessage.to,
+      },
+      // @ts-ignore
+      fileMessage.mid || fileMessage.id,
+    );
+  };
 
   return (
     <BaseMessage
+      id={fileMessage.id}
       bubbleType={type}
       style={style}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
       nickName={nickName || from}
+      onReplyMessage={handleReplyMsg}
+      onDeleteMessage={handleDeleteMsg}
       {...baseMsgProps}
     >
       <div className={classString}>

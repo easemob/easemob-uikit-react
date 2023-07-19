@@ -1,0 +1,61 @@
+@import '~/common/style/index.scss';
+@import './msg.scss';
+$reply-prefix-cls: #{$cui-prefix}-message-reply;
+
+.#{$reply-prefix-cls} {
+    background-color: $msg-reply-background-color;
+    &-summary {
+        height: $msg-reply-height;
+        font-size: $msg-reply-font-size;
+        line-height: $msg-reply-line-height;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: $msg-reply-padding;
+        position: relative;
+        &-title{
+            color: $msg-reply-title-color;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            flex:none;
+        }
+        &-desc{
+            color: $msg-reply-desc-color;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            flex:none;
+            .cui-icon{
+                float: left;
+            }
+            &>span{
+                font-weight: 500;
+                margin: 0 2px;
+            }
+            &-img{
+                width: $msg-reply-img-width;
+                height: $msg-reply-img-height;
+                flex-shrink: 0;
+                border-radius: $msg-reply-img-border-radius;
+                background: $msg-reply-img-background-color;
+                position: absolute;
+                top: $msg-reply-img-top;
+                right: $msg-reply-img-right;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                &>img{
+                    width: 100%;
+                }
+            }
+        }
+        &-close{
+            position: absolute;
+            right: $msg-reply-close-right;
+            top: $msg-reply-close-top;
+            cursor: pointer;
+        }
+
+    }
+}

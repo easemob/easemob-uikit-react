@@ -124,13 +124,14 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       local={{
         fallbackLng: 'en',
-        lng: 'en',
+        lng: 'zh',
         // resources: {
-        // 	zh: {
-        // 		translation: {
-        // 			hello: '你好呀',
-        // 		},
-        // 	},
+        //   en: {
+        //     translation: {
+        //       'module.conversationTitle': 'Conversation List 22',
+        //       'module.deleteCvs': 'Delete Conversation 22',
+        //     },
+        //   },
         // },
       }}
     >

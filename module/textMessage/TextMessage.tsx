@@ -12,6 +12,7 @@ import type { TextMessageType } from '../types/messageType';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import { UrlMessage } from './UrlMessage';
 import reactStringReplace from 'react-string-replace';
+import { AgoraChat } from 'agora-chat';
 export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
   // color?: string; // 字体颜色
@@ -24,7 +25,7 @@ export interface TextMessageProps extends BaseMessageProps {
   style?: React.CSSProperties;
 }
 
-const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
+export const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
   const urlRegex = /(https?:\/\/\S+)/gi;
   if (txt === undefined || txt === null) {
     return [];
@@ -168,14 +169,37 @@ export const TextMessage = (props: TextMessageProps) => {
   if (urlData?.images?.length > 0) {
     urlTxtClass = 'message-text-hasImage';
   }
+  const handleReplyMsg = () => {
+    rootStore.messageStore.setRepliedMessage(textMessage);
+  };
+
+  const handleDeleteMsg = () => {
+    rootStore.messageStore.deleteMessage(
+      {
+        chatType: textMessage.chatType,
+        conversationId: textMessage.to,
+      },
+      // @ts-ignore
+      textMessage.mid || textMessage.id,
+    );
+  };
+
+  let repliedMsg: undefined | AgoraChat.MessageBody;
+  if (textMessage.ext?.msgQuote) {
+    repliedMsg = textMessage;
+  }
   return (
     <BaseMessage
+      id={textMessage.id}
       direction={bySelf ? 'rtl' : 'ltr'}
       style={style}
       time={time}
       nickName={nickName || from}
       bubbleType={type}
       className={urlTxtClass}
+      onReplyMessage={handleReplyMsg}
+      onDeleteMessage={handleDeleteMsg}
+      repliedMessage={repliedMsg}
       {...others}
     >
       <span className={classString}>{renderTxt(msg, detectedUrl)}</span>

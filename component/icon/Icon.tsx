@@ -26,10 +26,14 @@ import { ReactComponent as AriPlane } from '../svgs/icons/airplane.svg';
 import { ReactComponent as ArrowRight } from '../svgs/icons/chevron_right.svg';
 import { ReactComponent as ArrowLeft } from '../svgs/icons/chevron_left.svg';
 import { ReactComponent as ArrowUp } from '../svgs/icons/chevron_up.svg';
+import { ReactComponent as ArrowUpThick } from '../svgs/icons/arrow_up_thick.svg';
 import { ReactComponent as ArrowDown } from '../svgs/icons/chevron_down.svg';
 import { ReactComponent as PlusCircle } from '../svgs/icons/plus_in_circle.svg';
 import { ReactComponent as Search } from '../svgs/icons/magnifier.svg';
 import { ReactComponent as Delete } from '../svgs/icons/trashdelete.svg';
+import { ReactComponent as CloseCircle } from '../svgs/icons/xmark_in_circle_fill.svg';
+import { ReactComponent as Img } from '../svgs/icons/img.svg';
+import { ReactComponent as ArrowTurnLeft } from '../svgs/icons/arrow_turn_left.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -117,6 +121,18 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'DELETE':
       return <Delete></Delete>;
+      break;
+    case 'CLOSE_CIRCLE':
+      return <CloseCircle></CloseCircle>;
+      break;
+    case 'IMG':
+      return <Img></Img>;
+      break;
+    case 'ARROW_TURN_LEFT':
+      return <ArrowTurnLeft></ArrowTurnLeft>;
+      break;
+    case 'ARROW_UP_THICK':
+      return <ArrowUpThick></ArrowUpThick>;
       break;
     default:
       return '';

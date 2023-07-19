@@ -6,7 +6,7 @@ import Textarea from './textarea';
 import './style/style.scss';
 import { emoji } from './emoji/emojiConfig';
 import MoreAction from './moreAction';
-
+import rootStore from '../store/index';
 export type Actions = {
   name: string;
   visible: boolean;
@@ -180,6 +180,14 @@ const MessageEditor = (props: MessageEditorProps) => {
     });
     setEditorNode(node);
   }, []);
+
+  useEffect(() => {
+    if (!textareaRef.current) return;
+    // @ts-ignore
+    textareaRef.current.divRef.current.innerHTML = '';
+    // @ts-ignore
+    textareaRef.current.setTextareaValue('');
+  }, [rootStore.conversationStore.currentCvs.conversationId]);
   return (
     <div className="editor-container">
       {isShowRecorder && (

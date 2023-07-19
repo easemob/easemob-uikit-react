@@ -1,0 +1,104 @@
+@import '~/common/style/index.scss';
+$reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
+
+.#{$reply-msg-prefix-cls} {
+    display: flex;
+    // height: 54px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 2px;
+    flex-shrink: 0;
+    padding: 0 $padding-xs;
+    margin-bottom: 2px;
+    &-nick{
+        height: $msg-nickname-height;
+        font-size: $msg-nickname-font-size;
+        line-height: $msg-nickname-height;
+        color: $msg-nickname-font-color;
+        display: flex;
+        // color: $special-5;
+        direction: ltr;
+        &>span{
+            font-weight: $msg-nickname-font-weight;
+            margin: 0 2px;
+        }
+    }
+    &-box{
+        display: flex;
+        align-items: center;
+    }
+    &-content{
+        display: flex;
+        padding: $padding-xs $padding-s;
+        // align-items: flex-start;
+        // overflow: hidden;
+        background-color: $gray-95;
+        border-radius: $msg-bubble-square-border-radius;
+        position: relative;
+        &:hover {
+            background-color: $gray-98;
+        }
+        &-text{
+            width: 100%; 
+            font-size: $font-size-base;
+            line-height: 20px;
+            color: $gray-5;
+            overflow: hidden;
+            -webkit-line-clamp: 2;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient:vertical;;
+            word-break: break-all;
+            direction: ltr;
+            .cui-icon{
+                float: left;
+                margin-top: 2px;
+            }
+            &-not{
+                font-style: italic;
+                color: $gray-7;
+                font-size: $font-size-base;
+            }
+        }
+    }
+
+    &-square{
+        border-radius: 4px;
+    }
+    &-ground{
+        &.#{$reply-msg-prefix-cls}-left{
+            .#{$reply-msg-prefix-cls}-content{
+                border-radius: $msg-bubble-border-radius-left;
+            }
+        }
+        &.#{$reply-msg-prefix-cls}-right{
+            .#{$reply-msg-prefix-cls}-content{
+                border-radius: $msg-bubble-border-radius-right;
+            }
+        }
+    }
+    &-arrow{
+        cursor: pointer;
+        margin: 0 $margin-xs;
+    }
+}
+
+.reply-message-twinkle{
+	animation: fadeInOut2 1s 0.5s;
+}
+
+@keyframes fadeInOut2 {
+    0% {
+        background-color: $chat-bg;
+        opacity: 1;
+    }
+    50% {
+        background-color: $gray-95;
+        opacity: 1;
+    }
+	100% {
+        background-color: $chat-bg;
+        opacity: 1;
+    }
+}

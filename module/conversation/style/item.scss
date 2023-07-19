@@ -66,3 +66,21 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         margin-bottom: $cvs-item-time-margin-bottom;
     }
 }
+
+.cui-moreAction{
+    padding: 0;
+    margin: 0;
+    display: grid;
+    li{
+        list-style: none;
+        height: 36px;
+        border-radius: 8px;
+        padding: 0 $padding-xs;
+        line-height: 36px;
+        cursor: pointer;
+    }
+    li:hover{
+        /* color_neutral/95 */
+        background-color: $gray-95;
+    }
+}

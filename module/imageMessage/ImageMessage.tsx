@@ -78,29 +78,34 @@ let ImageMessage = (props: ImageMessageProps) => {
   if (typeof bySelf == 'undefined') {
     bySelf = message.from === rootStore.client.context.userId;
   }
+
+  const handleReplyMsg = () => {
+    rootStore.messageStore.setRepliedMessage(message);
+  };
+
+  const handleDeleteMsg = () => {
+    rootStore.messageStore.deleteMessage(
+      {
+        chatType: message.chatType,
+        conversationId: message.to,
+      },
+      // @ts-ignore
+      message.mid || message.id,
+    );
+  };
+
   return (
     <div style={style}>
-      <BaseMessage bubbleType="none" direction={bySelf ? 'rtl' : 'ltr'} nickName={from}>
+      <BaseMessage
+        id={message.id}
+        bubbleType="none"
+        direction={bySelf ? 'rtl' : 'ltr'}
+        nickName={from}
+        onReplyMessage={handleReplyMsg}
+        onDeleteMessage={handleDeleteMsg}
+      >
         <div className="message-image-content">{img.current}</div>
       </BaseMessage>
-      {/* <Mask prefixCls="" visible={true}></Mask>
-			<Modal
-				open={previewVisible}
-				closable={true}
-				footer=""
-				wrapClassName="message-image-preview-wrap"
-				width="70%"
-				style={{ overflow: 'hidden', height: '70%' }}
-				maskClosable={true}
-				onCancel={() => setPreviewVisible(false)}
-			>
-				<img
-					className="message-image-big"
-					src={previewImageUrl}
-					alt={message.file.filename}
-					// onClick={() => handleClickImg(message.file.url)}
-				/>
-			</Modal> */}
     </div>
   );
 };

@@ -18,7 +18,7 @@ import { RootContext } from '../store/rootContext';
 import { useEventHandler } from '../hooks/chat';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import Empty from '../empty';
-
+import { UnsentRepliedMsg } from '../repliedMessage';
 import { useTranslation } from 'react-i18next';
 
 // import rootStore from '../store';
@@ -72,7 +72,10 @@ const Chat: FC<ChatProps> = props => {
     } else {
       setIsEmpty(false);
     }
+    rootStore.messageStore.setRepliedMessage(null);
   }, [rootStore.conversationStore.currentCvs]);
+
+  const repliedMsg = rootStore.messageStore.repliedMessage;
 
   return (
     <div className={classString}>
@@ -137,6 +140,8 @@ const Chat: FC<ChatProps> = props => {
           ) : (
             <MessageList {...messageListProps}></MessageList>
           )}
+          {repliedMsg && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
+
           {renderMessageEditor ? (
             renderMessageEditor()
           ) : (

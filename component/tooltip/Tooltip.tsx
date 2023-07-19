@@ -140,7 +140,7 @@ function getDisabledCompatibleChildren(element: React.ReactElement<any>, prefixC
 
 const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
   const {
-    // getPopupContainer: getContextPopupContainer,
+    getPopupContainer: getContextPopupContainer,
     getPrefixCls,
     // direction,
   } = React.useContext(ConfigContext);
@@ -280,15 +280,16 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
       mouseLeaveDelay={mouseLeaveDelay}
       prefixCls={prefixCls}
       overlayClassName={customOverlayClassName}
-      getTooltipContainer={getPopupContainer || getTooltipContainer}
+      getTooltipContainer={getPopupContainer || getTooltipContainer || getContextPopupContainer}
       ref={ref}
       builtinPlacements={getTooltipPlacements()}
       overlay={getOverlay()}
       visible={tempOpen}
       onVisibleChange={onOpenChange}
       onPopupAlign={onPopupAlign}
+      // trigger={['contextMenu']}
       overlayInnerStyle={formattedOverlayInnerStyle}
-      showArrow={false}
+      // showArrow={false}
       // arrowContent={<span className={`${prefixCls}-arrow-content`} />}
       arrowContent={
         props.arrow ? (

@@ -9,7 +9,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     order: 0;
     display: flex;
     align-items: flex-end;
-    margin: $msg-base-margin;
+    // margin: $msg-base-margin;
     box-sizing: border-box;
     padding: $msg-base-padding;
     &-arrow{
@@ -54,6 +54,18 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
                 pointer-events: none;
                 bottom: $msg-bubble-arrow-bottom;
                 right: $msg-bubble-arrow-right;
+            }
+        }
+    }
+    &-reply {
+        &.#{$status-prefix-cls}-right{
+            .#{$status-prefix-cls}-content{
+                border-radius: $msg-bubble-border-radius-right-reply;
+            }
+        }
+        &.#{$status-prefix-cls}-left{
+            .#{$status-prefix-cls}-content{
+                border-radius: $msg-bubble-border-radius-left-reply;
             }
         }
     }

@@ -32,7 +32,9 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('textarea', customizePrefixCls);
 
-  const { client, messageStore } = useContext(RootContext).rootStore;
+  const { client, messageStore, conversationStore } = useContext(RootContext).rootStore;
+  const { currentCVS } = messageStore;
+
   useEffect(() => {
     setIsEmpty(true);
   }, []);
@@ -60,7 +62,10 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
     placeholder = 'Say something';
   }
 
-  const { currentCVS } = messageStore;
+  // useEffect(() => {
+  //   alert(1);
+  //   setTextValue('');
+  // }, [currentCVS.conversationId]);
 
   const sendMessage = () => {
     if (!textValue) {

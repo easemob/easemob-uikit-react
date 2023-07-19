@@ -315,9 +315,12 @@ $chat-bg: $component-background;
 $msg-base-font-size: $font-size-lg;
 $msg-base-color: $font-color;
 $msg-base-margin: $margin-xs 0;
-$msg-base-padding: 0 $padding-lg;
+$msg-base-padding: $padding-xs $padding-lg;
 $msg-bubble-border-radius-left: 12px 16px 16px 4px;
 $msg-bubble-border-radius-right: 16px 12px 4px 16px;
+// has reply message bubble radius
+$msg-bubble-border-radius-right-reply: 16px 4px 4px 16px !important;
+$msg-bubble-border-radius-left-reply: 4px 16px 16px 4px !important;
 $msg-bubble-arrow-border-size: 6px;
 $msg-bubble-arrow-bottom: 8px;
 $msg-bubble-arrow-left: -11px;
@@ -326,7 +329,7 @@ $msg-bubble-color-secondly: $blue-95;
 $msg-bubble-color-primary: $blue-5;
 $msg-bubble-font-color-secondly: $font-color;
 $msg-bubble-font-color-primary: $gray-98;
-$msg-base-content-margin: 0 $margin-xs 0 $margin-sm;
+$msg-base-content-margin: 0 $margin-xs;
 $msg-base-content-padding: $padding-xs $padding-sm;
 $msg-base-content-minheight: 24px;
 $msg-bubble-none-bg: transparent;
@@ -344,6 +347,22 @@ $msg-time-height: 16px;
 $msg-time-margin: 0 $margin-xss;
 $msg-time-width: 106px;
 
+// unsent reply message
+$msg-reply-background-color: $gray-95;
+$msg-reply-height: 52px;
+$msg-reply-font-size: $font-size-sm;
+$msg-reply-line-height: 16px;
+$msg-reply-padding: 0 24px;
+$msg-reply-title-color: $gray-1;
+$msg-reply-desc-color: $gray-5;
+$msg-reply-img-width: 36px;
+$msg-reply-img-height: 36px;
+$msg-reply-img-background-color: $gray-9;
+$msg-reply-img-border-radius: 4px;
+$msg-reply-img-top: 8px;
+$msg-reply-img-right: 36px;
+$msg-reply-close-top: 8px;
+$msg-reply-close-right: 8px;
 
 
 

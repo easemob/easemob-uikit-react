@@ -10,6 +10,13 @@
         "file": "File",
         "custom": "Custom message",
         "noConversation": "No Conversation",
-        "recording": "Recording"
+        "recording": "Recording",
+        "you": "You",
+        "repliedTo": "replied to",
+        "messageNotFound": "Message not found",
+        "replyingTo": "Replying to",
+        "delete": "Delete",
+        "reply": "Reply",
+        "attachment": "Attachment"
     }
 }
