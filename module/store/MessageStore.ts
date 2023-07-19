@@ -147,38 +147,34 @@ class MessageStore {
         // this.message[chatType][to][i] = msg;
 
         console.log('---->message', this.message);
+
+        // 更新会话last message
+        let cvs = this.rootStore.conversationStore.getConversation(
+          // @ts-ignore
+          message.chatType,
+          to,
+        );
+        // 没有会话时创建会话
+        if (!cvs) {
+          cvs = {
+            // @ts-ignore
+            chatType: message.chatType,
+            conversationId:
+              // @ts-ignore
+              message.chatType == 'groupChat' ? message.to : message.from,
+            lastMessage: message,
+            unreadCount: 0,
+          };
+          this.rootStore.conversationStore.addConversation(cvs);
+          return;
+        }
+        cvs.lastMessage = message;
+        this.rootStore.conversationStore.modifyConversation({ ...cvs });
       })
       .catch((error: ErrorEvent) => {
         console.warn('send fail', error);
-        // message.status = 'fail';
-        // this.message.byId[message.id].status = 'fail';
-
         this.updateMessageStatus(message.id, 'failed');
       });
-
-    // 更新会话last message
-
-    let cvs = this.rootStore.conversationStore.getConversation(
-      // @ts-ignore
-      message.chatType,
-      to,
-    );
-    // 没有会话时创建会话
-    if (!cvs) {
-      cvs = {
-        // @ts-ignore
-        chatType: message.chatType,
-        conversationId:
-          // @ts-ignore
-          message.chatType == 'groupChat' ? message.to : message.from,
-        lastMessage: message,
-        unreadCount: 0,
-      };
-      this.rootStore.conversationStore.addConversation(cvs);
-      return;
-    }
-    cvs.lastMessage = message;
-    this.rootStore.conversationStore.modifyConversation({ ...cvs });
   }
 
   receiveMessage(message: AgoraChat.MessageBody) {
