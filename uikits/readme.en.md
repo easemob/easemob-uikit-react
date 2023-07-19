@@ -18,30 +18,30 @@ agora-chat-uikit is a UI component library based on Agora IM SDK. It provides ge
 
 The `agora-chat-uikit` library provides the following functions:
 
--   Automatically layout the height and width of the chat frame;
--   Pass mandatory parameters to implement automatic login internally;
--   Send and receive messages, message on the screen, message not read, message type (text, picture, file, expression, audio, video message);
--   conversation search;
--   Customize the UI.
+- Automatically layout the height and width of the chat frame;
+- Pass mandatory parameters to implement automatic login internally;
+- Send and receive messages, message on the screen, message not read, message type (text, picture, file, expression, audio, video message);
+- conversation search;
+- Customize the UI.
 
 agora offers an open source AgoraChat-UIKit-web project on GitHub. You can clone and run the project or refer to the logic in it to create projects integrating Agora-chat-uikit.
 
 Source code URL of Agora Chat UIKit for Web:
 
--   https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web
+- https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web
 
 URL of Agora Chat app using Agora Chat UIKit for Web:
 
--   https://github.com/AgoraIO-Usecase/AgoraChat-web
+- https://github.com/AgoraIO-Usecase/AgoraChat-web
 
 ## Prerequisites
 
 In order to follow the procedure in this page, you must have:
 
--   React 16.8.0 or later
--   React DOM 16.8.0 or later
--   A valid [Agora account](https://docs.agora.io/cn/AgoraPlatform/sign_in_and_sign_up).
--   A valid [Agora project](https://docs.agora.io/cn/AgoraPlatform/sign_in_and_sign_up) with an App Key.
+- React 16.8.0 or later
+- React DOM 16.8.0 or later
+- A valid [Agora account](https://docs.agora.io/cn/AgoraPlatform/sign_in_and_sign_up).
+- A valid [Agora project](https://docs.agora.io/cn/AgoraPlatform/sign_in_and_sign_up) with an App Key.
 
 ## Compatible browsers
 
@@ -88,13 +88,13 @@ The project directory.
 
 #### Install the Web Chat UIKit
 
--   To install the Web Chat UIKit with npm, run the following command:
+- To install the Web Chat UIKit with npm, run the following command:
 
 ```bash
 npm install agora-chat-uikit --save
 ```
 
--   To Install Agora chat UIKit for Web with Yarn, run the following command:
+- To Install Agora chat UIKit for Web with Yarn, run the following command:
 
 ```bash
 yarn add agora-chat-uikit
@@ -107,33 +107,28 @@ Import agora-chat-uikit into your code.
 ```javascript
 // App.js
 import React, { Component } from 'react';
-import {
-	Provider,
-	Chat,
-	ConversationList,
-	ContactList,
-} from 'agora-chat-uikit';
+import { Provider, Chat, ConversationList, ContactList } from 'agora-chat-uikit';
 import './App.scss';
 
 class App extends Component {
-	render() {
-		return (
-			<Provider
-				init={
-					((appkey = 'xxx'), // Your registered App Key.
-					(username = 'xxx'), // The user ID of the current user.
-					(agoraToken = 'xxx')) // The Agora token. For how to obtain an Agora token, see descriptions in the Reference.
-				}
-			>
-				<div>
-					<ConversationList />
-				</div>
-				<div>
-					<Chat />
-				</div>
-			</Provider>
-		);
-	}
+  render() {
+    return (
+      <Provider
+        init={
+          ((appkey = 'xxx'), // Your registered App Key.
+          (username = 'xxx'), // The user ID of the current user.
+          (agoraToken = 'xxx')) // The Agora token. For how to obtain an Agora token, see descriptions in the Reference.
+        }
+      >
+        <div>
+          <ConversationList />
+        </div>
+        <div>
+          <Chat />
+        </div>
+      </Provider>
+    );
+  }
 }
 
 export default App;
@@ -226,16 +221,16 @@ If you have any problems or suggestions regarding the sample projects, feel free
 
 ## Reference
 
--   [Agora Chat SDK Product Overview](https://docs.agora.io/en/agora-chat/overview/product-overview)
--   [Agora Chat SDK API Reference](https://api-ref.agora.io/en/chat-sdk/web/1.x/index.html)
+- [Agora Chat SDK Product Overview](https://docs.agora.io/en/agora-chat/overview/product-overview)
+- [Agora Chat SDK API Reference](https://api-ref.agora.io/en/chat-sdk/web/1.x/index.html)
 
 ## Related resources
 
--   Check our [FAQ](https://docs.agora.io/en/faq) to see if your issue has been recorded.
--   Dive into [Agora SDK Samples](https://github.com/AgoraIO) to see more tutorials
--   Take a look at [Agora Use Case](https://github.com/AgoraIO-usecase) for more complicated real use case
--   Repositories managed by developer communities can be found at [Agora Community](https://github.com/AgoraIO-Community)
--   If you encounter problems during integration, feel free to ask questions in [Stack Overflow](https://stackoverflow.com/questions/tagged/agora.io)
+- Check our [FAQ](https://docs.agora.io/en/faq) to see if your issue has been recorded.
+- Dive into [Agora SDK Samples](https://github.com/AgoraIO) to see more tutorials
+- Take a look at [Agora Use Case](https://github.com/AgoraIO-usecase) for more complicated real use case
+- Repositories managed by developer communities can be found at [Agora Community](https://github.com/AgoraIO-Community)
+- If you encounter problems during integration, feel free to ask questions in [Stack Overflow](https://stackoverflow.com/questions/tagged/agora.io)
 
 ## License
 

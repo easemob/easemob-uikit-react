@@ -10,6 +10,12 @@
         "file": "附件",
         "custom": "自定义消息",
         "noConversation": "没有会话",
-        "recording": "录音中"
+        "recording": "录音中",
+        "you": "你",
+        "repliedTo": "回复了",
+        "messageNotFound": "未找到原消息",
+        "replyingTo": "回复",
+        "delete": "删除",
+        "reply": "回复"
     }
 }

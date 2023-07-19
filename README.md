@@ -407,7 +407,7 @@ npm run start
 
 Now, you can see your app in the browser.
 
-<div align=center style="background: #ddd; padding-top: 8px"> <img src="./docs/chat.png" width = "480" height = "350" /></div>
+<div align=center style="background: #ddd; padding-top: 8px"> <img src="./docs/image/chat.png" width = "480" height = "350" /></div>
 
 In the default App Key situation, for the convenience of quick experience, we support several types of message distribution by default. After clicking to select a member, enter your first message and send it.
 

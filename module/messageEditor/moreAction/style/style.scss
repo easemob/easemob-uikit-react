@@ -10,8 +10,20 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         height: 36px;
         border-radius: 8px;
         padding: 0 $padding-xs;
-        line-height: 36px;
+        // line-height: 36px;
         cursor: pointer;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 20px;
+
+        >div{
+            margin-right: 8px;
+        }
     }
     li:hover{
         /* color_neutral/95 */
