@@ -36,52 +36,58 @@ const resolvePath = (str: string) => path.resolve(__dirname, str);
 // 	],
 // };
 export default defineConfig({
-	plugins: [
-		svgr({
-			svgrOptions: {
-				icon: true,
-			},
-		}),
-		dts({
-			outputDir: './build/types',
-			insertTypesEntry: true, // 插入TS 入口
-			copyDtsFiles: true, // 是否将源码里的 .d.ts 文件复制到 outputDir
-		}),
-	],
-	build: {
-		// rollupOptions,
-		minify: false,
-		// lib: {
-		// 	entry: './src/entry.ts',
-		// 	name: 'ChatUI',
-		// 	fileName: 'ChatUI',
-		// 	// 导出模块格式
-		// 	formats: ['esm', 'umd', 'iife'],
-		// },
-		// outDir: './dist',
+  plugins: [
+    svgr({
+      svgrOptions: {
+        icon: true,
+      },
+    }),
+    dts({
+      outputDir: './build/types',
+      insertTypesEntry: true, // 插入TS 入口
+      copyDtsFiles: true, // 是否将源码里的 .d.ts 文件复制到 outputDir
+    }),
+  ],
+  build: {
+    // rollupOptions,
+    minify: false,
+    // lib: {
+    // 	entry: './src/entry.ts',
+    // 	name: 'ChatUI',
+    // 	fileName: 'ChatUI',
+    // 	// 导出模块格式
+    // 	formats: ['esm', 'umd', 'iife'],
+    // },
+    // outDir: './dist',
 
-		lib: {
-			entry: './module/index.ts',
-			name: 'ChatUI',
-			fileName: 'ChatUI',
-			// 导出模块格式
-			formats: ['esm', 'umd', 'iife'],
-		},
-		rollupOptions: {
-			// 确保外部化处理那些你不想打包进库的依赖
-			external: ['react', 'react-dom'],
-			output: {
-				// 在 UMD 构建模式下为这些外部化的依赖提供一个全局变量
-				globals: {
-					react: 'react',
-					'react-dom': 'react-dom',
-				},
-			},
-		},
-		outDir: './build',
-	},
-	test: {
-		globals: true,
-		environment: 'happy-dom',
-	},
+    lib: {
+      entry: './index.ts',
+      name: 'ChatUI',
+      fileName: 'ChatUI',
+      // 导出模块格式
+      formats: ['esm', 'umd', 'cjs'],
+    },
+    rollupOptions: {
+      // 确保外部化处理那些你不想打包进库的依赖
+      external: ['react', 'react-dom'],
+      output: {
+        // 在 UMD 构建模式下为这些外部化的依赖提供一个全局变量
+        globals: {
+          react: 'react',
+          'react-dom': 'react-dom',
+        },
+      },
+    },
+    outDir: './build',
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+  },
+  resolve: {
+    // 配置路径别名
+    alias: {
+      '~': path.resolve(__dirname),
+    },
+  },
 } as any);
