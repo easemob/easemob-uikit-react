@@ -88,7 +88,7 @@ interface BaseMessage {
   };
   isChatThread?: boolean;
   priority?: MessagePriority;
-  reactions?: Reaction;
+  reactions?: Reaction[];
   chatThreadOverview?: ChatThreadOverview;
   onlineState?: ONLINESTATETYPE;
   status: MessageStatus;

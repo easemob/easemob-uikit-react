@@ -8,6 +8,7 @@ import Avatar from '../../component/avatar';
 import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
 import { AgoraChat } from 'agora-chat';
+import { getCvsIdFromMessage } from '../utils';
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -29,7 +30,16 @@ const AudioMessage = (props: AudioMessageProps) => {
   } = props;
 
   const audioRef = useRef(null);
-  const { url, file_length, length, file, time: messageTime, from, status } = audioMessage;
+  const {
+    url,
+    file_length,
+    length,
+    file,
+    time: messageTime,
+    from,
+    status,
+    reactions,
+  } = audioMessage;
   // const duration = body.length
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-audio', customizePrefixCls);
@@ -87,6 +97,34 @@ const AudioMessage = (props: AudioMessageProps) => {
     );
   };
 
+  const handleClickEmoji = (emojiString: string) => {
+    console.log('添加Reaction', emojiString);
+    let conversationId = getCvsIdFromMessage(audioMessage);
+
+    rootStore.messageStore.addReaction(
+      {
+        chatType: audioMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      audioMessage.mid || audioMessage.id,
+      emojiString,
+    );
+  };
+
+  const handleDeleteEmoji = (emojiString: string) => {
+    let conversationId = getCvsIdFromMessage(audioMessage);
+    rootStore.messageStore.deleteReaction(
+      {
+        chatType: audioMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      audioMessage.mid || audioMessage.id,
+      emojiString,
+    );
+  };
+
   return (
     <BaseMessage
       id={audioMessage.id}
@@ -98,6 +136,9 @@ const AudioMessage = (props: AudioMessageProps) => {
       bubbleType={bubbleType}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
+      reactionData={reactions}
+      onAddReactionEmoji={handleClickEmoji}
+      onDeleteReactionEmoji={handleDeleteEmoji}
       {...others}
     >
       <div className={classString} onClick={playAudio} style={{ ...style }}>

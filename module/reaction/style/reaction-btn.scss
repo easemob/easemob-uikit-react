@@ -1,0 +1,78 @@
+@import '~/common/style/index.scss';
+$status-prefix-cls: #{$cui-prefix}-reaction-btn;
+
+.#{$status-prefix-cls} {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    padding: 2px 8px 2px 6px;
+    gap: 4px;
+    background: $gray-95;
+    border-radius: 12px;
+    width: fit-content;
+    cursor: pointer;
+    // margin: 0 4px;
+    border: 1px solid $gray-95;
+
+    &:hover{
+        background: $gray-98;
+    }
+    &:active {
+        background: $blue-5;
+        color: $gray-98;
+    }
+    &-checked, &-checked:hover {
+        background: $blue-95;
+        border: 1px solid $blue-5;
+        color: $blue-5;
+    }
+    &-checked:active {
+        background: $gray-9;
+        color: $gray-3;
+        border: 1px solid $gray-9;
+    }
+    &-count{
+        font-family: PingFang SC;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 600;
+        line-height: 20px; /* 142.857% */
+    }
+    &-userList{
+        margin: 0;
+        padding: 0;
+        display: grid;
+        max-height: 36px * 4;
+        overflow-y: auto;
+        li{
+            min-width: 204px;
+            list-style: none;
+            display: flex;
+            height: 36px;
+            padding: 6px 8px;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            &:hover{
+                background-color: $gray-95;
+            } 
+        }
+
+        &-name{
+            flex: 1;
+        }
+
+        &-close{
+            cursor: pointer;
+        }
+    }
+}
+
+.#{$cui-prefix}-reaction-icon{
+    &:hover{
+        fill: $blue-5; 
+        cursor: pointer;
+    }
+}

@@ -8,6 +8,7 @@ import Avatar from '../../component/avatar';
 import Mask from '../../component/modal/Mast';
 import Modal from '../../component/modal';
 import rootStore from '../store/index';
+import { getCvsIdFromMessage } from '../utils';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -18,7 +19,7 @@ export interface ImageMessageProps extends BaseMessageProps {
 let ImageMessage = (props: ImageMessageProps) => {
   const { imageMessage: message, shape, style, onClickImage } = props;
 
-  let { bySelf, from } = message;
+  let { bySelf, from, reactions } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message.file.url || message.thumb);
   const [previewVisible, setPreviewVisible] = useState(false);
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
@@ -94,6 +95,34 @@ let ImageMessage = (props: ImageMessageProps) => {
     );
   };
 
+  const handleClickEmoji = (emojiString: string) => {
+    console.log('添加Reaction', emojiString);
+    let conversationId = getCvsIdFromMessage(message);
+
+    rootStore.messageStore.addReaction(
+      {
+        chatType: message.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      message.mid || message.id,
+      emojiString,
+    );
+  };
+
+  const handleDeleteEmoji = (emojiString: string) => {
+    let conversationId = getCvsIdFromMessage(message);
+    rootStore.messageStore.deleteReaction(
+      {
+        chatType: message.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      message.mid || message.id,
+      emojiString,
+    );
+  };
+
   return (
     <div style={style}>
       <BaseMessage
@@ -103,6 +132,9 @@ let ImageMessage = (props: ImageMessageProps) => {
         nickName={from}
         onReplyMessage={handleReplyMsg}
         onDeleteMessage={handleDeleteMsg}
+        reactionData={reactions}
+        onAddReactionEmoji={handleClickEmoji}
+        onDeleteReactionEmoji={handleDeleteEmoji}
       >
         <div className="message-image-content">{img.current}</div>
       </BaseMessage>

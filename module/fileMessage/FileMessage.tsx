@@ -8,6 +8,8 @@ import type { FileMessageType } from '../types/messageType';
 import Avatar from '../../component/avatar';
 import download from '../utils/download';
 import rootStore from '../store/index';
+import { getCvsIdFromMessage } from '../utils';
+
 export interface FileMessageProps extends BaseMessageProps {
   fileMessage: FileMessageType; // 从SDK收到的文件消息
   iconType?: IconProps['type'];
@@ -30,7 +32,7 @@ const FileMessage = (props: FileMessageProps) => {
     ...baseMsgProps
   } = props;
 
-  const { filename, file_length, from } = fileMessage;
+  const { filename, file_length, from, reactions } = fileMessage;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
   let { bySelf } = fileMessage;
@@ -76,6 +78,34 @@ const FileMessage = (props: FileMessageProps) => {
     );
   };
 
+  const handleClickEmoji = (emojiString: string) => {
+    console.log('添加Reaction', emojiString);
+    let conversationId = getCvsIdFromMessage(fileMessage);
+
+    rootStore.messageStore.addReaction(
+      {
+        chatType: fileMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      fileMessage.mid || fileMessage.id,
+      emojiString,
+    );
+  };
+
+  const handleDeleteEmoji = (emojiString: string) => {
+    let conversationId = getCvsIdFromMessage(fileMessage);
+    rootStore.messageStore.deleteReaction(
+      {
+        chatType: fileMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      fileMessage.mid || fileMessage.id,
+      emojiString,
+    );
+  };
+
   return (
     <BaseMessage
       id={fileMessage.id}
@@ -86,6 +116,9 @@ const FileMessage = (props: FileMessageProps) => {
       nickName={nickName || from}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
+      reactionData={reactions}
+      onAddReactionEmoji={handleClickEmoji}
+      onDeleteReactionEmoji={handleDeleteEmoji}
       {...baseMsgProps}
     >
       <div className={classString}>

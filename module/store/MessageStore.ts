@@ -2,6 +2,8 @@
 import AC, { AgoraChat } from 'agora-chat';
 import { makeAutoObservable, observable, action, computed, makeObservable, autorun } from 'mobx';
 import { CurrentConversation } from './ConversationStore';
+import type { ReactionData } from '../reaction/ReactionMessage';
+import { getCvsIdFromMessage } from '../utils';
 
 export interface Message {
   singleChat: { [key: string]: AgoraChat.MessageBody[] };
@@ -36,6 +38,8 @@ class MessageStore {
       updateMessageStatus: action,
       clearMessage: action,
       setRepliedMessage: action,
+      addReaction: action,
+      updateReactions: action,
     });
 
     autorun(() => {
@@ -57,7 +61,13 @@ class MessageStore {
     this.currentCVS = currentCVS;
   }
 
-  sendMessage(message: AgoraChat.MessageBody) {
+  sendMessage(
+    message:
+      | AgoraChat.MessageBody
+      | AgoraChat.ReadMsgBody
+      | AgoraChat.DeliveryMsgBody
+      | AgoraChat.ChannelMsgBody,
+  ) {
     // @ts-ignore
     const { to, chatType } = message;
     // @ts-ignore
@@ -109,8 +119,10 @@ class MessageStore {
       message.ext = ext;
       console.log('---', message, ext);
     }
+    if (message.type != 'read' && message.type != 'delivery' && message.type != 'channel') {
+      this.message.byId[message.id] = message;
+    }
 
-    this.message.byId[message.id] = message;
     // @ts-ignore
     if (!this.message[chatType][to]) {
       // @ts-ignore
@@ -182,9 +194,8 @@ class MessageStore {
     this.message.byId[message.id] = message;
     // @ts-ignore
     message.bySelf = false;
-    const conversationId =
-      // @ts-ignore
-      message.chatType == 'singleChat' ? message.from : message.to;
+    const conversationId = getCvsIdFromMessage(message);
+
     // @ts-ignore
     if (!this.message[message.chatType][conversationId]) {
       // @ts-ignore
@@ -250,18 +261,11 @@ class MessageStore {
   updateMessageStatus(msgId: string, status: string) {
     setTimeout(() => {
       let msg = this.message.byId[msgId];
-      let conversationId;
+      let conversationId = getCvsIdFromMessage(msg);
       if (!msg) {
         return console.error('not found message:', msgId);
       }
-      // @ts-ignore
-      if (msg.bySelf) {
-        conversationId = msg.to;
-      } else {
-        conversationId =
-          // @ts-ignore
-          msg.chatType == 'singleChat' ? msg.from : msg.to;
-      }
+
       // @ts-ignore
       this.message.byId[msgId].status = status;
       // @ts-ignore
@@ -312,6 +316,143 @@ class MessageStore {
         });
         this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
       });
+  }
+
+  addReaction(cvs: CurrentConversation, messageId: string, emoji: string) {
+    console.log(cvs, messageId, emoji);
+    if (!cvs || !messageId || !emoji) return;
+    return this.rootStore.client
+      .addReaction({
+        messageId,
+        reaction: emoji,
+      })
+      .then(() => {
+        const messages = this.message[cvs.chatType][cvs.conversationId];
+        messages.forEach(message => {
+          // @ts-ignore
+          if (message.id === messageId || message.mid === messageId) {
+            let hasEmoji = false;
+            message.reactions?.forEach((action: ReactionData) => {
+              if (action.reaction === emoji) {
+                hasEmoji = true;
+                action.count += 1;
+                action.isAddedBySelf = true;
+                action.userList.push(this.rootStore.client.user);
+              }
+            });
+            if (!hasEmoji) {
+              const newAction = {
+                count: 1,
+                isAddedBySelf: true,
+                reaction: emoji,
+                userList: [this.rootStore.client.user],
+              };
+              if (Array.isArray(message.reactions)) {
+                message.reactions.push(newAction);
+              } else {
+                message.reactions = [newAction];
+              }
+            }
+          }
+        });
+        this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+        // const filterMsgs = messages.filter(msg => {
+        //   // @ts-ignore
+        //   return msg.id != messageId && msg.mid != messageId;
+        // });
+        // this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+      })
+      .catch((err: AgoraChat.ErrorEvent) => {
+        console.error(err);
+      });
+  }
+
+  deleteReaction(cvs: CurrentConversation, messageId: string, emoji: string) {
+    console.log(cvs, messageId, emoji);
+    if (!cvs || !messageId || !emoji) return;
+    return this.rootStore.client
+      .deleteReaction({
+        messageId,
+        reaction: emoji,
+      })
+      .then(() => {
+        const messages = this.message[cvs.chatType][cvs.conversationId];
+        messages.forEach(message => {
+          // @ts-ignore
+          if (message.id === messageId || message.mid === messageId) {
+            message.reactions?.forEach((action: ReactionData, i) => {
+              if (action.reaction === emoji) {
+                action.count -= 1;
+                if (action.count <= 0) {
+                  message.reactions?.splice(i, 1);
+                }
+                const index = action.userList.indexOf(this.rootStore.client.user);
+                if (index > -1) {
+                  action.userList.splice(index, 1);
+                }
+              }
+            });
+          }
+
+          this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+        });
+      })
+      .catch((err: AgoraChat.ErrorEvent) => {
+        console.error(err);
+      });
+  }
+
+  updateReactions(cvs: CurrentConversation, messageId: string, reactions: ReactionData[]) {
+    console.log('updateReactions', cvs, messageId);
+    if (!cvs || !messageId) return;
+    const messages = this.message[cvs.chatType][cvs.conversationId];
+
+    const filterActs = reactions.filter(item => {
+      return item.op?.length && item.op?.length > 0;
+    });
+
+    messages.forEach(message => {
+      // @ts-ignore
+      if (message.id === messageId || message.mid === messageId) {
+        // The message has not yet been added the reaction
+        if (!message.reactions || message.reactions?.length === 0) {
+          message.reactions = reactions;
+          message.reactions.forEach(item => {
+            if (item.op) {
+              item.op.forEach(op => {
+                if (op.operator === this.rootStore.client.user && op.reactionType === 'create') {
+                  item.isAddedBySelf = true;
+                }
+              });
+            }
+          });
+        } else {
+          message.reactions.forEach(item => {
+            filterActs.forEach(filItem => {
+              if (item.reaction === filItem.reaction) {
+                let newReaction = {
+                  ...item,
+                  ...filItem,
+                };
+                item = newReaction;
+                filItem.op &&
+                  filItem.op.forEach(op => {
+                    if (op.operator === this.rootStore.client.user) {
+                      if (op.reactionType === 'create') {
+                      } else {
+                        item.isAddedBySelf = false;
+                      }
+                    }
+                  });
+              }
+            });
+          });
+        }
+
+        console.log('找到了', message);
+      }
+    });
+    this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
   }
 }
 

@@ -11,6 +11,7 @@ import { RenderFunction, Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import { JSX } from 'react/jsx-runtime';
+import { renderTxt } from '../textMessage/TextMessage';
 export interface ConversationItemProps {
   className?: string;
   prefix?: string;
@@ -131,10 +132,10 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     );
   }
 
-  let lastMsg = '';
+  let lastMsg: ReactNode = '';
   switch (data.lastMessage?.type) {
     case 'txt':
-      lastMsg = data.lastMessage?.msg as string;
+      lastMsg = renderTxt(data.lastMessage?.msg, '');
       break;
     case 'img':
       lastMsg = `/${t('module.image')}/`;

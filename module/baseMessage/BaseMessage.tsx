@@ -13,6 +13,8 @@ import Icon from '../../component/icon';
 import { RepliedMsg } from '../repliedMessage';
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
+import { EmojiKeyBoard } from '../reaction';
+import { ReactionMessage, ReactionData } from '../reaction';
 
 export interface BaseMessageProps {
   // messageId: string; // 消息 id
@@ -35,6 +37,9 @@ export interface BaseMessageProps {
   onReplyMessage?: () => void;
   onDeleteMessage?: () => void;
   id?: string;
+  reactionData?: ReactionData[];
+  onAddReactionEmoji?: (emojiString: string) => void;
+  onDeleteReactionEmoji?: (emojiString: string) => void;
 }
 
 const BaseMessage = (props: BaseMessageProps) => {
@@ -57,6 +62,9 @@ const BaseMessage = (props: BaseMessageProps) => {
     repliedMessage,
     onDeleteMessage,
     id,
+    reactionData,
+    onAddReactionEmoji,
+    onDeleteReactionEmoji,
   } = props;
 
   const { t } = useTranslation();
@@ -170,44 +178,81 @@ const BaseMessage = (props: BaseMessageProps) => {
     );
   }
 
+  const handleClickEmoji = (emoji: string) => {
+    onAddReactionEmoji && onAddReactionEmoji(emoji);
+  };
+
+  const handleDeleteReactionEmoji = (emoji: string) => {
+    onDeleteReactionEmoji && onDeleteReactionEmoji(emoji);
+  };
+
+  const selectedList: string[] = [];
+  if (reactionData) {
+    reactionData.forEach(item => {
+      if (item.isAddedBySelf) {
+        selectedList.push(item.reaction);
+      }
+    });
+  }
   return (
-    <div
-      id={id}
-      className={classString}
-      style={{ ...style }}
-      onMouseOver={() => setHoverStatus(true)}
-      onMouseLeave={() => {
-        console.log('leave');
-        setHoverStatus(false);
-      }}
-    >
-      {avatarToShow}
-      <div className={`${prefixCls}-box`}>
-        {showRepliedMsg ? (
-          <RepliedMsg message={repliedMessage} shape={shape} direction={direction}></RepliedMsg>
-        ) : (
-          <div className={`${prefixCls}-info`}>
-            <span className={`${prefixCls}-nickname`}>{nickName}</span>
-            <span className={`${prefixCls}-time`}>{getConversationTime(time as number)}</span>
-          </div>
-        )}
-        {/* <div className={`${prefixCls}-info`}>
+    <div>
+      <div
+        id={id}
+        className={classString}
+        style={{ ...style }}
+        onMouseOver={() => setHoverStatus(true)}
+        onMouseLeave={() => {
+          console.log('leave');
+          setHoverStatus(false);
+        }}
+      >
+        {avatarToShow}
+        <div className={`${prefixCls}-box`}>
+          {showRepliedMsg ? (
+            <RepliedMsg message={repliedMessage} shape={shape} direction={direction}></RepliedMsg>
+          ) : (
+            <div className={`${prefixCls}-info`}>
+              <span className={`${prefixCls}-nickname`}>{nickName}</span>
+              <span className={`${prefixCls}-time`}>{getConversationTime(time as number)}</span>
+            </div>
+          )}
+          {/* <div className={`${prefixCls}-info`}>
           <span className={`${prefixCls}-nickname`}>{nickName}</span>
           <span className={`${prefixCls}-time`}>{getConversationTime(time as number)}</span>
         </div> */}
 
-        <div className={`${prefixCls}-body`}>
-          {contentNode}
+          <div className={`${prefixCls}-body`}>
+            {contentNode}
+            {hoverStatus ? (
+              <>
+                <Tooltip title={menuNode} trigger="click" placement="bottom">
+                  {moreAction.icon || (
+                    <Icon type="ELLIPSIS" className={`${prefixCls}-body-action`} height={20}></Icon>
+                  )}
+                </Tooltip>
 
-          {hoverStatus ? (
-            <Tooltip title={menuNode} trigger="click" placement="bottom">
-              {moreAction.icon || <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>}
-            </Tooltip>
-          ) : (
-            <MessageStatus status={status} type="icon"></MessageStatus>
-          )}
+                <EmojiKeyBoard
+                  onSelected={handleClickEmoji}
+                  selectedList={selectedList}
+                  onDelete={handleDeleteReactionEmoji}
+                ></EmojiKeyBoard>
+              </>
+            ) : (
+              <MessageStatus status={status} type="icon"></MessageStatus>
+            )}
+          </div>
         </div>
       </div>
+      {reactionData && (
+        <div className="111">
+          <ReactionMessage
+            direction={direction}
+            reactionData={reactionData}
+            onClick={handleClickEmoji}
+            onDelete={handleDeleteReactionEmoji}
+          />
+        </div>
+      )}
     </div>
   );
 };

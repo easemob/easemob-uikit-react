@@ -1,0 +1,22 @@
+@import './reaction-btn.scss';
+
+@import '~/common/style/index.scss';
+$status-prefix-cls: #{$cui-prefix}-reaction-box;
+
+.#{$status-prefix-cls}{
+    display: flex;
+    padding: 0 64px;
+    float: left;
+    flex-flow: wrap;
+    gap: 4px 8px;
+    margin-bottom: 16px;
+    align-items: center;
+    &-left{
+        float: left;
+    }
+    &-right{
+        float: right;
+        // justify-content: flex-end;
+        flex-direction: row-reverse
+    }
+}

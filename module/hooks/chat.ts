@@ -1,7 +1,8 @@
 import { useCallback, useEffect, MutableRefObject, useContext } from 'react';
-import AC from 'agora-chat';
+import AC, { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
 import { useClient } from './useClient';
+import { getCvsIdFromMessage } from '../utils';
 const useEventHandler = () => {
   const rootStore = useContext(RootContext);
   const { messageStore } = rootStore.rootStore;
@@ -69,6 +70,16 @@ const useEventHandler = () => {
       onDisconnected: () => {
         console.log('退出成功 *********');
         rootStore.rootStore.setLoginState(false);
+      },
+
+      onReactionChange: data => {
+        const conversationId = getCvsIdFromMessage(data as unknown as AgoraChat.MessageBody);
+
+        const cvs = {
+          chatType: data.chatType,
+          conversationId: conversationId,
+        };
+        rootStore.rootStore.messageStore.updateReactions(cvs, data.messageId, data.reactions);
       },
     });
 

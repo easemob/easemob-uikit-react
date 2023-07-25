@@ -34,8 +34,8 @@ const ChatApp = () => {
     client &&
       client
         .open({
-          user: '13681272809',
-          pwd: '272809',
+          user: '13681272808',
+          pwd: '272808',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
@@ -95,7 +95,7 @@ const ChatApp = () => {
         <ConversationList className="conversation"></ConversationList>
         {/* <ContactList></ContactList> */}
       </div>
-      <div style={{ width: '65%', borderLeft: '1px solid transparent' }}>
+      <div style={{ width: '65%', borderLeft: '1px solid transparent', overflow: 'hidden' }}>
         <Chat></Chat>
       </div>
       <div>

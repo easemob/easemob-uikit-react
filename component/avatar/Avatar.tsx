@@ -106,6 +106,12 @@ export const InternalAvatar = (props: any, ref: any) => {
     childrenToRender = src;
   } else if (icon) {
     childrenToRender = icon;
+  } else if (typeof children == 'string') {
+    childrenToRender = (
+      <span className={`${prefixCls}-string`} ref={avatarChildrenRef}>
+        {children.slice(0, 2)}
+      </span>
+    );
   } else {
     childrenToRender = (
       <span className={`${prefixCls}-string`} ref={avatarChildrenRef}>

@@ -31,6 +31,7 @@ enum ICON_TYPES {
   IMG = 'IMG',
   ARROW_TURN_LEFT = 'ARROW_TURN_LEFT',
   ARROW_UP_THICK = 'ARROW_UP_THICK',
+  FACE_PLUS = 'FACE_PLUS',
 }
 // chevron_down
 export { ICON_TYPES };

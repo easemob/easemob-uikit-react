@@ -13,6 +13,7 @@ import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import { UrlMessage } from './UrlMessage';
 import reactStringReplace from 'react-string-replace';
 import { AgoraChat } from 'agora-chat';
+import { getCvsIdFromMessage } from '../utils';
 export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
   // color?: string; // 字体颜色
@@ -128,7 +129,7 @@ export const TextMessage = (props: TextMessageProps) => {
   const prefixCls = getPrefixCls('message-text', customizePrefixCls);
   const [urlData, setUrlData] = useState<any>(null);
   const [isFetching, setFetching] = useState(false);
-  let { bySelf, time, from, msg } = textMessage;
+  let { bySelf, time, from, msg, reactions } = textMessage;
 
   const classString = classNames(prefixCls, className);
 
@@ -138,7 +139,7 @@ export const TextMessage = (props: TextMessageProps) => {
   if (!type) {
     type = bySelf ? 'primary' : 'secondly';
   }
-  console.log('渲染文本组件');
+  console.log('渲染文本组件', textMessage);
   const urlPreview = useRef<any>(null);
 
   const detectedUrl = msg
@@ -188,6 +189,33 @@ export const TextMessage = (props: TextMessageProps) => {
   if (textMessage.ext?.msgQuote) {
     repliedMsg = textMessage;
   }
+
+  const handleClickEmoji = (emojiString: string) => {
+    console.log('添加Reaction', emojiString);
+    let conversationId = getCvsIdFromMessage(textMessage);
+    rootStore.messageStore.addReaction(
+      {
+        chatType: textMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      textMessage.mid || textMessage.id,
+      emojiString,
+    );
+  };
+
+  const handleDeleteEmoji = (emojiString: string) => {
+    let conversationId = getCvsIdFromMessage(textMessage);
+    rootStore.messageStore.deleteReaction(
+      {
+        chatType: textMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      textMessage.mid || textMessage.id,
+      emojiString,
+    );
+  };
   return (
     <BaseMessage
       id={textMessage.id}
@@ -200,6 +228,9 @@ export const TextMessage = (props: TextMessageProps) => {
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
       repliedMessage={repliedMsg}
+      reactionData={reactions}
+      onAddReactionEmoji={handleClickEmoji}
+      onDeleteReactionEmoji={handleDeleteEmoji}
       {...others}
     >
       <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
