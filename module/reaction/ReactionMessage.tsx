@@ -24,6 +24,7 @@ export interface ReactionMessageProps {
   config?: { map: any; path: string };
   onClick?: (emojiString: string) => void;
   onDelete?: (emojiString: string) => void;
+  onShowUserList?: (emojiString: string) => void;
 }
 
 const ReactionMessage = (props: ReactionMessageProps) => {
@@ -37,6 +38,7 @@ const ReactionMessage = (props: ReactionMessageProps) => {
     prefixCls: customizePrefixCls,
     className,
     direction = 'ltr',
+    onShowUserList,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('reaction-box', customizePrefixCls);
@@ -74,6 +76,10 @@ const ReactionMessage = (props: ReactionMessageProps) => {
     onDelete && onDelete(emoji);
   };
 
+  const handleShowUserList = (emoji: string) => {
+    onShowUserList && onShowUserList(emoji);
+  };
+
   const selectedList: string[] = [];
   if (reactionData) {
     reactionData.forEach(item => {
@@ -103,6 +109,7 @@ const ReactionMessage = (props: ReactionMessageProps) => {
             userList={item.userList}
             onClick={handleClickReaction}
             onDelete={handleDeleteReaction}
+            onShowUserList={handleShowUserList}
           ></ReactionButton>
         );
       })}

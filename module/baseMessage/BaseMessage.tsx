@@ -40,6 +40,7 @@ export interface BaseMessageProps {
   reactionData?: ReactionData[];
   onAddReactionEmoji?: (emojiString: string) => void;
   onDeleteReactionEmoji?: (emojiString: string) => void;
+  onShowReactionUserList?: (emojiString: string) => void;
 }
 
 const BaseMessage = (props: BaseMessageProps) => {
@@ -65,6 +66,7 @@ const BaseMessage = (props: BaseMessageProps) => {
     reactionData,
     onAddReactionEmoji,
     onDeleteReactionEmoji,
+    onShowReactionUserList,
   } = props;
 
   const { t } = useTranslation();
@@ -132,6 +134,10 @@ const BaseMessage = (props: BaseMessageProps) => {
         content: 'DELETE',
         onClick: () => {},
       },
+      {
+        content: 'UNSEND',
+        onClick: () => {},
+      },
     ],
   };
 
@@ -184,6 +190,10 @@ const BaseMessage = (props: BaseMessageProps) => {
 
   const handleDeleteReactionEmoji = (emoji: string) => {
     onDeleteReactionEmoji && onDeleteReactionEmoji(emoji);
+  };
+
+  const handleShowReactionUserList = (emoji: string) => {
+    onShowReactionUserList && onShowReactionUserList(emoji);
   };
 
   const selectedList: string[] = [];
@@ -250,6 +260,7 @@ const BaseMessage = (props: BaseMessageProps) => {
             reactionData={reactionData}
             onClick={handleClickEmoji}
             onDelete={handleDeleteReactionEmoji}
+            onShowUserList={handleShowReactionUserList}
           />
         </div>
       )}

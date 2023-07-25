@@ -17,6 +17,7 @@ export interface ReactionButtonProps {
   userList: string[];
   onClick?: (emojiString: string) => void;
   onDelete?: (emojiString: string) => void;
+  onShowUserList?: (emojiString: string) => void;
 }
 
 const emojiWidth = 18;
@@ -32,6 +33,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
     userList,
     onClick,
     onDelete,
+    onShowUserList,
   } = props;
   const prefixCls = getPrefixCls('reaction-btn', customizePrefixCls);
   const rootStore = useContext(RootContext).rootStore;
@@ -60,7 +62,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
       <ul className={`${prefixCls}-userList`}>
         {userList.map(userId => {
           return (
-            <li>
+            <li key={userId}>
               <Avatar size={24}></Avatar>
               <span className={`${prefixCls}-userList-name`}>{userId}</span>
               {myUserId == userId && (
@@ -92,6 +94,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
       onOpenChange={status => {
         if (isAddedBySelf && status) {
           setOpen(true);
+          onShowUserList?.(reaction);
         } else {
           setOpen(false);
         }

@@ -123,6 +123,35 @@ let ImageMessage = (props: ImageMessageProps) => {
     );
   };
 
+  const handleShowReactionUserList = (emojiString: string) => {
+    let conversationId = getCvsIdFromMessage(message);
+    reactions?.forEach(item => {
+      if (item.reaction === emojiString) {
+        if (item.count > 3 && item.userList.length <= 3) {
+          rootStore.messageStore.getReactionUserList(
+            {
+              chatType: message.chatType,
+              conversationId: conversationId,
+            },
+            // @ts-ignore
+            textMessage.mid || textMessage.id,
+            emojiString,
+          );
+        }
+
+        if (item.isAddedBySelf) {
+          const index = item.userList.indexOf(rootStore.client.user);
+          if (index > -1) {
+            const findItem = item.userList.splice(index, 1)[0];
+            item.userList.unshift(findItem);
+          } else {
+            item.userList.unshift(rootStore.client.user);
+          }
+        }
+      }
+    });
+  };
+
   return (
     <div style={style}>
       <BaseMessage
@@ -135,6 +164,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         reactionData={reactions}
         onAddReactionEmoji={handleClickEmoji}
         onDeleteReactionEmoji={handleDeleteEmoji}
+        onShowReactionUserList={handleShowReactionUserList}
       >
         <div className="message-image-content">{img.current}</div>
       </BaseMessage>

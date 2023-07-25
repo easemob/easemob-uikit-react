@@ -106,6 +106,34 @@ const FileMessage = (props: FileMessageProps) => {
     );
   };
 
+  const handleShowReactionUserList = (emojiString: string) => {
+    let conversationId = getCvsIdFromMessage(fileMessage);
+    reactions?.forEach(item => {
+      if (item.reaction === emojiString) {
+        if (item.count > 3 && item.userList.length <= 3) {
+          rootStore.messageStore.getReactionUserList(
+            {
+              chatType: fileMessage.chatType,
+              conversationId: conversationId,
+            },
+            // @ts-ignore
+            textMessage.mid || textMessage.id,
+            emojiString,
+          );
+        }
+
+        if (item.isAddedBySelf) {
+          const index = item.userList.indexOf(rootStore.client.user);
+          if (index > -1) {
+            const findItem = item.userList.splice(index, 1)[0];
+            item.userList.unshift(findItem);
+          } else {
+            item.userList.unshift(rootStore.client.user);
+          }
+        }
+      }
+    });
+  };
   return (
     <BaseMessage
       id={fileMessage.id}
@@ -119,6 +147,7 @@ const FileMessage = (props: FileMessageProps) => {
       reactionData={reactions}
       onAddReactionEmoji={handleClickEmoji}
       onDeleteReactionEmoji={handleDeleteEmoji}
+      onShowReactionUserList={handleShowReactionUserList}
       {...baseMsgProps}
     >
       <div className={classString}>

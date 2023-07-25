@@ -1,10 +1,10 @@
 // import client from './agoraChatConfig';
 import AC, { AgoraChat } from 'agora-chat';
 import { makeAutoObservable, observable, action, computed, makeObservable, autorun } from 'mobx';
-import { CurrentConversation } from './ConversationStore';
+import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage } from '../utils';
-
+import { RootStore } from './index';
 export interface Message {
   singleChat: { [key: string]: AgoraChat.MessageBody[] };
   groupChat: { [key: string]: AgoraChat.MessageBody[] };
@@ -15,7 +15,7 @@ class MessageStore {
   message: Message;
   currentCVS: CurrentConversation;
   repliedMessage: AgoraChat.MessageBody | null;
-  constructor(rootStore: any) {
+  constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
 
     this.message = {
@@ -136,7 +136,7 @@ class MessageStore {
       this.setRepliedMessage(null);
     }
     return this.rootStore.client
-      .send(message)
+      .send(message as unknown as AgoraChat.MessageBody)
       .then((data: { serverMsgId: string }) => {
         console.log('send success', data);
         // message.status = 'sent';
@@ -161,11 +161,11 @@ class MessageStore {
         console.log('---->message', this.message);
 
         // 更新会话last message
-        let cvs = this.rootStore.conversationStore.getConversation(
+        let cvs: Conversation = this.rootStore.conversationStore.getConversation(
           // @ts-ignore
           message.chatType,
           to,
-        );
+        ) as unknown as Conversation;
         // 没有会话时创建会话
         if (!cvs) {
           cvs = {
@@ -173,14 +173,14 @@ class MessageStore {
             chatType: message.chatType,
             conversationId:
               // @ts-ignore
-              message.chatType == 'groupChat' ? message.to : message.from,
-            lastMessage: message,
+              message.chatType == 'groupChat' ? message.to : message.from || '',
+            lastMessage: message as unknown as Conversation['lastMessage'],
             unreadCount: 0,
           };
           this.rootStore.conversationStore.addConversation(cvs);
           return;
         }
-        cvs.lastMessage = message;
+        cvs.lastMessage = message as unknown as Conversation['lastMessage'];
         this.rootStore.conversationStore.modifyConversation({ ...cvs });
       })
       .catch((error: ErrorEvent) => {
@@ -210,11 +210,11 @@ class MessageStore {
       this.currentCVS.chatType == message.chatType &&
       this.currentCVS.conversationId == conversationId;
     console.log('isCurrentCvs', isCurrentCvs);
-    let cvs = this.rootStore.conversationStore.getConversation(
+    let cvs: Conversation = this.rootStore.conversationStore.getConversation(
       // @ts-ignore
       message.chatType,
       conversationId,
-    );
+    ) as unknown as Conversation;
     // 没有会话时创建会话
     if (!cvs) {
       cvs = {
@@ -447,6 +447,34 @@ class MessageStore {
       }
     });
     this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+  }
+
+  getReactionUserList(cvs: CurrentConversation, messageId: string, reaction: string) {
+    if (!cvs || !messageId) return;
+    return this.rootStore.client
+      .getReactionDetail({
+        messageId,
+        reaction,
+        pageSize: 100,
+      })
+      .then((data: AgoraChat.AsyncResult<AgoraChat.GetReactionDetailResult>) => {
+        console.log('getReactionUserList', data);
+        const reactionData = data.data;
+        const messages = this.message[cvs.chatType][cvs.conversationId];
+        if (!reactionData) return;
+        messages.forEach(message => {
+          // @ts-ignore
+          if (message.id === messageId || message.mid === messageId) {
+            message.reactions?.forEach(item => {
+              if (item.reaction === reaction) {
+                item.userList = reactionData.userList;
+              }
+            });
+          }
+        });
+
+        this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+      });
   }
 }
 
