@@ -88,13 +88,13 @@ const ReactionButton = (props: ReactionButtonProps) => {
   return (
     <Tooltip
       title={renderUserList()}
-      trigger={'click'}
+      trigger={'hover'}
       arrowPointAtCenter={false}
       arrow={false}
       onOpenChange={status => {
-        if (isAddedBySelf && status) {
-          setOpen(true);
+        if (status) {
           onShowUserList?.(reaction);
+          setOpen(true);
         } else {
           setOpen(false);
         }

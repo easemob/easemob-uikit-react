@@ -336,7 +336,7 @@ class MessageStore {
                 hasEmoji = true;
                 action.count += 1;
                 action.isAddedBySelf = true;
-                action.userList.push(this.rootStore.client.user);
+                action.userList.unshift(this.rootStore.client.user);
               }
             });
             if (!hasEmoji) {
@@ -440,6 +440,16 @@ class MessageStore {
                       }
                     }
                   });
+
+                if (item.isAddedBySelf) {
+                  const index = item.userList.indexOf(this.rootStore.client.user);
+                  if (index > -1) {
+                    const findItem = item.userList.splice(index, 1)[0];
+                    item.userList.unshift(findItem);
+                  } else {
+                    item.userList.unshift(this.rootStore.client.user);
+                  }
+                }
               }
             });
           });
