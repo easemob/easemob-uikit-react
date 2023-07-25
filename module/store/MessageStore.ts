@@ -261,11 +261,10 @@ class MessageStore {
   updateMessageStatus(msgId: string, status: string) {
     setTimeout(() => {
       let msg = this.message.byId[msgId];
-      let conversationId = getCvsIdFromMessage(msg);
       if (!msg) {
         return console.error('not found message:', msgId);
       }
-
+      let conversationId = getCvsIdFromMessage(msg);
       // @ts-ignore
       this.message.byId[msgId].status = status;
       // @ts-ignore
@@ -403,14 +402,13 @@ class MessageStore {
   }
 
   updateReactions(cvs: CurrentConversation, messageId: string, reactions: ReactionData[]) {
-    console.log('updateReactions', cvs, messageId);
+    console.log('updateReactions', cvs, messageId, reactions);
     if (!cvs || !messageId) return;
     const messages = this.message[cvs.chatType][cvs.conversationId];
 
     const filterActs = reactions.filter(item => {
       return item.op?.length && item.op?.length > 0;
     });
-
     messages.forEach(message => {
       // @ts-ignore
       if (message.id === messageId || message.mid === messageId) {
@@ -430,15 +428,13 @@ class MessageStore {
           message.reactions.forEach(item => {
             filterActs.forEach(filItem => {
               if (item.reaction === filItem.reaction) {
-                let newReaction = {
-                  ...item,
-                  ...filItem,
-                };
-                item = newReaction;
+                item.count = filItem.count;
+                item.userList = filItem.userList;
                 filItem.op &&
                   filItem.op.forEach(op => {
                     if (op.operator === this.rootStore.client.user) {
                       if (op.reactionType === 'create') {
+                        item.isAddedBySelf = true;
                       } else {
                         item.isAddedBySelf = false;
                       }
@@ -448,8 +444,6 @@ class MessageStore {
             });
           });
         }
-
-        console.log('找到了', message);
       }
     });
     this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);

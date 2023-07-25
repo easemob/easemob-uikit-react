@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import Button from '../../component/button';
@@ -37,13 +37,13 @@ const ReactionButton = (props: ReactionButtonProps) => {
   const rootStore = useContext(RootContext).rootStore;
   const myUserId = rootStore.client.user;
   const path = emoji.map[reaction as keyof typeof emoji.map];
-
   const [checked, setCheck] = useState(isAddedBySelf);
   const [open, setOpen] = useState(false);
+
   const classString = classNames(
     prefixCls,
     {
-      [`${prefixCls}-checked`]: checked,
+      [`${prefixCls}-checked`]: isAddedBySelf,
     },
     className,
   );
@@ -78,10 +78,11 @@ const ReactionButton = (props: ReactionButtonProps) => {
   };
 
   const handleClick = () => {
-    if (!checked) {
+    if (!isAddedBySelf) {
       onClick?.(reaction);
     }
   };
+
   return (
     <Tooltip
       title={renderUserList()}
@@ -89,7 +90,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
       arrowPointAtCenter={false}
       arrow={false}
       onOpenChange={status => {
-        if (checked && status) {
+        if (isAddedBySelf && status) {
           setOpen(true);
         } else {
           setOpen(false);
