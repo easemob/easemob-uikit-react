@@ -8,6 +8,8 @@ import Avatar from '../../component/avatar';
 import Icon from '../../component/icon';
 import { RootContext } from '../store/rootContext';
 
+let timeoutId: string | number | NodeJS.Timeout | undefined;
+
 export interface ReactionButtonProps {
   prefixCls?: string;
   className?: string;
@@ -39,7 +41,6 @@ const ReactionButton = (props: ReactionButtonProps) => {
   const rootStore = useContext(RootContext).rootStore;
   const myUserId = rootStore.client.user;
   const path = emoji.map[reaction as keyof typeof emoji.map];
-  const [checked, setCheck] = useState(isAddedBySelf);
   const [open, setOpen] = useState(false);
 
   const classString = classNames(
@@ -50,11 +51,17 @@ const ReactionButton = (props: ReactionButtonProps) => {
     className,
   );
 
-  const handleMouseUp = () => {};
-  const handleMouseDown = () => {};
+  const handleMouseUp = () => {
+    timeoutId = setTimeout(() => {
+      setIsHovered(true);
+    }, 1000);
+  };
+  const handleMouseDown = () => {
+    clearTimeout(timeoutId);
+    setIsHovered(false);
+  };
 
   const deleteReaction = () => {
-    console.log('删除', reaction);
     onDelete?.(reaction);
   };
   const renderUserList = () => {
@@ -85,6 +92,8 @@ const ReactionButton = (props: ReactionButtonProps) => {
     }
   };
 
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <Tooltip
       title={renderUserList()}
@@ -94,19 +103,18 @@ const ReactionButton = (props: ReactionButtonProps) => {
       onOpenChange={status => {
         if (status) {
           onShowUserList?.(reaction);
-          setOpen(true);
+          //   setOpen(true);
         } else {
-          setOpen(false);
+          //   setOpen(false);
         }
       }}
-      open={open}
+      open={isHovered}
     >
       <button
         className={classString}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseDown}
+        onMouseEnter={handleMouseUp}
         onClick={handleClick}
-        //   onMouseLeave={handleMouseUp}
       >
         <img
           className={`${prefixCls}-img`}
