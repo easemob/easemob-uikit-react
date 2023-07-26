@@ -95,6 +95,9 @@ const ReactionButton = (props: ReactionButtonProps) => {
 
   const [isHovered, setIsHovered] = useState(false);
 
+  if (userList.length === 0) {
+    return null;
+  }
   return (
     <Tooltip
       title={renderUserList()}
