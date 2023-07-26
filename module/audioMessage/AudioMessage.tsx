@@ -154,6 +154,17 @@ const AudioMessage = (props: AudioMessageProps) => {
     });
   };
 
+  const handleRecallMessage = () => {
+    let conversationId = getCvsIdFromMessage(audioMessage);
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: audioMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      audioMessage.mid || audioMessage.id,
+    );
+  };
   return (
     <BaseMessage
       id={audioMessage.id}
@@ -169,6 +180,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       onAddReactionEmoji={handleClickEmoji}
       onDeleteReactionEmoji={handleDeleteEmoji}
       onShowReactionUserList={handleShowReactionUserList}
+      onRecallMessage={handleRecallMessage}
       {...others}
     >
       <div className={classString} onClick={playAudio} style={{ ...style }}>

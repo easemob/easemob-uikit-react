@@ -45,7 +45,7 @@ class MessageStore {
       setRepliedMessage: action,
       addReaction: action,
       updateReactions: action,
-      withdrewMessage: action,
+      recallMessage: action,
     });
 
     autorun(() => {
@@ -324,7 +324,7 @@ class MessageStore {
       });
   }
 
-  withdrewMessage(cvs: CurrentConversation, messageId: string) {
+  recallMessage(cvs: CurrentConversation, messageId: string) {
     if (!cvs || !messageId) return;
 
     return this.rootStore.client

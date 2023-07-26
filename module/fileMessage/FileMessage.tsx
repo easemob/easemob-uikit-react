@@ -134,6 +134,18 @@ const FileMessage = (props: FileMessageProps) => {
       }
     });
   };
+
+  const handleRecallMessage = () => {
+    let conversationId = getCvsIdFromMessage(fileMessage);
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: fileMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      fileMessage.mid || fileMessage.id,
+    );
+  };
   return (
     <BaseMessage
       id={fileMessage.id}
@@ -148,6 +160,7 @@ const FileMessage = (props: FileMessageProps) => {
       onAddReactionEmoji={handleClickEmoji}
       onDeleteReactionEmoji={handleDeleteEmoji}
       onShowReactionUserList={handleShowReactionUserList}
+      onRecallMessage={handleRecallMessage}
       {...baseMsgProps}
     >
       <div className={classString}>

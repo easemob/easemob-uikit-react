@@ -248,9 +248,8 @@ export const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    console.log('撤回消息', textMessage);
     let conversationId = getCvsIdFromMessage(textMessage);
-    rootStore.messageStore.withdrewMessage(
+    rootStore.messageStore.recallMessage(
       {
         chatType: textMessage.chatType,
         conversationId: conversationId,

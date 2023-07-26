@@ -152,6 +152,18 @@ let ImageMessage = (props: ImageMessageProps) => {
     });
   };
 
+  const handleRecallMessage = () => {
+    let conversationId = getCvsIdFromMessage(message);
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: message.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      message.mid || message.id,
+    );
+  };
+
   return (
     <div style={style}>
       <BaseMessage
@@ -165,6 +177,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         onAddReactionEmoji={handleClickEmoji}
         onDeleteReactionEmoji={handleDeleteEmoji}
         onShowReactionUserList={handleShowReactionUserList}
+        onRecallMessage={handleRecallMessage}
       >
         <div className="message-image-content">{img.current}</div>
       </BaseMessage>
