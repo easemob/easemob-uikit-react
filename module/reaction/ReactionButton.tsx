@@ -58,7 +58,6 @@ const ReactionButton = (props: ReactionButtonProps) => {
   };
   const handleMouseDown = () => {
     clearTimeout(timeoutId);
-    setIsHovered(false);
   };
 
   const deleteReaction = () => {
@@ -89,6 +88,8 @@ const ReactionButton = (props: ReactionButtonProps) => {
   const handleClick = () => {
     if (!isAddedBySelf) {
       onClick?.(reaction);
+    } else {
+      onDelete?.(reaction);
     }
   };
 
@@ -106,6 +107,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
           //   setOpen(true);
         } else {
           //   setOpen(false);
+          setIsHovered(false);
         }
       }}
       open={isHovered}

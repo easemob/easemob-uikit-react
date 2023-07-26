@@ -82,7 +82,7 @@ const BaseMessage = (props: BaseMessageProps) => {
     onShowReactionUserList,
     onRecallMessage,
     customAction,
-    reaction,
+    reaction = true,
   } = props;
 
   const { t } = useTranslation();
