@@ -1,0 +1,19 @@
+@import '~/common/style/index.scss';
+$suggestList-prefix-cls: #{$cui-prefix}-suggest-list;
+
+.#{$suggestList-prefix-cls} {
+  position: fixed;
+  width: 100px;
+  max-height: 212px;
+  border-radius: 16px;
+  padding: 8px;
+  border: 1px solid var(--color-neutral-9, #E3E6E8);
+  background: var(--color-neutral-98, #F9FAFA);
+  box-shadow: 0px 24px 36px 0px rgba(70, 78, 83, 0.15), 8px 0px 24px 0px rgba(23, 26, 28, 0.08);
+
+  & {
+    .active {
+      background: #abcdef;
+    }
+  }
+}

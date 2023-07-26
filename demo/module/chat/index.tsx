@@ -34,8 +34,8 @@ const ChatApp = () => {
     client &&
       client
         .open({
-          user: '13681272808',
-          pwd: '272808',
+          user: '15226583193',
+          pwd: '583193',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
