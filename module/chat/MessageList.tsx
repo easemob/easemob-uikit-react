@@ -25,12 +25,14 @@ import { RootContext } from '../store/rootContext';
 import AC, { AgoraChat } from 'agora-chat';
 import { cloneElement } from '../../component/_utils/reactNode';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
+import type { RecallMessage } from '../store/MessageStore';
+import { RecalledMessage } from '../recalledMessage';
 
 export interface MsgListProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
-  renderMessage?: (message: AgoraChat.MessageBody) => ReactNode;
+  renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
 }
 
 let MessageList: FC<MsgListProps> = props => {
@@ -96,6 +98,19 @@ let MessageList: FC<MsgListProps> = props => {
           fileMessage={messageData[data.index]}
           style={data.style}
         ></FileMessage>
+      );
+    } else if (messageData[data.index].type == 'recall') {
+      return (
+        <RecalledMessage
+          key={messageData[data.index].id}
+          style={data.style}
+          //@ts-ignore
+          status={messageData[data.index].status}
+          //@ts-ignore
+          message={messageData[data.index]}
+        >
+          {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
+        </RecalledMessage>
       );
     } else {
       return (

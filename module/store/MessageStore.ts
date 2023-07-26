@@ -5,10 +5,15 @@ import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage } from '../utils';
 import { RootStore } from './index';
+export interface RecallMessage {
+  type: 'recall';
+  [key: string]: any;
+}
+
 export interface Message {
-  singleChat: { [key: string]: AgoraChat.MessageBody[] };
-  groupChat: { [key: string]: AgoraChat.MessageBody[] };
-  byId: { [key: string]: AgoraChat.MessageBody };
+  singleChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
+  groupChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
+  byId: { [key: string]: AgoraChat.MessageBody | RecallMessage };
 }
 class MessageStore {
   rootStore;
@@ -40,6 +45,7 @@ class MessageStore {
       setRepliedMessage: action,
       addReaction: action,
       updateReactions: action,
+      withdrewMessage: action,
     });
 
     autorun(() => {
@@ -239,7 +245,7 @@ class MessageStore {
     this.rootStore.conversationStore.topConversation({ ...cvs });
   }
 
-  modifyMessage(id: string, message: AgoraChat.MessageBody) {
+  modifyMessage(id: string, message: AgoraChat.MessageBody | RecallMessage) {
     this.message.byId[id] = message;
   }
 
@@ -262,7 +268,8 @@ class MessageStore {
     setTimeout(() => {
       let msg = this.message.byId[msgId];
       if (!msg) {
-        return console.error('not found message:', msgId);
+        // ack message
+        return; // console.error('not found message:', msgId);
       }
       let conversationId = getCvsIdFromMessage(msg);
       // @ts-ignore
@@ -314,6 +321,30 @@ class MessageStore {
           return msg.id != messageId && msg.mid != messageId;
         });
         this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+      });
+  }
+
+  withdrewMessage(cvs: CurrentConversation, messageId: string) {
+    if (!cvs || !messageId) return;
+
+    return this.rootStore.client
+      .recallMessage({
+        chatType: cvs.chatType,
+        to: cvs.conversationId,
+        mid: messageId,
+      })
+      .then(data => {
+        const messages = this.message[cvs.chatType][cvs.conversationId];
+        messages.forEach(msg => {
+          // @ts-ignore
+          if (msg.mid === messageId || msg.id === messageId) {
+            msg.type = 'recall';
+          }
+        });
+        this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+      })
+      .catch(() => {
+        // TODO: alert error
       });
   }
 
@@ -379,7 +410,7 @@ class MessageStore {
         messages.forEach(message => {
           // @ts-ignore
           if (message.id === messageId || message.mid === messageId) {
-            message.reactions?.forEach((action: ReactionData, i) => {
+            message.reactions?.forEach((action: ReactionData, i: number) => {
               if (action.reaction === emoji) {
                 action.count -= 1;
                 if (action.count <= 0) {
@@ -415,7 +446,7 @@ class MessageStore {
         // The message has not yet been added the reaction
         if (!message.reactions || message.reactions?.length === 0) {
           message.reactions = reactions;
-          message.reactions.forEach(item => {
+          message.reactions.forEach((item: ReactionData) => {
             if (item.op) {
               item.op.forEach(op => {
                 if (op.operator === this.rootStore.client.user && op.reactionType === 'create') {
@@ -425,7 +456,7 @@ class MessageStore {
             }
           });
         } else {
-          message.reactions.forEach(item => {
+          message.reactions.forEach((item: ReactionData) => {
             filterActs.forEach(filItem => {
               if (item.reaction === filItem.reaction) {
                 item.count = filItem.count;
@@ -475,7 +506,7 @@ class MessageStore {
         messages.forEach(message => {
           // @ts-ignore
           if (message.id === messageId || message.mid === messageId) {
-            message.reactions?.forEach(item => {
+            message.reactions?.forEach((item: ReactionData) => {
               if (item.reaction === reaction) {
                 item.userList = reactionData.userList;
               }

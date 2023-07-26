@@ -22,6 +22,7 @@ export interface TextMessageProps extends BaseMessageProps {
   prefix?: string;
   nickName?: string; // 昵称
   className?: string;
+  bubbleClass?: string;
   children?: string;
   style?: React.CSSProperties;
 }
@@ -123,6 +124,7 @@ export const TextMessage = (props: TextMessageProps) => {
     style,
     nickName,
     type,
+    bubbleClass,
     ...others
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -244,6 +246,24 @@ export const TextMessage = (props: TextMessageProps) => {
       }
     });
   };
+
+  const handleRecallMessage = () => {
+    console.log('撤回消息', textMessage);
+    let conversationId = getCvsIdFromMessage(textMessage);
+    rootStore.messageStore.withdrewMessage(
+      {
+        chatType: textMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      textMessage.mid || textMessage.id,
+    );
+  };
+
+  let bubbleClassName = '';
+  if (bubbleClass) {
+    bubbleClassName = bubbleClass + ' ' + urlTxtClass;
+  }
   return (
     <BaseMessage
       id={textMessage.id}
@@ -252,7 +272,7 @@ export const TextMessage = (props: TextMessageProps) => {
       time={time}
       nickName={nickName || from}
       bubbleType={type}
-      className={urlTxtClass}
+      className={bubbleClassName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
       repliedMessage={repliedMsg}
@@ -260,6 +280,7 @@ export const TextMessage = (props: TextMessageProps) => {
       onAddReactionEmoji={handleClickEmoji}
       onDeleteReactionEmoji={handleDeleteEmoji}
       onShowReactionUserList={handleShowReactionUserList}
+      onRecallMessage={handleRecallMessage}
       {...others}
     >
       <span className={classString}>{renderTxt(msg, detectedUrl)}</span>

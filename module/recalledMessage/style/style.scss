@@ -1,0 +1,17 @@
+@import '~/common/style/index.scss';
+$recall-msg-prefix-cls: #{$cui-prefix}-message-recall;
+
+.#{$recall-msg-prefix-cls} {
+    .#{$cui-prefix}-message-base-content{
+        background: $gray-95;
+        
+    }
+    .#{$cui-prefix}-message-text{
+        color: $gray-7;
+        font-family: Roboto;
+        font-size: 14px;
+        font-style: italic;
+        font-weight: 400;
+        line-height: 20px;
+    }
+}

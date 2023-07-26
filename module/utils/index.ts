@@ -1,6 +1,7 @@
 import { ChatType } from '../types/messageType';
 import { AgoraChat } from 'agora-chat';
 import rootStore from '../store/index';
+import type { RecallMessage } from '../store/MessageStore';
 export function getConversationTime(time: number) {
   if (!time) return '';
   // ['Fri', 'Jun', '10', '2022', '14:16:28', 'GMT+0800', '(中国标准时间)']
@@ -41,7 +42,7 @@ export function parseChannel(channelId: string): {
   };
 }
 
-export function getCvsIdFromMessage(message: AgoraChat.MessageBody) {
+export function getCvsIdFromMessage(message: AgoraChat.MessageBody | RecallMessage) {
   let conversationId = '';
   if (message.chatType == 'groupChat') {
     conversationId = message.to;

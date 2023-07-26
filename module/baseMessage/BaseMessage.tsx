@@ -16,6 +16,16 @@ import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard } from '../reaction';
 import { ReactionMessage, ReactionData } from '../reaction';
 
+interface CustomAction {
+  visible: boolean;
+  icon?: ReactNode;
+  actions?: {
+    icon?: ReactNode;
+    content?: string;
+    onClick?: () => void;
+  }[];
+}
+
 export interface BaseMessageProps {
   // messageId: string; // 消息 id
   bubbleType?: 'primary' | 'secondly' | 'none'; // 气泡类型
@@ -41,6 +51,9 @@ export interface BaseMessageProps {
   onAddReactionEmoji?: (emojiString: string) => void;
   onDeleteReactionEmoji?: (emojiString: string) => void;
   onShowReactionUserList?: (emojiString: string) => void;
+  onRecallMessage?: () => void;
+  customAction?: CustomAction; // whether show more
+  reaction?: boolean; // whether show reaction
 }
 
 const BaseMessage = (props: BaseMessageProps) => {
@@ -67,6 +80,9 @@ const BaseMessage = (props: BaseMessageProps) => {
     onAddReactionEmoji,
     onDeleteReactionEmoji,
     onShowReactionUserList,
+    onRecallMessage,
+    customAction,
+    reaction,
   } = props;
 
   const { t } = useTranslation();
@@ -109,37 +125,30 @@ const BaseMessage = (props: BaseMessageProps) => {
       },
     }))
   );
-  const rootStore = useContext(RootContext).rootStore;
 
-  // const recallMessage = () => {
-  //   console.log('recallMessage', messageId);
-  //   rootStore.messageStore.modifyMessage(messageId, {
-  //     type: 'txt',
-  //     msg: '已撤回',
-  //     id: messageId,
-  //     chatType: 'singleChat',
-  //     to: 'zd2',
-  //     time: Date.now(),
-  //   });
-  // };
-  const moreAction = {
-    visible: true,
-    icon: null,
-    actions: [
-      {
-        content: 'REPLY',
-        onClick: () => {},
-      },
-      {
-        content: 'DELETE',
-        onClick: () => {},
-      },
-      {
-        content: 'UNSEND',
-        onClick: () => {},
-      },
-    ],
-  };
+  let moreAction: CustomAction = { visible: false };
+  if (customAction) {
+    moreAction = customAction;
+  } else {
+    moreAction = {
+      visible: true,
+      icon: null,
+      actions: [
+        {
+          content: 'REPLY',
+          onClick: () => {},
+        },
+        {
+          content: 'DELETE',
+          onClick: () => {},
+        },
+        {
+          content: 'UNSEND',
+          onClick: () => {},
+        },
+      ],
+    };
+  }
 
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
 
@@ -149,11 +158,15 @@ const BaseMessage = (props: BaseMessageProps) => {
   const deleteMessage = () => {
     onDeleteMessage && onDeleteMessage();
   };
+  const recallMessage = () => {
+    onRecallMessage && onRecallMessage();
+  };
+
   let menuNode: ReactNode | undefined;
   if (moreAction?.visible) {
     menuNode = (
       <ul className={morePrefixCls}>
-        {moreAction.actions.map((item, index) => {
+        {moreAction?.actions?.map((item, index) => {
           if (item.content === 'DELETE') {
             return (
               <li key={index} onClick={deleteMessage}>
@@ -166,6 +179,13 @@ const BaseMessage = (props: BaseMessageProps) => {
               <li key={index} onClick={replyMessage}>
                 <Icon type="ARROW_TURN_LEFT" width={16} height={16} color="#5270AD"></Icon>
                 {t('module.reply')}
+              </li>
+            );
+          } else if (item.content === 'UNSEND') {
+            return (
+              <li key={index} onClick={recallMessage}>
+                <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
+                {t('module.unsend')}
               </li>
             );
           }
@@ -235,17 +255,24 @@ const BaseMessage = (props: BaseMessageProps) => {
             {contentNode}
             {hoverStatus ? (
               <>
-                <Tooltip title={menuNode} trigger="click" placement="bottom">
-                  {moreAction.icon || (
-                    <Icon type="ELLIPSIS" className={`${prefixCls}-body-action`} height={20}></Icon>
-                  )}
-                </Tooltip>
-
-                <EmojiKeyBoard
-                  onSelected={handleClickEmoji}
-                  selectedList={selectedList}
-                  onDelete={handleDeleteReactionEmoji}
-                ></EmojiKeyBoard>
+                {moreAction.visible && (
+                  <Tooltip title={menuNode} trigger="click" placement="bottom">
+                    {moreAction.icon || (
+                      <Icon
+                        type="ELLIPSIS"
+                        className={`${prefixCls}-body-action`}
+                        height={20}
+                      ></Icon>
+                    )}
+                  </Tooltip>
+                )}
+                {reaction && (
+                  <EmojiKeyBoard
+                    onSelected={handleClickEmoji}
+                    selectedList={selectedList}
+                    onDelete={handleDeleteReactionEmoji}
+                  ></EmojiKeyBoard>
+                )}
               </>
             ) : (
               <MessageStatus status={status} type="icon"></MessageStatus>

@@ -17,6 +17,8 @@
         "replyingTo": "Replying to",
         "delete": "Delete",
         "reply": "Reply",
-        "attachment": "Attachment"
+        "unsend": "Unsend",
+        "attachment": "Attachment",
+        "unsentAMessage": " unsent a message"
     }
 }

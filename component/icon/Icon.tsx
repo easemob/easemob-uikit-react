@@ -35,6 +35,7 @@ import { ReactComponent as CloseCircle } from '../svgs/icons/xmark_in_circle_fil
 import { ReactComponent as Img } from '../svgs/icons/img.svg';
 import { ReactComponent as ArrowTurnLeft } from '../svgs/icons/arrow_turn_left.svg';
 import { ReactComponent as FacePlus } from '../svgs/icons/faceplus.svg';
+import { ReactComponent as ArrowBack } from '../svgs/icons/arrow_Uturn_anti_clockwise.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -134,6 +135,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ARROW_UP_THICK':
       return <ArrowUpThick></ArrowUpThick>;
+      break;
+    case 'ARROW_BACK':
+      return <ArrowBack></ArrowBack>;
       break;
     case 'FACE_PLUS':
       return <FacePlus></FacePlus>;

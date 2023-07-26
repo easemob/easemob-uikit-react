@@ -67,7 +67,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       const finsMsgs = messages.filter(msg => {
         // @ts-ignore
         return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;
-      });
+      }) as AgoraChat.MessageBody[];
 
       if (finsMsgs.length > 0) {
         setRepliedMsg(finsMsgs[0]);
