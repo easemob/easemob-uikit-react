@@ -339,6 +339,7 @@ class MessageStore {
           // @ts-ignore
           if (msg.mid === messageId || msg.id === messageId) {
             msg.type = 'recall';
+            msg.ext = {};
           }
         });
         this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);

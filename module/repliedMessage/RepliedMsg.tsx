@@ -7,7 +7,7 @@ import { AgoraChat } from 'agora-chat';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
-const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video'];
+const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
   className?: string;
@@ -64,19 +64,19 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       setMsgQuote(msgQuote);
       const messages = rootStore.messageStore.currentCvsMsgs;
 
-      const finsMsgs = messages.filter(msg => {
+      const findMsgs = messages.filter(msg => {
         // @ts-ignore
         return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;
       }) as AgoraChat.MessageBody[];
 
-      if (finsMsgs.length > 0) {
-        setRepliedMsg(finsMsgs[0]);
+      if (findMsgs.length > 0) {
+        setRepliedMsg(findMsgs[0]);
       }
-      if (finsMsgs[0]) {
-        setAnchorElement(document.getElementById(finsMsgs[0].id));
+      if (findMsgs[0]) {
+        setAnchorElement(document.getElementById(findMsgs[0].id));
       }
 
-      console.log('我找到你了', msgQuote, repliedMsg);
+      console.log('我找到你了', msgQuote, findMsgs[0]);
     }
   }, []);
 
@@ -91,6 +91,18 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       return (content = (
         <div className={`${prefixCls}-content-text-not`}>{t('module.messageNotFound')}</div>
       ));
+    }
+    // @ts-ignore
+    if (repliedMsg.type === 'recall') {
+      let msg;
+      // @ts-ignore
+      if (repliedMsg.bySelf) {
+        msg = t('module.you') + t('module.unsentAMessage');
+      } else {
+        // @ts-ignore
+        msg = repliedMsg.from + t('module.unsentAMessage');
+      }
+      return (content = <div className={`${prefixCls}-content-text-not`}>{msg}</div>);
     }
     switch (msgQuote?.msgType) {
       case 'txt':
