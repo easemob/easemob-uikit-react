@@ -55,3 +55,13 @@ export function getCvsIdFromMessage(message: AgoraChat.MessageBody | RecallMessa
   }
   return conversationId;
 }
+
+export function getGroupItemFromGroupsById(groupId: string) {
+  const { addressStore } = rootStore;
+  return addressStore.groups.filter(item => groupId === item.groupid)?.[0];
+}
+
+export function getGroupItemIndexFromGroupsById(groupId: string) {
+  const { addressStore } = rootStore;
+  return addressStore.groups.findIndex(item => groupId === item.groupid);
+}

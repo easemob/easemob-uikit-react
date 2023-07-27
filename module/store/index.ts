@@ -5,7 +5,6 @@ import MessageStore from './MessageStore';
 import ConversationStore from './ConversationStore';
 import AddressStore from './AddressStore';
 import { AgoraChat } from 'agora-chat';
-import { string } from 'prop-types';
 export interface InitConfig {
   appKey: string;
 }
@@ -20,7 +19,7 @@ export class RootStore {
     this.client = {} as AgoraChat.Connection;
     this.messageStore = new MessageStore(this);
     this.conversationStore = new ConversationStore(this);
-    this.addressStore = new AddressStore(this);
+    this.addressStore = new AddressStore();
     // makeAutoObservable(this);
 
     makeObservable(this, {
@@ -28,7 +27,6 @@ export class RootStore {
       loginState: observable,
       messageStore: observable,
       conversationStore: observable,
-      addressStore: observable,
       setLoginState: action,
       setClient: action,
       initConfig: observable,

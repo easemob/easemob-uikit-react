@@ -95,11 +95,8 @@ const MessageEditor = (props: MessageEditorProps) => {
           (a.draggable = !1),
           (a.className = 'message-text-emoji'),
           a.setAttribute('title', e.replace('[', '').replace(']', '')),
-          n.deleteContents(),
-          n.insertNode(a),
-          n.collapse(false),
-          s.removeAllRanges(),
-          s.addRange(n);
+          a.setAttribute('style', 'vertical-align: middle');
+        n.deleteContents(), n.insertNode(a), n.collapse(false), s.removeAllRanges(), s.addRange(n);
       }
     } else if ('selection' in document) {
       i.focus(),

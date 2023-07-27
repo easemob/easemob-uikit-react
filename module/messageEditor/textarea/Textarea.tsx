@@ -5,39 +5,88 @@ import React, {
   useState,
   forwardRef,
   useImperativeHandle,
-  FC,
+  useCallback,
 } from 'react';
 import AC, { AgoraChat } from 'agora-chat';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config/index';
 import { convertToMessage } from './util';
-import './style/style.scss';
 import Icon from '../../../component/icon';
-
 import { RootContext } from '../../store/rootContext';
+import SuggestList from '../suggestList';
+import { getRangeRect, showAt, getAtUser, replaceAtUser } from '../suggestList/utils';
+import './style/style.scss';
+
 export interface TextareaProps {
   prefix?: string;
   className?: string;
   placeholder?: string;
   hasSendButton?: boolean;
   sendButtonActiveColor?: string;
+  enabledMenton?: boolean;
 }
 
 let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
-  let { placeholder, hasSendButton, sendButtonActiveColor = '#009EFF' } = props;
+  const {
+    placeholder = 'Say something',
+    hasSendButton,
+    sendButtonActiveColor = '#009EFF',
+    enabledMenton = true,
+  } = props;
   const [isEmpty, setIsEmpty] = useState(false);
   const [textValue, setTextValue] = useState('');
-
   const { prefix: customizePrefixCls, className } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('textarea', customizePrefixCls);
-
   const { client, messageStore, conversationStore } = useContext(RootContext).rootStore;
   const { currentCVS } = messageStore;
+  const divRef = useRef<HTMLDivElement>(null);
+  const [queryString, setQueryString] = useState('');
+  const [showAtDialog, setShowDialog] = useState(false);
+  const [position, setPosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
 
-  useEffect(() => {
-    setIsEmpty(true);
+  const canAtUser = enabledMenton && currentCVS.chatType === 'groupChat';
+
+  const handleKeyUp = useCallback(() => {
+    if (!canAtUser) return;
+    if (showAt()) {
+      const position = getRangeRect();
+      setPosition(position);
+      const user = getAtUser();
+      setQueryString(user || '');
+      setShowDialog(true);
+    } else {
+      setShowDialog(false);
+    }
+  }, [canAtUser]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (canAtUser && showAtDialog) {
+      if (e.code === 'ArrowUp' || e.code === 'ArrowDown' || e.code === 'Enter') {
+        e.preventDefault();
+      }
+    } else {
+      onKeyDown(e);
+    }
+  };
+  const handlePickUser = useCallback((user: any) => {
+    replaceAtUser(user);
+    setShowDialog(false);
+    const str = convertToMessage(divRef?.current?.innerHTML || '').trim();
+    setTextValue(str);
   }, []);
+
+  const handleHide = () => {
+    setShowDialog(false);
+  };
+
+  const handleShow = () => {
+    setShowDialog(true);
+  };
+
   const classString = classNames(
     prefixCls,
     {
@@ -46,6 +95,7 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
     },
     className,
   );
+
   const handleInputChange: React.FormEventHandler<HTMLDivElement> = e => {
     const value = (e.target as HTMLDivElement).innerHTML;
     if (value.length) {
@@ -56,16 +106,6 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
     const str = convertToMessage(value).trim();
     setTextValue(str);
   };
-  const divRef = useRef<HTMLDivElement>(null);
-
-  if (!placeholder) {
-    placeholder = 'Say something';
-  }
-
-  // useEffect(() => {
-  //   alert(1);
-  //   setTextValue('');
-  // }, [currentCVS.conversationId]);
 
   const sendMessage = () => {
     if (!textValue) {
@@ -88,7 +128,7 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
     setIsEmpty(true);
   };
 
-  // 发送按钮
+  // Send Button
   const btnNode = hasSendButton ? (
     <div className={`${prefixCls}-sendBtn`}>
       <Icon
@@ -101,16 +141,9 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
     </div>
   ) : null;
 
-  useEffect(() => {
-    window.addEventListener('keydown', onKeyDown); // 添加全局事件
-    return () => {
-      window.removeEventListener('keydown', onKeyDown); // 销毁
-    };
-  }, [textValue]);
-
   // 键盘回车事件
-  const onKeyDown = (e: { keyCode: number; preventDefault: () => void }) => {
-    if (e.keyCode === 13) {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.code === 'Enter') {
       e.preventDefault();
       sendMessage();
     }
@@ -124,10 +157,16 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
       setIsEmpty(true);
     }
   };
+
   useImperativeHandle(ref, () => ({
     setTextareaValue,
     divRef,
   }));
+
+  useEffect(() => {
+    setIsEmpty(true);
+  }, []);
+
   return (
     <div className={classString}>
       <div
@@ -136,7 +175,21 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
         className={`${prefixCls}-input`}
         contentEditable="true"
         onInput={handleInputChange}
+        onKeyUp={handleKeyUp}
+        onKeyDown={handleKeyDown}
       ></div>
+      {/* Mention suggest list */}
+      {canAtUser && (
+        <SuggestList
+          visible={showAtDialog}
+          position={position}
+          queryString={queryString}
+          onPickUser={handlePickUser}
+          onHide={handleHide}
+          onShow={handleShow}
+        />
+      )}
+      {/* Send button node  */}
       {btnNode}
     </div>
   );
