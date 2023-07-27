@@ -68,12 +68,14 @@ let Conversations: FC<ConversationListProps> = props => {
   const prefixCls = getPrefixCls('conversationList', customizePrefixCls);
   const [activeKey, setActiveKey] = useState<number>();
   const classString = classNames(prefixCls, className);
+  const { getJoinedGroupList } = useGroups();
 
   const [isSearch, setIsSearch] = useState(false);
   const [renderData, setRenderData] = useState<ConversationData>([]);
   const [initRenderData, setInitRenderData] = useState<ConversationData>([]);
   const rootStore = useContext(RootContext).rootStore;
   const cvsStore = rootStore.conversationStore;
+  const { t } = useTranslation();
 
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
     setActiveKey(index);
@@ -115,12 +117,8 @@ let Conversations: FC<ConversationListProps> = props => {
 
   const cvsData = useConversation();
 
-  const groupData = useGroups();
+  const groupData = rootStore.addressStore.groups;
   const userInfo = useUserInfo();
-
-  useEffect(() => {
-    rootStore.addressStore.setGroups(groupData);
-  }, [groupData]);
 
   let iniRenderData: any[] = [];
   // 获取加入群组，把群组名放在 conversationList
@@ -179,7 +177,10 @@ let Conversations: FC<ConversationListProps> = props => {
     cvsStore.setSearchList(searchList);
   };
 
-  const { t } = useTranslation();
+  useEffect(() => {
+    rootStore.loginState && getJoinedGroupList();
+  }, [rootStore.loginState]);
+
   return (
     <div className={classString} style={style}>
       {renderHeader ? (

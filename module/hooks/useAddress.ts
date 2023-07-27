@@ -1,7 +1,10 @@
-import { useCallback, useEffect, MutableRefObject, useContext, useState } from 'react';
+import { useCallback, useEffect, useContext, useState } from 'react';
 import AC, { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
-import type { ServerCvs } from '../conversation/ConversationList';
+import { getStore } from '../store/index';
+import { getGroupItemFromGroupsById } from '../../module/utils';
+import { CurrentConversation } from 'module/store/ConversationStore';
+
 const useContacts = () => {
   const rootStore = useContext(RootContext).rootStore;
 
@@ -26,12 +29,6 @@ const useContacts = () => {
   }, [rootStore.loginState]);
   return contacts;
 };
-
-export interface GroupData {
-  //   disabled: 'true' | 'false';
-  groupid: string;
-  groupname: string;
-}
 
 const useUserInfo = (userIds?: string[]) => {
   const rootStore = useContext(RootContext).rootStore;
@@ -73,26 +70,64 @@ const useUserInfo = (userIds?: string[]) => {
 };
 
 const useGroups = () => {
-  const rootStore = useContext(RootContext).rootStore;
-  const { client, addressStore } = rootStore;
+  const pageSize = 1;
+  let pageNum = 1;
+  const { client, addressStore } = getStore();
+  let hasNext = addressStore.hasGroupsNext;
 
-  let [groups, setGroups] = useState<Array<GroupData>>([]);
-  useEffect(() => {
-    rootStore.loginState &&
-      client
-        .getJoinedGroups({
-          pageNum: 1,
-          pageSize: 500,
-        })
-        .then(res => {
-          console.log('群组列表', res);
-          setGroups(res.data || []);
-        })
-        .catch(err => {
-          console.log('获取群组列表失败', err);
-        });
-  }, [rootStore.loginState, rootStore.conversationStore.conversationList.length]);
-  return groups;
+  const getJoinedGroupList = () => {
+    if (!hasNext) return;
+    client
+      .getJoinedGroups({
+        pageNum: pageNum,
+        pageSize,
+      })
+      .then(res => {
+        res?.data && addressStore.setGroups(res.data);
+        if ((res.data?.length || 0) === pageSize) {
+          pageNum++;
+          getJoinedGroupList();
+        } else {
+          addressStore.setHasGroupsNext(false);
+        }
+      });
+  };
+
+  return {
+    getJoinedGroupList,
+  };
 };
 
-export { useContacts, useGroups, useUserInfo };
+const useGroupMembers = (groupId: string) => {
+  const pageSize = 20;
+  let pageNum = 1;
+  const { client, addressStore } = getStore();
+  let groupItem = getGroupItemFromGroupsById(groupId);
+  let hasNext = groupItem?.hasMembersNext;
+  if (hasNext === undefined) hasNext = true;
+
+  const getGroupMemberList = () => {
+    if (!hasNext) return;
+    client
+      .listGroupMembers({
+        groupId,
+        pageNum: pageNum,
+        pageSize,
+      })
+      .then(res => {
+        res?.data && addressStore.setGroupMembers(groupId, res.data);
+        if ((res.data?.length || 0) === pageSize) {
+          pageNum++;
+          getGroupMemberList();
+        } else {
+          addressStore.setGroupItemHasMembersNext(groupId, false);
+        }
+      });
+  };
+
+  return {
+    getGroupMemberList,
+  };
+};
+
+export { useContacts, useGroups, useUserInfo, useGroupMembers };

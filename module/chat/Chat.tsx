@@ -59,7 +59,7 @@ const Chat: FC<ChatProps> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('chat', customizePrefixCls);
 
-  const [isEmpty, setIsEmpty] = useState(false);
+  const [isEmpty, setIsEmpty] = useState(true);
   const classString = classNames(prefixCls, className);
 
   const rootStore = useContext(RootContext).rootStore;
