@@ -71,7 +71,7 @@ const useUserInfo = (userIds?: string[]) => {
 
 const useGroups = () => {
   const pageSize = 1;
-  let pageNum = 1;
+  let pageNum = 500;
   const { client, addressStore } = getStore();
   let hasNext = addressStore.hasGroupsNext;
 
@@ -83,7 +83,7 @@ const useGroups = () => {
         pageSize,
       })
       .then(res => {
-        res?.data && addressStore.setGroups(res.data);
+        res?.data && addressStore.setGroups(res.data as any);
         if ((res.data?.length || 0) === pageSize) {
           pageNum++;
           getJoinedGroupList();
@@ -116,6 +116,12 @@ const useGroupMembers = (groupId: string) => {
       })
       .then(res => {
         res?.data && addressStore.setGroupMembers(groupId, res.data);
+        let userIds =
+          res.data?.map(item => {
+            // @ts-ignore
+            return item.owner || item.member;
+          }) || [];
+        useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
         if ((res.data?.length || 0) === pageSize) {
           pageNum++;
           getGroupMemberList();
@@ -130,4 +136,31 @@ const useGroupMembers = (groupId: string) => {
   };
 };
 
-export { useContacts, useGroups, useUserInfo, useGroupMembers };
+const useGroupMembersAttributes = (
+  groupId: string,
+  userIds: string[],
+  attributesKeys?: string[],
+) => {
+  const { client, addressStore } = getStore();
+  const getMemberAttributes = () => {
+    client
+      .getGroupMembersAttributes({
+        groupId,
+        userIds,
+        keys: attributesKeys,
+      })
+      .then(res => {
+        if (res.data) {
+          Object.keys(res.data).forEach(key => {
+            res?.data && addressStore.setGroupMemberAttributes(groupId, key, res.data[key]);
+          });
+        }
+      });
+  };
+
+  return {
+    getMemberAttributes,
+  };
+};
+
+export { useContacts, useGroups, useUserInfo, useGroupMembers, useGroupMembersAttributes };

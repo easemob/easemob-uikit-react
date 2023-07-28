@@ -2,6 +2,7 @@ import { ChatType } from '../types/messageType';
 import { AgoraChat } from 'agora-chat';
 import rootStore from '../store/index';
 import type { RecallMessage } from '../store/MessageStore';
+import { GroupItem } from '../store/AddressStore';
 export function getConversationTime(time: number) {
   if (!time) return '';
   // ['Fri', 'Jun', '10', '2022', '14:16:28', 'GMT+0800', '(中国标准时间)']
@@ -64,4 +65,8 @@ export function getGroupItemFromGroupsById(groupId: string) {
 export function getGroupItemIndexFromGroupsById(groupId: string) {
   const { addressStore } = rootStore;
   return addressStore.groups.findIndex(item => groupId === item.groupid);
+}
+
+export function getGroupMemberIndexByUserId(group: GroupItem, userId: string) {
+  return group?.members?.findIndex(item => userId === item.userId);
 }

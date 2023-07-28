@@ -127,13 +127,7 @@ let ContactList: FC<ContactListProps> = props => {
   useEffect(() => {
     addressStore.setContacts(contactsData);
   }, [contactsData]);
-
-  // 获取群组列表
-  const groupsData = useGroups();
-  useEffect(() => {
-    addressStore.setGroups(groupsData);
-  }, [groupsData]);
-
+  
   // 自适应高度
   useEffect(() => {
     const height = listRef.current!.clientHeight;

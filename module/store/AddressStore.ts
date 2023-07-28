@@ -1,11 +1,21 @@
 import { observable, action, makeObservable } from 'mobx';
 import { getStore } from './index';
 import { AgoraChat } from 'agora-chat';
-import { getGroupItemIndexFromGroupsById } from '../../module/utils';
+import { useGroupMembersAttributes } from '../hooks/useAddress';
+import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
+
+export type MemberRole = 'member' | 'owner';
+
+export interface MemberItem {
+  userId: AgoraChat.UserId;
+  role: MemberRole;
+  attributes?: AgoraChat.MemberAttributes;
+}
+
 export interface GroupItem extends AgoraChat.BaseGroupInfo {
   disabled?: boolean;
   info?: AgoraChat.GroupDetailInfo;
-  members?: AgoraChat.GroupMember[];
+  members?: MemberItem[];
   hasMembersNext?: boolean;
 }
 
@@ -72,12 +82,20 @@ class AddressStore {
   setGroupMembers(groupId: string, membersList: AgoraChat.GroupMember[]) {
     let idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
-      // @ts-ignore
-      let currentMembers = this.groups[idx]?.members?.map(item => item?.member || item?.owner);
-      let filteredMembers = membersList.filter(
-        //@ts-ignore
-        item => !currentMembers?.find(id => id === (item.owner || item.member)),
-      );
+      let currentMembers = this.groups[idx]?.members?.map(item => item.userId);
+      let filteredMembers = membersList
+        .filter(
+          //@ts-ignore
+          item => !currentMembers?.find(id => id === (item.owner || item.member)),
+        )
+        .map<MemberItem>(member => {
+          return {
+            //@ts-ignore
+            userId: member.owner || member.member,
+            //@ts-ignore
+            role: member?.owner ? 'owner' : 'member',
+          };
+        });
       this.groups[idx].members = [...(this.groups[idx].members || []), ...filteredMembers];
     }
   }
@@ -86,6 +104,19 @@ class AddressStore {
     let idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       this.groups[idx].hasMembersNext = hasNext;
+    }
+  }
+
+  setGroupMemberAttributes(
+    groupId: string,
+    userId: string,
+    attributes: AgoraChat.MemberAttributes,
+  ) {
+    let groupIdx = getGroupItemIndexFromGroupsById(groupId);
+    let idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) || -1;
+    if (idx > -1) {
+      let memberList = this.groups[groupIdx].members || [];
+      memberList[idx].attributes = attributes;
     }
   }
 
