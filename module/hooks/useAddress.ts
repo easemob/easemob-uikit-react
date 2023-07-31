@@ -99,7 +99,7 @@ const useGroups = () => {
 };
 
 const useGroupMembers = (groupId: string) => {
-  const pageSize = 1;
+  const pageSize = 20;
   let pageNum = 1;
   const { client, addressStore } = getStore();
   let groupItem = getGroupItemFromGroupsById(groupId);

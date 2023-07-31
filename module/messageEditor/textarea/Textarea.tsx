@@ -14,8 +14,10 @@ import { convertToMessage } from './util';
 import Icon from '../../../component/icon';
 import { RootContext } from '../../store/rootContext';
 import SuggestList from '../suggestList';
+import { AT_ALL } from '../suggestList/SuggestList';
 import { getRangeRect, showAt, getAtUser, replaceAtUser } from '../suggestList/utils';
 import './style/style.scss';
+import { MemberItem } from 'module/store/AddressStore';
 
 export interface TextareaProps {
   prefix?: string;
@@ -72,7 +74,7 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
       onKeyDown(e);
     }
   };
-  const handlePickUser = useCallback((user: any) => {
+  const handlePickUser = useCallback((user: MemberItem) => {
     replaceAtUser(user);
     setShowDialog(false);
     const str = convertToMessage(divRef?.current?.innerHTML || '').trim();
@@ -116,14 +118,26 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
       console.warn('No specified conversation');
       return;
     }
+    let isAtAll = false;
+    let atNodeList = divRef.current?.querySelectorAll('.at-button') || [];
+    let atUserIds = Array.from(atNodeList).map(item => {
+      if (item instanceof HTMLElement) {
+        return item?.dataset.user;
+      }
+    });
+    if (atUserIds.includes(AT_ALL)) isAtAll = true;
     const message = AC.message.create({
       to: currentCVS.conversationId,
       chatType: currentCVS.chatType,
       type: 'txt',
       msg: textValue,
+      ext: {
+        em_at_list: isAtAll ? AT_ALL : atUserIds,
+      },
     });
     messageStore.sendMessage(message);
     divRef.current!.innerHTML = '';
+
     setTextValue('');
     setIsEmpty(true);
   };
@@ -178,7 +192,7 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
         onKeyUp={handleKeyUp}
         onKeyDown={handleKeyDown}
       ></div>
-      {/* Mention suggest list */}
+      {/* At suggest list */}
       {canAtUser && (
         <SuggestList
           visible={showAtDialog}

@@ -5,6 +5,17 @@ import { getStore } from '../../store';
 import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';
 import { getGroupItemFromGroupsById, getGroupMemberNickName } from '../../utils';
+
+export const AT_ALL = 'ALL';
+
+const AT_ALL_ITEM = {
+  userId: AT_ALL,
+  role: null,
+  attributes: {
+    nickName: '所有人',
+  },
+} as any;
+
 const searchUser = (memberList: MemberItem[], queryString?: string) => {
   return queryString
     ? memberList.filter(user => {
@@ -37,11 +48,12 @@ const SuggestList: FC<Props> = props => {
   visibleRef.current = props.visible;
   let currentCVS = getStore().messageStore.currentCVS;
   const memberList = getGroupItemFromGroupsById(currentCVS.conversationId)?.members || [];
+
   const filteredUsers = useMemo(() => {
-    return searchUser(memberList, props.queryString);
+    return searchUser([AT_ALL_ITEM, ...memberList], props.queryString);
   }, [memberList, props.queryString]);
   usersRef.current = filteredUsers;
-  
+
   useEffect(() => {
     setIndex(0);
     if (!filteredUsers.length) {
@@ -83,7 +95,7 @@ const SuggestList: FC<Props> = props => {
 
   return (
     <>
-      {props.visible ? (
+      {props.visible && filteredUsers.length ? (
         <div
           className={classes}
           ref={suggestRef}

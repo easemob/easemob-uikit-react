@@ -1,12 +1,12 @@
 import { MemberItem } from '../../store/AddressStore';
 import { getGroupMemberNickName } from '../../utils';
-// 获取光标位置
+// get cursor
 const getCursorIndex = () => {
   const selection = window.getSelection();
   return selection?.focusOffset;
 };
 
-// 获取节点
+// get range node
 const getRangeNode = () => {
   const selection = window.getSelection();
   return selection?.focusNode;
@@ -23,7 +23,7 @@ const getRangeRect = () => {
   };
 };
 
-// 是否展示 @
+// is show  @
 const showAt = () => {
   const node = getRangeNode();
   if (!node || node.nodeType !== Node.TEXT_NODE) return false;
@@ -33,7 +33,7 @@ const showAt = () => {
   return match && match.length === 2;
 };
 
-// 获取 @ 用户
+// get @ user
 const getAtUser = () => {
   const content = getRangeNode()?.textContent || '';
   const regx = /@([^@\s]*)$/;
@@ -47,7 +47,7 @@ const getAtUser = () => {
 const createAtButton = (user: MemberItem) => {
   const btn = document.createElement('span');
   btn.style.display = 'inline-block';
-  btn.dataset.user = JSON.stringify(user);
+  btn.dataset.user = user.userId;
   btn.className = 'at-button';
   btn.contentEditable = 'false';
   btn.textContent = `@${getGroupMemberNickName(user)}`;
@@ -85,10 +85,12 @@ const replaceAtUser = (user: MemberItem) => {
     if (nextNode) {
       parentNode.insertBefore(previousTextNode, nextNode);
       parentNode.insertBefore(atButton, nextNode);
+      parentNode.append(' ');
       parentNode.insertBefore(nextTextNode, nextNode);
     } else {
       parentNode.appendChild(previousTextNode);
       parentNode.appendChild(atButton);
+      parentNode.append(' ');
       parentNode.appendChild(nextTextNode);
     }
     const range = new Range();
