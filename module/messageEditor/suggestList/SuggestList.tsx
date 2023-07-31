@@ -1,31 +1,16 @@
 import React, { FC, useEffect, useState, useRef } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config/index';
+import { getStore } from '../../store';
 import './style/style.scss';
-
-type User = { name: string; id: string };
-const mockData = [
-  {
-    name: '张一鸣',
-    id: 'zhangyiming',
-  },
-  {
-    name: '张一鸣',
-    id: 'whatthehell',
-  },
-  {
-    name: '马化腾',
-    id: 'ponyma',
-  },
-  {
-    name: '马云',
-    id: 'jackmasb',
-  },
-];
-const searchUser = (queryString?: string) => {
+import { MemberItem } from '../../store/AddressStore';
+import { getGroupItemFromGroupsById, getGroupMemberNickName } from '../../utils';
+const searchUser = (memberList: MemberItem[], queryString?: string) => {
   return queryString
-    ? mockData.filter(({ name }) => name.startsWith(queryString))
-    : mockData.slice(0);
+    ? memberList.filter(user => {
+        return getGroupMemberNickName(user).startsWith(queryString);
+      })
+    : memberList.slice(0);
 };
 
 interface Props {
@@ -33,7 +18,7 @@ interface Props {
   position: { x: number; y: number };
   queryString?: string;
   className?: string;
-  onPickUser: (user: User) => void;
+  onPickUser: (user: MemberItem) => void;
   onHide: () => void;
   onShow: () => void;
 }
@@ -42,9 +27,9 @@ const SuggestList: FC<Props> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('suggest-list');
   const classes = classNames(prefixCls, props.className);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<MemberItem[]>([]);
   const [index, setIndex] = useState(-1);
-  const usersRef = useRef<{ id: string; name: string }[]>();
+  const usersRef = useRef<MemberItem[]>();
   usersRef.current = users;
   const suggestRef = useRef<HTMLDivElement>(null);
   const indexRef = useRef<number>();
@@ -52,14 +37,16 @@ const SuggestList: FC<Props> = props => {
   const visibleRef = useRef<boolean>();
   visibleRef.current = props.visible;
 
+  let currentCVS = getStore().messageStore.currentCVS;
+  const memberList = getGroupItemFromGroupsById(currentCVS.conversationId)?.members || [];
   useEffect(() => {
-    const filteredUsers = searchUser(props.queryString);
+    const filteredUsers = searchUser(memberList, props.queryString);
     setUsers(filteredUsers);
     setIndex(0);
     if (!filteredUsers.length) {
       props.onHide();
     }
-  }, [props.queryString]);
+  }, [props.queryString, memberList]);
 
   useEffect(() => {
     const keyDownHandler = (e: any) => {
@@ -92,25 +79,23 @@ const SuggestList: FC<Props> = props => {
       document.removeEventListener('keyup', keyDownHandler);
     };
   }, []);
+
   return (
     <>
-      {props.visible ? (
+      {props.visible && users.length ? (
         <div
           className={classes}
           ref={suggestRef}
           style={{
             top: props.position.y,
             left: props.position.x,
-            marginTop: `-${suggestRef?.current?.clientHeight}px`,
-            visibility: suggestRef?.current ? 'unset' : 'hidden',
           }}
         >
-          {users.length ? '' : '无搜索结果'}
+          {/* {users.length ? '' : '无搜索结果'} */}
           {users.map((user, i) => {
             return (
-              <div key={user.id} className={i === index ? 'active item' : 'item'}>
-                <div className="name">{user.name}</div>
-                <div className="id">{user.id}</div>
+              <div key={user.userId} className={i === index ? 'active item' : 'item'}>
+                <div className="name">{getGroupMemberNickName(user)}</div>
               </div>
             );
           })}

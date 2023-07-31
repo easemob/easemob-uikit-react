@@ -1,5 +1,5 @@
-type User = { name: string; id: string };
-
+import { MemberItem } from '../../store/AddressStore';
+import { getGroupMemberNickName } from '../../utils';
 // 获取光标位置
 const getCursorIndex = () => {
   const selection = window.getSelection();
@@ -44,13 +44,13 @@ const getAtUser = () => {
   return undefined;
 };
 
-const createAtButton = (user: User) => {
+const createAtButton = (user: MemberItem) => {
   const btn = document.createElement('span');
   btn.style.display = 'inline-block';
   btn.dataset.user = JSON.stringify(user);
   btn.className = 'at-button';
   btn.contentEditable = 'false';
-  btn.textContent = `@${user.name}`;
+  btn.textContent = `@${getGroupMemberNickName(user)}`;
   const wrapper = document.createElement('span');
   wrapper.style.display = 'inline-block';
   wrapper.contentEditable = 'false';
@@ -69,7 +69,7 @@ const replaceString = (raw: string, replacer: string) => {
   return raw.replace(/@([^@\s]*)$/, replacer);
 };
 
-const replaceAtUser = (user: User) => {
+const replaceAtUser = (user: MemberItem) => {
   const node = getRangeNode();
   if (node) {
     const content = node?.textContent || '';

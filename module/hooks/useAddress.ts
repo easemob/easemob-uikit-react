@@ -70,8 +70,8 @@ const useUserInfo = (userIds?: string[]) => {
 };
 
 const useGroups = () => {
-  const pageSize = 1;
-  let pageNum = 500;
+  const pageSize = 0;
+  let pageNum = 200;
   const { client, addressStore } = getStore();
   let hasNext = addressStore.hasGroupsNext;
 
