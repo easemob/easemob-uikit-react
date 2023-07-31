@@ -59,7 +59,7 @@ export function getCvsIdFromMessage(message: AgoraChat.MessageBody | RecallMessa
 
 export function getGroupItemFromGroupsById(groupId: string) {
   const { addressStore } = rootStore;
-  return addressStore.groups.filter(item => groupId === item.groupid)?.[0];
+  return addressStore.groups.find(item => groupId === item.groupid);
 }
 
 export function getGroupItemIndexFromGroupsById(groupId: string) {

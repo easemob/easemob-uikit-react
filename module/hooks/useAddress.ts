@@ -99,7 +99,7 @@ const useGroups = () => {
 };
 
 const useGroupMembers = (groupId: string) => {
-  const pageSize = 20;
+  const pageSize = 1;
   let pageNum = 1;
   const { client, addressStore } = getStore();
   let groupItem = getGroupItemFromGroupsById(groupId);
@@ -121,7 +121,8 @@ const useGroupMembers = (groupId: string) => {
             // @ts-ignore
             return item.owner || item.member;
           }) || [];
-        useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
+
+        userIds.length && useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
         if ((res.data?.length || 0) === pageSize) {
           pageNum++;
           getGroupMemberList();
