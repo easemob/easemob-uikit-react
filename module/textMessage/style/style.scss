@@ -11,7 +11,78 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
     word-break: break-all;
     direction: ltr !important;
     display: inline-block;
+
+
+    // translation
+    &-translation{
+        text-align: left;
+        &-line{
+            border-top: 1px solid $special-8;
+            width: 100%;
+        }
+        &-right{
+            .#{$text-msg-prefix-cls}-translation-text{
+                color: $special-3;
+            }
+
+            .#{$text-msg-prefix-cls}-translation-action{
+                &>div>svg{
+                    fill: $blue-9;
+                }
+                &>span{
+                    color: $blue-9;
+                }
+                &>span:last-child{
+                    color: $gray-98;
+                }
+            }
+        }
+        &-left{
+        
+        }
+        &-hide{
+            .#{$text-msg-prefix-cls}-translation-text{
+                display: none;
+            }
+        }
+        &-text{
+            font-size: 16px;
+            line-height: 24px;
+            text-align: left;
+            word-break: break-all;
+            direction: ltr !important;
+            display: inline-block;
+
+            font-size: 14px;
+            line-height: 20px;
+            color: $special-5;
+        }
+        &-action{
+            display: flex;
+            direction: ltr;
+            align-items: center;
+            // gap: 4px;
+            &>div>svg{
+                fill: $gray-5;
+            }
+            &>span{
+                font-size: 12px;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 16px; 
+                color: $gray-5;
+            }
+            &>span:last-child{
+                user-select: none;
+                margin-left: 4px;
+                color: $blue-5;
+                cursor: pointer;
+            }
+        }
+    }
 }
+
+
 .message-text-url{
     &::after{
         content: '';
@@ -92,3 +163,4 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         width: 268px;
     }
 }
+

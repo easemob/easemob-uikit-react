@@ -46,6 +46,7 @@ class MessageStore {
       addReaction: action,
       updateReactions: action,
       recallMessage: action,
+      translateMessage: action,
     });
 
     autorun(() => {
@@ -517,6 +518,40 @@ class MessageStore {
 
         this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
       });
+  }
+
+  translateMessage(cvs: CurrentConversation, messageId: string, language: string) {
+    if (!cvs || !messageId) return;
+    const messages = this.message[cvs.chatType][cvs.conversationId];
+    return new Promise((res, rej) => {
+      messages.forEach(message => {
+        // @ts-ignore
+        if (message.id === messageId || message.mid === messageId) {
+          if (message.type !== 'txt') {
+            return console.warn('message type is not txt');
+          }
+          this.rootStore.client
+            .translateMessage({
+              text: message.msg,
+              languages: [language],
+            })
+            .then(data => {
+              console.log(data);
+              if (data.type == 0) {
+                // {text: '发起视频通话', to: 'zh-Hans'}
+                // @ts-ignore
+                const translations = data.data[0]?.translations;
+                message.translations = translations;
+                this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+              }
+              res(true);
+            })
+            .catch(() => {
+              rej(false);
+            });
+        }
+      });
+    });
   }
 }
 

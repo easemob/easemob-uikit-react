@@ -54,6 +54,7 @@ export interface BaseMessageProps {
   onRecallMessage?: () => void;
   customAction?: CustomAction; // whether show more
   reaction?: boolean; // whether show reaction
+  onTranslateMessage?: () => void;
 }
 
 const BaseMessage = (props: BaseMessageProps) => {
@@ -83,6 +84,7 @@ const BaseMessage = (props: BaseMessageProps) => {
     onRecallMessage,
     customAction,
     reaction = true,
+    onTranslateMessage,
   } = props;
 
   const { t } = useTranslation();
@@ -146,6 +148,10 @@ const BaseMessage = (props: BaseMessageProps) => {
           content: 'UNSEND',
           onClick: () => {},
         },
+        {
+          content: 'TRANSLATE',
+          onClick: () => {},
+        },
       ],
     };
   }
@@ -160,6 +166,9 @@ const BaseMessage = (props: BaseMessageProps) => {
   };
   const recallMessage = () => {
     onRecallMessage && onRecallMessage();
+  };
+  const translateMessage = () => {
+    onTranslateMessage && onTranslateMessage();
   };
 
   let menuNode: ReactNode | undefined;
@@ -186,6 +195,13 @@ const BaseMessage = (props: BaseMessageProps) => {
               <li key={index} onClick={recallMessage}>
                 <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
                 {t('module.unsend')}
+              </li>
+            );
+          } else if (item.content === 'TRANSLATE') {
+            return (
+              <li key={index} onClick={translateMessage}>
+                <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
+                {t('module.translate')}
               </li>
             );
           }

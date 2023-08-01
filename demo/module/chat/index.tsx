@@ -34,8 +34,9 @@ const ChatApp = () => {
     client &&
       client
         .open({
-          user: '15226583193',
-          pwd: '583193',
+          user: 'zd2',
+          accessToken:
+            'YWMtELYKV6Y-Te6FqUq7Pctz2yhYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGJruVhSAABUX4SrBZ1QIvlTiyYnq7Fwc9M50gDcv0ncIGr0CErkkuhkA==',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
@@ -93,7 +94,7 @@ const ChatApp = () => {
         }}
       >
         <ConversationList className="conversation"></ConversationList>
-        {/* <ContactList></ContactList> */}
+        {/* <ContactList className="conversation"></ContactList> */}
       </div>
       <div style={{ width: '65%', borderLeft: '1px solid transparent', overflow: 'hidden' }}>
         <Chat></Chat>
@@ -120,7 +121,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: 'easemob#easeim',
+        appKey: '41117440#383391',
       }}
       local={{
         fallbackLng: 'en',

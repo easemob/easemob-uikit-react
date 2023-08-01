@@ -19,6 +19,13 @@
         "reply": "Reply",
         "unsend": "Unsend",
         "attachment": "Attachment",
-        "unsentAMessage": " unsent a message"
+        "unsentAMessage": " unsent a message",
+        "translate": "Translate",
+        "translated": "Translated",
+        "translationFailed": "translation failed",
+        "translating": "Translating",
+        "retry": "Retry",
+        "hide": "Hide",
+        "show": "Show"
     }
 }
