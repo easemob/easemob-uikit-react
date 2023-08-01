@@ -19,6 +19,13 @@
         "reply": "回复",
         "unsend": "撤回",
         "attachment": "附件",
-        "unsentAMessage": "撤回了一条消息"
+        "unsentAMessage": "撤回了一条消息",
+        "translate": "翻译",
+        "translated": "已翻译",
+        "translationFailed": "翻译失败",
+        "translating": "翻译中",
+        "retry": "重试",
+        "hide": "隐藏",
+        "show": "显示"
     }
 }

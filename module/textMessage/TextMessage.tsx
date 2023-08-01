@@ -14,6 +14,9 @@ import { UrlMessage } from './UrlMessage';
 import reactStringReplace from 'react-string-replace';
 import { AgoraChat } from 'agora-chat';
 import { getCvsIdFromMessage } from '../utils';
+import Icon from '../../component/icon';
+import { useTranslation } from 'react-i18next';
+
 export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
   // color?: string; // 字体颜色
@@ -129,6 +132,7 @@ export const TextMessage = (props: TextMessageProps) => {
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-text', customizePrefixCls);
+  const { t } = useTranslation();
   const [urlData, setUrlData] = useState<any>(null);
   const [isFetching, setFetching] = useState(false);
   let { bySelf, time, from, msg, reactions } = textMessage;
@@ -263,6 +267,46 @@ export const TextMessage = (props: TextMessageProps) => {
   if (bubbleClass) {
     bubbleClassName = bubbleClass + ' ' + urlTxtClass;
   }
+
+  // --------------- translation -----------
+  const [btnText, setBtnText] = useState('hide');
+  const [transStatus, setTransStatus] = useState('');
+  const transPrefix = getPrefixCls('message-text-translation', customizePrefixCls);
+  const translationClass = classNames(transPrefix, {
+    [`${transPrefix}-left`]: !bySelf,
+    [`${transPrefix}-right`]: bySelf,
+    [`${transPrefix}-hide`]: btnText === 'show',
+  });
+
+  const switchShowTranslation = () => {
+    if (btnText == 'retry') {
+      return handleTranslateMessage();
+    }
+    setBtnText(btnText === 'hide' ? 'show' : 'hide');
+  };
+
+  const handleTranslateMessage = () => {
+    setTransStatus('translating');
+    let conversationId = getCvsIdFromMessage(textMessage);
+    rootStore.messageStore
+      .translateMessage(
+        {
+          chatType: textMessage.chatType,
+          conversationId: conversationId,
+        },
+        // @ts-ignore
+        textMessage.mid || textMessage.id,
+        'zh',
+      )
+      ?.then(() => {
+        setTransStatus('translated');
+      })
+      .catch(() => {
+        setTransStatus('translationFailed');
+        setBtnText('retry');
+      });
+  };
+
   return (
     <BaseMessage
       id={textMessage.id}
@@ -280,12 +324,33 @@ export const TextMessage = (props: TextMessageProps) => {
       onDeleteReactionEmoji={handleDeleteEmoji}
       onShowReactionUserList={handleShowReactionUserList}
       onRecallMessage={handleRecallMessage}
+      onTranslateMessage={handleTranslateMessage}
       {...others}
     >
       <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
       {!!(urlData?.title || urlData?.description) && (
         <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
       )}
+
+      {
+        // @ts-ignore
+        (textMessage.translations || transStatus == 'translating') && (
+          <div className={translationClass}>
+            <div className={`${transPrefix}-line`}></div>
+            <span className={`${transPrefix}-text`}>
+              {
+                // @ts-ignore
+                renderTxt(textMessage.translations?.[0]?.text, detectedUrl)
+              }
+            </span>
+            <div className={`${transPrefix}-action`}>
+              <Icon type="TRANSLATION" width={16} height={16}></Icon>
+              <span>{t(`module.${transStatus}`)}</span>
+              <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+            </div>
+          </div>
+        )
+      }
     </BaseMessage>
   );
 };
