@@ -21,6 +21,7 @@ export type ConversationData = Array<{
   chatType: 'singleChat' | 'groupChat';
   conversationId: string;
   name?: string; // 昵称/群组名称
+  isAted?: boolean;
   unreadCount: number; // 会话未读数
   lastMessage: {
     type: 'txt' | 'img' | 'audio' | 'video' | 'file' | 'custom';

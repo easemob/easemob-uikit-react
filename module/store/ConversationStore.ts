@@ -8,6 +8,7 @@ export interface Conversation {
   lastMessage: AgoraChat.MessageBody;
   unreadCount: number;
   name?: string;
+  isAted?: boolean;
 }
 
 export interface CurrentConversation {
@@ -51,6 +52,7 @@ class ConversationStore {
       addConversation: action,
       modifyConversation: action,
       topConversation: action,
+      setIsAted: action,
     });
   }
 
@@ -171,6 +173,18 @@ class ConversationStore {
     console.log('cvs --->', cvs);
 
     return cvs;
+  }
+
+  setIsAted(chatType: ChatType, cvsId: string, isAted: boolean) {
+    console.log(chatType, cvsId, isAted, '12313s');
+    let idx = this.conversationList.findIndex(item => {
+      return item.chatType === chatType && item.conversationId === cvsId;
+    });
+    if (idx > -1) {
+      this.conversationList[idx].isAted = isAted;
+
+      console.log(this.conversationList[idx]);
+    }
   }
 }
 

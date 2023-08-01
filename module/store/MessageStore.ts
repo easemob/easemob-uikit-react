@@ -5,6 +5,7 @@ import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage } from '../utils';
 import { RootStore } from './index';
+import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
 export interface RecallMessage {
   type: 'recall';
   [key: string]: any;
@@ -198,6 +199,7 @@ class MessageStore {
 
   receiveMessage(message: AgoraChat.MessageBody) {
     console.log('收到消息', message);
+
     this.message.byId[message.id] = message;
     // @ts-ignore
     message.bySelf = false;
@@ -222,6 +224,7 @@ class MessageStore {
       message.chatType,
       conversationId,
     ) as unknown as Conversation;
+
     // 没有会话时创建会话
     if (!cvs) {
       cvs = {
@@ -244,6 +247,15 @@ class MessageStore {
     }
     cvs.lastMessage = message;
     this.rootStore.conversationStore.topConversation({ ...cvs });
+    // show at tag
+    if (message.type === 'txt') {
+      let mentionList = message?.ext?.em_at_list;
+      if (mentionList && message.from !== this.rootStore.client.user) {
+        if (mentionList === AT_ALL || mentionList.includes(this.rootStore.client.user)) {
+          this.rootStore.conversationStore.setIsAted(cvs.chatType, cvs.conversationId, true);
+        }
+      }
+    }
   }
 
   modifyMessage(id: string, message: AgoraChat.MessageBody | RecallMessage) {

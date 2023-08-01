@@ -67,6 +67,15 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     }
 }
 
+.#{$conversation-prefix-cls}-at-tag{
+    display: inline-block;
+    color: $blue-5;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    margin-right: 5px;
+}
+
 .cui-moreAction{
     padding: 0;
     margin: 0;

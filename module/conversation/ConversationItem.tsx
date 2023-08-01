@@ -10,7 +10,6 @@ import type { ConversationData } from './ConversationList';
 import { RenderFunction, Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
-import { JSX } from 'react/jsx-runtime';
 import { renderTxt } from '../textMessage/TextMessage';
 export interface ConversationItemProps {
   className?: string;
@@ -74,7 +73,12 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     className,
   );
 
+  const AtTag = () => {
+    return <div className={`${prefixCls}-at-tag`}>/有人@你/</div>;
+  };
+
   const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {
+    rootStore?.conversationStore.setIsAted(data.chatType, data.conversationId, false);
     onClick && onClick(e);
   };
 
@@ -132,7 +136,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     );
   }
 
-  let lastMsg: ReactNode = '';
+  let lastMsg: ReactNode[] | ReactNode = '';
   switch (data.lastMessage?.type) {
     case 'txt':
       lastMsg = renderTxt(data.lastMessage?.msg, '');
@@ -157,11 +161,9 @@ const ConversationItem: FC<ConversationItemProps> = props => {
       break;
   }
   if (data.chatType == 'groupChat') {
-    const from =
-      data.lastMessage.from && data.lastMessage.from != rootStore.client.context.userId
-        ? `${data.lastMessage.from}:`
-        : '';
-    lastMsg = `${from}${lastMsg}`;
+    let msgFrom = data.lastMessage.from;
+    const from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}:` : '';
+    lastMsg = [from, ...Array.from(lastMsg)];
   }
 
   return (
@@ -182,7 +184,10 @@ const ConversationItem: FC<ConversationItemProps> = props => {
 
       <div className={`${prefixCls}-content`}>
         <span className={`${prefixCls}-nickname`}>{data.name || data.conversationId}</span>
-        <span className={`${prefixCls}-message`}>{lastMsg}</span>
+        <span className={`${prefixCls}-message`}>
+          {data?.isAted ? <AtTag /> : ''}
+          {lastMsg}
+        </span>
       </div>
       <div className={`${prefixCls}-info`}>
         <span className={`${prefixCls}-time`}>{getConversationTime(data.lastMessage.time)}</span>
