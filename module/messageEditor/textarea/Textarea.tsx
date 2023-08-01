@@ -183,15 +183,6 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
 
   return (
     <div className={classString}>
-      <div
-        data-before={placeholder}
-        ref={divRef}
-        className={`${prefixCls}-input`}
-        contentEditable="true"
-        onInput={handleInputChange}
-        onKeyUp={handleKeyUp}
-        onKeyDown={handleKeyDown}
-      ></div>
       {/* At suggest list */}
       {canAtUser && (
         <SuggestList
@@ -204,6 +195,15 @@ let Textarea = forwardRef<any, TextareaProps>((props, ref) => {
         />
       )}
       {/* Send button node  */}
+      <div
+        data-before={placeholder}
+        ref={divRef}
+        className={`${prefixCls}-input`}
+        contentEditable="true"
+        onInput={handleInputChange}
+        onKeyUp={handleKeyUp}
+        onKeyDown={handleKeyDown}
+      ></div>
       {btnNode}
     </div>
   );

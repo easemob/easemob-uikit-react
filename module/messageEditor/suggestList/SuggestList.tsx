@@ -5,6 +5,7 @@ import { getStore } from '../../store';
 import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';
 import { getGroupItemFromGroupsById, getGroupMemberNickName } from '../../utils';
+import Avatar from '../../../component/avatar';
 
 export const AT_ALL = 'ALL';
 
@@ -36,7 +37,8 @@ interface Props {
 
 const SuggestList: FC<Props> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
-  const prefixCls = getPrefixCls('suggest-list');
+  const prefixCls = getPrefixCls('suggest');
+  const listCls = getPrefixCls('suggest-list');
   const classes = classNames(prefixCls, props.className);
   const [index, setIndex] = useState(-1);
   const usersRef = useRef<MemberItem[]>();
@@ -60,6 +62,12 @@ const SuggestList: FC<Props> = props => {
       props.onHide();
     }
   }, [filteredUsers]);
+
+  useEffect(() => {
+    suggestRef?.current
+      ?.getElementsByClassName('active')?.[0]
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [index]);
 
   useEffect(() => {
     const keyDownHandler = (e: any) => {
@@ -94,27 +102,35 @@ const SuggestList: FC<Props> = props => {
   }, []);
 
   return (
-    <>
+    <div>
       {props.visible && filteredUsers.length ? (
         <div
           className={classes}
           ref={suggestRef}
           style={{
-            top: props.position.y,
+            bottom: `calc(100% - ${props.position.y}px)`,
             left: props.position.x,
           }}
         >
-          {/* {filteredUsers.length ? '' : '无搜索结果'} */}
-          {filteredUsers.map((user, i) => {
-            return (
-              <div key={user.userId} className={i === index ? 'active item' : 'item'}>
-                <div className="name">{getGroupMemberNickName(user)}</div>
-              </div>
-            );
-          })}
+          <div className={listCls}>
+            {/* {filteredUsers.length ? '' : '无搜索结果'} */}
+            {filteredUsers.map((user, i) => {
+              return (
+                <div
+                  key={user.userId}
+                  className={i === index ? `active ${prefixCls}-item` : `${prefixCls}-item`}
+                >
+                  <div className="avatar">
+                    <Avatar size="small">{getGroupMemberNickName(user)}</Avatar>
+                  </div>
+                  <div className="name">{getGroupMemberNickName(user)}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 };
 

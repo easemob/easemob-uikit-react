@@ -1,19 +1,41 @@
 @import '~/common/style/index.scss';
-$suggestList-prefix-cls: #{$cui-prefix}-suggest-list;
+$suggestList-prefix-cls: #{$cui-prefix}-suggest;
 
 .#{$suggestList-prefix-cls} {
+  box-sizing: border-box;
   position: fixed;
-  width: 100px;
-  max-height: 212px;
   border-radius: 16px;
-  padding: 8px;
-  border: 1px solid var(--color-neutral-9, #E3E6E8);
-  background: var(--color-neutral-98, #F9FAFA);
+  padding: 4px 8px;
+  border: 1px solid $gray-95;
+  background: $gray-98;
   box-shadow: 0px 24px 36px 0px rgba(70, 78, 83, 0.15), 8px 0px 24px 0px rgba(23, 26, 28, 0.08);
 
   & {
     .active {
-      background: #abcdef;
+      background: $white;
     }
+  }
+}
+
+.#{$suggestList-prefix-cls}-list {
+  min-width: 220px;
+  max-height: 202px;
+  overflow: scroll;
+}
+
+.#{$suggestList-prefix-cls}-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px 6px 8px;
+  border-radius: 8px;
+  font-size: $font-size-base;
+  line-height: 20px;
+  font-weight: 500;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  background: $gray-98;
+
+  .avatar {
+    margin-right: 8px;
   }
 }
