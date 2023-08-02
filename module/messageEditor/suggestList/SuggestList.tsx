@@ -6,16 +6,9 @@ import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';
 import { getGroupItemFromGroupsById, getGroupMemberNickName } from '../../utils';
 import Avatar from '../../../component/avatar';
+import { useTranslation } from 'react-i18next';
 
 export const AT_ALL = 'ALL';
-
-const AT_ALL_ITEM = {
-  userId: AT_ALL,
-  role: null,
-  attributes: {
-    nickName: '所有人',
-  },
-} as any;
 
 const searchUser = (memberList: MemberItem[], queryString?: string) => {
   return queryString
@@ -36,13 +29,13 @@ interface Props {
 }
 
 const SuggestList: FC<Props> = props => {
+  const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('suggest');
   const listCls = getPrefixCls('suggest-list');
   const classes = classNames(prefixCls, props.className);
   const [index, setIndex] = useState(-1);
   const usersRef = useRef<MemberItem[]>();
-
   const suggestRef = useRef<HTMLDivElement>(null);
   const indexRef = useRef<number>();
   indexRef.current = index;
@@ -50,6 +43,14 @@ const SuggestList: FC<Props> = props => {
   visibleRef.current = props.visible;
   let currentCVS = getStore().messageStore.currentCVS;
   const memberList = getGroupItemFromGroupsById(currentCVS.conversationId)?.members || [];
+
+  const AT_ALL_ITEM = {
+    userId: AT_ALL,
+    role: null,
+    attributes: {
+      nickName: t('module.atAll'),
+    },
+  } as any;
 
   const filteredUsers = useMemo(() => {
     return searchUser([AT_ALL_ITEM, ...memberList], props.queryString);

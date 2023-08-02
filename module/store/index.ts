@@ -20,13 +20,10 @@ export class RootStore {
     this.messageStore = new MessageStore(this);
     this.conversationStore = new ConversationStore(this);
     this.addressStore = new AddressStore();
-    // makeAutoObservable(this);
 
     makeObservable(this, {
       client: observable,
       loginState: observable,
-      messageStore: observable,
-      conversationStore: observable,
       setLoginState: action,
       setClient: action,
       initConfig: observable,

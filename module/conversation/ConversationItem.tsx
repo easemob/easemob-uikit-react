@@ -74,7 +74,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
   );
 
   const AtTag = () => {
-    return <div className={`${prefixCls}-at-tag`}>/有人@你/</div>;
+    return <div className={`${prefixCls}-at-tag`}>{t('module.atTag')}</div>;
   };
 
   const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {

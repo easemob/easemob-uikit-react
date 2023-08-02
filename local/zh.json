@@ -26,6 +26,8 @@
         "translating": "翻译中",
         "retry": "重试",
         "hide": "隐藏",
-        "show": "显示"
+        "show": "显示",
+        "atAll": "所有人",
+        "atTag": "/有人@你/ "
     }
 }

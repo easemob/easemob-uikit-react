@@ -248,7 +248,7 @@ class MessageStore {
     cvs.lastMessage = message;
     this.rootStore.conversationStore.topConversation({ ...cvs });
     // show at tag
-    if (message.type === 'txt') {
+    if (!isCurrentCvs && message.type === 'txt') {
       let mentionList = message?.ext?.em_at_list;
       if (mentionList && message.from !== this.rootStore.client.user) {
         if (mentionList === AT_ALL || mentionList.includes(this.rootStore.client.user)) {

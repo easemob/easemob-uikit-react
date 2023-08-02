@@ -26,6 +26,8 @@
         "translating": "Translating",
         "retry": "Retry",
         "hide": "Hide",
-        "show": "Show"
+        "show": "Show",
+        "atAll": "All",
+        "atTag": "/someone@you/ "
     }
 }
