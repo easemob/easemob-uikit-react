@@ -10,7 +10,8 @@ import React, {
 import AC, { AgoraChat } from 'agora-chat';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config/index';
-import { convertToMessage } from './util';
+import { convertToMessage, formatHtmlString } from './util';
+import { renderHtml } from '../../utils';
 import Icon from '../../../component/icon';
 import { RootContext } from '../../store/rootContext';
 import SuggestList from '../suggestList';
@@ -25,6 +26,7 @@ export interface TextareaProps {
   placeholder?: string;
   hasSendButton?: boolean;
   sendButtonActiveColor?: string;
+  enableEnterSend?: boolean;
   enabledMenton?: boolean;
 }
 
@@ -38,6 +40,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     placeholder = 'Say something',
     hasSendButton,
     sendButtonActiveColor = '#009EFF',
+    enableEnterSend = true,
     enabledMenton = true,
   } = props;
   const [isEmpty, setIsEmpty] = useState(false);
@@ -164,9 +167,20 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.code === 'Enter') {
       e.preventDefault();
-      sendMessage();
+      if (enableEnterSend) {
+        sendMessage();
+      }
     }
   };
+
+  const onPaste = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    document.execCommand(
+      'insertHTML',
+      false,
+      renderHtml(formatHtmlString(e?.clipboardData.getData('text'))),
+    );
+  }, []);
 
   const setTextareaValue = (value: string) => {
     setTextValue(value);
@@ -196,6 +210,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
         onInput={handleInputChange}
         onKeyUp={handleKeyUp}
         onKeyDown={handleKeyDown}
+        onPaste={onPaste}
       ></div>
       {/* At suggest list */}
       {canAtUser && (

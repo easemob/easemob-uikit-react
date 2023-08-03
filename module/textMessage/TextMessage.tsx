@@ -34,6 +34,7 @@ export interface TextMessageProps extends BaseMessageProps {
   style?: React.CSSProperties;
 }
 
+
 export const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
   const urlRegex = /(https?:\/\/\S+)/gi;
   if (txt === undefined || txt === null) {
@@ -54,7 +55,7 @@ export const renderTxt = (txt: string | undefined | null, detectedUrl: string | 
       rnTxt.push(
         <img
           key={Math.floor(Math.random() * 100000 + 1) + new Date().getTime().toString()}
-          alt={v}
+          alt={match[1]}
           src={new URL(`/module/assets/reactions/${v}`, import.meta.url).href}
           width={20}
           height={20}
@@ -157,6 +158,7 @@ export const TextMessage = (props: TextMessageProps) => {
   const [btnText, setBtnText] = useState('hide');
   const [transStatus, setTransStatus] = useState('');
   const transPrefix = getPrefixCls('message-text-translation', customizePrefixCls);
+  const modifyPrefix = getPrefixCls('modify-textarea', customizePrefixCls);
   const translationClass = classNames(transPrefix, {
     [`${transPrefix}-left`]: !bySelf,
     [`${transPrefix}-right`]: bySelf,
@@ -403,7 +405,12 @@ export const TextMessage = (props: TextMessageProps) => {
           onOk={confirmModifyMessage}
           open={modifyMessageVisible}
         >
-          <Textarea ref={textareaRef} enabledMenton={false} />
+          <Textarea
+            className={modifyPrefix}
+            ref={textareaRef}
+            enableEnterSend={false}
+            enabledMenton={false}
+          />
         </Modal>
       }
     </>

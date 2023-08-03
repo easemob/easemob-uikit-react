@@ -1,6 +1,7 @@
 @import '~/common/style/index.scss';
 
 $text-msg-prefix-cls: #{$cui-prefix}-message-text;
+$text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
 .#{$text-msg-prefix-cls} {
     font-size: $font-size-lg;
@@ -167,6 +168,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
 }
 
+
 .message-text-url-loading {
     color: $gray-5;
     direction: ltr;
@@ -185,4 +187,9 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
     .cui-message-base-content {
         width: 268px;
     }
+}
+
+.#{$text-modify-prefix-cls} {
+    height: 120px;
+    overflow: scroll;
 }

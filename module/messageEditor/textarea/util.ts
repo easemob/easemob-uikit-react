@@ -24,3 +24,7 @@ export const convertToMessage = (e: string) => {
   new RegExp('(^[\\s\\n\\t\\xa0\\u3000]+)|([\\u3000\\xa0\\n\\s\\t]+$)', 'g');
   return t.replace(/&nbsp;/g, ' ').trim();
 };
+
+export const formatHtmlString = (str: string) =>
+  //@ts-ignore
+  str?.replace(/[\u00A0-\u9999<>]/gim, i => ''.concat('&#', i.charCodeAt(0), ';'));
