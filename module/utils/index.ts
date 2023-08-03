@@ -3,6 +3,8 @@ import { AgoraChat } from 'agora-chat';
 import rootStore from '../store/index';
 import type { RecallMessage } from '../store/MessageStore';
 import { GroupItem, MemberItem } from '../store/AddressStore';
+import { emoji } from '../messageEditor/emoji/emojiConfig';
+
 export function getConversationTime(time: number) {
   if (!time) return '';
   // ['Fri', 'Jun', '10', '2022', '14:16:28', 'GMT+0800', '(中国标准时间)']
@@ -56,6 +58,40 @@ export function getCvsIdFromMessage(message: AgoraChat.MessageBody | RecallMessa
   }
   return conversationId;
 }
+
+export function getEmojiHtml({ src = '', dataKey = '', alt = '' }) {
+  return `<span><img  src=${src} data-key=${dataKey} alt=${alt} width="20" height="20" style="vertical-align: middle" /></span>`;
+}
+
+export const renderHtml = (txt: string): string => {
+  if (txt === undefined) {
+    return '';
+  }
+  let rnTxt = '';
+  let match = null;
+  const regex = /(\[.*?\])/g;
+  let start = 0;
+  let index = 0;
+  while ((match = regex.exec(txt))) {
+    index = match.index;
+    if (index > start) {
+      rnTxt += txt.substring(start, index);
+    }
+    if (match[1] in emoji.map) {
+      const v = emoji.map[match[1] as keyof typeof emoji.map];
+      rnTxt += getEmojiHtml({
+        src: new URL(`/module/assets/reactions/${v}`, import.meta.url).href,
+        dataKey: match[1],
+        alt: match[1],
+      });
+    } else {
+      rnTxt += match[1];
+    }
+    start = index + match[1].length;
+  }
+  rnTxt += txt.substring(start, txt.length);
+  return rnTxt;
+};
 
 export function getGroupItemFromGroupsById(groupId: string) {
   const { addressStore } = rootStore;

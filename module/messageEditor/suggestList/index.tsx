@@ -1,3 +1,3 @@
-import { SuggestList } from './SuggestList';
+import SuggestList from './SuggestList';
 
 export default SuggestList;

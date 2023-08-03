@@ -12,10 +12,14 @@ import type { TextMessageType } from '../types/messageType';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import { UrlMessage } from './UrlMessage';
 import reactStringReplace from 'react-string-replace';
-import { AgoraChat } from 'agora-chat';
-import { getCvsIdFromMessage } from '../utils';
+import AC, { AgoraChat } from 'agora-chat';
+import Modal from '../../component/modal';
+import { getCvsIdFromMessage, renderHtml } from '../utils';
+import { convertToMessage } from '../messageEditor/textarea/util';
 import Icon from '../../component/icon';
 import { useTranslation } from 'react-i18next';
+import Textarea from '../messageEditor/textarea';
+import { ForwardRefProps } from '../messageEditor/textarea/Textarea';
 
 export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
@@ -136,8 +140,28 @@ export const TextMessage = (props: TextMessageProps) => {
   const [urlData, setUrlData] = useState<any>(null);
   const [isFetching, setFetching] = useState(false);
   let { bySelf, time, from, msg, reactions } = textMessage;
-
   const classString = classNames(prefixCls, className);
+  const textareaRef = useRef<ForwardRefProps>(null);
+  const [modifyMessageVisible, setModifyMessageVisible] = useState<boolean>(false);
+  let urlTxtClass = '';
+  if (urlData?.images?.length > 0) {
+    urlTxtClass = 'message-text-hasImage';
+  }
+
+  let bubbleClassName = '';
+  if (bubbleClass) {
+    bubbleClassName = bubbleClass + ' ' + urlTxtClass;
+  }
+
+  // --------------- translation -----------
+  const [btnText, setBtnText] = useState('hide');
+  const [transStatus, setTransStatus] = useState('');
+  const transPrefix = getPrefixCls('message-text-translation', customizePrefixCls);
+  const translationClass = classNames(transPrefix, {
+    [`${transPrefix}-left`]: !bySelf,
+    [`${transPrefix}-right`]: bySelf,
+    [`${transPrefix}-hide`]: btnText === 'show',
+  });
 
   if (typeof bySelf == 'undefined') {
     bySelf = from == rootStore.client.context.userId;
@@ -171,10 +195,7 @@ export const TextMessage = (props: TextMessageProps) => {
         });
     }
   }, [detectedUrl]);
-  let urlTxtClass = '';
-  if (urlData?.images?.length > 0) {
-    urlTxtClass = 'message-text-hasImage';
-  }
+
   const handleReplyMsg = () => {
     rootStore.messageStore.setRepliedMessage(textMessage);
   };
@@ -263,21 +284,6 @@ export const TextMessage = (props: TextMessageProps) => {
     );
   };
 
-  let bubbleClassName = '';
-  if (bubbleClass) {
-    bubbleClassName = bubbleClass + ' ' + urlTxtClass;
-  }
-
-  // --------------- translation -----------
-  const [btnText, setBtnText] = useState('hide');
-  const [transStatus, setTransStatus] = useState('');
-  const transPrefix = getPrefixCls('message-text-translation', customizePrefixCls);
-  const translationClass = classNames(transPrefix, {
-    [`${transPrefix}-left`]: !bySelf,
-    [`${transPrefix}-right`]: bySelf,
-    [`${transPrefix}-hide`]: btnText === 'show',
-  });
-
   const switchShowTranslation = () => {
     if (btnText == 'retry') {
       return handleTranslateMessage();
@@ -307,50 +313,99 @@ export const TextMessage = (props: TextMessageProps) => {
       });
   };
 
-  return (
-    <BaseMessage
-      id={textMessage.id}
-      direction={bySelf ? 'rtl' : 'ltr'}
-      style={style}
-      time={time}
-      nickName={nickName || from}
-      bubbleType={type}
-      className={bubbleClassName}
-      onReplyMessage={handleReplyMsg}
-      onDeleteMessage={handleDeleteMsg}
-      repliedMessage={repliedMsg}
-      reactionData={reactions}
-      onAddReactionEmoji={handleClickEmoji}
-      onDeleteReactionEmoji={handleDeleteEmoji}
-      onShowReactionUserList={handleShowReactionUserList}
-      onRecallMessage={handleRecallMessage}
-      onTranslateMessage={handleTranslateMessage}
-      {...others}
-    >
-      <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
-      {!!(urlData?.title || urlData?.description) && (
-        <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
-      )}
+  const handleModifyMessage = () => {
+    setModifyMessageVisible(true);
+  };
 
-      {
-        // @ts-ignore
-        (textMessage.translations || transStatus == 'translating') && (
-          <div className={translationClass}>
-            <div className={`${transPrefix}-line`}></div>
-            <span className={`${transPrefix}-text`}>
-              {
-                // @ts-ignore
-                renderTxt(textMessage.translations?.[0]?.text, detectedUrl)
-              }
-            </span>
-            <div className={`${transPrefix}-action`}>
-              <Icon type="TRANSLATION" width={16} height={16}></Icon>
-              <span>{t(`module.${transStatus}`)}</span>
-              <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+  const cancelModifyMessage = () => {
+    setModifyMessageVisible(false);
+  };
+
+  const confirmModifyMessage = () => {
+    setModifyMessageVisible(false);
+    const currentCVS = rootStore.conversationStore.currentCvs;
+    let msg = convertToMessage(textareaRef?.current?.divRef?.current?.innerHTML || '').trim();
+    const message = AC.message.create({
+      to: currentCVS.conversationId,
+      chatType: currentCVS.chatType,
+      type: 'txt',
+      msg: msg,
+    }) as AgoraChat.TextMsgBody;
+    // @ts-ignore
+    rootStore.messageStore.modifyServerMessage(textMessage?.mid || textMessage?.id, message);
+  };
+
+  useEffect(() => {
+    if (modifyMessageVisible) {
+      setTimeout(() => {
+        if (textareaRef?.current?.divRef.current) {
+          textareaRef.current.divRef.current.innerHTML = renderHtml(textMessage.msg);
+        }
+      }, 200);
+    }
+  }, [modifyMessageVisible]);
+
+  return (
+    <>
+      <BaseMessage
+        id={textMessage.id}
+        direction={bySelf ? 'rtl' : 'ltr'}
+        style={style}
+        time={time}
+        nickName={nickName || from}
+        bubbleType={type}
+        className={bubbleClassName}
+        onReplyMessage={handleReplyMsg}
+        onDeleteMessage={handleDeleteMsg}
+        repliedMessage={repliedMsg}
+        reactionData={reactions}
+        onAddReactionEmoji={handleClickEmoji}
+        onDeleteReactionEmoji={handleDeleteEmoji}
+        onShowReactionUserList={handleShowReactionUserList}
+        onRecallMessage={handleRecallMessage}
+        onTranslateMessage={handleTranslateMessage}
+        onModifyMessage={handleModifyMessage}
+        {...others}
+      >
+        <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
+        {textMessage?.modifiedInfo ? <span>（edited）</span> : ''}
+        {!!(urlData?.title || urlData?.description) && (
+          <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
+        )}
+        {
+          // @ts-ignore
+          (textMessage.translations || transStatus == 'translating') && (
+            <div className={translationClass}>
+              <div className={`${transPrefix}-line`}></div>
+              <span className={`${transPrefix}-text`}>
+                {
+                  // @ts-ignore
+                  renderTxt(textMessage.translations?.[0]?.text, detectedUrl)
+                }
+              </span>
+              <div className={`${transPrefix}-action`}>
+                <Icon type="TRANSLATION" width={16} height={16}></Icon>
+                <span>{t(`module.${transStatus}`)}</span>
+                <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+              </div>
             </div>
-          </div>
-        )
+          )
+        }
+      </BaseMessage>
+      {/* Modify Message Modal */}
+      {
+        <Modal
+          title={t('module.modifyTitle')}
+          okText={t('module.confirmBtn')}
+          cancelText={t('module.cancelBtn')}
+          wrapClassName="modify-message-modal"
+          onCancel={cancelModifyMessage}
+          onOk={confirmModifyMessage}
+          open={modifyMessageVisible}
+        >
+          <Textarea ref={textareaRef} enabledMenton={false} />
+        </Modal>
       }
-    </BaseMessage>
+    </>
   );
 };

@@ -7,6 +7,7 @@ import { MemberItem } from '../../store/AddressStore';
 import { getGroupItemFromGroupsById, getGroupMemberNickName } from '../../utils';
 import Avatar from '../../../component/avatar';
 import { useTranslation } from 'react-i18next';
+import { observer } from 'mobx-react-lite';
 
 export const AT_ALL = 'ALL';
 
@@ -135,4 +136,4 @@ const SuggestList: FC<Props> = props => {
   );
 };
 
-export { SuggestList };
+export default observer(SuggestList);

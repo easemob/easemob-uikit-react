@@ -1,7 +1,6 @@
 import { observable, action, makeObservable } from 'mobx';
 import { getStore } from './index';
 import { AgoraChat } from 'agora-chat';
-import { useGroupMembersAttributes } from '../hooks/useAddress';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
 
 export type MemberRole = 'member' | 'owner';
@@ -36,31 +35,14 @@ class AddressStore {
       groups: observable,
       chatroom: observable,
       searchList: observable,
+      hasGroupsNext: observable,
       setHasGroupsNext: action,
       setContacts: action,
       setGroups: action,
       setGroupMembers: action,
+      setGroupMemberAttributes: action,
       setChatroom: action,
     });
-  }
-
-  getGroupMembers({
-    groupId,
-    pageNum = 1,
-    pageSize = 20,
-  }: {
-    groupId: string;
-    pageNum: number;
-    pageSize: number;
-  }) {
-    const { client } = getStore();
-    client
-      .listGroupMembers({
-        groupId,
-        pageNum,
-        pageSize,
-      })
-      .then(res => {});
   }
 
   setContacts(contacts: any) {
@@ -113,7 +95,7 @@ class AddressStore {
     attributes: AgoraChat.MemberAttributes,
   ) {
     let groupIdx = getGroupItemIndexFromGroupsById(groupId);
-    let idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) || -1;
+    let idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) ?? -1;
     if (idx > -1) {
       let memberList = this.groups[groupIdx].members || [];
       memberList[idx].attributes = attributes;

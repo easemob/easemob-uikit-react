@@ -16,7 +16,7 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
     &-wrap {
         z-index: $zindex-modal;
     }
-
+    
     &-title {
         margin: 0;
         color: $modal-heading-color;

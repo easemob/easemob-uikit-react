@@ -9,7 +9,6 @@ import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import Icon from '../../component/icon';
-
 import { RepliedMsg } from '../repliedMessage';
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
@@ -55,6 +54,7 @@ export interface BaseMessageProps {
   customAction?: CustomAction; // whether show more
   reaction?: boolean; // whether show reaction
   onTranslateMessage?: () => void;
+  onModifyMessage?:() => void;
 }
 
 const BaseMessage = (props: BaseMessageProps) => {
@@ -85,6 +85,7 @@ const BaseMessage = (props: BaseMessageProps) => {
     customAction,
     reaction = true,
     onTranslateMessage,
+    onModifyMessage
   } = props;
 
   const { t } = useTranslation();
@@ -152,6 +153,10 @@ const BaseMessage = (props: BaseMessageProps) => {
           content: 'TRANSLATE',
           onClick: () => {},
         },
+        {
+          content: 'Modify',
+          onClick: () => {},
+        },
       ],
     };
   }
@@ -169,6 +174,10 @@ const BaseMessage = (props: BaseMessageProps) => {
   };
   const translateMessage = () => {
     onTranslateMessage && onTranslateMessage();
+  };
+
+  const modifyMessage = () => {
+    onModifyMessage && onModifyMessage();
   };
 
   let menuNode: ReactNode | undefined;
@@ -202,6 +211,13 @@ const BaseMessage = (props: BaseMessageProps) => {
               <li key={index} onClick={translateMessage}>
                 <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
                 {t('module.translate')}
+              </li>
+            );
+          } else if (item.content === 'Modify') {
+            return (
+              <li key={index} onClick={modifyMessage}>
+                <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
+                {t('module.modify')}
               </li>
             );
           }

@@ -14,38 +14,43 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
 
     // translation
-    &-translation{
+    &-translation {
         text-align: left;
-        &-line{
+
+        &-line {
             border-top: 1px solid $special-8;
             width: 100%;
         }
-        &-right{
-            .#{$text-msg-prefix-cls}-translation-text{
+
+        &-right {
+            .#{$text-msg-prefix-cls}-translation-text {
                 color: $special-3;
             }
 
-            .#{$text-msg-prefix-cls}-translation-action{
-                &>div>svg{
+            .#{$text-msg-prefix-cls}-translation-action {
+                &>div>svg {
                     fill: $blue-9;
                 }
-                &>span{
+
+                &>span {
                     color: $blue-9;
                 }
-                &>span:last-child{
+
+                &>span:last-child {
                     color: $gray-98;
                 }
             }
         }
-        &-left{
-        
-        }
-        &-hide{
-            .#{$text-msg-prefix-cls}-translation-text{
+
+        &-left {}
+
+        &-hide {
+            .#{$text-msg-prefix-cls}-translation-text {
                 display: none;
             }
         }
-        &-text{
+
+        &-text {
             font-size: 16px;
             line-height: 24px;
             text-align: left;
@@ -57,22 +62,26 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
             line-height: 20px;
             color: $special-5;
         }
-        &-action{
+
+        &-action {
             display: flex;
             direction: ltr;
             align-items: center;
+
             // gap: 4px;
-            &>div>svg{
+            &>div>svg {
                 fill: $gray-5;
             }
-            &>span{
+
+            &>span {
                 font-size: 12px;
                 font-style: normal;
                 font-weight: 400;
-                line-height: 16px; 
+                line-height: 16px;
                 color: $gray-5;
             }
-            &>span:last-child{
+
+            &>span:last-child {
                 user-select: none;
                 margin-left: 4px;
                 color: $blue-5;
@@ -83,8 +92,8 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 }
 
 
-.message-text-url{
-    &::after{
+.message-text-url {
+    &::after {
         content: '';
         height: 8px;
         width: 300px;
@@ -93,25 +102,30 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         position: relative;
         bottom: -8px;
     }
+
     background-color: $gray-95;
     position: relative;
     width: 300px;
     left: $padding-sm;
-    &-link{
+
+    &-link {
         color: inherit;
     }
-    &-img{
+
+    &-img {
         width: 300px;
         height: 154px;
         position: relative;
         // left: -$padding-sm;
         // float: left;
     }
-    &-info{
+
+    &-info {
         overflow: hidden;
         padding: 0 $padding-sm;
     }
-    &-title{
+
+    &-title {
         font-style: normal;
         font-weight: 500;
         font-size: $font-size-lg;
@@ -122,9 +136,11 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         direction: ltr;
-    };
+    }
 
-    &-desc{
+    ;
+
+    &-desc {
         color: $gray-3;
         font-style: normal;
         font-weight: 400;
@@ -135,8 +151,11 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         direction: ltr;
-    };
-    &-loading{
+    }
+
+    ;
+
+    &-loading {
         color: $gray-5;
         direction: ltr;
         font-family: 'SF Pro';
@@ -148,7 +167,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
 }
 
-.message-text-url-loading{
+.message-text-url-loading {
     color: $gray-5;
     direction: ltr;
     font-family: 'SF Pro';
@@ -158,9 +177,12 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
     line-height: 22px;
 }
 
-.message-text-hasImage{
-    .cui-message-base-content{
+.modify-message-modal {
+    direction: ltr;
+}
+
+.message-text-hasImage {
+    .cui-message-base-content {
         width: 268px;
     }
 }
-

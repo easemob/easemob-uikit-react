@@ -71,11 +71,21 @@ $screen-xxl: 1600px;
 $screen-xxl-min: $screen-xxl;
 
 // provide a maximum
-$screen-xs-max: ($screen-sm-min - 1px);
-$screen-sm-max: ($screen-md-min - 1px);
-$screen-md-max: ($screen-lg-min - 1px);
-$screen-lg-max: ($screen-xl-min - 1px);
-$screen-xl-max: ($screen-xxl-min - 1px);
+$screen-xs-max: (
+  $screen-sm-min - 1px
+);
+$screen-sm-max: (
+  $screen-md-min - 1px
+);
+$screen-md-max: (
+  $screen-lg-min - 1px
+);
+$screen-lg-max: (
+  $screen-xl-min - 1px
+);
+$screen-xl-max: (
+  $screen-xxl-min - 1px
+);
 
 // -------- Colors -----------
 // >>> Primary
@@ -212,8 +222,8 @@ $zindex-affix: 10;
 $zindex-back-top: 10;
 $zindex-picker-panel: 10;
 $zindex-popup-close: 10;
-$zindex-modal: 1000;
-$zindex-modal-mask: 1000;
+$zindex-modal: 1090;
+$zindex-modal-mask: 1080;
 $zindex-message: 1010;
 $zindex-notification: 1010;
 $zindex-popover: 1030;
@@ -244,7 +254,7 @@ $modal-footer-border-style: $border-style-base;
 $modal-footer-padding-vertical: 10px;
 $modal-footer-padding-horizontal: 16px;
 $modal-footer-border-width: $border-width-base;
-$modal-mask-bg: rgba(0,0,0, 0.45);
+$modal-mask-bg: rgba(0, 0, 0, 0.45);
 $modal-confirm-body-padding: 32px 32px 24px;
 $modal-confirm-title-font-size: $font-size-lg;
 $modal-border-radius: $border-radius-base;
@@ -297,7 +307,7 @@ $cvs-item-selected-name-color: $blue-6;
 $cvs-item-hover-bg-color: $gray-98;
 $cvs-item-active-bg-color: $gray-9;
 $cvs-item-info-right: 16px;
-$cvs-item-name-margin:  0 $margin-sm;
+$cvs-item-name-margin: 0 $margin-sm;
 $cvs-item-name-font-size: $font-size-lg;
 $cvs-item-name-font-weight: 500;
 $cvs-item-name-color: $title-color;
@@ -335,7 +345,7 @@ $msg-base-content-minheight: 24px;
 $msg-bubble-none-bg: transparent;
 $msg-bubble-none-color: $font-color;
 $msg-bubble-square-border-radius: 4px;
-$msg-info-margin-left:  $margin-sm;
+$msg-info-margin-left: $margin-sm;
 $msg-nickname-font-size: $font-size-sm;
 $msg-nickname-font-weight: 500;
 $msg-nickname-font-color: #5270AD;
@@ -363,11 +373,3 @@ $msg-reply-img-top: 8px;
 $msg-reply-img-right: 36px;
 $msg-reply-close-top: 8px;
 $msg-reply-close-right: 8px;
-
-
-
-
-
-
-
-

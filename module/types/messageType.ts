@@ -1,3 +1,5 @@
+import { AgoraChat } from 'agora-chat';
+
 export type ChatType = 'singleChat' | 'groupChat';
 
 export type MessageStatus =
@@ -111,6 +113,7 @@ export interface FileMessageType extends BaseMessage {
 export interface TextMessageType extends BaseMessage {
   type: 'txt';
   msg: string;
+  modifiedInfo: AgoraChat.ModifiedMsgInfo
 }
 
 export interface CustomMessageType extends BaseMessage {

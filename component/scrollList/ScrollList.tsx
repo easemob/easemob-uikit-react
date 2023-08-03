@@ -1,7 +1,7 @@
 import React, { useState, useImperativeHandle, forwardRef, useRef, useEffect } from 'react';
-import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
+import { observer } from 'mobx-react-lite';
 import './style/style.scss';
 export interface ScrollListProps<T> {
   className?: string;
@@ -16,7 +16,7 @@ export interface ScrollListProps<T> {
   loading: boolean;
 }
 
-const ScrollList = forwardRef(function InternalScrollList<T>(props: ScrollListProps<T>, ref: any) {
+let ScrollList = forwardRef(function InternalScrollList<T>(props: ScrollListProps<T>, ref: any) {
   const {
     className,
     style,
@@ -90,4 +90,5 @@ const ScrollList = forwardRef(function InternalScrollList<T>(props: ScrollListPr
     </div>
   );
 });
+ScrollList = observer(ScrollList);
 export { ScrollList };

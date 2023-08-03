@@ -24,10 +24,15 @@
         "translated": "Translated",
         "translationFailed": "translation failed",
         "translating": "Translating",
+        "modify": "Edit",
+        "modifyTitle": "Message Edit",
+        "confirmBtn": "Confirm",
+        "cancelBtn": "Cancel",
         "retry": "Retry",
         "hide": "Hide",
         "show": "Show",
         "atAll": "All",
         "atTag": "/someone@you/ "
+        
     }
 }

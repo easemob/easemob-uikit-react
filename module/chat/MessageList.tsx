@@ -51,6 +51,7 @@ let MessageList: FC<MsgListProps> = props => {
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
+
   const [imageInfo, setImageInfo] = useState<{
     visible: boolean;
     url: string;

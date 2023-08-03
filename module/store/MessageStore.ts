@@ -47,6 +47,8 @@ class MessageStore {
       addReaction: action,
       updateReactions: action,
       recallMessage: action,
+      modifyLocalMessage: action,
+      modifyServerMessage: action,
       translateMessage: action,
     });
 
@@ -564,6 +566,38 @@ class MessageStore {
         }
       });
     });
+  }
+
+  modifyLocalMessage(messageId: string, msg: AgoraChat.TextMsgBody) {
+    if (msg.chatType !== 'chatRoom') {
+      let cvsId = msg.chatType === 'groupChat' ? msg.to : msg.from || '';
+      const msgIndex = this.message[msg.chatType][cvsId].findIndex(
+        //@ts-ignore
+        msgItem => msgItem.id === messageId || msgItem.mid === messageId,
+      );
+      if (msgIndex > -1) {
+        let msgItem = this.message[msg.chatType][msg.to][msgIndex];
+        if (msgItem.type === 'txt') {
+          msgItem.msg = msg.msg;
+          msgItem.modifiedInfo = msg.modifiedInfo;
+        }
+      }
+    }
+  }
+
+  modifyServerMessage(messageId: string, msg: AgoraChat.ModifiedMsg) {
+    const { client } = this.rootStore;
+    client
+      .modifyMessage({
+        messageId,
+        modifiedMessage: msg,
+      })
+      .then(res => {
+        this.modifyLocalMessage(messageId, res.message);
+      })
+      .catch(e => {
+        console.log('Modify message failed', e);
+      });
   }
 }
 

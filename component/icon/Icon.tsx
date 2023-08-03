@@ -37,6 +37,7 @@ import { ReactComponent as ArrowTurnLeft } from '../svgs/icons/arrow_turn_left.s
 import { ReactComponent as FacePlus } from '../svgs/icons/faceplus.svg';
 import { ReactComponent as ArrowBack } from '../svgs/icons/arrow_Uturn_anti_clockwise.svg';
 import { ReactComponent as Translation } from '../svgs/icons/a_in_arrows_round.svg';
+import { ReactComponent as ModifyMessage } from '../svgs/icons/modifyMsg.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -146,6 +147,8 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'TRANSLATION':
       return <Translation></Translation>;
       break;
+    case 'MODIFY_MESSAGE':
+      return <ModifyMessage></ModifyMessage>  
     default:
       return '';
       break;

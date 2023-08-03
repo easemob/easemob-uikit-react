@@ -2,6 +2,7 @@ import { useCallback, useEffect, MutableRefObject, useContext } from 'react';
 import AC, { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
 import { useClient } from './useClient';
+import { getStore } from '../store';
 import { getCvsIdFromMessage } from '../utils';
 const useEventHandler = () => {
   const rootStore = useContext(RootContext);
@@ -80,6 +81,9 @@ const useEventHandler = () => {
           conversationId: conversationId,
         };
         rootStore.rootStore.messageStore.updateReactions(cvs, data.messageId, data.reactions);
+      },
+      onModifiedMessage: message => {
+        getStore().messageStore.modifyLocalMessage(message.id, message);
       },
     });
 

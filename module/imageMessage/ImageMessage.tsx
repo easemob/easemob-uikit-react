@@ -20,7 +20,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   const { imageMessage: message, shape, style, onClickImage } = props;
 
   let { bySelf, from, reactions } = message;
-  const [previewImageUrl, setPreviewImageUrl] = useState(message.file.url || message.thumb);
+  const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
   const [previewVisible, setPreviewVisible] = useState(false);
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
     var img = new Image();
@@ -65,7 +65,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     onClickImage?.(url);
   };
 
-  let renderImgUrl = bySelf ? message.file.url : (message.thumb as string);
+  let renderImgUrl = bySelf ? message?.file?.url : (message.thumb as string);
 
   const img = useRef(
     <img
@@ -218,7 +218,7 @@ export const ImagePreview = (props: ImagePreviewProps) => {
           className="message-image-big"
           src={previewImageUrl}
           alt={alt}
-          // onClick={() => handleClickImg(message.file.url)}
+          // onClick={() => handleClickImg(message?.file?.url)}
         />
       </Modal>
     </>
