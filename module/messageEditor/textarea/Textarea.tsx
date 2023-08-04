@@ -43,7 +43,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     enableEnterSend = true,
     enabledMenton = true,
   } = props;
-  const [isEmpty, setIsEmpty] = useState(false);
   const [textValue, setTextValue] = useState('');
   const { prefix: customizePrefixCls, className } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -100,7 +99,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const classString = classNames(
     prefixCls,
     {
-      [`${prefixCls}-empty`]: isEmpty,
       [`${prefixCls}-hasBtn`]: !!hasSendButton,
     },
     className,
@@ -108,11 +106,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   const handleInputChange: React.FormEventHandler<HTMLDivElement> = e => {
     const value = (e.target as HTMLDivElement).innerHTML;
-    if (value.length) {
-      setIsEmpty(false);
-    } else {
-      setIsEmpty(true);
-    }
     const str = convertToMessage(value).trim();
     setTextValue(str);
   };
@@ -147,7 +140,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     divRef.current!.innerHTML = '';
 
     setTextValue('');
-    setIsEmpty(true);
   };
 
   // Send Button
@@ -157,7 +149,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
         type="AIR_PLANE"
         width={20}
         height={20}
-        color={isEmpty ? '#464E53' : sendButtonActiveColor}
+        color={!textValue?.length ? '#464E53' : sendButtonActiveColor}
         onClick={sendMessage}
       ></Icon>
     </div>
@@ -184,11 +176,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   const setTextareaValue = (value: string) => {
     setTextValue(value);
-    if (value.length > 0) {
-      setIsEmpty(false);
-    } else {
-      setIsEmpty(true);
-    }
   };
 
   useImperativeHandle(ref, () => ({
@@ -196,14 +183,10 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     divRef,
   }));
 
-  useEffect(() => {
-    setIsEmpty(true);
-  }, []);
-
   return (
     <div className={classString}>
       <div
-        data-before={placeholder}
+        placeholder={placeholder}
         ref={divRef}
         className={`${prefixCls}-input`}
         contentEditable="true"
