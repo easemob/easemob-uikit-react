@@ -85,6 +85,24 @@ const useEventHandler = () => {
       onModifiedMessage: message => {
         getStore().messageStore.modifyLocalMessage(message.id, message);
       },
+      onPresenceStatusChange: message => {
+        const { addressStore } = rootStore.rootStore;
+        message.length > 0 &&
+          message.forEach(presenceInfo => {
+            const appUserInfo = addressStore.appUsersInfo;
+            if (appUserInfo[presenceInfo.userId]) {
+              const detailList = presenceInfo.statusDetails;
+              let isOnline = false;
+              detailList.forEach(item => {
+                if (item.status === 1) {
+                  isOnline = true;
+                }
+              });
+              appUserInfo[presenceInfo.userId].isOnline = isOnline;
+              addressStore.setAppUserInfo({ ...appUserInfo });
+            }
+          });
+      },
     });
 
     return () => {

@@ -56,6 +56,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     },
     ...others
   } = props;
+
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationItem', customizePrefixCls);
@@ -177,7 +178,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
       {avatar ? (
         avatar
       ) : (
-        <Avatar size={avatarSize} shape={avatarShape}>
+        <Avatar src={data.avatarUrl} isOnline={data.isOnline} size={avatarSize} shape={avatarShape}>
           {data.name || data.conversationId}
         </Avatar>
       )}

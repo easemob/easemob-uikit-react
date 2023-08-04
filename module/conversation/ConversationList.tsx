@@ -22,6 +22,8 @@ export type ConversationData = Array<{
   conversationId: string;
   name?: string; // 昵称/群组名称
   isAted?: boolean;
+  avatarUrl?: string;
+  isOnline?: boolean;
   unreadCount: number; // 会话未读数
   lastMessage: {
     type: 'txt' | 'img' | 'audio' | 'video' | 'file' | 'custom';
@@ -76,6 +78,7 @@ let Conversations: FC<ConversationListProps> = props => {
   const [initRenderData, setInitRenderData] = useState<ConversationData>([]);
   const rootStore = useContext(RootContext).rootStore;
   const cvsStore = rootStore.conversationStore;
+  const { appUsersInfo } = rootStore.addressStore;
   const { t } = useTranslation();
 
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
@@ -115,12 +118,9 @@ let Conversations: FC<ConversationListProps> = props => {
       ></CVSItem>
     );
   });
-
+  useUserInfo();
   const cvsData = useConversation();
-
   const groupData = rootStore.addressStore.groups;
-  const userInfo = useUserInfo();
-
   let iniRenderData: any[] = [];
   // 获取加入群组，把群组名放在 conversationList
   useEffect(() => {
@@ -137,7 +137,10 @@ let Conversations: FC<ConversationListProps> = props => {
             }
           });
         } else if (item.chatType == 'singleChat') {
-          renderItem.name = renderItem.name || userInfo?.[item.conversationId as string]?.nickname;
+          renderItem.name =
+            renderItem.name || appUsersInfo?.[item.conversationId as string]?.nickname;
+          renderItem.avatarUrl = appUsersInfo?.[item.conversationId as string]?.avatarurl;
+          renderItem.isOnline = appUsersInfo?.[item.conversationId as string]?.isOnline;
         }
         return renderItem;
       });
@@ -146,7 +149,7 @@ let Conversations: FC<ConversationListProps> = props => {
       // @ts-ignore
       setInitRenderData(renderData);
     }
-  }, [cvsStore.conversationList, cvsStore.searchList, groupData, userInfo]);
+  }, [cvsStore.conversationList, cvsStore.searchList, groupData, appUsersInfo]);
 
   // 获取会话列表数据，格式化后setConversation
   useEffect(() => {

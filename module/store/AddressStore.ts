@@ -18,19 +18,26 @@ export interface GroupItem extends AgoraChat.BaseGroupInfo {
   hasMembersNext?: boolean;
 }
 
+export type AppUserInfo = Partial<Record<AgoraChat.ConfigurableKey, any>> & {
+  uid: string;
+  isOnline?: boolean;
+};
 class AddressStore {
+  appUsersInfo: Record<string, AppUserInfo>;
   contacts: [];
   groups: GroupItem[];
   hasGroupsNext: boolean;
   chatroom: any;
   searchList: any;
   constructor() {
+    this.appUsersInfo = {};
     this.contacts = [];
     this.groups = [];
     this.chatroom = [];
     this.hasGroupsNext = true;
     this.searchList = [];
     makeObservable(this, {
+      appUsersInfo: observable,
       contacts: observable,
       groups: observable,
       chatroom: observable,
@@ -41,8 +48,13 @@ class AddressStore {
       setGroups: action,
       setGroupMembers: action,
       setGroupMemberAttributes: action,
+      setAppUserInfo: action,
       setChatroom: action,
     });
+  }
+
+  setAppUserInfo(appUsersInfo: Record<string, AppUserInfo>) {
+    this.appUsersInfo = appUsersInfo;
   }
 
   setContacts(contacts: any) {

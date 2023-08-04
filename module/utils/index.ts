@@ -1,9 +1,10 @@
 import { ChatType } from '../types/messageType';
 import { AgoraChat } from 'agora-chat';
-import rootStore from '../store/index';
+import rootStore, { getStore } from '../store/index';
 import type { RecallMessage } from '../store/MessageStore';
 import { GroupItem, MemberItem } from '../store/AddressStore';
 import { emoji } from '../messageEditor/emoji/emojiConfig';
+import { AppUserInfo } from '../store/AddressStore';
 
 export function getConversationTime(time: number) {
   if (!time) return '';
@@ -92,6 +93,77 @@ export const renderHtml = (txt: string): string => {
   rnTxt += txt.substring(start, txt.length);
   return rnTxt;
 };
+
+export function getUsersInfo(userIdList: string[]) {
+  let { client, addressStore } = getStore();
+  //订阅在线状态
+  const findIndex = userIdList.indexOf(client.user);
+  let subList = [...userIdList];
+  const list = addressStore.appUsersInfo;
+  const result = {};
+  if (findIndex > -1) {
+    subList.splice(findIndex, 1);
+  }
+  if (subList.length > 0) {
+    client.subscribePresence({ usernames: subList, expiry: 2592000 });
+  }
+
+  return new Promise((resolve, reject) => {
+    const type = [
+      'nickname',
+      'avatarurl',
+      'mail',
+      'phone',
+      'gender',
+      'sign',
+      'birth',
+      'ext',
+    ] as AgoraChat.ConfigurableKey[];
+    const reUserInfo: Record<string, AppUserInfo> = {};
+    userIdList.forEach(item => {
+      reUserInfo[item] = {
+        uid: item,
+        isOnline: false,
+      };
+    });
+    if (userIdList.length === 0) {
+      resolve(Object.assign({}, reUserInfo));
+    } else {
+      client
+        .fetchUserInfoById(userIdList, type)
+        .then(res => {
+          res.data &&
+            Object.keys(res.data).forEach(item => {
+              type.forEach(key => {
+                reUserInfo[item][key] = res?.data?.[item][key] ? res.data[item][key] : '';
+              });
+            });
+          client
+            .getPresenceStatus({ usernames: userIdList })
+            .then(res => {
+              res?.data?.result.forEach(item => {
+                if (reUserInfo[item.uid]) {
+                  if (
+                    Object.prototype.toString.call(item.status) === '[object Object]' &&
+                    Object.values(item.status).indexOf('1') > -1
+                  ) {
+                    reUserInfo[item.uid].isOnline = true;
+                  }
+                }
+              });
+              addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
+              resolve(Object.assign({}, result, reUserInfo));
+            })
+            .catch(e => {
+              reject(e);
+            });
+        })
+        .catch(e => {
+          reject(e);
+        });
+    }
+  });
+}
 
 export function getGroupItemFromGroupsById(groupId: string) {
   const { addressStore } = rootStore;

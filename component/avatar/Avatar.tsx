@@ -16,6 +16,7 @@ export interface AvatarProps {
   className?: string;
   children?: React.ReactNode;
   alt?: string;
+  isOnline?: boolean;
   draggable?: boolean;
   crossOrigin?: '' | 'anonymous' | 'use-credentials';
   srcSet?: string;
@@ -58,10 +59,14 @@ export const InternalAvatar = (props: any, ref: any) => {
     draggable,
     crossOrigin,
     srcSet,
+    isOnline,
     ...others
   } = props;
 
   const prefixCls = getPrefixCls('avatar', customizePrefixCls);
+  const wrapCls = getPrefixCls('avatar-wrap', customizePrefixCls);
+  const presenceCls = getPrefixCls('presence-tag', customizePrefixCls);
+
   const sizeCls = classNames({
     [`${prefixCls}-lg`]: customSize === 'large',
     [`${prefixCls}-sm`]: customSize === 'small',
@@ -121,14 +126,21 @@ export const InternalAvatar = (props: any, ref: any) => {
   }
 
   return (
-    <span
-      {...others}
-      style={{ ...sizeStyle, ...others.style }}
-      className={classString}
-      ref={avatarNodeMergeRef}
-    >
-      {childrenToRender}
-    </span>
+    <div className={wrapCls}>
+      <span
+        {...others}
+        style={{ ...sizeStyle, ...others.style }}
+        className={classString}
+        ref={avatarNodeMergeRef}
+      >
+        {childrenToRender}
+      </span>
+      {isOnline && (
+        <div className={`${presenceCls}-wrap`}>
+          <div className={presenceCls}></div>
+        </div>
+      )}
+    </div>
   );
 };
 

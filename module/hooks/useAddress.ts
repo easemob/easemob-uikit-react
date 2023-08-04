@@ -4,6 +4,7 @@ import { RootContext } from '../store/rootContext';
 import { getStore } from '../store/index';
 import { getGroupItemFromGroupsById } from '../../module/utils';
 import { CurrentConversation } from 'module/store/ConversationStore';
+import { getUsersInfo } from '../utils';
 
 const useContacts = () => {
   const rootStore = useContext(RootContext).rootStore;
@@ -30,43 +31,16 @@ const useContacts = () => {
   return contacts;
 };
 
-const useUserInfo = (userIds?: string[]) => {
+const useUserInfo = () => {
   const rootStore = useContext(RootContext).rootStore;
-  const { client, addressStore } = rootStore;
-
-  let [userInfo, setUserInfo] = useState<{
-    [key: string]: AgoraChat.UpdateOwnUserInfoParams;
-  }>();
-
   useEffect(() => {
-    let userIdsToGet = userIds;
+    let keys = Object.keys(rootStore.addressStore.appUsersInfo);
+    let cvsUserIds = rootStore.conversationStore.conversationList
+      .filter(item => item.chatType === 'singleChat' && !keys.includes(item.conversationId))
+      .map(cvs => cvs.conversationId);
 
-    const cvsUserIds: string[] = [];
-    rootStore.conversationStore.conversationList.forEach(item => {
-      if (item.chatType === 'singleChat') {
-        cvsUserIds.push(item.conversationId);
-      }
-    });
-    if (!userIdsToGet) {
-      userIdsToGet = cvsUserIds;
-    }
-    console.log('pppp', {
-      userId: userIdsToGet,
-      properties: 'nickname',
-    });
-    if (userIdsToGet.length == 0) return;
-    rootStore.loginState &&
-      client
-        .fetchUserInfoById(userIdsToGet, 'nickname')
-        .then(res => {
-          console.log('获取用户属性', res);
-          setUserInfo(res.data || {});
-        })
-        .catch(err => {
-          console.log('获取群组列表失败', err);
-        });
-  }, [rootStore.loginState, rootStore.conversationStore.conversationList.length]);
-  return userInfo;
+    getUsersInfo(cvsUserIds);
+  }, [rootStore.conversationStore.conversationList.length]);
 };
 
 const useGroups = () => {

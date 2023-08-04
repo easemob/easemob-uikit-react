@@ -9,6 +9,8 @@ export interface Conversation {
   unreadCount: number;
   name?: string;
   isAted?: boolean;
+  isOnline?: boolean;
+  avatarUrl?: string
 }
 
 export interface CurrentConversation {
