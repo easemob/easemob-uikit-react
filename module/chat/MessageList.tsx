@@ -27,7 +27,7 @@ import { cloneElement } from '../../component/_utils/reactNode';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import type { RecallMessage } from '../store/MessageStore';
 import { RecalledMessage } from '../recalledMessage';
-
+import CombinedMessage from '../combinedMessage';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
@@ -114,7 +114,7 @@ let MessageList: FC<MsgListProps> = props => {
           {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
         </RecalledMessage>
       );
-    } else {
+    } else if (messageData[data.index].type == 'txt') {
       return (
         <TextMessage
           key={messageData[data.index].id}
@@ -126,6 +126,17 @@ let MessageList: FC<MsgListProps> = props => {
         >
           {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
         </TextMessage>
+      );
+    } else if (messageData[data.index].type == 'combine') {
+      return (
+        <CombinedMessage
+          key={messageData[data.index].id}
+          style={data.style}
+          //@ts-ignore
+          status={messageData[data.index].status}
+          //@ts-ignore
+          combinedMessage={messageData[data.index]}
+        ></CombinedMessage>
       );
     }
   };

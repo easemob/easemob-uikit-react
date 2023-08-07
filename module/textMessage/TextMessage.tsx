@@ -20,6 +20,7 @@ import Icon from '../../component/icon';
 import { useTranslation } from 'react-i18next';
 import Textarea from '../messageEditor/textarea';
 import { ForwardRefProps } from '../messageEditor/textarea/Textarea';
+import { observer } from 'mobx-react-lite';
 
 export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
@@ -123,7 +124,7 @@ const REGEX_VALID_URL = new RegExp(
   'i',
 );
 
-export const TextMessage = (props: TextMessageProps) => {
+const TextMessage = (props: TextMessageProps) => {
   let {
     prefix: customizePrefixCls,
     textMessage,
@@ -139,6 +140,7 @@ export const TextMessage = (props: TextMessageProps) => {
   const { t } = useTranslation();
   const [urlData, setUrlData] = useState<any>(null);
   const [isFetching, setFetching] = useState(false);
+  let conversationId = getCvsIdFromMessage(textMessage);
   let { bySelf, time, from, msg, reactions } = textMessage;
   const classString = classNames(prefixCls, className);
   const textareaRef = useRef<ForwardRefProps>(null);
@@ -314,6 +316,55 @@ export const TextMessage = (props: TextMessageProps) => {
       });
   };
 
+  const handleSelectMessage = () => {
+    let conversationId = getCvsIdFromMessage(textMessage);
+    const selectable =
+      rootStore.messageStore.selectedMessage[textMessage.chatType][conversationId]?.selectable;
+    if (selectable) return; // has shown checkbox
+
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: textMessage.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: [],
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
+
+  const select =
+    rootStore.messageStore.selectedMessage[textMessage.chatType][conversationId]?.selectable;
+
+  const handleMsgCheckChange = (checked: boolean) => {
+    const checkedMessages =
+      rootStore.messageStore.selectedMessage[textMessage.chatType][conversationId]?.selectedMessage;
+
+    let changedList = checkedMessages;
+    if (checked) {
+      changedList.push(textMessage);
+    } else {
+      changedList = checkedMessages.filter(item => {
+        // @ts-ignore
+        return !(item.id == textMessage.id || item.mid == textMessage.id);
+      });
+    }
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: textMessage.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: changedList,
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
+
+
   const handleModifyMessage = () => {
     setModifyMessageVisible(true);
   };
@@ -368,6 +419,9 @@ export const TextMessage = (props: TextMessageProps) => {
         onRecallMessage={handleRecallMessage}
         onTranslateMessage={handleTranslateMessage}
         onModifyMessage={handleModifyMessage}
+        onSelectMessage={handleSelectMessage}
+        select={select}
+        onMessageCheckChange={handleMsgCheckChange}
         {...others}
       >
         <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
@@ -417,3 +471,5 @@ export const TextMessage = (props: TextMessageProps) => {
     </>
   );
 };
+
+export default observer(TextMessage);

@@ -8,6 +8,7 @@ export type MemberRole = 'member' | 'owner';
 export interface MemberItem {
   userId: AgoraChat.UserId;
   role: MemberRole;
+  // @ts-ignore
   attributes?: AgoraChat.MemberAttributes;
 }
 
@@ -104,6 +105,7 @@ class AddressStore {
   setGroupMemberAttributes(
     groupId: string,
     userId: string,
+    // @ts-ignore
     attributes: AgoraChat.MemberAttributes,
   ) {
     let groupIdx = getGroupItemIndexFromGroupsById(groupId);

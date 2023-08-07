@@ -72,7 +72,17 @@ const Chat: FC<ChatProps> = props => {
     } else {
       setIsEmpty(false);
     }
+
+    // clear replied message
     rootStore.messageStore.setRepliedMessage(null);
+
+    // Process it in a simple way first, without caching
+    if (!rootStore.conversationStore.currentCvs.conversationId) return;
+    // clear selected messages
+    rootStore.messageStore.setSelectedMessage(rootStore.conversationStore.currentCvs, {
+      selectable: false,
+      selectedMessage: [],
+    });
   }, [rootStore.conversationStore.currentCvs]);
 
   const repliedMsg = rootStore.messageStore.repliedMessage;

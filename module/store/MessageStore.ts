@@ -16,9 +16,25 @@ export interface Message {
   groupChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
   byId: { [key: string]: AgoraChat.MessageBody | RecallMessage };
 }
+
+export interface SelectedMessage {
+  singleChat: {
+    [key: string]: {
+      selectable: boolean;
+      selectedMessage: (AgoraChat.MessageBody | RecallMessage)[];
+    };
+  };
+  groupChat: {
+    [key: string]: {
+      selectable: boolean;
+      selectedMessage: (AgoraChat.MessageBody | RecallMessage)[];
+    };
+  };
+}
 class MessageStore {
   rootStore;
   message: Message;
+  selectedMessage: SelectedMessage;
   currentCVS: CurrentConversation;
   repliedMessage: AgoraChat.MessageBody | null;
   constructor(rootStore: RootStore) {
@@ -29,11 +45,18 @@ class MessageStore {
       groupChat: {},
       byId: {},
     };
+
+    this.selectedMessage = {
+      singleChat: {},
+      groupChat: {},
+    };
     this.currentCVS = {} as CurrentConversation;
     this.repliedMessage = null;
+
     makeObservable(this, {
       currentCVS: observable,
       message: observable,
+      selectedMessage: observable,
       repliedMessage: observable,
       setCurrentCVS: action,
       currentCvsMsgs: computed,
@@ -50,6 +73,7 @@ class MessageStore {
       modifyLocalMessage: action,
       modifyServerMessage: action,
       translateMessage: action,
+      setSelectedMessage: action,
     });
 
     autorun(() => {
@@ -321,19 +345,28 @@ class MessageStore {
     this.repliedMessage = message;
   }
 
-  deleteMessage(cvs: CurrentConversation, messageId: string) {
+  deleteMessage(cvs: CurrentConversation, messageId: string | string[]) {
     if (!cvs) return;
+
+    let msgIds: string[] = [];
+    if (Array.isArray(messageId)) {
+      msgIds = messageId;
+    } else {
+      msgIds = [messageId];
+    }
+
     return this.rootStore.client
       .removeHistoryMessages({
         targetId: cvs.conversationId,
         chatType: cvs.chatType,
-        messageIds: [messageId],
+        messageIds: msgIds,
       })
       .then(() => {
         const messages = this.message[cvs.chatType][cvs.conversationId];
         const filterMsgs = messages.filter(msg => {
           // @ts-ignore
-          return msg.id != messageId && msg.mid != messageId;
+          return !msgIds.includes(msg.id) && !msgIds.includes(msg.mid);
+          // return msg.id != messageId && msg.mid != messageId;
         });
         this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
       });
@@ -597,6 +630,16 @@ class MessageStore {
       .catch(e => {
         console.log('Modify message failed', e);
       });
+  }
+
+  setSelectedMessage(
+    cvs: CurrentConversation,
+    selectedData: {
+      selectable: boolean;
+      selectedMessage: (AgoraChat.MessageBody | RecallMessage)[];
+    },
+  ) {
+    this.selectedMessage[cvs.chatType][cvs.conversationId] = selectedData;
   }
 }
 

@@ -164,3 +164,13 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         color: $msg-time-font-color;
     }
 }
+
+.ttt{
+    display: flex;
+    align-items: center;
+
+    .checkbox{
+        position: relative;
+        left: 8px;
+    }
+}

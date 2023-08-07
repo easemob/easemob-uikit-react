@@ -9,6 +9,7 @@ import Mask from '../../component/modal/Mast';
 import Modal from '../../component/modal';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
+import { observer } from 'mobx-react-lite';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -17,7 +18,7 @@ export interface ImageMessageProps extends BaseMessageProps {
 }
 
 let ImageMessage = (props: ImageMessageProps) => {
-  const { imageMessage: message, shape, style, onClickImage } = props;
+  const { imageMessage: message, shape, style, onClickImage, ...others } = props;
 
   let { bySelf, from, reactions } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
@@ -164,6 +165,54 @@ let ImageMessage = (props: ImageMessageProps) => {
     );
   };
 
+  let conversationId = getCvsIdFromMessage(message);
+  const handleSelectMessage = () => {
+    const selectable =
+      rootStore.messageStore.selectedMessage[message.chatType][conversationId]?.selectable;
+    if (selectable) return; // has shown checkbox
+
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: message.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: [],
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
+
+  const select =
+    rootStore.messageStore.selectedMessage[message.chatType][conversationId]?.selectable;
+
+  const handleMsgCheckChange = (checked: boolean) => {
+    const checkedMessages =
+      rootStore.messageStore.selectedMessage[message.chatType][conversationId]?.selectedMessage;
+
+    let changedList = checkedMessages;
+    if (checked) {
+      changedList.push(message);
+    } else {
+      changedList = checkedMessages.filter(item => {
+        // @ts-ignore
+        return !(item.id == message.id || item.mid == message.id);
+      });
+    }
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: message.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: changedList,
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
+
   return (
     <div style={style}>
       <BaseMessage
@@ -178,6 +227,10 @@ let ImageMessage = (props: ImageMessageProps) => {
         onDeleteReactionEmoji={handleDeleteEmoji}
         onShowReactionUserList={handleShowReactionUserList}
         onRecallMessage={handleRecallMessage}
+        onSelectMessage={handleSelectMessage}
+        select={select}
+        onMessageCheckChange={handleMsgCheckChange}
+        {...others}
       >
         <div className="message-image-content">{img.current}</div>
       </BaseMessage>
@@ -224,4 +277,4 @@ export const ImagePreview = (props: ImagePreviewProps) => {
     </>
   );
 };
-export default memo(ImageMessage);
+export default observer(ImageMessage);

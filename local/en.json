@@ -9,6 +9,7 @@
         "video": "Video message",
         "file": "File",
         "custom": "Custom message",
+        "combine": "Combined message",
         "noConversation": "No Conversation",
         "recording": "Recording",
         "you": "You",
@@ -32,7 +33,12 @@
         "hide": "Hide",
         "show": "Show",
         "atAll": "All",
-        "atTag": "/someone@you/ "
+        "atTag": "/someone@you/ ",
+        "select": "Select",
+        "chatHistory": "A Chat History",
+        "batchDeletion": "Batch Deletion",
+        "messages": "messages?",
+        "cancel": "Cancel"
         
     }
 }

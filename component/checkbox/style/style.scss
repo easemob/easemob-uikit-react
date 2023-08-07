@@ -49,7 +49,7 @@ $checkbox-prefix-cls: #{$cui-prefix}-checkbox;
     }
 
   }
-
+  
   .#{$checkbox-prefix-cls}--mark {
     display: block;
     box-sizing: border-box;
@@ -75,5 +75,12 @@ $checkbox-prefix-cls: #{$cui-prefix}-checkbox;
       border-width: 0 1.5px 1.5px 0;
       transform: rotate(45deg);
     }
+  }
+
+}
+
+.#{$checkbox-prefix-cls}-ground{
+  &>.#{$checkbox-prefix-cls}--mark{
+    border-radius: 7px;
   }
 }

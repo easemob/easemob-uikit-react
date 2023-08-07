@@ -103,6 +103,10 @@ const useEventHandler = () => {
             }
           });
       },
+      onCombineMessage: message => {
+        console.log('onCombineMessage', message);
+        messageStore.receiveMessage(message);
+      },
     });
 
     return () => {

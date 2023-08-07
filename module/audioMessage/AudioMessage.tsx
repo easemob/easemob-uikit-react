@@ -7,7 +7,7 @@ import type { AudioMessageType } from '../types/messageType';
 import Avatar from '../../component/avatar';
 import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
-import { AgoraChat } from 'agora-chat';
+import { observer } from 'mobx-react-lite';
 import { getCvsIdFromMessage } from '../utils';
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
@@ -165,6 +165,55 @@ const AudioMessage = (props: AudioMessageProps) => {
       audioMessage.mid || audioMessage.id,
     );
   };
+
+  let conversationId = getCvsIdFromMessage(audioMessage);
+  const handleSelectMessage = () => {
+    const selectable =
+      rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]?.selectable;
+    if (selectable) return; // has shown checkbox
+
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: audioMessage.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: [],
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
+
+  const select =
+    rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]?.selectable;
+
+  const handleMsgCheckChange = (checked: boolean) => {
+    const checkedMessages =
+      rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]
+        ?.selectedMessage;
+
+    let changedList = checkedMessages;
+    if (checked) {
+      changedList.push(audioMessage);
+    } else {
+      changedList = checkedMessages.filter(item => {
+        // @ts-ignore
+        return !(item.id == audioMessage.id || item.mid == audioMessage.id);
+      });
+    }
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: audioMessage.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: changedList,
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
   return (
     <BaseMessage
       id={audioMessage.id}
@@ -181,6 +230,9 @@ const AudioMessage = (props: AudioMessageProps) => {
       onDeleteReactionEmoji={handleDeleteEmoji}
       onShowReactionUserList={handleShowReactionUserList}
       onRecallMessage={handleRecallMessage}
+      onSelectMessage={handleSelectMessage}
+      select={select}
+      onMessageCheckChange={handleMsgCheckChange}
       {...others}
     >
       <div className={classString} onClick={playAudio} style={{ ...style }}>
@@ -198,4 +250,4 @@ const AudioMessage = (props: AudioMessageProps) => {
   );
 };
 
-export { AudioMessage };
+export default observer(AudioMessage);

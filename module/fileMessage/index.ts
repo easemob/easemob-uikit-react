@@ -1,3 +1,3 @@
-import { FileMessage } from './FileMessage';
+import FileMessage from './FileMessage';
 
 export default FileMessage;

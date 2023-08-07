@@ -124,7 +124,7 @@ const useGroupMembersAttributes = (
         userIds,
         keys: attributesKeys,
       })
-      .then(res => {
+      .then((res: { data: { [x: string]: any } }) => {
         if (res.data) {
           Object.keys(res.data).forEach(key => {
             res?.data && addressStore.setGroupMemberAttributes(groupId, key, res.data[key]);

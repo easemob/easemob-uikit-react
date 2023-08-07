@@ -1,0 +1,68 @@
+@import '~/common/style/index.scss';
+
+$combine-msg-prefix-cls: #{$cui-prefix}-message-combine;
+
+.#{$combine-msg-prefix-cls} {
+    direction: ltr;
+    
+    &-title{
+        height: 24px;
+        font-size: 16px;
+        line-height: 24px;
+        color: $gray-98;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 4px;
+        overflow: hidden;
+        word-break: keep-all;
+        &>p{
+            margin: 0;
+            flex: 1;
+        }
+    }
+    &-line{
+        display: block;
+        border-top: 1px solid $blue-8;
+    }
+    &-content{
+        max-height: 80px;
+        overflow: hidden;
+        line-height: 20px;
+        font-size: 14px;
+        color: $special-3;
+        white-space: pre-wrap;
+    }
+    &-icon{
+        fill: $gray-98;
+    }
+    &-secondly{
+        .#{$combine-msg-prefix-cls}-title{
+            color: $gray-3;
+        }
+        .#{$combine-msg-prefix-cls}-line{
+            border-top: 1px solid $special-8;
+        }
+        .#{$combine-msg-prefix-cls}-content{
+            color: $special-5;
+        }
+        .#{$combine-msg-prefix-cls}-icon{
+            fill: $gray-3;
+        }
+    }
+
+    // modal content
+    &-detail{
+        height: 480px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    &-detail-text{
+        // .#{$cui-prefix}-message-base-content{
+        //     background-color: transparent;
+        //     color: $gray-1;
+        // }
+    }
+}

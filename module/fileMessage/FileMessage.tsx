@@ -9,7 +9,7 @@ import Avatar from '../../component/avatar';
 import download from '../utils/download';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
-
+import { observer } from 'mobx-react-lite';
 export interface FileMessageProps extends BaseMessageProps {
   fileMessage: FileMessageType; // 从SDK收到的文件消息
   iconType?: IconProps['type'];
@@ -146,6 +146,54 @@ const FileMessage = (props: FileMessageProps) => {
       fileMessage.mid || fileMessage.id,
     );
   };
+
+  let conversationId = getCvsIdFromMessage(fileMessage);
+  const handleSelectMessage = () => {
+    const selectable =
+      rootStore.messageStore.selectedMessage[fileMessage.chatType][conversationId]?.selectable;
+    if (selectable) return; // has shown checkbox
+
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: fileMessage.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: [],
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
+
+  const select =
+    rootStore.messageStore.selectedMessage[fileMessage.chatType][conversationId]?.selectable;
+
+  const handleMsgCheckChange = (checked: boolean) => {
+    const checkedMessages =
+      rootStore.messageStore.selectedMessage[fileMessage.chatType][conversationId]?.selectedMessage;
+
+    let changedList = checkedMessages;
+    if (checked) {
+      changedList.push(fileMessage);
+    } else {
+      changedList = checkedMessages.filter(item => {
+        // @ts-ignore
+        return !(item.id == fileMessage.id || item.mid == fileMessage.id);
+      });
+    }
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: fileMessage.chatType,
+        conversationId: conversationId,
+      },
+      {
+        selectable: true,
+        selectedMessage: changedList,
+      },
+    );
+    console.log('设置', rootStore.messageStore);
+  };
   return (
     <BaseMessage
       id={fileMessage.id}
@@ -161,6 +209,9 @@ const FileMessage = (props: FileMessageProps) => {
       onDeleteReactionEmoji={handleDeleteEmoji}
       onShowReactionUserList={handleShowReactionUserList}
       onRecallMessage={handleRecallMessage}
+      onSelectMessage={handleSelectMessage}
+      select={select}
+      onMessageCheckChange={handleMsgCheckChange}
       {...baseMsgProps}
     >
       <div className={classString}>
@@ -176,4 +227,4 @@ const FileMessage = (props: FileMessageProps) => {
   );
 };
 
-export { FileMessage };
+export default observer(FileMessage);

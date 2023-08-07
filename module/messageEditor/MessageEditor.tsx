@@ -7,6 +7,8 @@ import './style/style.scss';
 import { emoji } from './emoji/emojiConfig';
 import MoreAction from './moreAction';
 import rootStore from '../store/index';
+import SelectedControls from './selectedControls';
+import { observer } from 'mobx-react-lite';
 export type Actions = {
   name: string;
   visible: boolean;
@@ -74,6 +76,7 @@ const defaultActions: Actions = [
 const MessageEditor = (props: MessageEditorProps) => {
   const [isShowTextarea, setTextareaShow] = useState(true);
   const [isShowRecorder, setShowRecorder] = useState(false);
+  const [isShowSelect, setIsShowSelect] = useState(false);
   const [editorNode, setEditorNode] = useState<null | React.ReactFragment>(null);
   const textareaRef = useRef(null);
 
@@ -177,14 +180,33 @@ const MessageEditor = (props: MessageEditorProps) => {
     });
     setEditorNode(node);
   }, []);
-
+  const currentCvs = rootStore.conversationStore.currentCvs;
   useEffect(() => {
     if (!textareaRef.current) return;
     // @ts-ignore
     textareaRef.current.divRef.current.innerHTML = '';
     // @ts-ignore
     textareaRef.current.setTextareaValue('');
-  }, [rootStore.conversationStore.currentCvs.conversationId]);
+  }, [currentCvs.conversationId]);
+
+  useEffect(() => {
+    if (
+      rootStore.messageStore.selectedMessage[currentCvs.chatType][currentCvs.conversationId]
+        ?.selectable
+    ) {
+      setIsShowSelect(true);
+      setTextareaShow(false);
+      setShowRecorder(false);
+    } else {
+      setIsShowSelect(false);
+      setTextareaShow(true);
+      setShowRecorder(false);
+    }
+  }, [
+    rootStore.messageStore.selectedMessage[currentCvs.chatType][currentCvs.conversationId]
+      ?.selectable,
+  ]);
+
   return (
     <div className="editor-container">
       {isShowRecorder && (
@@ -196,8 +218,16 @@ const MessageEditor = (props: MessageEditorProps) => {
       )}
 
       {isShowTextarea && <>{editorNode}</>}
+      {isShowSelect && (
+        <SelectedControls
+          onHide={() => {
+            setTextareaShow(true);
+            setIsShowSelect(false);
+          }}
+        ></SelectedControls>
+      )}
     </div>
   );
 };
 MessageEditor.defaultActions = defaultActions;
-export { MessageEditor };
+export default observer(MessageEditor);

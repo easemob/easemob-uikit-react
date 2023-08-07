@@ -12,7 +12,7 @@ import { ReactComponent as File } from '../svgs/file.svg';
 import { ReactComponent as User } from '../svgs/user.svg';
 import { ReactComponent as Play } from '../svgs/play.svg';
 import { ReactComponent as Ellipsis } from '../svgs/ellipsis.svg';
-import { ReactComponent as Loading } from '../svgs/loading.svg';
+import { ReactComponent as Loading } from '../svgs/icons/loading_2.svg';
 
 import { ReactComponent as Doc } from '../svgs/icons/doc.svg';
 import { ReactComponent as Wave1 } from '../svgs/icons/wave1_right.svg';
@@ -22,6 +22,7 @@ import { ReactComponent as WaveCircle } from '../svgs/icons/wave_in_circle.svg';
 import { ReactComponent as PlayVideo } from '../svgs/icons/triangle_in_circle.svg';
 import { ReactComponent as Face } from '../svgs/icons/face.svg';
 import { ReactComponent as Cross } from '../svgs/icons/xmark_thick.svg';
+import { ReactComponent as CloseThin } from '../svgs/icons/xmark_thin.svg';
 import { ReactComponent as AriPlane } from '../svgs/icons/airplane.svg';
 import { ReactComponent as ArrowRight } from '../svgs/icons/chevron_right.svg';
 import { ReactComponent as ArrowLeft } from '../svgs/icons/chevron_left.svg';
@@ -38,6 +39,9 @@ import { ReactComponent as FacePlus } from '../svgs/icons/faceplus.svg';
 import { ReactComponent as ArrowBack } from '../svgs/icons/arrow_Uturn_anti_clockwise.svg';
 import { ReactComponent as Translation } from '../svgs/icons/a_in_arrows_round.svg';
 import { ReactComponent as ModifyMessage } from '../svgs/icons/modifyMsg.svg';
+import { ReactComponent as ForwardList } from '../svgs/icons/3lines_n_arrow.svg';
+import { ReactComponent as Time } from '../svgs/icons/3pm.svg';
+import { ReactComponent as Select } from '../svgs/icons/checked_ellipse.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -129,6 +133,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'CLOSE_CIRCLE':
       return <CloseCircle></CloseCircle>;
       break;
+    case 'CLOSE_THIN':
+      return <CloseThin></CloseThin>;
+      break;
     case 'IMG':
       return <Img></Img>;
       break;
@@ -148,7 +155,17 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       return <Translation></Translation>;
       break;
     case 'MODIFY_MESSAGE':
-      return <ModifyMessage></ModifyMessage>  
+      return <ModifyMessage></ModifyMessage>
+      break;
+    case 'FORWARD_LIST':
+      return <ForwardList></ForwardList>;
+      break;
+    case 'TIME':
+      return <Time></Time>;
+      break;
+    case 'SELECT':
+      return <Select></Select>;
+      break;
     default:
       return '';
       break;

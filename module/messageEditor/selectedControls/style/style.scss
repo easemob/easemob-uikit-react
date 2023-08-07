@@ -1,0 +1,59 @@
+@import '~/common/style/index.scss';
+$selected-prefix-cls: #{$cui-prefix}-selected-controls;
+
+.#{$selected-prefix-cls} {
+    width: 100%;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    height: 36px;
+    &-content{
+        display: flex;
+        flex: 1;
+        background-color: $component-background;
+        justify-content: space-between;
+
+        &-left{
+            display: flex;
+            align-items: center;
+        }
+
+        &-right{
+            flex: 1;
+            width: fit-content;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        &-left>.#{$selected-prefix-cls}-iconBox,  &-right>.#{$selected-prefix-cls}-iconBox{
+            width: 36px;
+            height: 36px;
+            background-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            &:hover{
+                &>div>svg{
+                    fill: $blue-5;
+                }
+                // background-color: $gray-95;
+            }
+        }
+
+        .#{$selected-prefix-cls}-iconBox-disable{
+            cursor: not-allowed;
+            &>div>svg{
+                fill: $gray-8;
+            }
+            &:hover{
+                &>div>svg{
+                    fill: $gray-8;
+                }
+            }
+        }
+    }
+}
