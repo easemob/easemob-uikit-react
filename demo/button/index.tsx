@@ -1,13 +1,15 @@
 // import { Button } from '../../dist/ChatUI.esm.js';
 import './index.scss';
-// import Button from '../../src/button/index';
-// import Avatar from '../../src/avatar/index';
-import { Button, Avatar } from '../../src/entry';
+// import Button from '../../component/button/index';
+// import Avatar from '../../component/avatar/index';
+import { Button, Avatar } from '../../component/entry';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 // import '../../dist/style.css';
 
-import { ConfigContext, ConfigProvider, ConfigConsumer } from '../../src/config/index';
+import { ConfigContext, ConfigProvider, ConfigConsumer } from '../../component/config/index';
+
+import Loading from '../../component/loading';
 
 const TestButton = () => {
   return (
@@ -17,6 +19,10 @@ const TestButton = () => {
         return (
           <>
             <Avatar>22</Avatar>
+            <div className="loadingBox">
+              <Loading size={24} visible={true}></Loading>
+            </div>
+
             <div className="white">
               <Button size={'large'} type="default" className="button">
                 default

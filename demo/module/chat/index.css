@@ -1,3 +1,25 @@
 .conversation{
     background-color: #eee;
 }
+
+.tab-box{
+    width: 50px;
+    border: 1px solid transparent;
+    background: #607D8B;
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    padding: 10px 4px;
+}
+
+.tab-btn{
+    height: 50px;
+    width: 50px;
+    text-align: center;
+    line-height: 50px;
+    background: #2196F3;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 25px;
+    font-size: 12px;
+}

@@ -35,8 +35,7 @@ const ChatApp = () => {
       client
         .open({
           user: 'zd2',
-          accessToken:
-            'YWMtELYKV6Y-Te6FqUq7Pctz2yhYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGJruVhSAABUX4SrBZ1QIvlTiyYnq7Fwc9M50gDcv0ncIGr0CErkkuhkA==',
+          accessToken: '',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
@@ -84,8 +83,30 @@ const ChatApp = () => {
 
   let MsgList = <MessageList renderMessage={msg => TxtMsg(msg)}></MessageList>;
 
+  const [tab, setTab] = useState('contact');
+  const changeTab = (tab: string) => {
+    setTab(tab);
+  };
   return (
     <>
+      <div className="tab-box">
+        <div
+          className="tab-btn"
+          onClick={() => {
+            changeTab('chat');
+          }}
+        >
+          chat
+        </div>
+        <div
+          className="tab-btn"
+          onClick={() => {
+            changeTab('contact');
+          }}
+        >
+          contact
+        </div>
+      </div>
       <div
         style={{
           width: '35%',
@@ -93,17 +114,18 @@ const ChatApp = () => {
           background: '#fff',
         }}
       >
-        <ConversationList className="conversation"></ConversationList>
-        {/* <ContactList className="conversation"></ContactList> */}
+        {tab == 'chat' && <ConversationList className="conversation"></ConversationList>}
+
+        {tab == 'contact' && <ContactList className="conversation"></ContactList>}
       </div>
       <div style={{ width: '65%', borderLeft: '1px solid transparent', overflow: 'hidden' }}>
         <Chat></Chat>
       </div>
-      <div>
+      {/* <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
         <Button onClick={topConversation}>top 2808</Button>
         <br />
-      </div>
+      </div> */}
     </>
   );
 };
@@ -116,7 +138,8 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       position: 'absolute',
       width: '90%',
       height: '90%',
-      marginLeft: '5%',
+      left: '5%',
+      top: '3%',
     }}
   >
     <Provider

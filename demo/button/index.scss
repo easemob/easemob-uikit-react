@@ -7,6 +7,12 @@
 .black{
     background-color: black;
 }
-@import '../../src/style/index.scss';
+@import '../../component/style/index.scss';
 $btn-primary-bg: red;
 $btn-default-color: red;
+
+.loadingBox{
+    width: 400px;
+    height: 250px;
+    border: 1px solid red;
+}
