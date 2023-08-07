@@ -14,7 +14,7 @@ import { UrlMessage } from './UrlMessage';
 import reactStringReplace from 'react-string-replace';
 import AC, { AgoraChat } from 'agora-chat';
 import Modal from '../../component/modal';
-import { getCvsIdFromMessage, renderHtml } from '../utils';
+import { getCvsIdFromMessage, renderHtml, formatHtmlString } from '../utils';
 import { convertToMessage } from '../messageEditor/textarea/util';
 import Icon from '../../component/icon';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +33,6 @@ export interface TextMessageProps extends BaseMessageProps {
   children?: string;
   style?: React.CSSProperties;
 }
-
 
 export const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
   const urlRegex = /(https?:\/\/\S+)/gi;
@@ -341,7 +340,9 @@ export const TextMessage = (props: TextMessageProps) => {
     if (modifyMessageVisible) {
       setTimeout(() => {
         if (textareaRef?.current?.divRef.current) {
-          textareaRef.current.divRef.current.innerHTML = renderHtml(textMessage.msg);
+          textareaRef.current.divRef.current.innerHTML = renderHtml(
+            formatHtmlString(textMessage.msg),
+          );
         }
       }, 200);
     }

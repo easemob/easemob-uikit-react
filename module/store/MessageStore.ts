@@ -570,8 +570,7 @@ class MessageStore {
 
   modifyLocalMessage(messageId: string, msg: AgoraChat.TextMsgBody) {
     if (msg.chatType !== 'chatRoom') {
-      let cvsId = msg.chatType === 'groupChat' ? msg.to : msg.from || '';
-      const msgIndex = this.message[msg.chatType][cvsId].findIndex(
+      const msgIndex = this.message[msg.chatType][msg.to].findIndex(
         //@ts-ignore
         msgItem => msgItem.id === messageId || msgItem.mid === messageId,
       );

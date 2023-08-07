@@ -10,8 +10,8 @@ import React, {
 import AC, { AgoraChat } from 'agora-chat';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config/index';
-import { convertToMessage, formatHtmlString } from './util';
-import { renderHtml } from '../../utils';
+import { convertToMessage } from './util';
+import { renderHtml, formatHtmlString } from '../../utils';
 import Icon from '../../../component/icon';
 import { RootContext } from '../../store/rootContext';
 import SuggestList from '../suggestList';

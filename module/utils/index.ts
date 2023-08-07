@@ -165,6 +165,10 @@ export function getUsersInfo(userIdList: string[]) {
   });
 }
 
+export const formatHtmlString = (str: string) =>
+  //@ts-ignore
+  str?.replace(/[\u00A0-\u9999<>]/gim, i => ''.concat('&#', i.charCodeAt(0), ';'));
+
 export function getGroupItemFromGroupsById(groupId: string) {
   const { addressStore } = rootStore;
   return addressStore.groups.find(item => groupId === item.groupid);

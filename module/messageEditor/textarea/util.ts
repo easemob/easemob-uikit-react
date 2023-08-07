@@ -25,6 +25,4 @@ export const convertToMessage = (e: string) => {
   return t.replace(/&nbsp;/g, ' ').trim();
 };
 
-export const formatHtmlString = (str: string) =>
-  //@ts-ignore
-  str?.replace(/[\u00A0-\u9999<>]/gim, i => ''.concat('&#', i.charCodeAt(0), ';'));
+
