@@ -48,6 +48,8 @@ let MessageList: FC<MsgListProps> = props => {
 
   const currentCVS = messageStore.currentCVS || {};
 
+  const MessageScrollList = ScrollList<AgoraChat.MessageBody | RecallMessage>();
+
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
@@ -160,7 +162,7 @@ let MessageList: FC<MsgListProps> = props => {
 
   return (
     <div className={classString} ref={msgContainerRef} id="listContainer">
-      <ScrollList
+      <MessageScrollList
         ref={listRef}
         hasMore={true}
         data={messageData}
@@ -168,12 +170,12 @@ let MessageList: FC<MsgListProps> = props => {
         loadMoreItems={loadMore}
         renderItem={(itemData, index) => {
           return (
-            <div key={(itemData as { id: string }).id} className={`${classString}-msgItem`}>
+            <div key={itemData.id} className={`${classString}-msgItem`}>
               {renderMsg({ index, style: {} })}
             </div>
           );
         }}
-      ></ScrollList>
+      ></MessageScrollList>
       <ImagePreview
         onCancel={() => {
           setImageInfo({ visible: false, url: '' });
