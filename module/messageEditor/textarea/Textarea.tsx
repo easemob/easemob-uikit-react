@@ -19,6 +19,7 @@ import { AT_ALL } from '../suggestList/SuggestList';
 import { getRangeRect, showAt, getAtUser, replaceAtUser } from '../suggestList/utils';
 import './style/style.scss';
 import { MemberItem } from 'module/store/AddressStore';
+import { rootStore } from 'module';
 
 export interface TextareaProps {
   prefix?: string;
@@ -104,10 +105,19 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     className,
   );
 
+  const [isTyping, setIsTyping] = useState(false);
   const handleInputChange: React.FormEventHandler<HTMLDivElement> = e => {
     const value = (e.target as HTMLDivElement).innerHTML;
     const str = convertToMessage(value).trim();
     setTextValue(str);
+
+    if (currentCVS.chatType == 'singleChat' && !isTyping) {
+      setIsTyping(true);
+      messageStore.sendTypingCmd(currentCVS);
+      setTimeout(() => {
+        setIsTyping(false);
+      }, 10000);
+    }
   };
 
   const sendMessage = () => {

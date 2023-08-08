@@ -1,0 +1,57 @@
+@import '~/common/style/index.scss';
+$typing-prefix-cls: #{$cui-prefix}-typing;
+
+.#{$typing-prefix-cls} {
+    display: flex;
+    height: 24px;
+    padding: 4px 24px;
+    justify-content: left;
+    align-items: flex-start;
+    gap: 4px;
+
+    .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+    }
+
+    .loading-dot {
+        width: 4px;
+        height: 4px;
+        background-color: #000;
+        margin: 0 2px;
+        border-radius: 50%;
+        animation: dot-animation 1.5s infinite;
+    }
+
+    .loading-dot:nth-child(1) {
+        animation-delay: 0;
+        background-color: #000;
+    }
+
+    .loading-dot:nth-child(2) {
+        animation-delay: 0.5s;
+        background-color: #666;
+    }
+
+    .loading-dot:nth-child(3) {
+        animation-delay: 1s;
+        background-color: #ccc;
+    }
+
+    @keyframes dot-animation {
+        0% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.5;
+            transform: scale(0.6);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+}

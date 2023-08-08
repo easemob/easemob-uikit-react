@@ -36,11 +36,28 @@ const useEventHandler = () => {
         messageStore.receiveMessage(message);
       },
       onCmdMessage: message => {
-        console.log('onLocationMessage', message);
-        messageStore.receiveMessage(message);
+        console.log('onCmdMessage', message);
+        const conversationId = getCvsIdFromMessage(message as unknown as AgoraChat.MessageBody);
+
+        const cvs = {
+          chatType: message.chatType,
+          conversationId: conversationId,
+        };
+        const { action } = message;
+        switch (action) {
+          case 'TypingBegin':
+            messageStore.setTyping(cvs, true);
+            break;
+          case 'TypingEnd':
+            messageStore.setTyping(cvs, false);
+            break;
+          default:
+            messageStore.receiveMessage(message);
+            break;
+        }
       },
       onCustomMessage: message => {
-        console.log('onLocationMessage', message);
+        console.log('onCustomMessage', message);
         messageStore.receiveMessage(message);
       },
 

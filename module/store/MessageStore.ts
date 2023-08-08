@@ -31,12 +31,17 @@ export interface SelectedMessage {
     };
   };
 }
+
+export interface Typing {
+  [key: string]: boolean;
+}
 class MessageStore {
   rootStore;
   message: Message;
   selectedMessage: SelectedMessage;
   currentCVS: CurrentConversation;
   repliedMessage: AgoraChat.MessageBody | null;
+  typing: Typing;
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
 
@@ -52,12 +57,13 @@ class MessageStore {
     };
     this.currentCVS = {} as CurrentConversation;
     this.repliedMessage = null;
-
+    this.typing = {};
     makeObservable(this, {
       currentCVS: observable,
       message: observable,
       selectedMessage: observable,
       repliedMessage: observable,
+      typing: observable,
       setCurrentCVS: action,
       currentCvsMsgs: computed,
       sendMessage: action,
@@ -74,6 +80,8 @@ class MessageStore {
       modifyServerMessage: action,
       translateMessage: action,
       setSelectedMessage: action,
+      setTyping: action,
+      sendTypingCmd: action,
     });
 
     autorun(() => {
@@ -640,6 +648,27 @@ class MessageStore {
     },
   ) {
     this.selectedMessage[cvs.chatType][cvs.conversationId] = selectedData;
+  }
+
+  setTyping(cvs: CurrentConversation, typing: boolean) {
+    console.log('setTyping', cvs, typing);
+    if (cvs.chatType !== 'singleChat') return;
+
+    this.typing[cvs.conversationId] = typing;
+  }
+
+  sendTypingCmd(cvs: CurrentConversation) {
+    const option = {
+      chatType: cvs.chatType,
+      to: cvs.conversationId,
+      type: 'cmd' as 'cmd',
+      isChatThread: false,
+      action: 'TypingBegin',
+    };
+    const msg = AC.message.create(option);
+    this.rootStore.client.send(msg).then(() => {
+      console.log('send cmd success');
+    });
   }
 }
 
