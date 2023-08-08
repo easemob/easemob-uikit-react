@@ -2,15 +2,17 @@ import React, { useState, useImperativeHandle, forwardRef, useRef, useEffect } f
 import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
 import { observer } from 'mobx-react-lite';
+import { useDebounceFn } from 'ahooks';
 import './style/style.scss';
 export interface ScrollListProps<T> {
   className?: string;
   style?: React.CSSProperties;
-  renderItem: (item: T, index: number) => JSX.Element;
+  renderItem: (item: T, index: number) => React.ReactNode;
   paddingHeight?: number; // 距离顶部多高开始触发加载
   loadMoreItems?: () => void | Promise<void>; // 触发加载更多的函数
   scrollTo?: () => 'top' | 'bottom' | string; // 滚动到指定位置
   hasMore?: boolean; // 是否还有更多
+  scrollDirection?: 'up' | 'down';
   prefix?: string;
   data: Array<T>;
   loading: boolean;
@@ -29,8 +31,17 @@ let ScrollList = function <T>() {
         hasMore = true,
         prefix,
         loading = false,
+        scrollDirection = 'up',
         data,
       } = props;
+      const { run } = useDebounceFn(
+        () => {
+          loadMoreItems?.();
+        },
+        {
+          wait: 100,
+        },
+      );
       const { getPrefixCls } = React.useContext(ConfigContext);
       const prefixCls = getPrefixCls('scrollList', prefix);
 
@@ -63,17 +74,16 @@ let ScrollList = function <T>() {
           let scrollTop = (event.target as HTMLElement).scrollTop;
           //列表内容实际高度
           let offsetHeight = (event.target as HTMLElement).offsetHeight;
-          //   console.log('height', scrollHeight, scrollTop, offsetHeight);
-          // 滚动到底加载更多
-          //   if (offsetHeight + scrollTop >= scrollHeight) {
-          //     console.log('列表触底');
-          //     // innerScrollTo('top');
-          //     loadMoreItems?.();
-          //   }
-
           // 滚动到顶加载更多
-          if (scrollTop < 100) {
-            loadMoreItems?.();
+          if (scrollDirection === 'up' && scrollTop < 100) {
+            run();
+          }
+          // scroll to bottom load data
+          if (scrollDirection === 'down') {
+            let offsetBottom = scrollHeight - (scrollTop + offsetHeight);
+            if (offsetBottom < 50) {
+              run();
+            }
           }
         };
 

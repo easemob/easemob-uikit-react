@@ -35,6 +35,8 @@ export interface MsgListProps {
   renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
 }
 
+const MessageScrollList = ScrollList<AgoraChat.MessageBody | RecallMessage>();
+
 let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
   const { messageStore } = rootStore;
@@ -47,8 +49,6 @@ let MessageList: FC<MsgListProps> = props => {
   const msgContainerRef = useRef<HTMLDivElement>(null);
 
   const currentCVS = messageStore.currentCVS || {};
-
-  const MessageScrollList = ScrollList<AgoraChat.MessageBody | RecallMessage>();
 
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 

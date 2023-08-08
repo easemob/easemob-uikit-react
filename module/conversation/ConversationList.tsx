@@ -3,19 +3,15 @@ import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import Icon from '../../component/icon';
-import Avatar from '../../component/avatar';
-import Badge from '../../component/badge';
-import Button from '../../component/button';
 import { ConversationItem as CVSItem, ConversationItemProps } from './ConversationItem';
 import { Search } from '../../component/input/Search';
 import Header, { HeaderProps } from '../header';
-import { useConversation } from '../hooks/useConversation';
+import { useConversations } from '../hooks/useConversation';
 import { useGroups, useUserInfo } from '../hooks/useAddress';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
-import { parseChannel } from '../utils';
-
 import { useTranslation } from 'react-i18next';
+import ScrollList from '../../component/scrollList';
 
 export type ConversationData = Array<{
   chatType: 'singleChat' | 'groupChat';
@@ -54,6 +50,8 @@ export interface ConversationListProps {
   itemProps?: ConversationItemProps;
 }
 
+const ConversationScrollList = ScrollList<ConversationData[0]>();
+
 let Conversations: FC<ConversationListProps> = props => {
   const {
     prefix: customizePrefixCls,
@@ -80,17 +78,21 @@ let Conversations: FC<ConversationListProps> = props => {
   const cvsStore = rootStore.conversationStore;
   const { appUsersInfo } = rootStore.addressStore;
   const { t } = useTranslation();
+  const { getConversationList, hasConversationNext } = useConversations();
+
+  useUserInfo();
+
+  const groupData = rootStore.addressStore.groups;
+  // 获取加入群组，把群组名放在 conversationList
 
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
     setActiveKey(index);
-    console.log('handleItemClick', index);
     cvsStore.setCurrentCvs({
       chatType: cvs.chatType,
       conversationId: cvs.conversationId,
       name: cvs.name,
       unreadCount: 0,
     });
-
     onItemClick?.(cvs);
   };
 
@@ -99,30 +101,10 @@ let Conversations: FC<ConversationListProps> = props => {
       !cvsStore.currentCvs ||
       (cvsStore.currentCvs && Object.keys(cvsStore.currentCvs).length == 0)
     ) {
-      setActiveKey(99999);
+      setActiveKey(-1);
     }
   }, [cvsStore.currentCvs]);
 
-  const content = renderData.map((cvs, index) => {
-    console.log('activeKey', activeKey);
-    // TODO: 复制renderItem的内容， 把isActive onClick的实现加进去，否则用户需要自己实现这些
-    return renderItem ? (
-      renderItem(cvs, index)
-    ) : (
-      <CVSItem
-        {...itemProps}
-        data={cvs}
-        key={cvs.conversationId}
-        isActive={index === activeKey}
-        onClick={handleItemClick(cvs, index)}
-      ></CVSItem>
-    );
-  });
-  useUserInfo();
-  const cvsData = useConversation();
-  const groupData = rootStore.addressStore.groups;
-  let iniRenderData: any[] = [];
-  // 获取加入群组，把群组名放在 conversationList
   useEffect(() => {
     if (isSearch) {
       // @ts-ignore
@@ -151,20 +133,6 @@ let Conversations: FC<ConversationListProps> = props => {
     }
   }, [cvsStore.conversationList, cvsStore.searchList, groupData, appUsersInfo]);
 
-  // 获取会话列表数据，格式化后setConversation
-  useEffect(() => {
-    const conversation = cvsData.map(cvs => {
-      const { chatType, conversationId } = parseChannel(cvs.channel_id);
-      return {
-        chatType,
-        conversationId,
-        unreadCount: cvs.unread_num,
-        lastMessage: cvs.lastMessage,
-      };
-    });
-    rootStore.conversationStore.setConversation(conversation);
-  }, [cvsData]);
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const returnValue = onSearch?.(e);
@@ -182,7 +150,10 @@ let Conversations: FC<ConversationListProps> = props => {
   };
 
   useEffect(() => {
-    rootStore.loginState && getJoinedGroupList();
+    if (rootStore.loginState) {
+      getConversationList();
+      getJoinedGroupList();
+    }
   }, [rootStore.loginState]);
 
   return (
@@ -205,8 +176,27 @@ let Conversations: FC<ConversationListProps> = props => {
           <Search onChange={handleSearch}></Search>
         </div>
       )}
-
-      {content}
+      <ConversationScrollList
+        style={{ height: 'calc(100% - 110px)' }}
+        hasMore={hasConversationNext}
+        data={renderData}
+        scrollDirection="down"
+        loading={false}
+        loadMoreItems={getConversationList}
+        renderItem={(cvs, index) => {
+          return renderItem ? (
+            renderItem(cvs, index)
+          ) : (
+            <CVSItem
+              {...itemProps}
+              data={cvs}
+              key={cvs.conversationId}
+              isActive={index === activeKey}
+              onClick={handleItemClick(cvs, index)}
+            ></CVSItem>
+          );
+        }}
+      ></ConversationScrollList>
     </div>
   );
 };

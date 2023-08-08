@@ -165,6 +165,7 @@ export function getUsersInfo(userIdList: string[]) {
   });
 }
 
+
 export const formatHtmlString = (str: string) =>
   //@ts-ignore
   str?.replace(/[\u00A0-\u9999<>]/gim, i => ''.concat('&#', i.charCodeAt(0), ';'));

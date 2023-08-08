@@ -10,7 +10,7 @@ export interface Conversation {
   name?: string;
   isAted?: boolean;
   isOnline?: boolean;
-  avatarUrl?: string
+  avatarUrl?: string;
 }
 
 export interface CurrentConversation {
@@ -29,6 +29,7 @@ class ConversationStore {
   currentCvs: CurrentConversation;
   conversationList: Conversation[];
   searchList: Conversation[];
+  hasConversationNext: boolean;
   byId: ById;
   constructor(rootStore: any) {
     this.rootStore = rootStore;
@@ -40,11 +41,13 @@ class ConversationStore {
 
     this.conversationList = [];
     this.searchList = [];
+    this.hasConversationNext = true;
     this.byId = {};
     makeObservable(this, {
       currentCvs: observable,
       conversationList: observable,
       searchList: observable,
+      hasConversationNext: observable,
       byId: observable,
       setCurrentCvs: action,
       setConversation: action,
@@ -80,13 +83,17 @@ class ConversationStore {
     if (!Array.isArray(conversations)) {
       return console.error('Invalid parameter: conversations');
     }
-    console.log('setConversation', conversations);
 
-    this.conversationList = conversations;
+    let currentCvsId = this.conversationList.map(item => item.conversationId);
+    let filteredGroups = conversations.filter(
+      ({ conversationId }) => !currentCvsId.find(id => id === conversationId),
+    );
 
-    conversations.forEach(cvs => {
+    filteredGroups.forEach(cvs => {
       this.byId[`${cvs.chatType}_${cvs.conversationId}`] = cvs;
     });
+
+    this.conversationList = [...this.conversationList, ...filteredGroups];
   }
 
   addConversation(conversation: Conversation) {
@@ -178,7 +185,6 @@ class ConversationStore {
   }
 
   setIsAted(chatType: ChatType, cvsId: string, isAted: boolean) {
-    console.log(chatType, cvsId, isAted, '12313s');
     let idx = this.conversationList.findIndex(item => {
       return item.chatType === chatType && item.conversationId === cvsId;
     });
@@ -187,6 +193,10 @@ class ConversationStore {
 
       console.log(this.conversationList[idx]);
     }
+  }
+
+  setHasConversationNext(hasNext: boolean) {
+    this.hasConversationNext = hasNext;
   }
 }
 
