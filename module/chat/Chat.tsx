@@ -13,13 +13,14 @@ import Header, { HeaderProps } from '../header';
 import MessageEditor, { MessageEditorProps } from '../messageEditor';
 import List from '../../component/list';
 import { MessageList, MsgListProps } from './MessageList';
-
+import { getStore } from '../store';
 import { RootContext } from '../store/rootContext';
 import { useEventHandler } from '../hooks/chat';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import Empty from '../empty';
 import { UnsentRepliedMsg } from '../repliedMessage';
 import { useTranslation } from 'react-i18next';
+import { CurrentConversation } from 'module/store/ConversationStore';
 
 // import rootStore from '../store';
 export interface ChatProps {
@@ -42,6 +43,13 @@ export interface ChatProps {
   messageListProps?: MsgListProps;
   messageEditorProps?: MessageEditorProps;
 }
+const getChatAvatarUrl = (cvs: CurrentConversation) => {
+  if (cvs.chatType === 'singleChat') {
+    return getStore().addressStore.appUsersInfo[cvs.conversationId]?.avatarurl;
+  } else {
+    return '';
+  }
+};
 
 const Chat: FC<ChatProps> = props => {
   const {
@@ -101,6 +109,7 @@ const Chat: FC<ChatProps> = props => {
             renderHeader(rootStore.conversationStore.currentCvs)
           ) : (
             <Header
+              avatarSrc={getChatAvatarUrl(CVS)}
               content={
                 rootStore.conversationStore.currentCvs.name ||
                 rootStore.conversationStore.currentCvs.conversationId

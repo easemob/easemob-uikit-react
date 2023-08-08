@@ -99,7 +99,6 @@ export function getUsersInfo(userIdList: string[]) {
   //订阅在线状态
   const findIndex = userIdList.indexOf(client.user);
   let subList = [...userIdList];
-  const list = addressStore.appUsersInfo;
   const result = {};
   if (findIndex > -1) {
     subList.splice(findIndex, 1);
@@ -151,6 +150,7 @@ export function getUsersInfo(userIdList: string[]) {
                   }
                 }
               });
+              const list = addressStore.appUsersInfo;
               addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
               resolve(Object.assign({}, result, reUserInfo));
             })
@@ -164,7 +164,6 @@ export function getUsersInfo(userIdList: string[]) {
     }
   });
 }
-
 
 export const formatHtmlString = (str: string) =>
   //@ts-ignore
@@ -185,5 +184,6 @@ export function getGroupMemberIndexByUserId(group: GroupItem, userId: string) {
 }
 
 export function getGroupMemberNickName(member: MemberItem) {
-  return member.attributes?.nickName || member.userId;
+  const { appUsersInfo } = rootStore.addressStore;
+  return member.attributes?.nickName || appUsersInfo?.[member.userId]?.nickname || member.userId;
 }

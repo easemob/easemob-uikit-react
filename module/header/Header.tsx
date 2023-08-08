@@ -13,6 +13,7 @@ export interface HeaderProps {
   avatar?: ReactNode; // 头像
   icon?: ReactNode; // 右侧更多按钮 icon
   back?: boolean; // 是否显示左侧返回按钮
+  avatarSrc?: string;
   renderContent?: () => React.ReactElement; // 自定义渲染中间内容部分；
   onIconClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void; // 右侧更多按钮的点击事件
   // 右侧更多按钮配置
@@ -31,6 +32,7 @@ const Header: FC<HeaderProps> = props => {
   const {
     icon,
     avatar,
+    avatarSrc = '',
     content = <div>Header</div>,
     prefix: customizePrefixCls,
     back = false,
@@ -80,6 +82,7 @@ const Header: FC<HeaderProps> = props => {
             avatar
           ) : (
             <Avatar
+              src={avatarSrc}
               onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
                 onAvatarClick?.(e);
               }}

@@ -219,6 +219,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       id={audioMessage.id}
       direction={bySelf ? 'rtl' : 'ltr'}
       style={customStyle}
+      message={audioMessage}
       time={messageTime}
       nickName={from}
       status={status}

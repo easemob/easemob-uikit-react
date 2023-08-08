@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useContext, useState } from 'react';
-import AC, { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
 import { getStore } from '../store/index';
 import { getGroupItemFromGroupsById } from '../../module/utils';
-import { CurrentConversation } from 'module/store/ConversationStore';
 import { getUsersInfo } from '../utils';
 
 const useContacts = () => {
@@ -42,6 +40,7 @@ const useUserInfo = () => {
     getUsersInfo(cvsUserIds);
   }, [rootStore.conversationStore.conversationList.length]);
 };
+
 
 const useGroups = () => {
   const pageSize = 0;
@@ -124,7 +123,7 @@ const useGroupMembersAttributes = (
         userIds,
         keys: attributesKeys,
       })
-      .then((res: { data: { [x: string]: any } }) => {
+      .then(res => {
         if (res.data) {
           Object.keys(res.data).forEach(key => {
             res?.data && addressStore.setGroupMemberAttributes(groupId, key, res.data[key]);
@@ -138,4 +137,10 @@ const useGroupMembersAttributes = (
   };
 };
 
-export { useContacts, useGroups, useUserInfo, useGroupMembers, useGroupMembersAttributes };
+export {
+  useContacts,
+  useGroups,
+  useUserInfo,
+  useGroupMembers,
+  useGroupMembersAttributes,
+};

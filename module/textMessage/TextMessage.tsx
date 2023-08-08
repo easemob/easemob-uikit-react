@@ -364,7 +364,6 @@ const TextMessage = (props: TextMessageProps) => {
     console.log('设置', rootStore.messageStore);
   };
 
-
   const handleModifyMessage = () => {
     setModifyMessageVisible(true);
   };
@@ -406,7 +405,8 @@ const TextMessage = (props: TextMessageProps) => {
         direction={bySelf ? 'rtl' : 'ltr'}
         style={style}
         time={time}
-        nickName={nickName || from}
+        message={textMessage}
+        nickName={nickName}
         bubbleType={type}
         className={bubbleClassName}
         onReplyMessage={handleReplyMsg}

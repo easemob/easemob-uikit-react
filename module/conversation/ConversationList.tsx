@@ -12,6 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import ScrollList from '../../component/scrollList';
+import { getUsersInfo } from '../utils/index';
 
 export type ConversationData = Array<{
   chatType: 'singleChat' | 'groupChat';
@@ -153,6 +154,7 @@ let Conversations: FC<ConversationListProps> = props => {
     if (rootStore.loginState) {
       getConversationList();
       getJoinedGroupList();
+      getUsersInfo([rootStore.client.user]);
     }
   }, [rootStore.loginState]);
 

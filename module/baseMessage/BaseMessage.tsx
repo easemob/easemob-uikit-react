@@ -4,17 +4,23 @@ import { ConfigContext } from '../../component/config/index';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
 import './style/style.scss';
 import { cloneElement } from '../../component/_utils/reactNode';
-import { getConversationTime } from '../utils';
+import {
+  getConversationTime,
+  getGroupItemFromGroupsById,
+  getGroupMemberIndexByUserId,
+  getGroupMemberNickName,
+} from '../utils';
 import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
-import { RootContext } from '../store/rootContext';
 import Icon from '../../component/icon';
 import { RepliedMsg } from '../repliedMessage';
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard } from '../reaction';
 import { ReactionMessage, ReactionData } from '../reaction';
+import { getStore } from '../store';
 import Checkbox from '../../component/checkbox';
+import { observer } from 'mobx-react-lite';
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -25,15 +31,20 @@ interface CustomAction {
   }[];
 }
 
+type BaseMessageType = Exclude<
+  AgoraChat.MessageBody,
+  AgoraChat.DeliveryMsgBody | AgoraChat.ReadMsgBody | AgoraChat.ChannelMsgBody
+>;
+
 export interface BaseMessageProps {
-  // messageId: string; // 消息 id
+  id?: string;
+  reactionData?: ReactionData[];
   bubbleType?: 'primary' | 'secondly' | 'none'; // 气泡类型
   bubbleStyle?: React.CSSProperties;
   status?: MessageStatusProps['status'];
   avatar?: ReactNode;
   direction?: 'ltr' | 'rtl'; // 左侧布局/右侧布局
   prefix?: string;
-
   shape?: 'ground' | 'square'; // 气泡形状
   arrow?: boolean; // 气泡是否有箭头
   nickName?: string; // 昵称
@@ -43,26 +54,42 @@ export interface BaseMessageProps {
   time?: number;
   hasRepliedMsg?: boolean;
   repliedMessage?: AgoraChat.MessageBody;
+  customAction?: CustomAction; // whether show more
+  reaction?: boolean; // whether show reaction
+  select?: boolean; // whether show message checkbox
+  message?: BaseMessageType;
   onReplyMessage?: () => void;
   onDeleteMessage?: () => void;
-  id?: string;
-  reactionData?: ReactionData[];
   onAddReactionEmoji?: (emojiString: string) => void;
   onDeleteReactionEmoji?: (emojiString: string) => void;
   onShowReactionUserList?: (emojiString: string) => void;
   onRecallMessage?: () => void;
-  customAction?: CustomAction; // whether show more
-  reaction?: boolean; // whether show reaction
   onTranslateMessage?: () => void;
   onModifyMessage?: () => void;
   onSelectMessage?: () => void; // message select action handler
-  select?: boolean; // whether show message checkbox
   onMessageCheckChange?: (checked: boolean) => void;
 }
 
-const BaseMessage = (props: BaseMessageProps) => {
+const getMsgSenderNickname = (msg: BaseMessageType) => {
+  const { chatType, from = '', to } = msg;
+  const { appUsersInfo } = getStore().addressStore;
+  if (chatType === 'groupChat') {
+    let group = getGroupItemFromGroupsById(to);
+    let memberIndex = (group && getGroupMemberIndexByUserId(group, from)) || -1;
+    if (memberIndex > -1) {
+      let memberItem = group?.members?.[memberIndex];
+      if (memberItem) {
+        return getGroupMemberNickName(memberItem);
+      }
+    }
+  } else {
+    return appUsersInfo?.[from]?.nickname || from;
+  }
+};
+
+let BaseMessage = (props: BaseMessageProps) => {
   const {
-    // messageId,
+    message,
     avatar,
     direction = 'ltr',
     status = 'default',
@@ -99,10 +126,15 @@ const BaseMessage = (props: BaseMessageProps) => {
   const prefixCls = getPrefixCls('message-base', customizePrefixCls);
   let avatarToShow: ReactNode = avatar;
   const [hoverStatus, setHoverStatus] = useState(false);
+  const { appUsersInfo } = getStore().addressStore;
+
+  const msgSenderNickname = nickName || (message && getMsgSenderNickname(message));
   if (avatar) {
     avatarToShow = avatar;
   } else {
-    avatarToShow = <Avatar>{nickName}</Avatar>;
+    avatarToShow = (
+      <Avatar src={appUsersInfo?.[message?.from || '']?.avatarurl}>{msgSenderNickname}</Avatar>
+    );
   }
   const showRepliedMsg =
     typeof repliedMessage == 'object' && typeof repliedMessage.type == 'string';
@@ -294,7 +326,6 @@ const BaseMessage = (props: BaseMessageProps) => {
           style={{ ...style }}
           onMouseOver={() => setHoverStatus(true)}
           onMouseLeave={() => {
-            console.log('leave');
             setHoverStatus(false);
           }}
         >
@@ -304,15 +335,10 @@ const BaseMessage = (props: BaseMessageProps) => {
               <RepliedMsg message={repliedMessage} shape={shape} direction={direction}></RepliedMsg>
             ) : (
               <div className={`${prefixCls}-info`}>
-                <span className={`${prefixCls}-nickname`}>{nickName}</span>
+                <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
                 <span className={`${prefixCls}-time`}>{getConversationTime(time as number)}</span>
               </div>
             )}
-            {/* <div className={`${prefixCls}-info`}>
-          <span className={`${prefixCls}-nickname`}>{nickName}</span>
-          <span className={`${prefixCls}-time`}>{getConversationTime(time as number)}</span>
-        </div> */}
-
             <div className={`${prefixCls}-body`}>
               {contentNode}
               {hoverStatus ? (
@@ -356,4 +382,5 @@ const BaseMessage = (props: BaseMessageProps) => {
   );
 };
 
+BaseMessage = observer(BaseMessage);
 export { BaseMessage };

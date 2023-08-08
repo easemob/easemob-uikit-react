@@ -197,6 +197,7 @@ const FileMessage = (props: FileMessageProps) => {
   return (
     <BaseMessage
       id={fileMessage.id}
+      message={fileMessage}
       bubbleType={type}
       style={style}
       direction={bySelf ? 'rtl' : 'ltr'}

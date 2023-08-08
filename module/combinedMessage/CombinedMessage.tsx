@@ -325,6 +325,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     <>
       <BaseMessage
         id={combinedMessage.id}
+        message={combinedMessage}
         direction={bySelf ? 'rtl' : 'ltr'}
         style={style}
         time={time}

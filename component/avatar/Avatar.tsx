@@ -36,7 +36,9 @@ export const InternalAvatar = (props: any, ref: any) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
 
   React.useEffect(() => {
-    setIsImgExist(true);
+    if (props.src !== '') {
+      setIsImgExist(true);
+    }
   }, [props.src]);
 
   const handleImgLoadError = () => {
