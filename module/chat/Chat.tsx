@@ -21,6 +21,7 @@ import Empty from '../empty';
 import { UnsentRepliedMsg } from '../repliedMessage';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from 'module/store/ConversationStore';
+import Typing from '../typing';
 
 // import rootStore from '../store';
 export interface ChatProps {
@@ -159,6 +160,12 @@ const Chat: FC<ChatProps> = props => {
           ) : (
             <MessageList {...messageListProps}></MessageList>
           )}
+          <Typing
+            conversation={rootStore.conversationStore.currentCvs}
+            onHide={() => {
+              rootStore.messageStore.setTyping(rootStore.conversationStore.currentCvs, false);
+            }}
+          ></Typing>
           {repliedMsg && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
 
           {renderMessageEditor ? (
