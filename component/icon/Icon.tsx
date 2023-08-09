@@ -42,6 +42,8 @@ import { ReactComponent as ModifyMessage } from '../svgs/icons/modifyMsg.svg';
 import { ReactComponent as ForwardList } from '../svgs/icons/3lines_n_arrow.svg';
 import { ReactComponent as Time } from '../svgs/icons/3pm.svg';
 import { ReactComponent as Select } from '../svgs/icons/checked_ellipse.svg';
+import { ReactComponent as GoToChat } from '../svgs/icons/gotoMessage.svg';
+import { ReactComponent as AddFriend } from '../svgs/icons/person_add_fill.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -155,7 +157,7 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       return <Translation></Translation>;
       break;
     case 'MODIFY_MESSAGE':
-      return <ModifyMessage></ModifyMessage>
+      return <ModifyMessage></ModifyMessage>;
       break;
     case 'FORWARD_LIST':
       return <ForwardList></ForwardList>;
@@ -165,6 +167,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'SELECT':
       return <Select></Select>;
+      break;
+    case 'GO_TO_CHAT':
+      return <GoToChat></GoToChat>;
+      break;
+    case 'ADD_FRIEND':
+      return <AddFriend></AddFriend>;
       break;
     default:
       return '';

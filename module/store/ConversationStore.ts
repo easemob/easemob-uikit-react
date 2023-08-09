@@ -97,17 +97,14 @@ class ConversationStore {
   }
 
   addConversation(conversation: Conversation) {
-    if (typeof conversation != 'object') {
+    if (typeof conversation !== 'object') {
       return console.error('Invalid parameter: conversation');
     }
-    let exist = false;
-    this.conversationList.forEach(item => {
-      if (item.conversationId == conversation.conversationId) {
-        exist = true;
-      }
+    let exist = this.conversationList.find(item => {
+      return item.conversationId === conversation.conversationId;
     });
     if (exist) return;
-    this.conversationList.unshift(conversation);
+    this.conversationList = [conversation, ...this.conversationList];
     this.byId[`${conversation.chatType}_${conversation.conversationId}`] = conversation;
   }
 
@@ -159,17 +156,12 @@ class ConversationStore {
   }
 
   topConversation(conversation: Conversation) {
-    const newCvsList = this.conversationList?.filter((cvs, index) => {
-      if (
-        cvs.chatType == conversation.chatType &&
-        cvs.conversationId == conversation.conversationId
-      ) {
-        return false;
-      }
-      return true;
+    const filteredList = this.conversationList?.filter(cvs => {
+      return (
+        cvs.chatType !== conversation.chatType || cvs.conversationId !== conversation.conversationId
+      );
     });
-    newCvsList.unshift(conversation);
-    this.conversationList = [...newCvsList];
+    this.conversationList = [conversation, ...filteredList];
   }
 
   getConversation(chatType: ChatType, cvsId: string) {

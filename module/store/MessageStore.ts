@@ -233,10 +233,11 @@ class MessageStore {
 
   receiveMessage(message: AgoraChat.MessageBody) {
     console.log('收到消息', message);
-
     this.message.byId[message.id] = message;
-    // @ts-ignore
-    message.bySelf = false;
+    if (message.from !== this.rootStore.client.user) {
+      // @ts-ignore
+      message.bySelf = false;
+    }
     const conversationId = getCvsIdFromMessage(message);
 
     // @ts-ignore
@@ -268,7 +269,6 @@ class MessageStore {
         lastMessage: message,
         unreadCount: isCurrentCvs ? 0 : 1,
       };
-
       this.rootStore.conversationStore.addConversation(cvs);
       return;
     }

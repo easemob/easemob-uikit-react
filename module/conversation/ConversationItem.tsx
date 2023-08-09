@@ -166,7 +166,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     const from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}:` : '';
     lastMsg = [from, ...Array.from(lastMsg)];
   }
-
+  
   return (
     <div
       className={classString}
@@ -210,5 +210,4 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     </div>
   );
 };
-
 export { ConversationItem };

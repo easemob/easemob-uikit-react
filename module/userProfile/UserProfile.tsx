@@ -6,6 +6,8 @@ import Avatar from '../../component/avatar';
 import { getStore } from '../store/index';
 import { observer } from 'mobx-react-lite';
 import { getUsersInfo } from '../utils/index';
+import Button from '../../component/button';
+import Icon from '../../component/icon';
 export interface TypingProps {
   prefix?: string;
   className?: string;
@@ -29,11 +31,19 @@ const UserProfile = (props: TypingProps) => {
 
   return (
     <div className={classString} style={style}>
-      <Avatar isOnline={isOnline} src={avatarurl}>
+      <Avatar size={80} isOnline={isOnline} src={avatarurl}>
         {uid}
       </Avatar>
       <div className={`${prefixCls}-nick`}>{nickname}</div>
-      <div className={`${prefixCls}-id`}>UserId: {uid}</div>
+      <div className={`${prefixCls}-id`}>Agora ID: {uid}</div>
+      {
+        <Button className={`${prefixCls}-action-btn`}>
+          <div className={`${prefixCls}-action`}>
+            <Icon width={'24px'} height={'24px'} type="ADD_FRIEND"></Icon>
+            <span className={`${prefixCls}-action-name`}>Add Contact</span>
+          </div>
+        </Button>
+      }
     </div>
   );
 };

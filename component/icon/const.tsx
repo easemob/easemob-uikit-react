@@ -39,6 +39,8 @@ enum ICON_TYPES {
   FORWARD_LIST = 'FORWARD_LIST',
   TIME = 'TIME',
   SELECT = 'SELECT',
+  GO_TO_CHAT = 'GO_TO_CHAT',
+  ADD_FRIEND = 'ADD_FRIEND',
 }
 // chevron_down
 export { ICON_TYPES };

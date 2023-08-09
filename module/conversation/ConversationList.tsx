@@ -127,6 +127,7 @@ let Conversations: FC<ConversationListProps> = props => {
         }
         return renderItem;
       });
+
       // @ts-ignore
       setRenderData(renderData);
       // @ts-ignore

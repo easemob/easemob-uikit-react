@@ -129,6 +129,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   let avatarToShow: ReactNode = avatar;
   const [hoverStatus, setHoverStatus] = useState(false);
   const { appUsersInfo } = getStore().addressStore;
+  const isCurrentUser = message?.from === getStore().client.user || message?.from === '';
 
   const msgSenderNickname = nickName || (message && getMsgSenderNickname(message));
   if (avatar) {
@@ -247,7 +248,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               </li>
             );
           } else if (item.content === 'UNSEND') {
-            return (
+            return isCurrentUser&& (
               <li key={index} onClick={recallMessage}>
                 <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
                 {t('module.unsend')}
@@ -262,10 +263,12 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'Modify') {
             return (
-              <li key={index} onClick={modifyMessage}>
-                <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.modify')}
-              </li>
+              isCurrentUser && (
+                <li key={index} onClick={modifyMessage}>
+                  <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
+                  {t('module.modify')}
+                </li>
+              )
             );
           } else if (item.content === 'SELECT') {
             return (
