@@ -1,0 +1,18 @@
+@import '~/common/style/index.scss';
+$user-profile-prefix-cls: #{$cui-prefix}-user-profile;
+
+.#{$user-profile-prefix-cls} {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+  padding: 10px;
+  text-align: center;
+
+  &-nick {
+    width: 100%;
+  }
+
+  &-id {
+    width: 100%;
+  }
+}

@@ -20,7 +20,9 @@ import { EmojiKeyBoard } from '../reaction';
 import { ReactionMessage, ReactionData } from '../reaction';
 import { getStore } from '../store';
 import Checkbox from '../../component/checkbox';
+import UserProfile from '../userProfile';
 import { observer } from 'mobx-react-lite';
+
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -329,7 +331,13 @@ let BaseMessage = (props: BaseMessageProps) => {
             setHoverStatus(false);
           }}
         >
-          {avatarToShow}
+          <Tooltip
+            title={<UserProfile uid={message?.from || ''} />}
+            trigger="click"
+            placement="topLeft"
+          >
+            {avatarToShow}
+          </Tooltip>
           <div className={`${prefixCls}-box`}>
             {showRepliedMsg ? (
               <RepliedMsg message={repliedMessage} shape={shape} direction={direction}></RepliedMsg>
