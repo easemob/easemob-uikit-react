@@ -1,5 +1,9 @@
 import { MemberItem } from '../../store/AddressStore';
 import { getGroupMemberNickName } from '../../utils';
+import { MENTION_TAG } from './const';
+
+const MentionRegx = new RegExp(`${MENTION_TAG}([^${MENTION_TAG}\s]*)$`); //
+
 // get cursor
 const getCursorIndex = () => {
   const selection = window.getSelection();
@@ -28,7 +32,7 @@ const showAt = () => {
   const node = getRangeNode();
   if (!node || node.nodeType !== Node.TEXT_NODE) return false;
   const content = node.textContent || '';
-  const regx = /@([^@\s]*)$/;
+  const regx = MentionRegx;
   const match = regx.exec(content.slice(0, getCursorIndex()));
   return match && match.length === 2;
 };
@@ -36,7 +40,7 @@ const showAt = () => {
 // get @ user
 const getAtUser = () => {
   const content = getRangeNode()?.textContent || '';
-  const regx = /@([^@\s]*)$/;
+  const regx = MentionRegx;
   const match = regx.exec(content.slice(0, getCursorIndex()));
   if (match && match.length === 2) {
     return match[1];
@@ -50,7 +54,7 @@ const createAtButton = (user: MemberItem) => {
   btn.dataset.user = user.userId;
   btn.className = 'at-button';
   btn.contentEditable = 'false';
-  btn.textContent = `@${getGroupMemberNickName(user)}`;
+  btn.textContent = `${MENTION_TAG}${getGroupMemberNickName(user)}`;
   const wrapper = document.createElement('span');
   wrapper.style.display = 'inline-block';
   wrapper.contentEditable = 'false';
@@ -66,11 +70,12 @@ const createAtButton = (user: MemberItem) => {
 };
 
 const replaceString = (raw: string, replacer: string) => {
-  return raw.replace(/@([^@\s]*)$/, replacer);
+  return raw.replace(MentionRegx, replacer);
 };
 
 const replaceAtUser = (user: MemberItem) => {
   const node = getRangeNode();
+
   if (node) {
     const content = node?.textContent || '';
     const endIndex = getCursorIndex();

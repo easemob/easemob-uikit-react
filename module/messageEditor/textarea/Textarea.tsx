@@ -19,7 +19,6 @@ import { AT_ALL } from '../suggestList/SuggestList';
 import { getRangeRect, showAt, getAtUser, replaceAtUser } from '../suggestList/utils';
 import './style/style.scss';
 import { MemberItem } from 'module/store/AddressStore';
-import { rootStore } from 'module';
 
 export interface TextareaProps {
   prefix?: string;
@@ -84,9 +83,9 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   };
   const handlePickUser = useCallback((user: MemberItem) => {
     replaceAtUser(user);
-    setShowDialog(false);
     const str = convertToMessage(divRef?.current?.innerHTML || '').trim();
     setTextValue(str);
+    setShowDialog(false);
   }, []);
 
   const handleHide = () => {
@@ -192,6 +191,22 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     setTextareaValue,
     divRef,
   }));
+
+  useEffect(() => {
+    if (enableEnterSend) {
+      const clickFun = (e: MouseEvent) => {
+        if (!divRef?.current?.contains(e.target as Node)) {
+          setShowDialog(false);
+        }
+      };
+      if (enableEnterSend) {
+        document.addEventListener('click', clickFun);
+      }
+      return () => {
+        document.removeEventListener('click', clickFun);
+      };
+    }
+  }, [enableEnterSend]);
 
   return (
     <div className={classString}>

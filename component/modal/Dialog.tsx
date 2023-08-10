@@ -191,7 +191,6 @@ export default function Dialog(props: DialogPropTypes) {
 
 	// ========================= Effect =========================
 	useEffect(() => {
-		console.log('useEffect', visible);
 		if (visible) {
 			setAnimatedVisible(true);
 			saveLastOutSideActiveElementRef();

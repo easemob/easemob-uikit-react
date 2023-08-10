@@ -45,6 +45,18 @@ const SuggestList: FC<Props> = props => {
   let currentCVS = getStore().messageStore.currentCVS;
   const memberList = getGroupItemFromGroupsById(currentCVS.conversationId)?.members || [];
 
+  const onMouseEnter = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    //@ts-ignore
+    setIndex(Number(e.target.dataset.idx));
+  };
+
+  const onClick = () => {
+    if (indexRef.current !== undefined && usersRef.current?.[indexRef.current]) {
+      props.onPickUser(usersRef.current?.[indexRef.current]);
+      setIndex(-1);
+    }
+  };
+
   const AT_ALL_ITEM = {
     userId: AT_ALL,
     role: null,
@@ -102,7 +114,7 @@ const SuggestList: FC<Props> = props => {
       document.removeEventListener('keyup', keyDownHandler);
     };
   }, []);
-
+  
   return (
     <div>
       {props.visible && filteredUsers.length ? (
@@ -120,7 +132,10 @@ const SuggestList: FC<Props> = props => {
               return (
                 <div
                   key={user.userId}
+                  data-idx={i}
                   className={i === index ? `active ${prefixCls}-item` : `${prefixCls}-item`}
+                  onMouseEnter={onMouseEnter}
+                  onClick={onClick}
                 >
                   <div className="avatar">
                     <Avatar size="small">{getGroupMemberNickName(user)}</Avatar>
