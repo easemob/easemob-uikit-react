@@ -1,5 +1,7 @@
 @import '~/common/style/index.scss';
 $status-prefix-cls: #{$cui-prefix}-message-base;
+$audio-prefix-cls: #{$cui-prefix}-message-audio;
+$reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
 
 .#{$status-prefix-cls} {
     width: 100%;
@@ -12,28 +14,30 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     // margin: $msg-base-margin;
     box-sizing: border-box;
     padding: $msg-base-padding;
-    &-arrow{
-        &.#{$status-prefix-cls}-left{
-            .#{$status-prefix-cls}-content{
-                &::before{
+
+    &-arrow {
+        &.#{$status-prefix-cls}-left {
+            .#{$status-prefix-cls}-content {
+                &::before {
                     content: " ";
                 }
             }
         }
-        &.#{$status-prefix-cls}-right{
-            .#{$status-prefix-cls}-content{
-                &::after{
+
+        &.#{$status-prefix-cls}-right {
+            .#{$status-prefix-cls}-content {
+                &::after {
                     content: " ";
                 }
             }
         }
     }
 
-    &-left{
-        direction: ltr;
-        .#{$status-prefix-cls}-content{
+    &-left {
+        .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-border-radius-left;
-            &::before{
+
+            &::before {
                 border: $msg-bubble-arrow-border-size solid transparent;
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly;
                 position: absolute;
@@ -43,11 +47,14 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
             }
         }
     }
-    &-right{
-        direction: rtl;
-        .#{$status-prefix-cls}-content{
+
+    &-right {
+        flex-direction: row-reverse;
+
+        .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-border-radius-right;
-            &::after{
+
+            &::after {
                 border: $msg-bubble-arrow-border-size solid transparent;
                 border-left: $msg-bubble-arrow-border-size solid $msg-bubble-color-primary;
                 position: absolute;
@@ -56,38 +63,64 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
                 right: $msg-bubble-arrow-right;
             }
         }
+
+        .#{$status-prefix-cls}-body {
+            flex-direction: row-reverse;
+        }
+
+        .#{$status-prefix-cls}-info {
+            flex-direction: row-reverse;
+        }
+
+        .#{$audio-prefix-cls} {
+            flex-direction: row-reverse;
+        }
+
+        .#{$reply-msg-prefix-cls} {
+            align-items: flex-end;
+        }
+
+        .#{$reply-msg-prefix-cls}-box {
+            flex-direction: row-reverse;
+        }
     }
+
     &-reply {
-        &.#{$status-prefix-cls}-right{
-            .#{$status-prefix-cls}-content{
+        &.#{$status-prefix-cls}-right {
+            .#{$status-prefix-cls}-content {
                 border-radius: $msg-bubble-border-radius-right-reply;
             }
         }
-        &.#{$status-prefix-cls}-left{
-            .#{$status-prefix-cls}-content{
+
+        &.#{$status-prefix-cls}-left {
+            .#{$status-prefix-cls}-content {
                 border-radius: $msg-bubble-border-radius-left-reply;
             }
         }
     }
-    &-box{
+
+    &-box {
         max-width: 100%;
         overflow: hidden;
         width: 100%;
     }
-    &-body{
+
+    &-body {
         flex-grow: 0;
         display: flex;
         align-items: flex-end;
         gap: 8px;
         margin: 0 8px;
-        &-action{
-            &:hover{
+
+        &-action {
+            &:hover {
                 fill: $blue-5;
                 cursor: pointer;
             }
         }
     }
-    &-content{
+
+    &-content {
         // flex: 1;
         max-width: calc(100% - 100px);
         // margin: $msg-base-content-margin;
@@ -102,31 +135,37 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     }
 
     &-primary {
-        .#{$status-prefix-cls}-content{
+        .#{$status-prefix-cls}-content {
             background: $msg-bubble-color-primary;
             color: $msg-bubble-font-color-primary;
-            &::before{
+
+            &::before {
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-primary;
             }
         }
     }
+
     &-secondly {
-        .#{$status-prefix-cls}-content{
+        .#{$status-prefix-cls}-content {
             background: $msg-bubble-color-secondly;
             color: $msg-bubble-font-color-secondly;
-            &::after{
-                border-left: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly!important;
+
+            &::after {
+                border-left: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly !important;
             }
-            &::before{
-                border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly!important;
+
+            &::before {
+                border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly !important;
             }
         }
     }
+
     &-none {
-        .#{$status-prefix-cls}-content{
+        .#{$status-prefix-cls}-content {
             background: $msg-bubble-none-bg;
             color: $msg-bubble-none-color;
-            &::before{
+
+            &::before {
                 border: none;
                 content: "";
                 position: absolute;
@@ -136,16 +175,19 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
             }
         }
     }
-    &-square{
-        .#{$status-prefix-cls}-content{
+
+    &-square {
+        .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-square-border-radius;
         }
     }
-    &-info{
+
+    &-info {
         margin-left: $msg-info-margin-left;
         display: flex;
     }
-    &-nickname{
+
+    &-nickname {
         display: inline-block;
         height: $msg-nickname-height;
         font-weight: $msg-nickname-font-weight;
@@ -153,9 +195,10 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
         line-height: $msg-nickname-height;
         color: $msg-nickname-font-color;
     }
-    &-time{
+
+    &-time {
         display: inline-block;
-        width: $msg-time-width;
+        // width: $msg-time-width;
         height: $msg-time-height;
         margin: $msg-time-margin;
         font-weight: $msg-time-font-weight;
@@ -165,11 +208,11 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
     }
 }
 
-.ttt{
+.ttt {
     display: flex;
     align-items: center;
 
-    .checkbox{
+    .checkbox {
         position: relative;
         left: 8px;
     }

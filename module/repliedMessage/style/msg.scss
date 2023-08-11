@@ -18,7 +18,6 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
         color: $msg-nickname-font-color;
         display: flex;
         // color: $special-5;
-        direction: ltr;
         &>span{
             font-weight: $msg-nickname-font-weight;
             margin: 0 2px;
@@ -53,7 +52,6 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
             display: -webkit-box;
             -webkit-box-orient:vertical;;
             word-break: break-all;
-            direction: ltr;
             .cui-icon{
                 float: left;
                 margin-top: 2px;

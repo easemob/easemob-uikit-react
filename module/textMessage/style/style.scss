@@ -10,7 +10,6 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
     font-style: normal;
     text-align: left;
     word-break: break-all;
-    direction: ltr !important;
     display: inline-block;
 
 
@@ -56,7 +55,6 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
             line-height: 24px;
             text-align: left;
             word-break: break-all;
-            direction: ltr !important;
             display: inline-block;
 
             font-size: 14px;
@@ -66,7 +64,6 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
         &-action {
             display: flex;
-            direction: ltr;
             align-items: center;
 
             // gap: 4px;
@@ -136,7 +133,6 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        direction: ltr;
     }
 
     ;
@@ -151,14 +147,12 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
-        direction: ltr;
     }
 
     ;
 
     &-loading {
         color: $gray-5;
-        direction: ltr;
         font-family: 'SF Pro';
         font-style: normal;
         font-weight: 400;
@@ -171,7 +165,6 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
 .message-text-url-loading {
     color: $gray-5;
-    direction: ltr;
     font-family: 'SF Pro';
     font-style: normal;
     font-weight: 400;
@@ -179,9 +172,6 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
     line-height: 22px;
 }
 
-.modify-message-modal {
-    direction: ltr;
-}
 
 .message-text-hasImage {
     .cui-message-base-content {

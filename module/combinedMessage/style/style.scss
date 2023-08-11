@@ -2,9 +2,7 @@
 
 $combine-msg-prefix-cls: #{$cui-prefix}-message-combine;
 
-.#{$combine-msg-prefix-cls} {
-    direction: ltr;
-    
+.#{$combine-msg-prefix-cls} {    
     &-title{
         height: 24px;
         font-size: 16px;

@@ -2,7 +2,6 @@
 $audio-prefix-cls: #{$cui-prefix}-message-audio;
 
 .#{$audio-prefix-cls}{
-    display: flex;
     align-items: center;
     cursor: pointer;
     display: flex;
@@ -18,7 +17,6 @@ $audio-prefix-cls: #{$cui-prefix}-message-audio;
         }
     }
     &-duration{
-        direction: ltr;
         font-size: $font-size-lg;
         line-height: 24px;
     }

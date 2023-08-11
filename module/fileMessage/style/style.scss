@@ -2,7 +2,7 @@
 $file-prefix-cls: #{$cui-prefix}-message-file;
 .#{$file-prefix-cls}{
     height: 44px;
-    width: 268px;
+    width: 240px;
     display: flex;
     justify-content: space-between;
     &-secondly{
@@ -45,7 +45,6 @@ $file-prefix-cls: #{$cui-prefix}-message-file;
             overflow: hidden;
             text-overflow: ellipsis;
             text-align: left;
-            direction: ltr;
 
             &:hover{
                 color: $gray-9;
@@ -92,7 +91,6 @@ $file-prefix-cls: #{$cui-prefix}-message-file;
 //         overflow: hidden;
 //         text-overflow: ellipsis;
 //         text-align: left;
-//         direction: ltr;
 
 //         &:hover{
 //             color: $gray-9;
