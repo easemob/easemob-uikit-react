@@ -2,6 +2,7 @@
 $status-prefix-cls: #{$cui-prefix}-message-base;
 $audio-prefix-cls: #{$cui-prefix}-message-audio;
 $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
+$text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
 .#{$status-prefix-cls} {
     width: 100%;
@@ -46,6 +47,9 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
                 bottom: $msg-bubble-arrow-bottom;
             }
         }
+        .#{$text-msg-prefix-cls}-edit-tag {
+            color: $special-5;
+        }
     }
 
     &-right {
@@ -82,6 +86,10 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
 
         .#{$reply-msg-prefix-cls}-box {
             flex-direction: row-reverse;
+        }
+
+        .#{$text-msg-prefix-cls}-edit-tag {
+            color: $special-3;
         }
     }
 

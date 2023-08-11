@@ -425,7 +425,6 @@ const TextMessage = (props: TextMessageProps) => {
         {...others}
       >
         <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
-        {textMessage?.modifiedInfo ? <span>（edited）</span> : ''}
         {!!(urlData?.title || urlData?.description) && (
           <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
         )}
@@ -448,6 +447,7 @@ const TextMessage = (props: TextMessageProps) => {
             </div>
           )
         }
+        {textMessage?.modifiedInfo ? <div className={`${classString}-edit-tag`}>Edited</div> : ''}
       </BaseMessage>
       {/* Modify Message Modal */}
       {
