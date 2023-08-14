@@ -1,6 +1,6 @@
 import React from 'react';
 import classNames from 'classnames';
-import BaseMessage, { BaseMessageProps } from '../baseMessage';
+import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
 import Icon, { IconProps } from '../../component/icon';
 import './style/style.scss';
@@ -17,6 +17,7 @@ export interface FileMessageProps extends BaseMessageProps {
   className?: string;
   nickName?: string;
   type?: 'primary' | 'secondly';
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
 const FileMessage = (props: FileMessageProps) => {
@@ -29,6 +30,7 @@ const FileMessage = (props: FileMessageProps) => {
     type,
     className,
     nickName,
+    renderUserProfile,
     ...baseMsgProps
   } = props;
 
@@ -211,6 +213,7 @@ const FileMessage = (props: FileMessageProps) => {
       onShowReactionUserList={handleShowReactionUserList}
       onRecallMessage={handleRecallMessage}
       onSelectMessage={handleSelectMessage}
+      renderUserProfile={renderUserProfile}
       select={select}
       onMessageCheckChange={handleMsgCheckChange}
       {...baseMsgProps}

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
-import BaseMessage, { BaseMessageProps } from '../baseMessage';
+import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import type { VideoMessageType } from '../types/messageType';
@@ -16,11 +16,12 @@ export interface VideoMessageProps {
   prefix?: string;
   style?: React.CSSProperties;
   status?: 'received' | 'read' | 'sent' | 'sending';
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 const VideoMessage = (props: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [imgSrc, setImgsrc] = useState('');
-  const { videoMessage, style, status = 'default' } = props;
+  const { videoMessage, style, status = 'default', renderUserProfile } = props;
   const getFirstFrame = () => {
     const canvas = document.createElement('canvas');
     const videoEle = document.getElementById('videoEle') as HTMLVideoElement;
@@ -53,6 +54,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       time={time}
       nickName={from}
       status={status}
+      renderUserProfile={renderUserProfile}
     >
       <div>
         <video

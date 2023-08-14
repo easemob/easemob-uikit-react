@@ -1,5 +1,5 @@
 import React, { ReactNode, useState } from 'react';
-import BaseMessage, { BaseMessageProps } from '../baseMessage';
+import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { AgoraChat } from 'agora-chat';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
@@ -26,6 +26,7 @@ export interface CombinedMessageProps extends BaseMessageProps {
   bubbleClass?: string;
   // @ts-ignore
   onShowDetail?: (msg: AgoraChat.CombineMsgBody) => void;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
 const comMsg = {
@@ -55,6 +56,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     bubbleClass,
     prefix: customizePrefixCls,
     className,
+    renderUserProfile,
     ...others
   } = props;
   //   combinedMessage = comMsg;
@@ -187,6 +189,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               bubbleType="none"
               textMessage={msg}
               direction="ltr"
+              renderUserProfile={renderUserProfile}
             />
           );
           break;
@@ -198,6 +201,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               key={msg.id}
               reaction={false}
               customAction={{ visible: false }}
+              renderUserProfile={renderUserProfile}
             />
           );
           break;
@@ -210,6 +214,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               type="secondly"
               reaction={false}
               customAction={{ visible: false }}
+              renderUserProfile={renderUserProfile}
             />
           );
           break;
@@ -222,6 +227,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               type="secondly"
               reaction={false}
               customAction={{ visible: false }}
+              renderUserProfile={renderUserProfile}
             />
           );
           break;
@@ -234,6 +240,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               type="secondly"
               reaction={false}
               customAction={{ visible: false }}
+              renderUserProfile={renderUserProfile}
             />
           );
           break;

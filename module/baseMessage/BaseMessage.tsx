@@ -38,6 +38,10 @@ type BaseMessageType = Exclude<
   AgoraChat.DeliveryMsgBody | AgoraChat.ReadMsgBody | AgoraChat.ChannelMsgBody
 >;
 
+export interface renderUserProfileProps {
+  userId: string;
+}
+
 export interface BaseMessageProps {
   id?: string;
   reactionData?: ReactionData[];
@@ -70,6 +74,7 @@ export interface BaseMessageProps {
   onModifyMessage?: () => void;
   onSelectMessage?: () => void; // message select action handler
   onMessageCheckChange?: (checked: boolean) => void;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
 const getMsgSenderNickname = (msg: BaseMessageType) => {
@@ -120,6 +125,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onModifyMessage,
     onSelectMessage,
     onMessageCheckChange,
+    renderUserProfile,
     select,
   } = props;
 
@@ -248,18 +254,22 @@ let BaseMessage = (props: BaseMessageProps) => {
               </li>
             );
           } else if (item.content === 'UNSEND') {
-            return isCurrentUser&& (
-              <li key={index} onClick={recallMessage}>
-                <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.unsend')}
-              </li>
+            return (
+              isCurrentUser && (
+                <li key={index} onClick={recallMessage}>
+                  <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
+                  {t('module.unsend')}
+                </li>
+              )
             );
           } else if (item.content === 'TRANSLATE') {
             return (
-              <li key={index} onClick={translateMessage}>
-                <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.translate')}
-              </li>
+              message?.type === 'txt' && (
+                <li key={index} onClick={translateMessage}>
+                  <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
+                  {t('module.translate')}
+                </li>
+              )
             );
           } else if (item.content === 'Modify') {
             return (
@@ -335,7 +345,11 @@ let BaseMessage = (props: BaseMessageProps) => {
           }}
         >
           <Tooltip
-            title={<UserProfile uid={message?.from || ''} />}
+            title={
+              renderUserProfile?.({ userId: message?.from || '' }) || (
+                <UserProfile uid={message?.from || ''} />
+              )
+            }
             trigger="click"
             placement="topLeft"
           >

@@ -6,7 +6,7 @@ import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import { emoji } from '../messageEditor/emoji/emojiConfig';
 import { getConversationTime } from '../utils';
-import BaseMessage, { BaseMessageProps } from '../baseMessage';
+import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import rootStore from '../store/index';
 import type { TextMessageType } from '../types/messageType';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
@@ -33,6 +33,7 @@ export interface TextMessageProps extends BaseMessageProps {
   bubbleClass?: string;
   children?: string;
   style?: React.CSSProperties;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
 export const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
@@ -133,6 +134,7 @@ const TextMessage = (props: TextMessageProps) => {
     nickName,
     type,
     bubbleClass,
+    renderUserProfile,
     ...others
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -422,6 +424,7 @@ const TextMessage = (props: TextMessageProps) => {
         onSelectMessage={handleSelectMessage}
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
+        renderUserProfile={renderUserProfile}
         {...others}
       >
         <span className={classString}>{renderTxt(msg, detectedUrl)}</span>

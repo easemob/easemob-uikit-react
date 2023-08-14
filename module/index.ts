@@ -17,7 +17,7 @@ import rootStore from './store/index';
 import { RootContext, RootProvider, RootConsumer } from './store/rootContext';
 import Provider from './store/Provider';
 import { useClient } from './hooks/useClient';
-import { useConversation } from './hooks/useConversation';
+import { useConversations } from './hooks/useConversation';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
 
 export {
@@ -42,6 +42,6 @@ export {
   RootConsumer,
   Provider,
   useClient,
-  useConversation,
+  useConversations,
   useHistoryMessages,
 };

@@ -1,6 +1,6 @@
 import React, { useRef, useState, memo, useEffect } from 'react';
 import classNames from 'classnames';
-import BaseMessage, { BaseMessageProps } from '../baseMessage';
+import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import type { ImageMessageType } from '../types/messageType';
@@ -15,10 +15,11 @@ export interface ImageMessageProps extends BaseMessageProps {
   prefix?: string;
   style?: React.CSSProperties;
   onClickImage?: (url: string) => void;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
 let ImageMessage = (props: ImageMessageProps) => {
-  const { imageMessage: message, shape, style, onClickImage, ...others } = props;
+  const { imageMessage: message, shape, style, onClickImage, renderUserProfile, ...others } = props;
 
   let { bySelf, from, reactions } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
@@ -231,6 +232,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         onSelectMessage={handleSelectMessage}
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
+        renderUserProfile={renderUserProfile}
         {...others}
       >
         <div className="message-image-content">{img.current}</div>

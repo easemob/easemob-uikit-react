@@ -28,11 +28,13 @@ import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import type { RecallMessage } from '../store/MessageStore';
 import { RecalledMessage } from '../recalledMessage';
 import CombinedMessage from '../combinedMessage';
+import { renderUserProfileProps } from '../baseMessage';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
   renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
 const MessageScrollList = ScrollList<AgoraChat.MessageBody | RecallMessage>();
@@ -41,7 +43,7 @@ let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
   const { messageStore } = rootStore;
 
-  const { prefix: customizePrefixCls, className, renderMessage } = props;
+  const { prefix: customizePrefixCls, className, renderMessage, renderUserProfile } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
   const classString = classNames(prefixCls, className);
@@ -77,6 +79,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           audioMessage={messageData[data.index] as AgoraChat.AudioMsgBody}
           style={data.style}
+          renderUserProfile={renderUserProfile}
         ></AudioMessage>
       );
     } else if (messageData[data.index].type == 'img') {
@@ -92,6 +95,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           imageMessage={messageData[data.index]}
           style={data.style}
+          renderUserProfile={renderUserProfile}
         ></ImageMessage>
       );
     } else if (messageData[data.index].type == 'file') {
@@ -101,6 +105,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           fileMessage={messageData[data.index]}
           style={data.style}
+          renderUserProfile={renderUserProfile}
         ></FileMessage>
       );
     } else if (messageData[data.index].type == 'recall') {
@@ -125,6 +130,7 @@ let MessageList: FC<MsgListProps> = props => {
           status={messageData[data.index].status}
           //@ts-ignore
           textMessage={messageData[data.index]}
+          renderUserProfile={renderUserProfile}
         >
           {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
         </TextMessage>
@@ -138,6 +144,7 @@ let MessageList: FC<MsgListProps> = props => {
           status={messageData[data.index].status}
           //@ts-ignore
           combinedMessage={messageData[data.index]}
+          renderUserProfile={renderUserProfile}
         ></CombinedMessage>
       );
     }

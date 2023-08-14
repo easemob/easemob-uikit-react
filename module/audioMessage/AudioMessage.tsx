@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import classNames from 'classnames';
-import BaseMessage, { BaseMessageProps } from '../baseMessage';
+import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import type { AudioMessageType } from '../types/messageType';
@@ -15,6 +15,7 @@ export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> 
   style?: React.CSSProperties;
   className?: string;
   type?: 'primary' | 'secondly';
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
 const AudioMessage = (props: AudioMessageProps) => {
@@ -26,6 +27,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     prefix: customizePrefixCls,
     className,
     type,
+    renderUserProfile,
     ...others
   } = props;
 
@@ -234,6 +236,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       onSelectMessage={handleSelectMessage}
       select={select}
       onMessageCheckChange={handleMsgCheckChange}
+      renderUserProfile={renderUserProfile}
       {...others}
     >
       <div className={classString} onClick={playAudio} style={{ ...style }}>
