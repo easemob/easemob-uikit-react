@@ -15,7 +15,7 @@ import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import List from '../../component/list';
 import ScrollList from '../../component/scrollList';
-import { useGroupMembers } from '../hooks/useAddress';
+import { useGroupMembers, useGroupAdmins } from '../hooks/useAddress';
 import TextMessage from '../textMessage';
 import AudioMessage from '../audioMessage';
 import FileMessage from '../fileMessage';
@@ -163,6 +163,8 @@ let MessageList: FC<MsgListProps> = props => {
     (listRef?.current as any)?.scrollTo('bottom');
     if (currentCVS && currentCVS.chatType === 'groupChat') {
       const { getGroupMemberList } = useGroupMembers(currentCVS.conversationId);
+      const { getGroupAdmins } = useGroupAdmins(currentCVS.conversationId);
+      getGroupAdmins();
       getGroupMemberList();
     }
   }, [currentCVS]);

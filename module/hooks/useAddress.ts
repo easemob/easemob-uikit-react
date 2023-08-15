@@ -41,7 +41,6 @@ const useUserInfo = () => {
   }, [rootStore.conversationStore.conversationList.length]);
 };
 
-
 const useGroups = () => {
   const pageSize = 0;
   let pageNum = 200;
@@ -137,10 +136,34 @@ const useGroupMembersAttributes = (
   };
 };
 
+const useGroupAdmins = (groupId: string) => {
+  const { client, addressStore } = getStore();
+  const getGroupAdmins = () => {
+    client
+      .getGroupAdmin({
+        groupId,
+      })
+      .then(res => {
+        addressStore.setGroupAdmins(groupId, res.data || []);
+        addressStore.setGroupMembers(
+          groupId,
+          (res.data || []).map(item => {
+            return {
+              member: item,
+            };
+          }),
+        );
+      });
+  };
+
+  return { getGroupAdmins };
+};
+
 export {
   useContacts,
   useGroups,
   useUserInfo,
   useGroupMembers,
+  useGroupAdmins,
   useGroupMembersAttributes,
 };

@@ -3,7 +3,7 @@ import { getStore } from './index';
 import { AgoraChat } from 'agora-chat';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
 
-export type MemberRole = 'member' | 'owner';
+export type MemberRole = 'member' | 'owner' | 'admin';
 
 export interface MemberItem {
   userId: AgoraChat.UserId;
@@ -17,6 +17,7 @@ export interface GroupItem extends AgoraChat.BaseGroupInfo {
   info?: AgoraChat.GroupDetailInfo;
   members?: MemberItem[];
   hasMembersNext?: boolean;
+  admins?: AgoraChat.UserId[];
 }
 
 export type AppUserInfo = Partial<Record<AgoraChat.ConfigurableKey, any>> & {
@@ -88,7 +89,13 @@ class AddressStore {
             //@ts-ignore
             userId: member.owner || member.member,
             //@ts-ignore
-            role: member?.owner ? 'owner' : 'member',
+
+            role: this.groups[idx].admins?.includes(member.owner || member.member)
+              ? 'admin'
+              : //@ts-ignore
+              member?.owner
+              ? 'owner'
+              : 'member',
           };
         });
       this.groups[idx].members = [...(this.groups[idx].members || []), ...filteredMembers];
@@ -113,6 +120,15 @@ class AddressStore {
     if (idx > -1) {
       let memberList = this.groups[groupIdx].members || [];
       memberList[idx].attributes = attributes;
+    }
+  }
+
+  setGroupAdmins(groupId: string, admins: string[]) {
+    let idx = getGroupItemIndexFromGroupsById(groupId);
+    if (idx > -1) {
+      let currentAdmins = this.groups[idx].admins || [];
+      let filteredAdmins = admins.filter(userId => !currentAdmins.includes(userId));
+      this.groups[idx].admins = [...currentAdmins, ...filteredAdmins];
     }
   }
 
