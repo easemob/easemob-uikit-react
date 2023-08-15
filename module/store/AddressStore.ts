@@ -2,7 +2,7 @@ import { observable, action, makeObservable } from 'mobx';
 import { getStore } from './index';
 import { AgoraChat } from 'agora-chat';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
-
+import { getUsersInfo } from '../utils';
 export type MemberRole = 'member' | 'owner' | 'admin';
 
 export interface MemberItem {
@@ -23,6 +23,7 @@ export interface GroupItem extends AgoraChat.BaseGroupInfo {
 export type AppUserInfo = Partial<Record<AgoraChat.ConfigurableKey, any>> & {
   uid: string;
   isOnline?: boolean;
+  presenceExt?: string;
 };
 class AddressStore {
   appUsersInfo: Record<string, AppUserInfo>;
@@ -131,6 +132,16 @@ class AddressStore {
       this.groups[idx].admins = [...currentAdmins, ...filteredAdmins];
     }
   }
+
+  getUserInfo = (userId: string) => {
+    let userInfo = this.appUsersInfo?.[userId];
+    if (!userInfo) {
+      getUsersInfo([userId]).then(() => {
+        userInfo = this.appUsersInfo?.[userId];
+      });
+    }
+    return userInfo;
+  };
 
   setChatroom(chatroom: any) {
     this.chatroom = chatroom;

@@ -138,11 +138,14 @@ let BaseMessage = (props: BaseMessageProps) => {
   const isCurrentUser = message?.from === getStore().client.user || message?.from === '';
 
   const msgSenderNickname = nickName || (message && getMsgSenderNickname(message));
+  const userId = message?.from || '';
   if (avatar) {
     avatarToShow = avatar;
   } else {
     avatarToShow = (
-      <Avatar src={appUsersInfo?.[message?.from || '']?.avatarurl}>{msgSenderNickname}</Avatar>
+      <Avatar src={appUsersInfo?.[userId]?.avatarurl}>
+        {appUsersInfo?.[userId]?.nickname || userId}
+      </Avatar>
     );
   }
   const showRepliedMsg =

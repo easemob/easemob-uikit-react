@@ -116,6 +116,7 @@ const useEventHandler = () => {
                 }
               });
               appUserInfo[presenceInfo.userId].isOnline = isOnline;
+              appUserInfo[presenceInfo.userId].presenceExt = presenceInfo.ext;
               addressStore.setAppUserInfo({ ...appUserInfo });
             }
           });

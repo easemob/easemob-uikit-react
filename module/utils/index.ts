@@ -142,6 +142,7 @@ export function getUsersInfo(userIdList: string[]) {
             .then(res => {
               res?.data?.result.forEach(item => {
                 if (reUserInfo[item.uid]) {
+                  reUserInfo[item.uid].presenceExt = item.ext;
                   if (
                     Object.prototype.toString.call(item.status) === '[object Object]' &&
                     Object.values(item.status).indexOf('1') > -1

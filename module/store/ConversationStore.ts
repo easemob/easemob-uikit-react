@@ -61,7 +61,7 @@ class ConversationStore {
     });
   }
 
-  setCurrentCvs(currentCvs: CurrentConversation) {
+  setCurrentCvs = (currentCvs: CurrentConversation) => {
     this.currentCvs = currentCvs;
     this.rootStore.messageStore.setCurrentCVS(currentCvs);
     console.log('设置当前会话', this.conversationList, currentCvs);
@@ -77,7 +77,7 @@ class ConversationStore {
       }
       this.conversationList = [...this.conversationList];
     });
-  }
+  };
 
   setConversation(conversations: Conversation[]) {
     if (!Array.isArray(conversations)) {
