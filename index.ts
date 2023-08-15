@@ -19,7 +19,7 @@ import {
   RootConsumer,
   Provider,
   useClient,
-  useConversation,
+  useConversations,
   useHistoryMessages,
 } from './module/index';
 
@@ -60,7 +60,7 @@ export {
   RootConsumer,
   Provider,
   useClient,
-  useConversation,
+  useConversations,
   useHistoryMessages,
   Avatar,
   Button,

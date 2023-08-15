@@ -51,5 +51,5 @@ export function getStore() {
   return store;
 }
 
-const store2 = getStore();
-export default store2;
+const rootStore = getStore();
+export default rootStore;
