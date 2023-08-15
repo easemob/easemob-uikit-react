@@ -121,7 +121,7 @@ export function getUsersInfo(userIdList: string[]) {
     const reUserInfo: Record<string, AppUserInfo> = {};
     userIdList.forEach(item => {
       reUserInfo[item] = {
-        uid: item,
+        userId: item,
         isOnline: false,
       };
     });

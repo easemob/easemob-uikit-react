@@ -86,9 +86,11 @@ const getMsgSenderNickname = (msg: BaseMessageType) => {
     if (memberIndex > -1) {
       let memberItem = group?.members?.[memberIndex];
       if (memberItem) {
-        return getGroupMemberNickName(memberItem);
+        return getGroupMemberNickName(memberItem) || appUsersInfo?.[from]?.nickname || from;
       }
+      return appUsersInfo?.[from]?.nickname || from;
     }
+    return appUsersInfo?.[from]?.nickname || from;
   } else {
     return appUsersInfo?.[from]?.nickname || from;
   }

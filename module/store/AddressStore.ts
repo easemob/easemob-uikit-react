@@ -21,7 +21,7 @@ export interface GroupItem extends AgoraChat.BaseGroupInfo {
 }
 
 export type AppUserInfo = Partial<Record<AgoraChat.ConfigurableKey, any>> & {
-  uid: string;
+  userId: string;
   isOnline?: boolean;
   presenceExt?: string;
 };
