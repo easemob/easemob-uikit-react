@@ -9,6 +9,9 @@ import MoreAction from './moreAction';
 import rootStore from '../store/index';
 import SelectedControls from './selectedControls';
 import { observer } from 'mobx-react-lite';
+import { ConfigContext } from '../../component/config/index';
+import { AgoraChat } from 'agora-chat';
+import { CurrentConversation } from '../store/ConversationStore';
 export type Actions = {
   name: string;
   visible: boolean;
@@ -16,6 +19,7 @@ export type Actions = {
 }[];
 
 export interface MessageEditorProps {
+  prefix?: string;
   actions?: Actions;
   onSend?: (message: any) => void; // 消息发送的回调
   className?: string; // wrap 的 class
@@ -23,6 +27,12 @@ export interface MessageEditorProps {
   sendButtonIcon?: ReactNode; // 发送按钮的 icon
   row?: number; //input 行数
   placeHolder?: string; // input placeHolder
+  disabled?: boolean; // 是否禁用
+  isChatThread?: boolean; // 是否是子区聊天
+  onSendMessage?: (message: AgoraChat.MessageBody) => void;
+  conversation?: CurrentConversation;
+  // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
+  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
 }
 
 function converToMessage(e: string) {
@@ -75,7 +85,7 @@ const defaultActions: Actions = [
 
 const MessageEditor = (props: MessageEditorProps) => {
   const [isShowTextarea, setTextareaShow] = useState(true);
-  const [isShowRecorder, setShowRecorder] = useState(false);
+  const [isShowRecorder, setShowRecorder] = useState(true);
   const [isShowSelect, setIsShowSelect] = useState(false);
   const [editorNode, setEditorNode] = useState<null | React.ReactFragment>(null);
   const textareaRef = useRef(null);
@@ -143,7 +153,17 @@ const MessageEditor = (props: MessageEditorProps) => {
     // setInputHaveValue(false);
   };
 
-  const { actions = defaultActions, placeHolder } = props;
+  const {
+    actions = defaultActions,
+    placeHolder,
+    disabled,
+    className,
+    prefix,
+    isChatThread,
+    onSendMessage,
+    conversation,
+    onBeforeSendMessage,
+  } = props;
 
   useEffect(() => {
     let node = actions.map((item, index) => {
@@ -154,10 +174,14 @@ const MessageEditor = (props: MessageEditorProps) => {
       if (item.name === 'TEXTAREA' && item.visible) {
         return (
           <Textarea
+            isChatThread={isChatThread}
             key={item.name}
             ref={textareaRef}
             hasSendButton
             placeholder={placeHolder}
+            onSendMessage={onSendMessage}
+            conversation={conversation}
+            onBeforeSendMessage={onBeforeSendMessage}
           ></Textarea>
         );
       } else if (item.name === 'EMOJI' && item.visible) {
@@ -180,7 +204,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     });
     setEditorNode(node);
   }, []);
-  const currentCvs = rootStore.conversationStore.currentCvs;
+  const currentCvs = conversation ? conversation : rootStore.conversationStore.currentCvs || {};
   useEffect(() => {
     if (!textareaRef.current) return;
     // @ts-ignore
@@ -191,7 +215,7 @@ const MessageEditor = (props: MessageEditorProps) => {
 
   useEffect(() => {
     if (
-      rootStore.messageStore.selectedMessage[currentCvs.chatType][currentCvs.conversationId]
+      rootStore.messageStore.selectedMessage[currentCvs.chatType]?.[currentCvs.conversationId]
         ?.selectable
     ) {
       setIsShowSelect(true);
@@ -200,17 +224,30 @@ const MessageEditor = (props: MessageEditorProps) => {
     } else {
       setIsShowSelect(false);
       setTextareaShow(true);
-      setShowRecorder(false);
+      setShowRecorder(true);
     }
   }, [
-    rootStore.messageStore.selectedMessage[currentCvs.chatType][currentCvs.conversationId]
+    rootStore.messageStore.selectedMessage[currentCvs.chatType]?.[currentCvs.conversationId]
       ?.selectable,
   ]);
+  const { getPrefixCls } = React.useContext(ConfigContext);
+  const prefixCls = getPrefixCls('message-editor', prefix);
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-disabled`]: disabled,
+    },
+    className,
+  );
 
+  const handleSendCombineMessage = (message: any) => {
+    onSendMessage && onSendMessage(message);
+  };
   return (
-    <div className="editor-container">
+    <div className={classString}>
       {isShowRecorder && (
         <Recorder
+          conversation={conversation}
           onShow={() => setTextareaShow(false)}
           onHide={() => setTextareaShow(true)}
           onSend={() => setTextareaShow(true)}
@@ -220,6 +257,8 @@ const MessageEditor = (props: MessageEditorProps) => {
       {isShowTextarea && <>{editorNode}</>}
       {isShowSelect && (
         <SelectedControls
+          onSendMessage={handleSendCombineMessage}
+          conversation={conversation}
           onHide={() => {
             setTextareaShow(true);
             setIsShowSelect(false);

@@ -6,7 +6,7 @@ import { getStore } from '../store';
 import { getCvsIdFromMessage } from '../utils';
 const useEventHandler = () => {
   const rootStore = useContext(RootContext);
-  const { messageStore } = rootStore.rootStore;
+  const { messageStore, threadStore } = rootStore.rootStore;
   const client = useClient();
   useEffect(() => {
     console.log('注册监听', client);
@@ -121,9 +121,15 @@ const useEventHandler = () => {
             }
           });
       },
-      onCombineMessage: message => {
+      // @ts-ignore
+      onCombineMessage: (message: AgoraChat.MessageBody) => {
         console.log('onCombineMessage', message);
         messageStore.receiveMessage(message);
+      },
+
+      onChatThreadChange: (message: AgoraChat.ThreadChangeInfo) => {
+        console.log('onChatThreadChange', message);
+        threadStore.updateThreadInfo(message);
       },
     });
 

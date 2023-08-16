@@ -130,7 +130,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
     &-content {
         // flex: 1;
-        max-width: calc(100% - 100px);
+        max-width: calc(100% - 120px);
         // margin: $msg-base-content-margin;
         padding: $msg-base-content-padding;
         gap: 10px;
@@ -213,6 +213,115 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         font-size: $msg-time-font-size;
         line-height: $msg-time-height;
         color: $msg-time-font-color;
+    }
+
+    &-thread{
+        display: flex;
+        direction: ltr;
+        flex-direction: column;
+        gap: 4px;
+        &>div{
+            display: flex;
+            align-items: center;
+            max-width: 100%;
+            overflow: hidden;
+            &>div{
+                display: flex;
+                align-items: center;
+                color: $gray-98;
+            }
+        }
+        &-line{
+            border-top: 1px solid $blue-8;
+            width: 100%;
+            margin-bottom: 4px;
+        }
+        &-name{
+            justify-content: space-between;
+            // 只有一行， 超出显示省略号
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            &>div{
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                overflow: hidden;
+            }
+
+            // 第一个div里面的span字号是14px
+            &>div>span{
+                font-size: 14px;
+                line-height: 20px;
+                font-weight: 500;
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+            }
+            // 当前元素下第二个div（child(2)）里面的span字号是12px
+           
+            &>div:nth-child(2)>span{
+                font-size: 12px;
+                line-height: 16px;
+            }
+
+            // 这个元素固定在最右面
+            &>div:nth-child(2){
+                flex: none;
+
+            }
+
+            &-icon{
+                fill: $gray-98;
+            }
+        }
+        &-message{
+            gap: 4px;
+            margin-bottom: 4px;
+            &>span{
+                font-size: 12px;
+                line-height: 16px;
+                color: $blue-9; 
+            }
+            &>span:nth-child(1){
+                font-weight: 500;
+            }
+            &>span:nth-child(3){
+                // flex: none;
+                    /* flex: 1; */
+                overflow: hidden;
+                /* flex-wrap: nowrap; */
+                /* display: flex; */
+                height: 16px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+        }
+        
+    }
+
+    &-secondly{
+        .#{$status-prefix-cls}-thread{
+            &>div{
+                &>div{
+                    color: $special-5;
+                }
+            }
+            &-line{
+                border-top: 1px solid $special-8;
+            }
+            &-name{
+                &-icon{
+                    fill: $special-5;
+                }
+            }
+            &-message{
+                &>span{
+                    color: $gray-5; 
+                }
+            }
+        }
     }
 }
 

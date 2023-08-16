@@ -9,12 +9,14 @@ import { ConfigContext } from '../../../component/config/index';
 import HZRecorder from './recorderFun';
 import { RootContext } from '../../store/rootContext';
 import { useTranslation } from 'react-i18next';
+import { CurrentConversation } from '../../store/ConversationStore';
 export interface RecorderProps {
   prefix?: string;
   cancelBtnShape?: 'circle' | 'square';
   onShow?: () => void;
   onHide?: () => void;
   onSend?: (message: AgoraChat.MessageBody) => void;
+  conversation?: CurrentConversation;
 }
 
 let MediaStream: any;
@@ -24,7 +26,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const rootStore = useContext(RootContext).rootStore;
   const { t } = useTranslation();
   const { messageStore, client } = rootStore;
-  const { prefix: customizePrefixCls, onShow, onHide, onSend } = props;
+  const { prefix: customizePrefixCls, onShow, onHide, onSend, conversation } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('recorder', customizePrefixCls);
   const classString = classNames(prefixCls);
@@ -81,7 +83,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       clearInterval(timer);
     }
   };
-  const { currentCVS } = messageStore;
+  const currentCVS = conversation ? conversation : messageStore.currentCVS;
   const sendAudio = () => {
     if (!currentCVS.conversationId) {
       console.warn('No specified conversation');

@@ -38,6 +38,11 @@
         "chatHistory": "聊天记录",
         "batchDeletion": "批量删除",
         "messages": "条消息？",
-        "cancel": "取消"
+        "cancel": "取消",
+        "startedBy": "发起人",
+        "createThread": "创建子区",
+        "threadNameRequired": "子区名称（必填）",
+        "enterThreadName": "请输入子区名称",
+        "aThread": "一个子区"
     }
 }

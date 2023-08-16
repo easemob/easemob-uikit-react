@@ -34,6 +34,7 @@ export interface TextMessageProps extends BaseMessageProps {
   children?: string;
   style?: React.CSSProperties;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  onCreateThread?: () => void;
 }
 
 export const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
@@ -135,6 +136,7 @@ const TextMessage = (props: TextMessageProps) => {
     type,
     bubbleClass,
     renderUserProfile,
+    thread,
     ...others
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -400,6 +402,36 @@ const TextMessage = (props: TextMessageProps) => {
     }
   }, [modifyMessageVisible]);
 
+  // open thread panel
+  const handleCreateThread = () => {
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: true,
+      originalMessage: textMessage,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+  };
+
+  // @ts-ignore
+  let _thread =
+    // @ts-ignore
+    textMessage.chatType == 'groupChat' &&
+    thread &&
+    !textMessage.chatThread &&
+    !textMessage.isChatThread;
+  const handleClickThreadTitle = () => {
+    rootStore.threadStore.joinChatThread(textMessage.chatThreadOverview?.id || '');
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: false,
+      originalMessage: textMessage,
+      info: textMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+
+    rootStore.threadStore.getChatThreadDetail(textMessage?.chatThreadOverview?.id || '');
+  };
+
   return (
     <>
       <BaseMessage
@@ -425,6 +457,10 @@ const TextMessage = (props: TextMessageProps) => {
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
         renderUserProfile={renderUserProfile}
+        onCreateThread={handleCreateThread}
+        thread={_thread}
+        chatThreadOverview={textMessage.chatThreadOverview}
+        onClickThreadTitle={handleClickThreadTitle}
         {...others}
       >
         <span className={classString}>{renderTxt(msg, detectedUrl)}</span>

@@ -7,19 +7,22 @@ import { RootContext } from '../../store/rootContext';
 import AgoraChat from 'agora-chat';
 import { useTranslation } from 'react-i18next';
 import Modal from '../../../component/modal';
+import { CurrentConversation } from '../../store/ConversationStore';
 export interface SelectedControlsProps {
   prefix?: string;
   onHide?: () => void;
+  conversation?: CurrentConversation;
+  onSendMessage?: (message: AgoraChat.TextMessage) => void;
 }
 
 const SelectedControls = (props: SelectedControlsProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { t } = useTranslation();
-  const { prefix: customizePrefixCls, onHide } = props;
+  const { prefix: customizePrefixCls, onHide, conversation, onSendMessage } = props;
   const prefixCls = getPrefixCls('selected-controls', customizePrefixCls);
   const rootStore = useContext(RootContext).rootStore;
   const classString = classNames(prefixCls);
-  const { currentCVS } = rootStore.messageStore;
+  const currentCVS = conversation ? conversation : rootStore.messageStore.currentCVS;
   const selectedMessages =
     rootStore.messageStore.selectedMessage[currentCVS.chatType][currentCVS.conversationId]
       ?.selectedMessage || [];
@@ -36,8 +39,11 @@ const SelectedControls = (props: SelectedControlsProps) => {
     let selectedMessages =
       rootStore.messageStore.selectedMessage[currentCVS.chatType][currentCVS.conversationId]
         .selectedMessage;
-
+    if (selectedMessages.length == 0) {
+      return;
+    }
     selectedMessages = selectedMessages.sort((a, b) => {
+      // @ts-ignore
       return a.time - b.time;
     });
     const summaryMsgs = selectedMessages.slice(0, 3);
@@ -88,6 +94,8 @@ const SelectedControls = (props: SelectedControlsProps) => {
     console.log(option);
     // @ts-ignore
     let msg = AgoraChat.message.create(option);
+    onSendMessage?.(msg);
+    return;
     rootStore.client
       .send(msg)
       .then((res: any) => {
@@ -103,7 +111,11 @@ const SelectedControls = (props: SelectedControlsProps) => {
   });
 
   const deleteSelectedMsg = () => {
+    if (selectedMessages.length == 0) {
+      return;
+    }
     // TODO: limit msgIds length
+    // @ts-ignore
     const msgIds = selectedMessages.map(msg => msg.mid || msg.id);
 
     rootStore.messageStore.deleteMessage(currentCVS, msgIds);
@@ -126,7 +138,9 @@ const SelectedControls = (props: SelectedControlsProps) => {
               className={iconClass}
               style={{ cursor: selectedMessages.length > 0 ? 'pointer' : 'not-allowed' }}
               onClick={() => {
-                setModalOpen(true);
+                if (selectedMessages.length > 0) {
+                  setModalOpen(true);
+                }
               }}
             >
               <Icon type="DELETE" width={24} height={24}></Icon>

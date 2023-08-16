@@ -44,6 +44,7 @@ import { ReactComponent as Time } from '../svgs/icons/3pm.svg';
 import { ReactComponent as Select } from '../svgs/icons/checked_ellipse.svg';
 import { ReactComponent as GoToChat } from '../svgs/icons/gotoMessage.svg';
 import { ReactComponent as AddFriend } from '../svgs/icons/person_add_fill.svg';
+import { ReactComponent as Thread } from '../svgs/icons/hashtag_in_bubble.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -173,6 +174,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ADD_FRIEND':
       return <AddFriend></AddFriend>;
+      break;
+    case 'THREAD':
+      return <Thread></Thread>;
       break;
     default:
       return '';

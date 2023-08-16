@@ -95,7 +95,8 @@ const Chat: FC<ChatProps> = props => {
   }, [rootStore.conversationStore.currentCvs]);
 
   const repliedMsg = rootStore.messageStore.repliedMessage;
-
+  const replyCvsId = repliedMsg?.to;
+  const showReply = repliedMsg && replyCvsId === CVS.conversationId;
   return (
     <div className={classString}>
       {isEmpty ? (
@@ -166,7 +167,7 @@ const Chat: FC<ChatProps> = props => {
               rootStore.messageStore.setTyping(rootStore.conversationStore.currentCvs, false);
             }}
           ></Typing>
-          {repliedMsg && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
+          {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
 
           {renderMessageEditor ? (
             renderMessageEditor()

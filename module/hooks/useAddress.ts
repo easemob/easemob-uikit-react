@@ -73,6 +73,7 @@ const useGroups = () => {
 };
 
 const useGroupMembers = (groupId: string) => {
+  if (!groupId) return {};
   const pageSize = 20;
   let pageNum = 1;
   const { client, addressStore } = getStore();

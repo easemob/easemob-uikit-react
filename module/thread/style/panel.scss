@@ -1,0 +1,13 @@
+$thread-prefix-cls: #{$cui-prefix}-thread-panel;
+.#{$thread-prefix-cls}{
+    top: 10px;
+    right: 20px;
+    width: 540px;
+    z-index: 1060;
+    position: fixed;
+    background: $white;
+    box-shadow: 0px 24px 36px 0px rgba(70, 78, 83, 0.15), 8px 0px 24px 0px rgba(23, 26, 28, 0.08);
+    max-height: 770px;
+    min-height: 416px;
+    border-radius: 16px;
+}

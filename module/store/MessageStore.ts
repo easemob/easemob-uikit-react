@@ -208,7 +208,10 @@ class MessageStore {
           message.chatType,
           to,
         ) as unknown as Conversation;
-        // 没有会话时创建会话
+        // 没有会话时创建会话, thread 不创建会话
+        if (message.isChatThread) {
+          return;
+        }
         if (!cvs) {
           cvs = {
             // @ts-ignore
@@ -247,6 +250,10 @@ class MessageStore {
     } else {
       // @ts-ignore
       this.message[message.chatType][conversationId].push(message);
+    }
+
+    if (message.isChatThread) {
+      return;
     }
 
     const isCurrentCvs =

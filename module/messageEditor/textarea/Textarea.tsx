@@ -18,7 +18,8 @@ import SuggestList from '../suggestList';
 import { AT_ALL } from '../suggestList/SuggestList';
 import { getRangeRect, showAt, getAtUser, replaceAtUser } from '../suggestList/utils';
 import './style/style.scss';
-import { MemberItem } from 'module/store/AddressStore';
+import { MemberItem } from '../../store/AddressStore';
+import { CurrentConversation } from '../../store/ConversationStore';
 
 export interface TextareaProps {
   prefix?: string;
@@ -28,6 +29,10 @@ export interface TextareaProps {
   sendButtonActiveColor?: string;
   enableEnterSend?: boolean;
   enabledMenton?: boolean;
+  isChatThread?: boolean;
+  onSendMessage?: (message: AgoraChat.TextMessage) => void;
+  conversation?: CurrentConversation;
+  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
 }
 
 export interface ForwardRefProps {
@@ -42,13 +47,17 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     sendButtonActiveColor = '#009EFF',
     enableEnterSend = true,
     enabledMenton = true,
+    isChatThread = false,
+    onSendMessage,
+    conversation,
+    onBeforeSendMessage,
   } = props;
   const [textValue, setTextValue] = useState('');
   const { prefix: customizePrefixCls, className } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('textarea', customizePrefixCls);
   const { client, messageStore, conversationStore } = useContext(RootContext).rootStore;
-  const { currentCVS } = messageStore;
+  let { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);
   const [queryString, setQueryString] = useState('');
   const [showAtDialog, setShowDialog] = useState(false);
@@ -56,6 +65,16 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     x: 0,
     y: 0,
   });
+  // if (conversation && conversation.conversationId) {
+  //   currentCVS = conversation;
+  // }
+  console.log('conversation -------1', conversation);
+  useEffect(() => {
+    console.log('conversation -------2', conversation);
+    if (conversation) {
+      currentCVS = conversation;
+    }
+  }, [conversation?.conversationId]);
 
   const canAtUser = enabledMenton && currentCVS.chatType === 'groupChat';
 
@@ -119,6 +138,15 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     }
   };
 
+  const _sendMessage = (message: AgoraChat.MessageBody) => {
+    messageStore.sendMessage(message).then(() => {
+      onSendMessage && onSendMessage(message);
+    });
+    divRef.current!.innerHTML = '';
+
+    setTextValue('');
+  };
+
   const sendMessage = () => {
     if (!textValue) {
       console.warn('No text message');
@@ -136,19 +164,30 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       }
     });
     if (atUserIds.includes(AT_ALL)) isAtAll = true;
+
     const message = AC.message.create({
       to: currentCVS.conversationId,
       chatType: currentCVS.chatType,
       type: 'txt',
       msg: textValue,
+      isChatThread,
       ext: {
         em_at_list: isAtAll ? AT_ALL : atUserIds,
       },
     });
-    messageStore.sendMessage(message);
-    divRef.current!.innerHTML = '';
+    if (onBeforeSendMessage) {
+      onBeforeSendMessage(message).then(cvs => {
+        if (cvs) {
+          message.to = cvs.conversationId;
+          message.chatType = cvs.chatType;
+        }
 
-    setTextValue('');
+        console.log('发送的消息', message);
+        _sendMessage(message);
+      });
+    } else {
+      _sendMessage(message);
+    }
   };
 
   // Send Button
