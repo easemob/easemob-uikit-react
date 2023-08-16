@@ -21,15 +21,24 @@ const useConversations = () => {
           conversationStore.setHasConversationNext(true);
           pageNum++;
         }
-        const conversation = res.data?.channel_infos?.map(cvs => {
-          const { chatType, conversationId } = parseChannel(cvs.channel_id);
-          return {
-            chatType,
-            conversationId,
-            unreadCount: cvs.unread_num,
-            lastMessage: cvs.lastMessage,
-          };
-        });
+        const conversation = res.data?.channel_infos
+          ?.filter(cvs => {
+            const { lastMessage } = cvs;
+            // @ts-ignore
+            if (lastMessage.chatThread) {
+              return false;
+            }
+            return true;
+          })
+          ?.map(cvs => {
+            const { chatType, conversationId } = parseChannel(cvs.channel_id);
+            return {
+              chatType,
+              conversationId,
+              unreadCount: cvs.unread_num,
+              lastMessage: cvs.lastMessage,
+            };
+          });
         //@ts-ignore
         conversationStore.setConversation(conversation);
       })
