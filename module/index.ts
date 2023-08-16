@@ -20,6 +20,7 @@ import { useClient } from './hooks/useClient';
 import { useConversations } from './hooks/useConversation';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
 import Thread from './thread';
+import UserProfile from './userProfile';
 export {
   AudioMessage,
   BaseMessage,
@@ -42,6 +43,7 @@ export {
   RootConsumer,
   Provider,
   Thread,
+  UserProfile,
   useClient,
   useConversations,
   useHistoryMessages,

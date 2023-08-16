@@ -22,6 +22,7 @@ import {
   useConversations,
   useHistoryMessages,
   Thread,
+  UserProfile,
 } from './module/index';
 
 import {
@@ -77,4 +78,5 @@ export {
   Tooltip,
   ScrollList,
   Thread,
+  UserProfile,
 };

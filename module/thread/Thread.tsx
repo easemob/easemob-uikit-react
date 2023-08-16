@@ -183,17 +183,17 @@ const Thread = (props: ThreadProps) => {
     message: AgoraChat.MessageBody,
   ) => Promise<CurrentConversation | void> = message => {
     // console.log('current  Thread ---', currentThread, rootStore.threadStore.currentThread);
-
+    const originalMessage = rootStore.threadStore.currentThread.originalMessage || {};
     const currentThread = rootStore.threadStore.currentThread;
     if (currentThread.creating) {
       // 创建thread
       const options = {
         name: threadName?.replace(/(^\s*)|(\s*$)/g, '') || (t('module.aThread') as string),
         // @ts-ignore
-        messageId: threadOriginalMsg.mid || threadOriginalMsg.id,
-        parentId: threadOriginalMsg.to,
+        messageId: originalMessage.mid || originalMessage.id,
+        parentId: originalMessage.to,
       };
-      console.log('threadOriginalMsg ---', threadStore.currentThread.info, threadOriginalMsg);
+      console.log('threadOriginalMsg ---', threadStore.currentThread.info, originalMessage);
       return new Promise((resolve, reject) => {
         rootStore.client
           .createChatThread(options)

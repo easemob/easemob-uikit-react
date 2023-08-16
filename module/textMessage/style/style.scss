@@ -11,7 +11,7 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
     text-align: left;
     word-break: break-all;
     display: inline-block;
-
+    width: 100%;
 
     // translation
     &-translation {
