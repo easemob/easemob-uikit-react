@@ -56,9 +56,9 @@ class AddressStore {
     });
   }
 
-  setAppUserInfo(appUsersInfo: Record<string, AppUserInfo>) {
+  setAppUserInfo = (appUsersInfo: Record<string, AppUserInfo>) => {
     this.appUsersInfo = appUsersInfo;
-  }
+  };
 
   setContacts(contacts: any) {
     this.contacts = contacts;
@@ -136,11 +136,14 @@ class AddressStore {
   getUserInfo = (userId: string) => {
     let userInfo = this.appUsersInfo?.[userId];
     if (!userInfo) {
-      getUsersInfo([userId]).then(() => {
+      getUsersInfo({ userIdList: [userId], withPresence: false }).then(() => {
         userInfo = this.appUsersInfo?.[userId];
       });
     }
-    return userInfo;
+  };
+
+  getUserInfoWithPresence = (userIdList: string[]) => {
+    getUsersInfo({ userIdList });
   };
 
   setChatroom(chatroom: any) {

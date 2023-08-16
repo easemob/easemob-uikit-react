@@ -94,9 +94,9 @@ export const renderHtml = (txt: string): string => {
   return rnTxt;
 };
 
-export function getUsersInfo(userIdList: string[]) {
+export function getUsersInfo(props: { userIdList: string[]; withPresence?: boolean }) {
+  const { userIdList, withPresence = true } = props;
   let { client, addressStore } = getStore();
-  //订阅在线状态
   const findIndex = userIdList.indexOf(client.user);
   let subList = [...userIdList];
   const result = {};
@@ -137,27 +137,33 @@ export function getUsersInfo(userIdList: string[]) {
                 reUserInfo[item][key] = res?.data?.[item][key] ? res.data[item][key] : '';
               });
             });
-          client
-            .getPresenceStatus({ usernames: userIdList })
-            .then(res => {
-              res?.data?.result.forEach(item => {
-                if (reUserInfo[item.uid]) {
-                  reUserInfo[item.uid].presenceExt = item.ext;
-                  if (
-                    Object.prototype.toString.call(item.status) === '[object Object]' &&
-                    Object.values(item.status).indexOf('1') > -1
-                  ) {
-                    reUserInfo[item.uid].isOnline = true;
+          if (withPresence) {
+            client
+              .getPresenceStatus({ usernames: userIdList })
+              .then(res => {
+                res?.data?.result.forEach(item => {
+                  if (reUserInfo[item.uid]) {
+                    reUserInfo[item.uid].presenceExt = item.ext;
+                    if (
+                      Object.prototype.toString.call(item.status) === '[object Object]' &&
+                      Object.values(item.status).indexOf('1') > -1
+                    ) {
+                      reUserInfo[item.uid].isOnline = true;
+                    }
                   }
-                }
+                });
+                const list = addressStore.appUsersInfo;
+                addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
+                resolve(Object.assign({}, result, reUserInfo));
+              })
+              .catch(e => {
+                reject(e);
               });
-              const list = addressStore.appUsersInfo;
-              addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
-              resolve(Object.assign({}, result, reUserInfo));
-            })
-            .catch(e => {
-              reject(e);
-            });
+          } else {
+            const list = addressStore.appUsersInfo;
+            addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
+            resolve(Object.assign({}, result, reUserInfo));
+          }
         })
         .catch(e => {
           reject(e);

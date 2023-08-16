@@ -37,13 +37,15 @@ const useUserInfo = () => {
       .filter(item => item.chatType === 'singleChat' && !keys.includes(item.conversationId))
       .map(cvs => cvs.conversationId);
 
-    getUsersInfo(cvsUserIds);
+    getUsersInfo({
+      userIdList: cvsUserIds,
+    });
   }, [rootStore.conversationStore.conversationList.length]);
 };
 
 const useGroups = () => {
-  const pageSize = 0;
-  let pageNum = 200;
+  const pageSize = 200;
+  let pageNum = 1;
   const { client, addressStore } = getStore();
   let hasNext = addressStore.hasGroupsNext;
 

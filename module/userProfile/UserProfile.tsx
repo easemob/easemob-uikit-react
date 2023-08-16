@@ -12,30 +12,32 @@ export interface TypingProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
-  uid: string;
+  userId: string;
 }
 
 const UserProfile = (props: TypingProps) => {
-  const { prefix: customizePrefixCls, className, style, uid } = props;
+  const { prefix: customizePrefixCls, className, style, userId } = props;
   const { addressStore } = getStore();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('user-profile', customizePrefixCls);
   const classString = classNames(prefixCls, className);
-  const { avatarurl, nickname, isOnline } = addressStore.appUsersInfo?.[uid] || {};
+  const { avatarurl, nickname, isOnline } = addressStore.appUsersInfo?.[userId] || {};
 
   useEffect(() => {
-    if (!addressStore.appUsersInfo?.[uid]) {
-      getUsersInfo([uid]);
+    if (!addressStore.appUsersInfo?.[userId]) {
+      getUsersInfo({
+        userIdList: [userId],
+      });
     }
   }, []);
 
   return (
     <div className={classString} style={style}>
       <Avatar size={80} isOnline={isOnline} src={avatarurl}>
-        {uid}
+        {userId}
       </Avatar>
       <div className={`${prefixCls}-nick`}>{nickname}</div>
-      <div className={`${prefixCls}-id`}>Agora ID: {uid}</div>
+      <div className={`${prefixCls}-id`}>Agora ID: {userId}</div>
       {
         <Button className={`${prefixCls}-action-btn`}>
           <div className={`${prefixCls}-action`}>

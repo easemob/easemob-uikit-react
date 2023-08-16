@@ -352,7 +352,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           <Tooltip
             title={
               renderUserProfile?.({ userId: message?.from || '' }) || (
-                <UserProfile uid={message?.from || ''} />
+                <UserProfile userId={message?.from || ''} />
               )
             }
             trigger="click"

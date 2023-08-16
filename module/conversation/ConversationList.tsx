@@ -155,7 +155,9 @@ let Conversations: FC<ConversationListProps> = props => {
     if (rootStore.loginState) {
       getConversationList();
       getJoinedGroupList();
-      getUsersInfo([rootStore.client.user]);
+      getUsersInfo({
+        userIdList: [rootStore.client.user],
+      });
     }
   }, [rootStore.loginState]);
 
