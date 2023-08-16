@@ -151,6 +151,9 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-primary;
             }
         }
+        .#{$status-prefix-cls}-info {
+            margin-right: $msg-info-margin-left;
+        }
     }
 
     &-secondly {
