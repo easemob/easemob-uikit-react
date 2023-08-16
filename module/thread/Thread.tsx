@@ -28,6 +28,7 @@ import Tooltip from '../../component/tooltip';
 import ThreadPanel from './ThreadPanel';
 import Button from '../../component/button';
 import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
+import rootStore from '../store/index';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
@@ -46,13 +47,13 @@ const Thread = (props: ThreadProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('thread', prefix);
   const { t } = useTranslation();
-  const rootStore = useContext(RootContext).rootStore;
+  // const rootStore = useContext(RootContext).rootStore;
   const threadOriginalMsg = rootStore.threadStore.currentThread.originalMessage;
   // 为什么 currentThread 不会自动更新？ 但是currentCVS会自动更新， 用一个变量能表示rootStore.threadStore.currentThread， 会自动更新
 
   const { threadStore } = rootStore;
 
-  const renderMsgDom = (msg: AgoraChat.MessagesType) => {
+  const renderMsgDom = (msg: AgoraChat.MessagesType = {}) => {
     let content;
     switch (msg.type) {
       case 'txt':
@@ -248,7 +249,7 @@ const Thread = (props: ThreadProps) => {
     //   visible: false,
     //   creating: false,
     // });
-
+    console.log('关闭', rootStore);
     rootStore.threadStore.setThreadVisible(false);
   };
 

@@ -216,9 +216,7 @@ class MessageStore {
           cvs = {
             // @ts-ignore
             chatType: message.chatType,
-            conversationId:
-              // @ts-ignore
-              message.chatType == 'groupChat' ? message.to : message.from || '',
+            conversationId: message.to,
             lastMessage: message as unknown as Conversation['lastMessage'],
             unreadCount: 0,
           };

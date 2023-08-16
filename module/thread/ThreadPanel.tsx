@@ -106,7 +106,7 @@ const ThreadPanel = (props: ThreadPanelProps) => {
     //   // 这里假设你有一个函数叫 updatePosition，用来更新组件的位置
     //   setPosition({ top, left });
     // }
-  }, [anchorEl]);
+  }, [anchorEl, open]);
 
   const handleClose = () => {
     props.onClose?.();

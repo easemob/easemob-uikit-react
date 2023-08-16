@@ -59,7 +59,8 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
             font-size: 14px;
             line-height: 20px;
-            color: $special-5;
+            color: $special-5;;
+            width: 100%;
         }
 
         &-action {

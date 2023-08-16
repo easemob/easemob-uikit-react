@@ -21,6 +21,7 @@ import {
   useClient,
   useConversations,
   useHistoryMessages,
+  Thread,
 } from './module/index';
 
 import {
@@ -75,4 +76,5 @@ export {
   Switch,
   Tooltip,
   ScrollList,
+  Thread,
 };
