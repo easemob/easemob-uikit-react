@@ -9,6 +9,7 @@ import AC, { AgoraChat } from 'agora-chat';
 import { RootContext } from '../../store/rootContext';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
+import { CurrentConversation } from '../../store/ConversationStore';
 export interface MoreActionProps {
   prefix?: string;
   icon?: ReactNode;
@@ -18,9 +19,10 @@ export interface MoreActionProps {
     icon: ReactNode;
   }>;
   defaultActions?: [{}];
+  conversation?: CurrentConversation;
 }
 let MoreAction = (props: MoreActionProps) => {
-  const { icon, customActions, prefix: customizePrefixCls } = props;
+  const { icon, customActions, prefix: customizePrefixCls, conversation } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('moreAction', customizePrefixCls);
   const classString = classNames(prefixCls);
@@ -72,7 +74,7 @@ let MoreAction = (props: MoreActionProps) => {
       })}
     </ul>
   );
-  const { currentCVS } = messageStore;
+  const currentCVS = conversation ? conversation : messageStore.currentCVS;
   const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = e => {
     let file = AC.utils.getFileUrl(e.target);
     if (!file.filename) {

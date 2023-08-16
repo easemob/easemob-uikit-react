@@ -7,6 +7,7 @@ import { AgoraChat } from 'agora-chat';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
+import { getCvsIdFromMessage } from '../utils';
 const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
@@ -62,8 +63,11 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         msgQuote = JSON.parse(msgQuote);
       }
       setMsgQuote(msgQuote);
-      const messages = rootStore.messageStore.currentCvsMsgs;
-
+      const cvsId = getCvsIdFromMessage(message);
+      // @ts-ignore
+      const messages = rootStore.messageStore.message[message.chatType]?.[cvsId] || [];
+      // const messages = rootStore.messageStore.currentCvsMsgs;
+      console.log('++++', message, cvsId, rootStore.messageStore);
       const findMsgs = messages.filter(msg => {
         // @ts-ignore
         return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;

@@ -14,6 +14,8 @@ export interface HeaderProps {
   icon?: ReactNode; // 右侧更多按钮 icon
   back?: boolean; // 是否显示左侧返回按钮
   avatarSrc?: string;
+  close?: boolean; // 是否显示右侧关闭按钮
+  suffixIcon?: ReactNode; // 右侧自定义 icon
   renderContent?: () => React.ReactElement; // 自定义渲染中间内容部分；
   onIconClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void; // 右侧更多按钮的点击事件
   // 右侧更多按钮配置
@@ -26,6 +28,7 @@ export interface HeaderProps {
     }>;
   };
   onAvatarClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  onClickClose?: () => void;
 }
 
 const Header: FC<HeaderProps> = props => {
@@ -40,12 +43,18 @@ const Header: FC<HeaderProps> = props => {
     onIconClick,
     moreAction,
     onAvatarClick,
+    close,
+    onClickClose,
+    suffixIcon,
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('header', customizePrefixCls);
   const classString = classNames(prefixCls);
 
+  const clickClose = () => {
+    onClickClose?.();
+  };
   let menuNode;
   if (moreAction?.visible) {
     menuNode = (
@@ -97,14 +106,23 @@ const Header: FC<HeaderProps> = props => {
           onClick={e => {
             onIconClick?.(e);
           }}
+          className={`${prefixCls}-iconBox`}
         >
-          <Tooltip title={menuNode} trigger="click" placement="bottom">
-            {
-              <Button type="text" shape="circle">
-                <Icon type="ELLIPSIS"></Icon>
-              </Button>
-            }
-          </Tooltip>
+          {suffixIcon}
+          {moreAction?.visible && (
+            <Tooltip title={menuNode} trigger="click" placement="bottom">
+              {
+                <Button type="text" shape="circle">
+                  <Icon type="ELLIPSIS"></Icon>
+                </Button>
+              }
+            </Tooltip>
+          )}
+          {close && (
+            <Button type="text" shape="circle" onClick={clickClose}>
+              <Icon type="CLOSE"></Icon>
+            </Button>
+          )}
         </div>
       </>
     );

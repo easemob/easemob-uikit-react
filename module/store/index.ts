@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import MessageStore from './MessageStore';
 import ConversationStore from './ConversationStore';
 import AddressStore from './AddressStore';
+import ThreadStore from './ThreadStore';
 import { AgoraChat } from 'agora-chat';
 export interface InitConfig {
   appKey: string;
@@ -12,6 +13,7 @@ export class RootStore {
   messageStore;
   conversationStore;
   addressStore;
+  threadStore;
   client: AgoraChat.Connection;
   loginState = false;
   initConfig = { appKey: '' };
@@ -20,6 +22,7 @@ export class RootStore {
     this.messageStore = new MessageStore(this);
     this.conversationStore = new ConversationStore(this);
     this.addressStore = new AddressStore();
+    this.threadStore = new ThreadStore(this);
 
     makeObservable(this, {
       client: observable,

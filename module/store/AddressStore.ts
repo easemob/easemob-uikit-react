@@ -32,6 +32,9 @@ class AddressStore {
   hasGroupsNext: boolean;
   chatroom: any;
   searchList: any;
+  thread: {
+    [key: string]: AgoraChat.ThreadChangeInfo[];
+  };
   constructor() {
     this.appUsersInfo = {};
     this.contacts = [];
@@ -39,6 +42,7 @@ class AddressStore {
     this.chatroom = [];
     this.hasGroupsNext = true;
     this.searchList = [];
+    this.thread = {};
     makeObservable(this, {
       appUsersInfo: observable,
       contacts: observable,
@@ -46,6 +50,7 @@ class AddressStore {
       chatroom: observable,
       searchList: observable,
       hasGroupsNext: observable,
+      thread: observable,
       setHasGroupsNext: action,
       setContacts: action,
       setGroups: action,

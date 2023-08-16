@@ -92,7 +92,7 @@ export const InternalAvatar = (props: any, ref: any) => {
           width: customSize,
           height: customSize,
           lineHeight: `${customSize}px`,
-          fontSize: icon ? customSize / 2 : 18,
+          fontSize: icon ? customSize / 2 : '.8em',
         }
       : {};
 

@@ -75,6 +75,10 @@ export interface BaseMessageProps {
   onSelectMessage?: () => void; // message select action handler
   onMessageCheckChange?: (checked: boolean) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  onCreateThread?: () => void;
+  thread?: boolean; // whether show thread
+  chatThreadOverview?: AgoraChat.ThreadOverview;
+  onClickThreadTitle?: () => void;
 }
 
 const getMsgSenderNickname = (msg: BaseMessageType) => {
@@ -128,9 +132,12 @@ let BaseMessage = (props: BaseMessageProps) => {
     onSelectMessage,
     onMessageCheckChange,
     renderUserProfile,
+    onCreateThread,
     select,
+    thread,
+    chatThreadOverview,
+    onClickThreadTitle,
   } = props;
-
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-base', customizePrefixCls);
@@ -168,9 +175,80 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   const hasBubble = bubbleType !== 'none';
 
+  const clickThreadTitle = () => {
+    console.log('click thread title');
+    onClickThreadTitle?.();
+  };
+  const threadNode = () => {
+    let { name, messageCount, lastMessage = {} } = chatThreadOverview;
+    if (messageCount > 100) {
+      messageCount = '100 +';
+    }
+    const { from, type, time } = lastMessage || {};
+    let msgContent = '';
+    switch (type) {
+      case 'txt':
+        msgContent = lastMessage.msg;
+        break;
+      case 'img':
+        msgContent = '[图片]';
+        break;
+      case 'file':
+        msgContent = '[文件]';
+        break;
+      case 'audio':
+        msgContent = '[语音]';
+        break;
+      case 'video':
+        msgContent = '[视频]';
+        break;
+      case 'custom':
+        msgContent = '[自定义消息]';
+        break;
+      case 'combine':
+        msgContent = '[合并消息]';
+        break;
+      default:
+        msgContent = '';
+        break;
+    }
+    return (
+      <div className={`${prefixCls}-thread`}>
+        <span className={`${prefixCls}-thread-line`}></span>
+        <div className={`${prefixCls}-thread-name`} onClick={clickThreadTitle}>
+          <div>
+            <Icon
+              width={20}
+              height={20}
+              type="THREAD"
+              className={`${prefixCls}-thread-name-icon`}
+            ></Icon>
+            <span>{name}</span>
+          </div>
+          <div>
+            <span>{messageCount}</span>
+            <Icon
+              width={16}
+              height={16}
+              type="ARROW_RIGHT"
+              className={`${prefixCls}-thread-name-icon`}
+            ></Icon>
+          </div>
+        </div>
+        <div className={`${prefixCls}-thread-message`}>
+          <Avatar size={16}>W</Avatar>
+          <span>{from}</span>
+          <span>{msgContent}</span>
+          <span>{getConversationTime(time)}</span>
+        </div>
+      </div>
+    );
+  };
+
   const contentNode = hasBubble ? (
     <div className={`${prefixCls}-content`} style={bubbleStyle}>
       {props.children}
+      {thread && chatThreadOverview && threadNode()}
     </div>
   ) : (
     cloneElement(props.children, oriProps => ({
@@ -334,6 +412,12 @@ let BaseMessage = (props: BaseMessageProps) => {
     const result = e.target.checked;
     onMessageCheckChange?.(result);
   };
+
+  // ------ thread -----
+  const handleClickThreadIcon = () => {
+    console.log('create thread');
+    onCreateThread?.();
+  };
   return (
     <div>
       <div className="ttt">
@@ -371,6 +455,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             )}
             <div className={`${prefixCls}-body`}>
               {contentNode}
+
               {hoverStatus ? (
                 <>
                   {moreAction.visible && (
@@ -390,6 +475,14 @@ let BaseMessage = (props: BaseMessageProps) => {
                       selectedList={selectedList}
                       onDelete={handleDeleteReactionEmoji}
                     ></EmojiKeyBoard>
+                  )}
+                  {thread && !chatThreadOverview && (
+                    <Icon
+                      type="THREAD"
+                      onClick={handleClickThreadIcon}
+                      className={`${prefixCls}-body-action`}
+                      height={20}
+                    ></Icon>
                   )}
                 </>
               ) : (

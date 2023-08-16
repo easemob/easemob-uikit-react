@@ -9,6 +9,8 @@ import ReactDOM from 'react-dom/client';
 
 import { ConfigContext, ConfigProvider, ConfigConsumer } from '../../component/config/index';
 
+import Input from '../../component/input';
+
 import Loading from '../../component/loading';
 
 const TestButton = () => {
@@ -18,6 +20,7 @@ const TestButton = () => {
         console.log('data, value', data);
         return (
           <>
+            <Input required close></Input>
             <Avatar>22</Avatar>
             <div className="loadingBox">
               <Loading size={24} visible={true}></Loading>

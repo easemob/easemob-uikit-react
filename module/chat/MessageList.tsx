@@ -29,12 +29,14 @@ import type { RecallMessage } from '../store/MessageStore';
 import { RecalledMessage } from '../recalledMessage';
 import CombinedMessage from '../combinedMessage';
 import { renderUserProfileProps } from '../baseMessage';
+import { CurrentConversation } from '../store/ConversationStore';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
   renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  conversation?: CurrentConversation;
 }
 
 const MessageScrollList = ScrollList<AgoraChat.MessageBody | RecallMessage>();
@@ -43,19 +45,20 @@ let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
   const { messageStore } = rootStore;
 
-  const { prefix: customizePrefixCls, className, renderMessage, renderUserProfile } = props;
+  const { prefix: customizePrefixCls, className, renderMessage, renderUserProfile, conversation } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
   const classString = classNames(prefixCls, className);
 
   const msgContainerRef = useRef<HTMLDivElement>(null);
 
-  const currentCVS = messageStore.currentCVS || {};
+  const currentCVS = conversation ? conversation : messageStore.currentCVS || {};
 
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
+  console.log('**** currentCVS ***', currentCVS);
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
-
+  console.log('**** messageData ***', messageData);
   const [imageInfo, setImageInfo] = useState<{
     visible: boolean;
     url: string;
@@ -131,6 +134,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           textMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
+          thread={true}
         >
           {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
         </TextMessage>
@@ -162,10 +166,11 @@ let MessageList: FC<MsgListProps> = props => {
   useEffect(() => {
     (listRef?.current as any)?.scrollTo('bottom');
     if (currentCVS && currentCVS.chatType === 'groupChat') {
+      if (!currentCVS.conversationId) return;
       const { getGroupMemberList } = useGroupMembers(currentCVS.conversationId);
       const { getGroupAdmins } = useGroupAdmins(currentCVS.conversationId);
       getGroupAdmins();
-      getGroupMemberList();
+      getGroupMemberList?.();
     }
   }, [currentCVS]);
 

@@ -12,9 +12,14 @@ $header-prefix-cls: #{$cui-prefix}-header;
     &-content{
         display: flex;
         align-items: center;
-
+        overflow: hidden;
+        flex: 1;
         &-text{
             margin-left: $margin-sm;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
         }
     }
 
@@ -35,5 +40,9 @@ $header-prefix-cls: #{$cui-prefix}-header;
         li:hover{
             background: #F1F2F3;
         }
+    }
+
+    &-iconBox{
+        display: flex;
     }
 }

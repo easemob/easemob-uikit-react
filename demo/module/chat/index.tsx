@@ -18,7 +18,9 @@ import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import Button from '../../../component/button';
 import Avatar from '../../../component/avatar';
 import { MessageList } from '../../../module/chat/MessageList';
+import Thread from '../../../module/thread';
 import './index.css';
+import { observer } from 'mobx-react-lite';
 // import {
 // 	Chat,
 // 	rootStore,
@@ -35,6 +37,7 @@ const ChatApp = () => {
       client
         .open({
           user: 'zd2',
+          // pwd: '272808',
           accessToken: '',
         })
         .then(res => {
@@ -59,6 +62,8 @@ const ChatApp = () => {
       lastMessage: {},
     });
   };
+
+  const thread = rootStore.threadStore;
 
   let TxtMsg = msg => (
     <TextMessage
@@ -87,6 +92,10 @@ const ChatApp = () => {
   const changeTab = (tab: string) => {
     setTab(tab);
   };
+
+  useEffect(() => {
+    console.log('变化了 showThreadPanel');
+  }, [thread.showThreadPanel]);
   return (
     <>
       <div className="tab-box">
@@ -118,8 +127,29 @@ const ChatApp = () => {
 
         {tab == 'contact' && <ContactList className="conversation"></ContactList>}
       </div>
-      <div style={{ width: '65%', borderLeft: '1px solid transparent', overflow: 'hidden' }}>
-        <Chat></Chat>
+      <div
+        style={{
+          width: '65%',
+          borderLeft: '1px solid transparent',
+          overflow: 'hidden',
+          display: 'flex',
+        }}
+      >
+        <div style={{ flex: 1, borderLeft: '1px solid transparent', overflow: 'hidden' }}>
+          <Chat></Chat>
+        </div>
+        {thread.showThreadPanel && (
+          <div
+            style={{
+              width: '50%',
+              borderLeft: '1px solid #eee',
+              overflow: 'hidden',
+              background: '#fff',
+            }}
+          >
+            <Thread></Thread>
+          </div>
+        )}
       </div>
       {/* <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -129,6 +159,8 @@ const ChatApp = () => {
     </>
   );
 };
+
+const App = observer(ChatApp);
 
 ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   <div
@@ -145,6 +177,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
     <Provider
       initConfig={{
         appKey: '41117440#383391',
+        // appKey: 'easemob#easeim',
       }}
       local={{
         fallbackLng: 'en',
@@ -159,7 +192,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         // },
       }}
     >
-      <ChatApp></ChatApp>
+      <App></App>
     </Provider>
   </div>,
 );
