@@ -23,6 +23,8 @@ export interface HeaderProps {
     visible?: boolean;
     icon?: ReactNode;
     actions: Array<{
+      visible?: boolean;
+      icon?: ReactNode;
       content: ReactNode;
       onClick?: () => void;
     }>;
@@ -60,6 +62,7 @@ const Header: FC<HeaderProps> = props => {
     menuNode = (
       <ul className={`${prefixCls}-more`}>
         {moreAction.actions.map((item, index) => {
+          if (item.visible == false) return null;
           return (
             <li
               key={index}

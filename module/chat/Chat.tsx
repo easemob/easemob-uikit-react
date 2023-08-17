@@ -22,7 +22,10 @@ import { UnsentRepliedMsg } from '../repliedMessage';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from 'module/store/ConversationStore';
 import Typing from '../typing';
-
+import { ThreadModal } from '../thread';
+import ScrollList from '../../component/scrollList';
+import { AgoraChat } from 'agora-chat';
+import { getConversationTime } from '../utils/index';
 // import rootStore from '../store';
 export interface ChatProps {
   prefix?: string;
@@ -92,11 +95,129 @@ const Chat: FC<ChatProps> = props => {
       selectable: false,
       selectedMessage: [],
     });
+
+    // close thread
+    setModalOpen(false);
+    rootStore.threadStore.setThreadVisible(false);
   }, [rootStore.conversationStore.currentCvs]);
 
   const repliedMsg = rootStore.messageStore.repliedMessage;
   const replyCvsId = repliedMsg?.to;
   const showReply = repliedMsg && replyCvsId === CVS.conversationId;
+
+  // --------- thread -----------
+  // thread modal title name
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+  const headerRef = useRef(null);
+  const showTheadList = () => {
+    console.log('show list');
+    setModalOpen(true);
+    rootStore.threadStore.getGroupChatThreads(CVS.conversationId)?.then(cursor => {
+      console.log('cursor', cursor);
+      setCursor(cursor);
+    });
+  };
+  const [cursor, setCursor] = useState<string | undefined>();
+  // containerRef?.current?.scrollHeight
+  const threadScrollRef = useRef(null);
+  const pagingGetThreadList = () => {
+    const height = threadScrollRef?.current?.scrollHeight;
+    console.log('height', height);
+    console.log('more');
+    console.log('cursor', cursor);
+    if (cursor === null) return;
+    rootStore.threadStore.getGroupChatThreads(CVS.conversationId, cursor)?.then((res: string) => {
+      setCursor(res);
+      setTimeout(() => {
+        threadScrollRef?.current.scrollTo(threadList.length * 56);
+      }, 100);
+    });
+  };
+
+  const threadList = rootStore.threadStore.threadList[CVS.conversationId] || [];
+  const openThread = item => {
+    // close thread list modal
+    console.log('item =====', item);
+    setModalOpen(false);
+    rootStore.threadStore.setThreadVisible(true);
+    rootStore.threadStore.getChatThreadDetail(item.id);
+  };
+  const ThreadScrollList = ScrollList<AgoraChat.ChatThreadOverview>();
+
+  const [renderThreadList, setRenderThreadList] = useState(threadList);
+
+  useEffect(() => {
+    setRenderThreadList(threadList);
+  }, [threadList.length, CVS.conversationId]);
+  // render thread list
+  const threadListContent = () => {
+    const renderItem = (item: AgoraChat.ChatThreadOverview, index: number) => {
+      let lastMsg = '';
+      switch (item.lastMessage?.type) {
+        case 'txt':
+          lastMsg = item.lastMessage?.msg;
+          break;
+        case 'img':
+          lastMsg = `/${t('module.image')}/`;
+          break;
+        case 'audio':
+          lastMsg = `/${t('module.audio')}/`;
+          break;
+        case 'file':
+          lastMsg = `/${t('module.file')}/`;
+          break;
+        case 'video':
+          lastMsg = `/${t('module.video')}/`;
+          break;
+        case 'custom':
+          lastMsg = `/${t('module.custom')}/`;
+          break;
+        default:
+          console.warn('unexpected message type:', item.lastMessage?.type);
+          break;
+      }
+      return (
+        <div
+          className={`${prefixCls}-thread-item`}
+          key={index}
+          onClick={() => {
+            openThread(item);
+          }}
+        >
+          <span className={`${prefixCls}-thread-item-name`}> {item.name}</span>
+          <div className={`${prefixCls}-thread-item-msgBox`}>
+            <Avatar size={12}>{item.lastMessage?.from}</Avatar>
+            <div className={`${prefixCls}-thread-item-msgBox-name`}>{item.lastMessage?.from}</div>
+            <div>{lastMsg}</div>
+            <div>{getConversationTime(item.lastMessage?.time)}</div>
+          </div>
+        </div>
+      );
+    };
+
+    const dom = (
+      <ThreadScrollList
+        ref={threadScrollRef}
+        loading={false}
+        loadMoreItems={pagingGetThreadList}
+        scrollDirection="down"
+        paddingHeight={50}
+        data={renderThreadList}
+        renderItem={renderItem}
+      ></ThreadScrollList>
+    );
+    return dom;
+  };
+
+  // thread thread
+  const handleSearchThread = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+
+    const filterList = threadList.filter(item => {
+      return item.name.includes(value);
+    });
+    setRenderThreadList(filterList);
+  };
   return (
     <div className={classString}>
       {isEmpty ? (
@@ -112,6 +233,15 @@ const Chat: FC<ChatProps> = props => {
           ) : (
             <Header
               avatarSrc={getChatAvatarUrl(CVS)}
+              suffixIcon={
+                CVS.chatType == 'groupChat' ? (
+                  <div ref={headerRef}>
+                    <Button onClick={showTheadList} type="text" shape="circle">
+                      <Icon type="THREAD"></Icon>
+                    </Button>
+                  </div>
+                ) : null
+              }
               content={
                 rootStore.conversationStore.currentCvs.name ||
                 rootStore.conversationStore.currentCvs.conversationId
@@ -173,6 +303,23 @@ const Chat: FC<ChatProps> = props => {
             renderMessageEditor()
           ) : (
             <MessageEditor {...messageEditorProps}></MessageEditor>
+          )}
+          {modalOpen && (
+            <ThreadModal
+              headerContent={'Thread List'}
+              open={modalOpen}
+              anchorEl={headerRef.current}
+              onClose={() => {
+                setModalOpen(false);
+              }}
+              onSearch={handleSearchThread}
+              onClear={() => {
+                setRenderThreadList(threadList || []);
+              }}
+              style={{ width: '360px' }}
+            >
+              <div className={`${prefixCls}-threads-box`}>{threadListContent()}</div>
+            </ThreadModal>
           )}
         </>
       )}

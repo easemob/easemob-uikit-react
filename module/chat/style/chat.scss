@@ -11,4 +11,43 @@ $chat-prefix-cls: #{$cui-prefix}-chat;
     &-messageList{
         flex: 1;
     }
+
+    &-threads-box{
+        height: 346px;
+    }
+
+    &-thread-item{
+        height: 56px;
+        cursor: pointer;
+        background-color: $gray-98;
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
+        gap: 4px;
+        margin: 4px 8px;
+        &:hover{
+            background-color: $white;
+        }
+        &-name{
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px; 
+        }
+        &-msgBox{
+            display: flex;
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 16px;
+            color: $gray-5;
+            gap: 4px;
+            overflow: hidden;
+            &-name{
+                font-weight: 500;
+            }
+        }
+    }
 }

@@ -10,4 +10,6 @@ $thread-prefix-cls: #{$cui-prefix}-thread-panel;
     max-height: 770px;
     min-height: 416px;
     border-radius: 16px;
+    background-color: $gray-98;
+    overflow: hidden;
 }

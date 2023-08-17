@@ -25,7 +25,7 @@ import { CurrentConversation } from '../store/ConversationStore';
 import { RootContext } from '../store/rootContext';
 import Modal from '../../component/modal';
 import Tooltip from '../../component/tooltip';
-import ThreadPanel from './ThreadPanel';
+import ThreadModal from './ThreadModal';
 import Button from '../../component/button';
 import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
 import rootStore from '../store/index';
@@ -52,7 +52,7 @@ const Thread = (props: ThreadProps) => {
   // 为什么 currentThread 不会自动更新？ 但是currentCVS会自动更新， 用一个变量能表示rootStore.threadStore.currentThread， 会自动更新
 
   const { threadStore } = rootStore;
-
+  console.log('rootStore ----', rootStore);
   const renderMsgDom = (msg: AgoraChat.MessagesType = {}) => {
     let content;
     switch (msg.type) {
@@ -126,6 +126,7 @@ const Thread = (props: ThreadProps) => {
 
   const [editorDisable, setEditorDisable] = useState(false);
   const [threadName, setThreadName] = useState(t('module.aThread'));
+  const [role, setRole] = useState('member'); // My role in the group
   const handleThreadNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log(event.target.value);
     setThreadName(event.target.value);
@@ -208,7 +209,7 @@ const Thread = (props: ThreadProps) => {
               info: { owner: rootStore.client.user } as unknown as AgoraChat.ThreadChangeInfo,
               creating: false,
             });
-            // onOpenThreadPanel && onOpenThreadPanel({ id: threadId })
+            // onOpenThreadModal && onOpenThreadModal({ id: threadId })
             resolve({
               chatType: 'groupChat',
               conversationId: res.data?.chatThreadId || '',
@@ -230,14 +231,41 @@ const Thread = (props: ThreadProps) => {
   //threadNameValue 为什么不更新
   let threadNameValue: string = '';
   // const [threadNameValue, setThreadNameValue] = useState('');
+
+  const groups = rootStore.addressStore.groups || [];
+
   useEffect(() => {
-    console.log('有thread了 -------', rootStore.threadStore.currentThread);
+    console.log('有thread了 -------', rootStore.threadStore);
     const currentThread = rootStore.threadStore.currentThread;
     setConversation({
       chatType: 'groupChat',
       conversationId: currentThread?.info?.id || '',
     });
     // setThreadNameValue(currentThread?.info?.name || '');
+    const myId = rootStore.client.user;
+    if (currentThread?.info?.parentId) {
+      groups.forEach(item => {
+        if (item.groupid == currentThread?.info?.parentId) {
+          const members = item.members || [];
+          if (members.length > 0) {
+            for (let index = 0; index < members.length; index++) {
+              if (members[index].userId == myId) {
+                if (members[index].role == 'member')
+                  if (item.admins?.includes(myId)) {
+                    setRole('admin');
+                  } else if (currentThread?.info?.owner == myId) {
+                    setRole('threadOwner');
+                  }
+                setRole(members[index].role);
+                break;
+              }
+            }
+          }
+        }
+      });
+    }
+
+    console.log('我的角色', role, myId);
   }, [currentThread?.info?.id]);
 
   console.log('生成的conversation--', conversation);
@@ -366,7 +394,7 @@ const Thread = (props: ThreadProps) => {
     });
   };
 
-  // thread panel title name
+  // thread modal title name
   const [modalName, setModalName] = useState<string>('Thread Members');
 
   // 获取thread members
@@ -411,6 +439,7 @@ const Thread = (props: ThreadProps) => {
         },
       },
       {
+        visible: role != 'member',
         content: 'Edit Thread',
         onClick: () => {
           handleEditThreadName();
@@ -423,6 +452,7 @@ const Thread = (props: ThreadProps) => {
         },
       },
       {
+        visible: role == 'admin' || role == 'owner',
         content: 'Disband Thread',
         onClick: () => {
           handleDisbandThread();
@@ -471,7 +501,7 @@ const Thread = (props: ThreadProps) => {
       </ul>
     );
     // 控制是否显示更多操作的开关
-    const showMoreAction = true;
+    const showMoreAction = role != 'member';
     const myId = rootStore.client.user;
     const membersDom = members.map(member => {
       return (
@@ -541,7 +571,7 @@ const Thread = (props: ThreadProps) => {
         <div className={`${prefixCls}-detail`}>{modalData.content}</div>
       </Modal>
 
-      <ThreadPanel
+      <ThreadModal
         headerContent={modalName}
         open={panelOpen}
         anchorEl={headerRef.current}
@@ -555,7 +585,7 @@ const Thread = (props: ThreadProps) => {
         style={{ width: '360px' }}
       >
         <div className={`${prefixCls}-members-box`}>{membersContent()}</div>
-      </ThreadPanel>
+      </ThreadModal>
     </div>
   );
 };

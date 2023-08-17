@@ -51,7 +51,7 @@ let ScrollList = function <T>() {
         scrollTo: innerScrollTo,
       }));
 
-      const innerScrollTo = (position: 'top' | 'bottom' | string) => {
+      const innerScrollTo = (position: 'top' | 'bottom' | number) => {
         if (!containerRef) {
           return;
         }
@@ -62,6 +62,8 @@ let ScrollList = function <T>() {
           (containerRef as React.MutableRefObject<HTMLDivElement>).current.scrollTop =
             containerRef?.current?.scrollHeight || 0;
         } else {
+          (containerRef as React.MutableRefObject<HTMLDivElement>).current.scrollTop =
+            position || 0;
         }
       };
 

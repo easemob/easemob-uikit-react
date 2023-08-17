@@ -23,7 +23,7 @@ import Input from '../../component/input';
 //   // 右侧更多按钮配置
 // }
 
-export interface ThreadPanelProps {
+export interface ThreadModalProps {
   className?: string;
   prefix?: string;
   anchorEl?: HTMLElement | null;
@@ -53,14 +53,14 @@ export interface ThreadPanelProps {
   //   transitionDuration?: TransitionProps['timeout'] | 'auto';  // 过渡时间
   //   TransitionProps?: TransitionProps;  // 过渡组件的 props
 }
-const ThreadPanel = (props: ThreadPanelProps) => {
+const ThreadModal = (props: ThreadModalProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { anchorEl, prefix, open, style, onSearch, onClear, headerContent } = props;
 
   const prefixCls = getPrefixCls('thread-panel', prefix);
   const classString = classNames(prefixCls);
 
-  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [position, setPosition] = useState({});
   // 用来更新组件的位置
   const popupRef = useRef(null);
   useEffect(() => {
@@ -166,4 +166,4 @@ const ThreadPanel = (props: ThreadPanelProps) => {
   );
 };
 
-export default ThreadPanel;
+export default ThreadModal;

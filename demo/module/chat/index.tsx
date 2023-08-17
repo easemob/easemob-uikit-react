@@ -88,7 +88,7 @@ const ChatApp = () => {
 
   let MsgList = <MessageList renderMessage={msg => TxtMsg(msg)}></MessageList>;
 
-  const [tab, setTab] = useState('contact');
+  const [tab, setTab] = useState('chat');
   const changeTab = (tab: string) => {
     setTab(tab);
   };

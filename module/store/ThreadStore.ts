@@ -43,6 +43,7 @@ class ThreadStore {
       updateThreadInfo: action,
       updateMultiDeviceEvent: action,
       getChatThreadDetail: action,
+      getGroupChatThreads: action,
     });
   }
 
@@ -187,19 +188,20 @@ class ThreadStore {
   getChatThreadDetail(threadId: string) {
     if (!threadId) return;
     const currentThreadInfo = this.currentThread.info;
-    if (currentThreadInfo) {
-      this.rootStore.client.getChatThreadDetail({ chatThreadId: threadId }).then((res: any) => {
-        console.log('getChatThreadDetail --->', res);
-        this.setCurrentThread({
-          ...this.currentThread,
-          info: {
-            ...currentThreadInfo,
-            // @ts-ignore
-            owner: res.data.owner,
-          },
-        });
+    // if (currentThreadInfo) {
+    this.rootStore.client.getChatThreadDetail({ chatThreadId: threadId }).then((res: any) => {
+      console.log('getChatThreadDetail --->', res);
+      this.setCurrentThread({
+        ...this.currentThread,
+        info: {
+          // ...currentThreadInfo,
+          // // @ts-ignore
+          // owner: res.data.owner,
+          ...res.data,
+        },
       });
-    }
+    });
+    // }
   }
 
   getThreadMembers(parentId: string, threadId: string) {
@@ -258,6 +260,49 @@ class ThreadStore {
       console.log('joinChatThread --->', res);
       // this.getThreadMembers('', chatThreadId);
     });
+  }
+
+  getGroupChatThreads(parentId: string, cursor?: string) {
+    if (!parentId) return console.error('no parentId');
+    console;
+    if (this.threadList[parentId]?.length >= 20 && !cursor)
+      return console.error('no cursor', cursor);
+    return this.rootStore.client
+      .getChatThreads({
+        parentId,
+        pageSize: 20,
+        cursor,
+      })
+      .then((res: any) => {
+        console.log('getGroupChatThreads --->', res);
+        const threads = res.entities;
+        const list = this.threadList[parentId] || [];
+        const chatThreadIds = threads.map((item: { id: any }) => {
+          return item.id;
+        });
+        return this.rootStore.client
+          .getChatThreadLastMessage({
+            chatThreadIds: chatThreadIds,
+          })
+          .then(data => {
+            console.log('最后一条消息', data.entities);
+            data.entities.forEach(item => {
+              threads.forEach(thread => {
+                if (item.chatThreadId == thread.id) {
+                  thread.lastMessage = item.lastMessage;
+                }
+              });
+            });
+
+            this.threadList[parentId] = [...list, ...threads];
+
+            if (threads.length < 20) {
+              return null;
+            }
+
+            return res.properties.cursor;
+          });
+      });
   }
 }
 
