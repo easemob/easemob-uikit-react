@@ -194,3 +194,8 @@ export function getGroupMemberNickName(member: MemberItem) {
   const { appUsersInfo } = rootStore.addressStore;
   return member.attributes?.nickName || appUsersInfo?.[member.userId]?.nickname || member.userId;
 }
+
+export function getAppUserInfo(userId: string) {
+  const { appUsersInfo } = rootStore.addressStore;
+  return appUsersInfo?.[userId] || {};
+}

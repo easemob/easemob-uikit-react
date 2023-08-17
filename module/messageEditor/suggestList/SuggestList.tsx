@@ -4,7 +4,7 @@ import { ConfigContext } from '../../../component/config/index';
 import { getStore } from '../../store';
 import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';
-import { getGroupItemFromGroupsById, getGroupMemberNickName } from '../../utils';
+import { getGroupItemFromGroupsById, getGroupMemberNickName, getAppUserInfo } from '../../utils';
 import Avatar from '../../../component/avatar';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
@@ -114,7 +114,7 @@ const SuggestList: FC<Props> = props => {
       document.removeEventListener('keyup', keyDownHandler);
     };
   }, []);
-  
+
   return (
     <div>
       {props.visible && filteredUsers.length ? (
@@ -138,7 +138,9 @@ const SuggestList: FC<Props> = props => {
                   onClick={onClick}
                 >
                   <div className="avatar">
-                    <Avatar size="small">{getGroupMemberNickName(user)}</Avatar>
+                    <Avatar src={getAppUserInfo(user.userId).avatarurl} size="small">
+                      {getGroupMemberNickName(user)}
+                    </Avatar>
                   </div>
                   <div className="name">{getGroupMemberNickName(user)}</div>
                 </div>
