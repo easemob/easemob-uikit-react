@@ -86,7 +86,7 @@ class ThreadStore {
     let foundThread: AgoraChat.ThreadChangeInfo = {} as AgoraChat.ThreadChangeInfo;
 
     if (operation != 'create') {
-      this.threadList[parentId].forEach(item => {
+      this.threadList[parentId]?.forEach(item => {
         if (item.id === id) {
           // @ts-ignore
           foundThread = item;
