@@ -73,12 +73,21 @@ const useEventHandler = () => {
       },
       onReadMessage: message => {
         console.log('onReadMessage', message);
-        // messageStore.receiveMessage(message);
         messageStore.updateMessageStatus(message.mid as string, 'read');
       },
       onChannelMessage: message => {
-        console.log('onChannelMessage', message);
-        // messageStore.receiveMessage(message);
+        const { chatType, from = '' } = message;
+        if (chatType === 'singleChat') {
+          rootStore.rootStore.messageStore.message?.[chatType]?.[from]
+            .filter(message => {
+              //@ts-ignore
+              return message.status === 'received';
+            })
+            .map(receivedMessage => {
+              // @ts-ignore
+              receivedMessage.status = 'read';
+            });
+        }
       },
 
       onConnected: () => {

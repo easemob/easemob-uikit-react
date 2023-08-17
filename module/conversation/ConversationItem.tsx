@@ -11,6 +11,7 @@ import { RenderFunction, Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
+import AC from 'agora-chat';
 export interface ConversationItemProps {
   className?: string;
   prefix?: string;
@@ -89,7 +90,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
   const handleMouseLeave = () => {
     setShowMore(false);
   };
-
+  
   const deleteCvs: MouseEventHandler<HTMLLIElement> = e => {
     e.stopPropagation();
 
@@ -166,7 +167,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     const from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}:` : '';
     lastMsg = [from, ...Array.from(lastMsg)];
   }
-  
+
   return (
     <div
       className={classString}

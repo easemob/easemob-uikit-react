@@ -123,7 +123,7 @@ let Conversations: FC<ConversationListProps> = props => {
           renderItem.name =
             renderItem.name || appUsersInfo?.[item.conversationId as string]?.nickname;
           renderItem.avatarUrl = appUsersInfo?.[item.conversationId as string]?.avatarurl;
-          renderItem.isOnline = appUsersInfo?.[item.conversationId as string]?.isOnline;
+          // renderItem.isOnline = appUsersInfo?.[item.conversationId as string]?.isOnline;
         }
         return renderItem;
       });

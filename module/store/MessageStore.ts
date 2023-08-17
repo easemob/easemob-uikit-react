@@ -308,12 +308,6 @@ class MessageStore {
       to: cvs.conversationId,
     });
     return this.rootStore.client.send(channelMsg);
-    // .then((d) => {
-    // 	console.log('发送 channel', d);
-    // })
-    // .catch((err) => {
-    // 	console.log('channel 失败', err);
-    // });
   }
 
   updateMessageStatus(msgId: string, status: string) {
