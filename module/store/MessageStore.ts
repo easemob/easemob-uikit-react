@@ -234,6 +234,11 @@ class MessageStore {
 
   receiveMessage(message: AgoraChat.MessageBody) {
     console.log('收到消息', message);
+    const curCvs = this.rootStore.conversationStore.currentCvs;
+    //@ts-ignore
+    if (curCvs && curCvs.chatType === message.chatType && curCvs.conversationId === message.from) {
+      this.sendChannelAck(curCvs);
+    }
     this.message.byId[message.id] = message;
     if (message.from !== this.rootStore.client.user) {
       // @ts-ignore
