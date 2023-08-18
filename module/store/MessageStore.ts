@@ -613,14 +613,20 @@ class MessageStore {
     });
   }
 
-  modifyLocalMessage(messageId: string, msg: AgoraChat.TextMsgBody) {
+  modifyLocalMessage(messageId: string, msg: AgoraChat.TextMsgBody, isReceivedModify?: boolean) {
     if (msg.chatType !== 'chatRoom') {
-      const msgIndex = this.message[msg.chatType][msg.to].findIndex(
+      let cvsId = '';
+      if (isReceivedModify) {
+        cvsId = msg.chatType === 'groupChat' ? msg.to : msg.from || '';
+      } else {
+        cvsId = msg.to;
+      }
+      const msgIndex = this.message[msg.chatType][cvsId].findIndex(
         //@ts-ignore
         msgItem => msgItem.id === messageId || msgItem.mid === messageId,
       );
       if (msgIndex > -1) {
-        let msgItem = this.message[msg.chatType][msg.to][msgIndex];
+        let msgItem = this.message[msg.chatType][cvsId][msgIndex];
         if (msgItem.type === 'txt') {
           msgItem.msg = msg.msg;
           msgItem.modifiedInfo = msg.modifiedInfo;

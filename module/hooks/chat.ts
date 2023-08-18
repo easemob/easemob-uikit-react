@@ -109,7 +109,7 @@ const useEventHandler = () => {
         rootStore.rootStore.messageStore.updateReactions(cvs, data.messageId, data.reactions);
       },
       onModifiedMessage: message => {
-        getStore().messageStore.modifyLocalMessage(message.id, message);
+        getStore().messageStore.modifyLocalMessage(message.id, message, true);
       },
       onPresenceStatusChange: message => {
         const { addressStore } = rootStore.rootStore;
