@@ -10,6 +10,7 @@ import Modal from '../../component/modal';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
+import { AgoraChat } from 'agora-chat';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -19,7 +20,15 @@ export interface ImageMessageProps extends BaseMessageProps {
 }
 
 let ImageMessage = (props: ImageMessageProps) => {
-  const { imageMessage: message, shape, style, onClickImage, renderUserProfile, ...others } = props;
+  const {
+    imageMessage: message,
+    shape,
+    style,
+    onClickImage,
+    renderUserProfile,
+    thread,
+    ...others
+  } = props;
 
   let { bySelf, from, reactions } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
@@ -214,6 +223,39 @@ let ImageMessage = (props: ImageMessageProps) => {
     console.log('设置', rootStore.messageStore);
   };
 
+  // @ts-ignore
+  let _thread =
+    // @ts-ignore
+    message.chatType == 'groupChat' &&
+    thread &&
+    // @ts-ignore
+    !message.chatThread &&
+    !message.isChatThread;
+
+  // open thread panel to create thread
+  const handleCreateThread = () => {
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: true,
+      originalMessage: message,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+  };
+
+  // join the thread
+  const handleClickThreadTitle = () => {
+    rootStore.threadStore.joinChatThread(message.chatThreadOverview?.id || '');
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: false,
+      originalMessage: message,
+      info: message.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+
+    rootStore.threadStore.getChatThreadDetail(message?.chatThreadOverview?.id || '');
+  };
+
   return (
     <div style={style}>
       <BaseMessage
@@ -233,6 +275,10 @@ let ImageMessage = (props: ImageMessageProps) => {
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
         renderUserProfile={renderUserProfile}
+        onCreateThread={handleCreateThread}
+        thread={_thread}
+        chatThreadOverview={message.chatThreadOverview}
+        onClickThreadTitle={handleClickThreadTitle}
         {...others}
       >
         <div className="message-image-content">{img.current}</div>

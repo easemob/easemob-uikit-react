@@ -29,25 +29,6 @@ export interface CombinedMessageProps extends BaseMessageProps {
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
 }
 
-const comMsg = {
-  id: '1174219449960499156',
-  type: 'combine',
-  chatType: 'singleChat',
-  to: 'zd5',
-  from: 'wy1',
-  ext: {},
-  time: 1690959070333,
-  onlineState: 3,
-  title: '聊天记录',
-  summary: 'zd5: asd\nzd2: 123123\nzd2: hello\n',
-  url: 'http://a41-cn.easemob.com/41117440/383391/chatfiles/9a9dfad0-3293-11ee-a1e2-db9c4d0f779d?em-redirect=true&share-secret=mp4h4DKTEe67L5_Rd94q0LWToKOcGbHs9xUX08eDSrLEivgt',
-  secret: 'mp4h4DKTEe67L5_Rd94q0LWToKOcGbHs9xUX08eDSrLEivgt',
-  file_length: 189,
-  filename: '426005469894',
-  compatibleText: '版本过低',
-  combineLevel: 0,
-  bySelf: false,
-};
 const CombinedMessage = (props: CombinedMessageProps) => {
   let {
     combinedMessage,
@@ -57,6 +38,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     prefix: customizePrefixCls,
     className,
     renderUserProfile,
+    thread,
     ...others
   } = props;
   //   combinedMessage = comMsg;
@@ -328,6 +310,40 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     );
     console.log('设置', rootStore.messageStore);
   };
+
+  // @ts-ignore
+  let _thread =
+    // @ts-ignore
+    combinedMessage.chatType == 'groupChat' &&
+    thread &&
+    // @ts-ignore
+    !combinedMessage.chatThread &&
+    !combinedMessage.isChatThread;
+
+  // open thread panel to create thread
+  const handleCreateThread = () => {
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: true,
+      originalMessage: combinedMessage,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+  };
+
+  // join the thread
+  const handleClickThreadTitle = () => {
+    rootStore.threadStore.joinChatThread(combinedMessage.chatThreadOverview?.id || '');
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: false,
+      originalMessage: combinedMessage,
+      info: combinedMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+
+    rootStore.threadStore.getChatThreadDetail(combinedMessage?.chatThreadOverview?.id || '');
+  };
+
   return (
     <>
       <BaseMessage
@@ -352,6 +368,10 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         onSelectMessage={handleSelectMessage}
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
+        onCreateThread={handleCreateThread}
+        thread={_thread}
+        chatThreadOverview={combinedMessage.chatThreadOverview}
+        onClickThreadTitle={handleClickThreadTitle}
         {...others}
       >
         <div className={classString}>

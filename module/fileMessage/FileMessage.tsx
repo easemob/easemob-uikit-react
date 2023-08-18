@@ -10,6 +10,7 @@ import download from '../utils/download';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
+import { AgoraChat } from 'agora-chat';
 export interface FileMessageProps extends BaseMessageProps {
   fileMessage: FileMessageType; // 从SDK收到的文件消息
   iconType?: IconProps['type'];
@@ -31,6 +32,7 @@ const FileMessage = (props: FileMessageProps) => {
     className,
     nickName,
     renderUserProfile,
+    thread,
     ...baseMsgProps
   } = props;
 
@@ -196,6 +198,40 @@ const FileMessage = (props: FileMessageProps) => {
     );
     console.log('设置', rootStore.messageStore);
   };
+
+  // @ts-ignore
+  let _thread =
+    // @ts-ignore
+    fileMessage.chatType == 'groupChat' &&
+    thread &&
+    // @ts-ignore
+    !fileMessage.chatThread &&
+    !fileMessage.isChatThread;
+
+  // open thread panel to create thread
+  const handleCreateThread = () => {
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: true,
+      originalMessage: fileMessage,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+  };
+
+  // join the thread
+  const handleClickThreadTitle = () => {
+    rootStore.threadStore.joinChatThread(fileMessage.chatThreadOverview?.id || '');
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: false,
+      originalMessage: fileMessage,
+      info: fileMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+
+    rootStore.threadStore.getChatThreadDetail(fileMessage?.chatThreadOverview?.id || '');
+  };
+
   return (
     <BaseMessage
       id={fileMessage.id}
@@ -216,6 +252,10 @@ const FileMessage = (props: FileMessageProps) => {
       renderUserProfile={renderUserProfile}
       select={select}
       onMessageCheckChange={handleMsgCheckChange}
+      onCreateThread={handleCreateThread}
+      thread={_thread}
+      chatThreadOverview={fileMessage.chatThreadOverview}
+      onClickThreadTitle={handleClickThreadTitle}
       {...baseMsgProps}
     >
       <div className={classString}>

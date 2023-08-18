@@ -45,7 +45,13 @@ let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
   const { messageStore } = rootStore;
 
-  const { prefix: customizePrefixCls, className, renderMessage, renderUserProfile, conversation } = props;
+  const {
+    prefix: customizePrefixCls,
+    className,
+    renderMessage,
+    renderUserProfile,
+    conversation,
+  } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
   const classString = classNames(prefixCls, className);
@@ -83,6 +89,7 @@ let MessageList: FC<MsgListProps> = props => {
           audioMessage={messageData[data.index] as AgoraChat.AudioMsgBody}
           style={data.style}
           renderUserProfile={renderUserProfile}
+          thread={true}
         ></AudioMessage>
       );
     } else if (messageData[data.index].type == 'img') {
@@ -99,6 +106,7 @@ let MessageList: FC<MsgListProps> = props => {
           imageMessage={messageData[data.index]}
           style={data.style}
           renderUserProfile={renderUserProfile}
+          thread={true}
         ></ImageMessage>
       );
     } else if (messageData[data.index].type == 'file') {
@@ -109,6 +117,7 @@ let MessageList: FC<MsgListProps> = props => {
           fileMessage={messageData[data.index]}
           style={data.style}
           renderUserProfile={renderUserProfile}
+          thread={true}
         ></FileMessage>
       );
     } else if (messageData[data.index].type == 'recall') {
@@ -149,6 +158,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           combinedMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
+          thread={true}
         ></CombinedMessage>
       );
     }

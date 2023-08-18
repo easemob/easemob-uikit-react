@@ -9,6 +9,7 @@ import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
 import { observer } from 'mobx-react-lite';
 import { getCvsIdFromMessage } from '../utils';
+import { AgoraChat } from 'agora-chat';
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -28,6 +29,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     className,
     type,
     renderUserProfile,
+    thread,
     ...others
   } = props;
 
@@ -216,6 +218,39 @@ const AudioMessage = (props: AudioMessageProps) => {
     );
     console.log('设置', rootStore.messageStore);
   };
+
+  // @ts-ignore
+  let _thread =
+    // @ts-ignore
+    audioMessage.chatType == 'groupChat' &&
+    thread &&
+    // @ts-ignore
+    !audioMessage.chatThread &&
+    !audioMessage.isChatThread;
+
+  // open thread panel to create thread
+  const handleCreateThread = () => {
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: true,
+      originalMessage: audioMessage,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+  };
+
+  // join the thread
+  const handleClickThreadTitle = () => {
+    rootStore.threadStore.joinChatThread(audioMessage.chatThreadOverview?.id || '');
+    rootStore.threadStore.setCurrentThread({
+      visible: true,
+      creating: false,
+      originalMessage: audioMessage,
+      info: audioMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+    });
+    rootStore.threadStore.setThreadVisible(true);
+
+    rootStore.threadStore.getChatThreadDetail(audioMessage?.chatThreadOverview?.id || '');
+  };
   return (
     <BaseMessage
       id={audioMessage.id}
@@ -237,6 +272,10 @@ const AudioMessage = (props: AudioMessageProps) => {
       select={select}
       onMessageCheckChange={handleMsgCheckChange}
       renderUserProfile={renderUserProfile}
+      onCreateThread={handleCreateThread}
+      thread={_thread}
+      chatThreadOverview={audioMessage.chatThreadOverview}
+      onClickThreadTitle={handleClickThreadTitle}
       {...others}
     >
       <div className={classString} onClick={playAudio} style={{ ...style }}>

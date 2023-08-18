@@ -18,6 +18,9 @@ $combine-msg-prefix-cls: #{$cui-prefix}-message-combine;
         &>p{
             margin: 0;
             flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     }
     &-line{
