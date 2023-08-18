@@ -41,7 +41,8 @@ enum ICON_TYPES {
   SELECT = 'SELECT',
   GO_TO_CHAT = 'GO_TO_CHAT',
   ADD_FRIEND = 'ADD_FRIEND',
-  THREAD = 'THREAD'
+  THREAD = 'THREAD',
+  ENVELOPE = 'ENVELOPE',
 }
 // chevron_down
 export { ICON_TYPES };

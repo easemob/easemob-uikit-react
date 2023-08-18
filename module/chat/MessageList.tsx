@@ -26,7 +26,7 @@ import AC, { AgoraChat } from 'agora-chat';
 import { cloneElement } from '../../component/_utils/reactNode';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import type { RecallMessage } from '../store/MessageStore';
-import { RecalledMessage } from '../recalledMessage';
+import RecalledMessage from '../recalledMessage';
 import CombinedMessage from '../combinedMessage';
 import { renderUserProfileProps } from '../baseMessage';
 import { CurrentConversation } from '../store/ConversationStore';

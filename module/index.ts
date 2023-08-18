@@ -6,12 +6,16 @@ import NoticeMessage from './noticeMessage';
 import TextMessage from './textMessage';
 import VideoMessage from './videoMessage';
 import MessageStatus from './messageStatus';
-import Chat from './chat';
+import CombinedMessage from './recalledMessage';
+import { RepliedMsg, UnsentRepliedMsg } from './repliedMessage';
+
+import Chat, { MessageList } from './chat';
 import { ContactList } from './contactList';
 import { ConversationList, ConversationItem } from './conversation';
 import MessageEditor from './messageEditor';
 import Header from './header';
 import Empty from './empty';
+import RecalledMessage from './recalledMessage';
 
 import rootStore from './store/index';
 import { RootContext, RootProvider, RootConsumer } from './store/rootContext';
@@ -29,14 +33,19 @@ export {
   NoticeMessage,
   TextMessage,
   VideoMessage,
+  CombinedMessage,
+  RepliedMsg,
+  UnsentRepliedMsg,
   MessageStatus,
   Chat,
+  MessageList,
   ContactList,
   ConversationList,
   ConversationItem,
   MessageEditor,
   Header,
   Empty,
+  RecalledMessage,
   rootStore,
   RootContext,
   RootProvider,

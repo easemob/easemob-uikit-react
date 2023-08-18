@@ -29,7 +29,7 @@ interface CustomAction {
   actions?: {
     icon?: ReactNode;
     content?: string;
-    onClick?: () => void;
+    onClick?: (message: BaseMessageType) => void;
   }[];
 }
 
@@ -375,9 +375,10 @@ let BaseMessage = (props: BaseMessageProps) => {
             <li
               key={index}
               onClick={() => {
-                item.onClick?.();
+                item.onClick?.(message);
               }}
             >
+              {item.icon && item.icon}
               {item.content}
             </li>
           );

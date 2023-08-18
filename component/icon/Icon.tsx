@@ -45,6 +45,7 @@ import { ReactComponent as Select } from '../svgs/icons/checked_ellipse.svg';
 import { ReactComponent as GoToChat } from '../svgs/icons/gotoMessage.svg';
 import { ReactComponent as AddFriend } from '../svgs/icons/person_add_fill.svg';
 import { ReactComponent as Thread } from '../svgs/icons/hashtag_in_bubble.svg';
+import { ReactComponent as Envelope } from '../svgs/icons/envelope.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -177,6 +178,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'THREAD':
       return <Thread></Thread>;
+      break;
+    case 'ENVELOPE':
+      return <Envelope></Envelope>;
       break;
     default:
       return '';
