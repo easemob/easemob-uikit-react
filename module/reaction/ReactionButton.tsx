@@ -40,8 +40,8 @@ const ReactionButton = (props: ReactionButtonProps) => {
   const prefixCls = getPrefixCls('reaction-btn', customizePrefixCls);
   const rootStore = useContext(RootContext).rootStore;
   const myUserId = rootStore.client.user;
+  const { appUsersInfo } = rootStore.addressStore;
   const path = emoji.map[reaction as keyof typeof emoji.map];
-  const [open, setOpen] = useState(false);
 
   const classString = classNames(
     prefixCls,
@@ -69,8 +69,12 @@ const ReactionButton = (props: ReactionButtonProps) => {
         {userList.map(userId => {
           return (
             <li key={userId}>
-              <Avatar size={24}></Avatar>
-              <span className={`${prefixCls}-userList-name`}>{userId}</span>
+              <Avatar src={appUsersInfo[userId].avatarurl} size={24}>
+                {appUsersInfo[userId].nickname || userId}
+              </Avatar>
+              <span className={`${prefixCls}-userList-name`}>
+                {appUsersInfo[userId].nickname || userId}
+              </span>
               {myUserId == userId && (
                 <Icon
                   type="CROSS"
