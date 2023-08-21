@@ -35,6 +35,8 @@ export interface TextMessageProps extends BaseMessageProps {
   style?: React.CSSProperties;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
   onCreateThread?: () => void;
+  onTranslateMessage?: (textMessage: TextMessageType) => boolean;
+  targetLanguage?: string;
 }
 
 export const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
@@ -137,8 +139,11 @@ const TextMessage = (props: TextMessageProps) => {
     bubbleClass,
     renderUserProfile,
     thread,
+    onTranslateMessage,
+    targetLanguage = 'en',
     ...others
   } = props;
+  if (!textMessage.chatType) return null;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-text', customizePrefixCls);
   const { t } = useTranslation();
@@ -299,6 +304,10 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleTranslateMessage = () => {
+    const result = onTranslateMessage?.(textMessage);
+    if (result == false) {
+      return;
+    }
     setTransStatus('translating');
     let conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore
@@ -309,7 +318,7 @@ const TextMessage = (props: TextMessageProps) => {
         },
         // @ts-ignore
         textMessage.mid || textMessage.id,
-        'zh',
+        targetLanguage,
       )
       ?.then(() => {
         setTransStatus('translated');
@@ -417,6 +426,7 @@ const TextMessage = (props: TextMessageProps) => {
     // @ts-ignore
     textMessage.chatType == 'groupChat' &&
     thread &&
+    // @ts-ignore
     !textMessage.chatThread &&
     !textMessage.isChatThread;
   const handleClickThreadTitle = () => {
