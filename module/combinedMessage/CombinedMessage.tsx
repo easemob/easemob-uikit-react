@@ -162,7 +162,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     let node = data.map(msg => {
       let content;
 
-      switch (msg.type) {
+      switch (msg?.type) {
         case 'txt':
           content = (
             <TextMessage

@@ -4,7 +4,7 @@ import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
 import './style/style.scss';
 import { RootContext } from '../../store/rootContext';
-import AgoraChat from 'agora-chat';
+import AC, { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
 import Modal from '../../../component/modal';
 import { CurrentConversation } from '../../store/ConversationStore';
@@ -88,22 +88,15 @@ const SelectedControls = (props: SelectedControlsProps) => {
       summary: summary,
       messageList: selectedMessages,
       onFileUploadComplete: (data: any) => {
-        console.log('data', data);
+       rootStore.messageStore.message.byId[msg.id].url = data.url;
+       rootStore.messageStore.message.byId[msg.id].secret = data.secret;
       },
     };
     console.log(option);
     // @ts-ignore
-    let msg = AgoraChat.message.create(option);
+    let msg = AC.message.create(option);
     onSendMessage?.(msg);
     return;
-    rootStore.client
-      .send(msg)
-      .then((res: any) => {
-        console.log('发送成功', res, msg);
-      })
-      .catch((err: any) => {
-        console.log('发送失败', err);
-      });
   };
 
   const iconClass = classNames(`${prefixCls}-iconBox`, {

@@ -6,7 +6,7 @@ import NoticeMessage from './noticeMessage';
 import TextMessage from './textMessage';
 import VideoMessage from './videoMessage';
 import MessageStatus from './messageStatus';
-import CombinedMessage from './recalledMessage';
+import CombinedMessage from './combinedMessage';
 import { RepliedMsg, UnsentRepliedMsg } from './repliedMessage';
 
 import Chat, { MessageList } from './chat';
