@@ -36,9 +36,9 @@ const ChatApp = () => {
     client &&
       client
         .open({
-          user: 'zd2',
+          user: 'stwang',
           // pwd: '272808',
-          accessToken: '',
+          accessToken: 'YWMtBwA_2MfrRFOfe5rSK2kuAChYwv00w0hrtpGKy_Jc3V1XHZqAA-cR7bNqndS133gvAwMAAAGKGw2roAABUX4gi1ExiM1sVxNX8-0saQl7x77coueWvJVPhnS8UOzRRg==',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);

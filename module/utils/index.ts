@@ -5,6 +5,7 @@ import type { RecallMessage } from '../store/MessageStore';
 import { GroupItem, MemberItem } from '../store/AddressStore';
 import { emoji } from '../messageEditor/emoji/emojiConfig';
 import { AppUserInfo } from '../store/AddressStore';
+import { CurrentConversation } from '../store/ConversationStore';
 
 export function getConversationTime(time: number) {
   if (!time) return '';
@@ -198,4 +199,22 @@ export function getGroupMemberNickName(member: MemberItem) {
 export function getAppUserInfo(userId: string) {
   const { appUsersInfo } = rootStore.addressStore;
   return appUsersInfo?.[userId] || {};
+}
+
+export function getMessages(cvs: CurrentConversation) {
+  const { message } = rootStore.messageStore;
+  return message[cvs.chatType][cvs.conversationId];
+}
+
+export function getMessageIndex(
+  messages: (AgoraChat.MessageBody | RecallMessage)[],
+  messageId: string,
+) {
+  //@ts-ignore
+  return messages.findIndex(msg => msg.id === messageId || msg.mid === messageId);
+}
+
+export function getReactionByEmoji(message: AgoraChat.MessageBody | RecallMessage, emoji: string) {
+  // @ts-ignore
+  return message.reactions?.find(reaction => reaction.reaction === emoji);
 }

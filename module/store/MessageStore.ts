@@ -1,9 +1,9 @@
 // import client from './agoraChatConfig';
 import AC, { AgoraChat } from 'agora-chat';
-import { makeAutoObservable, observable, action, computed, makeObservable, autorun } from 'mobx';
+import { observable, action, computed, makeObservable, autorun } from 'mobx';
 import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
-import { getCvsIdFromMessage } from '../utils';
+import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji } from '../utils';
 import { RootStore } from './index';
 import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
 export interface RecallMessage {
@@ -393,18 +393,16 @@ class MessageStore {
         to: cvs.conversationId,
         mid: messageId,
       })
-      .then(data => {
-        const messages = this.message[cvs.chatType][cvs.conversationId];
-        messages.forEach(msg => {
-          // @ts-ignore
-          if (msg.mid === messageId || msg.id === messageId) {
-            msg.type = 'recall';
-            msg.ext = {};
-          }
-        });
-        this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+      .then(() => {
+        const messages = getMessages(cvs);
+        const msgIndex = getMessageIndex(messages, messageId);
+        if (msgIndex > -1) {
+          messages[msgIndex].type = 'recall';
+          //@ts-ignore
+          messages[msgIndex].ext = {};
+        }
       })
-      .catch(() => {
+      .catch(e => {
         // TODO: alert error
       });
   }
@@ -418,35 +416,29 @@ class MessageStore {
         reaction: emoji,
       })
       .then(() => {
-        const messages = this.message[cvs.chatType][cvs.conversationId];
-        messages.forEach(message => {
-          // @ts-ignore
-          if (message.id === messageId || message.mid === messageId) {
-            let hasEmoji = false;
-            message.reactions?.forEach((action: ReactionData) => {
-              if (action.reaction === emoji) {
-                hasEmoji = true;
-                action.count += 1;
-                action.isAddedBySelf = true;
-                action.userList.unshift(this.rootStore.client.user);
-              }
-            });
-            if (!hasEmoji) {
-              const newAction = {
-                count: 1,
-                isAddedBySelf: true,
-                reaction: emoji,
-                userList: [this.rootStore.client.user],
-              };
-              if (Array.isArray(message.reactions)) {
-                message.reactions.push(newAction);
-              } else {
-                message.reactions = [newAction];
-              }
+        const messages = getMessages(cvs);
+        const messageIndex = getMessageIndex(messages, messageId);
+        if (messageIndex > -1) {
+          const message = messages[messageIndex];
+          const reaction = getReactionByEmoji(message, emoji);
+          if (reaction) {
+            reaction.count += 1;
+            reaction.isAddedBySelf = true;
+            reaction.userList.unshift(this.rootStore.client.user);
+          } else {
+            const newAction = {
+              count: 1,
+              isAddedBySelf: true,
+              reaction: emoji,
+              userList: [this.rootStore.client.user],
+            };
+            if (Array.isArray(message.reactions)) {
+              messages[messageIndex].reactions.push(newAction);
+            } else {
+              messages[messageIndex].reactions = [newAction];
             }
           }
-        });
-        this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+        }
         // const filterMsgs = messages.filter(msg => {
         //   // @ts-ignore
         //   return msg.id != messageId && msg.mid != messageId;
@@ -464,29 +456,25 @@ class MessageStore {
     return this.rootStore.client
       .deleteReaction({
         messageId,
-        reaction: emoji,
+        reaction: encodeURIComponent(emoji),
       })
       .then(() => {
-        const messages = this.message[cvs.chatType][cvs.conversationId];
-        messages.forEach(message => {
-          // @ts-ignore
-          if (message.id === messageId || message.mid === messageId) {
-            message.reactions?.forEach((action: ReactionData, i: number) => {
-              if (action.reaction === emoji) {
-                action.count -= 1;
-                if (action.count <= 0) {
-                  message.reactions?.splice(i, 1);
-                }
-                const index = action.userList.indexOf(this.rootStore.client.user);
-                if (index > -1) {
-                  action.userList.splice(index, 1);
-                }
-              }
-            });
+        const messages = getMessages(cvs);
+        const messageIndex = getMessageIndex(messages, messageId);
+        if (messageIndex > -1) {
+          const message = messages[messageIndex];
+          const reaction = getReactionByEmoji(message, emoji);
+          if (reaction) {
+            reaction.count -= 1;
+            if (reaction.count <= 0) {
+              message.reactions?.splice(message.reactions?.indexOf(reaction), 1);
+            }
+            const index = reaction.userList?.indexOf(this.rootStore.client.user);
+            if (index > -1) {
+              reaction.userList.splice(index, 1);
+            }
           }
-
-          this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
-        });
+        }
       })
       .catch((err: AgoraChat.ErrorEvent) => {
         console.error(err);
@@ -496,59 +484,53 @@ class MessageStore {
   updateReactions(cvs: CurrentConversation, messageId: string, reactions: ReactionData[]) {
     console.log('updateReactions', cvs, messageId, reactions);
     if (!cvs || !messageId) return;
-    const messages = this.message[cvs.chatType][cvs.conversationId];
-
-    const filterActs = reactions.filter(item => {
+    const messages = getMessages(cvs);
+    const messageIndex = getMessageIndex(messages, messageId);
+    const message = messages[messageIndex];
+    let list: ReactionData[] = [];
+    const opItem = reactions.filter(item => {
       return item.op?.length && item.op?.length > 0;
-    });
-    messages.forEach(message => {
-      // @ts-ignore
-      if (message.id === messageId || message.mid === messageId) {
-        // The message has not yet been added the reaction
-        if (!message.reactions || message.reactions?.length === 0) {
-          message.reactions = reactions;
-          message.reactions.forEach((item: ReactionData) => {
-            if (item.op) {
-              item.op.forEach(op => {
-                if (op.operator === this.rootStore.client.user && op.reactionType === 'create') {
-                  item.isAddedBySelf = true;
-                }
-              });
-            }
-          });
-        } else {
-          message.reactions.forEach((item: ReactionData) => {
-            filterActs.forEach(filItem => {
-              if (item.reaction === filItem.reaction) {
-                item.count = filItem.count;
-                item.userList = filItem.userList;
-                filItem.op &&
-                  filItem.op.forEach(op => {
-                    if (op.operator === this.rootStore.client.user) {
-                      if (op.reactionType === 'create') {
-                        item.isAddedBySelf = true;
-                      } else {
-                        item.isAddedBySelf = false;
-                      }
-                    }
-                  });
+    })[0];
 
-                if (item.isAddedBySelf) {
-                  const index = item.userList.indexOf(this.rootStore.client.user);
-                  if (index > -1) {
-                    const findItem = item.userList.splice(index, 1)[0];
-                    item.userList.unshift(findItem);
-                  } else {
-                    item.userList.unshift(this.rootStore.client.user);
-                  }
-                }
-              }
-            });
-          });
-        }
+    const hasMsgReactions = message?.reactions;
+    const currentReaction = message?.reactions || [];
+    let idx = currentReaction.findIndex((item: ReactionData) => item.reaction === opItem.reaction);
+    let isAddedBySelf;
+    if (idx > -1) {
+      isAddedBySelf = currentReaction[idx].isAddedBySelf;
+    }
+    if (opItem.op?.[0].operator === this.rootStore.client.user) {
+      isAddedBySelf = opItem.op?.[0].reactionType === 'create' ? true : false;
+    }
+
+    if (hasMsgReactions) {
+      if (idx > -1) {
+        currentReaction[idx] = {
+          ...opItem,
+          isAddedBySelf,
+        };
+      } else {
+        currentReaction.push({
+          ...opItem,
+          isAddedBySelf,
+        });
       }
-    });
-    this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+    } else {
+      list = reactions.map(item => {
+        let isAddedBySelf = false;
+        let op = item.op;
+        if (op && op[0].operator === this.rootStore.client.user) {
+          if (op[0].reactionType === 'create') {
+            isAddedBySelf = true;
+          }
+        }
+        return {
+          ...item,
+          isAddedBySelf,
+        };
+      });
+    }
+    message.reaction = hasMsgReactions || idx > -1 ? currentReaction : list;
   }
 
   getReactionUserList(cvs: CurrentConversation, messageId: string, reaction: string) {
@@ -562,54 +544,45 @@ class MessageStore {
       .then((data: AgoraChat.AsyncResult<AgoraChat.GetReactionDetailResult>) => {
         console.log('getReactionUserList', data);
         const reactionData = data.data;
-        const messages = this.message[cvs.chatType][cvs.conversationId];
+        const messages = getMessages(cvs);
+        const messageIndex = getMessageIndex(messages, messageId);
         if (!reactionData) return;
-        messages.forEach(message => {
-          // @ts-ignore
-          if (message.id === messageId || message.mid === messageId) {
-            message.reactions?.forEach((item: ReactionData) => {
-              if (item.reaction === reaction) {
-                item.userList = reactionData.userList;
-              }
-            });
-          }
-        });
-
-        this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
+        if (messageIndex > -1) {
+          const message = messages[messageIndex];
+          message.reactions.userList = reactionData.userList;
+        }
       });
   }
 
   translateMessage(cvs: CurrentConversation, messageId: string, language: string) {
     if (!cvs || !messageId) return;
-    const messages = this.message[cvs.chatType][cvs.conversationId];
+    const messages = getMessages(cvs);
+    const messageIndex = getMessageIndex(messages, messageId);
     return new Promise((res, rej) => {
-      messages.forEach(message => {
-        // @ts-ignore
-        if (message.id === messageId || message.mid === messageId) {
-          if (message.type !== 'txt') {
-            return console.warn('message type is not txt');
-          }
-          this.rootStore.client
-            .translateMessage({
-              text: message.msg,
-              languages: [language],
-            })
-            .then(data => {
-              console.log(data);
-              if (data.type == 0) {
-                // {text: '发起视频通话', to: 'zh-Hans'}
-                // @ts-ignore
-                const translations = data.data[0]?.translations;
-                message.translations = translations;
-                this.message[cvs.chatType][cvs.conversationId] = messages.concat([]);
-              }
-              res(true);
-            })
-            .catch(() => {
-              rej(false);
-            });
+      if (messageIndex > -1) {
+        let currentMsg = messages[messageIndex];
+        if (currentMsg.type !== 'txt') {
+          return console.warn('message type is not txt');
         }
-      });
+        this.rootStore.client
+          .translateMessage({
+            text: currentMsg.msg,
+            languages: [language],
+          })
+          .then(data => {
+            console.log(data);
+            if (data.type == 0) {
+              // @ts-ignore
+              const translations = data.data[0]?.translations;
+              // @ts-ignore
+              currentMsg.translations = translations;
+            }
+            res(true);
+          })
+          .catch(() => {
+            rej(false);
+          });
+      }
     });
   }
 
