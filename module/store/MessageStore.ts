@@ -486,51 +486,40 @@ class MessageStore {
     if (!cvs || !messageId) return;
     const messages = getMessages(cvs);
     const messageIndex = getMessageIndex(messages, messageId);
-    const message = messages[messageIndex];
-    let list: ReactionData[] = [];
-    const opItem = reactions.filter(item => {
+    const filterActs = reactions.filter(item => {
       return item.op?.length && item.op?.length > 0;
-    })[0];
-
-    const hasMsgReactions = message?.reactions;
-    const currentReaction = message?.reactions || [];
-    let idx = currentReaction.findIndex((item: ReactionData) => item.reaction === opItem.reaction);
-    let isAddedBySelf;
-    if (idx > -1) {
-      isAddedBySelf = currentReaction[idx].isAddedBySelf;
-    }
-    if (opItem.op?.[0].operator === this.rootStore.client.user) {
-      isAddedBySelf = opItem.op?.[0].reactionType === 'create' ? true : false;
-    }
-
-    if (hasMsgReactions) {
-      if (idx > -1) {
-        currentReaction[idx] = {
-          ...opItem,
-          isAddedBySelf,
-        };
+    });
+    if (messageIndex > -1) {
+      const message = messages[messageIndex];
+      // has reaction list
+      if (!message.reactions || message.reactions?.length === 0) {
+        message.reactions = reactions;
+        message.reactions.forEach((item: ReactionData) => {
+          if (item.op) {
+            item.isAddedBySelf = !!item?.op?.find(
+              op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
+            );
+          }
+        });
       } else {
-        currentReaction.push({
-          ...opItem,
-          isAddedBySelf,
+        filterActs.forEach(item => {
+          let reaction = getReactionByEmoji(message, item.reaction);
+          if (reaction) {
+            reaction.count = item.count;
+            reaction.userList = item.userList;
+            reaction.op = item.op;
+            reaction.isAddedBySelf = !!item?.op?.find(
+              op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
+            );
+          } else {
+            item.isAddedBySelf = !!item?.op?.find(
+              op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
+            );
+            message.reactions.push(item);
+          }
         });
       }
-    } else {
-      list = reactions.map(item => {
-        let isAddedBySelf = false;
-        let op = item.op;
-        if (op && op[0].operator === this.rootStore.client.user) {
-          if (op[0].reactionType === 'create') {
-            isAddedBySelf = true;
-          }
-        }
-        return {
-          ...item,
-          isAddedBySelf,
-        };
-      });
     }
-    message.reaction = hasMsgReactions || idx > -1 ? currentReaction : list;
   }
 
   getReactionUserList(cvs: CurrentConversation, messageId: string, reaction: string) {
