@@ -96,10 +96,11 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
+    let conversationId = getCvsIdFromMessage(message);
     rootStore.messageStore.deleteMessage(
       {
         chatType: message.chatType,
-        conversationId: message.to,
+        conversationId: conversationId,
       },
       // @ts-ignore
       message.mid || message.id,

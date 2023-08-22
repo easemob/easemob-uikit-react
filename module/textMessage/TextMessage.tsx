@@ -213,10 +213,11 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
+    let conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore.deleteMessage(
       {
         chatType: textMessage.chatType,
-        conversationId: textMessage.to,
+        conversationId: conversationId,
       },
       // @ts-ignore
       textMessage.mid || textMessage.id,

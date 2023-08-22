@@ -58,10 +58,11 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
+    let conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.deleteMessage(
       {
         chatType: combinedMessage.chatType,
-        conversationId: combinedMessage.to,
+        conversationId: conversationId,
       },
       // @ts-ignore
       combinedMessage.mid || combinedMessage.id,

@@ -91,10 +91,11 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
+    let conversationId = getCvsIdFromMessage(audioMessage);
     rootStore.messageStore.deleteMessage(
       {
         chatType: audioMessage.chatType,
-        conversationId: audioMessage.to,
+        conversationId: conversationId,
       },
       // @ts-ignore
       audioMessage.mid || audioMessage.id,

@@ -72,10 +72,12 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
+    let conversationId = getCvsIdFromMessage(fileMessage);
+
     rootStore.messageStore.deleteMessage(
       {
         chatType: fileMessage.chatType,
-        conversationId: fileMessage.to,
+        conversationId: conversationId,
       },
       // @ts-ignore
       fileMessage.mid || fileMessage.id,
