@@ -25,7 +25,7 @@ import Typing from '../typing';
 import { ThreadModal } from '../thread';
 import ScrollList from '../../component/scrollList';
 import { AgoraChat } from 'agora-chat';
-import { getConversationTime } from '../utils/index';
+import { getConversationTime, getCvsIdFromMessage } from '../utils/index';
 // import rootStore from '../store';
 export interface ChatProps {
   prefix?: string;
@@ -102,7 +102,7 @@ const Chat: FC<ChatProps> = props => {
   }, [rootStore.conversationStore.currentCvs]);
 
   const repliedMsg = rootStore.messageStore.repliedMessage;
-  const replyCvsId = repliedMsg?.to;
+  const replyCvsId = getCvsIdFromMessage(repliedMsg || {})
   const showReply = repliedMsg && replyCvsId === CVS.conversationId;
 
   // --------- thread -----------
