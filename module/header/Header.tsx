@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
@@ -57,6 +57,9 @@ const Header: FC<HeaderProps> = props => {
   const clickClose = () => {
     onClickClose?.();
   };
+
+  const [menuOpen, setMenuOpen] = useState(false);
+
   let menuNode;
   if (moreAction?.visible) {
     menuNode = (
@@ -67,6 +70,7 @@ const Header: FC<HeaderProps> = props => {
             <li
               key={index}
               onClick={() => {
+                setMenuOpen(false);
                 item.onClick?.();
               }}
             >
@@ -113,7 +117,15 @@ const Header: FC<HeaderProps> = props => {
         >
           {suffixIcon}
           {moreAction?.visible && (
-            <Tooltip title={menuNode} trigger="click" placement="bottom">
+            <Tooltip
+              title={menuNode}
+              trigger="click"
+              placement="bottom"
+              open={menuOpen}
+              onOpenChange={c => {
+                setMenuOpen(c);
+              }}
+            >
               {
                 <Button type="text" shape="circle">
                   <Icon type="ELLIPSIS"></Icon>

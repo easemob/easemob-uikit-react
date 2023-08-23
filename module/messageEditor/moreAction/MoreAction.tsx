@@ -67,7 +67,13 @@ let MoreAction = (props: MoreActionProps) => {
     <ul className={classString}>
       {actions2.map((item, index) => {
         return (
-          <li onClick={item.onClick} key={item.key || index}>
+          <li
+            onClick={() => {
+              setMenuOpen(false);
+              item?.onClick();
+            }}
+            key={item.key || index}
+          >
             {item.title}
           </li>
         );
@@ -126,9 +132,19 @@ let MoreAction = (props: MoreActionProps) => {
     messageStore.sendMessage(fileMessage);
   };
 
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <>
-      <Tooltip title={menu} trigger="click" arrowPointAtCenter={false} arrow={false}>
+      <Tooltip
+        title={menu}
+        trigger="click"
+        arrowPointAtCenter={false}
+        arrow={false}
+        open={menuOpen}
+        onOpenChange={c => {
+          setMenuOpen(c);
+        }}
+      >
         {iconNode}
       </Tooltip>
       {
