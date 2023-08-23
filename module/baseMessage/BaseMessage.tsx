@@ -86,7 +86,7 @@ const getMsgSenderNickname = (msg: BaseMessageType) => {
   const { appUsersInfo } = getStore().addressStore;
   if (chatType === 'groupChat') {
     let group = getGroupItemFromGroupsById(to);
-    let memberIndex = (group && getGroupMemberIndexByUserId(group, from)) || -1;
+    let memberIndex = (group && getGroupMemberIndexByUserId(group, from)) ?? -1;
     if (memberIndex > -1) {
       let memberItem = group?.members?.[memberIndex];
       if (memberItem) {
