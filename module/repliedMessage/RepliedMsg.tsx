@@ -117,7 +117,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       case 'file':
         content = (
           <div className={`${prefixCls}-content-text`}>
-            <Icon type="DOC" color="#75828A" width={16} height={16}></Icon>
+            <Icon type="DOC" color="#75828A" width={20} height={20}></Icon>
             <span>Attachment:</span> {(repliedMsg as AgoraChat.FileMsgBody).filename}
           </div>
         );
@@ -125,7 +125,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       case 'audio':
         content = (
           <div className={`${prefixCls}-content-text`}>
-            <Icon type="WAVE3" color="#75828A" width={16} height={16}></Icon>
+            <Icon type="WAVE3" color="#75828A" width={20} height={20}></Icon>
             <span>Audio:</span>
             {(repliedMsg as AgoraChat.AudioMsgBody).length}"
           </div>
@@ -143,6 +143,14 @@ const RepliedMsg = (props: RepliedMsgProps) => {
                 }
               ></img>
             </div>
+          </div>
+        );
+        break;
+      case 'combine':
+        content = (
+          <div className={`${prefixCls}-content-text`}>
+            <Icon type="TIME" color="#75828A" width={20} height={20}></Icon>
+            <span>{t('module.chatHistory')}</span>
           </div>
         );
         break;
@@ -174,7 +182,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       }}
     >
       <div className={`${prefixCls}-nick`}>
-        <Icon type="ARROW_TURN_LEFT" width={16} height={16} color="#5270AD"></Icon>
+        <Icon type="ARROW_TURN_LEFT" width={20} height={20} color="#5270AD"></Icon>
         <span>{from}</span>
         {t('module.repliedTo')}
         <span>{to}</span>

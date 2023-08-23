@@ -13,12 +13,13 @@ export interface RecalledMessageProps extends TextMessageProps {
 }
 
 const RecalledMessage = (props: RecalledMessageProps) => {
-  const { message = {}, prefixCls: customizePrefixCls, className } = props;
+  const { message, prefixCls: customizePrefixCls, className } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-recall', customizePrefixCls);
   const classSting = classNames(prefixCls, className);
-  if (!message.chatType) {
+  // @ts-ignore
+  if (!message?.chatType) {
     return null;
   }
   const { t } = useTranslation();

@@ -166,7 +166,7 @@ const TextMessage = (props: TextMessageProps) => {
 
   // --------------- translation -----------
   const [btnText, setBtnText] = useState('hide');
-  const [transStatus, setTransStatus] = useState('');
+  const [transStatus, setTransStatus] = useState('translated');
   const transPrefix = getPrefixCls('message-text-translation', customizePrefixCls);
   const modifyPrefix = getPrefixCls('modify-textarea', customizePrefixCls);
   const translationClass = classNames(transPrefix, {
@@ -474,30 +474,32 @@ const TextMessage = (props: TextMessageProps) => {
         onClickThreadTitle={handleClickThreadTitle}
         {...others}
       >
-        <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
-        {!!(urlData?.title || urlData?.description) && (
-          <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
-        )}
-        {
-          // @ts-ignore
-          (textMessage.translations || transStatus == 'translating') && (
-            <div className={translationClass}>
-              <div className={`${transPrefix}-line`}></div>
-              <span className={`${transPrefix}-text`}>
-                {
-                  // @ts-ignore
-                  renderTxt(textMessage.translations?.[0]?.text, detectedUrl)
-                }
-              </span>
-              <div className={`${transPrefix}-action`}>
-                <Icon type="TRANSLATION" width={16} height={16}></Icon>
-                <span>{t(`module.${transStatus}`)}</span>
-                <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+        <div>
+          <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
+          {!!(urlData?.title || urlData?.description) && (
+            <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
+          )}
+          {
+            // @ts-ignore
+            (textMessage.translations || transStatus == 'translating') && (
+              <div className={translationClass}>
+                <div className={`${transPrefix}-line`}></div>
+                <span className={`${transPrefix}-text`}>
+                  {
+                    // @ts-ignore
+                    renderTxt(textMessage.translations?.[0]?.text, detectedUrl)
+                  }
+                </span>
+                <div className={`${transPrefix}-action`}>
+                  <Icon type="TRANSLATION" width={16} height={16}></Icon>
+                  <span>{t(`module.${transStatus}`)}</span>
+                  <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+                </div>
               </div>
-            </div>
-          )
-        }
-        {textMessage?.modifiedInfo ? <div className={`${classString}-edit-tag`}>Edited</div> : ''}
+            )
+          }
+          {textMessage?.modifiedInfo ? <div className={`${classString}-edit-tag`}>Edited</div> : ''}
+        </div>
       </BaseMessage>
       {/* Modify Message Modal */}
       {
