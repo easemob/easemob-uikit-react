@@ -54,7 +54,8 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
             word-break: break-all;
             .cui-icon{
                 float: left;
-                margin-top: 2px;
+                // margin-top: 2px;
+                margin-right: 2px;
             }
             &-not{
                 font-style: italic;

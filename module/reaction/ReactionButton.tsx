@@ -69,11 +69,11 @@ const ReactionButton = (props: ReactionButtonProps) => {
         {userList.map(userId => {
           return (
             <li key={userId}>
-              <Avatar src={appUsersInfo[userId].avatarurl} size={24}>
-                {appUsersInfo[userId].nickname || userId}
+              <Avatar src={appUsersInfo[userId]?.avatarurl} size={24}>
+                {appUsersInfo[userId]?.nickname || userId}
               </Avatar>
               <span className={`${prefixCls}-userList-name`}>
-                {appUsersInfo[userId].nickname || userId}
+                {appUsersInfo[userId]?.nickname || userId}
               </span>
               {myUserId == userId && (
                 <Icon
