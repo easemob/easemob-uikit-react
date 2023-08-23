@@ -26,7 +26,7 @@ export interface CombinedMessageProps extends BaseMessageProps {
   bubbleClass?: string;
   // @ts-ignore
   onShowDetail?: (msg: AgoraChat.CombineMsgBody) => void;
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
 
 const CombinedMessage = (props: CombinedMessageProps) => {
@@ -364,6 +364,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         onDeleteReactionEmoji={handleDeleteEmoji}
         onShowReactionUserList={handleShowReactionUserList}
         onRecallMessage={handleRecallMessage}
+        renderUserProfile={renderUserProfile}
         //   onTranslateMessage={handleTranslateMessage}
 
         onSelectMessage={handleSelectMessage}

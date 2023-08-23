@@ -35,7 +35,7 @@ export interface MsgListProps {
   className?: string;
   style?: React.CSSProperties;
   renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
 }
 

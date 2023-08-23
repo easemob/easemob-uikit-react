@@ -18,7 +18,7 @@ export interface FileMessageProps extends BaseMessageProps {
   className?: string;
   nickName?: string;
   type?: 'primary' | 'secondly';
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
 
 const FileMessage = (props: FileMessageProps) => {

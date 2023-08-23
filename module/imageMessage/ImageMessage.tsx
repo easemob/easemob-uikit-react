@@ -16,7 +16,7 @@ export interface ImageMessageProps extends BaseMessageProps {
   prefix?: string;
   style?: React.CSSProperties;
   onClickImage?: (url: string) => void;
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
 
 let ImageMessage = (props: ImageMessageProps) => {

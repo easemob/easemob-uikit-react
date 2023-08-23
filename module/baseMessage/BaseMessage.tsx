@@ -74,7 +74,7 @@ export interface BaseMessageProps {
   onModifyMessage?: () => void;
   onSelectMessage?: () => void; // message select action handler
   onMessageCheckChange?: (checked: boolean) => void;
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
   thread?: boolean; // whether show thread
   chatThreadOverview?: AgoraChat.ThreadOverview;
@@ -174,6 +174,8 @@ let BaseMessage = (props: BaseMessageProps) => {
   );
 
   const hasBubble = bubbleType !== 'none';
+
+  const CustomProfile = renderUserProfile?.({ userId: message?.from || '' });
 
   const clickThreadTitle = () => {
     console.log('click thread title');
@@ -434,17 +436,18 @@ let BaseMessage = (props: BaseMessageProps) => {
             setHoverStatus(false);
           }}
         >
-          <Tooltip
-            title={
-              renderUserProfile?.({ userId: message?.from || '' }) || (
-                <UserProfile userId={message?.from || ''} />
-              )
-            }
-            trigger="click"
-            placement="topLeft"
-          >
-            {avatarToShow}
-          </Tooltip>
+          {renderUserProfile && !CustomProfile ? (
+            <>{avatarToShow}</>
+          ) : (
+            <Tooltip
+              title={CustomProfile || <UserProfile userId={message?.from || ''} />}
+              trigger="click"
+              placement="topLeft"
+            >
+              {avatarToShow}
+            </Tooltip>
+          )}
+
           <div className={`${prefixCls}-box`}>
             {showRepliedMsg ? (
               <RepliedMsg message={repliedMessage} shape={shape} direction={direction}></RepliedMsg>

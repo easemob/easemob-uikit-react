@@ -16,7 +16,7 @@ export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> 
   style?: React.CSSProperties;
   className?: string;
   type?: 'primary' | 'secondly';
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
 
 const AudioMessage = (props: AudioMessageProps) => {

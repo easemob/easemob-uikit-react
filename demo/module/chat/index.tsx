@@ -36,9 +36,10 @@ const ChatApp = () => {
     client &&
       client
         .open({
-          user: 'stwang',
+          user: 'zd',
           // pwd: '272808',
-          accessToken: 'YWMtBwA_2MfrRFOfe5rSK2kuAChYwv00w0hrtpGKy_Jc3V1XHZqAA-cR7bNqndS133gvAwMAAAGKGw2roAABUX4gi1ExiM1sVxNX8-0saQl7x77coueWvJVPhnS8UOzRRg==',
+          accessToken:
+            '',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
@@ -136,7 +137,13 @@ const ChatApp = () => {
         }}
       >
         <div style={{ flex: 1, borderLeft: '1px solid transparent', overflow: 'hidden' }}>
-          <Chat></Chat>
+          <Chat
+            messageListProps={{
+              renderUserProfile: () => {
+                return null;
+              },
+            }}
+          ></Chat>
         </div>
         {thread.showThreadPanel && (
           <div

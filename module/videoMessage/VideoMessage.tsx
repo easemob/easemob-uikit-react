@@ -16,7 +16,7 @@ export interface VideoMessageProps {
   prefix?: string;
   style?: React.CSSProperties;
   status?: 'received' | 'read' | 'sent' | 'sending';
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
 const VideoMessage = (props: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);

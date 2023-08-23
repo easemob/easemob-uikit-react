@@ -33,7 +33,7 @@ export interface TextMessageProps extends BaseMessageProps {
   bubbleClass?: string;
   children?: string;
   style?: React.CSSProperties;
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactElement;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
   onTranslateMessage?: (textMessage: TextMessageType) => boolean;
   targetLanguage?: string;
