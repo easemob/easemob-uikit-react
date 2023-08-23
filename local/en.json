@@ -43,6 +43,7 @@
         "createThread": "Create Thread",
         "threadNameRequired": "Thread name (required)",
         "enterThreadName": "Enter a thread name",
-        "aThread": "A Thread"
+        "aThread": "A Thread",
+        "edited": "Message Edited"
     }
 }

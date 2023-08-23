@@ -43,6 +43,7 @@
         "createThread": "创建子区",
         "threadNameRequired": "子区名称（必填）",
         "enterThreadName": "请输入子区名称",
-        "aThread": "一个子区"
+        "aThread": "一个子区",
+        "edited": "消息已编辑"
     }
 }

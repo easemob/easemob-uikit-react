@@ -254,6 +254,9 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         console.log(data);
         combinedMessage.messages = data;
         createDetailContent(data);
+      })
+      .catch(() => {
+        setDetailContent(<div>download message failed</div>);
       });
   };
   const [modalOpen, setModalOpen] = useState(false);

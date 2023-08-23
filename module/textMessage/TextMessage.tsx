@@ -479,7 +479,11 @@ const TextMessage = (props: TextMessageProps) => {
           {!!(urlData?.title || urlData?.description) && (
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
-          {textMessage?.modifiedInfo ? <div className={`${classString}-edit-tag`}>Message Edited</div> : ''}
+          {textMessage?.modifiedInfo ? (
+            <div className={`${classString}-edit-tag`}>{t('module.edited')}</div>
+          ) : (
+            ''
+          )}
           {
             // @ts-ignore
             (textMessage.translations || transStatus == 'translating') && (
