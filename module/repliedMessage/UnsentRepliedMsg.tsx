@@ -62,6 +62,14 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
           </div>
         );
         break;
+      case 'combine':
+        content = (
+          <div className={`${prefixCls}-summary-desc`}>
+            <Icon type="TIME" color="#75828A" width={16} height={16}></Icon>
+            <span>{t('module.chatHistory')}</span>
+          </div>
+        );
+        break;
       default:
         content = '';
         break;
