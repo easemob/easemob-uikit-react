@@ -46,6 +46,7 @@ import { ReactComponent as GoToChat } from '../svgs/icons/gotoMessage.svg';
 import { ReactComponent as AddFriend } from '../svgs/icons/person_add_fill.svg';
 import { ReactComponent as Thread } from '../svgs/icons/hashtag_in_bubble.svg';
 import { ReactComponent as Envelope } from '../svgs/icons/envelope.svg';
+import { ReactComponent as MemberGroup } from '../svgs/all.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -182,6 +183,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'ENVELOPE':
       return <Envelope></Envelope>;
       break;
+    case 'MEMBER_GROUP':
+      return <MemberGroup></MemberGroup>;
+      break;
     default:
       return '';
       break;
@@ -196,6 +200,7 @@ const Icon = ({
   height,
   color,
   onClick,
+  ...otherProps
 }: IconProps): ReactElement => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('icon');
@@ -223,6 +228,7 @@ const Icon = ({
       style={{
         ...iconStyle,
       }}
+      {...otherProps}
     >
       {children || getIconNode(type)}
     </div>

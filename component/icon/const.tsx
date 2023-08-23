@@ -43,6 +43,7 @@ enum ICON_TYPES {
   ADD_FRIEND = 'ADD_FRIEND',
   THREAD = 'THREAD',
   ENVELOPE = 'ENVELOPE',
+  MEMBER_GROUP = "MEMBER_GROUP",
 }
 // chevron_down
 export { ICON_TYPES };

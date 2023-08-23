@@ -8,6 +8,7 @@ import { getGroupItemFromGroupsById, getGroupMemberNickName, getAppUserInfo } fr
 import Avatar from '../../../component/avatar';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
+import Icon from '../../../component/icon';
 
 export const AT_ALL = 'ALL';
 
@@ -139,7 +140,11 @@ const SuggestList: FC<Props> = props => {
                 >
                   <div className="avatar">
                     <Avatar src={getAppUserInfo(user.userId).avatarurl} size="small">
-                      {getGroupMemberNickName(user)}
+                      {user.role === null && user.userId === AT_ALL ? (
+                        <Icon type="MEMBER_GROUP" style={{ verticalAlign: 'sub' }}></Icon>
+                      ) : (
+                        getGroupMemberNickName(user)
+                      )}
                     </Avatar>
                   </div>
                   <div className="name">{getGroupMemberNickName(user)}</div>

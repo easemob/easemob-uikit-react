@@ -479,6 +479,7 @@ const TextMessage = (props: TextMessageProps) => {
           {!!(urlData?.title || urlData?.description) && (
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
+          {textMessage?.modifiedInfo ? <div className={`${classString}-edit-tag`}>Message Edited</div> : ''}
           {
             // @ts-ignore
             (textMessage.translations || transStatus == 'translating') && (
@@ -498,7 +499,6 @@ const TextMessage = (props: TextMessageProps) => {
               </div>
             )
           }
-          {textMessage?.modifiedInfo ? <div className={`${classString}-edit-tag`}>Edited</div> : ''}
         </div>
       </BaseMessage>
       {/* Modify Message Modal */}
