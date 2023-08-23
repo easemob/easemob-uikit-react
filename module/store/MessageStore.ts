@@ -493,14 +493,14 @@ class MessageStore {
       const message = messages[messageIndex];
       // has reaction list
       if (!message.reactions || message.reactions?.length === 0) {
-        message.reactions = reactions;
-        message.reactions.forEach((item: ReactionData) => {
+        reactions.forEach((item: ReactionData) => {
           if (item.op) {
             item.isAddedBySelf = !!item?.op?.find(
               op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
             );
           }
         });
+        message.reactions = reactions;
       } else {
         filterActs.forEach(item => {
           let reaction = getReactionByEmoji(message, item.reaction);
@@ -508,9 +508,16 @@ class MessageStore {
             reaction.count = item.count;
             reaction.userList = item.userList;
             reaction.op = item.op;
-            reaction.isAddedBySelf = !!item?.op?.find(
-              op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
-            );
+            item?.op?.forEach(op => {
+              if (op.operator === this.rootStore.client.user) {
+                if (op.reactionType === 'create') {
+                  reaction.isAddedBySelf = true;
+                } else {
+                  reaction.isAddedBySelf = false;
+                }
+              }
+            });
+            message.reactions = [...message.reactions];
           } else {
             item.isAddedBySelf = !!item?.op?.find(
               op => op.operator === this.rootStore.client.user && op.reactionType === 'create',

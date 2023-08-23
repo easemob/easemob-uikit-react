@@ -88,7 +88,7 @@ const ReactionMessage = (props: ReactionMessageProps) => {
       }
     });
   }
-
+  
   return (
     <div
       className={classString}
