@@ -84,6 +84,18 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     }
   };
   const currentCVS = conversation ? conversation : messageStore.currentCVS;
+
+  useEffect(() => {
+    if (recorder) {
+      (recorder as any).stop();
+    }
+    setRecordingState(false);
+    onHide && onHide();
+    stopRecording();
+    setDuration(0);
+    clearInterval(timer);
+  }, [currentCVS]);
+
   const sendAudio = () => {
     if (!currentCVS.conversationId) {
       console.warn('No specified conversation');
