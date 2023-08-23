@@ -44,6 +44,7 @@ const SuggestList: FC<Props> = props => {
   const visibleRef = useRef<boolean>();
   visibleRef.current = props.visible;
   let currentCVS = getStore().messageStore.currentCVS;
+  const client = getStore().client;
   const memberList = getGroupItemFromGroupsById(currentCVS.conversationId)?.members || [];
 
   const onMouseEnter = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -67,7 +68,10 @@ const SuggestList: FC<Props> = props => {
   } as any;
 
   const filteredUsers = useMemo(() => {
-    return searchUser([AT_ALL_ITEM, ...memberList], props.queryString);
+    return searchUser(
+      [AT_ALL_ITEM, ...memberList].filter(user => user.userId !== client.user),
+      props.queryString,
+    );
   }, [memberList, props.queryString]);
   usersRef.current = filteredUsers;
 
@@ -141,7 +145,10 @@ const SuggestList: FC<Props> = props => {
                   <div className="avatar">
                     <Avatar src={getAppUserInfo(user.userId).avatarurl} size="small">
                       {user.role === null && user.userId === AT_ALL ? (
-                        <Icon type="MEMBER_GROUP" style={{ verticalAlign: 'sub' }}></Icon>
+                        <Icon
+                          type="MEMBER_GROUP"
+                          style={{ verticalAlign: 'sub', width: '15px', height: '15px' }}
+                        ></Icon>
                       ) : (
                         getGroupMemberNickName(user)
                       )}
