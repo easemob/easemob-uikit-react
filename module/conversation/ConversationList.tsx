@@ -68,7 +68,7 @@ let Conversations: FC<ConversationListProps> = props => {
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationList', customizePrefixCls);
-  const [activeKey, setActiveKey] = useState<number>();
+  const [activeCvsId, setActiveCvsId] = useState<string>();
   const classString = classNames(prefixCls, className);
   const { getJoinedGroupList } = useGroups();
 
@@ -87,7 +87,7 @@ let Conversations: FC<ConversationListProps> = props => {
   // 获取加入群组，把群组名放在 conversationList
 
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
-    setActiveKey(index);
+    setActiveCvsId(cvs.conversationId);
     cvsStore.setCurrentCvs({
       chatType: cvs.chatType,
       conversationId: cvs.conversationId,
@@ -102,7 +102,9 @@ let Conversations: FC<ConversationListProps> = props => {
       !cvsStore.currentCvs ||
       (cvsStore.currentCvs && Object.keys(cvsStore.currentCvs).length == 0)
     ) {
-      setActiveKey(-1);
+      setActiveCvsId('-1');
+    } else {
+      setActiveCvsId(cvsStore.currentCvs.conversationId)
     }
   }, [cvsStore.currentCvs]);
 
@@ -196,7 +198,7 @@ let Conversations: FC<ConversationListProps> = props => {
               {...itemProps}
               data={cvs}
               key={cvs.conversationId}
-              isActive={index === activeKey}
+              isActive={cvs.conversationId === activeCvsId}
               onClick={handleItemClick(cvs, index)}
             ></CVSItem>
           );
