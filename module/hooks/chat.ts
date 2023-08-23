@@ -111,6 +111,17 @@ const useEventHandler = () => {
       onModifiedMessage: message => {
         getStore().messageStore.modifyLocalMessage(message.id, message, true);
       },
+      onGroupEvent: message => {
+        const { operation, id } = message;
+        switch (operation) {
+          case 'memberAttributesUpdate':
+            const { userId, attributes } = message;
+            const { addressStore } = rootStore.rootStore;
+            addressStore.setGroupMemberAttributes(id, userId, attributes);
+            break;
+          default:
+        }
+      },
       onPresenceStatusChange: message => {
         const { addressStore } = rootStore.rootStore;
         message.length > 0 &&
