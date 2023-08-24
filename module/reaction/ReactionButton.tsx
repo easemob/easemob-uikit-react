@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import Button from '../../component/button';
-import { emoji } from '../messageEditor/emoji/emojiConfig';
+import { emoji } from './emojiConfig';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Avatar from '../../component/avatar';
 import Icon from '../../component/icon';

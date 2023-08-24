@@ -1,26 +1,40 @@
 import React, { ReactNode, useState } from 'react';
 import { Tooltip } from '../../../component/tooltip/Tooltip';
 import Button, { ButtonProps } from '../../../component/button';
-import { emoji } from './emojiConfig';
+import { emoji as defaultEmojiConfig } from './emojiConfig';
 import Icon from '../../../component/icon';
 import './style/style.scss';
 const emojiWidth = 25;
 const emojiPadding = 5;
 
+export interface EmojiConfig {
+  path: string;
+  map: { [key: string]: string };
+}
+
 export interface EmojiProps {
   icon?: ReactNode;
-  onSelected?: (emojiString: keyof typeof emoji.map) => void;
+  onSelected?: (emojiString: string) => void;
   trigger?: 'click' | 'hover';
   config?: { map: any; path: string };
   onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
   selectedList?: string[];
-  onDelete?: (emojiString: keyof typeof emoji.map) => void;
+  onDelete?: (emojiString: string) => void;
+  emojiConfig?: EmojiConfig;
 }
 
 const Emoji = (props: EmojiProps) => {
-  const { onSelected, icon, trigger = 'click', onClick, selectedList, onDelete } = props;
+  const {
+    onSelected,
+    icon,
+    trigger = 'click',
+    onClick,
+    selectedList,
+    onDelete,
+    emojiConfig,
+  } = props;
   const [isOpen, setOpen] = useState(false);
-
+  const emoji: EmojiConfig = emojiConfig ? emojiConfig : defaultEmojiConfig;
   const renderEmoji = () => {
     const emojiString = Object.keys(emoji.map);
     return emojiString.map(k => {
@@ -48,8 +62,8 @@ const Emoji = (props: EmojiProps) => {
 
   const handleEmojiClick: React.MouseEventHandler<HTMLImageElement> = e => {
     e.preventDefault();
-    const selectedEmoji = ((e.target as HTMLImageElement).alt ||
-      ((e.target as any).children[0] as HTMLImageElement).alt) as keyof typeof emoji.map;
+    const selectedEmoji =
+      (e.target as HTMLImageElement).alt || ((e.target as any).children[0] as HTMLImageElement).alt;
     // setOpen(false);
     if (selectedList && selectedList.length > 0 && selectedList.includes(selectedEmoji)) {
       return onDelete && onDelete(selectedEmoji);
