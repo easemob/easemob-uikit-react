@@ -29,6 +29,7 @@ export interface MessageEditorProps {
   placeHolder?: string; // input placeHolder
   disabled?: boolean; // 是否禁用
   isChatThread?: boolean; // 是否是子区聊天
+  enabledMenton?: boolean; // 是否开启@功能
   onSendMessage?: (message: AgoraChat.MessageBody) => void;
   conversation?: CurrentConversation;
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
@@ -181,6 +182,7 @@ const MessageEditor = (props: MessageEditorProps) => {
             placeholder={placeHolder}
             onSendMessage={onSendMessage}
             conversation={conversation}
+            enabledMenton={props.enabledMenton}
             onBeforeSendMessage={onBeforeSendMessage}
           ></Textarea>
         );

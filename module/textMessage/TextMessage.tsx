@@ -390,10 +390,13 @@ const TextMessage = (props: TextMessageProps) => {
     setModifyMessageVisible(false);
     const currentCVS = rootStore.conversationStore.currentCvs;
     let msg = convertToMessage(textareaRef?.current?.divRef?.current?.innerHTML || '').trim();
+    const { isChatThread, to, chatThread } = textMessage;
+    const isThread = !!(isChatThread || chatThread);
     const message = AC.message.create({
-      to: currentCVS.conversationId,
+      to: isThread ? to : currentCVS.conversationId,
       chatType: currentCVS.chatType,
       type: 'txt',
+      isChatThread: isThread,
       msg: msg,
     }) as AgoraChat.TextMsgBody;
     // @ts-ignore

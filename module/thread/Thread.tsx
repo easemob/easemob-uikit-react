@@ -550,6 +550,7 @@ const Thread = (props: ThreadProps) => {
       <MessageEditor
         disabled={threadStore.currentThread.creating && editorDisable}
         isChatThread={true}
+        enabledMenton={false}
         // onSendMessage={handleSendMessage}
         onBeforeSendMessage={handleSendMessage}
         conversation={conversation}
