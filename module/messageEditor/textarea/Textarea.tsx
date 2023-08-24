@@ -29,6 +29,7 @@ export interface TextareaProps {
   sendButtonActiveColor?: string;
   enableEnterSend?: boolean;
   enabledMenton?: boolean;
+  enabledTyping?: boolean;
   isChatThread?: boolean;
   onSendMessage?: (message: AgoraChat.TextMessage) => void;
   conversation?: CurrentConversation;
@@ -51,6 +52,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     onSendMessage,
     conversation,
     onBeforeSendMessage,
+    enabledTyping = true,
   } = props;
   const [textValue, setTextValue] = useState('');
   const { prefix: customizePrefixCls, className } = props;
@@ -129,7 +131,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     const str = convertToMessage(value).trim();
     setTextValue(str);
 
-    if (currentCVS.chatType == 'singleChat' && !isTyping) {
+    if (currentCVS.chatType == 'singleChat' && !isTyping && enabledTyping) {
       setIsTyping(true);
       messageStore.sendTypingCmd(currentCVS);
       setTimeout(() => {

@@ -102,7 +102,7 @@ const Chat: FC<ChatProps> = props => {
   }, [rootStore.conversationStore.currentCvs]);
 
   const repliedMsg = rootStore.messageStore.repliedMessage;
-  const replyCvsId = getCvsIdFromMessage(repliedMsg || {})
+  const replyCvsId = getCvsIdFromMessage(repliedMsg || {});
   const showReply = repliedMsg && replyCvsId === CVS.conversationId;
 
   // --------- thread -----------
@@ -291,12 +291,15 @@ const Chat: FC<ChatProps> = props => {
           ) : (
             <MessageList {...messageListProps}></MessageList>
           )}
-          <Typing
-            conversation={rootStore.conversationStore.currentCvs}
-            onHide={() => {
-              rootStore.messageStore.setTyping(rootStore.conversationStore.currentCvs, false);
-            }}
-          ></Typing>
+          {messageEditorProps?.enabledTyping && (
+            <Typing
+              conversation={rootStore.conversationStore.currentCvs}
+              onHide={() => {
+                rootStore.messageStore.setTyping(rootStore.conversationStore.currentCvs, false);
+              }}
+            ></Typing>
+          )}
+
           {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
 
           {renderMessageEditor ? (

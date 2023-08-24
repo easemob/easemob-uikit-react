@@ -21,6 +21,7 @@ export type Actions = {
 export interface MessageEditorProps {
   prefix?: string;
   actions?: Actions;
+  enabledTyping?: boolean; // 是否启用正在输入
   onSend?: (message: any) => void; // 消息发送的回调
   className?: string; // wrap 的 class
   showSendButton?: boolean; // 是否展示发送按钮
@@ -164,6 +165,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     onSendMessage,
     conversation,
     onBeforeSendMessage,
+    enabledTyping,
   } = props;
 
   useEffect(() => {
@@ -175,6 +177,7 @@ const MessageEditor = (props: MessageEditorProps) => {
       if (item.name === 'TEXTAREA' && item.visible) {
         return (
           <Textarea
+            enabledTyping={enabledTyping}
             isChatThread={isChatThread}
             key={item.name}
             ref={textareaRef}
