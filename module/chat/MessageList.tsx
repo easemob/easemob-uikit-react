@@ -34,6 +34,7 @@ export interface MsgListProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
+  isThread?: boolean;
   renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
@@ -51,6 +52,7 @@ let MessageList: FC<MsgListProps> = props => {
     renderMessage,
     renderUserProfile,
     conversation,
+    isThread,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
@@ -163,13 +165,15 @@ let MessageList: FC<MsgListProps> = props => {
   }, [lastMsgId]);
 
   useEffect(() => {
-    (listRef?.current as any)?.scrollTo('bottom');
-    if (currentCVS && currentCVS.chatType === 'groupChat') {
-      if (!currentCVS.conversationId) return;
-      const { getGroupMemberList } = useGroupMembers(currentCVS.conversationId);
-      const { getGroupAdmins } = useGroupAdmins(currentCVS.conversationId);
-      getGroupAdmins();
-      getGroupMemberList?.();
+    if (!isThread) {
+      (listRef?.current as any)?.scrollTo('bottom');
+      if (currentCVS && currentCVS.chatType === 'groupChat') {
+        if (!currentCVS.conversationId) return;
+        const { getGroupMemberList } = useGroupMembers(currentCVS.conversationId);
+        const { getGroupAdmins } = useGroupAdmins(currentCVS.conversationId);
+        getGroupAdmins();
+        getGroupMemberList?.();
+      }
     }
   }, [currentCVS]);
 

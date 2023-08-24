@@ -141,22 +141,25 @@ const useGroupMembersAttributes = (
 
 const useGroupAdmins = (groupId: string) => {
   const { client, addressStore } = getStore();
+  const groupItem = getGroupItemFromGroupsById(groupId);
   const getGroupAdmins = () => {
-    client
-      .getGroupAdmin({
-        groupId,
-      })
-      .then(res => {
-        addressStore.setGroupAdmins(groupId, res.data || []);
-        addressStore.setGroupMembers(
+    if (!groupItem?.admins) {
+      client
+        .getGroupAdmin({
           groupId,
-          (res.data || []).map(item => {
-            return {
-              member: item,
-            };
-          }),
-        );
-      });
+        })
+        .then(res => {
+          addressStore.setGroupAdmins(groupId, res.data || []);
+          addressStore.setGroupMembers(
+            groupId,
+            (res.data || []).map(item => {
+              return {
+                member: item,
+              };
+            }),
+          );
+        });
+    }
   };
 
   return { getGroupAdmins };

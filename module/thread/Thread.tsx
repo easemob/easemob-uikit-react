@@ -545,7 +545,7 @@ const Thread = (props: ThreadProps) => {
         />
       </div>
       {threadStore.currentThread.creating ? renderCreateForm() : renderOriginalMsg()}
-      <MessageList {...messageListProps} conversation={conversation}></MessageList>
+      <MessageList {...messageListProps} isThread={true} conversation={conversation}></MessageList>
       {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
       <MessageEditor
         disabled={threadStore.currentThread.creating && editorDisable}
