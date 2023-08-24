@@ -284,6 +284,15 @@ let ImageMessage = (props: ImageMessageProps) => {
       >
         <div className="message-image-content">{img.current}</div>
       </BaseMessage>
+      {previewVisible && (
+        <ImagePreview
+          visible={previewVisible}
+          previewImageUrl={message.url}
+          onCancel={() => {
+            setPreviewVisible(false);
+          }}
+        ></ImagePreview>
+      )}
     </div>
   );
 };
@@ -296,11 +305,6 @@ export interface ImagePreviewProps {
 }
 export const ImagePreview = (props: ImagePreviewProps) => {
   const { visible, previewImageUrl, alt, onCancel } = props;
-  const [previewVisible, setPreviewVisible] = useState(false);
-
-  useEffect(() => {
-    setPreviewVisible(visible);
-  }, [visible]);
 
   return (
     <>
@@ -327,4 +331,5 @@ export const ImagePreview = (props: ImagePreviewProps) => {
     </>
   );
 };
+
 export default observer(ImageMessage);

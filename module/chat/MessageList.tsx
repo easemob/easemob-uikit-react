@@ -64,11 +64,6 @@ let MessageList: FC<MsgListProps> = props => {
 
   console.log('**** currentCVS ***', currentCVS);
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
-  console.log('**** messageData ***', messageData);
-  const [imageInfo, setImageInfo] = useState<{
-    visible: boolean;
-    url: string;
-  }>({ visible: false, url: '' });
 
   const renderMsg = (data: { index: number; style: React.CSSProperties }) => {
     if (renderMessage) {
@@ -96,12 +91,6 @@ let MessageList: FC<MsgListProps> = props => {
       return (
         <ImageMessage
           key={messageData[data.index].id}
-          onClickImage={url => {
-            setImageInfo({
-              visible: true,
-              url: url,
-            });
-          }}
           //@ts-ignore
           imageMessage={messageData[data.index]}
           style={data.style}
@@ -200,13 +189,6 @@ let MessageList: FC<MsgListProps> = props => {
           );
         }}
       ></MessageScrollList>
-      <ImagePreview
-        onCancel={() => {
-          setImageInfo({ visible: false, url: '' });
-        }}
-        visible={imageInfo.visible}
-        previewImageUrl={imageInfo.url}
-      ></ImagePreview>
     </div>
   );
 };
