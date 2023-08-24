@@ -1,6 +1,9 @@
 import { useCallback, useEffect, MutableRefObject, useContext, useState, useRef } from 'react';
 import { RootContext } from '../store/rootContext';
 import { CurrentConversation } from '../store/ConversationStore';
+
+const cache: { [key: string]: boolean } = {};
+
 const useHistoryMessages = (cvs: CurrentConversation) => {
   const rootStore = useContext(RootContext).rootStore;
 
@@ -19,8 +22,13 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
 
     const currentChatMsgs = messageStore.message[cvs.chatType][cvs.conversationId] || [];
     // 第一次加载过的缓存和加载更多之后的缓存
-    if (currentChatMsgs.length > 0 && (cursor === -1 || cursor != currentChatMsgs[0].id)) {
-      console.log('有缓存');
+    if (
+      currentChatMsgs.length > 0 &&
+      (cursor === -1 || cursor != currentChatMsgs[0].id) &&
+      cache[`${cvs.chatType}${cvs.conversationId}`]
+    ) {
+      console.log('有缓存', currentChatMsgs);
+
       return setHistoryMsgs(currentChatMsgs);
     }
 
@@ -30,6 +38,10 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
     let useCursor = cursor;
     if (cvs.conversationId != cvsId) {
       useCursor = -1;
+    }
+
+    if (currentChatMsgs.length > 0) {
+      useCursor = currentChatMsgs[0].id;
     }
 
     setLoading(true);
@@ -43,6 +55,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
           searchDirection: 'up',
         })
         .then(res => {
+          cache[`${cvs.chatType}${cvs.conversationId}`] = true;
           console.log('历史消息', res);
           let msgs = res.messages.reverse();
 
