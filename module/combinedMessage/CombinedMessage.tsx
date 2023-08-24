@@ -166,6 +166,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         case 'txt':
           content = (
             <TextMessage
+              select={false}
               customAction={{ visible: false }}
               reaction={false}
               key={msg.id}
@@ -179,6 +180,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         case 'img':
           content = (
             <ImageMessage
+              select={false}
               imageMessage={msg}
               direction="ltr"
               key={msg.id}
@@ -191,6 +193,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         case 'file':
           content = (
             <FileMessage
+              select={false}
               key={msg.id}
               fileMessage={msg}
               direction="ltr"
@@ -204,6 +207,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         case 'audio':
           content = (
             <AudioMessage
+              select={false}
               key={msg.id}
               audioMessage={msg}
               direction="ltr"
@@ -217,6 +221,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         case 'combine':
           content = (
             <CombinedMessage
+              select={false}
               key={msg.id}
               combinedMessage={msg}
               direction="ltr"
