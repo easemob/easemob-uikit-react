@@ -58,6 +58,7 @@ class AddressStore {
       setGroupMemberAttributes: action,
       setAppUserInfo: action,
       setChatroom: action,
+      updateGroupName: action,
     });
   }
 
@@ -75,6 +76,14 @@ class AddressStore {
       ({ groupid }) => !currentGroupsId.find(id => id === groupid),
     );
     this.groups = [...this.groups, ...filteredGroups];
+  }
+
+  updateGroupName(groupId: string, groupName: string) {
+    let idx = getGroupItemIndexFromGroupsById(groupId);
+    if (idx > -1) {
+      this.groups[idx].groupname = groupName;
+      this.groups = [...this.groups];
+    }
   }
 
   setHasGroupsNext(hasNext: boolean) {
