@@ -11,7 +11,12 @@ import { RenderFunction, Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
-import AC from 'agora-chat';
+import { observer } from 'mobx-react-lite';
+import {
+  getGroupMemberIndexByUserId,
+  getGroupItemFromGroupsById,
+  getGroupMemberNickName,
+} from '../utils/index';
 export interface ConversationItemProps {
   className?: string;
   prefix?: string;
@@ -35,7 +40,7 @@ export interface ConversationItemProps {
   };
 }
 
-const ConversationItem: FC<ConversationItemProps> = props => {
+let ConversationItem: FC<ConversationItemProps> = props => {
   let {
     prefix: customizePrefixCls,
     className,
@@ -90,7 +95,7 @@ const ConversationItem: FC<ConversationItemProps> = props => {
   const handleMouseLeave = () => {
     setShowMore(false);
   };
-  
+
   const deleteCvs: MouseEventHandler<HTMLLIElement> = e => {
     e.stopPropagation();
 
@@ -164,7 +169,15 @@ const ConversationItem: FC<ConversationItemProps> = props => {
   }
   if (data.chatType == 'groupChat') {
     let msgFrom = data.lastMessage.from;
-    const from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}:` : '';
+    let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}:` : '';
+    const groupItem = getGroupItemFromGroupsById(data.conversationId);
+    if (groupItem) {
+      const memberIdx = getGroupMemberIndexByUserId(groupItem, msgFrom) ?? -1;
+      if (memberIdx > -1) {
+        let memberItem = groupItem?.members?.[memberIdx]!;
+        from = `${getGroupMemberNickName(memberItem)}:`;
+      }
+    }
     lastMsg = [from, ...Array.from(lastMsg)];
   }
 
@@ -211,4 +224,6 @@ const ConversationItem: FC<ConversationItemProps> = props => {
     </div>
   );
 };
+
+ConversationItem = observer(ConversationItem);
 export { ConversationItem };
