@@ -141,6 +141,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
       },
       // @ts-ignore
       combinedMessage.mid || combinedMessage.id,
+      combinedMessage.isChatThread,
     );
   };
   const { getPrefixCls } = React.useContext(ConfigContext);

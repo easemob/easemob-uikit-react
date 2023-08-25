@@ -150,6 +150,7 @@ const FileMessage = (props: FileMessageProps) => {
       },
       // @ts-ignore
       fileMessage.mid || fileMessage.id,
+      fileMessage.isChatThread,
     );
   };
 
