@@ -3,6 +3,8 @@ $file-prefix-cls: #{$cui-prefix}-message-file;
 .#{$file-prefix-cls}{
     height: 44px;
     width: 240px;
+    min-width: 122px;
+    max-width: 100%;
     display: flex;
     justify-content: space-between;
     &-secondly{
