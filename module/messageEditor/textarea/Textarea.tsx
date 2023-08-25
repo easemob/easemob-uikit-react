@@ -154,6 +154,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       console.warn('No text message');
       return;
     }
+    console.log('sendMessage', currentCVS.conversationId);
     if (!currentCVS.conversationId) {
       console.warn('No specified conversation');
       return;
@@ -207,7 +208,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   // 键盘回车事件
   const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.code === 'Enter') {
+    if (e.code === 'Enter' && e.keyCode === 13 && !e.shiftKey) {
       e.preventDefault();
       if (enableEnterSend) {
         sendMessage();

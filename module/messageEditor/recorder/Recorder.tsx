@@ -17,6 +17,8 @@ export interface RecorderProps {
   onHide?: () => void;
   onSend?: (message: AgoraChat.MessageBody) => void;
   conversation?: CurrentConversation;
+  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
+  isChatThread?: boolean;
 }
 
 let MediaStream: any;
@@ -26,7 +28,15 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const rootStore = useContext(RootContext).rootStore;
   const { t } = useTranslation();
   const { messageStore, client } = rootStore;
-  const { prefix: customizePrefixCls, onShow, onHide, onSend, conversation } = props;
+  const {
+    prefix: customizePrefixCls,
+    onShow,
+    onHide,
+    onSend,
+    conversation,
+    onBeforeSendMessage,
+    isChatThread = false,
+  } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('recorder', customizePrefixCls);
   const classString = classNames(prefixCls);
@@ -96,10 +106,18 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     clearInterval(timer);
   }, [currentCVS]);
 
+  const _sendMessage = (message: AgoraChat.MessageBody) => {
+    messageStore.sendMessage(message);
+    stopRecording();
+    setDuration(0);
+    clearInterval(timer);
+    setRecordingState(false);
+    onSend && onSend(message);
+  };
   const sendAudio = () => {
     if (!currentCVS.conversationId) {
       console.warn('No specified conversation');
-      return;
+      // return;
     }
     if (recorder) {
       (recorder as any).stop();
@@ -122,15 +140,24 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         file: uri,
         filename: '',
         length: duration,
+        isChatThread,
       });
-      messageStore.sendMessage(message);
 
-      stopRecording();
-      setDuration(0);
-      clearInterval(timer);
-      setRecordingState(false);
-      onSend && onSend(message);
+      if (onBeforeSendMessage) {
+        onBeforeSendMessage(message).then(cvs => {
+          if (cvs) {
+            message.to = cvs.conversationId;
+            message.chatType = cvs.chatType;
+          }
+
+          console.log('发送的消息', message);
+          _sendMessage(message);
+        });
+      } else {
+        _sendMessage(message);
+      }
     }
+    console.log(333);
   };
 
   const initNode = (

@@ -182,6 +182,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onClickThreadTitle?.();
   };
   const threadNode = () => {
+    console.log('chatThreadOverview', chatThreadOverview);
     let { name, messageCount, lastMessage = {} } = chatThreadOverview;
     if (messageCount > 100) {
       messageCount = '100 +';
@@ -238,7 +239,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           </div>
         </div>
         <div className={`${prefixCls}-thread-message`}>
-          <Avatar size={16}>W</Avatar>
+          {msgContent && <Avatar size={16}>{from}</Avatar>}
           <span>{from}</span>
           <span>{msgContent}</span>
           <span>{getConversationTime(time)}</span>

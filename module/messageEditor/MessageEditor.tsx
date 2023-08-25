@@ -198,7 +198,13 @@ const MessageEditor = (props: MessageEditorProps) => {
           ></Emoji>
         );
       } else if (item.name === 'MORE' && item.visible) {
-        return <MoreAction key={item.name}></MoreAction>;
+        return (
+          <MoreAction
+            key={item.name}
+            isChatThread={isChatThread}
+            onBeforeSendMessage={onBeforeSendMessage}
+          ></MoreAction>
+        );
       } else {
         return (
           <span key={item.name} className="icon-container">
@@ -252,6 +258,8 @@ const MessageEditor = (props: MessageEditorProps) => {
     <div className={classString}>
       {isShowRecorder && (
         <Recorder
+          isChatThread={isChatThread}
+          onBeforeSendMessage={onBeforeSendMessage}
           conversation={conversation}
           onShow={() => setTextareaShow(false)}
           onHide={() => setTextareaShow(true)}

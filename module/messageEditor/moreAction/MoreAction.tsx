@@ -20,9 +20,18 @@ export interface MoreActionProps {
   }>;
   defaultActions?: [{}];
   conversation?: CurrentConversation;
+  isChatThread?: boolean;
+  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
 }
 let MoreAction = (props: MoreActionProps) => {
-  const { icon, customActions, prefix: customizePrefixCls, conversation } = props;
+  const {
+    icon,
+    customActions,
+    prefix: customizePrefixCls,
+    conversation,
+    isChatThread,
+    onBeforeSendMessage,
+  } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('moreAction', customizePrefixCls);
   const classString = classNames(prefixCls);
@@ -96,6 +105,7 @@ let MoreAction = (props: MoreActionProps) => {
       to: currentCVS.conversationId,
       chatType: currentCVS.chatType,
       file: file,
+      isChatThread,
       onFileUploadComplete: data => {
         let sendMsg = messageStore.message.byId[imageMessage.id];
         (sendMsg as any).thumb = data.thumb;
@@ -105,7 +115,19 @@ let MoreAction = (props: MoreActionProps) => {
     } as AgoraChat.CreateImgMsgParameters;
     const imageMessage = AC.message.create(option);
 
-    messageStore.sendMessage(imageMessage);
+    if (onBeforeSendMessage) {
+      onBeforeSendMessage(imageMessage).then(cvs => {
+        if (cvs) {
+          imageMessage.to = cvs.conversationId;
+          imageMessage.chatType = cvs.chatType;
+        }
+
+        console.log('发送的消息', imageMessage);
+        messageStore.sendMessage(imageMessage);
+      });
+    } else {
+      messageStore.sendMessage(imageMessage);
+    }
   };
 
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = e => {
@@ -126,10 +148,23 @@ let MoreAction = (props: MoreActionProps) => {
       filename: file.filename,
       file_length: file.data.size,
       url: file.url,
+      isChatThread,
     } as AgoraChat.CreateFileMsgParameters;
     const fileMessage = AC.message.create(option);
 
-    messageStore.sendMessage(fileMessage);
+    if (onBeforeSendMessage) {
+      onBeforeSendMessage(fileMessage).then(cvs => {
+        if (cvs) {
+          fileMessage.to = cvs.conversationId;
+          fileMessage.chatType = cvs.chatType;
+        }
+
+        console.log('发送的消息', fileMessage);
+        messageStore.sendMessage(fileMessage);
+      });
+    } else {
+      messageStore.sendMessage(fileMessage);
+    }
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
