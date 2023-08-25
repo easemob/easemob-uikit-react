@@ -31,6 +31,7 @@ export class RootStore {
       setClient: action,
       initConfig: observable,
       setInitConfig: action,
+      clear: action,
     });
   }
 
@@ -45,6 +46,12 @@ export class RootStore {
   setInitConfig(initConfig: InitConfig) {
     this.initConfig = initConfig;
   }
+  clear() {
+    this.messageStore.clear();
+    this.addressStore.clear();
+    this.conversationStore.clear();
+    this.threadStore.clear();
+  }
 }
 let store: RootStore;
 export function getStore() {
@@ -55,4 +62,5 @@ export function getStore() {
 }
 
 const rootStore = getStore();
+
 export default rootStore;

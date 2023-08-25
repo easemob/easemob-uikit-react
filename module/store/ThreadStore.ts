@@ -44,6 +44,7 @@ class ThreadStore {
       updateMultiDeviceEvent: action,
       getChatThreadDetail: action,
       getGroupChatThreads: action,
+      clear: action,
     });
   }
 
@@ -303,6 +304,12 @@ class ThreadStore {
             return res.properties.cursor;
           });
       });
+  }
+  clear() {
+    this.thread = {};
+    this.currentThread = {} as CurrentThread;
+    this.showThreadPanel = false;
+    this.threadList = {};
   }
 }
 

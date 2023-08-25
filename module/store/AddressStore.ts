@@ -59,6 +59,7 @@ class AddressStore {
       setAppUserInfo: action,
       setChatroom: action,
       updateGroupName: action,
+      clear: action,
     });
   }
 
@@ -166,6 +167,15 @@ class AddressStore {
 
   setSearchList(searchList: any) {
     this.searchList = searchList;
+  }
+  clear() {
+    this.appUsersInfo = {};
+    this.contacts = [];
+    this.groups = [];
+    this.chatroom = [];
+    this.hasGroupsNext = true;
+    this.searchList = [];
+    this.thread = {};
   }
 }
 

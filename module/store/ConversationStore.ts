@@ -58,6 +58,7 @@ class ConversationStore {
       modifyConversation: action,
       topConversation: action,
       setIsAted: action,
+      clear: action,
     });
   }
 
@@ -189,6 +190,17 @@ class ConversationStore {
 
   setHasConversationNext(hasNext: boolean) {
     this.hasConversationNext = hasNext;
+  }
+  clear() {
+    this.currentCvs = {
+      conversationId: '',
+      chatType: '' as ChatType,
+    };
+
+    this.conversationList = [];
+    this.searchList = [];
+    this.hasConversationNext = true;
+    this.byId = {};
   }
 }
 

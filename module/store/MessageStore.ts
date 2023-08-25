@@ -82,6 +82,7 @@ class MessageStore {
       setSelectedMessage: action,
       setTyping: action,
       sendTypingCmd: action,
+      clear: action
     });
 
     autorun(() => {
@@ -648,6 +649,22 @@ class MessageStore {
     this.rootStore.client.send(msg).then(() => {
       console.log('send cmd success');
     });
+  }
+
+  clear(){
+    this.message = {
+      singleChat: {},
+      groupChat: {},
+      byId: {},
+    };
+
+    this.selectedMessage = {
+      singleChat: {},
+      groupChat: {},
+    };
+    this.currentCVS = {} as CurrentConversation;
+    this.repliedMessage = null;
+    this.typing = {};
   }
 }
 
