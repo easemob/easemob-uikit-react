@@ -168,6 +168,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       },
       // @ts-ignore
       audioMessage.mid || audioMessage.id,
+      audioMessage.isChatThread,
     );
   };
 

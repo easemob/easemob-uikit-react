@@ -287,6 +287,7 @@ const TextMessage = (props: TextMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(textMessage);
+    console.log('handleRecallMessage', textMessage);
     rootStore.messageStore.recallMessage(
       {
         chatType: textMessage.chatType,
@@ -294,6 +295,7 @@ const TextMessage = (props: TextMessageProps) => {
       },
       // @ts-ignore
       textMessage.mid || textMessage.id,
+      textMessage.isChatThread,
     );
   };
 
