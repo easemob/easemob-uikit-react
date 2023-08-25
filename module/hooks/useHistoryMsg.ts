@@ -81,7 +81,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
   }, [cvs.conversationId, cursor]);
 
   const loadMore = () => {
-    let nextCursor = historyMsgs[0]?.id || -1;
+    let nextCursor = historyMsgs[0]?.mid || historyMsgs[0]?.id || -1;
     let msg = historyMsgs[0] || {};
     const userId = rootStore.client.context.userId;
     const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
