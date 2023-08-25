@@ -87,7 +87,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
   return (
     <div className={classString}>
       <div className={`${prefixCls}-summary-title`}>
-        {t('module.replyingTo')} {from}
+        {t('module.replyingTo')} <span>{from}</span>
       </div>
       {renderMsgContent(repliedMessage)}
       <Icon
