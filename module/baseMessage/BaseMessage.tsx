@@ -63,6 +63,7 @@ export interface BaseMessageProps {
   customAction?: CustomAction; // whether show more
   reaction?: boolean; // whether show reaction
   select?: boolean; // whether show message checkbox
+  messageStatus?: boolean; // whether show message status
   message?: BaseMessageType;
   onReplyMessage?: () => void;
   onDeleteMessage?: () => void;
@@ -169,6 +170,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onCreateThread,
     select,
     thread,
+    messageStatus = true,
     chatThreadOverview,
     onClickThreadTitle,
   } = props;
@@ -527,7 +529,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   )}
                 </>
               ) : (
-                <MessageStatus status={status} type="icon"></MessageStatus>
+                messageStatus && <MessageStatus status={status} type="icon"></MessageStatus>
               )}
             </div>
           </div>
