@@ -12,7 +12,7 @@ export interface SelectedControlsProps {
   prefix?: string;
   onHide?: () => void;
   conversation?: CurrentConversation;
-  onSendMessage?: (message: AgoraChat.TextMessage) => void;
+  onSendMessage?: (message: AgoraChat.CombineMsgBody) => void;
 }
 
 const SelectedControls = (props: SelectedControlsProps) => {

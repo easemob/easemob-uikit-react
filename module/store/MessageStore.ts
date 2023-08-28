@@ -244,6 +244,9 @@ class MessageStore {
     if (message.from !== this.rootStore.client.user) {
       // @ts-ignore
       message.bySelf = false;
+    } else {
+      // @ts-ignore
+      message.bySelf = true;
     }
     const conversationId = getCvsIdFromMessage(message);
 
@@ -385,7 +388,7 @@ class MessageStore {
       });
   }
 
-  recallMessage(cvs: CurrentConversation, messageId: string) {
+  recallMessage(cvs: CurrentConversation, messageId: string, isChatThread: boolean = false) {
     if (!cvs || !messageId) return;
 
     return this.rootStore.client
@@ -393,6 +396,7 @@ class MessageStore {
         chatType: cvs.chatType,
         to: cvs.conversationId,
         mid: messageId,
+        isChatThread,
       })
       .then(() => {
         const messages = getMessages(cvs);

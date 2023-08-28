@@ -461,7 +461,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             <div className={`${prefixCls}-body`}>
               {contentNode}
 
-              {hoverStatus ? (
+              {hoverStatus && !select ? (
                 <>
                   {moreAction.visible && (
                     <Tooltip title={menuNode} trigger="click" placement="bottom">
