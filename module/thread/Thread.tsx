@@ -82,6 +82,7 @@ const Thread = (props: ThreadProps) => {
       case 'file':
         content = (
           <FileMessage
+            bubbleStyle={{ minWidth: '160px' }}
             key={msg.id}
             fileMessage={msg}
             direction="ltr"
@@ -482,6 +483,8 @@ const Thread = (props: ThreadProps) => {
       setRenderMembers(threadStore.currentThread.info?.members);
     }
   }, [threadStore.currentThread.info?.members]);
+
+  //render thread member list
   const membersContent = () => {
     const members = renderMembers || [];
     const menuNode = (member: string) => (
