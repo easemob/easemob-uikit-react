@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import classNames from 'classnames';
 import AC, { AgoraChat } from 'agora-chat';
-import { useKeyPress } from 'ahooks';
 import './style/style.scss';
-import Button from '../../../component/button';
 import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
 import HZRecorder from './recorderFun';

@@ -100,6 +100,40 @@ const getMsgSenderNickname = (msg: BaseMessageType) => {
   }
 };
 
+const msgSenderIsCurrentUser = (message: BaseMessageType) => {
+  return message?.from === getStore().client.user || message?.from === '';
+};
+
+const isGroupAdmin = (message: BaseMessageType) => {
+  if (message.chatType === 'groupChat') {
+    const group = getGroupItemFromGroupsById(message.to);
+    if (group) {
+      return group.admins?.includes(getStore().client.user);
+    }
+  }
+};
+
+const isGroupOwner = (message: BaseMessageType) => {
+  if (message.chatType === 'groupChat') {
+    const group = getGroupItemFromGroupsById(message.to);
+    if (group) {
+      return (
+        group.members?.find(member => member.role === 'owner')?.userId === getStore().client.user
+      );
+    }
+  }
+};
+
+// if can modify the message
+const canModifyMessage = (message: BaseMessageType) => {
+  const { chatType } = message;
+  if (chatType === 'singleChat') {
+    return msgSenderIsCurrentUser(message);
+  } else if (chatType === 'groupChat') {
+    return true;
+  }
+};
+
 let BaseMessage = (props: BaseMessageProps) => {
   const {
     message,
@@ -143,9 +177,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   const prefixCls = getPrefixCls('message-base', customizePrefixCls);
   let avatarToShow: ReactNode = avatar;
   const [hoverStatus, setHoverStatus] = useState(false);
-  const { appUsersInfo } = getStore().addressStore;
-  const isCurrentUser = message?.from === getStore().client.user || message?.from === '';
-
+  const { appUsersInfo, groups } = getStore().addressStore;
   const msgSenderNickname = nickName || (message && getMsgSenderNickname(message));
   const userId = message?.from || '';
   if (avatar) {
@@ -300,6 +332,10 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
 
+  const isCurrentUser = message && msgSenderIsCurrentUser(message);
+  const isOwner = message && isGroupOwner(message);
+  const isAdmin = message && isGroupAdmin(message);
+
   const replyMessage = () => {
     onReplyMessage && onReplyMessage();
   };
@@ -359,7 +395,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'Modify') {
             return (
-              isCurrentUser && (
+              (isCurrentUser || isOwner || isAdmin) && (
                 <li key={index} onClick={modifyMessage}>
                   <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
                   {t('module.modify')}
