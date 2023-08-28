@@ -39,7 +39,7 @@ export interface TextMessageProps extends BaseMessageProps {
   targetLanguage?: string;
 }
 
-export const renderTxt = (txt: string | undefined | null, detectedUrl: string | undefined) => {
+export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = true) => {
   const urlRegex = /(https?:\/\/\S+)/gi;
   if (txt === undefined || txt === null) {
     return [];
@@ -74,18 +74,18 @@ export const renderTxt = (txt: string | undefined | null, detectedUrl: string | 
     start = index + match[1].length;
   }
   rnTxt.push(txt.substring(start, txt.length));
-  // if (detectedUrl) {
-  rnTxt.forEach((text, index) => {
-    if (urlRegex.test(text!.toString())) {
-      let replacedText = reactStringReplace(text?.toString() || '', urlRegex, (match, i) => (
-        <a key={match + i} target="_blank" href={match} className="message-text-url-link">
-          {match}
-        </a>
-      ));
-      rnTxt[index] = replacedText;
-    }
-  });
-  // }
+  if (parseUrl) {
+    rnTxt.forEach((text, index) => {
+      if (urlRegex.test(text!.toString())) {
+        let replacedText = reactStringReplace(text?.toString() || '', urlRegex, (match, i) => (
+          <a key={match + i} target="_blank" href={match} className="message-text-url-link">
+            {match}
+          </a>
+        ));
+        rnTxt[index] = replacedText;
+      }
+    });
+  }
 
   return rnTxt;
 };
@@ -480,7 +480,7 @@ const TextMessage = (props: TextMessageProps) => {
         {...others}
       >
         <div>
-          <span className={classString}>{renderTxt(msg, detectedUrl)}</span>
+          <span className={classString}>{renderTxt(msg, true)}</span>
           {!!(urlData?.title || urlData?.description) && (
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
@@ -497,7 +497,7 @@ const TextMessage = (props: TextMessageProps) => {
                 <span className={`${transPrefix}-text`}>
                   {
                     // @ts-ignore
-                    renderTxt(textMessage.translations?.[0]?.text, detectedUrl)
+                    renderTxt(textMessage.translations?.[0]?.text, true)
                   }
                 </span>
                 <div className={`${transPrefix}-action`}>

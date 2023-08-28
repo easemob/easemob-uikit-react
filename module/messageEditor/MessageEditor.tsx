@@ -154,7 +154,7 @@ const MessageEditor = (props: MessageEditorProps) => {
 
     // setInputHaveValue(false);
   };
-
+  console.log('enabledTyping3', props.enabledTyping);
   const {
     actions = defaultActions,
     placeHolder,
@@ -169,51 +169,11 @@ const MessageEditor = (props: MessageEditorProps) => {
   } = props;
 
   useEffect(() => {
-    let node = actions.map((item, index) => {
+    actions?.forEach((item, index) => {
       if (item.name === 'RECORDER' && item.visible) {
         setShowRecorder(true);
-        return null;
-      }
-      if (item.name === 'TEXTAREA' && item.visible) {
-        return (
-          <Textarea
-            enabledTyping={enabledTyping}
-            isChatThread={isChatThread}
-            key={item.name}
-            ref={textareaRef}
-            hasSendButton
-            placeholder={placeHolder}
-            onSendMessage={onSendMessage}
-            conversation={conversation}
-            enabledMenton={props.enabledMenton}
-            onBeforeSendMessage={onBeforeSendMessage}
-          ></Textarea>
-        );
-      } else if (item.name === 'EMOJI' && item.visible) {
-        return (
-          <Emoji
-            key={item.name}
-            onSelected={handleSelectEmoji}
-            onClick={handleClickEmojiIcon}
-          ></Emoji>
-        );
-      } else if (item.name === 'MORE' && item.visible) {
-        return (
-          <MoreAction
-            key={item.name}
-            isChatThread={isChatThread}
-            onBeforeSendMessage={onBeforeSendMessage}
-          ></MoreAction>
-        );
-      } else {
-        return (
-          <span key={item.name} className="icon-container">
-            {item.icon}
-          </span>
-        );
       }
     });
-    setEditorNode(node);
   }, []);
   const currentCvs = conversation ? conversation : rootStore.conversationStore.currentCvs || {};
   useEffect(() => {
@@ -267,7 +227,54 @@ const MessageEditor = (props: MessageEditorProps) => {
         ></Recorder>
       )}
 
-      {isShowTextarea && <>{editorNode}</>}
+      {isShowTextarea && (
+        <>
+          {actions.map((item, index) => {
+            if (item.name === 'RECORDER' && item.visible) {
+              // setShowRecorder(true);
+              return null;
+            }
+            if (item.name === 'TEXTAREA' && item.visible) {
+              return (
+                <Textarea
+                  enabledTyping={enabledTyping}
+                  isChatThread={isChatThread}
+                  key={item.name}
+                  ref={textareaRef}
+                  hasSendButton
+                  placeholder={placeHolder}
+                  onSendMessage={onSendMessage}
+                  conversation={conversation}
+                  enabledMenton={props.enabledMenton}
+                  onBeforeSendMessage={onBeforeSendMessage}
+                ></Textarea>
+              );
+            } else if (item.name === 'EMOJI' && item.visible) {
+              return (
+                <Emoji
+                  key={item.name}
+                  onSelected={handleSelectEmoji}
+                  onClick={handleClickEmojiIcon}
+                ></Emoji>
+              );
+            } else if (item.name === 'MORE' && item.visible) {
+              return (
+                <MoreAction
+                  key={item.name}
+                  isChatThread={isChatThread}
+                  onBeforeSendMessage={onBeforeSendMessage}
+                ></MoreAction>
+              );
+            } else {
+              return (
+                <span key={item.name} className="icon-container">
+                  {item.icon}
+                </span>
+              );
+            }
+          })}
+        </>
+      )}
       {isShowSelect && (
         <SelectedControls
           onSendMessage={handleSendCombineMessage}

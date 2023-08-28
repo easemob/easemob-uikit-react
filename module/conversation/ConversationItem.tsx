@@ -163,6 +163,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     case 'custom':
       lastMsg = `/${t('module.custom')}/`;
       break;
+    // @ts-ignore
+    case 'combine':
+      lastMsg = `/${t('module.chatHistory')}/`;
+      break;
     default:
       console.warn('unexpected message type:', data.lastMessage?.type);
       break;
