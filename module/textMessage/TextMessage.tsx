@@ -37,6 +37,7 @@ export interface TextMessageProps extends BaseMessageProps {
   onCreateThread?: () => void;
   onTranslateMessage?: (textMessage: TextMessageType) => boolean;
   targetLanguage?: string;
+  showTranslation?: boolean; // 是否展示翻译后的消息
 }
 
 export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = true) => {
@@ -141,6 +142,7 @@ const TextMessage = (props: TextMessageProps) => {
     thread,
     onTranslateMessage,
     targetLanguage = 'en',
+    showTranslation = true,
     ...others
   } = props;
   if (!textMessage.chatType) return null;
@@ -491,7 +493,7 @@ const TextMessage = (props: TextMessageProps) => {
           )}
           {
             // @ts-ignore
-            (textMessage.translations || transStatus == 'translating') && (
+            (textMessage.translations || transStatus == 'translating') && showTranslation && (
               <div className={translationClass}>
                 <div className={`${transPrefix}-line`}></div>
                 <span className={`${transPrefix}-text`}>
