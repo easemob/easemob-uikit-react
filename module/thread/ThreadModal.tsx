@@ -121,6 +121,7 @@ const ThreadModal = (props: ThreadModalProps) => {
       <div className={`${prefixCls}-header`}>
         {search ? (
           <Input
+            className={`${prefixCls}-header-title-input`}
             close
             onChange={handleSearch}
             onClear={() => {

@@ -12,4 +12,19 @@ $thread-prefix-cls: #{$cui-prefix}-thread-panel;
     border-radius: 16px;
     background-color: $gray-98;
     overflow: hidden;
+
+    &-header{
+        &-title{
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 26px;
+            color: $gray-1;
+            &-input>input{
+                background-color: $gray-95;
+            }
+        }
+    }
+    &-content{
+        border-top: 1px solid $gray-95;
+    }
 }

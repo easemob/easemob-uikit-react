@@ -82,7 +82,7 @@ class MessageStore {
       setSelectedMessage: action,
       setTyping: action,
       sendTypingCmd: action,
-      clear: action
+      clear: action,
     });
 
     autorun(() => {
@@ -604,6 +604,8 @@ class MessageStore {
         if (msgItem.type === 'txt') {
           msgItem.msg = msg.msg;
           msgItem.modifiedInfo = msg.modifiedInfo;
+          // delete translations when message was edited
+          msgItem.translations = undefined;
         }
       }
     }
@@ -655,7 +657,7 @@ class MessageStore {
     });
   }
 
-  clear(){
+  clear() {
     this.message = {
       singleChat: {},
       groupChat: {},

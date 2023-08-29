@@ -172,6 +172,9 @@ const Chat: FC<ChatProps> = props => {
         case 'custom':
           lastMsg = `/${t('module.custom')}/`;
           break;
+        case 'combine':
+          lastMsg = `/${t('module.combine')}/`;
+          break;
         default:
           console.warn('unexpected message type:', item.lastMessage?.type);
           break;
@@ -185,12 +188,14 @@ const Chat: FC<ChatProps> = props => {
           }}
         >
           <span className={`${prefixCls}-thread-item-name`}> {item.name}</span>
-          <div className={`${prefixCls}-thread-item-msgBox`}>
-            <Avatar size={12}>{item.lastMessage?.from}</Avatar>
-            <div className={`${prefixCls}-thread-item-msgBox-name`}>{item.lastMessage?.from}</div>
-            <div>{lastMsg}</div>
-            <div>{getConversationTime(item.lastMessage?.time)}</div>
-          </div>
+          {item.lastMessage?.type && (
+            <div className={`${prefixCls}-thread-item-msgBox`}>
+              <Avatar size={12}>{item.lastMessage?.from}</Avatar>
+              <div className={`${prefixCls}-thread-item-msgBox-name`}>{item.lastMessage?.from}</div>
+              <div>{lastMsg}</div>
+              <div>{getConversationTime(item.lastMessage?.time)}</div>
+            </div>
+          )}
         </div>
       );
     };
