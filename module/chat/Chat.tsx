@@ -41,6 +41,7 @@ export interface ChatProps {
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
   // Header 的 props
   headerProps?: {
+    avatar: ReactNode,
     onAvatarClick?: () => void; // 点击 Header 中 头像的回调
     moreAction?: HeaderProps['moreAction'];
   };
