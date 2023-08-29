@@ -139,14 +139,12 @@ class AddressStore {
     }
   }
 
-  setGroupAdmins(groupId: string, admins: string[]) {
+  setGroupAdmins = (groupId: string, admins: string[]) => {
     let idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
-      let currentAdmins = this.groups[idx].admins || [];
-      let filteredAdmins = admins.filter(userId => !currentAdmins.includes(userId));
-      this.groups[idx].admins = [...currentAdmins, ...filteredAdmins];
+      this.groups[idx].admins = [...admins];
     }
-  }
+  };
 
   getUserInfo = (userId: string) => {
     let userInfo = this.appUsersInfo?.[userId];

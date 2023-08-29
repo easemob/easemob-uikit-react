@@ -3,7 +3,7 @@ import AC, { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
 import { useClient } from './useClient';
 import { getStore } from '../store';
-import { getCvsIdFromMessage } from '../utils';
+import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
 const useEventHandler = () => {
   const rootStore = useContext(RootContext);
   const { messageStore, threadStore } = rootStore.rootStore;
@@ -113,11 +113,24 @@ const useEventHandler = () => {
       },
       onGroupEvent: message => {
         const { operation, id } = message;
+        const { addressStore, client } = rootStore.rootStore;
+        const groupItem = getGroupItemFromGroupsById(id);
         switch (operation) {
           case 'memberAttributesUpdate':
             const { userId, attributes } = message;
-            const { addressStore } = rootStore.rootStore;
             addressStore.setGroupMemberAttributes(id, userId, attributes);
+            break;
+          case 'setAdmin':
+            if (groupItem) {
+              addressStore.setGroupAdmins(id, [...(groupItem?.admins || []), client.user]);
+            }
+            break;
+          case 'removeAdmin':
+            if (groupItem) {
+              let admins = [...(groupItem?.admins || [])];
+              admins.splice(admins.indexOf(client.user), 1);
+              addressStore.setGroupAdmins(id, [...admins]);
+            }
             break;
           default:
         }
