@@ -49,6 +49,12 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     }, 1000);
   };
 
+  useEffect(() => {
+    if (duration >= 60) {
+      sendAudio();
+    }
+  }, [duration]);
+
   const startRecording = () => {
     HZRecorder.get((rec: typeof HZRecorder, val: any) => {
       recorder = rec;
