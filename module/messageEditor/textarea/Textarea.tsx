@@ -20,7 +20,7 @@ import { getRangeRect, showAt, getAtUser, replaceAtUser } from '../suggestList/u
 import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';
 import { CurrentConversation } from '../../store/ConversationStore';
-
+import { useTranslation } from 'react-i18next';
 export interface TextareaProps {
   prefix?: string;
   className?: string;
@@ -54,6 +54,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     onBeforeSendMessage,
     enabledTyping = true,
   } = props;
+  const { t } = useTranslation();
   const [textValue, setTextValue] = useState('');
   const { prefix: customizePrefixCls, className } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -195,7 +196,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   // Send Button
   const btnNode = hasSendButton ? (
-    <div className={`${prefixCls}-sendBtn`}>
+    <div className={`${prefixCls}-sendBtn`} title={t('module.send')}>
       <Icon
         type="AIR_PLANE"
         width={20}

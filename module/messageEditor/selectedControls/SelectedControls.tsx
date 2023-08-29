@@ -87,7 +87,9 @@ const SelectedControls = (props: SelectedControlsProps) => {
       title: t('module.chatHistory'),
       summary: summary,
       messageList: selectedMessages,
+
       onFileUploadComplete: (data: any) => {
+        console.log('onFileUploadComplete msg', msg);
         rootStore.messageStore.message.byId[msg.id].url = data.url;
         rootStore.messageStore.message.byId[msg.id].secret = data.secret;
       },
@@ -128,6 +130,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
           </div>
           <div className={`${prefixCls}-content-right`}>
             <div
+              title={t('module.cancel') as string}
               className={iconClass}
               style={{ cursor: selectedMessages.length > 0 ? 'pointer' : 'not-allowed' }}
               onClick={() => {
@@ -139,6 +142,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
               <Icon type="DELETE" width={24} height={24}></Icon>
             </div>
             <div
+              title={t('module.forward') as string}
               className={iconClass}
               style={{ cursor: selectedMessages.length > 0 ? 'pointer' : 'not-allowed' }}
               onClick={sendSelectedMsg}

@@ -44,6 +44,11 @@
         "threadNameRequired": "Thread name (required)",
         "enterThreadName": "Enter a thread name",
         "aThread": "A Thread",
-        "edited": "Message Edited"
+        "edited": "Message Edited",
+        "send": "Send",
+        "forward": "Forward",
+        "more": "More",
+        "emoji": "Emoji",
+        "record": "Record"
     }
 }
