@@ -71,7 +71,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
         // @ts-ignore
         case 'combine':
           // @ts-ignore
-          summary = `${summary}${msg.from}: /${t('module.custom')}/\n`;
+          summary = `${summary}${msg.from}: /${t('module.chatHistory')}/\n`;
           break;
         default:
           break;
@@ -88,8 +88,8 @@ const SelectedControls = (props: SelectedControlsProps) => {
       summary: summary,
       messageList: selectedMessages,
       onFileUploadComplete: (data: any) => {
-       rootStore.messageStore.message.byId[msg.id].url = data.url;
-       rootStore.messageStore.message.byId[msg.id].secret = data.secret;
+        rootStore.messageStore.message.byId[msg.id].url = data.url;
+        rootStore.messageStore.message.byId[msg.id].secret = data.secret;
       },
     };
     console.log(option);
