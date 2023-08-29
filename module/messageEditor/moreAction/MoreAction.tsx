@@ -42,7 +42,7 @@ let MoreAction = (props: MoreActionProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container">
+    <span className="icon-container" title={t('module.more') as string}>
       <Icon
         type="PLUS_CIRCLE"
         width={20}

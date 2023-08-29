@@ -49,6 +49,12 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     }, 1000);
   };
 
+  useEffect(() => {
+    if (duration >= 60) {
+      sendAudio();
+    }
+  }, [duration]);
+
   const startRecording = () => {
     HZRecorder.get((rec: typeof HZRecorder, val: any) => {
       recorder = rec;
@@ -159,7 +165,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   };
 
   const initNode = (
-    <div className="icon-container">
+    <div className="icon-container" title={t('module.record') as string}>
       <Icon
         type="CIRCLE_WAVE"
         width={20}
@@ -173,7 +179,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const liveNode = (
     <div className={`${prefixCls}-content`}>
       <div className={`${prefixCls}-content-left`}>
-        <div className={`${prefixCls}-iconBox`}>
+        <div className={`${prefixCls}-iconBox`} title={t(`module.cancel`)}>
           <Icon
             type="DELETE"
             width={20}
@@ -188,7 +194,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       </div>
       <div className={`${prefixCls}-content-right`}>
         <span>{t('module.recording')}...</span>
-        <div onClick={sendAudio} className={`${prefixCls}-send`}>
+        <div onClick={sendAudio} className={`${prefixCls}-send`} title={t(`module.send`)}>
           <Icon type="AIR_PLANE" width={20} height={20} color="#fff"></Icon>
         </div>
       </div>

@@ -4,6 +4,7 @@ import Button, { ButtonProps } from '../../../component/button';
 import { emoji as defaultEmojiConfig } from './emojiConfig';
 import Icon from '../../../component/icon';
 import './style/style.scss';
+import { useTranslation } from 'react-i18next';
 const emojiWidth = 25;
 const emojiPadding = 5;
 
@@ -33,6 +34,7 @@ const Emoji = (props: EmojiProps) => {
     onDelete,
     emojiConfig,
   } = props;
+  const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
   const emoji: EmojiConfig = emojiConfig ? emojiConfig : defaultEmojiConfig;
   const renderEmoji = () => {
@@ -78,7 +80,7 @@ const Emoji = (props: EmojiProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container">
+    <span className="icon-container" title={t('module.emoji') as string}>
       <Icon
         type="FACE"
         width={20}

@@ -2,10 +2,11 @@
     max-width: 100%;
     overflow: hidden;
     img{
-        width: 100%;
+        // width: 100%;
         display: block;
         max-width: 374px;
         max-width: 374px;
+        object-fit: contain;
     }
 }
 
