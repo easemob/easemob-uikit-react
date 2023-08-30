@@ -50,6 +50,7 @@
         "more": "更多",
         "emoji": "表情",
         "record": "录音",
-        "resend": "重发"
+        "resend": "重发",
+        "unsupportedMessageType": "不支持的消息类型"
     }
 }

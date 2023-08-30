@@ -14,13 +14,13 @@
         "recording": "Recording",
         "you": "You",
         "repliedTo": "replied to",
-        "messageNotFound": "Message not found",
+        "messageNotFound": "Quoted content does not exist",
         "replyingTo": "Replying to",
         "delete": "Delete",
         "reply": "Reply",
-        "unsend": "Unsend",
+        "unsend": "Recall",
         "attachment": "Attachment",
-        "unsentAMessage": " unsent a message",
+        "unsentAMessage": " recalled a message",
         "translate": "Translate",
         "translated": "Translated",
         "translationFailed": "translation failed",
@@ -50,6 +50,7 @@
         "more": "More",
         "emoji": "Emoji",
         "record": "Record",
-        "resend": "Resend"
+        "resend": "Resend",
+        "unsupportedMessageType": "Unsupported message type"
     }
 }
