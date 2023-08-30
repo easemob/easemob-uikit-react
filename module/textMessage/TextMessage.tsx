@@ -353,6 +353,10 @@ const TextMessage = (props: TextMessageProps) => {
     console.log('设置', rootStore.messageStore);
   };
 
+  const handleResendMessage = () => {
+    rootStore.messageStore.sendMessage(textMessage);
+  };
+
   const select =
     rootStore.messageStore.selectedMessage[textMessage.chatType][conversationId]?.selectable;
 
@@ -472,6 +476,7 @@ const TextMessage = (props: TextMessageProps) => {
         onTranslateMessage={handleTranslateMessage}
         onModifyMessage={handleModifyMessage}
         onSelectMessage={handleSelectMessage}
+        onResendMessage={handleResendMessage}
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
         renderUserProfile={renderUserProfile}

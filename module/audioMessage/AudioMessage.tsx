@@ -191,6 +191,10 @@ const AudioMessage = (props: AudioMessageProps) => {
     console.log('设置', rootStore.messageStore);
   };
 
+  const handleResendMessage = () => {
+    rootStore.messageStore.sendMessage(audioMessage);
+  };
+
   const select =
     rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]?.selectable;
 
@@ -271,6 +275,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       onShowReactionUserList={handleShowReactionUserList}
       onRecallMessage={handleRecallMessage}
       onSelectMessage={handleSelectMessage}
+      onResendMessage={handleResendMessage}
       select={select}
       onMessageCheckChange={handleMsgCheckChange}
       renderUserProfile={renderUserProfile}

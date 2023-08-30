@@ -196,6 +196,10 @@ let ImageMessage = (props: ImageMessageProps) => {
     console.log('设置', rootStore.messageStore);
   };
 
+  const handleResendMessage = () => {
+    rootStore.messageStore.sendMessage(message);
+  };
+
   const select =
     rootStore.messageStore.selectedMessage[message.chatType][conversationId]?.selectable;
 
@@ -274,6 +278,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         onShowReactionUserList={handleShowReactionUserList}
         onRecallMessage={handleRecallMessage}
         onSelectMessage={handleSelectMessage}
+        onResendMessage={handleResendMessage}
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
         renderUserProfile={renderUserProfile}

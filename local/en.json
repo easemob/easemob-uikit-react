@@ -49,6 +49,7 @@
         "forward": "Forward",
         "more": "More",
         "emoji": "Emoji",
-        "record": "Record"
+        "record": "Record",
+        "resend": "Resend"
     }
 }

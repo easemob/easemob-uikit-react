@@ -173,6 +173,10 @@ const FileMessage = (props: FileMessageProps) => {
     console.log('设置', rootStore.messageStore);
   };
 
+  const handleResendMessage = () => {
+    rootStore.messageStore.sendMessage(fileMessage);
+  };
+
   const select =
     rootStore.messageStore.selectedMessage[fileMessage.chatType][conversationId]?.selectable;
 
@@ -252,6 +256,7 @@ const FileMessage = (props: FileMessageProps) => {
       onShowReactionUserList={handleShowReactionUserList}
       onRecallMessage={handleRecallMessage}
       onSelectMessage={handleSelectMessage}
+      onResendMessage={handleResendMessage}
       renderUserProfile={renderUserProfile}
       select={select}
       onMessageCheckChange={handleMsgCheckChange}

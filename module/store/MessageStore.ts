@@ -171,8 +171,11 @@ class MessageStore {
       // @ts-ignore
       this.message[chatType][to] = [this.message.byId[message.id]];
     } else {
-      // @ts-ignore
-      this.message[chatType][to].push(this.message.byId[message.id]);
+      // 处理重发的消息，重发的消息不push
+      if (!this.message.byId[message.id]) {
+        // @ts-ignore
+        this.message[chatType][to].push(this.message.byId[message.id]);
+      }
     }
 
     if (this.repliedMessage != null) {
@@ -371,6 +374,29 @@ class MessageStore {
       msgIds = [messageId];
     }
 
+    let localMsgIds: string[] = [];
+    msgIds = msgIds.filter(id => {
+      if (id.length < 13) {
+        localMsgIds.push(id);
+      }
+      return id.length > 13;
+    });
+
+    const _deleteMessage = (msgIds: string[]) => {
+      const messages = this.message[cvs.chatType][cvs.conversationId];
+      const filterMsgs = messages.filter(msg => {
+        // @ts-ignore
+        return !msgIds.includes(msg.id) && !msgIds.includes(msg.mid);
+        // return msg.id != messageId && msg.mid != messageId;
+      });
+      this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+    };
+    // delete local message
+    if (localMsgIds.length > 0) {
+      console.log('删本地');
+      return _deleteMessage(localMsgIds);
+    }
+    // delete server message
     return this.rootStore.client
       .removeHistoryMessages({
         targetId: cvs.conversationId,
@@ -378,13 +404,8 @@ class MessageStore {
         messageIds: msgIds,
       })
       .then(() => {
-        const messages = this.message[cvs.chatType][cvs.conversationId];
-        const filterMsgs = messages.filter(msg => {
-          // @ts-ignore
-          return !msgIds.includes(msg.id) && !msgIds.includes(msg.mid);
-          // return msg.id != messageId && msg.mid != messageId;
-        });
-        this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+        console.log('删服务器');
+        _deleteMessage(msgIds);
       });
   }
 

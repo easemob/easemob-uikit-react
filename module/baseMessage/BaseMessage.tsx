@@ -74,6 +74,7 @@ export interface BaseMessageProps {
   onTranslateMessage?: () => void;
   onModifyMessage?: () => void;
   onSelectMessage?: () => void; // message select action handler
+  onResendMessage?: () => void;
   onMessageCheckChange?: (checked: boolean) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
@@ -165,6 +166,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onTranslateMessage,
     onModifyMessage,
     onSelectMessage,
+    onResendMessage,
     onMessageCheckChange,
     renderUserProfile,
     onCreateThread,
@@ -332,6 +334,24 @@ let BaseMessage = (props: BaseMessageProps) => {
     };
   }
 
+  // failed message only has 'resend', 'delete' action.
+  if (status == 'failed') {
+    moreAction = {
+      visible: true,
+      icon: null,
+      actions: [
+        {
+          content: 'RESEND',
+          onClick: () => {},
+        },
+        {
+          content: 'DELETE',
+          onClick: () => {},
+        },
+      ],
+    };
+  }
+
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
 
   const isCurrentUser = message && msgSenderIsCurrentUser(message);
@@ -357,6 +377,11 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   const selectMessage = () => {
     onSelectMessage && onSelectMessage();
+  };
+
+  const resendMessage = () => {
+    console.log('resend message');
+    onResendMessage && onResendMessage();
   };
   let menuNode: ReactNode | undefined;
   if (moreAction?.visible) {
@@ -409,6 +434,13 @@ let BaseMessage = (props: BaseMessageProps) => {
               <li key={index} onClick={selectMessage}>
                 <Icon type="SELECT" width={16} height={16} color="#5270AD"></Icon>
                 {t('module.select')}
+              </li>
+            );
+          } else if (item.content === 'RESEND') {
+            return (
+              <li key={index} onClick={resendMessage}>
+                <Icon type="LOOP" width={16} height={16} color="#5270AD"></Icon>
+                {t('module.resend')}
               </li>
             );
           }
@@ -512,14 +544,14 @@ let BaseMessage = (props: BaseMessageProps) => {
                       )}
                     </Tooltip>
                   )}
-                  {reaction && (
+                  {reaction && status != 'failed' && (
                     <EmojiKeyBoard
                       onSelected={handleClickEmoji}
                       selectedList={selectedList}
                       onDelete={handleDeleteReactionEmoji}
                     ></EmojiKeyBoard>
                   )}
-                  {thread && !chatThreadOverview && (
+                  {thread && !chatThreadOverview && status != 'failed' && (
                     <Icon
                       type="THREAD"
                       onClick={handleClickThreadIcon}

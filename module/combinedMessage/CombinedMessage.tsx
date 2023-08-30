@@ -287,6 +287,10 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     console.log('设置', rootStore.messageStore);
   };
 
+  const handleResendMessage = () => {
+    rootStore.messageStore.sendMessage(combinedMessage);
+  };
+
   console.log('*****', combinedMessage);
   const select =
     // @ts-ignore
@@ -377,6 +381,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         //   onTranslateMessage={handleTranslateMessage}
 
         onSelectMessage={handleSelectMessage}
+        onResendMessage={handleResendMessage}
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
         onCreateThread={handleCreateThread}

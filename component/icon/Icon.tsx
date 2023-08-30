@@ -47,7 +47,7 @@ import { ReactComponent as AddFriend } from '../svgs/icons/person_add_fill.svg';
 import { ReactComponent as Thread } from '../svgs/icons/hashtag_in_bubble.svg';
 import { ReactComponent as Envelope } from '../svgs/icons/envelope.svg';
 import { ReactComponent as MemberGroup } from '../svgs/all.svg';
-
+import { ReactComponent as Loop } from '../svgs/icons/arrow_round.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -185,6 +185,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'MEMBER_GROUP':
       return <MemberGroup></MemberGroup>;
+      break;
+    case 'LOOP':
+      return <Loop></Loop>;
       break;
     default:
       return '';
