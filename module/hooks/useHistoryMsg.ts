@@ -41,7 +41,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
     }
 
     if (currentChatMsgs.length > 0) {
-      useCursor = currentChatMsgs[0].id;
+      useCursor = currentChatMsgs[0].mid || currentChatMsgs[0].id;
     }
 
     setLoading(true);
