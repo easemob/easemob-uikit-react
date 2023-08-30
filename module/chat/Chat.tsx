@@ -113,6 +113,7 @@ const Chat: FC<ChatProps> = props => {
   const headerRef = useRef(null);
   const showTheadList = () => {
     console.log('show list');
+    if (modalOpen) return;
     setModalOpen(true);
     rootStore.threadStore.getGroupChatThreads(CVS.conversationId)?.then(cursor => {
       console.log('cursor', cursor);

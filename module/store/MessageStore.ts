@@ -116,10 +116,13 @@ class MessageStore {
     // @ts-ignore
     message.bySelf = true;
     // @ts-ignore
-    message.status = 'sending';
-    // @ts-ignore
     message.mid = '';
     message.from = this.rootStore.client.context.userId;
+    // @ts-ignore
+    if (this.message.byId[message.id]?.status !== 'failed') {
+      // @ts-ignore
+      message.status = 'sending';
+    }
     // 添加引用消息
     if (
       this.repliedMessage != null &&
@@ -169,7 +172,9 @@ class MessageStore {
       };
     }
     if (message.type != 'read' && message.type != 'delivery' && message.type != 'channel') {
-      this.message.byId[message.id] = message;
+      if (!this.message.byId[message.id]) {
+        this.message.byId[message.id] = message;
+      }
     }
 
     // @ts-ignore
@@ -178,7 +183,8 @@ class MessageStore {
       this.message[chatType][to] = [this.message.byId[message.id]];
     } else {
       // 处理重发的消息，重发的消息不push
-      if (!this.message.byId[message.id]) {
+      // @ts-ignore
+      if (this.message.byId[message.id].status !== 'failed') {
         // @ts-ignore
         this.message[chatType][to].push(this.message.byId[message.id]);
       }
