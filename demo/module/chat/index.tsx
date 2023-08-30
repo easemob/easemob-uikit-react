@@ -36,7 +36,7 @@ const ChatApp = () => {
     client &&
       client
         .open({
-          user: 'zd',
+          user: 'zd2',
           // pwd: '272808',
           accessToken:
             '',
@@ -143,6 +143,9 @@ const ChatApp = () => {
                 return null;
               },
             }}
+            messageEditorProps={{
+              enabledTyping: true,
+            }}
           ></Chat>
         </div>
         {thread.showThreadPanel && (
@@ -182,6 +185,9 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
     }}
   >
     <Provider
+      onError={err => {
+        console.log('回调出的err', err);
+      }}
       initConfig={{
         appKey: '41117440#383391',
         // appKey: 'easemob#easeim',

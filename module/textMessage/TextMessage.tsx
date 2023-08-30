@@ -1,4 +1,4 @@
-import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import Avatar from '../../component/avatar';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import Textarea from '../messageEditor/textarea';
 import { ForwardRefProps } from '../messageEditor/textarea/Textarea';
 import { observer } from 'mobx-react-lite';
-
+import { RootContext } from '../store/rootContext';
 export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
   // color?: string; // 字体颜色
@@ -156,6 +156,9 @@ const TextMessage = (props: TextMessageProps) => {
   const classString = classNames(prefixCls, className);
   const textareaRef = useRef<ForwardRefProps>(null);
   const [modifyMessageVisible, setModifyMessageVisible] = useState<boolean>(false);
+
+  const context = useContext(RootContext);
+  const { onError } = context;
   let urlTxtClass = '';
   if (urlData?.images?.length > 0) {
     urlTxtClass = 'message-text-hasImage';
@@ -290,15 +293,19 @@ const TextMessage = (props: TextMessageProps) => {
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(textMessage);
     console.log('handleRecallMessage', textMessage);
-    rootStore.messageStore.recallMessage(
-      {
-        chatType: textMessage.chatType,
-        conversationId: conversationId,
-      },
-      // @ts-ignore
-      textMessage.mid || textMessage.id,
-      textMessage.isChatThread,
-    );
+    rootStore.messageStore
+      .recallMessage(
+        {
+          chatType: textMessage.chatType,
+          conversationId: conversationId,
+        },
+        // @ts-ignore
+        textMessage.mid || textMessage.id,
+        textMessage.isChatThread,
+      )
+      ?.catch(err => {
+        onError?.(err);
+      });
   };
 
   const switchShowTranslation = () => {

@@ -427,9 +427,6 @@ class MessageStore {
           //@ts-ignore
           messages[msgIndex].ext = {};
         }
-      })
-      .catch(e => {
-        // TODO: alert error
       });
   }
 

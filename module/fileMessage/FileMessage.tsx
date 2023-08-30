@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
@@ -11,6 +11,7 @@ import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
 import { AgoraChat } from 'agora-chat';
+import { RootContext } from '../store/rootContext';
 export interface FileMessageProps extends BaseMessageProps {
   fileMessage: FileMessageType; // 从SDK收到的文件消息
   iconType?: IconProps['type'];
@@ -39,6 +40,8 @@ const FileMessage = (props: FileMessageProps) => {
   const { filename, file_length, from, reactions } = fileMessage;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
+  const context = useContext(RootContext);
+  const { onError } = context;
   let { bySelf } = fileMessage;
   if (typeof bySelf == 'undefined') {
     bySelf = fileMessage.from === rootStore.client.context.userId;
@@ -143,15 +146,19 @@ const FileMessage = (props: FileMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(fileMessage);
-    rootStore.messageStore.recallMessage(
-      {
-        chatType: fileMessage.chatType,
-        conversationId: conversationId,
-      },
-      // @ts-ignore
-      fileMessage.mid || fileMessage.id,
-      fileMessage.isChatThread,
-    );
+    rootStore.messageStore
+      .recallMessage(
+        {
+          chatType: fileMessage.chatType,
+          conversationId: conversationId,
+        },
+        // @ts-ignore
+        fileMessage.mid || fileMessage.id,
+        fileMessage.isChatThread,
+      )
+      ?.catch(err => {
+        onError?.(err);
+      });
   };
 
   let conversationId = getCvsIdFromMessage(fileMessage);

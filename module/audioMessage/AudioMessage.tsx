@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
@@ -10,6 +10,7 @@ import rootStore from '../store/index';
 import { observer } from 'mobx-react-lite';
 import { getCvsIdFromMessage } from '../utils';
 import { AgoraChat } from 'agora-chat';
+import { RootContext } from '../store/rootContext';
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -54,7 +55,8 @@ const AudioMessage = (props: AudioMessageProps) => {
     },
     className,
   );
-
+  const context = useContext(RootContext);
+  const { onError } = context;
   const playAudio = () => {
     setPlayStatus(true);
     (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current
@@ -161,15 +163,19 @@ const AudioMessage = (props: AudioMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(audioMessage);
-    rootStore.messageStore.recallMessage(
-      {
-        chatType: audioMessage.chatType,
-        conversationId: conversationId,
-      },
-      // @ts-ignore
-      audioMessage.mid || audioMessage.id,
-      audioMessage.isChatThread,
-    );
+    rootStore.messageStore
+      .recallMessage(
+        {
+          chatType: audioMessage.chatType,
+          conversationId: conversationId,
+        },
+        // @ts-ignore
+        audioMessage.mid || audioMessage.id,
+        audioMessage.isChatThread,
+      )
+      ?.catch(err => {
+        onError?.(err);
+      });
   };
 
   let conversationId = getCvsIdFromMessage(audioMessage);

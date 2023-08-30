@@ -8,6 +8,7 @@ import { useEventHandler } from '../hooks/chat';
 import { initReactI18next } from 'react-i18next';
 import i18n from 'i18next';
 import { resource } from '../../local/resource';
+
 export interface ProviderProps {
   initConfig: {
     appKey: string;
@@ -25,10 +26,11 @@ export interface ProviderProps {
       };
     };
   };
+  onError?: (err: AgoraChat.ErrorEvent) => void;
   children?: ReactNode;
 }
 const Provider: React.FC<ProviderProps> = props => {
-  const { initConfig, local } = props;
+  const { initConfig, local, onError } = props;
   const { appKey } = initConfig;
   const client = useMemo(() => {
     return new AC.connection({
@@ -63,6 +65,7 @@ const Provider: React.FC<ProviderProps> = props => {
         rootStore,
         initConfig,
         client,
+        onError,
       }}
     >
       {props.children}

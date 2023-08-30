@@ -12,12 +12,14 @@ export interface ContextProps {
   rootStore: RootStore;
   initConfig: any;
   client: any;
+  onError?: (err: AgoraChat.ErrorEvent) => void;
 }
 
 export const RootContext = React.createContext<ContextProps>({
   rootStore,
   initConfig: {},
   client: {},
+  onError: (err: AgoraChat.ErrorEvent) => {},
 });
 
 export const RootConsumer = RootContext.Consumer;

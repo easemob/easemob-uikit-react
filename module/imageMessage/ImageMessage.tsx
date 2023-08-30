@@ -1,4 +1,4 @@
-import React, { useRef, useState, memo, useEffect } from 'react';
+import React, { useRef, useState, memo, useEffect, useContext } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
@@ -11,6 +11,7 @@ import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
 import { AgoraChat } from 'agora-chat';
+import { RootContext } from '../store/rootContext';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -33,6 +34,9 @@ let ImageMessage = (props: ImageMessageProps) => {
   let { bySelf, from, reactions } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
   const [previewVisible, setPreviewVisible] = useState(false);
+  const context = useContext(RootContext);
+  const { onError } = context;
+
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
     var img = new Image();
     img.src = path;
@@ -166,15 +170,19 @@ let ImageMessage = (props: ImageMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(message);
-    rootStore.messageStore.recallMessage(
-      {
-        chatType: message.chatType,
-        conversationId: conversationId,
-      },
-      // @ts-ignore
-      message.mid || message.id,
-      message.isChatThread,
-    );
+    rootStore.messageStore
+      .recallMessage(
+        {
+          chatType: message.chatType,
+          conversationId: conversationId,
+        },
+        // @ts-ignore
+        message.mid || message.id,
+        message.isChatThread,
+      )
+      ?.catch(err => {
+        onError?.(err);
+      });
   };
 
   let conversationId = getCvsIdFromMessage(message);

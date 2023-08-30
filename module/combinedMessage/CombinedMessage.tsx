@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useContext } from 'react';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { AgoraChat } from 'agora-chat';
 import rootStore from '../store/index';
@@ -15,6 +15,7 @@ import AudioMessage from '../audioMessage';
 import { observer } from 'mobx-react-lite';
 import Loading from '../../component/loading';
 import { useTranslation } from 'react-i18next';
+import { RootContext } from '../store/rootContext';
 export interface CombinedMessageProps extends BaseMessageProps {
   prefix?: string;
   className?: string;
@@ -52,6 +53,8 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     type = bySelf ? 'primary' : 'secondly';
   }
   const { t } = useTranslation();
+  const context = useContext(RootContext);
+  const { onError } = context;
   const handleReplyMsg = () => {
     // TODO: reply message add combine type
     rootStore.messageStore.setRepliedMessage(combinedMessage);
@@ -134,15 +137,19 @@ const CombinedMessage = (props: CombinedMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(combinedMessage);
-    rootStore.messageStore.recallMessage(
-      {
-        chatType: combinedMessage.chatType,
-        conversationId: conversationId,
-      },
-      // @ts-ignore
-      combinedMessage.mid || combinedMessage.id,
-      combinedMessage.isChatThread,
-    );
+    rootStore.messageStore
+      .recallMessage(
+        {
+          chatType: combinedMessage.chatType,
+          conversationId: conversationId,
+        },
+        // @ts-ignore
+        combinedMessage.mid || combinedMessage.id,
+        combinedMessage.isChatThread,
+      )
+      ?.catch(err => {
+        onError?.(err);
+      });
   };
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-combine', customizePrefixCls);

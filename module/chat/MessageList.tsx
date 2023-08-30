@@ -152,6 +152,8 @@ let MessageList: FC<MsgListProps> = props => {
           thread={true}
         ></CombinedMessage>
       );
+    } else if (messageData[data.index].type == 'video' || messageData[data.index].type == 'loc') {
+      return null;
     }
   };
 
