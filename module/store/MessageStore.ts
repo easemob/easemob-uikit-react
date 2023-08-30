@@ -162,6 +162,12 @@ class MessageStore {
       message.ext = ext;
       console.log('---', message, ext);
     }
+    if (message.isChatThread) {
+      const { currentThread } = this.rootStore.threadStore;
+      message.chatThread = {
+        parentId: currentThread.info?.parentId || currentThread.originalMessage.to,
+      };
+    }
     if (message.type != 'read' && message.type != 'delivery' && message.type != 'channel') {
       this.message.byId[message.id] = message;
     }

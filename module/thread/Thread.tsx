@@ -7,7 +7,6 @@ import './style/style.scss';
 // @ts-ignore
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
-import { renderTxt } from '../textMessage/TextMessage';
 import Header from '../header';
 import MessageEditor from '../messageEditor';
 import Icon from '../../component/icon';
@@ -20,15 +19,14 @@ import CombinedMessage from '../combinedMessage';
 import { MessageList, MsgListProps } from '../chat/MessageList';
 import Input from '../../component/input';
 import { observer } from 'mobx-react-lite';
-// import rootStore from '../store/index';
 import { CurrentConversation } from '../store/ConversationStore';
-import { RootContext } from '../store/rootContext';
 import Modal from '../../component/modal';
 import Tooltip from '../../component/tooltip';
 import ThreadModal from './ThreadModal';
 import Button from '../../component/button';
 import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
 import rootStore from '../store/index';
+import { getMsgSenderNickname } from '../utils/index';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
@@ -147,7 +145,14 @@ const Thread = (props: ThreadProps) => {
     return (
       <div className={`${prefixCls}-original`}>
         <div className={`${prefixCls}-original-start`}>
-          {t('module.startedBy')} <span>{threadStore.currentThread.info?.owner}</span>
+          {t('module.startedBy')}{' '}
+          <span>
+            {getMsgSenderNickname({
+              chatType: 'groupChat',
+              to: threadStore.currentThread.info?.parentId || '',
+              from: threadStore.currentThread.info?.owner || '',
+            } as any)}
+          </span>
         </div>
         <div className={`${prefixCls}-original-msg`}>{renderMsgDom(threadOriginalMsg)}</div>
         <span className={`${prefixCls}-original-line`}></span>

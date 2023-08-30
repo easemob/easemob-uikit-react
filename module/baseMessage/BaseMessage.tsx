@@ -4,12 +4,7 @@ import { ConfigContext } from '../../component/config/index';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
 import './style/style.scss';
 import { cloneElement } from '../../component/_utils/reactNode';
-import {
-  getConversationTime,
-  getGroupItemFromGroupsById,
-  getGroupMemberIndexByUserId,
-  getGroupMemberNickName,
-} from '../utils';
+import { getConversationTime, getGroupItemFromGroupsById, getMsgSenderNickname } from '../utils';
 import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Icon from '../../component/icon';
@@ -33,7 +28,7 @@ interface CustomAction {
   }[];
 }
 
-type BaseMessageType = Exclude<
+export type BaseMessageType = Exclude<
   AgoraChat.MessageBody,
   AgoraChat.DeliveryMsgBody | AgoraChat.ReadMsgBody | AgoraChat.ChannelMsgBody
 >;
@@ -79,28 +74,9 @@ export interface BaseMessageProps {
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
   thread?: boolean; // whether show thread
-  chatThreadOverview?: AgoraChat.ThreadOverview;
+  chatThreadOverview?: AgoraChat.ChatThreadOverview;
   onClickThreadTitle?: () => void;
 }
-
-const getMsgSenderNickname = (msg: BaseMessageType) => {
-  const { chatType, from = '', to } = msg;
-  const { appUsersInfo } = getStore().addressStore;
-  if (chatType === 'groupChat') {
-    let group = getGroupItemFromGroupsById(to);
-    let memberIndex = (group && getGroupMemberIndexByUserId(group, from)) ?? -1;
-    if (memberIndex > -1) {
-      let memberItem = group?.members?.[memberIndex];
-      if (memberItem) {
-        return getGroupMemberNickName(memberItem) || appUsersInfo?.[from]?.nickname || from;
-      }
-      return appUsersInfo?.[from]?.nickname || from;
-    }
-    return appUsersInfo?.[from]?.nickname || from;
-  } else {
-    return appUsersInfo?.[from]?.nickname || from;
-  }
-};
 
 const msgSenderIsCurrentUser = (message: BaseMessageType) => {
   return message?.from === getStore().client.user || message?.from === '';
@@ -219,10 +195,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
   const threadNode = () => {
     console.log('chatThreadOverview', chatThreadOverview);
-    let { name, messageCount, lastMessage = {} } = chatThreadOverview;
-    if (messageCount > 100) {
-      messageCount = '100 +';
-    }
+    let { name, messageCount, lastMessage = {} } = chatThreadOverview!;
     const { from, type, time } = lastMessage || {};
     let msgContent = '';
     switch (type) {
@@ -265,7 +238,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             <span>{name}</span>
           </div>
           <div>
-            <span>{messageCount}</span>
+            <span>{messageCount > 100 ? '100 +' : messageCount}</span>
             <Icon
               width={16}
               height={16}
@@ -275,8 +248,12 @@ let BaseMessage = (props: BaseMessageProps) => {
           </div>
         </div>
         <div className={`${prefixCls}-thread-message`}>
-          {msgContent && <Avatar size={16}>{from}</Avatar>}
-          <span>{from}</span>
+          {msgContent && (
+            <Avatar size={16} src={appUsersInfo?.[userId]?.avatarurl}>
+              {appUsersInfo?.[userId]?.nickname || userId}
+            </Avatar>
+          )}
+          <span>{msgSenderNickname}</span>
           <span>{msgContent}</span>
           <span>{getConversationTime(time)}</span>
         </div>

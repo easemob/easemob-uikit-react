@@ -25,7 +25,7 @@ import Typing from '../typing';
 import { ThreadModal } from '../thread';
 import ScrollList from '../../component/scrollList';
 import { AgoraChat } from 'agora-chat';
-import { getConversationTime, getCvsIdFromMessage } from '../utils/index';
+import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
 // import rootStore from '../store';
 export interface ChatProps {
   prefix?: string;
@@ -41,7 +41,7 @@ export interface ChatProps {
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
   // Header 的 props
   headerProps?: {
-    avatar: ReactNode,
+    avatar: ReactNode;
     onAvatarClick?: () => void; // 点击 Header 中 头像的回调
     moreAction?: HeaderProps['moreAction'];
   };
@@ -76,6 +76,7 @@ const Chat: FC<ChatProps> = props => {
   const classString = classNames(prefixCls, className);
 
   const rootStore = useContext(RootContext).rootStore;
+  const { appUsersInfo } = rootStore.addressStore;
 
   const CVS = rootStore.conversationStore.currentCvs;
 
@@ -191,8 +192,12 @@ const Chat: FC<ChatProps> = props => {
           <span className={`${prefixCls}-thread-item-name`}> {item.name}</span>
           {item.lastMessage?.type && (
             <div className={`${prefixCls}-thread-item-msgBox`}>
-              <Avatar size={12}>{item.lastMessage?.from}</Avatar>
-              <div className={`${prefixCls}-thread-item-msgBox-name`}>{item.lastMessage?.from}</div>
+              <Avatar size={12} src={appUsersInfo?.[item.lastMessage?.from]?.avatarurl}>
+                {appUsersInfo?.[item.lastMessage?.from]?.nickname || item.lastMessage?.from}
+              </Avatar>
+              <div className={`${prefixCls}-thread-item-msgBox-name`}>
+                {getMsgSenderNickname(item.lastMessage, item.parentId)}
+              </div>
               <div>{lastMsg}</div>
               <div>{getConversationTime(item.lastMessage?.time)}</div>
             </div>

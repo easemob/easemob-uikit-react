@@ -286,13 +286,10 @@ class ThreadStore {
             chatThreadIds: chatThreadIds,
           })
           .then(data => {
-            console.log('最后一条消息', data.entities);
             data.entities.forEach(item => {
-              threads.forEach(thread => {
-                if (item.chatThreadId == thread.id) {
-                  thread.lastMessage = item.lastMessage;
-                }
-              });
+              let idx = threads.findIndex(thread => item.chatThreadId === thread.id);
+              item.lastMessage.chatType = 'groupChat';
+              threads[idx].lastMessage = item.lastMessage;
             });
 
             this.threadList[parentId] = [...list, ...threads];

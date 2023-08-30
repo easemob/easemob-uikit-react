@@ -6,6 +6,7 @@ import { GroupItem, MemberItem } from '../store/AddressStore';
 import { emoji } from '../messageEditor/emoji/emojiConfig';
 import { AppUserInfo } from '../store/AddressStore';
 import { CurrentConversation } from '../store/ConversationStore';
+import type { BaseMessageType } from '../baseMessage/BaseMessage';
 
 export function getConversationTime(time: number) {
   if (!time) return '';
@@ -218,3 +219,26 @@ export function getReactionByEmoji(message: AgoraChat.MessageBody | RecallMessag
   // @ts-ignore
   return message.reactions?.find(reaction => reaction.reaction === emoji);
 }
+
+export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) => {
+  let { chatType, from = '', to, chatThread } = msg;
+  let id = parentId || chatThread?.parentId;
+  if (id) {
+    to = id;
+  }
+  const { appUsersInfo } = getStore().addressStore;
+  if (chatType === 'groupChat') {
+    let group = getGroupItemFromGroupsById(to);
+    let memberIndex = (group && getGroupMemberIndexByUserId(group, from)) ?? -1;
+    if (memberIndex > -1) {
+      let memberItem = group?.members?.[memberIndex];
+      if (memberItem) {
+        return getGroupMemberNickName(memberItem) || appUsersInfo?.[from]?.nickname || from;
+      }
+      return appUsersInfo?.[from]?.nickname || from;
+    }
+    return appUsersInfo?.[from]?.nickname || from;
+  } else {
+    return appUsersInfo?.[from]?.nickname || from;
+  }
+};
