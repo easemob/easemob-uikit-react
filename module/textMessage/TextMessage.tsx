@@ -415,7 +415,11 @@ const TextMessage = (props: TextMessageProps) => {
       msg: msg,
     }) as AgoraChat.TextMsgBody;
     // @ts-ignore
-    rootStore.messageStore.modifyServerMessage(textMessage?.mid || textMessage?.id, message);
+    rootStore.messageStore
+      .modifyServerMessage(textMessage?.mid || textMessage?.id, message)
+      ?.catch(e => {
+        onError?.(e);
+      });
   };
 
   useEffect(() => {

@@ -631,16 +631,13 @@ class MessageStore {
 
   modifyServerMessage(messageId: string, msg: AgoraChat.ModifiedMsg) {
     const { client } = this.rootStore;
-    client
+    return client
       .modifyMessage({
         messageId,
         modifiedMessage: msg,
       })
       .then(res => {
         this.modifyLocalMessage(messageId, res.message);
-      })
-      .catch(e => {
-        console.log('Modify message failed', e);
       });
   }
 
