@@ -17,6 +17,7 @@ export interface ImageMessageProps extends BaseMessageProps {
   prefix?: string;
   style?: React.CSSProperties;
   onClickImage?: (url: string) => void;
+  nickName?: string;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
 
@@ -28,6 +29,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     onClickImage,
     renderUserProfile,
     thread,
+    nickName,
     ...others
   } = props;
 
@@ -277,7 +279,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         message={message}
         bubbleType="none"
         direction={bySelf ? 'rtl' : 'ltr'}
-        nickName={from}
+        nickName={nickName}
         onReplyMessage={handleReplyMsg}
         onDeleteMessage={handleDeleteMsg}
         reactionData={reactions}

@@ -254,7 +254,7 @@ const FileMessage = (props: FileMessageProps) => {
       style={style}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
-      nickName={nickName || from}
+      nickName={nickName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
       reactionData={reactions}

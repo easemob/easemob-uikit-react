@@ -15,6 +15,7 @@ export interface VideoMessageProps {
   videoMessage: VideoMessageType; // 从SDK收到的视频消息
   prefix?: string;
   style?: React.CSSProperties;
+  nickName?: string;
   status?: 'received' | 'read' | 'sent' | 'sending';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
@@ -52,7 +53,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       direction={bySelf ? 'rtl' : 'ltr'}
       style={style}
       time={time}
-      nickName={from}
+      nickName={props?.nickName}
       status={status}
       renderUserProfile={renderUserProfile}
     >

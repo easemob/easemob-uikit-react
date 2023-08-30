@@ -373,7 +373,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         direction={bySelf ? 'rtl' : 'ltr'}
         style={style}
         time={time}
-        nickName={nickName || from}
+        nickName={nickName}
         bubbleType={type}
         className={bubbleClass}
         onReplyMessage={handleReplyMsg}

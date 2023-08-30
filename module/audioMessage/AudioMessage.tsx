@@ -16,6 +16,7 @@ export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> 
   prefix?: string;
   style?: React.CSSProperties;
   className?: string;
+  nickName?: string;
   type?: 'primary' | 'secondly';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
 }
@@ -30,6 +31,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     className,
     type,
     renderUserProfile,
+    nickName,
     thread,
     ...others
   } = props;
@@ -270,7 +272,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       style={customStyle}
       message={audioMessage}
       time={messageTime}
-      nickName={from}
+      nickName={nickName}
       status={status}
       bubbleType={bubbleType}
       onReplyMessage={handleReplyMsg}
