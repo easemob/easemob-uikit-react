@@ -193,6 +193,7 @@ class MessageStore {
     if (this.repliedMessage != null) {
       this.setRepliedMessage(null);
     }
+
     return this.rootStore.client
       .send(message as unknown as AgoraChat.MessageBody)
       .then((data: { serverMsgId: string }) => {
@@ -204,6 +205,19 @@ class MessageStore {
         // @ts-ignore
         msg.mid = data.serverMsgId;
         // this.message.byId[data.serverMsgId] = { ...msg };
+
+        if (message.type == 'combine') {
+          let level = 0;
+          //@ts-ignore
+          message.messageList.forEach(item => {
+            if (item.combineLevel > level) {
+              level = item.combineLevel;
+            }
+          });
+          //@ts-ignore
+          msg.combineLevel = level + 1;
+          console.log('合并消息', message);
+        }
 
         this.message.byId[data.serverMsgId] = this.message.byId[message.id];
         // @ts-ignore
@@ -245,6 +259,7 @@ class MessageStore {
       .catch((error: ErrorEvent) => {
         console.warn('send fail', error);
         this.updateMessageStatus(message.id, 'failed');
+        throw error;
       });
   }
 
@@ -423,7 +438,18 @@ class MessageStore {
 
   recallMessage(cvs: CurrentConversation, messageId: string, isChatThread: boolean = false) {
     if (!cvs || !messageId) return;
-
+    // the others recall the message
+    const messages = getMessages(cvs);
+    const msgIndex = getMessageIndex(messages, messageId);
+    if (messages[msgIndex].from !== this.rootStore.client.user) {
+      if (msgIndex > -1) {
+        messages[msgIndex].type = 'recall';
+        //@ts-ignore
+        messages[msgIndex].ext = {};
+      }
+      return;
+    }
+    // mySelf recall the message
     return this.rootStore.client
       .recallMessage({
         chatType: cvs.chatType,

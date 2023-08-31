@@ -89,6 +89,22 @@ const useEventHandler = () => {
             });
         }
       },
+      onRecallMessage: message => {
+        console.log('onRecallMessage', message);
+        let chatType: 'singleChat' | 'groupChat' = 'singleChat';
+        let conversationId = message.from;
+        if (message.to.length == 15 && Number(message.to) > 0) {
+          chatType = 'groupChat';
+          conversationId = message.to;
+        }
+        messageStore.recallMessage(
+          {
+            chatType, // TODO: 'singleChat' | 'groupChat'
+            conversationId,
+          },
+          message.mid,
+        );
+      },
 
       onConnected: () => {
         console.log('登录成功 ********');

@@ -1,18 +1,24 @@
 @import '~/common/style/index.scss';
-.message-notice-content{
+$notice-msg-prefix-cls: #{$cui-prefix}-message-notice;
+.#{$notice-msg-prefix-cls}{
     width: 100%;
     display: flex;
     justify-content: center;
-    margin: $margin-xs 0;
-    span{
-        font-family: 'SF Pro';
+    overflow: hidden;
+    padding: 8px 24px;
+    box-sizing: border-box;
+    gap: 8px;
+    color: $gray-7;
+    span:nth-child(1){
+        font-size: 14px;
         font-style: normal;
-        font-weight: 400;
-        font-size: $font-size-sm;
+        font-weight: 500;
         line-height: 20px;
-        display: inline-block;
         text-align: center;
-        /* color_neutral/7 */
-        color: $gray-7;
+    }
+    span:nth-child(2){
+        font-size: 12px;
+        font-style: normal;
+        line-height: 20px;
     }
 }

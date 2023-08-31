@@ -30,6 +30,7 @@ import RecalledMessage from '../recalledMessage';
 import CombinedMessage from '../combinedMessage';
 import { renderUserProfileProps } from '../baseMessage';
 import { CurrentConversation } from '../store/ConversationStore';
+import NoticeMessage from '../noticeMessage';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
@@ -112,6 +113,9 @@ let MessageList: FC<MsgListProps> = props => {
         ></FileMessage>
       );
     } else if (messageData[data.index].type == 'recall') {
+      return (
+        <NoticeMessage noticeMessage={messageData[data.index] as RecallMessage}></NoticeMessage>
+      );
       return (
         <RecalledMessage
           key={messageData[data.index].id}
