@@ -63,11 +63,12 @@ const useEventHandler = () => {
 
       onReceivedMessage: message => {
         console.log('onReceivedMessage', message);
-        messageStore.updateMessageStatus(message.mid, 'received');
+        messageStore.updateMessageStatus(message.mid, 'sent');
         // messageStore.receiveMessage(message);
       },
       onDeliveredMessage: message => {
         console.log('onDeliveredMessage', message);
+        messageStore.updateMessageStatus(message.mid as string, 'received');
         // messageStore.receiveMessage(message);
         // messageStore.updateMessageStatus();
       },

@@ -41,11 +41,7 @@ const MessageStatus = (props: MessageStatusProps) => {
       break;
     case 'received':
       statusNode =
-        type == 'icon' ? (
-          <img alt="received" src={received as unknown as string}></img>
-        ) : (
-          '发送成功'
-        );
+        type == 'icon' ? <img alt="received" src={received as unknown as string}></img> : '已送达';
       break;
     case 'read':
       statusNode = type == 'icon' ? <img alt="read" src={read as unknown as string}></img> : '已读';

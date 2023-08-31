@@ -35,6 +35,7 @@ const Provider: React.FC<ProviderProps> = props => {
   const client = useMemo(() => {
     return new AC.connection({
       appKey: appKey,
+      delivery: true,
     });
   }, [appKey]);
 
