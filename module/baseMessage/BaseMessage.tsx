@@ -399,7 +399,8 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'Modify') {
             return (
-              (isCurrentUser || isOwner || isAdmin) && (
+              (isCurrentUser || isOwner || isAdmin) &&
+              message?.type === 'txt' && (
                 <li key={index} onClick={modifyMessage}>
                   <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
                   {t('module.modify')}
