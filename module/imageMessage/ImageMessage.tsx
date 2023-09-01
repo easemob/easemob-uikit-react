@@ -16,6 +16,7 @@ export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
   style?: React.CSSProperties;
+  type?: 'primary' | 'secondly';
   onClickImage?: (url: string) => void;
   nickName?: string;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
@@ -32,7 +33,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     nickName,
     ...others
   } = props;
-
+  let type = props.type;
   let { bySelf, from, reactions } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
   const [previewVisible, setPreviewVisible] = useState(false);
@@ -271,13 +272,15 @@ let ImageMessage = (props: ImageMessageProps) => {
 
     rootStore.threadStore.getChatThreadDetail(message?.chatThreadOverview?.id || '');
   };
-
+  if (!type) {
+    type = bySelf ? 'primary' : 'secondly';
+  }
   return (
     <div style={style}>
       <BaseMessage
         id={message.id}
         message={message}
-        // bubbleType="none"
+        bubbleType={type}
         direction={bySelf ? 'rtl' : 'ltr'}
         nickName={nickName}
         onReplyMessage={handleReplyMsg}
