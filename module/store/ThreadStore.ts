@@ -192,8 +192,14 @@ class ThreadStore {
     // if (currentThreadInfo) {
     this.rootStore.client.getChatThreadDetail({ chatThreadId: threadId }).then((res: any) => {
       console.log('getChatThreadDetail --->', res);
+      // 找到原消息
+      const message = this.rootStore.messageStore.message['groupChat'][res.data.parentId];
+      const originalMessage = message.find(
+        (item: any) => item.mid === res.data.messageId || item.id === res.data.messageId,
+      );
       this.setCurrentThread({
         ...this.currentThread,
+        originalMessage: originalMessage,
         info: {
           // ...currentThreadInfo,
           // // @ts-ignore
