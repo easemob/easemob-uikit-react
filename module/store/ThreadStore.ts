@@ -272,8 +272,8 @@ class ThreadStore {
   getGroupChatThreads(parentId: string, cursor?: string) {
     if (!parentId) return console.error('no parentId');
     console;
-    if (this.threadList[parentId]?.length >= 20 && !cursor)
-      return console.error('no cursor', cursor);
+    if (this.threadList[parentId]?.length > 0 && !cursor) return console.error('no cursor', cursor);
+
     return this.rootStore.client
       .getChatThreads({
         parentId,
