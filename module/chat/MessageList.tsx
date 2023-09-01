@@ -116,18 +116,6 @@ let MessageList: FC<MsgListProps> = props => {
       return (
         <NoticeMessage noticeMessage={messageData[data.index] as RecallMessage}></NoticeMessage>
       );
-      return (
-        <RecalledMessage
-          key={messageData[data.index].id}
-          style={data.style}
-          //@ts-ignore
-          status={messageData[data.index].status}
-          //@ts-ignore
-          message={messageData[data.index]}
-        >
-          {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
-        </RecalledMessage>
-      );
     } else if (messageData[data.index].type == 'txt') {
       return (
         <TextMessage
@@ -157,7 +145,18 @@ let MessageList: FC<MsgListProps> = props => {
         ></CombinedMessage>
       );
     } else if (messageData[data.index].type == 'video' || messageData[data.index].type == 'loc') {
-      return null;
+      return (
+        <RecalledMessage
+          key={messageData[data.index].id}
+          style={data.style}
+          //@ts-ignore
+          status={messageData[data.index].status}
+          //@ts-ignore
+          message={messageData[data.index]}
+        >
+          {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
+        </RecalledMessage>
+      );
     }
   };
 

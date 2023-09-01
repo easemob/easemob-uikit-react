@@ -86,8 +86,8 @@ let ImageMessage = (props: ImageMessageProps) => {
 
   const img = useRef(
     <img
-      width={75}
-      height={75}
+      // width={75}
+      // height={75}
       src={renderImgUrl}
       alt={message.file?.filename}
       onClick={() => handleClickImg(message.url || renderImgUrl)}
@@ -277,7 +277,7 @@ let ImageMessage = (props: ImageMessageProps) => {
       <BaseMessage
         id={message.id}
         message={message}
-        bubbleType="none"
+        // bubbleType="none"
         direction={bySelf ? 'rtl' : 'ltr'}
         nickName={nickName}
         onReplyMessage={handleReplyMsg}
@@ -296,6 +296,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         thread={_thread}
         chatThreadOverview={message.chatThreadOverview}
         onClickThreadTitle={handleClickThreadTitle}
+        bubbleStyle={{ padding: '0' }}
         {...others}
       >
         <div className="message-image-content">{img.current}</div>

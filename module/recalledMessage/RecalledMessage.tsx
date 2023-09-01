@@ -24,13 +24,15 @@ const RecalledMessage = (props: RecalledMessageProps) => {
   }
   const { t } = useTranslation();
   // @ts-ignore
-  if (message.bySelf) {
-    // @ts-ignore
-    message.msg = t('module.you') + t('module.unsentAMessage');
-  } else {
-    // @ts-ignore
-    message.msg = message.from + t('module.unsentAMessage');
-  }
+  // if (message.bySelf) {
+  //   // @ts-ignore
+  //   message.msg = t('module.you') + t('module.unsentAMessage');
+  // } else {
+  //   // @ts-ignore
+  //   message.msg = message.from + t('module.unsentAMessage');
+  // }
+  // @ts-ignore
+  message.msg = t('module.unsupportedMessageType');
   return (
     <TextMessage
       customAction={{ visible: false }}
