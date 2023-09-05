@@ -33,7 +33,7 @@
         "hide": "Hide",
         "show": "Show",
         "atAll": "All",
-        "atTag": "/someone@you/ ",
+        "atTag": "[Someone@You] ",
         "select": "Select",
         "chatHistory": "A Chat History",
         "batchDeletion": "Batch Deletion",

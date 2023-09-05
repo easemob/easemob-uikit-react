@@ -33,7 +33,7 @@
         "hide": "隐藏",
         "show": "显示",
         "atAll": "所有人",
-        "atTag": "/有人@你/ ",
+        "atTag": "[有人@你] ",
         "select": "多选",
         "chatHistory": "聊天记录",
         "batchDeletion": "批量删除",
