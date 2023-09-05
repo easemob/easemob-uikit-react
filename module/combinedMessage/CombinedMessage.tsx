@@ -180,6 +180,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               bubbleType="none"
               textMessage={msg}
               direction="ltr"
+              thread={false}
               renderUserProfile={renderUserProfile}
             />
           );
@@ -193,6 +194,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               key={msg.id}
               reaction={false}
               customAction={{ visible: false }}
+              thread={false}
               renderUserProfile={renderUserProfile}
             />
           );
@@ -207,6 +209,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               type="secondly"
               reaction={false}
               customAction={{ visible: false }}
+              thread={false}
               renderUserProfile={renderUserProfile}
             />
           );
@@ -221,6 +224,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               type="secondly"
               reaction={false}
               customAction={{ visible: false }}
+              thread={false}
               renderUserProfile={renderUserProfile}
             />
           );
@@ -235,6 +239,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               type="secondly"
               reaction={false}
               customAction={{ visible: false }}
+              thread={false}
               renderUserProfile={renderUserProfile}
             />
           );

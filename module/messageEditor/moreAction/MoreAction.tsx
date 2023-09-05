@@ -152,12 +152,12 @@ let MoreAction = (props: MoreActionProps) => {
           imageMessage.chatType = cvs.chatType;
         }
 
-        console.log('发送的消息', imageMessage);
         messageStore.sendMessage(imageMessage);
       });
     } else {
       messageStore.sendMessage(imageMessage);
     }
+    imageEl!.current!.value = '';
   };
 
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = e => {
@@ -189,12 +189,12 @@ let MoreAction = (props: MoreActionProps) => {
           fileMessage.chatType = cvs.chatType;
         }
 
-        console.log('发送的消息', fileMessage);
         messageStore.sendMessage(fileMessage);
       });
     } else {
       messageStore.sendMessage(fileMessage);
     }
+    fileEl!.current!.value = '';
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
