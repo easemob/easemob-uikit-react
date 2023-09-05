@@ -57,7 +57,6 @@ const List = React.forwardRef<any, ListProps>((props, ref) => {
   //   useEffect(() => {
   //     //@ts-ignore
   //     infiniteLoaderRef.current?.resetloadMoreItemsCache();
-  //     console.log('刷新了');
   //   }, [itemData]);
   return (
     <InfiniteLoader

@@ -68,7 +68,6 @@ let MessageList: FC<MsgListProps> = props => {
 
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
-  console.log('**** currentCVS ***', currentCVS);
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
 
   const renderMsg = (data: { index: number; style: React.CSSProperties }) => {

@@ -64,10 +64,10 @@ const AudioMessage = (props: AudioMessageProps) => {
     (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current
       .play()
       .then(res => {
-        console.log(res);
+        // console.log(res);
       })
       .catch(err => {
-        console.log('err', err);
+        console.error('err', err);
       });
     // const time = audioMessage!.body!.length * 1000;
     // const time = file.duration * 1000;
@@ -107,7 +107,6 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    console.log('添加Reaction', emojiString);
     let conversationId = getCvsIdFromMessage(audioMessage);
 
     rootStore.messageStore.addReaction(
@@ -196,7 +195,6 @@ const AudioMessage = (props: AudioMessageProps) => {
         selectedMessage: [],
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   const handleResendMessage = () => {
@@ -230,7 +228,6 @@ const AudioMessage = (props: AudioMessageProps) => {
         selectedMessage: changedList,
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   // @ts-ignore

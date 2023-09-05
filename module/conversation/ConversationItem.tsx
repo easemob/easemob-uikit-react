@@ -108,10 +108,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         deleteRoam: true,
       })
       .then(() => {
-        console.log('delete success');
+        // console.log('delete success');
       })
       .catch(err => {
-        console.log('delete fail', err);
+        console.error('delete fail', err);
       });
   };
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -146,7 +146,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   let lastMsg: ReactNode[] | ReactNode = '';
   switch (data.lastMessage?.type) {
     case 'txt':
-      lastMsg = renderTxt(data.lastMessage?.msg, '');
+      lastMsg = renderTxt(data.lastMessage?.msg, false);
       break;
     case 'img':
       lastMsg = `/${t('module.image')}/`;

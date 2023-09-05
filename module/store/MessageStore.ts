@@ -86,7 +86,7 @@ class MessageStore {
     });
 
     autorun(() => {
-      console.log('message', this.message.singleChat.zd3);
+      // console.log('message', this.message.singleChat.zd3);
     });
   }
 
@@ -100,7 +100,6 @@ class MessageStore {
   }
 
   setCurrentCVS(currentCVS: CurrentConversation) {
-    console.log('setCurrentCVS', currentCVS);
     this.currentCVS = currentCVS;
   }
 
@@ -163,7 +162,6 @@ class MessageStore {
         msgType: this.repliedMessage.type,
       };
       message.ext = ext;
-      console.log('---', message, ext);
     }
     if (message.isChatThread) {
       const { currentThread } = this.rootStore.threadStore;
@@ -197,7 +195,6 @@ class MessageStore {
     return this.rootStore.client
       .send(message as unknown as AgoraChat.MessageBody)
       .then((data: { serverMsgId: string }) => {
-        console.log('send success', data);
         // message.status = 'sent';
         const msg = this.message.byId[message.id];
         // @ts-ignore
@@ -216,7 +213,6 @@ class MessageStore {
           });
           //@ts-ignore
           msg.combineLevel = level + 1;
-          console.log('合并消息', message);
         }
 
         this.message.byId[data.serverMsgId] = this.message.byId[message.id];
@@ -229,8 +225,6 @@ class MessageStore {
         // @ts-ignore
         this.message[chatType][to].splice(i, 1, msg);
         // this.message[chatType][to][i] = msg;
-
-        console.log('---->message', this.message);
 
         // 更新会话last message
         let cvs: Conversation = this.rootStore.conversationStore.getConversation(
@@ -264,7 +258,6 @@ class MessageStore {
   }
 
   receiveMessage(message: AgoraChat.MessageBody) {
-    console.log('收到消息', message);
     const curCvs = this.rootStore.conversationStore.currentCvs;
     //@ts-ignore
     if (curCvs && curCvs.chatType === message.chatType && curCvs.conversationId === message.from) {
@@ -297,7 +290,6 @@ class MessageStore {
       // @ts-ignore
       this.currentCVS.chatType == message.chatType &&
       this.currentCVS.conversationId == conversationId;
-    console.log('isCurrentCvs', isCurrentCvs);
     let cvs: Conversation = this.rootStore.conversationStore.getConversation(
       // @ts-ignore
       message.chatType,
@@ -364,8 +356,6 @@ class MessageStore {
       // @ts-ignore
       this.message[msg.chatType][conversationId].splice(i, 1, msg);
       // this.message[chatType][to][i] = msg;
-
-      console.log('---->message', this.message);
     }, 10);
   }
 
@@ -420,7 +410,7 @@ class MessageStore {
     };
     // delete local message
     if (localMsgIds.length > 0) {
-      console.log('删本地');
+      // console.log('删本地');
       return _deleteMessage(localMsgIds);
     }
     // delete server message
@@ -431,7 +421,7 @@ class MessageStore {
         messageIds: msgIds,
       })
       .then(() => {
-        console.log('删服务器');
+        // console.log('删服务器');
         _deleteMessage(msgIds);
       });
   }
@@ -469,7 +459,6 @@ class MessageStore {
   }
 
   addReaction(cvs: CurrentConversation, messageId: string, emoji: string) {
-    console.log(cvs, messageId, emoji);
     if (!cvs || !messageId || !emoji) return;
     return this.rootStore.client
       .addReaction({
@@ -512,7 +501,6 @@ class MessageStore {
   }
 
   deleteReaction(cvs: CurrentConversation, messageId: string, emoji: string) {
-    console.log(cvs, messageId, emoji);
     if (!cvs || !messageId || !emoji) return;
     return this.rootStore.client
       .deleteReaction({
@@ -543,7 +531,6 @@ class MessageStore {
   }
 
   updateReactions(cvs: CurrentConversation, messageId: string, reactions: ReactionData[]) {
-    console.log('updateReactions', cvs, messageId, reactions);
     if (!cvs || !messageId) return;
     const messages = getMessages(cvs);
     const messageIndex = getMessageIndex(messages, messageId);
@@ -599,7 +586,6 @@ class MessageStore {
         pageSize: 100,
       })
       .then((data: AgoraChat.AsyncResult<AgoraChat.GetReactionDetailResult>) => {
-        console.log('getReactionUserList', data);
         const reactionData = data.data;
         const messages = getMessages(cvs);
         const messageIndex = getMessageIndex(messages, messageId);
@@ -627,7 +613,6 @@ class MessageStore {
             languages: [language],
           })
           .then(data => {
-            console.log(data);
             if (data.type == 0) {
               // @ts-ignore
               const translations = data.data[0]?.translations;
@@ -690,7 +675,6 @@ class MessageStore {
   }
 
   setTyping(cvs: CurrentConversation, typing: boolean) {
-    console.log('setTyping', cvs, typing);
     if (cvs.chatType !== 'singleChat') return;
 
     this.typing[cvs.conversationId] = typing;
@@ -706,7 +690,7 @@ class MessageStore {
     };
     const msg = AC.message.create(option);
     this.rootStore.client.send(msg).then(() => {
-      console.log('send cmd success');
+      // console.log('send cmd success');
     });
   }
 

@@ -28,7 +28,6 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
   const repliedMessage = rootStore.messageStore.repliedMessage;
   const renderMsgContent = (msg: any) => {
     let content: ReactNode;
-    console.log('renderMsgContent', msg);
     switch (msg.type) {
       case 'txt':
         content = <div className={`${prefixCls}-summary-desc`}>{renderTxt(msg.msg, '')}</div>;

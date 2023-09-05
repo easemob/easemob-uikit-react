@@ -50,14 +50,10 @@ class ThreadStore {
 
   setThread(thread: Thread) {
     this.thread = { ...this.thread, ...thread };
-    console.log(this.thread);
   }
 
   setCurrentThread(thread: CurrentThread) {
-    console.log('setCurrentThread --->', thread);
     this.currentThread = thread;
-
-    console.log('更新后', this.currentThread);
   }
 
   setThreadVisible(visible: boolean) {
@@ -65,18 +61,6 @@ class ThreadStore {
   }
 
   updateThreadInfo(threadInfo: AgoraChat.ThreadChangeInfo) {
-    //   {
-    //     "id": "222635276435457",
-    //     "name": "一个子区",
-    //     "parentId": "211519172313089",
-    //     "messageId": "1177487158236154628",
-    //     "timestamp": 1691719945703,
-    //     "operator": "zd2",
-    //     "operation": "create",
-    //     "createTimestamp": 1691719945703,
-    //     "messageCount": 0
-    // }
-    console.log('updateThreadInfo --->', threadInfo);
     let chatThreadOverview: AgoraChat.ThreadChangeInfo | undefined;
 
     const { operation, messageId, parentId, id, operator } = threadInfo;
@@ -169,8 +153,6 @@ class ThreadStore {
         item.chatThreadOverview = chatThreadOverview;
       }
     });
-
-    console.log('更新后', this.currentThread);
   }
 
   //thread member received changed
@@ -191,7 +173,6 @@ class ThreadStore {
     const currentThreadInfo = this.currentThread.info;
     // if (currentThreadInfo) {
     this.rootStore.client.getChatThreadDetail({ chatThreadId: threadId }).then((res: any) => {
-      console.log('getChatThreadDetail --->', res);
       // 找到原消息
       const message = this.rootStore.messageStore.message['groupChat'][res.data.parentId];
       const originalMessage = message.find(
@@ -219,7 +200,6 @@ class ThreadStore {
         pageSize: 50,
       })
       .then((res: { data: { affiliations: string[] } }) => {
-        console.log('获取thread members成功', res);
         const members = res.data.affiliations;
 
         if (!this.threadList[parentId]) {
@@ -256,7 +236,6 @@ class ThreadStore {
         username: userId,
       })
       .then((res: any) => {
-        console.log('removeChatThreadMember --->', res);
         this.getThreadMembers(parentId, threadId);
       });
   }
@@ -264,14 +243,12 @@ class ThreadStore {
   joinChatThread(chatThreadId: string) {
     if (!chatThreadId) return;
     return this.rootStore.client.joinChatThread({ chatThreadId }).then((res: any) => {
-      console.log('joinChatThread --->', res);
       // this.getThreadMembers('', chatThreadId);
     });
   }
 
   getGroupChatThreads(parentId: string, cursor?: string) {
     if (!parentId) return console.error('no parentId');
-    console;
     if (this.threadList[parentId]?.length > 0 && !cursor) return console.error('no cursor', cursor);
 
     return this.rootStore.client
@@ -281,7 +258,6 @@ class ThreadStore {
         cursor,
       })
       .then((res: any) => {
-        console.log('getGroupChatThreads --->', res);
         const threads = res.entities;
         const list = this.threadList[parentId] || [];
         const chatThreadIds = threads.map((item: { id: any }) => {

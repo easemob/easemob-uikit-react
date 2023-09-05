@@ -67,7 +67,6 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       // @ts-ignore
       const messages = rootStore.messageStore.message[message.chatType]?.[cvsId] || [];
       // const messages = rootStore.messageStore.currentCvsMsgs;
-      console.log('++++', message, cvsId, rootStore.messageStore);
       const findMsgs = messages.filter(msg => {
         // @ts-ignore
         return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;
@@ -79,8 +78,6 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       if (findMsgs[0]) {
         setAnchorElement(document.getElementById(findMsgs[0].id));
       }
-
-      console.log('我找到你了', msgQuote, findMsgs[0]);
     }
   }, []);
 
@@ -98,14 +95,14 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     }
     // @ts-ignore
     if (repliedMsg.type === 'recall') {
-      let msg;
+      let msg = t('module.messageNotFound');
       // @ts-ignore
-      if (repliedMsg.bySelf) {
-        msg = t('module.you') + t('module.unsentAMessage');
-      } else {
-        // @ts-ignore
-        msg = repliedMsg.from + t('module.unsentAMessage');
-      }
+      // if (repliedMsg.bySelf) {
+      //   msg = t('module.you') + t('module.unsentAMessage');
+      // } else {
+      //   // @ts-ignore
+      //   msg = repliedMsg.from + t('module.unsentAMessage');
+      // }
       return (content = <div className={`${prefixCls}-content-text-not`}>{msg}</div>);
     }
     switch (msgQuote?.msgType) {
