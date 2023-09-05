@@ -59,6 +59,7 @@ class AddressStore {
       setAppUserInfo: action,
       setChatroom: action,
       updateGroupName: action,
+      removeGroupMember: action,
       clear: action,
     });
   }
@@ -115,6 +116,15 @@ class AddressStore {
           };
         });
       this.groups[idx].members = [...(this.groups[idx].members || []), ...filteredMembers];
+    }
+  }
+
+  removeGroupMember(groupId: string, userId: string) {
+    let idx = getGroupItemIndexFromGroupsById(groupId);
+    if (idx > -1) {
+      if (this.groups[idx].members) {
+        this.groups[idx].members = this.groups[idx].members?.filter(item => item.userId !== userId);
+      }
     }
   }
 

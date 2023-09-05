@@ -4,6 +4,7 @@ import { RootContext } from '../store/rootContext';
 import { useClient } from './useClient';
 import { getStore } from '../store';
 import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
+import { useGroupMembersAttributes } from '../hooks/useAddress';
 const useEventHandler = () => {
   const rootStore = useContext(RootContext);
   const { messageStore, threadStore } = rootStore.rootStore;
@@ -147,6 +148,28 @@ const useEventHandler = () => {
               let admins = [...(groupItem?.admins || [])];
               admins.splice(admins.indexOf(client.user), 1);
               addressStore.setGroupAdmins(id, [...admins]);
+            }
+            break;
+          case 'memberPresence':
+            if (groupItem) {
+              if (groupItem.members) {
+                addressStore.setGroupMembers(id, [{ member: message.from }]);
+                useGroupMembersAttributes(id, [message.from]);
+              }
+            }
+            break;
+          case 'memberAbsence':
+            if (groupItem) {
+              if (groupItem.members) {
+                addressStore.removeGroupMember(id, message.from);
+              }
+              if (groupItem.admins) {
+                groupItem.admins.includes(message.from) &&
+                  addressStore.setGroupAdmins(
+                    id,
+                    groupItem.admins.filter(item => item !== message.from),
+                  );
+              }
             }
             break;
           default:
