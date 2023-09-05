@@ -14,11 +14,10 @@ export interface MoreActionProps {
   prefix?: string;
   icon?: ReactNode;
   customActions?: Array<{
-    title: string;
-    onClick: () => void;
-    icon: ReactNode;
+    content: string;
+    onClick?: () => void;
+    icon?: ReactNode;
   }>;
-  defaultActions?: [{}];
   conversation?: CurrentConversation;
   isChatThread?: boolean;
   onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
@@ -62,28 +61,59 @@ let MoreAction = (props: MoreActionProps) => {
     fileEl.current?.click();
   };
 
-  let actions2 = [
+  const defaultActions = [
     {
-      key: 'image',
+      content: 'image',
       title: t('module.image'),
       onClick: sendImage,
       icon: null,
     },
-    { key: 'file', title: t('module.file'), onClick: sendFile, icon: null },
+    { content: 'file', title: t('module.file'), onClick: sendFile, icon: null },
   ];
+  let actions = [];
+  if (customActions) {
+    actions = customActions;
+  } else {
+    actions = defaultActions;
+  }
 
   const menu = (
     <ul className={classString}>
-      {actions2.map((item, index) => {
+      {actions.map((item, index) => {
+        if (item.content == 'IMAGE') {
+          return (
+            <li
+              onClick={() => {
+                setMenuOpen(false);
+                sendImage();
+              }}
+              key={item.content || index}
+            >
+              {t('module.image')}
+            </li>
+          );
+        } else if (item.content == 'FILE') {
+          return (
+            <li
+              onClick={() => {
+                setMenuOpen(false);
+                sendFile();
+              }}
+              key={item.content || index}
+            >
+              {t('module.file')}
+            </li>
+          );
+        }
         return (
           <li
             onClick={() => {
               setMenuOpen(false);
               item?.onClick();
             }}
-            key={item.key || index}
+            key={item.content || index}
           >
-            {item.title}
+            {item.content}
           </li>
         );
       })}

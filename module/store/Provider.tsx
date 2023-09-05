@@ -28,9 +28,47 @@ export interface ProviderProps {
   };
   onError?: (err: AgoraChat.ErrorEvent) => void;
   children?: ReactNode;
+  features?: {
+    chat?: {
+      header?: {
+        threadList: boolean;
+        moreAction?: boolean;
+        clearMessage?: boolean;
+        deleteConversation?: boolean;
+      };
+      message?: {
+        status?: boolean;
+        thread?: boolean;
+        reaction?: boolean;
+        moreAction?: boolean;
+        reply?: boolean;
+        delete?: boolean;
+        recall?: boolean;
+        translate?: boolean;
+        edit?: boolean;
+        select?: boolean;
+      };
+      messageEditor?: {
+        mention?: boolean;
+        typing?: boolean;
+        record?: boolean;
+        emoji?: boolean;
+        moreAction?: boolean;
+        file?: boolean;
+        picture?: boolean;
+      };
+    };
+    conversationList?: {
+      search?: boolean;
+      item?: {
+        moreAction?: boolean;
+        deleteConversation?: boolean;
+      };
+    };
+  };
 }
 const Provider: React.FC<ProviderProps> = props => {
-  const { initConfig, local, onError } = props;
+  const { initConfig, local, onError, features } = props;
   const { appKey } = initConfig;
   const client = useMemo(() => {
     return new AC.connection({
@@ -65,6 +103,7 @@ const Provider: React.FC<ProviderProps> = props => {
       value={{
         rootStore,
         initConfig,
+        features,
         client,
         onError,
       }}

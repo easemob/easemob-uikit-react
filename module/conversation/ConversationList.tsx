@@ -75,17 +75,19 @@ let Conversations: FC<ConversationListProps> = props => {
   const [isSearch, setIsSearch] = useState(false);
   const [renderData, setRenderData] = useState<ConversationData>([]);
   const [initRenderData, setInitRenderData] = useState<ConversationData>([]);
-  const rootStore = useContext(RootContext).rootStore;
+  const context = useContext(RootContext);
+  const { rootStore, features } = context;
   const cvsStore = rootStore.conversationStore;
   const { appUsersInfo } = rootStore.addressStore;
   const { t } = useTranslation();
   const { getConversationList, hasConversationNext } = useConversations();
-
   useUserInfo();
 
   const groupData = rootStore.addressStore.groups;
   // 获取加入群组，把群组名放在 conversationList
-
+  const globalConfig = features?.conversationList || {};
+  console.log(globalConfig);
+  console.log('glooobel', context, globalConfig);
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
     setActiveCvsId(cvs.conversationId);
     cvsStore.setCurrentCvs({
@@ -104,7 +106,7 @@ let Conversations: FC<ConversationListProps> = props => {
     ) {
       setActiveCvsId('-1');
     } else {
-      setActiveCvsId(cvsStore.currentCvs.conversationId)
+      setActiveCvsId(cvsStore.currentCvs.conversationId);
     }
   }, [cvsStore.currentCvs]);
 
@@ -163,6 +165,26 @@ let Conversations: FC<ConversationListProps> = props => {
     }
   }, [rootStore.loginState]);
 
+  let itemMoreAction: ConversationItemProps['moreAction'];
+  if (globalConfig?.item?.moreAction) {
+    itemMoreAction = {
+      visible: true,
+      actions: [],
+    };
+    if (globalConfig?.item?.deleteConversation) {
+      itemMoreAction.actions = [
+        {
+          content: 'DELETE',
+        },
+      ];
+    }
+  }
+  if (globalConfig?.item?.moreAction == false) {
+    itemMoreAction = {
+      visible: false,
+      actions: [],
+    };
+  }
   return (
     <div className={classString} style={style}>
       {renderHeader ? (
@@ -176,13 +198,13 @@ let Conversations: FC<ConversationListProps> = props => {
         ></Header>
       )}
 
-      {renderSearch ? (
-        renderSearch()
-      ) : (
-        <div className={`${prefixCls}-search`}>
-          <Search onChange={handleSearch}></Search>
-        </div>
-      )}
+      {renderSearch
+        ? renderSearch()
+        : globalConfig.search && (
+            <div className={`${prefixCls}-search`}>
+              <Search onChange={handleSearch}></Search>
+            </div>
+          )}
       <ConversationScrollList
         style={{ height: 'calc(100% - 110px)' }}
         hasMore={hasConversationNext}
@@ -195,6 +217,7 @@ let Conversations: FC<ConversationListProps> = props => {
             renderItem(cvs, index)
           ) : (
             <CVSItem
+              moreAction={itemMoreAction}
               {...itemProps}
               data={cvs}
               key={cvs.conversationId}

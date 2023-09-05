@@ -5,7 +5,7 @@ import Recorder from './recorder';
 import Textarea from './textarea';
 import './style/style.scss';
 import { emoji } from './emoji/emojiConfig';
-import MoreAction from './moreAction';
+import MoreAction, { MoreActionProps } from './moreAction';
 import rootStore from '../store/index';
 import SelectedControls from './selectedControls';
 import { observer } from 'mobx-react-lite';
@@ -21,6 +21,7 @@ export type Actions = {
 export interface MessageEditorProps {
   prefix?: string;
   actions?: Actions;
+  customActions?: MoreActionProps['customActions'];
   enabledTyping?: boolean; // 是否启用正在输入
   onSend?: (message: any) => void; // 消息发送的回调
   className?: string; // wrap 的 class
@@ -30,7 +31,7 @@ export interface MessageEditorProps {
   placeHolder?: string; // input placeHolder
   disabled?: boolean; // 是否禁用
   isChatThread?: boolean; // 是否是子区聊天
-  enabledMenton?: boolean; // 是否开启@功能
+  enabledMention?: boolean; // 是否开启@功能
   onSendMessage?: (message: AgoraChat.MessageBody) => void;
   conversation?: CurrentConversation;
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
@@ -166,14 +167,19 @@ const MessageEditor = (props: MessageEditorProps) => {
     conversation,
     onBeforeSendMessage,
     enabledTyping,
+    customActions,
   } = props;
 
   useEffect(() => {
-    actions?.forEach((item, index) => {
-      if (item.name === 'RECORDER' && item.visible) {
-        setShowRecorder(true);
-      }
+    const result = actions?.find(item => {
+      return item.name === 'RECORDER';
     });
+    console.log('+++++++', result);
+    if (result) {
+      setShowRecorder(true);
+    } else {
+      setShowRecorder(false);
+    }
   }, []);
   const currentCvs = conversation ? conversation : rootStore.conversationStore.currentCvs || {};
   useEffect(() => {
@@ -195,7 +201,12 @@ const MessageEditor = (props: MessageEditorProps) => {
     } else {
       setIsShowSelect(false);
       setTextareaShow(true);
-      setShowRecorder(true);
+      const result = actions?.find(item => {
+        return item.name === 'RECORDER';
+      });
+      if (result) {
+        setShowRecorder(true);
+      }
     }
   }, [
     rootStore.messageStore.selectedMessage[currentCvs.chatType]?.[currentCvs.conversationId]
@@ -245,7 +256,7 @@ const MessageEditor = (props: MessageEditorProps) => {
                   placeholder={placeHolder}
                   onSendMessage={onSendMessage}
                   conversation={conversation}
-                  enabledMenton={props.enabledMenton}
+                  enabledMention={props.enabledMention}
                   onBeforeSendMessage={onBeforeSendMessage}
                 ></Textarea>
               );
@@ -263,6 +274,7 @@ const MessageEditor = (props: MessageEditorProps) => {
                   key={item.name}
                   isChatThread={isChatThread}
                   onBeforeSendMessage={onBeforeSendMessage}
+                  customActions={customActions}
                 ></MoreAction>
               );
             } else {

@@ -13,6 +13,44 @@ export interface ContextProps {
   initConfig: any;
   client: any;
   onError?: (err: AgoraChat.ErrorEvent) => void;
+  features?: {
+    chat?: {
+      header?: {
+        threadList: boolean;
+        moreAction?: boolean;
+        clearMessage?: boolean;
+        deleteConversation?: boolean;
+      };
+      message?: {
+        status?: boolean;
+        thread?: boolean;
+        reaction?: boolean;
+        moreAction?: boolean;
+        reply?: boolean;
+        delete?: boolean;
+        recall?: boolean;
+        translate?: boolean;
+        edit?: boolean;
+        select?: boolean;
+      };
+      messageEditor?: {
+        mention?: boolean;
+        typing?: boolean;
+        record?: boolean;
+        emoji?: boolean;
+        moreAction?: boolean;
+        file?: boolean;
+        picture?: boolean;
+      };
+    };
+    conversationList?: {
+      search?: boolean;
+      item?: {
+        moreAction?: boolean;
+        deleteConversation?: boolean;
+      };
+    };
+  };
 }
 
 export const RootContext = React.createContext<ContextProps>({

@@ -124,7 +124,17 @@ const ChatApp = () => {
           background: '#fff',
         }}
       >
-        {tab == 'chat' && <ConversationList className="conversation"></ConversationList>}
+        {tab == 'chat' && (
+          <ConversationList
+            itemProps={{
+              moreAction: {
+                visible: true,
+                actions: [{ content: 'DELETE' }],
+              },
+            }}
+            className="conversation"
+          ></ConversationList>
+        )}
 
         {tab == 'contact' && <ContactList className="conversation"></ContactList>}
       </div>
@@ -203,6 +213,39 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         //     },
         //   },
         // },
+      }}
+      features={{
+        conversationList: {
+          search: false,
+          item: {
+            moreAction: false,
+            deleteConversation: false,
+          },
+        },
+        chat: {
+          header: {
+            threadList: false,
+            moreAction: true,
+            clearMessage: true,
+            deleteConversation: false,
+          },
+          message: {
+            status: false,
+            reaction: false,
+            thread: false,
+            recall: false,
+            translate: false,
+            edit: false,
+          },
+          messageEditor: {
+            mention: false,
+            typing: false,
+            record: false,
+            emoji: false,
+            moreAction: true,
+            picture: false,
+          },
+        },
       }}
     >
       <App></App>

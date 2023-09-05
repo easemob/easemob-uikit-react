@@ -28,7 +28,7 @@ export interface TextareaProps {
   hasSendButton?: boolean;
   sendButtonActiveColor?: string;
   enableEnterSend?: boolean;
-  enabledMenton?: boolean;
+  enabledMention?: boolean;
   enabledTyping?: boolean;
   isChatThread?: boolean;
   onSendMessage?: (message: AgoraChat.TextMessage) => void;
@@ -47,7 +47,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     hasSendButton,
     sendButtonActiveColor = '#009EFF',
     enableEnterSend = true,
-    enabledMenton = true,
+    enabledMention = true,
     isChatThread = false,
     onSendMessage,
     conversation,
@@ -79,7 +79,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     }
   }, [conversation?.conversationId]);
 
-  const canAtUser = enabledMenton && currentCVS.chatType === 'groupChat';
+  const canAtUser = enabledMention && currentCVS.chatType === 'groupChat';
 
   const handleKeyUp = useCallback(() => {
     if (!canAtUser) return;

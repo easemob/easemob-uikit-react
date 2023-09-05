@@ -31,6 +31,7 @@ import CombinedMessage from '../combinedMessage';
 import { renderUserProfileProps } from '../baseMessage';
 import { CurrentConversation } from '../store/ConversationStore';
 import NoticeMessage from '../noticeMessage';
+import { BaseMessageProps } from '../baseMessage';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
@@ -39,6 +40,7 @@ export interface MsgListProps {
   renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
+  messageProps?: BaseMessageProps;
 }
 
 const MessageScrollList = ScrollList<AgoraChat.MessageBody | RecallMessage>();
@@ -54,6 +56,7 @@ let MessageList: FC<MsgListProps> = props => {
     renderUserProfile,
     conversation,
     isThread,
+    messageProps,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
@@ -87,7 +90,7 @@ let MessageList: FC<MsgListProps> = props => {
           audioMessage={messageData[data.index] as AgoraChat.AudioMsgBody}
           style={data.style}
           renderUserProfile={renderUserProfile}
-          thread={true}
+          {...messageProps}
         ></AudioMessage>
       );
     } else if (messageData[data.index].type == 'img') {
@@ -98,7 +101,7 @@ let MessageList: FC<MsgListProps> = props => {
           imageMessage={messageData[data.index]}
           style={data.style}
           renderUserProfile={renderUserProfile}
-          thread={true}
+          {...messageProps}
         ></ImageMessage>
       );
     } else if (messageData[data.index].type == 'file') {
@@ -109,7 +112,7 @@ let MessageList: FC<MsgListProps> = props => {
           fileMessage={messageData[data.index]}
           style={data.style}
           renderUserProfile={renderUserProfile}
-          thread={true}
+          {...messageProps}
         ></FileMessage>
       );
     } else if (messageData[data.index].type == 'recall') {
@@ -126,7 +129,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           textMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
-          thread={true}
+          {...messageProps}
         >
           {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
         </TextMessage>
@@ -141,7 +144,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           combinedMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
-          thread={true}
+          {...messageProps}
         ></CombinedMessage>
       );
     } else if (messageData[data.index].type == 'video' || messageData[data.index].type == 'loc') {

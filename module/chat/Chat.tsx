@@ -74,10 +74,10 @@ const Chat: FC<ChatProps> = props => {
 
   const [isEmpty, setIsEmpty] = useState(true);
   const classString = classNames(prefixCls, className);
-
-  const rootStore = useContext(RootContext).rootStore;
+  const context = useContext(RootContext);
+  const { rootStore, features } = context;
   const { appUsersInfo } = rootStore.addressStore;
-
+  const globalConfig = features?.chat;
   const CVS = rootStore.conversationStore.currentCvs;
 
   useEffect(() => {
@@ -230,6 +230,199 @@ const Chat: FC<ChatProps> = props => {
     });
     setRenderThreadList(filterList);
   };
+
+  //------ global config ------
+  // config header
+  let showHeaderThreadListBtn = true;
+  let headerMoreAction = {
+    visible: true,
+    actions: [
+      {
+        content: t('module.clearMsgs'),
+        onClick: () => {
+          rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
+          rootStore.client
+            .removeHistoryMessages({
+              targetId: CVS.conversationId,
+              chatType: CVS.chatType,
+              beforeTimeStamp: Date.now(),
+            })
+            .then(() => {
+              console.log('清除成功');
+            })
+            .catch(err => {
+              console.log('清除失败', err);
+            });
+        },
+      },
+      {
+        content: t('module.deleteCvs'),
+        onClick: () => {
+          rootStore.conversationStore.deleteConversation(rootStore.conversationStore.currentCvs);
+
+          rootStore.client.deleteConversation({
+            channel: CVS.conversationId,
+            chatType: CVS.chatType,
+            deleteRoam: true,
+          });
+        },
+      },
+    ],
+  };
+
+  if (globalConfig?.header) {
+    if (globalConfig?.header?.threadList == false) {
+      showHeaderThreadListBtn = false;
+    }
+    if (globalConfig?.header?.moreAction == false) {
+      headerMoreAction = {
+        visible: false,
+        actions: [],
+      };
+    }
+    if (globalConfig?.header?.clearMessage == false) {
+      headerMoreAction.actions.shift();
+    }
+    if (globalConfig?.header?.deleteConversation == false) {
+      headerMoreAction.actions.pop();
+    }
+  }
+
+  // config message
+  let messageProps: MsgListProps['messageProps'] = {
+    customAction: {
+      visible: true,
+      icon: null,
+      actions: [
+        {
+          content: 'REPLY',
+          onClick: () => {},
+        },
+        {
+          content: 'DELETE',
+          onClick: () => {},
+        },
+        {
+          content: 'UNSEND',
+          onClick: () => {},
+        },
+        {
+          content: 'TRANSLATE',
+          onClick: () => {},
+        },
+        {
+          content: 'Modify',
+          onClick: () => {},
+        },
+        {
+          content: 'SELECT',
+          onClick: () => {},
+        },
+      ],
+    },
+  };
+
+  if (globalConfig?.message) {
+    if (globalConfig?.message?.status == false) {
+      messageProps.messageStatus = false;
+    }
+    if (globalConfig?.message?.thread == false) {
+      messageProps.thread = false;
+    }
+    if (globalConfig?.message?.reaction == false) {
+      messageProps.reaction = false;
+    }
+    if (globalConfig?.message?.moreAction == false) {
+      messageProps.customAction = {
+        visible: false,
+      };
+    }
+
+    messageProps.customAction!.actions = messageProps.customAction!.actions!.filter(item => {
+      if (globalConfig?.message?.reply == false && item.content == 'REPLY') {
+        return false;
+      }
+      if (globalConfig?.message?.delete == false && item.content == 'DELETE') {
+        return false;
+      }
+      if (globalConfig?.message?.recall == false && item.content == 'UNSEND') {
+        return false;
+      }
+      if (globalConfig?.message?.translate == false && item.content == 'TRANSLATE') {
+        return false;
+      }
+      if (globalConfig?.message?.edit == false && item.content == 'Modify') {
+        return false;
+      }
+      if (globalConfig?.message?.select == false && item.content == 'SELECT') {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  // config messageEditor
+  let messageEditorConfig: MessageEditorProps = {
+    enabledTyping: true,
+    enabledMention: true,
+    actions: [
+      {
+        name: 'RECORDER',
+        visible: true,
+      },
+      {
+        name: 'TEXTAREA',
+        visible: true,
+      },
+      {
+        name: 'EMOJI',
+        visible: true,
+      },
+      {
+        name: 'MORE',
+        visible: true,
+      },
+    ],
+    customActions: [
+      {
+        content: 'IMAGE',
+      },
+      {
+        content: 'FILE',
+      },
+    ],
+  };
+  if (globalConfig?.messageEditor) {
+    if (globalConfig?.messageEditor?.mention == false) {
+      messageEditorConfig.enabledMention = false;
+    }
+    if (globalConfig?.messageEditor?.typing == false) {
+      messageEditorConfig.enabledTyping = false;
+    }
+
+    messageEditorConfig.actions = messageEditorConfig.actions?.filter(item => {
+      if (item.name == 'EMOJI' && globalConfig?.messageEditor?.emoji == false) {
+        return false;
+      }
+      if (item.name == 'MORE' && globalConfig?.messageEditor?.moreAction == false) {
+        return false;
+      }
+      if (item.name == 'RECORDER' && globalConfig?.messageEditor?.record == false) {
+        return false;
+      }
+
+      return true;
+    });
+    messageEditorConfig.customActions = messageEditorConfig!.customActions?.filter(item => {
+      if (item.content == 'IMAGE' && globalConfig?.messageEditor?.picture == false) {
+        return false;
+      }
+      if (item.content == 'FILE' && globalConfig?.messageEditor?.file == false) {
+        return false;
+      }
+      return true;
+    });
+  }
   return (
     <div className={classString}>
       {isEmpty ? (
@@ -246,7 +439,7 @@ const Chat: FC<ChatProps> = props => {
             <Header
               avatarSrc={getChatAvatarUrl(CVS)}
               suffixIcon={
-                CVS.chatType == 'groupChat' ? (
+                CVS.chatType == 'groupChat' && showHeaderThreadListBtn ? (
                   <div ref={headerRef}>
                     <Button onClick={showTheadList} type="text" shape="circle">
                       <Icon type="THREAD"></Icon>
@@ -258,50 +451,14 @@ const Chat: FC<ChatProps> = props => {
                 rootStore.conversationStore.currentCvs.name ||
                 rootStore.conversationStore.currentCvs.conversationId
               }
-              moreAction={{
-                visible: true,
-                actions: [
-                  {
-                    content: t('module.clearMsgs'),
-                    onClick: () => {
-                      rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
-                      rootStore.client
-                        .removeHistoryMessages({
-                          targetId: CVS.conversationId,
-                          chatType: CVS.chatType,
-                          beforeTimeStamp: Date.now(),
-                        })
-                        .then(() => {
-                          console.log('清除成功');
-                        })
-                        .catch(err => {
-                          console.log('清除失败', err);
-                        });
-                    },
-                  },
-                  {
-                    content: t('module.deleteCvs'),
-                    onClick: () => {
-                      rootStore.conversationStore.deleteConversation(
-                        rootStore.conversationStore.currentCvs,
-                      );
-
-                      rootStore.client.deleteConversation({
-                        channel: CVS.conversationId,
-                        chatType: CVS.chatType,
-                        deleteRoam: true,
-                      });
-                    },
-                  },
-                ],
-              }}
+              moreAction={headerMoreAction}
               {...headerProps}
             ></Header>
           )}
           {renderMessageList ? (
             renderMessageList()
           ) : (
-            <MessageList {...messageListProps}></MessageList>
+            <MessageList messageProps={messageProps} {...messageListProps}></MessageList>
           )}
           {messageEditorProps?.enabledTyping && (
             <Typing
@@ -317,7 +474,7 @@ const Chat: FC<ChatProps> = props => {
           {renderMessageEditor ? (
             renderMessageEditor()
           ) : (
-            <MessageEditor {...messageEditorProps}></MessageEditor>
+            <MessageEditor {...messageEditorConfig} {...messageEditorProps}></MessageEditor>
           )}
           {modalOpen && (
             <ThreadModal
