@@ -187,7 +187,6 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
 
   const onPopupAlign = (domNode: HTMLElement, align: AlignType) => {
     const placements = getTooltipPlacements();
-    console.log('placements', placements);
     // 当前返回的位置
     const placement = Object.keys(placements).find(
       key =>

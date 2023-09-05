@@ -65,12 +65,9 @@ class ConversationStore {
   setCurrentCvs = (currentCvs: CurrentConversation) => {
     this.currentCvs = currentCvs;
     this.rootStore.messageStore.setCurrentCVS(currentCvs);
-    console.log('设置当前会话', this.conversationList, currentCvs);
 
     this.conversationList.forEach((cvs, index) => {
       if (cvs.chatType == currentCvs.chatType && cvs.conversationId == currentCvs.conversationId) {
-        console.log('找到会话 清空未读数');
-
         if (this.conversationList[index].unreadCount > 0) {
           this.conversationList[index].unreadCount = 0;
           this.rootStore.messageStore.sendChannelAck(currentCvs);
@@ -138,7 +135,6 @@ class ConversationStore {
       }
       return true;
     });
-    console.log('deleteConversation', this.searchList);
     this.setCurrentCvs({} as CurrentConversation);
   }
 
@@ -153,7 +149,6 @@ class ConversationStore {
       }
     });
     this.conversationList = [...this.conversationList];
-    console.log('modifyConversation -->', this.conversationList, conversation);
   }
 
   topConversation(conversation: Conversation) {
@@ -172,7 +167,6 @@ class ConversationStore {
         cvs = item;
       }
     });
-    console.log('cvs --->', cvs);
 
     return cvs;
   }
@@ -183,8 +177,6 @@ class ConversationStore {
     });
     if (idx > -1) {
       this.conversationList[idx].isAted = isAted;
-
-      console.log(this.conversationList[idx]);
     }
   }
 

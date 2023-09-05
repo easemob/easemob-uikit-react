@@ -195,7 +195,7 @@ const TextMessage = (props: TextMessageProps) => {
       return REGEX_VALID_URL.test(token);
     });
   if (detectedUrl) {
-    console.log(detectedUrl);
+    // console.log(detectedUrl);
   }
   useEffect(() => {
     if (detectedUrl) {
@@ -208,7 +208,7 @@ const TextMessage = (props: TextMessageProps) => {
         })
         .catch(e => {
           setFetching(false);
-          console.log(e);
+          console.error(e);
         });
     }
   }, [detectedUrl]);
@@ -235,7 +235,6 @@ const TextMessage = (props: TextMessageProps) => {
   }
 
   const handleClickEmoji = (emojiString: string) => {
-    console.log('添加Reaction', emojiString);
     let conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore.addReaction(
       {
@@ -292,7 +291,6 @@ const TextMessage = (props: TextMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(textMessage);
-    console.log('handleRecallMessage', textMessage);
     rootStore.messageStore
       .recallMessage(
         {
@@ -357,7 +355,6 @@ const TextMessage = (props: TextMessageProps) => {
         selectedMessage: [],
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   const handleResendMessage = () => {
@@ -390,7 +387,6 @@ const TextMessage = (props: TextMessageProps) => {
         selectedMessage: changedList,
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   const handleModifyMessage = () => {

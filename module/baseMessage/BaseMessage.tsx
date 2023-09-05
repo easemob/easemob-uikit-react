@@ -190,11 +190,9 @@ let BaseMessage = (props: BaseMessageProps) => {
   const CustomProfile = renderUserProfile?.({ userId: message?.from || '' });
 
   const clickThreadTitle = () => {
-    console.log('click thread title');
     onClickThreadTitle?.();
   };
   const threadNode = () => {
-    console.log('chatThreadOverview', chatThreadOverview);
     let { name, messageCount, lastMessage = {} } = chatThreadOverview!;
     const { from, type, time } = lastMessage || {};
     let msgContent = '';
@@ -357,7 +355,6 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
 
   const resendMessage = () => {
-    console.log('resend message');
     onResendMessage && onResendMessage();
   };
   let menuNode: ReactNode | undefined;
@@ -467,7 +464,6 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   // ------ thread -----
   const handleClickThreadIcon = () => {
-    console.log('create thread');
     onCreateThread?.();
   };
   return (

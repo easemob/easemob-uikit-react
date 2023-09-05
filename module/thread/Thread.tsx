@@ -50,7 +50,6 @@ const Thread = (props: ThreadProps) => {
   // 为什么 currentThread 不会自动更新？ 但是currentCVS会自动更新， 用一个变量能表示rootStore.threadStore.currentThread， 会自动更新
 
   const { threadStore } = rootStore;
-  console.log('rootStore ----', rootStore);
   const renderMsgDom = (msg: AgoraChat.MessagesType = {}) => {
     let content;
     switch (msg.type) {
@@ -132,7 +131,6 @@ const Thread = (props: ThreadProps) => {
   const [threadName, setThreadName] = useState(t('module.aThread'));
   const [role, setRole] = useState('member'); // My role in the group
   const handleThreadNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(event.target.value);
     setThreadName(event.target.value);
     if (event.target.value.length == 0) {
       setEditorDisable(true);
@@ -194,7 +192,6 @@ const Thread = (props: ThreadProps) => {
   const handleSendMessage: (
     message: AgoraChat.MessageBody,
   ) => Promise<CurrentConversation | void> = message => {
-    // console.log('current  Thread ---', currentThread, rootStore.threadStore.currentThread);
     const originalMessage = rootStore.threadStore.currentThread.originalMessage || {};
     const currentThread = rootStore.threadStore.currentThread;
     if (currentThread.creating) {
@@ -205,12 +202,10 @@ const Thread = (props: ThreadProps) => {
         messageId: originalMessage.mid || originalMessage.id,
         parentId: originalMessage.to,
       };
-      console.log('threadOriginalMsg ---', threadStore.currentThread.info, originalMessage);
       return new Promise((resolve, reject) => {
         rootStore.client
           .createChatThread(options)
           .then(res => {
-            console.log('创建成功', res);
             setConversation({
               chatType: 'groupChat',
               conversationId: res.data?.chatThreadId || '',
@@ -246,7 +241,6 @@ const Thread = (props: ThreadProps) => {
   const groups = rootStore.addressStore.groups || [];
 
   useEffect(() => {
-    console.log('有thread了 -------', rootStore.threadStore);
     const currentThread = rootStore.threadStore.currentThread;
     setConversation({
       chatType: 'groupChat',
@@ -275,11 +269,7 @@ const Thread = (props: ThreadProps) => {
         }
       });
     }
-
-    console.log('我的角色', role, myId);
   }, [currentThread?.info?.id]);
-
-  console.log('生成的conversation--', conversation);
 
   // close panel
   const handleClickClose = () => {
@@ -288,7 +278,6 @@ const Thread = (props: ThreadProps) => {
     //   visible: false,
     //   creating: false,
     // });
-    console.log('关闭', rootStore);
     rootStore.threadStore.setThreadVisible(false);
   };
 
@@ -322,7 +311,6 @@ const Thread = (props: ThreadProps) => {
             chatThreadId: threadStore.currentThread.info?.id || '',
           })
           .then(res => {
-            console.log('解散成功', res);
             setModalData({
               ...modalData,
               open: false,
@@ -350,7 +338,6 @@ const Thread = (props: ThreadProps) => {
             chatThreadId: threadStore.currentThread.info?.id || '',
           })
           .then(res => {
-            console.log('离开成功', res);
             setModalData({
               ...modalData,
               open: false,
@@ -392,7 +379,6 @@ const Thread = (props: ThreadProps) => {
             name: threadNameValue,
           })
           .then(res => {
-            console.log('修改成功', res);
             setModalData({
               ...modalData,
               open: false,
@@ -423,21 +409,6 @@ const Thread = (props: ThreadProps) => {
         });
         setModalName(`Thread Members(${data.length})`);
       });
-    // rootStore.client
-    //   .getChatThreadMembers({
-    //     chatThreadId: threadStore.currentThread.info?.id || '',
-    //     pageSize: 50,
-    //   })
-    //   .then(res => {
-    //     console.log('获取thread members成功', res);
-    //     setModalData({
-    //       ...modalData,
-    //       open: false,
-    //     });
-    //   })
-    //   .catch(err => {
-    //     console.error(err);
-    //   });
   };
 
   const threadMoreAction = {

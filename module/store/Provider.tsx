@@ -77,11 +77,9 @@ const Provider: React.FC<ProviderProps> = props => {
     });
   }, [appKey]);
 
-  console.log('******** 222');
-
   rootStore.setClient(client);
   rootStore.setInitConfig(initConfig);
-  console.log('Provider is run...', appKey);
+  // console.log('Provider is run...');
   useEventHandler();
   let localConfig: any = {
     fallbackLng: 'en',
@@ -96,7 +94,6 @@ const Provider: React.FC<ProviderProps> = props => {
     };
   }
   i18n.use(initReactI18next).init(localConfig);
-  console.log('resource', resource);
   // i18n.changeLanguage('zh');
   return (
     <RootProvider

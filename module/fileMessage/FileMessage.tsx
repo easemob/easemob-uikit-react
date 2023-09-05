@@ -88,7 +88,6 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    console.log('添加Reaction', emojiString);
     let conversationId = getCvsIdFromMessage(fileMessage);
 
     rootStore.messageStore.addReaction(
@@ -177,7 +176,6 @@ const FileMessage = (props: FileMessageProps) => {
         selectedMessage: [],
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   const handleResendMessage = () => {
@@ -210,7 +208,6 @@ const FileMessage = (props: FileMessageProps) => {
         selectedMessage: changedList,
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   // @ts-ignore

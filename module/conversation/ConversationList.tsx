@@ -86,8 +86,6 @@ let Conversations: FC<ConversationListProps> = props => {
   const groupData = rootStore.addressStore.groups;
   // 获取加入群组，把群组名放在 conversationList
   const globalConfig = features?.conversationList || {};
-  console.log(globalConfig);
-  console.log('glooobel', context, globalConfig);
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
     setActiveCvsId(cvs.conversationId);
     cvsStore.setCurrentCvs({

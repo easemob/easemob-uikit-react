@@ -112,11 +112,9 @@ const Chat: FC<ChatProps> = props => {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const headerRef = useRef(null);
   const showTheadList = () => {
-    console.log('show list');
     if (modalOpen) return;
     setModalOpen(true);
     rootStore.threadStore.getGroupChatThreads(CVS.conversationId)?.then(cursor => {
-      console.log('cursor', cursor);
       setCursor(cursor);
     });
   };
@@ -125,9 +123,6 @@ const Chat: FC<ChatProps> = props => {
   const threadScrollRef = useRef(null);
   const pagingGetThreadList = () => {
     const height = threadScrollRef?.current?.scrollHeight;
-    console.log('height', height);
-    console.log('more');
-    console.log('cursor', cursor);
     if (cursor === null) return;
     rootStore.threadStore.getGroupChatThreads(CVS.conversationId, cursor)?.then((res: string) => {
       setCursor(res);
@@ -140,7 +135,6 @@ const Chat: FC<ChatProps> = props => {
   const threadList = rootStore.threadStore.threadList[CVS.conversationId] || [];
   const openThread = item => {
     // close thread list modal
-    console.log('item =====', item);
     setModalOpen(false);
     rootStore.threadStore.setThreadVisible(true);
     rootStore.threadStore.getChatThreadDetail(item.id);
@@ -241,18 +235,11 @@ const Chat: FC<ChatProps> = props => {
         content: t('module.clearMsgs'),
         onClick: () => {
           rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
-          rootStore.client
-            .removeHistoryMessages({
-              targetId: CVS.conversationId,
-              chatType: CVS.chatType,
-              beforeTimeStamp: Date.now(),
-            })
-            .then(() => {
-              console.log('清除成功');
-            })
-            .catch(err => {
-              console.log('清除失败', err);
-            });
+          rootStore.client.removeHistoryMessages({
+            targetId: CVS.conversationId,
+            chatType: CVS.chatType,
+            beforeTimeStamp: Date.now(),
+          });
         },
       },
       {

@@ -55,7 +55,6 @@ let ScrollList = function <T>() {
         if (!containerRef) {
           return;
         }
-        console.log(222, containerRef?.current?.scrollHeight);
         if (position === 'top') {
           (containerRef as React.MutableRefObject<HTMLDivElement>).current.scrollTop = 0;
         } else if (position === 'bottom') {

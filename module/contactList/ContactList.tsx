@@ -127,7 +127,7 @@ let ContactList: FC<ContactListProps> = props => {
   useEffect(() => {
     addressStore.setContacts(contactsData);
   }, [contactsData]);
-  
+
   // 自适应高度
   useEffect(() => {
     const height = listRef.current!.clientHeight;
@@ -161,7 +161,6 @@ let ContactList: FC<ContactListProps> = props => {
             <ContactItem
               contactId={id}
               onClick={e => {
-                console.log('setItemActiveKey', id);
                 setItemActiveKey(id);
               }}
               key={id + Math.random().toString()}
@@ -192,7 +191,6 @@ let ContactList: FC<ContactListProps> = props => {
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log(value);
     const returnValue = onSearch?.(e);
     if (returnValue === false) return;
 
@@ -225,14 +223,12 @@ let ContactList: FC<ContactListProps> = props => {
   useEffect(() => {
     const searchList = addressStore.searchList.map(
       (item: { userId: any; groupid: any; nickname: any; groupname: any }) => {
-        // console.log('contactItem', contactItem);
         const id = item.userId || item.groupid;
         const name = item.nickname || item.groupname;
         return (
           <ContactItem
             contactId={id}
             onClick={e => {
-              console.log('setItemActiveKey', id);
               setItemActiveKey(id);
             }}
             key={id + Math.random().toString()}

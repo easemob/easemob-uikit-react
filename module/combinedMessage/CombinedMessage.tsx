@@ -78,7 +78,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   }
 
   const handleClickEmoji = (emojiString: string) => {
-    console.log('添加Reaction', emojiString);
     let conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.addReaction(
       {
@@ -253,7 +252,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
 
   const showCombinedMsgs = () => {
     setModalOpen(true);
-    console.log('combinedMessage ---', combinedMessage);
     if (combinedMessage.messages) {
       createDetailContent(combinedMessage.messages);
       return;
@@ -264,7 +262,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         secret: combinedMessage.secret,
       })
       .then((data: AgoraChat.MessageType[]) => {
-        console.log(data);
         combinedMessage.messages = data;
         createDetailContent(data);
       })
@@ -291,14 +288,12 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         selectedMessage: [],
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   const handleResendMessage = () => {
     rootStore.messageStore.sendMessage(combinedMessage);
   };
 
-  console.log('*****', combinedMessage);
   const select =
     // @ts-ignore
     rootStore.messageStore.selectedMessage[combinedMessage.chatType][conversationId]?.selectable;
@@ -329,7 +324,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         selectedMessage: changedList,
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   // @ts-ignore
