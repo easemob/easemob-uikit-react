@@ -80,15 +80,17 @@ const useEventHandler = () => {
       onChannelMessage: message => {
         const { chatType, from = '' } = message;
         if (chatType === 'singleChat') {
-          rootStore.rootStore.messageStore.message?.[chatType]?.[from]
-            .filter(message => {
-              //@ts-ignore
-              return message.status === 'received';
-            })
-            .map(receivedMessage => {
-              // @ts-ignore
-              receivedMessage.status = 'read';
-            });
+          setTimeout(() => {
+            rootStore.rootStore.messageStore.message?.[chatType]?.[from]
+              .filter(message => {
+                //@ts-ignore
+                return message.status === 'received';
+              })
+              .map(receivedMessage => {
+                // @ts-ignore
+                receivedMessage.status = 'read';
+              });
+          }, 10);
         }
       },
       onRecallMessage: message => {
