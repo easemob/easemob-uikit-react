@@ -329,8 +329,8 @@ $msg-base-padding: $padding-xs $padding-lg;
 $msg-bubble-border-radius-left: 12px 16px 16px 4px;
 $msg-bubble-border-radius-right: 16px 12px 4px 16px;
 // has reply message bubble radius
-$msg-bubble-border-radius-right-reply: 16px 4px 4px 16px !important;
-$msg-bubble-border-radius-left-reply: 4px 16px 16px 4px !important;
+$msg-bubble-border-radius-right-reply: 16px 4px 4px 16px;
+$msg-bubble-border-radius-left-reply: 4px 16px 16px 4px;
 $msg-bubble-arrow-border-size: 6px;
 $msg-bubble-arrow-bottom: 8px;
 $msg-bubble-arrow-left: -11px;

@@ -19,6 +19,7 @@ export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> 
   nickName?: string;
   type?: 'primary' | 'secondly';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
+  onlyContent?: boolean;
 }
 
 const AudioMessage = (props: AudioMessageProps) => {
@@ -33,6 +34,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     renderUserProfile,
     nickName,
     thread,
+    onlyContent = false,
     ...others
   } = props;
 
@@ -263,45 +265,61 @@ const AudioMessage = (props: AudioMessageProps) => {
     rootStore.threadStore.getChatThreadDetail(audioMessage?.chatThreadOverview?.id || '');
   };
   return (
-    <BaseMessage
-      id={audioMessage.id}
-      direction={bySelf ? 'rtl' : 'ltr'}
-      style={customStyle}
-      message={audioMessage}
-      time={messageTime}
-      nickName={nickName}
-      status={status}
-      bubbleType={bubbleType}
-      onReplyMessage={handleReplyMsg}
-      onDeleteMessage={handleDeleteMsg}
-      reactionData={reactions}
-      onAddReactionEmoji={handleClickEmoji}
-      onDeleteReactionEmoji={handleDeleteEmoji}
-      onShowReactionUserList={handleShowReactionUserList}
-      onRecallMessage={handleRecallMessage}
-      onSelectMessage={handleSelectMessage}
-      onResendMessage={handleResendMessage}
-      select={select}
-      onMessageCheckChange={handleMsgCheckChange}
-      renderUserProfile={renderUserProfile}
-      onCreateThread={handleCreateThread}
-      thread={_thread}
-      chatThreadOverview={audioMessage.chatThreadOverview}
-      onClickThreadTitle={handleClickThreadTitle}
-      {...others}
-    >
-      <div className={classString} onClick={playAudio} style={{ ...style }}>
-        <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
-        <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
-        <audio
-          src={file.url || url}
-          ref={audioRef}
-          onEnded={handlePlayEnd}
-          onError={handlePlayEnd}
-          onStalled={handlePlayEnd}
-        />
-      </div>
-    </BaseMessage>
+    <>
+      {onlyContent ? (
+        <div className={classString} onClick={playAudio} style={{ ...style }}>
+          <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
+          <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
+          <audio
+            src={file.url || url}
+            ref={audioRef}
+            onEnded={handlePlayEnd}
+            onError={handlePlayEnd}
+            onStalled={handlePlayEnd}
+          />
+        </div>
+      ) : (
+        <BaseMessage
+          id={audioMessage.id}
+          direction={bySelf ? 'rtl' : 'ltr'}
+          style={customStyle}
+          message={audioMessage}
+          time={messageTime}
+          nickName={nickName}
+          status={status}
+          bubbleType={bubbleType}
+          onReplyMessage={handleReplyMsg}
+          onDeleteMessage={handleDeleteMsg}
+          reactionData={reactions}
+          onAddReactionEmoji={handleClickEmoji}
+          onDeleteReactionEmoji={handleDeleteEmoji}
+          onShowReactionUserList={handleShowReactionUserList}
+          onRecallMessage={handleRecallMessage}
+          onSelectMessage={handleSelectMessage}
+          onResendMessage={handleResendMessage}
+          select={select}
+          onMessageCheckChange={handleMsgCheckChange}
+          renderUserProfile={renderUserProfile}
+          onCreateThread={handleCreateThread}
+          thread={_thread}
+          chatThreadOverview={audioMessage.chatThreadOverview}
+          onClickThreadTitle={handleClickThreadTitle}
+          {...others}
+        >
+          <div className={classString} onClick={playAudio} style={{ ...style }}>
+            <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
+            <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
+            <audio
+              src={file.url || url}
+              ref={audioRef}
+              onEnded={handlePlayEnd}
+              onError={handlePlayEnd}
+              onStalled={handlePlayEnd}
+            />
+          </div>
+        </BaseMessage>
+      )}
+    </>
   );
 };
 

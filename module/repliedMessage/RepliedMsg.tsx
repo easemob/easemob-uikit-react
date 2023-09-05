@@ -8,6 +8,10 @@ import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { getCvsIdFromMessage } from '../utils';
+import download from '../utils/download';
+import { ImagePreview } from '../imageMessage';
+import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
+import AudioMessage, { AudioMessageProps } from '../audioMessage';
 const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
@@ -81,9 +85,20 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     }
   }, []);
 
-  //   if (!msgQuote) {
-  //     return null;
-  //   }
+  const [imgPreviewVisible, setImgVisible] = useState(false);
+  // download file
+  const handleClick = (fileMessage: any) => {
+    fetch(fileMessage.url)
+      .then(res => {
+        return res.blob();
+      })
+      .then(blob => {
+        download(blob, fileMessage.filename);
+      })
+      .catch(err => {
+        return false;
+      });
+  };
 
   // 渲染引用消息的内容
   let renderMsgContent = () => {
@@ -113,19 +128,33 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         break;
       case 'file':
         content = (
-          <div className={`${prefixCls}-content-text`}>
+          <div
+            className={`${prefixCls}-content-text`}
+            style={{ cursor: 'pointer' }}
+            onClick={handleClick}
+          >
             <Icon type="DOC" color="#75828A" width={20} height={20}></Icon>
             <span>Attachment:</span> {(repliedMsg as AgoraChat.FileMsgBody).filename}
           </div>
         );
         break;
       case 'audio':
+        // content = (
+        //   <div className={`${prefixCls}-content-text`}>
+        //     <Icon type="WAVE3" color="#75828A" width={20} height={20}></Icon>
+        //     <span>Audio:</span>
+        //     {(repliedMsg as AgoraChat.AudioMsgBody).length}"
+        //   </div>
+        // );
+        let msg = { ...repliedMsg, bySelf: true };
         content = (
-          <div className={`${prefixCls}-content-text`}>
-            <Icon type="WAVE3" color="#75828A" width={20} height={20}></Icon>
-            <span>Audio:</span>
-            {(repliedMsg as AgoraChat.AudioMsgBody).length}"
-          </div>
+          <AudioMessage
+            type={'secondly'}
+            className="cui-message-base-reply"
+            style={{ flexDirection: 'row' }}
+            onlyContent={true}
+            audioMessage={msg as AudioMessageProps['audioMessage']}
+          ></AudioMessage>
         );
         break;
       case 'img':
@@ -133,6 +162,9 @@ const RepliedMsg = (props: RepliedMsgProps) => {
           <div className={`${prefixCls}-content-text`}>
             <div className={`${prefixCls}-summary-desc-img`}>
               <img
+                onClick={() => {
+                  setImgVisible(true);
+                }}
                 height={75}
                 src={
                   (repliedMsg as AgoraChat.ImgMsgBody).thumb ||
@@ -140,15 +172,29 @@ const RepliedMsg = (props: RepliedMsgProps) => {
                 }
               ></img>
             </div>
+            <ImagePreview
+              visible={imgPreviewVisible}
+              previewImageUrl={(repliedMsg as AgoraChat.ImgMsgBody).url as string}
+              onCancel={() => {
+                setImgVisible(false);
+              }}
+            ></ImagePreview>
           </div>
         );
         break;
       case 'combine':
+        // content = (
+        //   <div className={`${prefixCls}-content-text`}>
+        //     <Icon type="TIME" color="#75828A" width={20} height={20}></Icon>
+        //     <span>{t('module.chatHistory')}</span>
+        //   </div>
+        // );
         content = (
-          <div className={`${prefixCls}-content-text`}>
-            <Icon type="TIME" color="#75828A" width={20} height={20}></Icon>
-            <span>{t('module.chatHistory')}</span>
-          </div>
+          <CombinedMessage
+            combinedMessage={repliedMsg as CombinedMessageProps['combinedMessage']}
+            onlyContent={true}
+            showSummary={false}
+          ></CombinedMessage>
         );
         break;
       default:
@@ -185,7 +231,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         <span>{to}</span>
       </div>
       <div className={`${prefixCls}-box`}>
-        <div className={`${prefixCls}-content`}>{renderMsgContent()}</div>
+        <div className={`${prefixCls}-content`}>{<>{renderMsgContent()}</>}</div>
         {hoverStatus && (
           <Icon
             className={`${prefixCls}-arrow`}

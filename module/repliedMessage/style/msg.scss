@@ -69,14 +69,14 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
         border-radius: 4px;
     }
     &-ground{
-        &.#{$reply-msg-prefix-cls}-left{
-            .#{$reply-msg-prefix-cls}-content{
-                border-radius: $msg-bubble-border-radius-left;
-            }
-        }
         &.#{$reply-msg-prefix-cls}-right{
             .#{$reply-msg-prefix-cls}-content{
                 border-radius: $msg-bubble-border-radius-right;
+            }
+        }
+        &.#{$reply-msg-prefix-cls}-left{
+            .#{$reply-msg-prefix-cls}-content{
+                border-radius: $msg-bubble-border-radius-left;
             }
         }
     }

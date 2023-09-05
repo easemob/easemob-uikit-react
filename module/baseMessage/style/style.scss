@@ -34,23 +34,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
         }
     }
 
-    &-left {
-        .#{$status-prefix-cls}-content {
-            border-radius: $msg-bubble-border-radius-left;
-
-            &::before {
-                border: $msg-bubble-arrow-border-size solid transparent;
-                border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly;
-                position: absolute;
-                pointer-events: none;
-                left: $msg-bubble-arrow-left;
-                bottom: $msg-bubble-arrow-bottom;
-            }
-        }
-        .#{$text-msg-prefix-cls}-edit-tag {
-            color: $special-5;
-        }
-    }
+    
 
     &-right {
         flex-direction: row-reverse;
@@ -90,6 +74,48 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
         .#{$text-msg-prefix-cls}-edit-tag {
             color: $special-3;
+        }
+    }
+
+    &-left {
+        .#{$status-prefix-cls}-content {
+            border-radius: $msg-bubble-border-radius-left;
+
+            &::before {
+                border: $msg-bubble-arrow-border-size solid transparent;
+                border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly;
+                position: absolute;
+                pointer-events: none;
+                left: $msg-bubble-arrow-left;
+                bottom: $msg-bubble-arrow-bottom;
+            }
+        }
+        .#{$text-msg-prefix-cls}-edit-tag {
+            color: $special-5;
+        }
+
+        .#{$status-prefix-cls}-body {
+            flex-direction: row;
+        }
+
+        .#{$status-prefix-cls}-info {
+            flex-direction: row;
+        }
+
+        .#{$audio-prefix-cls} {
+            flex-direction: row;
+        }
+
+        .#{$reply-msg-prefix-cls} {
+            align-items: flex-start;
+        }
+
+        .#{$reply-msg-prefix-cls}-box {
+            flex-direction: row;
+        }
+
+        .#{$text-msg-prefix-cls}-edit-tag {
+            color: $special-5;
         }
     }
 
@@ -169,6 +195,9 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly !important;
             }
         }
+        .#{$status-prefix-cls}-info {
+            margin-left: $msg-info-margin-left;
+        }
     }
 
     &-none {
@@ -220,6 +249,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 
     &-thread{
         display: flex;
+        direction: ltr;
         flex-direction: column;
         gap: 4px;
         &>div{

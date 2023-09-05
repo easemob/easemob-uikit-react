@@ -2,7 +2,6 @@ import React, { useState, ReactNode, useRef, useContext, MouseEventHandler } fro
 import classNames from 'classnames';
 import './style/style.scss';
 import { ConfigContext } from '../../../component/config/index';
-import Dropdown from '../../../component/dropdown';
 import { Tooltip } from '../../../component/tooltip/Tooltip';
 import Icon from '../../../component/icon';
 import AC, { AgoraChat } from 'agora-chat';
@@ -109,7 +108,7 @@ let MoreAction = (props: MoreActionProps) => {
           <li
             onClick={() => {
               setMenuOpen(false);
-              item?.onClick();
+              item.onClick && item?.onClick();
             }}
             key={item.content || index}
           >

@@ -28,6 +28,8 @@ export interface CombinedMessageProps extends BaseMessageProps {
   // @ts-ignore
   onShowDetail?: (msg: AgoraChat.CombineMsgBody) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
+  showSummary?: boolean; // whether show summary
+  onlyContent?: boolean; // only show message content
 }
 
 const CombinedMessage = (props: CombinedMessageProps) => {
@@ -40,6 +42,8 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     className,
     renderUserProfile,
     thread,
+    showSummary = true,
+    onlyContent = false,
     ...others
   } = props;
   //   combinedMessage = comMsg;
@@ -366,46 +370,80 @@ const CombinedMessage = (props: CombinedMessageProps) => {
 
   return (
     <>
-      <BaseMessage
-        id={combinedMessage.id}
-        message={combinedMessage}
-        direction={bySelf ? 'rtl' : 'ltr'}
-        style={style}
-        time={time}
-        nickName={nickName}
-        bubbleType={type}
-        className={bubbleClass}
-        onReplyMessage={handleReplyMsg}
-        onDeleteMessage={handleDeleteMsg}
-        repliedMessage={repliedMsg}
-        reactionData={reactions}
-        onAddReactionEmoji={handleClickEmoji}
-        onDeleteReactionEmoji={handleDeleteEmoji}
-        onShowReactionUserList={handleShowReactionUserList}
-        onRecallMessage={handleRecallMessage}
-        renderUserProfile={renderUserProfile}
-        //   onTranslateMessage={handleTranslateMessage}
+      {!onlyContent ? (
+        <BaseMessage
+          id={combinedMessage.id}
+          message={combinedMessage}
+          direction={bySelf ? 'rtl' : 'ltr'}
+          style={style}
+          time={time}
+          nickName={nickName}
+          bubbleType={type}
+          className={bubbleClass}
+          onReplyMessage={handleReplyMsg}
+          onDeleteMessage={handleDeleteMsg}
+          repliedMessage={repliedMsg}
+          reactionData={reactions}
+          onAddReactionEmoji={handleClickEmoji}
+          onDeleteReactionEmoji={handleDeleteEmoji}
+          onShowReactionUserList={handleShowReactionUserList}
+          onRecallMessage={handleRecallMessage}
+          renderUserProfile={renderUserProfile}
+          //   onTranslateMessage={handleTranslateMessage}
 
-        onSelectMessage={handleSelectMessage}
-        onResendMessage={handleResendMessage}
-        select={select}
-        onMessageCheckChange={handleMsgCheckChange}
-        onCreateThread={handleCreateThread}
-        thread={_thread}
-        chatThreadOverview={combinedMessage.chatThreadOverview}
-        onClickThreadTitle={handleClickThreadTitle}
-        {...others}
-      >
+          onSelectMessage={handleSelectMessage}
+          onResendMessage={handleResendMessage}
+          select={select}
+          onMessageCheckChange={handleMsgCheckChange}
+          onCreateThread={handleCreateThread}
+          thread={_thread}
+          chatThreadOverview={combinedMessage.chatThreadOverview}
+          onClickThreadTitle={handleClickThreadTitle}
+          {...others}
+        >
+          <div className={classString}>
+            <div className={`${prefixCls}-title`} onClick={showCombinedMsgs}>
+              <Icon className={`${prefixCls}-icon`} type="TIME" width={20} height={20}></Icon>
+              <p>{title}</p>
+              {showSummary && (
+                <Icon
+                  className={`${prefixCls}-icon`}
+                  type="ARROW_RIGHT"
+                  width={20}
+                  height={20}
+                ></Icon>
+              )}
+            </div>
+            {showSummary && (
+              <>
+                <span className={`${prefixCls}-line`}></span>
+                <div className={`${prefixCls}-content`}>{summary}</div>
+              </>
+            )}
+          </div>
+        </BaseMessage>
+      ) : (
         <div className={classString}>
           <div className={`${prefixCls}-title`} onClick={showCombinedMsgs}>
             <Icon className={`${prefixCls}-icon`} type="TIME" width={20} height={20}></Icon>
             <p>{title}</p>
-            <Icon className={`${prefixCls}-icon`} type="ARROW_RIGHT" width={20} height={20}></Icon>
+            {showSummary && (
+              <Icon
+                className={`${prefixCls}-icon`}
+                type="ARROW_RIGHT"
+                width={20}
+                height={20}
+              ></Icon>
+            )}
           </div>
-          <span className={`${prefixCls}-line`}></span>
-          <div className={`${prefixCls}-content`}>{summary}</div>
+          {showSummary && (
+            <>
+              <span className={`${prefixCls}-line`}></span>
+              <div className={`${prefixCls}-content`}>{summary}</div>
+            </>
+          )}
         </div>
-      </BaseMessage>
+      )}
       <Modal
         open={modalOpen}
         title={t('module.chatHistory')}

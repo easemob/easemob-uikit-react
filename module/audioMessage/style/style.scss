@@ -10,11 +10,13 @@ $audio-prefix-cls: #{$cui-prefix}-message-audio;
         .#{$audio-prefix-cls}-duration{
             color: $gray-98
         }
+        flex-direction: row-reverse;
     }
     &-secondly{
         .#{$audio-prefix-cls}-duration{
             color: $font-color
         }
+        flex-direction: row;
     }
     &-duration{
         font-size: $font-size-lg;
