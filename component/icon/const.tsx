@@ -45,6 +45,8 @@ enum ICON_TYPES {
   ENVELOPE = 'ENVELOPE',
   MEMBER_GROUP = 'MEMBER_GROUP',
   LOOP = 'LOOP',
+
+  CAMERA_ARROW = 'CAMERA_ARROW',
 }
 // chevron_down
 export { ICON_TYPES };

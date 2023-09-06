@@ -180,13 +180,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     <div className={`${prefixCls}-content`}>
       <div className={`${prefixCls}-content-left`}>
         <div className={`${prefixCls}-iconBox`} title={t(`module.cancel`)}>
-          <Icon
-            type="DELETE"
-            width={20}
-            height={20}
-            color="#fff"
-            onClick={() => handleClick('stop')}
-          ></Icon>
+          <Icon type="DELETE" width={20} height={20} onClick={() => handleClick('stop')}></Icon>
         </div>
         <div className={`${prefixCls}-time`}>
           <span>{duration + "''"}</span>

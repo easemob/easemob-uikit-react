@@ -89,6 +89,7 @@ let MessageList: FC<MsgListProps> = props => {
           audioMessage={messageData[data.index] as AgoraChat.AudioMsgBody}
           style={data.style}
           renderUserProfile={renderUserProfile}
+          thread={isThread}
           {...messageProps}
         ></AudioMessage>
       );
@@ -100,6 +101,7 @@ let MessageList: FC<MsgListProps> = props => {
           imageMessage={messageData[data.index]}
           style={data.style}
           renderUserProfile={renderUserProfile}
+          thread={isThread}
           {...messageProps}
         ></ImageMessage>
       );
@@ -111,6 +113,7 @@ let MessageList: FC<MsgListProps> = props => {
           fileMessage={messageData[data.index]}
           style={data.style}
           renderUserProfile={renderUserProfile}
+          thread={isThread}
           {...messageProps}
         ></FileMessage>
       );
@@ -128,6 +131,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           textMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
+          thread={isThread}
           {...messageProps}
         >
           {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
@@ -143,6 +147,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           combinedMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
+          thread={isThread}
           {...messageProps}
         ></CombinedMessage>
       );

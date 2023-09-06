@@ -48,6 +48,8 @@ import { ReactComponent as Thread } from '../svgs/icons/hashtag_in_bubble.svg';
 import { ReactComponent as Envelope } from '../svgs/icons/envelope.svg';
 import { ReactComponent as MemberGroup } from '../svgs/all.svg';
 import { ReactComponent as Loop } from '../svgs/icons/arrow_round.svg';
+import { ReactComponent as CameraArrow } from '../svgs/icons/video_camera_arrow_right.svg';
+
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -188,6 +190,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'LOOP':
       return <Loop></Loop>;
+      break;
+    case 'CAMERA_ARROW':
+      return <CameraArrow></CameraArrow>;
       break;
     default:
       return '';

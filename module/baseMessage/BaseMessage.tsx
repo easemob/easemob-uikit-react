@@ -146,7 +146,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onMessageCheckChange,
     renderUserProfile,
     onCreateThread,
-    select = true,
+    select = false,
     thread = true,
     messageStatus = true,
     chatThreadOverview,
