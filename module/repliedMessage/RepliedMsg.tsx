@@ -147,7 +147,8 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         //     {(repliedMsg as AgoraChat.AudioMsgBody).length}"
         //   </div>
         // );
-        let msg = { ...repliedMsg, bySelf: true };
+        const bySelf = rootStore.client.user == message.from;
+        let msg = { ...repliedMsg, bySelf: bySelf };
         content = (
           <AudioMessage
             type={'secondly'}
@@ -195,6 +196,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
             combinedMessage={repliedMsg as CombinedMessageProps['combinedMessage']}
             onlyContent={true}
             showSummary={false}
+            type="secondly"
           ></CombinedMessage>
         );
         break;
