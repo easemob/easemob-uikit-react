@@ -12,6 +12,7 @@ import download from '../utils/download';
 import { ImagePreview } from '../imageMessage';
 import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
 import AudioMessage, { AudioMessageProps } from '../audioMessage';
+import RecalledMessage from '../recalledMessage';
 const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
@@ -197,8 +198,26 @@ const RepliedMsg = (props: RepliedMsgProps) => {
           ></CombinedMessage>
         );
         break;
+      case 'video':
+      case 'loc':
+        content = (
+          //@ts-ignore
+          <RecalledMessage
+            //@ts-ignore
+            message={repliedMsg}
+            onlyContent={true}
+          ></RecalledMessage>
+        );
+        break;
       default:
-        content = '';
+        content = (
+          //@ts-ignore
+          <RecalledMessage
+            //@ts-ignore
+            message={repliedMsg}
+            onlyContent={true}
+          ></RecalledMessage>
+        );
         break;
     }
     return content;
@@ -231,7 +250,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         <span>{to}</span>
       </div>
       <div className={`${prefixCls}-box`}>
-        <div className={`${prefixCls}-content`}>{<>{renderMsgContent()}</>}</div>
+        <div className={`${prefixCls}-content`}>{renderMsgContent()}</div>
         {hoverStatus && (
           <Icon
             className={`${prefixCls}-arrow`}

@@ -10,10 +10,11 @@ export interface RecalledMessageProps extends TextMessageProps {
   prefixCls?: string;
   className?: string;
   message: AgoraChat.MessageBody;
+  onlyContent?: boolean;
 }
 
 const RecalledMessage = (props: RecalledMessageProps) => {
-  const { message, prefixCls: customizePrefixCls, className } = props;
+  const { message, prefixCls: customizePrefixCls, className, onlyContent } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-recall', customizePrefixCls);
@@ -32,13 +33,16 @@ const RecalledMessage = (props: RecalledMessageProps) => {
   //   message.msg = message.from + t('module.unsentAMessage');
   // }
   // @ts-ignore
-  message.msg = t('module.unsupportedMessageType');
+  // message.msg = t('module.unsupportedMessageType');
+  const msg = { ...message, msg: t('module.unsupportedMessageType') };
   return (
     <TextMessage
+      onlyContent={onlyContent}
       customAction={{ visible: false }}
       reaction={false}
+      className={classSting}
       bubbleClass={classSting}
-      textMessage={message as unknown as TextMessageProps['textMessage']}
+      textMessage={msg as unknown as TextMessageProps['textMessage']}
     />
   );
 };

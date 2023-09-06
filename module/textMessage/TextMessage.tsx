@@ -38,6 +38,7 @@ export interface TextMessageProps extends BaseMessageProps {
   onTranslateMessage?: (textMessage: TextMessageType) => boolean;
   targetLanguage?: string;
   showTranslation?: boolean; // 是否展示翻译后的消息
+  onlyContent?: boolean;
 }
 
 export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = true) => {
@@ -143,6 +144,7 @@ const TextMessage = (props: TextMessageProps) => {
     onTranslateMessage,
     targetLanguage = 'en',
     showTranslation = true,
+    onlyContent = false,
     ...others
   } = props;
   if (!textMessage.chatType) return null;
@@ -463,36 +465,7 @@ const TextMessage = (props: TextMessageProps) => {
 
   return (
     <>
-      <BaseMessage
-        id={textMessage.id}
-        direction={bySelf ? 'rtl' : 'ltr'}
-        style={style}
-        time={time}
-        message={textMessage}
-        nickName={nickName}
-        bubbleType={type}
-        className={bubbleClassName}
-        onReplyMessage={handleReplyMsg}
-        onDeleteMessage={handleDeleteMsg}
-        repliedMessage={repliedMsg}
-        reactionData={reactions}
-        onAddReactionEmoji={handleClickEmoji}
-        onDeleteReactionEmoji={handleDeleteEmoji}
-        onShowReactionUserList={handleShowReactionUserList}
-        onRecallMessage={handleRecallMessage}
-        onTranslateMessage={handleTranslateMessage}
-        onModifyMessage={handleModifyMessage}
-        onSelectMessage={handleSelectMessage}
-        onResendMessage={handleResendMessage}
-        select={select}
-        onMessageCheckChange={handleMsgCheckChange}
-        renderUserProfile={renderUserProfile}
-        onCreateThread={handleCreateThread}
-        thread={_thread}
-        chatThreadOverview={textMessage.chatThreadOverview}
-        onClickThreadTitle={handleClickThreadTitle}
-        {...others}
-      >
+      {onlyContent ? (
         <div>
           <span className={classString}>{renderTxt(msg, true)}</span>
           {!!(urlData?.title || urlData?.description) && (
@@ -523,26 +496,89 @@ const TextMessage = (props: TextMessageProps) => {
             )
           }
         </div>
-      </BaseMessage>
-      {/* Modify Message Modal */}
-      {
-        <Modal
-          title={t('module.modifyTitle')}
-          okText={t('module.confirmBtn')}
-          cancelText={t('module.cancelBtn')}
-          wrapClassName="modify-message-modal"
-          onCancel={cancelModifyMessage}
-          onOk={confirmModifyMessage}
-          open={modifyMessageVisible}
-        >
-          <Textarea
-            className={modifyPrefix}
-            ref={textareaRef}
-            enableEnterSend={false}
-            enabledMenton={false}
-          />
-        </Modal>
-      }
+      ) : (
+        <>
+          <BaseMessage
+            id={textMessage.id}
+            direction={bySelf ? 'rtl' : 'ltr'}
+            style={style}
+            time={time}
+            message={textMessage}
+            nickName={nickName}
+            bubbleType={type}
+            className={bubbleClassName}
+            onReplyMessage={handleReplyMsg}
+            onDeleteMessage={handleDeleteMsg}
+            repliedMessage={repliedMsg}
+            reactionData={reactions}
+            onAddReactionEmoji={handleClickEmoji}
+            onDeleteReactionEmoji={handleDeleteEmoji}
+            onShowReactionUserList={handleShowReactionUserList}
+            onRecallMessage={handleRecallMessage}
+            onTranslateMessage={handleTranslateMessage}
+            onModifyMessage={handleModifyMessage}
+            onSelectMessage={handleSelectMessage}
+            onResendMessage={handleResendMessage}
+            select={select}
+            onMessageCheckChange={handleMsgCheckChange}
+            renderUserProfile={renderUserProfile}
+            onCreateThread={handleCreateThread}
+            thread={_thread}
+            chatThreadOverview={textMessage.chatThreadOverview}
+            onClickThreadTitle={handleClickThreadTitle}
+            {...others}
+          >
+            <div>
+              <span className={classString}>{renderTxt(msg, true)}</span>
+              {!!(urlData?.title || urlData?.description) && (
+                <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
+              )}
+              {textMessage?.modifiedInfo ? (
+                <div className={`${classString}-edit-tag`}>{t('module.edited')}</div>
+              ) : (
+                ''
+              )}
+              {
+                // @ts-ignore
+                (textMessage.translations || transStatus == 'translating') && showTranslation && (
+                  <div className={translationClass}>
+                    <div className={`${transPrefix}-line`}></div>
+                    <span className={`${transPrefix}-text`}>
+                      {
+                        // @ts-ignore
+                        renderTxt(textMessage.translations?.[0]?.text, true)
+                      }
+                    </span>
+                    <div className={`${transPrefix}-action`}>
+                      <Icon type="TRANSLATION" width={16} height={16}></Icon>
+                      <span>{t(`module.${transStatus}`)}</span>
+                      <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+                    </div>
+                  </div>
+                )
+              }
+            </div>
+          </BaseMessage>
+          {
+            <Modal
+              title={t('module.modifyTitle')}
+              okText={t('module.confirmBtn')}
+              cancelText={t('module.cancelBtn')}
+              wrapClassName="modify-message-modal"
+              onCancel={cancelModifyMessage}
+              onOk={confirmModifyMessage}
+              open={modifyMessageVisible}
+            >
+              <Textarea
+                className={modifyPrefix}
+                ref={textareaRef}
+                enableEnterSend={false}
+                enabledMenton={false}
+              />
+            </Modal>
+          }
+        </>
+      )}
     </>
   );
 };
