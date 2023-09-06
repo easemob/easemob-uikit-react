@@ -34,6 +34,7 @@
         "show": "显示",
         "atAll": "所有人",
         "atTag": "[有人@你] ",
+        "atAllTag": "[@所有人] ",
         "select": "多选",
         "chatHistory": "聊天记录",
         "batchDeletion": "批量删除",

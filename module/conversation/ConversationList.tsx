@@ -13,12 +13,13 @@ import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import ScrollList from '../../component/scrollList';
 import { getUsersInfo } from '../utils/index';
+import { AT_TYPE } from '../store/ConversationStore';
 
 export type ConversationData = Array<{
   chatType: 'singleChat' | 'groupChat';
   conversationId: string;
   name?: string; // 昵称/群组名称
-  isAted?: boolean;
+  atType?: AT_TYPE;
   avatarUrl?: string;
   isOnline?: boolean;
   unreadCount: number; // 会话未读数

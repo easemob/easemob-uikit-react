@@ -2,13 +2,14 @@ import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
 import { ChatType } from '../types/messageType';
 import { AgoraChat } from 'agora-chat';
 
+export type AT_TYPE = 'NONE' | 'ALL' | 'ME';
 export interface Conversation {
   chatType: ChatType;
   conversationId: string;
   lastMessage: AgoraChat.MessageBody;
   unreadCount: number;
   name?: string;
-  isAted?: boolean;
+  atType?: AT_TYPE;
   isOnline?: boolean;
   avatarUrl?: string;
 }
@@ -57,7 +58,7 @@ class ConversationStore {
       addConversation: action,
       modifyConversation: action,
       topConversation: action,
-      setIsAted: action,
+      setAtType: action,
       clear: action,
     });
   }
@@ -171,12 +172,12 @@ class ConversationStore {
     return cvs;
   }
 
-  setIsAted(chatType: ChatType, cvsId: string, isAted: boolean) {
+  setAtType(chatType: ChatType, cvsId: string, atType: AT_TYPE) {
     let idx = this.conversationList.findIndex(item => {
       return item.chatType === chatType && item.conversationId === cvsId;
     });
     if (idx > -1) {
-      this.conversationList[idx].isAted = isAted;
+      this.conversationList[idx].atType = atType;
     }
   }
 

@@ -322,7 +322,11 @@ class MessageStore {
       let mentionList = message?.ext?.em_at_list;
       if (mentionList && message.from !== this.rootStore.client.user) {
         if (mentionList === AT_ALL || mentionList.includes(this.rootStore.client.user)) {
-          this.rootStore.conversationStore.setIsAted(cvs.chatType, cvs.conversationId, true);
+          this.rootStore.conversationStore.setAtType(
+            cvs.chatType,
+            cvs.conversationId,
+            mentionList === AT_ALL ? 'ALL' : 'ME',
+          );
         }
       }
     }

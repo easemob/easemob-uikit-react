@@ -12,6 +12,7 @@ import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { observer } from 'mobx-react-lite';
+import { AT_TYPE } from '../store/ConversationStore';
 import {
   getGroupMemberIndexByUserId,
   getGroupItemFromGroupsById,
@@ -80,12 +81,18 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     className,
   );
 
-  const AtTag = () => {
-    return <div className={`${prefixCls}-at-tag`}>{t('module.atTag')}</div>;
+  const AtTag = (props: { type?: AT_TYPE }) => {
+    let { type = 'NONE' } = props;
+    if (type === 'NONE') return <></>;
+    return (
+      <div className={`${prefixCls}-at-tag`}>
+        {type === 'ALL' ? t('module.atAllTag') : t('module.atTag')}
+      </div>
+    );
   };
 
   const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {
-    rootStore?.conversationStore.setIsAted(data.chatType, data.conversationId, false);
+    rootStore?.conversationStore.setAtType(data.chatType, data.conversationId, 'NONE');
     onClick && onClick(e);
   };
 
@@ -204,7 +211,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       <div className={`${prefixCls}-content`}>
         <span className={`${prefixCls}-nickname`}>{data.name || data.conversationId}</span>
         <span className={`${prefixCls}-message`}>
-          {data?.isAted ? <AtTag /> : ''}
+          {<AtTag type={data?.atType} />}
           {lastMsg}
         </span>
       </div>
