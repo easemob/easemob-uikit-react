@@ -11,33 +11,26 @@ const useEventHandler = () => {
   const client = useClient();
   useEffect(() => {
     console.log('注册监听', client);
-    client?.addEventHandler?.('message', {
+    client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
-        console.log('onTextMessage', message);
         messageStore.receiveMessage(message);
       },
       onImageMessage: message => {
-        console.log('onImageMessage', message);
         messageStore.receiveMessage(message);
       },
       onFileMessage: message => {
-        console.log('onFileMessage', message);
         messageStore.receiveMessage(message);
       },
       onAudioMessage: message => {
-        console.log('onAudioMessage', message);
         messageStore.receiveMessage(message);
       },
       onVideoMessage: message => {
-        console.log('onVideoMessage', message);
         messageStore.receiveMessage(message);
       },
       onLocationMessage: message => {
-        console.log('onLocationMessage', message);
         messageStore.receiveMessage(message);
       },
       onCmdMessage: message => {
-        console.log('onCmdMessage', message);
         const conversationId = getCvsIdFromMessage(message as unknown as AgoraChat.MessageBody);
 
         const cvs = {
@@ -58,23 +51,19 @@ const useEventHandler = () => {
         }
       },
       onCustomMessage: message => {
-        console.log('onCustomMessage', message);
         messageStore.receiveMessage(message);
       },
 
       onReceivedMessage: message => {
-        console.log('onReceivedMessage', message);
         messageStore.updateMessageStatus(message.mid, 'sent');
         // messageStore.receiveMessage(message);
       },
       onDeliveredMessage: message => {
-        console.log('onDeliveredMessage', message);
         messageStore.updateMessageStatus(message.mid as string, 'received');
         // messageStore.receiveMessage(message);
         // messageStore.updateMessageStatus();
       },
       onReadMessage: message => {
-        console.log('onReadMessage', message);
         messageStore.updateMessageStatus(message.mid as string, 'read');
       },
       onChannelMessage: message => {
@@ -94,7 +83,6 @@ const useEventHandler = () => {
         }
       },
       onRecallMessage: message => {
-        console.log('onRecallMessage', message);
         let chatType: 'singleChat' | 'groupChat' = 'singleChat';
         let conversationId = message.from;
         if (message.to.length == 15 && Number(message.to) > 0) {
@@ -111,11 +99,9 @@ const useEventHandler = () => {
       },
 
       onConnected: () => {
-        console.log('登录成功 ********');
         rootStore.rootStore.setLoginState(true);
       },
       onDisconnected: () => {
-        console.log('退出成功 *********');
         rootStore.rootStore.setLoginState(false);
       },
 
@@ -198,19 +184,16 @@ const useEventHandler = () => {
       },
       // @ts-ignore
       onCombineMessage: (message: AgoraChat.MessageBody) => {
-        console.log('onCombineMessage', message);
         messageStore.receiveMessage(message);
       },
 
       onChatThreadChange: (message: AgoraChat.ThreadChangeInfo) => {
-        console.log('onChatThreadChange', message);
         threadStore.updateThreadInfo(message);
       },
     });
 
     return () => {
-      console.log('移除监听');
-      client?.removeEventHandler?.('message');
+      client?.removeEventHandler?.('UIKitMessage');
     };
   }, [client]);
 };
