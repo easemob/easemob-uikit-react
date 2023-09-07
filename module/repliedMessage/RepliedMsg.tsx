@@ -59,6 +59,9 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   const [repliedMsg, setRepliedMsg] = useState<AgoraChat.MessageBody | undefined>();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>();
   // 找到被引用的消息
+  const cvsId = getCvsIdFromMessage(message);
+  // @ts-ignore
+  const messages = rootStore.messageStore.message[message.chatType]?.[cvsId] || [];
 
   useEffect(() => {
     if (msgType.includes(message.type)) {
@@ -68,9 +71,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         msgQuote = JSON.parse(msgQuote);
       }
       setMsgQuote(msgQuote);
-      const cvsId = getCvsIdFromMessage(message);
-      // @ts-ignore
-      const messages = rootStore.messageStore.message[message.chatType]?.[cvsId] || [];
+
       // const messages = rootStore.messageStore.currentCvsMsgs;
       const findMsgs = messages.filter(msg => {
         // @ts-ignore
@@ -79,12 +80,14 @@ const RepliedMsg = (props: RepliedMsgProps) => {
 
       if (findMsgs.length > 0) {
         setRepliedMsg(findMsgs[0]);
+      } else {
+        setRepliedMsg(null);
       }
       if (findMsgs[0]) {
         setAnchorElement(document.getElementById(findMsgs[0].id));
       }
     }
-  }, []);
+  }, [messages.length]);
 
   const [imgPreviewVisible, setImgVisible] = useState(false);
   // download file
@@ -132,7 +135,9 @@ const RepliedMsg = (props: RepliedMsgProps) => {
           <div
             className={`${prefixCls}-content-text`}
             style={{ cursor: 'pointer' }}
-            onClick={handleClick}
+            onClick={() => {
+              handleClick(repliedMsg);
+            }}
           >
             <Icon type="DOC" color="#75828A" width={20} height={20}></Icon>
             <span>Attachment:</span> {(repliedMsg as AgoraChat.FileMsgBody).filename}

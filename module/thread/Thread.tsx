@@ -59,6 +59,7 @@ const Thread = (props: ThreadProps) => {
             messageStatus={false}
             customAction={{ visible: false }}
             reaction={false}
+            thread={false}
             key={msg.id}
             bubbleType="none"
             textMessage={msg}
@@ -74,6 +75,7 @@ const Thread = (props: ThreadProps) => {
             direction="ltr"
             key={msg.id}
             reaction={false}
+            thread={false}
             customAction={{ visible: false }}
           />
         );
@@ -88,6 +90,7 @@ const Thread = (props: ThreadProps) => {
             direction="ltr"
             type="secondly"
             reaction={false}
+            thread={false}
             customAction={{ visible: false }}
           />
         );
@@ -101,6 +104,7 @@ const Thread = (props: ThreadProps) => {
             direction="ltr"
             type="secondly"
             reaction={false}
+            thread={false}
             customAction={{ visible: false }}
           />
         );
@@ -114,6 +118,7 @@ const Thread = (props: ThreadProps) => {
             direction="ltr"
             type="secondly"
             reaction={false}
+            thread={false}
             customAction={{ visible: false }}
           />
         );
