@@ -21,6 +21,7 @@ import { MessageList } from '../../../module/chat/MessageList';
 import Thread from '../../../module/thread';
 import './index.css';
 import { observer } from 'mobx-react-lite';
+import axios from 'axios';
 // import {
 // 	Chat,
 // 	rootStore,
@@ -97,6 +98,21 @@ const ChatApp = () => {
   useEffect(() => {
     console.log('变化了 showThreadPanel');
   }, [thread.showThreadPanel]);
+
+  const getRTCToken = data => {
+    const { channel, chatUserId } = data;
+    const agoraUId = '935243573';
+    const url = `https://a41.chat.agora.io/token/rtc/channel/${channel}/agorauid/${agoraUId}?userAccount=${chatUserId}`;
+    return axios
+      .get(url)
+      .then(function (response) {
+        console.log('getRtctoken', response);
+        return response.data;
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+  };
   return (
     <>
       <div className="tab-box">
@@ -156,6 +172,7 @@ const ChatApp = () => {
             messageEditorProps={{
               enabledTyping: true,
             }}
+            getRTCToken={getRTCToken}
           ></Chat>
         </div>
         {thread.showThreadPanel && (
@@ -224,7 +241,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         },
         chat: {
           header: {
-            threadList: false,
+            threadList: true,
             moreAction: true,
             clearMessage: true,
             deleteConversation: false,
@@ -232,18 +249,18 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
           message: {
             status: false,
             reaction: false,
-            thread: false,
-            recall: false,
+            thread: true,
+            recall: true,
             translate: false,
             edit: false,
           },
           messageEditor: {
             mention: false,
             typing: false,
-            record: false,
+            record: true,
             emoji: false,
             moreAction: true,
-            picture: false,
+            picture: true,
           },
         },
       }}

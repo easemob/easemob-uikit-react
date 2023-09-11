@@ -81,7 +81,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       if (findMsgs.length > 0) {
         setRepliedMsg(findMsgs[0]);
       } else {
-        setRepliedMsg(null);
+        setRepliedMsg(undefined);
       }
       if (findMsgs[0]) {
         setAnchorElement(document.getElementById(findMsgs[0].id));

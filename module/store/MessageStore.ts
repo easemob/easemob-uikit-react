@@ -1,6 +1,6 @@
 // import client from './agoraChatConfig';
 import AC, { AgoraChat } from 'agora-chat';
-import { observable, action, computed, makeObservable, autorun } from 'mobx';
+import { observable, action, computed, makeObservable, autorun, runInAction } from 'mobx';
 import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji } from '../utils';
@@ -83,10 +83,11 @@ class MessageStore {
       setTyping: action,
       sendTypingCmd: action,
       clear: action,
+      deleteMessage: action,
     });
 
     autorun(() => {
-      // console.log('message', this.message.singleChat.zd3);
+      console.log('message', this.message.singleChat.zd3);
     });
   }
 
@@ -410,7 +411,9 @@ class MessageStore {
         return !msgIds.includes(msg.id) && !msgIds.includes(msg.mid);
         // return msg.id != messageId && msg.mid != messageId;
       });
-      this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+      runInAction(() => {
+        this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+      });
     };
     // delete local message
     if (localMsgIds.length > 0) {

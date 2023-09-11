@@ -26,7 +26,7 @@ import { ThreadModal } from '../thread';
 import ScrollList from '../../component/scrollList';
 import { AgoraChat } from 'agora-chat';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
-// import rootStore from '../store';
+import CallKit from 'chat-callkit';
 export interface ChatProps {
   prefix?: string;
   className?: string;
@@ -47,6 +47,24 @@ export interface ChatProps {
   };
   messageListProps?: MsgListProps;
   messageEditorProps?: MessageEditorProps;
+  getRTCToken?: (data: {
+    channel: number | string;
+    chatUserId: string; // chat user ID
+  }) => Promise<{
+    agoraUid: string | number; // rtc user ID
+    accessToken: string;
+  }>;
+  rtcConfig?: {
+    appId: string;
+    agoraUid: string | number;
+    onInvite?: (data: {
+      channel: string;
+      conversation: CurrentConversation;
+    }) => Promise<[{ name: string; id: string }]>;
+    onAddPerson?: (data: { channel: string }) => Promise<[{ member: string } | { owner: string }]>;
+    getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>;
+    onStateChange?: (data: { type: string; confr: any }) => void;
+  };
 }
 const getChatAvatarUrl = (cvs: CurrentConversation) => {
   if (cvs.chatType === 'singleChat') {
@@ -67,6 +85,8 @@ const Chat: FC<ChatProps> = props => {
     headerProps,
     messageListProps,
     messageEditorProps,
+    getRTCToken,
+    rtcConfig,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -108,6 +128,7 @@ const Chat: FC<ChatProps> = props => {
   const showReply = repliedMsg && replyCvsId === CVS.conversationId;
 
   // --------- thread -----------
+
   // thread modal title name
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const headerRef = useRef(null);
@@ -224,6 +245,7 @@ const Chat: FC<ChatProps> = props => {
     });
     setRenderThreadList(filterList);
   };
+  // ------------------- thread end -------
 
   //------ global config ------
   // config header
@@ -410,6 +432,165 @@ const Chat: FC<ChatProps> = props => {
       return true;
     });
   }
+
+  // ----- video call -----------
+  const [currentCall, setCurrentCall] = useState<any>({});
+  const showInvite = async (conf: any) => {
+    // rtcConfig?.onAddPerson?.(conf);
+    const members = await rtcConfig?.onAddPerson?.(conf);
+    const rtcMembers = members?.map(item => {
+      return item.id;
+    });
+    console.log('members ----', members);
+    let options = {
+      callType: currentCall.callType,
+      chatType: 'groupChat',
+      to: rtcMembers,
+      // agoraUid: agoraUid,
+      message: `Start a ${currentCall.callType == 2 ? 'video' : 'audio'} call`,
+      groupId: currentCall.groupId,
+      groupName: currentCall.groupName,
+      accessToken: currentCall.accessToken,
+      channel: currentCall.channel,
+    };
+    console.log('options ----', options);
+    CallKit.startCall(options);
+  };
+  const handleCallStateChange = async (info: any) => {
+    rtcConfig?.onStateChange?.(info);
+    switch (info.type) {
+      case 'hangup':
+      case 'refuse':
+        console.log('hangup');
+        break;
+      case 'user-published':
+        console.log('user-published');
+        // getIdMap
+        if (!info.confr) return;
+        let idMap = await rtcConfig?.getIdMap?.({
+          userId: rootStore.client.user,
+          channel: info.confr.channel,
+        });
+        if (idMap && Object.keys(idMap).length > 0) {
+          CallKit.setUserIdMap(idMap);
+        }
+        break;
+      default:
+        break;
+    }
+  };
+  const handleInvite = async (data: { channel: string }) => {
+    console.log(data);
+    if (!getRTCToken) return console.error('need getRTCToken method to get token');
+    const { agoraUid, accessToken } = await getRTCToken({
+      channel: data.channel,
+      chatUserId: rootStore.client.user,
+    });
+
+    CallKit.answerCall(true, accessToken);
+  };
+
+  const startVideoCall = async (type: 'video' | 'audio') => {
+    if (!getRTCToken) return console.error('need getRTCToken method to get token');
+    const channel = String(Math.ceil(Math.random() * 100000000));
+    const { agoraUid, accessToken } = await getRTCToken({
+      channel: channel,
+      chatUserId: rootStore.client.user,
+    });
+    if (CVS.chatType === 'groupChat') {
+      console.log('rootStore', rootStore);
+      const members = await rtcConfig?.onInvite?.({ channel, conversation: CVS });
+      const rtcMembers = members?.map(item => {
+        return item.id;
+      });
+      console.log('members ----', members);
+      let options = {
+        callType: type == 'video' ? 2 : 3,
+        chatType: 'groupChat',
+        to: rtcMembers,
+        // agoraUid: agoraUid,
+        message: `Start a ${type} call`,
+        groupId: CVS.conversationId,
+        groupName: CVS.name || '',
+        accessToken,
+        channel,
+      };
+      console.log('options ----', options);
+      CallKit.startCall(options);
+      setCurrentCall({
+        channel,
+        accessToken,
+        groupId: CVS.conversationId,
+        groupName: CVS.name || '',
+        chatType: 'groupChat',
+        callType: type == 'video' ? 2 : 3,
+      });
+
+      const userInfo = {};
+      members?.forEach(item => {
+        // @ts-ignore
+        userInfo[item.id] = {
+          nickname: item.name,
+          avatarUrl: item.avatarurl,
+        };
+      });
+      // @ts-ignore
+      userInfo[rootStore.client.user] = {
+        nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
+        avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
+      };
+      CallKit.setUserInfo(userInfo);
+
+      return;
+    } else {
+    }
+    let options = {
+      callType: type == 'video' ? 1 : 0,
+      chatType: 'singleChat',
+      to: CVS.conversationId,
+      agoraUid,
+      message: `Start a ${type} call`,
+      accessToken,
+      channel,
+    };
+    setCurrentCall({
+      channel,
+      accessToken,
+      targetId: CVS.conversationId,
+      targetName: CVS.name || '',
+      chatType: 'singleChat',
+      callType: type == 'video' ? 1 : 0,
+    });
+
+    CallKit.startCall(options);
+    // }
+    let idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
+    CallKit.setUserIdMap(idMap);
+
+    CallKit.setUserInfo({
+      [CVS.conversationId]: {
+        nickname:
+          rootStore.addressStore.appUsersInfo[CVS.conversationId]?.nickname || CVS.conversationId,
+        avatarUrl: rootStore.addressStore.appUsersInfo[CVS.conversationId]?.avatarurl,
+      },
+      // @ts-ignore
+      [rootStore.client.user]: {
+        nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
+        avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (!rtcConfig) {
+      return;
+    }
+    let appId = '15cb0d28b87b425ea613fc46f7c9f974';
+    if (appId) {
+      CallKit.init(appId, rtcConfig?.agoraUid, rootStore.client);
+    }
+  }, []);
+
   return (
     <div className={classString}>
       {isEmpty ? (
@@ -431,8 +612,23 @@ const Chat: FC<ChatProps> = props => {
                     <Button onClick={showTheadList} type="text" shape="circle">
                       <Icon type="THREAD"></Icon>
                     </Button>
+                    <Button onClick={() => startVideoCall('video')} type="text" shape="circle">
+                      <Icon type="CAMERA_ARROW"></Icon>
+                    </Button>
+                    <Button onClick={() => startVideoCall('audio')} type="text" shape="circle">
+                      <Icon type="MIC"></Icon>
+                    </Button>
                   </div>
-                ) : null
+                ) : (
+                  <>
+                    <Button onClick={() => startVideoCall('video')} type="text" shape="circle">
+                      <Icon type="CAMERA_ARROW"></Icon>
+                    </Button>
+                    <Button onClick={() => startVideoCall('audio')} type="text" shape="circle">
+                      <Icon type="MIC"></Icon>
+                    </Button>
+                  </>
+                )
               }
               content={
                 rootStore.conversationStore.currentCvs.name ||
@@ -480,6 +676,13 @@ const Chat: FC<ChatProps> = props => {
               <div className={`${prefixCls}-threads-box`}>{threadListContent()}</div>
             </ThreadModal>
           )}
+          <CallKit
+            onAddPerson={showInvite}
+            onStateChange={handleCallStateChange}
+            onInvite={handleInvite}
+            contactAvatar={rootStore.addressStore.appUsersInfo[currentCall.targetId]?.avatarurl}
+            groupAvatar={<Avatar size="large">{CVS.name}</Avatar>}
+          ></CallKit>
         </>
       )}
     </div>
