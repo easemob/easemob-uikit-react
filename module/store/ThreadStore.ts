@@ -249,7 +249,7 @@ class ThreadStore {
 
   getGroupChatThreads(parentId: string, cursor?: string) {
     if (!parentId) return console.error('no parentId');
-    if (this.threadList[parentId]?.length > 0 && !cursor) return console.error('no cursor', cursor);
+    // if (this.threadList[parentId]?.length > 0 && !cursor) return console.error('no cursor', cursor);
 
     return this.rootStore.client
       .getChatThreads({
@@ -259,7 +259,10 @@ class ThreadStore {
       })
       .then((res: any) => {
         const threads = res.entities;
-        const list = this.threadList[parentId] || [];
+        let list = this.threadList[parentId] || [];
+        if (!cursor) {
+          list = [];
+        }
         const chatThreadIds = threads.map((item: { id: any }) => {
           return item.id;
         });
