@@ -56,6 +56,7 @@ const Thread = (props: ThreadProps) => {
       case 'txt':
         content = (
           <TextMessage
+            renderUserProfile={() => null}
             messageStatus={false}
             customAction={{ visible: false }}
             reaction={false}
@@ -70,6 +71,7 @@ const Thread = (props: ThreadProps) => {
       case 'img':
         content = (
           <ImageMessage
+            renderUserProfile={() => null}
             messageStatus={false}
             imageMessage={msg}
             direction="ltr"
@@ -83,6 +85,7 @@ const Thread = (props: ThreadProps) => {
       case 'file':
         content = (
           <FileMessage
+            renderUserProfile={() => null}
             messageStatus={false}
             bubbleStyle={{ minWidth: '160px' }}
             key={msg.id}
@@ -98,6 +101,7 @@ const Thread = (props: ThreadProps) => {
       case 'audio':
         content = (
           <AudioMessage
+            renderUserProfile={() => null}
             messageStatus={false}
             key={msg.id}
             audioMessage={msg}
@@ -112,6 +116,7 @@ const Thread = (props: ThreadProps) => {
       case 'combine':
         content = (
           <CombinedMessage
+            renderUserProfile={() => null}
             messageStatus={false}
             key={msg.id}
             combinedMessage={msg}

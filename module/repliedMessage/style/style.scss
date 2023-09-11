@@ -13,6 +13,7 @@ $reply-prefix-cls: #{$cui-prefix}-message-reply;
         justify-content: center;
         padding: $msg-reply-padding;
         position: relative;
+        align-items: flex-start;
         &-title{
             color: $msg-reply-title-color;
             overflow: hidden;
