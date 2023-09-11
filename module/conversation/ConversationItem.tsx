@@ -153,7 +153,11 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   let lastMsg: ReactNode[] | ReactNode = '';
   switch (data.lastMessage?.type) {
     case 'txt':
-      lastMsg = renderTxt(data.lastMessage?.msg, false);
+      if (data.lastMessage?.msg == 'the combine message') {
+        lastMsg = `/${t('module.chatHistory')}/`;
+      } else {
+        lastMsg = renderTxt(data.lastMessage?.msg, false);
+      }
       break;
     case 'img':
       lastMsg = `/${t('module.image')}/`;
