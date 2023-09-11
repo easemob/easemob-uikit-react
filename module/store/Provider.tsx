@@ -35,6 +35,8 @@ export interface ProviderProps {
         moreAction?: boolean;
         clearMessage?: boolean;
         deleteConversation?: boolean;
+        audioCall?: boolean;
+        videoCall?: boolean;
       };
       message?: {
         status?: boolean;

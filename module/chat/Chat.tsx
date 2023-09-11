@@ -582,7 +582,7 @@ const Chat: FC<ChatProps> = props => {
   };
 
   useEffect(() => {
-    if (!rtcConfig) {
+    if (!rtcConfig || !rtcConfig.appId) {
       return;
     }
     let appId = '15cb0d28b87b425ea613fc46f7c9f974';
@@ -590,6 +590,20 @@ const Chat: FC<ChatProps> = props => {
       CallKit.init(appId, rtcConfig?.agoraUid, rootStore.client);
     }
   }, []);
+
+  // config rtc call
+  let showAudioCall = true;
+  let showVideoCall = true;
+  if (globalConfig?.header?.audioCall == false) {
+    showAudioCall = false;
+  }
+  if (globalConfig?.header?.videoCall == false) {
+    showVideoCall = false;
+  }
+  if (!rtcConfig) {
+    showVideoCall = false;
+    showAudioCall = false;
+  }
 
   return (
     <div className={classString}>
@@ -607,28 +621,23 @@ const Chat: FC<ChatProps> = props => {
             <Header
               avatarSrc={getChatAvatarUrl(CVS)}
               suffixIcon={
-                CVS.chatType == 'groupChat' && showHeaderThreadListBtn ? (
-                  <div ref={headerRef}>
+                <div ref={headerRef}>
+                  {CVS.chatType == 'groupChat' && showHeaderThreadListBtn && (
                     <Button onClick={showTheadList} type="text" shape="circle">
                       <Icon type="THREAD"></Icon>
                     </Button>
+                  )}
+                  {showVideoCall && (
                     <Button onClick={() => startVideoCall('video')} type="text" shape="circle">
                       <Icon type="CAMERA_ARROW"></Icon>
                     </Button>
+                  )}
+                  {showAudioCall && (
                     <Button onClick={() => startVideoCall('audio')} type="text" shape="circle">
                       <Icon type="MIC"></Icon>
                     </Button>
-                  </div>
-                ) : (
-                  <>
-                    <Button onClick={() => startVideoCall('video')} type="text" shape="circle">
-                      <Icon type="CAMERA_ARROW"></Icon>
-                    </Button>
-                    <Button onClick={() => startVideoCall('audio')} type="text" shape="circle">
-                      <Icon type="MIC"></Icon>
-                    </Button>
-                  </>
-                )
+                  )}
+                </div>
               }
               content={
                 rootStore.conversationStore.currentCvs.name ||
