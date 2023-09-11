@@ -1,30 +1,126 @@
-import AudioMessage from './audioMessage';
-import BaseMessage from './baseMessage';
-import FileMessage from './fileMessage';
-import ImageMessage from './imageMessage';
-import NoticeMessage from './noticeMessage';
-import TextMessage from './textMessage';
-import VideoMessage from './videoMessage';
-import MessageStatus from './messageStatus';
-import CombinedMessage from './combinedMessage';
-import { RepliedMsg, UnsentRepliedMsg } from './repliedMessage';
+import AudioMessage, { AudioMessageProps } from './audioMessage';
+import BaseMessage, { BaseMessageProps } from './baseMessage';
+import FileMessage, { FileMessageProps } from './fileMessage';
+import ImageMessage, { ImageMessageProps, ImagePreviewProps } from './imageMessage';
+import NoticeMessage, { NoticeMessageProps } from './noticeMessage';
+import TextMessage, { TextMessageProps } from './textMessage';
+import VideoMessage, { VideoMessageProps } from './videoMessage';
+import MessageStatus, { MessageStatusProps } from './messageStatus';
+import CombinedMessage, { CombinedMessageProps } from './combinedMessage';
+import {
+  RepliedMsg,
+  UnsentRepliedMsg,
+  RepliedMsgProps,
+  UnsentRepliedMsgProps,
+} from './repliedMessage';
 
-import Chat, { MessageList } from './chat';
+import Chat, { MessageList, ChatProps, MsgListProps } from './chat';
 import { ContactList } from './contactList';
-import { ConversationList, ConversationItem } from './conversation';
-import MessageEditor from './messageEditor';
-import Header from './header';
-import Empty from './empty';
-import RecalledMessage from './recalledMessage';
+import {
+  ConversationList,
+  ConversationItem,
+  ConversationItemProps,
+  ConversationListProps,
+  ConversationData,
+} from './conversation';
+import MessageEditor, {
+  MessageEditorProps,
+  MoreActionProps,
+  RecorderProps,
+  EmojiProps,
+  SelectedControlsProps,
+  SuggestListProps,
+  TextareaProps,
+} from './messageEditor';
 
-import rootStore from './store/index';
-import { RootContext, RootProvider, RootConsumer } from './store/rootContext';
-import Provider from './store/Provider';
+import Header, { HeaderProps } from './header';
+import Empty, { EmptyProps } from './empty';
+import RecalledMessage, { RecalledMessageProps } from './recalledMessage';
+
+import rootStore, {
+  RootStore,
+  InitConfig,
+  MessageStore,
+  RecallMessage,
+  Message,
+  SelectedMessage,
+  Typing,
+  ConversationStore,
+  AT_TYPE,
+  Conversation,
+  CurrentConversation,
+  ById,
+  AddressStore,
+  MemberRole,
+  MemberItem,
+  GroupItem,
+  AppUserInfo,
+  ThreadStore,
+  ThreadData,
+  CurrentThread,
+} from './store/index';
+import { RootContext, RootProvider, RootConsumer, ContextProps } from './store/rootContext';
+import Provider, { ProviderProps } from './store/Provider';
 import { useClient } from './hooks/useClient';
 import { useConversations } from './hooks/useConversation';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
-import Thread from './thread';
-import UserProfile from './userProfile';
+import Thread, { ThreadProps } from './thread';
+import UserProfile, { UserProfileProps } from './userProfile';
+
+export type {
+  AudioMessageProps,
+  BaseMessageProps,
+  FileMessageProps,
+  ImageMessageProps,
+  ImagePreviewProps,
+  NoticeMessageProps,
+  TextMessageProps,
+  VideoMessageProps,
+  MessageStatusProps,
+  CombinedMessageProps,
+  RepliedMsgProps,
+  UnsentRepliedMsgProps,
+  ChatProps,
+  MsgListProps,
+  ConversationItemProps,
+  ConversationListProps,
+  ConversationData,
+  MessageEditorProps,
+  MoreActionProps,
+  RecorderProps,
+  EmojiProps,
+  SelectedControlsProps,
+  SuggestListProps,
+  TextareaProps,
+  HeaderProps,
+  EmptyProps,
+  RecalledMessageProps,
+  RootStore,
+  InitConfig,
+  MessageStore,
+  RecallMessage,
+  Message,
+  SelectedMessage,
+  Typing,
+  ConversationStore,
+  AT_TYPE,
+  Conversation,
+  CurrentConversation,
+  ById,
+  AddressStore,
+  MemberRole,
+  MemberItem,
+  GroupItem,
+  AppUserInfo,
+  ThreadStore,
+  ThreadData,
+  CurrentThread,
+  ProviderProps,
+  ContextProps,
+  ThreadProps,
+  UserProfileProps,
+};
+
 export {
   AudioMessage,
   BaseMessage,

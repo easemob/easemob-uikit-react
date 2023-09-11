@@ -35,7 +35,7 @@ export interface TextMessageProps extends BaseMessageProps {
   style?: React.CSSProperties;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
-  onTranslateMessage?: (textMessage: TextMessageType) => boolean;
+  onTranslateTextMessage?: (textMessage: TextMessageType) => boolean;
   targetLanguage?: string;
   showTranslation?: boolean; // 是否展示翻译后的消息
   onlyContent?: boolean;
@@ -141,7 +141,7 @@ const TextMessage = (props: TextMessageProps) => {
     bubbleClass,
     renderUserProfile,
     thread,
-    onTranslateMessage,
+    onTranslateTextMessage,
     targetLanguage = 'en',
     showTranslation = true,
     onlyContent = false,
@@ -316,7 +316,7 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleTranslateMessage = () => {
-    const result = onTranslateMessage?.(textMessage);
+    const result = onTranslateTextMessage?.(textMessage);
     if (result == false) {
       return;
     }

@@ -2,7 +2,7 @@ import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
 import { AgoraChat } from 'agora-chat';
 import { A } from 'vitest/dist/types-71ccd11d';
 
-export interface Thread {
+export interface ThreadData {
   [key: string]: {
     [key: string]: {
       info?: AgoraChat.ThreadChangeInfo & { owner?: string };
@@ -20,7 +20,7 @@ export interface CurrentThread {
 
 class ThreadStore {
   rootStore;
-  thread: Thread;
+  thread: ThreadData;
   currentThread: CurrentThread;
   showThreadPanel: boolean;
   threadList: { [key: string]: (AgoraChat.ChatThreadDetail & { members?: string[] })[] };
@@ -48,7 +48,7 @@ class ThreadStore {
     });
   }
 
-  setThread(thread: Thread) {
+  setThread(thread: ThreadData) {
     this.thread = { ...this.thread, ...thread };
   }
 

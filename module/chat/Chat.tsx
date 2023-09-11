@@ -47,23 +47,24 @@ export interface ChatProps {
   };
   messageListProps?: MsgListProps;
   messageEditorProps?: MessageEditorProps;
-  getRTCToken?: (data: {
-    channel: number | string;
-    chatUserId: string; // chat user ID
-  }) => Promise<{
-    agoraUid: string | number; // rtc user ID
-    accessToken: string;
-  }>;
+
   rtcConfig?: {
     appId: string;
     agoraUid: string | number;
     onInvite?: (data: {
       channel: string;
       conversation: CurrentConversation;
-    }) => Promise<[{ name: string; id: string }]>;
+    }) => Promise<[{ name: string; id: string; avatarurl?: string }]>;
     onAddPerson?: (data: { channel: string }) => Promise<[{ member: string } | { owner: string }]>;
     getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>;
     onStateChange?: (data: { type: string; confr: any }) => void;
+    getRTCToken?: (data: {
+      channel: number | string;
+      chatUserId: string; // chat user ID
+    }) => Promise<{
+      agoraUid: string | number; // rtc user ID
+      accessToken: string;
+    }>;
   };
 }
 const getChatAvatarUrl = (cvs: CurrentConversation) => {

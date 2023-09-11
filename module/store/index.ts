@@ -1,15 +1,20 @@
 import { action, makeAutoObservable, makeObservable, observable } from 'mobx';
 import { observer } from 'mobx-react-lite';
 // import client from './agoraChatConfig';
-import MessageStore from './MessageStore';
-import ConversationStore from './ConversationStore';
-import AddressStore from './AddressStore';
-import ThreadStore from './ThreadStore';
+import MessageStore, { RecallMessage, Message, SelectedMessage, Typing } from './MessageStore';
+import ConversationStore, {
+  AT_TYPE,
+  Conversation,
+  CurrentConversation,
+  ById,
+} from './ConversationStore';
+import AddressStore, { MemberRole, MemberItem, GroupItem, AppUserInfo } from './AddressStore';
+import ThreadStore, { ThreadData, CurrentThread } from './ThreadStore';
 import { AgoraChat } from 'agora-chat';
-export interface InitConfig {
+interface InitConfig {
   appKey: string;
 }
-export class RootStore {
+class RootStore {
   messageStore;
   conversationStore;
   addressStore;
@@ -62,5 +67,28 @@ export function getStore() {
 }
 
 const rootStore = getStore();
+
+export type {
+  RootStore,
+  InitConfig,
+  MessageStore,
+  RecallMessage,
+  Message,
+  SelectedMessage,
+  Typing,
+  ConversationStore,
+  AT_TYPE,
+  Conversation,
+  CurrentConversation,
+  ById,
+  AddressStore,
+  MemberRole,
+  MemberItem,
+  GroupItem,
+  AppUserInfo,
+  ThreadStore,
+  ThreadData,
+  CurrentThread,
+};
 
 export default rootStore;

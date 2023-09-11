@@ -5,20 +5,20 @@ import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
 
 const buttonShapes = tuple('circle', 'round', 'default');
-export type ButtonShape = typeof buttonShapes[number];
+export type ButtonShape = (typeof buttonShapes)[number];
 
 const buttonSizes = tuple('small', 'medium', 'large');
-export type buttonSize = typeof buttonSizes[number];
+export type ButtonSize = (typeof buttonSizes)[number];
 
 const buttonTypes = tuple('primary', 'default', 'ghost', 'text');
-export type ButtonType = typeof buttonTypes[number];
+export type ButtonType = (typeof buttonTypes)[number];
 
 export interface ButtonProps {
   className?: string;
   children?: React.ReactNode;
   type?: ButtonType;
   shape?: ButtonShape;
-  size?: buttonSize;
+  size?: ButtonSize;
   disabled?: boolean;
   icon?: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLElement>;

@@ -40,7 +40,7 @@ const ChatApp = () => {
           user: 'zd2',
           // pwd: '272808',
           accessToken:
-            '',
+            'YWMtxFQKDJk6QmOzmTXRPgZa4ChYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGKgtPycgABUX67AyHJH3G3VOBwA6O0cuL8twBmtEO4bNp8jy6J0lDCgw==',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
@@ -172,7 +172,10 @@ const ChatApp = () => {
             messageEditorProps={{
               enabledTyping: true,
             }}
-            getRTCToken={getRTCToken}
+            rtcConfig={{
+              getRTCToken: getRTCToken,
+              getIdMap: () => {},
+            }}
           ></Chat>
         </div>
         {thread.showThreadPanel && (
@@ -233,7 +236,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       features={{
         conversationList: {
-          search: false,
+          // search: false,
           item: {
             moreAction: false,
             deleteConversation: false,
@@ -245,6 +248,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
             moreAction: true,
             clearMessage: true,
             deleteConversation: false,
+            audioCall: false,
           },
           message: {
             status: false,

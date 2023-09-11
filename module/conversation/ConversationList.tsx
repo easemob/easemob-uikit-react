@@ -184,6 +184,10 @@ let Conversations: FC<ConversationListProps> = props => {
       actions: [],
     };
   }
+  let showSearch = true;
+  if (globalConfig.search == false) {
+    showSearch = false;
+  }
   return (
     <div className={classString} style={style}>
       {renderHeader ? (
@@ -199,7 +203,7 @@ let Conversations: FC<ConversationListProps> = props => {
 
       {renderSearch
         ? renderSearch()
-        : globalConfig.search && (
+        : showSearch && (
             <div className={`${prefixCls}-search`}>
               <Search onChange={handleSearch}></Search>
             </div>

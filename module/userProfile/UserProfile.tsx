@@ -8,14 +8,14 @@ import { observer } from 'mobx-react-lite';
 import { getUsersInfo } from '../utils/index';
 import Button from '../../component/button';
 import Icon from '../../component/icon';
-export interface TypingProps {
+export interface UserProfileProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
   userId: string;
 }
 
-const UserProfile = (props: TypingProps) => {
+const UserProfile = (props: UserProfileProps) => {
   const { prefix: customizePrefixCls, className, style, userId } = props;
   const { addressStore } = getStore();
   const { getPrefixCls } = React.useContext(ConfigContext);

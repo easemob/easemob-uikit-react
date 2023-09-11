@@ -1,3 +1,4 @@
-import userProfile from "./UserProfile";
+import userProfile from './UserProfile';
 
+export type { UserProfileProps } from './UserProfile';
 export default userProfile;

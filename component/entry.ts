@@ -1,19 +1,38 @@
 // import './style/index.scss';
-import Avatar from './avatar';
+import Avatar, { AvatarProps } from './avatar';
 // import './avatar/style/style.scss';
-import Button from './button';
+import Button, { ButtonProps, ButtonShape, ButtonSize, ButtonType } from './button';
 // import './button/style/style.scss';
-import Input from './input/Input';
-import Badge from './badge';
-import Checkbox from './checkbox';
-import Dropdown from './dropdown';
-import Icon from './icon';
-import List from './list';
-import Modal from './modal';
-import Popover from './popover';
-import Switch from './switch';
+import Input, { InputProps } from './input/Input';
+import Badge, { BadgeProps } from './badge';
+import Checkbox, { CheckboxProps } from './checkbox';
+import Dropdown, { DropdownProps } from './dropdown';
+import Icon, { IconProps, ICON_TYPES } from './icon';
+import List, { ListProps } from './list';
+import Modal, { ModalProps } from './modal';
+import Popover, { PopoverProps } from './popover';
+import Switch, { SwitchProps } from './switch';
 import Tooltip from 'rc-tooltip';
-import ScrollList from './scrollList';
+import ScrollList, { ScrollListProps } from './scrollList';
+
+export type {
+  AvatarProps,
+  ButtonProps,
+  ButtonShape,
+  ButtonSize,
+  ButtonType,
+  InputProps,
+  BadgeProps,
+  CheckboxProps,
+  DropdownProps,
+  IconProps,
+  ICON_TYPES,
+  ListProps,
+  ModalProps,
+  PopoverProps,
+  SwitchProps,
+  ScrollListProps,
+};
 
 export {
   Avatar,

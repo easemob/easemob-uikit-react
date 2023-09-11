@@ -20,7 +20,7 @@ const searchUser = (memberList: MemberItem[], queryString?: string) => {
     : memberList.slice(0);
 };
 
-interface Props {
+export interface SuggestListProps {
   visible: boolean;
   position: { x: number; y: number };
   queryString?: string;
@@ -30,7 +30,7 @@ interface Props {
   onShow: () => void;
 }
 
-const SuggestList: FC<Props> = props => {
+const SuggestList: FC<SuggestListProps> = props => {
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('suggest');

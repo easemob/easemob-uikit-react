@@ -16,7 +16,7 @@ const Row = ({
   return <div style={style}>{content}</div>;
 };
 
-interface ListProps {
+export interface ListProps {
   height: number; // List 高度
   itemCount: number; // item 数量
   itemSize: number | ((i: number) => number); // item 高度
