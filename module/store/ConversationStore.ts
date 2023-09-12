@@ -70,7 +70,6 @@ class ConversationStore {
 
     this.conversationList.forEach((cvs, index) => {
       if (cvs.chatType == currentCvs.chatType && cvs.conversationId == currentCvs.conversationId) {
-        this.currentCvs = cvs;
         if (this.conversationList[index].unreadCount > 0) {
           this.conversationList[index].unreadCount = 0;
           this.rootStore.messageStore.sendChannelAck(currentCvs);
@@ -195,7 +194,7 @@ class ConversationStore {
           cvs.name = res?.data?.[0]?.name;
         }
       });
-      this.conversationList = this.conversationList?.concat([]) || [];
+      // this.conversationList = this.conversationList?.concat([]) || [];
     });
   }
 

@@ -296,6 +296,7 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
             &>div:nth-child(2)>span{
                 font-size: 12px;
                 line-height: 16px;
+                margin-left: 4px;
             }
 
             // 这个元素固定在最右面

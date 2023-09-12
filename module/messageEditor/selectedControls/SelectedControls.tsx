@@ -115,6 +115,16 @@ const SelectedControls = (props: SelectedControlsProps) => {
 
     rootStore.messageStore.deleteMessage(currentCVS, msgIds);
     setModalOpen(false);
+    rootStore.messageStore.setSelectedMessage(
+      {
+        chatType: currentCVS.chatType,
+        conversationId: currentCVS.conversationId,
+      },
+      {
+        selectable: false,
+        selectedMessage: [],
+      },
+    );
   };
 
   const [modalOpen, setModalOpen] = useState(false);

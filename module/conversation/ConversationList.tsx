@@ -141,7 +141,13 @@ let Conversations: FC<ConversationListProps> = props => {
   useEffect(() => {
     cvsStore.conversationList?.forEach(cvs => {
       if (!cvs.name && cvs.chatType == 'groupChat' && rootStore.addressStore.groups.length > 0) {
-        cvsStore.updateConversationName(cvs.chatType, cvs.conversationId);
+        let result = rootStore.addressStore.groups.find(item => {
+          return item.groupid === cvs.conversationId;
+        });
+        if (!result) {
+          console.log('22222', cvs, rootStore.addressStore.groups);
+          cvsStore.updateConversationName(cvs.chatType, cvs.conversationId);
+        }
       }
     });
   }, [cvsStore.conversationList?.length]);
