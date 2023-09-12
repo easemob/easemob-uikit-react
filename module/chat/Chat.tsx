@@ -86,7 +86,6 @@ const Chat: FC<ChatProps> = props => {
     headerProps,
     messageListProps,
     messageEditorProps,
-    getRTCToken,
     rtcConfig,
   } = props;
   const { t } = useTranslation();
@@ -100,7 +99,7 @@ const Chat: FC<ChatProps> = props => {
   const { appUsersInfo } = rootStore.addressStore;
   const globalConfig = features?.chat;
   const CVS = rootStore.conversationStore.currentCvs;
-
+  const getRTCToken = rtcConfig?.getRTCToken;
   useEffect(() => {
     if (!rootStore.conversationStore.currentCvs.conversationId) {
       setIsEmpty(true);
@@ -686,15 +685,15 @@ const Chat: FC<ChatProps> = props => {
               <div className={`${prefixCls}-threads-box`}>{threadListContent()}</div>
             </ThreadModal>
           )}
-          <CallKit
-            onAddPerson={showInvite}
-            onStateChange={handleCallStateChange}
-            onInvite={handleInvite}
-            contactAvatar={rootStore.addressStore.appUsersInfo[currentCall.targetId]?.avatarurl}
-            groupAvatar={<Avatar size="large">{CVS.name}</Avatar>}
-          ></CallKit>
         </>
       )}
+      <CallKit
+        onAddPerson={showInvite}
+        onStateChange={handleCallStateChange}
+        onInvite={handleInvite}
+        contactAvatar={rootStore.addressStore.appUsersInfo[currentCall.targetId]?.avatarurl}
+        groupAvatar={<Avatar className="cui-callkit-groupAvatar">{CVS.name}</Avatar>}
+      ></CallKit>
     </div>
   );
 };
