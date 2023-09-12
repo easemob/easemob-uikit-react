@@ -160,6 +160,14 @@ const useEventHandler = () => {
               }
             }
             break;
+          case 'directJoined':
+            addressStore.setGroups([
+              {
+                groupid: id,
+                groupname: message.name || '',
+              },
+            ]);
+            break;
           default:
         }
       },

@@ -59,6 +59,7 @@ class ConversationStore {
       modifyConversation: action,
       topConversation: action,
       setAtType: action,
+      updateConversationName: action,
       clear: action,
     });
   }
@@ -69,6 +70,7 @@ class ConversationStore {
 
     this.conversationList.forEach((cvs, index) => {
       if (cvs.chatType == currentCvs.chatType && cvs.conversationId == currentCvs.conversationId) {
+        this.currentCvs = cvs;
         if (this.conversationList[index].unreadCount > 0) {
           this.conversationList[index].unreadCount = 0;
           this.rootStore.messageStore.sendChannelAck(currentCvs);
@@ -184,6 +186,19 @@ class ConversationStore {
   setHasConversationNext(hasNext: boolean) {
     this.hasConversationNext = hasNext;
   }
+
+  updateConversationName(chatType: ChatType, cvsId: string) {
+    this.rootStore.client.getGroupInfo({ groupId: cvsId }).then(res => {
+      console.log('群详情', res);
+      this.conversationList?.forEach(cvs => {
+        if (cvs.conversationId === cvsId) {
+          cvs.name = res?.data?.[0]?.name;
+        }
+      });
+      this.conversationList = this.conversationList?.concat([]) || [];
+    });
+  }
+
   clear() {
     this.currentCvs = {
       conversationId: '',

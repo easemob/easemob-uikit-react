@@ -138,6 +138,14 @@ let Conversations: FC<ConversationListProps> = props => {
     }
   }, [cvsStore.conversationList, cvsStore.searchList, groupData, appUsersInfo]);
 
+  useEffect(() => {
+    cvsStore.conversationList?.forEach(cvs => {
+      if (!cvs.name && cvs.chatType == 'groupChat' && rootStore.addressStore.groups.length > 0) {
+        cvsStore.updateConversationName(cvs.chatType, cvs.conversationId);
+      }
+    });
+  }, [cvsStore.conversationList?.length]);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const returnValue = onSearch?.(e);
