@@ -240,7 +240,11 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   };
   const myUserId = rootStore.client.user;
   const from = message.from === myUserId ? t('module.you') : message.from;
-  const to = msgQuote?.msgSender === myUserId ? t('module.you') : msgQuote?.msgSender;
+  const to =
+    msgQuote?.msgSender === myUserId
+      ? t('module.you')
+      : rootStore.addressStore.appUsersInfo?.[msgQuote?.msgSender as string]?.nickname ||
+        msgQuote?.msgSender;
 
   return (
     <div
