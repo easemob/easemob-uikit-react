@@ -6,8 +6,22 @@
   
     @return hsla($hue, $saturation, $lightness, $alpha);
 }
-  
-$blue-base: hsla(203, 100%, 60%, 1);
+
+// :root {
+//     --cui-primary-color: red;
+//     --cui-secondary-color: hsla(155, 100%, 60%, 1);
+//     --cui-error-color: hsla(350, 100%, 60%, 1);
+//     --cui-neutral-color: hsla(203, 8%, 60%, 1);
+//     --cui-neutral-special-color: hsla(220, 36%, 60%, 1);
+// }
+
+$cui-primary-color: hsla(203, 100%, 60%, 1);
+$cui-secondary-color: hsla(155, 100%, 60%, 1);
+$cui-error-color: hsla(350, 100%, 60%, 1);
+$cui-neural-color: hsla(203, 8%, 60%, 1);
+$cui-neutral-special-color: hsla(220, 36%, 60%, 1);
+
+$blue-base: $cui-primary-color;
 $blue-1: adjusted-color($blue-base, -50%);
 $blue-2: adjusted-color($blue-base, -40%);
 $blue-3: adjusted-color($blue-base, -30%);
@@ -22,7 +36,7 @@ $blue-98: adjusted-color($blue-base, 38%);
 $blue-10: adjusted-color($blue-base, 40%);
 
 
-$green-base: hsla(155, 100%, 60%, 1);
+$green-base: $cui-secondary-color;
 $green-1: adjusted-color($green-base, -50);
 $green-2: adjusted-color($green-base, -40);
 $green-3: adjusted-color($green-base, -30);
@@ -32,7 +46,7 @@ $green-6: $green-base;
 
 
 
-$red-base: hsla(350, 100%, 60%, 1);
+$red-base: $cui-error-color;
 $red-1: adjusted-color($red-base, -50);
 $red-2: adjusted-color($red-base, -40);
 $red-3: adjusted-color($red-base, -30);
@@ -45,7 +59,7 @@ $red-9: adjusted-color($red-base, 30);
 $red-10: adjusted-color($red-base, 40);
 
 
-$gray-base: hsla(203, 8%, 60%, 1);
+$gray-base: $cui-neural-color;
 $gray-1: adjusted-color($gray-base, -50);
 $gray-2: adjusted-color($gray-base, -40);
 $gray-3: adjusted-color($gray-base, -30);
@@ -59,7 +73,7 @@ $gray-95: adjusted-color($gray-base, 35);
 $gray-98: adjusted-color($gray-base, 38);
 $gray-10: adjusted-color($gray-base, 40);
 
-$special-base: hsla(220, 36%, 60%, 1);
+$special-base: $cui-neutral-special-color;
 $special-1: adjusted-color($special-base, -50);
 $special-2: adjusted-color($special-base, -40);
 $special-3: adjusted-color($special-base, -30);

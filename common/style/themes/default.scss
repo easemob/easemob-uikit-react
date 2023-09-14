@@ -4,13 +4,12 @@ $theme: light;
 // The prefix to use on all css classes from Chat UI.
 $cui-prefix: cui;
 
-
 $white: #fff;
 $black: #000;
 $font-color: $gray-3;
 $title-color: $gray-1;
 // Base background color for most components
-$component-background: #fff;
+$component-background: $gray-98;
 
 $heading-color: rgba(0, 0, 0, 0.85);
 $text-color-secondary: rgba(0, 0, 0, 0.45);
@@ -87,13 +86,17 @@ $screen-xl-max: (
   $screen-xxl-min - 1px
 );
 
+
 // -------- Colors -----------
-// >>> Primary
-$primary-color: $blue-6;
+
+// $primary-color: var(--cui-primary-color);
+// $secondary-color: var(--cui-secondary-color);
+// $error-color: var(--cui-error-color);
+// $neural-color: var(--cui-neutral-color);
+// $neutral-special-color: var(--cui-neutral-special-color);
+
 $highlight-color: $red-5;
-// $primary-color-hover: color(~`colorPalette('@{primary-color}', 5) `);
-// $primary-color-active: color(~`colorPalette('@{primary-color}', 7) `);
-// $primary-color-outline: fade(@primary-color, @outline-fade);
+
 
 // Shadow
 $shadow-1-up: 0 -6px 16px -8px rgba(0, 0, 0, 0.08), 0 -9px 28px 0 rgba(0, 0, 0, 0.05),
