@@ -183,7 +183,7 @@ const TextMessage = (props: TextMessageProps) => {
   });
 
   if (typeof bySelf == 'undefined') {
-    bySelf = from == rootStore.client.context.userId;
+    bySelf = from == rootStore.client.context?.userId;
   }
   if (!type) {
     type = bySelf ? 'primary' : 'secondly';

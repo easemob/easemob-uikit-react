@@ -32,7 +32,8 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
       return setHistoryMsgs(currentChatMsgs);
     }
 
-    const userId = rootStore.client.context.userId;
+    const userId = rootStore.client?.context?.userId;
+    if (!userId) return;
     let msg = historyMsgs[0] || {};
     const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
     let useCursor = cursor;

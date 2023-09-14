@@ -117,7 +117,7 @@ class MessageStore {
     message.bySelf = true;
     // @ts-ignore
     message.mid = '';
-    message.from = this.rootStore.client.context.userId;
+    message.from = this.rootStore.client?.context?.userId;
     // @ts-ignore
     if (this.message.byId[message.id]?.status !== 'failed') {
       // @ts-ignore
@@ -159,7 +159,7 @@ class MessageStore {
         // @ts-ignore
         msgID: this.repliedMessage.mid || this.repliedMessage.id,
         msgPreview: msgPreview,
-        msgSender: this.repliedMessage.from || this.rootStore.client.user,
+        msgSender: this.repliedMessage.from || this.rootStore?.client?.user,
         msgType: this.repliedMessage.type,
       };
       message.ext = ext;

@@ -79,7 +79,7 @@ $screen-xl-max: ($screen-xxl-min - 1px);
 
 // -------- Colors -----------
 // >>> Primary
-$primary-color: $blue-6;
+// $primary-color: $blue-6;
 $highlight-color: $red-5;
 // $primary-color-hover: color(~`colorPalette('@{primary-color}', 5) `);
 // $primary-color-active: color(~`colorPalette('@{primary-color}', 7) `);
@@ -156,7 +156,7 @@ $btn-default-border: $border-color-base;
 
 $btn-primary-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
 $btn-primary-color: #fff;
-$btn-primary-bg: $primary-color;
+$btn-primary-bg: $blue-5;
 
 $btn-height-lg: $height-lg;
 $btn-font-size-lg: $font-size-lg;

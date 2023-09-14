@@ -99,6 +99,7 @@ export const renderHtml = (txt: string): string => {
 export function getUsersInfo(props: { userIdList: string[]; withPresence?: boolean }) {
   const { userIdList, withPresence = true } = props;
   let { client, addressStore } = getStore();
+  if (!client.context) return;
   const findIndex = userIdList.indexOf(client.user);
   let subList = [...userIdList];
   const result = {};
