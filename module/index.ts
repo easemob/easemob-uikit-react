@@ -64,6 +64,7 @@ import Provider, { ProviderProps } from './store/Provider';
 import { useClient } from './hooks/useClient';
 import { useConversations } from './hooks/useConversation';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
+import { useSDK } from './hooks/useSDK';
 import Thread, { ThreadProps } from './thread';
 import UserProfile, { UserProfileProps } from './userProfile';
 
@@ -152,4 +153,5 @@ export {
   useClient,
   useConversations,
   useHistoryMessages,
+  useSDK,
 };

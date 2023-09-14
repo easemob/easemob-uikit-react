@@ -26,6 +26,7 @@ import {
   useClient,
   useConversations,
   useHistoryMessages,
+  useSDK,
   Thread,
   UserProfile,
 } from './module/index';
@@ -74,6 +75,7 @@ export {
   useClient,
   useConversations,
   useHistoryMessages,
+  useSDK,
   Avatar,
   Button,
   Input,
