@@ -115,7 +115,6 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    console.log('添加Reaction', emojiString);
     let conversationId = getCvsIdFromMessage(message);
 
     rootStore.messageStore.addReaction(
@@ -204,7 +203,6 @@ let ImageMessage = (props: ImageMessageProps) => {
         selectedMessage: [],
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   const handleResendMessage = () => {
@@ -237,7 +235,6 @@ let ImageMessage = (props: ImageMessageProps) => {
         selectedMessage: changedList,
       },
     );
-    console.log('设置', rootStore.messageStore);
   };
 
   // @ts-ignore

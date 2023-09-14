@@ -10,7 +10,6 @@ const useEventHandler = () => {
   const { messageStore, threadStore } = rootStore.rootStore;
   const client = useClient();
   useEffect(() => {
-    console.log('注册监听', client);
     client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
         messageStore.receiveMessage(message);

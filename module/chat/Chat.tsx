@@ -441,7 +441,6 @@ const Chat: FC<ChatProps> = props => {
     const rtcMembers = members?.map(item => {
       return item.id;
     });
-    console.log('members ----', members);
     let options = {
       callType: currentCall.callType,
       chatType: 'groupChat',
@@ -453,7 +452,6 @@ const Chat: FC<ChatProps> = props => {
       accessToken: currentCall.accessToken,
       channel: currentCall.channel,
     };
-    console.log('options ----', options);
     CallKit.startCall(options);
   };
   const handleCallStateChange = async (info: any) => {
@@ -461,10 +459,8 @@ const Chat: FC<ChatProps> = props => {
     switch (info.type) {
       case 'hangup':
       case 'refuse':
-        console.log('hangup');
         break;
       case 'user-published':
-        console.log('user-published');
         // getIdMap
         if (!info.confr) return;
         let idMap = await rtcConfig?.getIdMap?.({
@@ -480,7 +476,6 @@ const Chat: FC<ChatProps> = props => {
     }
   };
   const handleInvite = async (data: { channel: string }) => {
-    console.log(data);
     if (!getRTCToken) return console.error('need getRTCToken method to get token');
     const { agoraUid, accessToken } = await getRTCToken({
       channel: data.channel,
@@ -498,12 +493,10 @@ const Chat: FC<ChatProps> = props => {
       chatUserId: rootStore.client.user,
     });
     if (CVS.chatType === 'groupChat') {
-      console.log('rootStore', rootStore);
       const members = await rtcConfig?.onInvite?.({ channel, conversation: CVS });
       const rtcMembers = members?.map(item => {
         return item.id;
       });
-      console.log('members ----', members);
       let options = {
         callType: type == 'video' ? 2 : 3,
         chatType: 'groupChat',
@@ -515,7 +508,6 @@ const Chat: FC<ChatProps> = props => {
         accessToken,
         channel,
       };
-      console.log('options ----', options);
       CallKit.startCall(options);
       setCurrentCall({
         channel,

@@ -69,8 +69,9 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const prefixCls = getPrefixCls('conversationItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
   const [active, setActive] = useState(isActive);
+  const context = useContext(RootContext);
+  const { rootStore, onError } = context;
 
-  const rootStore = useContext(RootContext).rootStore;
   const cvsStore = rootStore.conversationStore;
 
   const classString = classNames(
@@ -118,7 +119,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         // console.log('delete success');
       })
       .catch(err => {
-        console.error('delete fail', err);
+        // console.error('delete fail', err);
+        onError && onError?.(err);
       });
   };
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);

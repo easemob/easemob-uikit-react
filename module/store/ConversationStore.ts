@@ -188,13 +188,11 @@ class ConversationStore {
 
   updateConversationName(chatType: ChatType, cvsId: string) {
     this.rootStore.client.getGroupInfo({ groupId: cvsId }).then(res => {
-      console.log('群详情', res);
       this.conversationList?.forEach(cvs => {
         if (cvs.conversationId === cvsId) {
           cvs.name = res?.data?.[0]?.name;
         }
       });
-      // this.conversationList = this.conversationList?.concat([]) || [];
     });
   }
 

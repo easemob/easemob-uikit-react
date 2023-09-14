@@ -155,7 +155,6 @@ const MessageEditor = (props: MessageEditorProps) => {
 
     // setInputHaveValue(false);
   };
-  console.log('enabledTyping3', props.enabledTyping);
   const {
     actions = defaultActions,
     placeHolder,
@@ -174,7 +173,6 @@ const MessageEditor = (props: MessageEditorProps) => {
     const result = actions?.find(item => {
       return item.name === 'RECORDER';
     });
-    console.log('+++++++', result);
     if (result) {
       setShowRecorder(true);
     } else {

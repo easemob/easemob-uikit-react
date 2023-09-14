@@ -87,7 +87,7 @@ class MessageStore {
     });
 
     autorun(() => {
-      console.log('message', this.message.singleChat.zd3);
+      // console.log('message', this.message.singleChat.zd3);
     });
   }
 

@@ -71,9 +71,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   // if (conversation && conversation.conversationId) {
   //   currentCVS = conversation;
   // }
-  console.log('conversation -------1', conversation);
   useEffect(() => {
-    console.log('conversation -------2', conversation);
     if (conversation) {
       currentCVS = conversation;
     }
@@ -155,7 +153,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       console.warn('No text message');
       return;
     }
-    console.log('sendMessage', currentCVS.conversationId);
     if (!currentCVS.conversationId) {
       console.warn('No specified conversation');
       return;
@@ -186,7 +183,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
           message.chatType = cvs.chatType;
         }
 
-        console.log('发送的消息', message);
         _sendMessage(message);
       });
     } else {

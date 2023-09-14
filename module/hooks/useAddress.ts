@@ -15,7 +15,6 @@ const useContacts = () => {
       client
         .getContacts()
         .then(res => {
-          console.log('联系人列表', res);
           const contacts = res.data?.map(userId => ({
             userId: userId,
             nickname: '',
@@ -23,7 +22,7 @@ const useContacts = () => {
           setContacts(contacts || []);
         })
         .catch(err => {
-          console.log('获取联系人列表失败', err);
+          console.warn('get contacts failed', err);
         });
   }, [rootStore.loginState]);
   return contacts;

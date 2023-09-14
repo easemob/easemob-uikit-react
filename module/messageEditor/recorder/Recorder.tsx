@@ -80,7 +80,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       // };
       MediaStream.getTracks()[0].stop();
     } else {
-      console.error('recorder is', recorder);
+      // console.error('recorder is', recorder);
     }
   };
 
@@ -154,14 +154,12 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
             message.chatType = cvs.chatType;
           }
 
-          console.log('发送的消息', message);
           _sendMessage(message);
         });
       } else {
         _sendMessage(message);
       }
     }
-    console.log(333);
   };
 
   const initNode = (

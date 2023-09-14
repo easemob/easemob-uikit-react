@@ -46,7 +46,6 @@ export const Button = ({
     className,
   );
   const kids = children || children === 0 ? ' ' : null;
-  console.log('children', kids, classes);
   return (
     <button type="button" onClick={onClick} className={classes} disabled={disabled}>
       {children}

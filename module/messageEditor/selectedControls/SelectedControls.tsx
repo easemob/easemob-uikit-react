@@ -89,12 +89,10 @@ const SelectedControls = (props: SelectedControlsProps) => {
       messageList: selectedMessages,
 
       onFileUploadComplete: (data: any) => {
-        console.log('onFileUploadComplete msg', msg);
         rootStore.messageStore.message.byId[msg.id].url = data.url;
         rootStore.messageStore.message.byId[msg.id].secret = data.secret;
       },
     };
-    console.log(option);
     // @ts-ignore
     let msg = AC.message.create(option);
     onSendMessage?.(msg);

@@ -19,7 +19,6 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('reaction-icon', customizePrefixCls);
   const handleSelectedEmoji = (emoji: string) => {
-    console.log('emoji', emoji);
     onSelected?.(emoji);
   };
 

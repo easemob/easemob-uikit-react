@@ -43,7 +43,7 @@ const useConversations = () => {
         conversationStore.setConversation(conversation);
       })
       .catch(err => {
-        console.log('分页获取会话列表失败 ******', err);
+        console.warn('get conversation list failed', err);
       });
   };
 

@@ -165,7 +165,6 @@ const HZRecorder = function (
       if (emptyDatacount > 10) {
         // recording = false;
         // this.stop();
-        console.log('stoped');
         return true;
       }
     } else {
@@ -175,7 +174,6 @@ const HZRecorder = function (
   };
   // 停止
   this.stop = function () {
-    console.log('context.state', context.state);
     if (context.state === 'running') {
       context.close();
     }
@@ -224,24 +222,24 @@ HZRecorder.get = function (callback: (arg0: any, arg1: MediaStream) => void, con
           case 'PERMISSION_DENIED':
           case 'PermissionDeniedError':
             // message.error('用户拒绝提供信息。')
-            console.log('用户拒绝提供信息。');
+            console.warn('The user refuses to provide information.');
             break;
           case 'NOT_SUPPORTED_ERROR':
           case 'NotSupportedError':
             // message.error('浏览器不支持硬件设备。')
-            console.log('浏览器不支持硬件设备。');
+            console.warn('The browser does not support hardware devices.');
             break;
           case 'MANDATORY_UNSATISFIED_ERROR':
           case 'MandatoryUnsatisfiedError':
             // message.error('无法发现指定的硬件设备。')
-            console.log('无法发现指定的硬件设备。');
+            console.warn('The specified hardware device cannot be discovered.');
             break;
           default:
             // message.error('当前浏览器不支持录音功能。(建议使用Chrome)')
-            console.log('当前浏览器不支持录音功能。(建议使用Chrome)');
+            console.warn('The current browser does not support recording. (Chrome recommended)');
             break;
         }
-        console.log('当前浏览器不支持录音功能。');
+        console.warn('The current browser does not support recording.');
       });
   }
 };

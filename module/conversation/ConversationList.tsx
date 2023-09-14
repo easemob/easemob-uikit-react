@@ -145,7 +145,6 @@ let Conversations: FC<ConversationListProps> = props => {
           return item.groupid === cvs.conversationId;
         });
         if (!result) {
-          console.log('22222', cvs, rootStore.addressStore.groups);
           cvsStore.updateConversationName(cvs.chatType, cvs.conversationId);
         }
       }

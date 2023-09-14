@@ -69,7 +69,7 @@ const AudioMessage = (props: AudioMessageProps) => {
         // console.log(res);
       })
       .catch(err => {
-        console.error('err', err);
+        // console.error('err', err);
       });
     // const time = audioMessage!.body!.length * 1000;
     // const time = file.duration * 1000;

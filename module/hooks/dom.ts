@@ -41,7 +41,6 @@ const useParentName = (ref: { current: any }) => {
   useEffect(() => {
     if (ref.current) {
       let node = FindReact(ref.current, 1);
-      console.log('node -->', node);
       setParentName(node.type.name);
     }
   }, []);

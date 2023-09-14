@@ -25,8 +25,9 @@ import Tooltip from '../../component/tooltip';
 import ThreadModal from './ThreadModal';
 import Button from '../../component/button';
 import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
-import rootStore from '../store/index';
+// import rootStore from '../store/index';
 import { getMsgSenderNickname } from '../utils/index';
+import { RootContext } from '../store/rootContext';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
@@ -41,11 +42,12 @@ export interface ThreadProps {
 }
 
 const Thread = (props: ThreadProps) => {
+  const context = useContext(RootContext);
+  const { rootStore, features, onError } = context;
   const { prefix, className, messageListProps } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('thread', prefix);
   const { t } = useTranslation();
-  // const rootStore = useContext(RootContext).rootStore;
   const threadOriginalMsg = rootStore.threadStore.currentThread.originalMessage;
   // 为什么 currentThread 不会自动更新？ 但是currentCVS会自动更新， 用一个变量能表示rootStore.threadStore.currentThread， 会自动更新
 
@@ -232,7 +234,7 @@ const Thread = (props: ThreadProps) => {
             });
           })
           .catch(err => {
-            console.error(err);
+            onError && onError?.(err);
             reject(err);
           });
       });
@@ -328,6 +330,7 @@ const Thread = (props: ThreadProps) => {
             handleClickClose();
           })
           .catch(err => {
+            onError && onError?.(err);
             console.error(err);
           });
       },
@@ -355,15 +358,13 @@ const Thread = (props: ThreadProps) => {
             handleClickClose();
           })
           .catch(err => {
+            onError && onError?.(err);
             console.error(err);
           });
       },
     });
   };
   const handleEditInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // console.log('e.target.value', e.target.value);
-    // setThreadNameValue(e.target.value);
-    // console.log('threadNameValue', threadNameValue);
     threadNameValue = e.target.value;
   };
 
