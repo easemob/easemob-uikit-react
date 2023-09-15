@@ -176,15 +176,16 @@ const TextMessage = (props: TextMessageProps) => {
   const [transStatus, setTransStatus] = useState('translated');
   const transPrefix = getPrefixCls('message-text-translation', customizePrefixCls);
   const modifyPrefix = getPrefixCls('modify-textarea', customizePrefixCls);
+
+  if (typeof bySelf == 'undefined') {
+    bySelf = from == rootStore.client.context?.userId;
+  }
   const translationClass = classNames(transPrefix, {
     [`${transPrefix}-left`]: !bySelf,
     [`${transPrefix}-right`]: bySelf,
     [`${transPrefix}-hide`]: btnText === 'show',
   });
 
-  if (typeof bySelf == 'undefined') {
-    bySelf = from == rootStore.client.context?.userId;
-  }
   if (!type) {
     type = bySelf ? 'primary' : 'secondly';
   }
