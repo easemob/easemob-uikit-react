@@ -10,6 +10,7 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
     line-height: $size;
     border-radius: 50%;
     flex-shrink: 0;
+    font-size: calc($size/2) - 4;
     // &-string {
     //   position: absolute;
     //   left: 50%;
@@ -27,12 +28,18 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
 
 .#{$avatar-prefix-cls}-wrap {
     position: relative;
+    width: fit-content;
+    &>span{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 }
 
 .#{$avatar-prefix-cls} {
     position: relative;
     display: inline-block;
-    overflow: hidden;
+    overflow: visible;
     color: $avatar-color;
     white-space: nowrap;
     text-align: center;
@@ -54,13 +61,46 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
     display: inline-block;
     word-wrap: break-word;
     white-space: break-spaces;
-
+    justify-content: center;
+    border-radius: 50%;
     &-image {
         background: transparent;
+        width: 100%;
+        /* flex: 1; */
+        display: block;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+        border-radius: 50%;
+        &>img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
     }
 
     .#{$cui-prefix}-image-img {
         display: block;
+        width: 100%;
+        height: 100%;
+    }
+    &-string{
+        padding: 0 4px;
+        overflow: hidden;
+        white-space: nowrap;
+        display: flex;
+        position: absolute;
+        box-sizing: border-box;
+        width: 100%;
+
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+
+        &>div{
+            overflow: hidden;
+        }
     }
 
     @include avatar-size($avatar-size-base, $avatar-font-size-base);
@@ -75,14 +115,11 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
 
     &-square {
         border-radius: $avatar-border-radius;
+        &-image{
+            border-radius: $avatar-border-radius;
+        }
     }
-
-    &>img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
+   
 
 }
 
@@ -92,8 +129,8 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    right: 0;
-    bottom: 0;
+    right: calc(14.65% - 6px);
+    bottom: calc(14.65% - 6px);
     width: 12px;
     height: 12px;
     background: $gray-98;

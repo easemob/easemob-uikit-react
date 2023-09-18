@@ -1,0 +1,20 @@
+.container2 {
+    position: relative;
+        width: 200px;
+        height: 200px;
+        border: 1px solid black;
+        border-radius: 50%;
+  }
+  
+  .dot {
+    position: absolute;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: red;
+        /* 你需要将小圆点放在右下角的边界上，所以可以将其定位在100%的垂直和水平位置，并且向右和向下进行50%的偏移量（即小圆的一半大小）。这可以确保小圆始终位于大圆的右下角边界上，无论大圆的大小如何改变。 */
+        right: 50%;
+        bottom: 50%;
+        /* 使用CSS的变换属性来进行偏移 */
+        transform: translate(50%, 50%);
+  }

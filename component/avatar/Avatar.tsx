@@ -80,7 +80,7 @@ export const InternalAvatar = (props: any, ref: any) => {
     sizeCls,
     {
       [`${prefixCls}-${shape}`]: !!shape,
-      [`${prefixCls}-image`]: hasImageElement || (src && isImgExist),
+      // [`${prefixCls}-image`]: hasImageElement || (src && isImgExist),
       [`${prefixCls}-icon`]: !!icon,
     },
     className,
@@ -92,7 +92,7 @@ export const InternalAvatar = (props: any, ref: any) => {
           width: customSize,
           height: customSize,
           lineHeight: `${customSize}px`,
-          fontSize: icon ? customSize / 2 : '.8em',
+          fontSize: customSize / 2 - 4,
         }
       : {};
 
@@ -100,14 +100,16 @@ export const InternalAvatar = (props: any, ref: any) => {
 
   if (typeof src === 'string' && isImgExist) {
     childrenToRender = (
-      <img
-        src={src}
-        draggable={draggable}
-        srcSet={srcSet}
-        onError={handleImgLoadError}
-        alt={alt}
-        crossOrigin={crossOrigin}
-      />
+      <div className={`${prefixCls}-image`}>
+        <img
+          src={src}
+          draggable={draggable}
+          srcSet={srcSet}
+          onError={handleImgLoadError}
+          alt={alt}
+          crossOrigin={crossOrigin}
+        />
+      </div>
     );
   } else if (hasImageElement) {
     childrenToRender = src;
@@ -116,7 +118,7 @@ export const InternalAvatar = (props: any, ref: any) => {
   } else if (typeof children == 'string') {
     childrenToRender = (
       <span className={`${prefixCls}-string`} ref={avatarChildrenRef}>
-        {children.slice(0, 2)}
+        {customSize < 20 ? children.slice(0, 1) : children.slice(0, 2)}
       </span>
     );
   } else {
@@ -128,15 +130,13 @@ export const InternalAvatar = (props: any, ref: any) => {
   }
 
   return (
-    <div className={wrapCls}>
-      <span
-        {...others}
-        style={{ ...sizeStyle, ...others.style }}
-        className={classString}
-        ref={avatarNodeMergeRef}
-      >
-        {childrenToRender}
-      </span>
+    <div
+      className={classString}
+      ref={avatarNodeMergeRef}
+      {...others}
+      style={{ ...sizeStyle, ...others.style }}
+    >
+      {childrenToRender}
       {isOnline && (
         <div className={`${presenceCls}-wrap`}>
           <div className={presenceCls}></div>
