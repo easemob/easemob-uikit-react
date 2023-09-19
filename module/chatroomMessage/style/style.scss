@@ -1,0 +1,37 @@
+@import '~/common/style/index.scss';
+$chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
+.#{$chatroom-prefix-cls}-container{
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px; 
+    color: $gray-1;
+    word-break: break-word;
+}
+
+.#{$chatroom-prefix-cls}-header{
+    display: flex;
+    align-items: center;
+    width: fit-content;
+    height: fit-content;
+    float: left;
+    gap: 4px;
+
+    float: left;
+    align-items: center;
+    margin-right: 4px;
+
+    &-label{
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        color: $green-4;
+    }
+
+    &-nick{
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        color: $blue-5;
+    }
+}
