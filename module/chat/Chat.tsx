@@ -577,10 +577,8 @@ const Chat: FC<ChatProps> = props => {
     if (!rtcConfig || !rtcConfig.appId) {
       return;
     }
-    let appId = '15cb0d28b87b425ea613fc46f7c9f974';
-    if (appId) {
-      CallKit.init(appId, rtcConfig?.agoraUid, rootStore.client);
-    }
+    // let appId = '15cb0d28b87b425ea613fc46f7c9f974';
+    CallKit.init(rtcConfig.appId, rtcConfig?.agoraUid, rootStore.client);
   }, []);
 
   // config rtc call
