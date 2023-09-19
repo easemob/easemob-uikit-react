@@ -36,7 +36,9 @@ let MoreAction = (props: MoreActionProps) => {
   const imageEl = useRef<HTMLInputElement>(null);
   const fileEl = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
-  const { client, messageStore } = useContext(RootContext).rootStore;
+  const context = useContext(RootContext);
+  const { onError, rootStore } = context;
+  const { client, messageStore } = rootStore;
   const iconNode = icon ? (
     icon
   ) : (
@@ -151,10 +153,24 @@ let MoreAction = (props: MoreActionProps) => {
           imageMessage.chatType = cvs.chatType;
         }
 
-        messageStore.sendMessage(imageMessage);
+        messageStore
+          .sendMessage(imageMessage)
+          .then(() => {
+            // console.log('send success');
+          })
+          .catch(err => {
+            onError && onError(err);
+          });
       });
     } else {
-      messageStore.sendMessage(imageMessage);
+      messageStore
+        .sendMessage(imageMessage)
+        .then(() => {
+          // console.log('send success');
+        })
+        .catch(err => {
+          onError && onError(err);
+        });
     }
     imageEl!.current!.value = '';
   };
@@ -188,10 +204,24 @@ let MoreAction = (props: MoreActionProps) => {
           fileMessage.chatType = cvs.chatType;
         }
 
-        messageStore.sendMessage(fileMessage);
+        messageStore
+          .sendMessage(fileMessage)
+          .then(() => {
+            // console.log('send success');
+          })
+          .catch(err => {
+            onError && onError(err);
+          });
       });
     } else {
-      messageStore.sendMessage(fileMessage);
+      messageStore
+        .sendMessage(fileMessage)
+        .then(() => {
+          // console.log('send success');
+        })
+        .catch(err => {
+          onError && onError(err);
+        });
     }
     fileEl!.current!.value = '';
   };

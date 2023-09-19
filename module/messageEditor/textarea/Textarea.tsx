@@ -59,7 +59,9 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const { prefix: customizePrefixCls, className } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('textarea', customizePrefixCls);
-  const { client, messageStore, conversationStore } = useContext(RootContext).rootStore;
+  const context = useContext(RootContext);
+  const { onError, rootStore } = context;
+  const { client, messageStore, conversationStore } = rootStore;
   let { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);
   const [queryString, setQueryString] = useState('');
@@ -68,6 +70,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     x: 0,
     y: 0,
   });
+
   // if (conversation && conversation.conversationId) {
   //   currentCVS = conversation;
   // }
@@ -140,9 +143,14 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   };
 
   const _sendMessage = (message: AgoraChat.MessageBody) => {
-    messageStore.sendMessage(message).then(() => {
-      onSendMessage && onSendMessage(message);
-    });
+    messageStore
+      .sendMessage(message)
+      .then(() => {
+        onSendMessage && onSendMessage(message);
+      })
+      .catch(err => {
+        onError && onError?.(err);
+      });
     divRef.current!.innerHTML = '';
 
     setTextValue('');

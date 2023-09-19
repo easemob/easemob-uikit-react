@@ -23,7 +23,8 @@ let MediaStream: any;
 let recorder: typeof HZRecorder;
 let timer: number;
 const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
-  const rootStore = useContext(RootContext).rootStore;
+  const context = useContext(RootContext);
+  const { onError, rootStore } = context;
   const { t } = useTranslation();
   const { messageStore, client } = rootStore;
   const {
@@ -111,7 +112,14 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   }, [currentCVS]);
 
   const _sendMessage = (message: AgoraChat.MessageBody) => {
-    messageStore.sendMessage(message);
+    messageStore
+      .sendMessage(message)
+      .then(() => {
+        console.log('send success');
+      })
+      .catch(err => {
+        onError && onError(err);
+      });
     stopRecording();
     setDuration(0);
     clearInterval(timer);
