@@ -136,7 +136,7 @@ let Conversations: FC<ConversationListProps> = props => {
       // @ts-ignore
       setInitRenderData(renderData);
     }
-  }, [cvsStore.conversationList, cvsStore.searchList, groupData, appUsersInfo]);
+  }, [cvsStore.conversationList, cvsStore.searchList, groupData.length, appUsersInfo]);
 
   useEffect(() => {
     cvsStore.conversationList?.forEach(cvs => {

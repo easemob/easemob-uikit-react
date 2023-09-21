@@ -193,6 +193,7 @@ class ConversationStore {
           cvs.name = res?.data?.[0]?.name;
         }
       });
+      this.conversationList = [...this.conversationList];
     });
   }
 

@@ -299,12 +299,20 @@ class MessageStore {
 
     // 没有会话时创建会话
     if (!cvs) {
+      let name = '';
+      const groupData = this.rootStore.addressStore.groups;
+      groupData.forEach(group => {
+        if (conversationId == group.groupid) {
+          name = group.groupname;
+        }
+      });
       cvs = {
         // @ts-ignore
         chatType: message.chatType,
         conversationId: conversationId,
         lastMessage: message,
         unreadCount: isCurrentCvs ? 0 : 1,
+        name: name,
       };
       this.rootStore.conversationStore.addConversation(cvs);
       return;
