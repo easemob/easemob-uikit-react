@@ -11,7 +11,7 @@ import { getCvsIdFromMessage } from '../utils';
 import { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
 import Icon from '../../component/icon';
-
+import heart from '../assets/gift/heart.png';
 export interface ChatroomMessageProps {
   prefix?: string;
   className?: string;
@@ -20,13 +20,28 @@ export interface ChatroomMessageProps {
   avatar?: ReactNode;
   nickname?: string;
   content?: ReactNode;
+  type: 'img' | 'txt';
 }
 
 const ChatroomMessage = (props: ChatroomMessageProps) => {
-  const { prefix: customizePrefixCls, className } = props;
+  const { prefix: customizePrefixCls, className, type = 'txt' } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-chatroom', customizePrefixCls);
   const classString = classNames(prefixCls, className);
+
+  const renderText = (text: string) => {
+    return <div>{text}</div>;
+  };
+
+  const renderGift = () => {
+    return (
+      <div className={`${prefixCls}-gift`}>
+        <div>礼物</div>
+        <img src={heart as any as string} alt="" className={`${prefixCls}-gift-img`} />
+        <div className={`${prefixCls}-gift-number`}>+1</div>
+      </div>
+    );
+  };
 
   return (
     <div className={classString}>
@@ -37,7 +52,8 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
           <Avatar size={20}>2</Avatar>
           <div className={`${prefixCls}-header-nick`}>nick name</div>
         </div>
-        hao ar you asdj as ads asd0 asop daso aso aspop aopd aod ia-s 9ado ajd aj asj a kdj adlka
+        {type == 'img' && renderGift()}
+        {type == 'txt' && renderText('qwqwqasdaswe')}
       </div>
     </div>
   );

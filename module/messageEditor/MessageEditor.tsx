@@ -16,6 +16,7 @@ export type Actions = {
   name: string;
   visible: boolean;
   icon?: ReactNode;
+  onClick?: () => void;
 }[];
 
 export interface MessageEditorProps {
@@ -277,7 +278,13 @@ const MessageEditor = (props: MessageEditorProps) => {
               );
             } else {
               return (
-                <span key={item.name} className="icon-container">
+                <span
+                  key={item.name}
+                  className="icon-container"
+                  onClick={() => {
+                    item?.onClick?.();
+                  }}
+                >
                   {item.icon}
                 </span>
               );

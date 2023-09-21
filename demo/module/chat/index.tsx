@@ -40,7 +40,7 @@ const ChatApp = () => {
           user: 'zd2',
           // pwd: '272808',
           accessToken:
-            'YWMtxFQKDJk6QmOzmTXRPgZa4ChYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGKgtPycgABUX67AyHJH3G3VOBwA6O0cuL8twBmtEO4bNp8jy6J0lDCgw==',
+            'YWMtZafyEsG_SqKd1vt_oBTzrChYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGKtmuw0gABUX5Y7eN0_OAvCUDLPbEkCi7O-RF6lkVKt_GG-tzEbfpiWQ==',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);

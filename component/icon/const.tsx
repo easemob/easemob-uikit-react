@@ -48,6 +48,7 @@ enum ICON_TYPES {
 
   CAMERA_ARROW = 'CAMERA_ARROW',
   MIC = 'MIC',
+  GIFT = 'GIFT',
 }
 // chevron_down
 export { ICON_TYPES };
