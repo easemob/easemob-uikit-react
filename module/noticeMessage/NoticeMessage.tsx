@@ -1,7 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
-import { getConversationTime, getMsgSenderNickname, BaseMessageType } from '../utils';
+import type { BaseMessageType } from '../baseMessage/BaseMessage';
+import { getConversationTime, getMsgSenderNickname } from '../utils';
 import './style/style.scss';
 import type { RecallMessage } from '../store/MessageStore';
 import rootStore from '../store/index';
@@ -33,7 +34,9 @@ const NoticeMessage = (props: NoticeMessageProps) => {
       message = t('module.you') + ' ' + t('module.unsentAMessage');
     } else {
       message =
-        getMsgSenderNickname(noticeMessage as BaseMessageType) + ' ' + t('module.unsentAMessage');
+        getMsgSenderNickname(noticeMessage as any as BaseMessageType) +
+        ' ' +
+        t('module.unsentAMessage');
     }
   }
   return (

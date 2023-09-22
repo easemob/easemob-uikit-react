@@ -438,13 +438,28 @@ class MessageStore {
       .then(() => {
         // console.log('删服务器');
         _deleteMessage(msgIds);
+        let conversation: Conversation = this.rootStore.conversationStore.getConversation(
+          // @ts-ignore
+          cvs.chatType,
+          cvs.conversationId,
+        ) as unknown as Conversation;
+        // @ts-ignore
+        conversation.lastMessage = {};
+        this.rootStore.conversationStore.modifyConversation(conversation);
       });
   }
 
   recallMessage(cvs: CurrentConversation, messageId: string, isChatThread: boolean = false) {
     if (!cvs || !messageId) return;
+    let conversation: Conversation = this.rootStore.conversationStore.getConversation(
+      // @ts-ignore
+      cvs.chatType,
+      cvs.conversationId,
+    ) as unknown as Conversation;
+
     // the others recall the message
     const messages = getMessages(cvs);
+    if (!messages) return;
     const msgIndex = getMessageIndex(messages, messageId);
     if (messages[msgIndex].from !== this.rootStore.client.user) {
       if (msgIndex > -1) {
@@ -452,6 +467,13 @@ class MessageStore {
         //@ts-ignore
         messages[msgIndex].ext = {};
       }
+      //@ts-ignore
+      conversation.lastMessage = messages[msgIndex];
+      if (conversation.unreadCount > 0) {
+        conversation.unreadCount -= 1;
+      }
+
+      this.rootStore.conversationStore.modifyConversation(conversation);
       return;
     }
     // mySelf recall the message
@@ -469,6 +491,10 @@ class MessageStore {
           messages[msgIndex].type = 'recall';
           //@ts-ignore
           messages[msgIndex].ext = {};
+
+          // @ts-ignore
+          conversation.lastMessage = messages[msgIndex];
+          this.rootStore.conversationStore.modifyConversation(conversation);
         }
       });
   }

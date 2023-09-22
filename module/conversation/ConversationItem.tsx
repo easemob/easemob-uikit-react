@@ -17,7 +17,9 @@ import {
   getGroupMemberIndexByUserId,
   getGroupItemFromGroupsById,
   getGroupMemberNickName,
+  getMsgSenderNickname,
 } from '../utils/index';
+import type { BaseMessageType } from '../baseMessage/BaseMessage';
 export interface ConversationItemProps {
   className?: string;
   prefix?: string;
@@ -179,6 +181,13 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     // @ts-ignore
     case 'combine':
       lastMsg = `/${t('module.chatHistory')}/`;
+      break;
+    // @ts-ignore
+    case 'recall':
+      lastMsg =
+        getMsgSenderNickname(data.lastMessage as BaseMessageType) +
+        ' ' +
+        t('module.unsentAMessage');
       break;
     default:
       console.warn('unexpected message type:', data.lastMessage?.type);
