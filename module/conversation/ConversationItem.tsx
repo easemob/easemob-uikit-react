@@ -195,13 +195,13 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   }
   if (data.chatType == 'groupChat') {
     let msgFrom = data.lastMessage.from;
-    let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}:` : '';
+    let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}: ` : '';
     const groupItem = getGroupItemFromGroupsById(data.conversationId);
     if (groupItem) {
       const memberIdx = getGroupMemberIndexByUserId(groupItem, msgFrom) ?? -1;
       if (memberIdx > -1) {
         let memberItem = groupItem?.members?.[memberIdx]!;
-        from = `${getGroupMemberNickName(memberItem)}:`;
+        from = `${getGroupMemberNickName(memberItem)}: `;
       }
     }
     lastMsg = [from, ...Array.from(lastMsg)];
