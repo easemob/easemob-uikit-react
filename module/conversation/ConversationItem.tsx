@@ -184,10 +184,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       break;
     // @ts-ignore
     case 'recall':
-      lastMsg =
-        getMsgSenderNickname(data.lastMessage as BaseMessageType) +
-        ' ' +
-        t('module.unsentAMessage');
+      lastMsg = t('module.unsentAMessage') as string;
       break;
     default:
       console.warn('unexpected message type:', data.lastMessage?.type);
