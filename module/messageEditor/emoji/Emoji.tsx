@@ -49,13 +49,26 @@ const Emoji = (props: EmojiProps) => {
       }
       return (
         <Button key={k} type={btnType}>
-          <div>
-            <img
-              src={new URL(`/module/assets/reactions/${v}`, import.meta.url).href}
-              alt={k}
-              width={emojiWidth}
-              height={emojiWidth}
-            />
+          <div className="cui-emoji-box">
+            {emojiConfig ? (
+              typeof v == 'string' ? (
+                <img
+                  src={new URL(`/module/assets/reactions/${v}`, import.meta.url).href}
+                  alt={k}
+                  width={emojiWidth}
+                  height={emojiWidth}
+                />
+              ) : (
+                v
+              )
+            ) : (
+              <img
+                src={new URL(`/module/assets/reactions/${v}`, import.meta.url).href}
+                alt={k}
+                width={emojiWidth}
+                height={emojiWidth}
+              />
+            )}
           </div>
         </Button>
       );

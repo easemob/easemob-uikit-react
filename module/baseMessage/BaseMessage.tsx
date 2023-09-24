@@ -12,12 +12,12 @@ import { RepliedMsg } from '../repliedMessage';
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard } from '../reaction';
-import { ReactionMessage, ReactionData } from '../reaction';
+import { ReactionMessage, ReactionData, ReactionMessageProps } from '../reaction';
 import { getStore } from '../store';
 import Checkbox from '../../component/checkbox';
 import UserProfile from '../userProfile';
 import { observer } from 'mobx-react-lite';
-
+import { EmojiConfig } from '../messageEditor/emoji/Emoji';
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -76,6 +76,7 @@ export interface BaseMessageProps {
   thread?: boolean; // whether show thread
   chatThreadOverview?: AgoraChat.ChatThreadOverview;
   onClickThreadTitle?: () => void;
+  reactionConfig?: ReactionMessageProps['reactionConfig'];
 }
 
 const msgSenderIsCurrentUser = (message: BaseMessageType) => {
@@ -151,6 +152,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     messageStatus = true,
     chatThreadOverview,
     onClickThreadTitle,
+    reactionConfig,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -520,6 +522,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   )}
                   {reaction && status != 'failed' && (
                     <EmojiKeyBoard
+                      reactionConfig={reactionConfig}
                       onSelected={handleClickEmoji}
                       selectedList={selectedList}
                       onDelete={handleDeleteReactionEmoji}
@@ -543,6 +546,7 @@ let BaseMessage = (props: BaseMessageProps) => {
       </div>
       {reactionData && reaction && (
         <ReactionMessage
+          reactionConfig={reactionConfig}
           direction={direction}
           reactionData={reactionData}
           onClick={handleClickEmoji}

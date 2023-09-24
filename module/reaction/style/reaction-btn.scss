@@ -13,7 +13,7 @@ $status-prefix-cls: #{$cui-prefix}-reaction-btn;
     cursor: pointer;
     // margin: 0 4px;
     border: 1px solid $gray-95;
-
+    
     &:hover{
         background: $gray-98;
     }
@@ -37,6 +37,10 @@ $status-prefix-cls: #{$cui-prefix}-reaction-btn;
         font-style: normal;
         font-weight: 600;
         line-height: 20px; /* 142.857% */
+    }
+    &>img{
+        width: 18px;
+        height: 18px;
     }
     &-userList{
         margin: 0;

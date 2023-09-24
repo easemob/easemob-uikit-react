@@ -53,6 +53,11 @@ export interface ContextProps {
       };
     };
   };
+  reactionConfig?: {
+    map: {
+      [key: string]: HTMLImageElement;
+    };
+  };
 }
 
 export const RootContext = React.createContext<ContextProps>({
@@ -60,6 +65,7 @@ export const RootContext = React.createContext<ContextProps>({
   initConfig: {},
   client: {},
   onError: (err: AgoraChat.ErrorEvent) => {},
+  reactionConfig: { map: {} },
 });
 
 export const RootConsumer = RootContext.Consumer;

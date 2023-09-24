@@ -20,6 +20,11 @@ export interface ReactionButtonProps {
   onClick?: (emojiString: string) => void;
   onDelete?: (emojiString: string) => void;
   onShowUserList?: (emojiString: string) => void;
+  emojiConfig?: {
+    map: {
+      [key: string]: HTMLImageElement;
+    };
+  };
 }
 
 const emojiWidth = 18;
@@ -36,6 +41,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
     onClick,
     onDelete,
     onShowUserList,
+    emojiConfig,
   } = props;
   const prefixCls = getPrefixCls('reaction-btn', customizePrefixCls);
   const rootStore = useContext(RootContext).rootStore;
@@ -125,12 +131,15 @@ const ReactionButton = (props: ReactionButtonProps) => {
         onMouseEnter={handleMouseUp}
         onClick={handleClick}
       >
-        <img
-          className={`${prefixCls}-img`}
-          src={new URL(`/module/assets/reactions/${path}`, import.meta.url).href}
-          width={emojiWidth}
-          height={emojiWidth}
-        />
+        {emojiConfig ? (
+          (emojiConfig.map[reaction] as unknown as React.ReactNode)
+        ) : (
+          <img
+            src={new URL(`/module/assets/reactions/${path}`, import.meta.url).href}
+            width={emojiWidth}
+            height={emojiWidth}
+          />
+        )}
         <span className={`${prefixCls}-count`}>{count}</span>
       </button>
     </Tooltip>

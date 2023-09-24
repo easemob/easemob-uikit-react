@@ -68,9 +68,14 @@ export interface ProviderProps {
       };
     };
   };
+  reactionConfig?: {
+    map: {
+      [key: string]: HTMLImageElement;
+    };
+  };
 }
 const Provider: React.FC<ProviderProps> = props => {
-  const { initConfig, local, onError, features } = props;
+  const { initConfig, local, onError, features, reactionConfig } = props;
   const { appKey } = initConfig;
   const client = useMemo(() => {
     return new AC.connection({
@@ -105,6 +110,7 @@ const Provider: React.FC<ProviderProps> = props => {
         features,
         client,
         onError,
+        reactionConfig,
       }}
     >
       {props.children}

@@ -1,10 +1,11 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useContext } from 'react';
 import Button from '../../component/button';
 import Icon from '../../component/icon';
 import { ReactionButton } from './ReactionButton';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import { EmojiKeyBoard } from './EmojiKeyboard';
+import { RootContext } from '../store/rootContext';
 export interface ReactionData {
   count: number;
   isAddedBySelf?: boolean;
@@ -25,6 +26,11 @@ export interface ReactionMessageProps {
   onClick?: (emojiString: string) => void;
   onDelete?: (emojiString: string) => void;
   onShowUserList?: (emojiString: string) => void;
+  reactionConfig?: {
+    map: {
+      [key: string]: HTMLImageElement;
+    };
+  };
 }
 
 const ReactionMessage = (props: ReactionMessageProps) => {
@@ -39,7 +45,10 @@ const ReactionMessage = (props: ReactionMessageProps) => {
     className,
     direction = 'ltr',
     onShowUserList,
+    reactionConfig,
   } = props;
+  const context = useContext(RootContext);
+  const { reactionConfig: globalRatConfig } = context;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('reaction-box', customizePrefixCls);
   const classString = classNames(
@@ -88,7 +97,6 @@ const ReactionMessage = (props: ReactionMessageProps) => {
       }
     });
   }
-  
   return (
     <div
       className={classString}
@@ -102,6 +110,7 @@ const ReactionMessage = (props: ReactionMessageProps) => {
       {reactionData.map((item, index) => {
         return (
           <ReactionButton
+            emojiConfig={reactionConfig || globalRatConfig}
             key={item.reaction + index}
             count={item.count}
             reaction={item.reaction}

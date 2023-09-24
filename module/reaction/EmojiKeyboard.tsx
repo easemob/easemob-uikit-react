@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useContext } from 'react';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Button from '../../component/button';
 // import { emoji } from '../messageEditor/emoji/emojiConfig';
@@ -7,15 +7,25 @@ import Icon from '../../component/icon';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import { emoji } from './emojiConfig';
+import { RootContext } from '../store/rootContext';
 export interface EmojiKeyBoardProps {
   prefixCls?: string;
   onSelected?: (emoji: string) => void;
   onDelete?: (emoji: string) => void;
   selectedList?: string[];
+  reactionConfig?: EmojiProps['emojiConfig'];
 }
 
 const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
-  const { onSelected, selectedList, onDelete, prefixCls: customizePrefixCls } = props;
+  const {
+    onSelected,
+    selectedList,
+    onDelete,
+    prefixCls: customizePrefixCls,
+    reactionConfig,
+  } = props;
+  const context = useContext(RootContext);
+  const { reactionConfig: globalRatConfig } = context;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('reaction-icon', customizePrefixCls);
   const handleSelectedEmoji = (emoji: string) => {
@@ -29,7 +39,7 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
   const classString = classNames(prefixCls);
   return (
     <Emoji
-      emojiConfig={emoji}
+      emojiConfig={reactionConfig || (globalRatConfig as EmojiProps['emojiConfig']) || emoji}
       selectedList={selectedList}
       onSelected={handleSelectedEmoji}
       onDelete={handleDeleteEmoji}
