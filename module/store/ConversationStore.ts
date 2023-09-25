@@ -154,12 +154,25 @@ class ConversationStore {
   }
 
   topConversation(conversation: Conversation) {
+    let findCvs: Conversation = {} as Conversation;
     const filteredList = this.conversationList?.filter(cvs => {
-      return (
-        cvs.chatType !== conversation.chatType || cvs.conversationId !== conversation.conversationId
-      );
+      if (
+        cvs.chatType == conversation.chatType &&
+        cvs.conversationId == conversation.conversationId
+      ) {
+        findCvs = cvs;
+        return false;
+      }
+      return true;
+      // return (
+      //   cvs.chatType !== conversation.chatType || cvs.conversationId !== conversation.conversationId
+      // );
     });
-    this.conversationList = [conversation, ...filteredList];
+    if (JSON.stringify(findCvs) === '{}') {
+      console.warn('not find conversation');
+      return;
+    }
+    this.conversationList = [findCvs, ...filteredList];
   }
 
   getConversation(chatType: ChatType, cvsId: string) {

@@ -8,7 +8,7 @@ import './style/style.scss';
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
 import Header from '../header';
-import MessageEditor from '../messageEditor';
+import MessageEditor, { MessageEditorProps } from '../messageEditor';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import TextMessage from '../textMessage';
@@ -39,12 +39,13 @@ export interface ThreadProps {
   groupID: string;
   threadID?: string;
   originalMsg: AgoraChat.MessageBody;
+  messageEditorProps?: MessageEditorProps;
 }
 
 const Thread = (props: ThreadProps) => {
   const context = useContext(RootContext);
   const { rootStore, features, onError } = context;
-  const { prefix, className, messageListProps } = props;
+  const { prefix, className, messageListProps, messageEditorProps } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('thread', prefix);
   const { t } = useTranslation();
@@ -549,6 +550,7 @@ const Thread = (props: ThreadProps) => {
         // onSendMessage={handleSendMessage}
         onBeforeSendMessage={handleSendMessage}
         conversation={conversation}
+        {...messageEditorProps}
       />
 
       <Modal
