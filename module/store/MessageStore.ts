@@ -467,6 +467,7 @@ class MessageStore {
         //@ts-ignore
         messages[msgIndex].ext = {};
       }
+      if (!conversation) return;
       //@ts-ignore
       conversation.lastMessage = messages[msgIndex];
       if (conversation.unreadCount > 0) {
@@ -492,6 +493,7 @@ class MessageStore {
           //@ts-ignore
           messages[msgIndex].ext = {};
 
+          if (!conversation) return;
           // @ts-ignore
           conversation.lastMessage = messages[msgIndex];
           this.rootStore.conversationStore.modifyConversation(conversation);
