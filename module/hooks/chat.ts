@@ -196,7 +196,16 @@ const useEventHandler = () => {
       },
 
       onChatThreadChange: (message: AgoraChat.ThreadChangeInfo) => {
-        threadStore.updateThreadInfo(message);
+        if (message.operation == 'userRemove') {
+          if (
+            message.userName == rootStore.rootStore.client.user &&
+            threadStore.currentThread?.info?.id == message.id
+          ) {
+            threadStore.setThreadVisible(false);
+          }
+        } else {
+          threadStore.updateThreadInfo(message);
+        }
       },
     });
 
