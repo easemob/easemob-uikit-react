@@ -283,7 +283,8 @@ class MessageStore {
       this.message[message.chatType][conversationId].push(message);
     }
 
-    if (message.isChatThread) {
+    // @ts-ignore
+    if (message.isChatThread || message.chatThread) {
       return;
     }
 
