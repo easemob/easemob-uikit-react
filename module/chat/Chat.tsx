@@ -156,6 +156,7 @@ const Chat: FC<ChatProps> = props => {
   const threadList = rootStore.threadStore.threadList[CVS.conversationId] || [];
   const openThread = item => {
     // close thread list modal
+    rootStore.threadStore.joinChatThread(item.id || '');
     setModalOpen(false);
     rootStore.threadStore.setThreadVisible(true);
     rootStore.threadStore.getChatThreadDetail(item.id);
