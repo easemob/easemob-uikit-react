@@ -92,6 +92,7 @@ const Conversation = () => {
 ```
 
 <div align=center > <img src="../image/cvs-header2.png" width = "200" height = "450" /></div>
+
 3. Set the user's avatar and nickname.
 
 Use the `renderItem` method to render the conversation list item. Use props to customize the `ConversationItem` component.
@@ -136,6 +137,7 @@ const Conversation = () => {
 ```
 
 <div align=center > <img src="../image/cvs-nick.png" width = "200" height = "450" /></div>
+
 4. Use methods in `conversationStore` for conversation customization, for example:
 
 - Use the `topConversation` method to pin a conversation.
@@ -197,6 +199,7 @@ const Conversation = () => {
 ```
 
 <div align=center > <img src="../image/cvs-action.png" width = "200" height = "450" /></div>
+
 5. Modify the conversation theme.
 
 The conversation list provides the following conversation theme variables. For how to modify the theme, see the [Get Started with Agora Chat UIKit for Web](https://github.com/easemob/Easemob-UIKit-web/blob/dev/docs/theme.md).
