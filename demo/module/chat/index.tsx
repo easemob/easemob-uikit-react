@@ -11,7 +11,7 @@ import Icon from '../../../component/icon';
 import AC from 'agora-chat';
 import { RootProvider } from '../../../module/store/rootContext';
 import rootStore from '../../../module/store/index';
-import { ConversationList } from '../../../module/conversation';
+import { ConversationList, ConversationItem } from '../../../module/conversation';
 import Provider from '../../../module/store/Provider';
 import { useClient } from '../../../module/hooks/useClient';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
@@ -40,7 +40,7 @@ const ChatApp = () => {
           user: 'zd2',
           // pwd: '272808',
           accessToken:
-            'YWMtxFQKDJk6QmOzmTXRPgZa4ChYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGKgtPycgABUX67AyHJH3G3VOBwA6O0cuL8twBmtEO4bNp8jy6J0lDCgw==',
+            'YWMteVQiVFXlQz24UxIfhL7jsShYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGK0N7CvgABUX6wy9x1evPAbmNLo_cnR4svRIF8xQrpNXeLO01iZla9vA==',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
@@ -113,6 +113,17 @@ const ChatApp = () => {
         console.log(error);
       });
   };
+
+  const handleClickCvs = (cvs: any) => {
+    return () => {
+      rootStore.conversationStore.setCurrentCvs({
+        chatType: cvs.chatType,
+        conversationId: cvs.conversationId,
+        name: cvs.name,
+        unreadCount: 0,
+      });
+    };
+  };
   return (
     <>
       <div className="tab-box">
@@ -149,6 +160,9 @@ const ChatApp = () => {
               },
             }}
             className="conversation"
+            renderItem={csv => (
+              <ConversationItem onClick={handleClickCvs(csv)} key={csv.conversationId} data={csv} />
+            )}
           ></ConversationList>
         )}
 
@@ -200,7 +214,7 @@ const ChatApp = () => {
   );
 };
 
-const App = observer(ChatApp);
+const App = ChatApp;
 
 ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   <div
