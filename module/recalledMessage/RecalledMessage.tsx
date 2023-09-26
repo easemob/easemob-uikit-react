@@ -27,14 +27,14 @@ const RecalledMessage = (props: RecalledMessageProps) => {
   // @ts-ignore
   // if (message.bySelf) {
   //   // @ts-ignore
-  //   message.msg = t('module.you') + t('module.unsentAMessage');
+  //   message.msg = t('you') + t('unsentAMessage');
   // } else {
   //   // @ts-ignore
-  //   message.msg = message.from + t('module.unsentAMessage');
+  //   message.msg = message.from + t('unsentAMessage');
   // }
   // @ts-ignore
-  // message.msg = t('module.unsupportedMessageType');
-  const msg = { ...message, msg: t('module.unsupportedMessageType') };
+  // message.msg = t('unsupportedMessageType');
+  const msg = { ...message, msg: t('unsupportedMessageType') };
   return (
     <TextMessage
       onlyContent={onlyContent}

@@ -63,7 +63,7 @@ const SuggestList: FC<SuggestListProps> = props => {
     userId: AT_ALL,
     role: null,
     attributes: {
-      nickName: t('module.atAll'),
+      nickName: t('atAll'),
     },
   } as any;
 

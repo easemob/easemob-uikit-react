@@ -31,12 +31,10 @@ const NoticeMessage = (props: NoticeMessageProps) => {
   if ((noticeMessage as RecallMessage).type == 'recall') {
     const myUserId = rootStore.client.user;
     if (myUserId == (noticeMessage as RecallMessage).from) {
-      message = t('module.you') + ' ' + t('module.unsentAMessage');
+      message = t('you') + ' ' + t('unsentAMessage');
     } else {
       message =
-        getMsgSenderNickname(noticeMessage as any as BaseMessageType) +
-        ' ' +
-        t('module.unsentAMessage');
+        getMsgSenderNickname(noticeMessage as any as BaseMessageType) + ' ' + t('unsentAMessage');
     }
   }
   return (

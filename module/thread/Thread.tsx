@@ -141,7 +141,7 @@ const Thread = (props: ThreadProps) => {
   const classString = classNames(prefixCls, className);
 
   const [editorDisable, setEditorDisable] = useState(false);
-  const [threadName, setThreadName] = useState(t('module.aThread'));
+  const [threadName, setThreadName] = useState(t('aThread'));
   const [role, setRole] = useState('member'); // My role in the group
   const handleThreadNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setThreadName(event.target.value);
@@ -156,7 +156,7 @@ const Thread = (props: ThreadProps) => {
     return (
       <div className={`${prefixCls}-original`}>
         <div className={`${prefixCls}-original-start`}>
-          {t('module.startedBy')}{' '}
+          {t('startedBy')}{' '}
           <span>
             {getMsgSenderNickname({
               chatType: 'groupChat',
@@ -174,7 +174,7 @@ const Thread = (props: ThreadProps) => {
   const renderCreateForm = () => {
     return (
       <div className={`${prefixCls}-create`}>
-        <div className={`${prefixCls}-create-title`}>{t('module.threadNameRequired')}</div>
+        <div className={`${prefixCls}-create-title`}>{t('threadNameRequired')}</div>
         <div className={`${prefixCls}-create-content`}>
           <Input
             onChange={handleThreadNameChange}
@@ -183,8 +183,8 @@ const Thread = (props: ThreadProps) => {
             }}
             close
             required
-            value={t('module.aThread') as string}
-            placeholder={t('module.enterThreadName') as string}
+            value={t('aThread') as string}
+            placeholder={t('enterThreadName') as string}
           />
         </div>
 
@@ -210,7 +210,7 @@ const Thread = (props: ThreadProps) => {
     if (currentThread.creating) {
       // 创建thread
       const options = {
-        name: threadName?.replace(/(^\s*)|(\s*$)/g, '') || (t('module.aThread') as string),
+        name: threadName?.replace(/(^\s*)|(\s*$)/g, '') || (t('aThread') as string),
         // @ts-ignore
         messageId: originalMessage.mid || originalMessage.id,
         parentId: originalMessage.to,
@@ -534,7 +534,7 @@ const Thread = (props: ThreadProps) => {
       <div ref={headerRef}>
         <Header
           avatar={<Icon type="THREAD"></Icon>}
-          content={threadStore.currentThread.info?.name || t('module.aThread')}
+          content={threadStore.currentThread.info?.name || t('aThread')}
           close
           onClickClose={handleClickClose}
           moreAction={threadMoreAction}

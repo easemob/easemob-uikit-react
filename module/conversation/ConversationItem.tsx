@@ -88,9 +88,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     let { type = 'NONE' } = props;
     if (type === 'NONE') return <></>;
     return (
-      <div className={`${prefixCls}-at-tag`}>
-        {type === 'ALL' ? t('module.atAllTag') : t('module.atTag')}
-      </div>
+      <div className={`${prefixCls}-at-tag`}>{type === 'ALL' ? t('atAllTag') : t('atTag')}</div>
     );
   };
 
@@ -135,7 +133,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
           if (item.content === 'DELETE') {
             return (
               <li key={index} onClick={deleteCvs}>
-                {t('module.deleteCvs')}
+                {t('deleteCvs')}
               </li>
             );
           }
@@ -158,33 +156,33 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   switch (data.lastMessage?.type) {
     case 'txt':
       if (data.lastMessage?.msg == 'the combine message') {
-        lastMsg = `/${t('module.chatHistory')}/`;
+        lastMsg = `/${t('chatHistory')}/`;
       } else {
         lastMsg = renderTxt(data.lastMessage?.msg, false);
       }
       break;
     case 'img':
-      lastMsg = `/${t('module.image')}/`;
+      lastMsg = `/${t('image')}/`;
       break;
     case 'audio':
-      lastMsg = `/${t('module.audio')}/`;
+      lastMsg = `/${t('audio')}/`;
       break;
     case 'file':
-      lastMsg = `/${t('module.file')}/`;
+      lastMsg = `/${t('file')}/`;
       break;
     case 'video':
-      lastMsg = `/${t('module.video')}/`;
+      lastMsg = `/${t('video')}/`;
       break;
     case 'custom':
-      lastMsg = `/${t('module.custom')}/`;
+      lastMsg = `/${t('custom')}/`;
       break;
     // @ts-ignore
     case 'combine':
-      lastMsg = `/${t('module.chatHistory')}/`;
+      lastMsg = `/${t('chatHistory')}/`;
       break;
     // @ts-ignore
     case 'recall':
-      lastMsg = t('module.unsentAMessage') as string;
+      lastMsg = t('unsentAMessage') as string;
       break;
     default:
       console.warn('unexpected message type:', data.lastMessage?.type);

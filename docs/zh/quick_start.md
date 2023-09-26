@@ -1,135 +1,368 @@
-# Get Started with Agora Chat UIKit for Web
+# Agora Chat UIKit Web 使用指南
 
-Instant messaging connects people wherever they are and allows them to communicate with others in real time. With built-in user interfaces (UI) for the conversation list and contact list, the [Agora Chat UI Samples](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web) enables you to quickly embed real-time messaging into your app without requiring extra effort on the UI.
+## 简介
 
-This page shows a sample code to add peer-to-peer messaging into your app by using the Agora Chat UI Samples.
+agora-chat-uikit 是基于声网 Chat SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件， 容器组件允许用户使用 renderX 方法来进行自定义。agora-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
 
-## Understand the tech
+## 技术原理
 
-The following figure shows the workflow of how clients send and receive peer-to-peer messages:
+UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI 组件包含容器组件 container 复合组件 module, 以及纯 UI 组件 components, 这些不同级别的组件全部对外暴露，用户可以引用任意组件构建自己的应用。UIkit 使用 mobx 管理全局数据，用户可以引用 rootStore 来获得全部数据和 action 方法，可以用 action 方法来操作数据。 UIKit 内部集成了 chat SDK，通过 chat SDK 和服务器交互。<div align=center> <img src="../image/uikit.png" width = "400" height = "450" /></div>
 
-![agora_chat](https://docs.agora.io/en/assets/images/get-started-sdk-understand-009486abec0cc276183ab535456cf889.png)
+## 功能
 
-1. Clients retrieve a token from your app server.
-2. Client A and Client B log in to Agora Chat.
-3. Client A sends a message to Client B. The message is sent to the Agora Chat server and the server delivers the message to Client B. When Client B receives the message, the SDK triggers an event. Client B listens for the event and gets the message.
+`agora-chat-uikit` 库提供以下功能：
 
-## Prerequisites
+- 自动布局，适配容器的宽高；
+- 实现收发消息、消息上屏、消息未读数、清空消息、消息类型包括：（文本、图片、文件、表情、音频、视频消息）；
+- 搜索，删除会话；
+- 定制化 UI。
 
-In order to follow the procedure in this page, you must have:
+<table>
+    <tr>
+        <td>模块</td>
+        <td>功能</td>
+        <td>说明</td>
+    </tr>
+   <tr>
+      <td rowspan="5" style=font-weight:bold>会话列表</td>
+   </tr>
+   <tr>
+      <td>会话列表</td>
+      <td style=font-size:10px>会话列表显示头像、昵称、最新消息内容、未读消息提醒和时间</td>
+   </tr>
+   <tr>
+      <td>删除会话</td>
+      <td style=font-size:10px>将会话从会话列表中删除</td>
+   </tr>
+   <tr>
+      <td>免打扰（开发中）</td>
+      <td style=font-size:10px>开启消息免打扰或关闭消息免打扰</td>
+   </tr>
+   <tr>
+      <td>置顶（开发中）</td>
+      <td style=font-size:10px>将会话固定在列表顶部</td>
+   </tr>
+    <tr>
+      <td rowspan="6" style=font-weight:bold>聊天</td>
+   </tr>
+   <tr>
+      <td>消息发送器</td>
+      <td style=font-size:10px>支持发送文本 表情 图片 文件 语音</td>
+   </tr>
+   <tr>
+      <td>消息展示</td>
+      <td style=font-size:10px>单、群聊消息展示，包括头像、昵称、消息内容、时间、发送状态、已读状态，消息包括：文本、表情、图片、视频、文件、语音</td>
+   </tr>
+   <tr>
+      <td>撤回消息（开发中）</td>
+      <td style=font-size:10px>已发出的消息默认 2 分钟内可撤回</td>
+   </tr>
+   <tr>
+      <td>reaction（开发中）</td>
+      <td style=font-size:10px>对消息回复自定义表情</td>
+   </tr>
+   <tr>
+      <td>名片（开发中）</td>
+      <td style=font-size:10px>点击头像显示好友名片，可以发送好友的个人名片信息</td>
+   </tr>
+   <tr>
+   <td colspan="3">
+     更多功能开发中 ...
+	 </td>
+   </tr>
 
-- React 16.8.0 or later
-- React DOM 16.8.0 or later
-- A Windows or macOS computer that has a browser supported by the Agora Chat SDK:
-  - Internet Explorer 11 or later
-  - Edge 43 or later
-  - Firefox 10 or later
-  - Chrome 54 or later
-  - Safari 11 or later
-- An [App Key](./enable#get-the-information-of-the-chat-project).
-- A valid [Agora account](https://docs.agora.io/en/video-calling/reference/manage-agora-account/?platform=web#create-an-agora-account).
-- A valid [Agora project](https://docs.agora.io/en/video-calling/reference/manage-agora-account/?platform=web#create-an-agora-project) with an App Key.
+</table>
 
-## Token Generation
+## 组件
 
-This section describes how to register a user at Agora Console and generate a temporary token.
+`agora-chat-uikit` 目前提供的组件：
 
-### Register a user
+- 容器组件：`Provider`， `Chat`，`ConversationList`；
+- module 组件：`BaseMessage`，`AudioMessage`，`FileMessage`， `VideoMessage`，`ImageMessage`，`TextMessage`，`Header`，`Empty`，`MessageList`， `ConversationItem`，`MessageEditor`，`MessageStatus`；
+- 纯 UI 组件：`Avatar`，`Badge`，`Button`，`Checkbox`，`Icon`，`Modal`，`Tooltip`
 
-To generate a user ID, do the following:
+容器组件介绍
 
-1. On the **Project Management** page, click **Config** for the project you want to use.
+<table>
+    <tr>
+        <td>组件</td>
+        <td>描述</td>
+        <td>参数</td>
+		<td>参数描述</td>
+    </tr> 
+   <tr>
+      <td rowspan="2" style=font-weight:bold>Provider</td>
+      <td rowspan="2"  style=font-size:10px>Provider 不渲染任何UI, 只为组件提供全局上下文，自动监听SDK事件，向下传递数据，驱动组件渲染</td>
+      <td style=font-size:10px>
+      initConfig: {
+        appkey: string
+      }
+      </td>
+	  <td style=font-size:10px>可以配置 appKey</td>
+	   <tr>
+	   <td style=font-size:10px>
+	   </pre>
+       local
+		<pre>
+      </td>
+	   <td style=font-size:10px>配置本地化文案，具体参见 i18next init方法的参数</td>
+	   </tr>
+   </tr>
+   <tr>
+      <td rowspan="8" style=font-weight:bold>ConversationList</td>
+      <td rowspan="8"  style=font-size:10px>会话列表组件</td>
+      <td style=font-size:10px>
+      className
+	  </td>
+	  <td style=font-size:10px>
+	  组件类名
+	  </td>
+	  <tr>
+		<td style=font-size:10px>prefix</td>
+		<td style=font-size:10px>css 类名前缀</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>headerProps</td>
+		<td style=font-size:10px>Header组件的props</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>itemProps</td>
+		<td style=font-size:10px>ConversationItem组件的props</td>
+	  </tr>
+	   <tr>
+		<td style=font-size:10px>renderHeader?: () => React.ReactNode</td>
+		<td style=font-size:10px>自定义渲染 header, 该参数接收一个函数，这个函数返回一个react 节点</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>renderSearch?: () => React.ReactNode</td>
+		<td style=font-size:10px>自定义渲染搜索组件, 该参数接收一个函数，这个函数返回一个react 节点</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>onItemClick?: (data: ConversationData[0]) => void</td>
+		<td style=font-size:10px>点击会话事件，返回当前会话的数据</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean</td>
+		<td style=font-size:10px>搜索框change事件，如果函数返回false会阻止默认搜索行为，用户可自行按条件搜索</td>
+	  </tr>
+   </tr>
+   <tr>
+      <td rowspan="9" style=font-weight:bold>Chat</td>
+      <td rowspan="9" style=font-size:10px>聊天组件</td>
+      <td style=font-size:10px>
+	  className: string
+	  </td>
+	  <td style=font-size:10px>
+	  组件 css 类名
+	  </td>
+	  <tr>
+	    <td style=font-size:10px>prefix: string</td>
+		<td style=font-size:10px>css 类名前缀</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>headerProps: HeaderProps</td>
+		<td style=font-size:10px>Header组件的props</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>messageListProps: MsgListProps</td>
+		<td style=font-size:10px>MessageList组件的props</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>messageEditorProps: MessageEditorProps</td>
+		<td style=font-size:10px>messageEditor组件的props</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>renderHeader: (cvs: CurrentCvs) => React.ReactNode</td>
+		<td style=font-size:10px>自定义渲染Header组件, 该参数接收一个函数，这个函数返回一个react 节点, CurrentCvs 为当前会话</td>
+	  </tr>
+	   <tr>
+	    <td style=font-size:10px>renderMessageList?: () => ReactNode; </td>
+		<td style=font-size:10px>自定义渲染消息列表组件</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>renderMessageEditor?: () => ReactNode; </td>
+		<td style=font-size:10px>自定义渲染消息发送器组件</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>renderEmpty?: () => ReactNode; </td>
+		<td style=font-size:10px>自定义渲染没有会话时的空页面</td>
+	  </tr>
+   </tr>
+</table>
 
-![](https://web-cdn.agora.io/docs-files/1664531061644)
+## store
 
-2. On the **Edit Project** page, click **Config** next to **Chat** below **Features**.
+UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
 
-![](https://web-cdn.agora.io/docs-files/1664531091562)
+- initConfig：UIKit 初始化数据
+- client：Chat SDK 实例
+- conversationStore: 会话列表相关数据
+- messageStore： 消息相关数据
+- addressStore：通讯录相关数据
 
-3. In the left-navigation pane, select **Operation Management** > **User** and click **Create User**.
+<table>
+    <tr>
+        <td>store</td>
+        <td>属性/方法</td>
+        <td>说明</td>
+    </tr> 
+    <tr>
+      <td rowspan="10" >conversationStore</td>
+    </<tr>
+    <tr>
+        <td>currentCvs</td>
+        <td style=font-size:10px>当前的会话</td>
+    </tr> 
+    <tr>
+        <td>conversationList</td>
+        <td style=font-size:10px>全部会话</td>
+    </tr> 
+    <tr>
+        <td>searchList</td>
+        <td style=font-size:10px>搜索出来的会话</td>
+    </tr> 
+   <tr>
+        <td style=color:blue>setCurrentCvs</td>
+        <td style=font-size:10px>设置当前的会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>setConversation</td>
+        <td style=font-size:10px>设置全部的会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>deleteConversation</td>
+        <td style=font-size:10px>删除会话</td>
+    </tr> 
+   <tr>
+        <td style=color:blue>addConversation</td>
+        <td style=font-size:10px>添加一个会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>topConversation</td>
+        <td style=font-size:10px>置顶一个会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>modifyConversation</td>
+        <td style=font-size:10px>修改一个会话</td>
+    </tr>
+     <tr>
+      <td rowspan="10" >messageStore</td>
+    </tr>
+   <tr>
+        <td>message</td>
+        <td style=font-size:10px>全部会话的消息，里面包含singleChat, groupChat, byId</td style=font-size:10px>
+    </tr>
+   <tr>
+        <td style=color:blue>currentCvsMsgs</td>
+        <td style=font-size:10px>设置当前会话的消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>sendMessage</td>
+        <td style=font-size:10px>发送一条消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>receiveMessage</td>
+        <td style=font-size:10px>接收一条消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>modifyMessage</td>
+        <td style=font-size:10px>编辑一条消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>sendChannelAck</td>
+        <td style=font-size:10px>回复一条channel ack, 清空会话中的未读数</td>
+    </tr>
+   <tr>
+        <td style=color:blue>updateMessageStatus</td>
+        <td style=font-size:10px>更新消息状态</td>
+    </tr>
+     <tr>
+        <td style=color:blue>clearMessage</td>
+        <td style=font-size:10px>清空一个会话的消息</td>
+    </tr>
+    
+</table>
 
-![](https://web-cdn.agora.io/docs-files/1664531141100)
+## 前提条件
 
-4. In the **Create User** dialog box, fill in the **User ID**, **Nickname**, and **Password**, and click **Save** to create a user.
+开启 Agora Chat 服务前，请确保已经具备以下要素：
 
-![](https://web-cdn.agora.io/docs-files/1664531162872)
+- React 16.8.0 或以上版本；
+- React DOM 16.8.0 或以上版本；
+- 有效的 Agora Chat 开发者账号；
+- Agora Chat 项目和 App Key。
 
-### Generate a user token
+## 支持的浏览器
 
-To ensure communication security, Agora recommends using tokens to authenticate users logging in to an Agora Chat system.
+| 浏览器    | 支持的版本 |
+| --------- | ---------- |
+| IE 浏览器 | 11 或以上  |
+| Edge      | 43 或以上  |
+| Firefox   | 10 或以上  |
+| Chrome    | 54 或以上  |
+| Safari    | 11 或以上  |
 
-For testing purposes, Agora Console supports generating Agora chat tokens. To generate an Agora chat token, do the following:
+## UIKit 中用到的服务
 
-1. On the **Project Management** page, click **Config** for the project you want to use.
+- 会话列表
+- 漫游消息
+- 单向删除漫游消息
+- 用户属性
 
-![](https://web-cdn.agora.io/docs-files/1664531061644)
+## 使用步骤
 
-2. On the **Edit Project** page, click **Config** next to **Chat** below **Features**.
+### 1.创建 chat-uikit 项目
 
-![](https://web-cdn.agora.io/docs-files/1664531091562)
-
-3. In the **Data Center** section of the **Application Information** page, enter the user ID in the **Chat User Temp Token** box and click **Generate** to generate a token with user privileges.
-
-![](https://web-cdn.agora.io/docs-files/1664531214169)
-
-## Project setup
-
-### Create a Web Chat UIKit project
-
-1. Install a CLI tool.
-
-```
+```bash
+# 安装 CLI 工具。
 npm install create-react-app
-```
-
-2. Create an my-app project.
-
-```
+# 构建一个 my-app 的项目。
 npx create-react-app my-app
 cd my-app
 ```
 
-The project directory is as follows:
-
 ```
+项目目录：
 ├── package.json
-├── public # The static directory of Webpack.
-│ ├── favicon.ico
-│ ├── index.html # The default single-page app.
-│ └── manifest.json
+├── public                  # Webpack 的静态目录。
+│   ├── favicon.ico
+│   ├── index.html          # 默认的单页面应用。
+│   └── manifest.json
 ├── src
-│ ├── App.css # The CSS of the app's root component.
-│ ├── App.js # The app component code.
-│ ├── App.test.js
-│ ├── index.css # The style of the startup file.
-│ ├── index.js # The startup file.
-│ ├── logo.svg
-│ └── serviceWorker.js
+│   ├── App.css             # App 根组件的 CSS。
+│   ├── App.js              # App 组件代码。
+│   ├── App.test.js
+│   ├── index.css           # 启动文件样式。
+│   ├── index.js            # 启动文件。
+│   ├── logo.svg
+│   └── serviceWorker.js
 └── yarn.lock
 ```
 
-### Install the Web Chat UIKit
+### 2.集成 agora-chat-uikit
 
-- To install the Web Chat UIKit with npm, run the following command:
+#### 安装 agora-chat-uikit
 
-```
+- 通过 npm 安装，运行以下命令：
+
+```bash
 npm install agora-chat-uikit --save
 ```
 
-- To Install Agora chat UIKit for Web with Yarn, run the following command:
+- 通过 yarn 安装，运行以下命令：
 
-```
+```bash
 yarn add agora-chat-uikit
 ```
 
-### Build the application using the agora-chat-uikit
+#### 使用 agora-chat-uikit 组件构建应用
 
-Import agora-chat-uikit into your code.
+将 agora-chat-uikit 库导入你的代码中：
 
-```
+```javascript
 // App.js
 import React, { Component, useEffect } from 'react';
-import { UIKitProvider, Chat, ConversationList, useClient, rootStore } from 'agora-chat-uikit';
+import { Provider, Chat, ConversationList, useClient, rootStore } from 'agora-chat-uikit';
 import 'agora-chat-uikit/style.css';
 
 const ChatApp = () => {
@@ -143,11 +376,11 @@ const ChatApp = () => {
         })
         .then(res => {
           console.log('get token success', res);
-          // Creates a conversation.
+          // create a conversation
           rootStore.conversationStore.addConversation({
             chatType: '', // 'singleChat' || 'groupChat'
-            conversationId: '', // The user ID of the peer user for one-to-one chats for group ID for group chats.
-            name: '', // The nickname of the peer user for one-to-one chats for group name for group chats.
+            conversationId: '', // target user id or group id
+            name: '', // target user nickname or group name
           });
         });
   }, [client]);
@@ -167,13 +400,13 @@ const ChatApp = () => {
 class App extends Component {
   render() {
     return (
-      <UIKitProvider
+      <Provider
         initConfig={{
           appKey: 'you app key',
         }}
       >
         <ChatApp />
-      </UIKitProvider>
+      </Provider>
     );
   }
 }
@@ -181,27 +414,147 @@ class App extends Component {
 export default App;
 ```
 
-### Run the project and send your first message
+#### 运行项目并发送你的第一条消息
 
-In your terminal, run the following command to launch the app:
-
-```
+```bash
 npm run start
 ```
 
-Now, you can see your app in the browser.
+在浏览器可看到你的应用。
 
-![img](https://github.com/easemob/Easemob-UIKit-web/raw/dev/docs/chat.png)
+<div align=center style="background: #ddd; padding-top: 8px"> <img src="../image/chat.png" width = "480" height = "350" /></div>
 
-If the default App Key is used, the UIKit allows you to send the text, emoji, image, and voice messages.
+在默认 App Key 情况下，为方便快速体验，我们默认支持几种类型的消息下发。点击选中一个成员后，输入你的第一条消息并发送。
 
-**Note**
+**注意** 使用自定义 App Key 时，由于没有联系人，需先[添加好友](https://docs-preprod.agora.io/cn/agora-chat/agora_chat_relationship_web?platform=Web#申请添加好友)或[加入群组](https://docs-preprod.agora.io/cn/agora-chat/agora_chat_group_web?platform=Web#用户申请入群与退出群组)。
 
-If a custom App Key is used, no contact is available by default and you need to first [add contacts](https://docs.agora.io/en/agora-chat/client-api/contacts) or [join a group](https://docs.agora.io/en/agora-chat/client-api/chat-group/manage-chat-groups).
+Agora 在 GitHub 上提供一个开源的 AgoraChat-UIKit-web 项目，你可以克隆和运行该项目或参考其中的逻辑创建项目集成 agora-chat-uikit。
 
-## Reference
+- [Agora Chat UIKit Web 源代码 URL](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web)
+- [利用 agora-chat-uikit 的声网 IM 应用的 URL](https://github.com/AgoraIO-Usecase/AgoraChat-web)
 
-Agora provides an open-source Web project for Agora Chat UIKit on GitHub. You can clone and run the project or reference the logic to create a project that integrates agora-chat-uikit.
+## 如何自定义
 
-- [URL for Agora Chat UIKit Web source code](https://github.com/easemob/Easemob-UIKit-web)
-- [URL for Agora Chat application using agora-chat-uikit](https://github.com/AgoraIO-Usecase/AgoraChat-web/tree/dev-2.0)
+### 修改组件样式
+
+可以通过组件 props 传递 className, style, prefix 修改样式
+
+```javascript
+import { Chat, Button } from 'agora-chat-uikit';
+
+const ChatApp = () => {
+  return (
+    <div>
+      <Chat className="customClass" prefix="custom" />
+      <Button style={{ width: '100px' }}>Button</Button>
+    </div>
+  );
+};
+```
+
+### 使用自定义组件
+
+可以通过容器组件的 renderX 方法来渲染自定义组件
+
+```javascript
+import {Chat, Header} from 'agora-chat-uikit'
+
+const ChatApp = () => {
+  const CustomHeader = <Header back content="Custom Header">
+  return(
+    <div>
+      <Chat renderHeader={(cvs) => CustomHeader}>
+    </div>
+  )
+}
+
+```
+
+### 修改主题
+
+UIKit 样式使用 scss 框架开发，定义了一系列全局样式变量，包括但不限于全局样式（主色、背景色、圆角、边框、字体大小）。
+
+```scss
+// need to use hsla
+$blue-base: hsla(203, 100%, 60%, 1);
+$green-base: hsla(155, 100%, 60%, 1);
+$red-base: hsla(350, 100%, 60%, 1);
+$gray-base: hsla(203, 8%, 60%, 1);
+$special-base: hsla(220, 36%, 60%, 1);
+
+$font-color: $gray-3;
+$title-color: $gray-1;
+$component-background: #fff;
+
+$height-base: 36px;
+$height-lg: 48px;
+$height-sm: 28px;
+
+// vertical margins
+$margin-lg: 24px;
+$margin-md: 16px;
+$margin-sm: 12px;
+$margin-xs: 8px;
+$margin-xss: 4px;
+
+// vertical paddings
+$padding-lg: 24px;
+$padding-md: 20px;
+$padding-sm: 16px;
+$padding-s: 12px;
+$padding-xs: 8px;
+$padding-xss: 4px;
+// font
+$font-size-base: 14px;
+$font-size-lg: $font-size-base + 2px;
+$font-size-sm: 12px;
+$text-color: fade($black, 85%);
+```
+
+使用 webpack 进行变量覆盖：
+
+```json
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.s[ac]ss$/i,
+        use: [
+          "style-loader",
+          "css-loader",
+          {
+            loader: "sass-loader",
+            options: {
+              additionalData: `@import "@/styles/index.scss";`
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+如果这些不能满足定制化要求，还可以检查元素来覆盖 UIKit 的样式。
+
+## 社区贡献者
+
+如果你认为可将一些功能添加到 UIKit 中让更多用户受益，请随时 Fork 存储库并添加拉取请求。如果你在使用上有任何问题，也请在存储库上提交。感谢你的贡献！
+
+## 参考文档
+
+- [Agora Chat SDK 产品概述](https://docs-preprod.agora.io/en/agora-chat/agora_chat_overview?platform=Web)
+- [Agora Chat SDK API 参考](https://docs-preprod.agora.io/en/agora-chat/API%20Reference/im_ts/index.html?transId=4dbea540-f2cd-11ec-bafe-3fe630a7aac4)
+
+## 相关资源
+
+- 你可以先参阅 [常见问题](https://docs.agora.io/cn/faq)
+- 如果你想了解更多官方示例，可以参考 [官方 SDK 示例](https://github.com/AgoraIO)
+- 如果你想了解声网 SDK 在复杂场景下的应用，可以参考 [官方场景案例](https://github.com/AgoraIO-usecase)
+- 如果你想了解声网的一些社区开发者维护的项目，可以查看 [社区](https://github.com/AgoraIO-Community)
+- 若遇到问题需要开发者帮助，你可以到 [开发者社区](https://rtcdeveloper.com/) 提问
+- 如果需要售后技术支持, 你可以在 [Agora Dashboard](https://dashboard.agora.io) 提交工单
+
+## 代码许可
+
+示例项目遵守 MIT 许可证。

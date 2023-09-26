@@ -93,7 +93,7 @@ const Emoji = (props: EmojiProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" title={t('module.emoji') as string}>
+    <span className="icon-container" title={t('emoji') as string}>
       <Icon
         type="FACE"
         width={20}

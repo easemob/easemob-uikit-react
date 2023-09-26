@@ -446,7 +446,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
       )}
       <Modal
         open={modalOpen}
-        title={t('module.chatHistory')}
+        title={t('chatHistory')}
         footer=""
         onCancel={() => {
           setModalOpen(false);

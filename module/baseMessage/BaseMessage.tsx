@@ -368,14 +368,14 @@ let BaseMessage = (props: BaseMessageProps) => {
             return (
               <li key={index} onClick={deleteMessage}>
                 <Icon type="DELETE" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.delete')}
+                {t('delete')}
               </li>
             );
           } else if (item.content === 'REPLY') {
             return (
               <li key={index} onClick={replyMessage}>
                 <Icon type="ARROW_TURN_LEFT" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.reply')}
+                {t('reply')}
               </li>
             );
           } else if (item.content === 'UNSEND') {
@@ -383,7 +383,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               isCurrentUser && (
                 <li key={index} onClick={recallMessage}>
                   <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
-                  {t('module.unsend')}
+                  {t('unsend')}
                 </li>
               )
             );
@@ -392,7 +392,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               message?.type === 'txt' && (
                 <li key={index} onClick={translateMessage}>
                   <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
-                  {t('module.translate')}
+                  {t('translate')}
                 </li>
               )
             );
@@ -402,7 +402,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               message?.type === 'txt' && (
                 <li key={index} onClick={modifyMessage}>
                   <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
-                  {t('module.modify')}
+                  {t('modify')}
                 </li>
               )
             );
@@ -410,14 +410,14 @@ let BaseMessage = (props: BaseMessageProps) => {
             return (
               <li key={index} onClick={selectMessage}>
                 <Icon type="SELECT" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.select')}
+                {t('select')}
               </li>
             );
           } else if (item.content === 'RESEND') {
             return (
               <li key={index} onClick={resendMessage}>
                 <Icon type="LOOP" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.resend')}
+                {t('resend')}
               </li>
             );
           }

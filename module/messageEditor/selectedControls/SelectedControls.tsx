@@ -54,24 +54,24 @@ const SelectedControls = (props: SelectedControlsProps) => {
           summary = summary + msg.from + ': ' + msg.msg + '\n';
           break;
         case 'img':
-          summary = `${summary}${msg.from}: /${t('module.image')}/\n`;
+          summary = `${summary}${msg.from}: /${t('image')}/\n`;
           break;
         case 'audio':
-          summary = `${summary}${msg.from}: /${t('module.audio')}/\n`;
+          summary = `${summary}${msg.from}: /${t('audio')}/\n`;
           break;
         case 'file':
-          summary = `${summary}${msg.from}: /${t('module.file')}/\n`;
+          summary = `${summary}${msg.from}: /${t('file')}/\n`;
           break;
         case 'video':
-          summary = `${summary}${msg.from}: /${t('module.video')}/\n`;
+          summary = `${summary}${msg.from}: /${t('video')}/\n`;
           break;
         case 'custom':
-          summary = `${summary}${msg.from}: /${t('module.custom')}/\n`;
+          summary = `${summary}${msg.from}: /${t('custom')}/\n`;
           break;
         // @ts-ignore
         case 'combine':
           // @ts-ignore
-          summary = `${summary}${msg.from}: /${t('module.chatHistory')}/\n`;
+          summary = `${summary}${msg.from}: /${t('chatHistory')}/\n`;
           break;
         default:
           break;
@@ -84,7 +84,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
       to: currentCVS.conversationId,
       deliverOnlineOnly: false,
       compatibleText: 'the combine message',
-      title: t('module.chatHistory'),
+      title: t('chatHistory'),
       summary: summary,
       messageList: selectedMessages,
 
@@ -138,7 +138,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
           </div>
           <div className={`${prefixCls}-content-right`}>
             <div
-              title={t('module.cancel') as string}
+              title={t('cancel') as string}
               className={iconClass}
               style={{ cursor: selectedMessages.length > 0 ? 'pointer' : 'not-allowed' }}
               onClick={() => {
@@ -150,7 +150,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
               <Icon type="DELETE" width={24} height={24}></Icon>
             </div>
             <div
-              title={t('module.forward') as string}
+              title={t('forward') as string}
               className={iconClass}
               style={{ cursor: selectedMessages.length > 0 ? 'pointer' : 'not-allowed' }}
               onClick={sendSelectedMsg}
@@ -163,17 +163,17 @@ const SelectedControls = (props: SelectedControlsProps) => {
 
       <Modal
         open={modalOpen}
-        title={t('module.batchDeletion')}
-        okText={t('module.delete')}
-        cancelText={t('module.cancel')}
+        title={t('batchDeletion')}
+        okText={t('delete')}
+        cancelText={t('cancel')}
         onCancel={() => {
           setModalOpen(false);
         }}
         onOk={deleteSelectedMsg}
       >
-        <div className={`${prefixCls}-detail`}>{`${t('module.delete')} ${
-          selectedMessages.length
-        } ${t('module.messages')}`}</div>
+        <div className={`${prefixCls}-detail`}>{`${t('delete')} ${selectedMessages.length} ${t(
+          'messages',
+        )}`}</div>
       </Modal>
     </>
   );

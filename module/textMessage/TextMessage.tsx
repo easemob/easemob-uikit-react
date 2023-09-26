@@ -473,7 +473,7 @@ const TextMessage = (props: TextMessageProps) => {
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
           {textMessage?.modifiedInfo ? (
-            <div className={`${classString}-edit-tag`}>{t('module.edited')}</div>
+            <div className={`${classString}-edit-tag`}>{t('edited')}</div>
           ) : (
             ''
           )}
@@ -490,8 +490,8 @@ const TextMessage = (props: TextMessageProps) => {
                 </span>
                 <div className={`${transPrefix}-action`}>
                   <Icon type="TRANSLATION" width={16} height={16}></Icon>
-                  <span>{t(`module.${transStatus}`)}</span>
-                  <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+                  <span>{t(`${transStatus}`)}</span>
+                  <span onClick={switchShowTranslation}>{t(`${btnText}`)}</span>
                 </div>
               </div>
             )
@@ -535,7 +535,7 @@ const TextMessage = (props: TextMessageProps) => {
                 <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
               )}
               {textMessage?.modifiedInfo ? (
-                <div className={`${classString}-edit-tag`}>{t('module.edited')}</div>
+                <div className={`${classString}-edit-tag`}>{t('edited')}</div>
               ) : (
                 ''
               )}
@@ -552,8 +552,8 @@ const TextMessage = (props: TextMessageProps) => {
                     </span>
                     <div className={`${transPrefix}-action`}>
                       <Icon type="TRANSLATION" width={16} height={16}></Icon>
-                      <span>{t(`module.${transStatus}`)}</span>
-                      <span onClick={switchShowTranslation}>{t(`module.${btnText}`)}</span>
+                      <span>{t(`${transStatus}`)}</span>
+                      <span onClick={switchShowTranslation}>{t(`${btnText}`)}</span>
                     </div>
                   </div>
                 )
@@ -562,9 +562,9 @@ const TextMessage = (props: TextMessageProps) => {
           </BaseMessage>
           {
             <Modal
-              title={t('module.modifyTitle')}
-              okText={t('module.confirmBtn')}
-              cancelText={t('module.cancelBtn')}
+              title={t('modifyTitle')}
+              okText={t('confirmBtn')}
+              cancelText={t('cancelBtn')}
               wrapClassName="modify-message-modal"
               onCancel={cancelModifyMessage}
               onOk={confirmModifyMessage}

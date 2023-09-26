@@ -200,7 +200,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   // Send Button
   const btnNode = hasSendButton ? (
-    <div className={`${prefixCls}-sendBtn`} title={t('module.send')}>
+    <div className={`${prefixCls}-sendBtn`} title={t('send')}>
       <Icon
         type="AIR_PLANE"
         width={20}

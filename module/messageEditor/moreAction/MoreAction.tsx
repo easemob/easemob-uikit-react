@@ -42,7 +42,7 @@ let MoreAction = (props: MoreActionProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" title={t('module.more') as string}>
+    <span className="icon-container" title={t('more') as string}>
       <Icon
         type="PLUS_CIRCLE"
         width={20}
@@ -65,11 +65,11 @@ let MoreAction = (props: MoreActionProps) => {
   const defaultActions = [
     {
       content: 'image',
-      title: t('module.image'),
+      title: t('image'),
       onClick: sendImage,
       icon: null,
     },
-    { content: 'file', title: t('module.file'), onClick: sendFile, icon: null },
+    { content: 'file', title: t('file'), onClick: sendFile, icon: null },
   ];
   let actions = [];
   if (customActions) {
@@ -90,7 +90,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {t('module.image')}
+              {t('image')}
             </li>
           );
         } else if (item.content == 'FILE') {
@@ -102,7 +102,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {t('module.file')}
+              {t('file')}
             </li>
           );
         }

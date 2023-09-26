@@ -176,22 +176,22 @@ const Chat: FC<ChatProps> = props => {
           lastMsg = item.lastMessage?.msg;
           break;
         case 'img':
-          lastMsg = `/${t('module.image')}/`;
+          lastMsg = `/${t('image')}/`;
           break;
         case 'audio':
-          lastMsg = `/${t('module.audio')}/`;
+          lastMsg = `/${t('audio')}/`;
           break;
         case 'file':
-          lastMsg = `/${t('module.file')}/`;
+          lastMsg = `/${t('file')}/`;
           break;
         case 'video':
-          lastMsg = `/${t('module.video')}/`;
+          lastMsg = `/${t('video')}/`;
           break;
         case 'custom':
-          lastMsg = `/${t('module.custom')}/`;
+          lastMsg = `/${t('custom')}/`;
           break;
         case 'combine':
-          lastMsg = `/${t('module.combine')}/`;
+          lastMsg = `/${t('combine')}/`;
           break;
         default:
           console.warn('unexpected message type:', item.lastMessage?.type);
@@ -254,7 +254,7 @@ const Chat: FC<ChatProps> = props => {
     visible: true,
     actions: [
       {
-        content: t('module.clearMsgs'),
+        content: t('clearMsgs'),
         onClick: () => {
           rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
           rootStore.client.removeHistoryMessages({
@@ -265,7 +265,7 @@ const Chat: FC<ChatProps> = props => {
         },
       },
       {
-        content: t('module.deleteCvs'),
+        content: t('deleteCvs'),
         onClick: () => {
           rootStore.conversationStore.deleteConversation(rootStore.conversationStore.currentCvs);
 
@@ -601,7 +601,7 @@ const Chat: FC<ChatProps> = props => {
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text={t('module.noConversation')}></Empty>
+          <Empty text={t('noConversation')}></Empty>
         )
       ) : (
         <>
