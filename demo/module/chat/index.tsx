@@ -11,7 +11,7 @@ import Icon from '../../../component/icon';
 import AC from 'agora-chat';
 import { RootProvider } from '../../../module/store/rootContext';
 import rootStore from '../../../module/store/index';
-import { ConversationList } from '../../../module/conversation';
+import { ConversationList, ConversationItem } from '../../../module/conversation';
 import Provider from '../../../module/store/Provider';
 import { useClient } from '../../../module/hooks/useClient';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
@@ -40,7 +40,7 @@ const ChatApp = () => {
           user: 'zd2',
           // pwd: '272808',
           accessToken:
-            'YWMtZafyEsG_SqKd1vt_oBTzrChYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGKtmuw0gABUX5Y7eN0_OAvCUDLPbEkCi7O-RF6lkVKt_GG-tzEbfpiWQ==',
+            'YWMteVQiVFXlQz24UxIfhL7jsShYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGK0N7CvgABUX6wy9x1evPAbmNLo_cnR4svRIF8xQrpNXeLO01iZla9vA==',
         })
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
@@ -149,6 +149,7 @@ const ChatApp = () => {
               },
             }}
             className="conversation"
+            renderItem={csv => <ConversationItem data={csv} />}
           ></ConversationList>
         )}
 

@@ -14,6 +14,7 @@ export interface RecallMessage {
 export interface Message {
   singleChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
   groupChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
+  chatRoom: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
   byId: { [key: string]: AgoraChat.MessageBody | RecallMessage };
 }
 
@@ -48,12 +49,14 @@ class MessageStore {
     this.message = {
       singleChat: {},
       groupChat: {},
+      chatRoom: {},
       byId: {},
     };
 
     this.selectedMessage = {
       singleChat: {},
       groupChat: {},
+      chatRoom: {},
     };
     this.currentCVS = {} as CurrentConversation;
     this.repliedMessage = null;

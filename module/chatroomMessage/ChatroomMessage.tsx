@@ -21,14 +21,16 @@ export interface ChatroomMessageProps {
   nickname?: string;
   content?: ReactNode;
   type: 'img' | 'txt';
+  message: AgoraChat.MessageBody;
 }
 
 const ChatroomMessage = (props: ChatroomMessageProps) => {
-  const { prefix: customizePrefixCls, className, type = 'txt' } = props;
+  const { prefix: customizePrefixCls, className, type = 'txt', message } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-chatroom', customizePrefixCls);
   const classString = classNames(prefixCls, className);
 
+  console.log('22222', message);
   const renderText = (text: string) => {
     return <div>{text}</div>;
   };
@@ -52,8 +54,8 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
           <Avatar size={20}>2</Avatar>
           <div className={`${prefixCls}-header-nick`}>nick name</div>
         </div>
-        {type == 'img' && renderGift()}
-        {type == 'txt' && renderText('qwqwqasdaswe')}
+        {message.type == 'img' && renderGift()}
+        {message.type == 'txt' && renderText(message.msg)}
       </div>
     </div>
   );

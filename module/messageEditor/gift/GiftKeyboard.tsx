@@ -1,12 +1,12 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useContext } from 'react';
 import { Tooltip } from '../../../component/tooltip/Tooltip';
 import Button, { ButtonProps } from '../../../component/button';
 import Icon from '../../../component/icon';
 import './style/style.scss';
 import { useTranslation } from 'react-i18next';
-
+import AC, { AgoraChat } from 'agora-chat';
 import { Gift } from './Gift';
-
+import { RootContext } from '../../store/rootContext';
 export interface GiftKeyboardProps {
   prefix?: string;
   className?: string;
@@ -15,13 +15,27 @@ export interface GiftKeyboardProps {
   onSelected?: (emojiString: string) => void;
   trigger?: 'click' | 'hover';
   onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
-
+  conversation: { chatType: 'chatRoom'; conversationId: string };
   gifts?: ReactNode[];
+  onSendMessage?: (message: AgoraChat.CustomMsgBody) => void;
+  onBeforeSendMessage?: (
+    message: AgoraChat.MessageBody,
+  ) => Promise<{ chatType: 'chatRoom'; conversationId: string } | void>;
 }
 
 const GiftKeyboard = (props: GiftKeyboardProps) => {
-  const { icon, trigger = 'click', gifts } = props;
+  const {
+    icon,
+    trigger = 'click',
+    gifts,
+    conversation,
+    onSendMessage,
+    onBeforeSendMessage,
+  } = props;
   const { t } = useTranslation();
+  const context = useContext(RootContext);
+  const { rootStore, onError } = context;
+  const { messageStore } = rootStore;
   const iconNode = icon ? (
     icon
   ) : (
@@ -36,10 +50,38 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     </span>
   );
 
+  const sendGiftMessage = (giftId: string) => {
+    console.log('conversation', conversation);
+    const options = {
+      type: 'custom',
+      to: conversation.conversationId,
+      chatType: conversation.chatType,
+      customEvent: 'CHATROOMUIKITGIFT',
+      customExts: {
+        giftId: 'gift_1',
+        giftName: '小心心',
+        giftPrice: '20',
+        giftCount: '1',
+        giftIcon: 'gift_1',
+      },
+      ext: {},
+    } as AgoraChat.CreateCustomMsgParameters;
+    const customMsg = AC.message.create(options);
+    messageStore
+      .sendMessage(customMsg)
+      .then(() => {
+        onSendMessage && onSendMessage(customMsg as AgoraChat.CustomMsgBody);
+      })
+      .catch(err => {
+        onError && onError?.(err);
+      });
+  };
+
   const [selectedIndex, setIndex] = useState<string | number>('');
   const handleClick = (giftId: string | number) => {
     console.log('e', giftId);
     setIndex(giftId);
+    sendGiftMessage(giftId as string);
   };
   let titleNode;
   if (gifts) {
@@ -76,6 +118,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     </div>
   );
 
+  console.log('conversation 111', conversation);
   return (
     <Tooltip title={titleNode} trigger={trigger} arrowPointAtCenter={false} arrow={false}>
       {iconNode}

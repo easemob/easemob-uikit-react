@@ -9,6 +9,7 @@ import Button from '../../component/button';
 import ChatroomMessage from '../../module/chatroomMessage';
 import { Gift, GiftKeyboard } from '../../module/messageEditor/gift';
 import MessageEditor from '../../module/messageEditor';
+import Chatroom from '../../module/chatroom';
 import './index.css';
 import AgoraChat from 'agora-chat';
 const ChatApp = () => {
@@ -23,16 +24,22 @@ const ChatApp = () => {
         .then(res => {
           console.log('获取token成功', res, rootStore.client);
         });
+
+    client.addEventHandler('chatroom', {
+      onConnected: () => {
+        rootStore.setLoginState(true);
+      },
+    });
   }, [client]);
 
   return (
     <>
       <div>
-        <ChatroomMessage />
-        <ChatroomMessage type="img" />
+        {/* <ChatroomMessage />
+        <ChatroomMessage type="img" /> */}
       </div>
       <div>
-        <Gift giftId={3} title="小心心" subTitle="20元" />
+        {/* <Gift giftId={3} title="小心心" subTitle="20元" />
         <Gift giftId={2} title="小心心" subTitle="20元" selected />
         <Gift
           giftId={1}
@@ -40,19 +47,21 @@ const ChatApp = () => {
           subTitle="20元"
           selected
           action={{ visible: true, text: 'send' }}
-        />
+        /> */}
       </div>
-      <div>
-        <GiftKeyboard></GiftKeyboard>
-      </div>
+      <div>{/* <GiftKeyboard></GiftKeyboard> */}</div>
 
       <div>
-        <MessageEditor
+        {/* <MessageEditor
           actions={[
             { name: 'TEXTAREA', visible: true },
             { name: 'GIFT', visible: true, icon: <GiftKeyboard></GiftKeyboard> },
           ]}
-        ></MessageEditor>
+        ></MessageEditor> */}
+      </div>
+
+      <div>
+        <Chatroom></Chatroom>
       </div>
     </>
   );

@@ -12,6 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
 import { AgoraChat } from 'agora-chat';
 import { CurrentConversation } from '../store/ConversationStore';
+import { GiftKeyboard } from './gift/GiftKeyboard';
 export type Actions = {
   name: string;
   visible: boolean;
@@ -34,7 +35,7 @@ export interface MessageEditorProps {
   isChatThread?: boolean; // 是否是子区聊天
   enabledMention?: boolean; // 是否开启@功能
   onSendMessage?: (message: AgoraChat.MessageBody) => void;
-  conversation?: CurrentConversation;
+  conversation?: CurrentConversation & { chatType: 'chatRoom'; conversationId: string };
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
   onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
 }
@@ -276,6 +277,8 @@ const MessageEditor = (props: MessageEditorProps) => {
                   customActions={customActions}
                 ></MoreAction>
               );
+            } else if (item.name === 'GIFT' && item.visible) {
+              return <GiftKeyboard />;
             } else {
               return (
                 <span

@@ -70,17 +70,21 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     x: 0,
     y: 0,
   });
-
+  const [usedCvs, setUsedCvs] = useState<CurrentConversation>(currentCVS);
   // if (conversation && conversation.conversationId) {
   //   currentCVS = conversation;
   // }
   useEffect(() => {
-    if (conversation) {
-      currentCVS = conversation;
+    console.log('收到的会话', conversation);
+    if (currentCVS?.conversationId) {
+      setUsedCvs(currentCVS);
     }
-  }, [conversation?.conversationId]);
+    if (conversation?.conversationId) {
+      setUsedCvs(conversation);
+    }
+  }, [conversation?.conversationId, currentCVS]);
 
-  const canAtUser = enabledMention && currentCVS.chatType === 'groupChat';
+  const canAtUser = enabledMention && usedCvs.chatType === 'groupChat';
 
   const handleKeyUp = useCallback(() => {
     if (!canAtUser) return;
@@ -133,9 +137,9 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     const str = convertToMessage(value).trim();
     setTextValue(str);
 
-    if (currentCVS.chatType == 'singleChat' && !isTyping && enabledTyping) {
+    if (usedCvs.chatType == 'singleChat' && !isTyping && enabledTyping) {
       setIsTyping(true);
-      messageStore.sendTypingCmd(currentCVS);
+      messageStore.sendTypingCmd(usedCvs);
       setTimeout(() => {
         setIsTyping(false);
       }, 10000);
@@ -157,11 +161,12 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   };
 
   const sendMessage = () => {
+    console.log('发消息', usedCvs);
     if (!textValue) {
       console.warn('No text message');
       return;
     }
-    if (!currentCVS.conversationId) {
+    if (!usedCvs.conversationId) {
       console.warn('No specified conversation');
       return;
     }
@@ -175,8 +180,8 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     if (atUserIds.includes(AT_ALL)) isAtAll = true;
 
     const message = AC.message.create({
-      to: currentCVS.conversationId,
-      chatType: currentCVS.chatType,
+      to: usedCvs.conversationId,
+      chatType: usedCvs.chatType,
       type: 'txt',
       msg: textValue,
       isChatThread,
