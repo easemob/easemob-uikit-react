@@ -464,12 +464,16 @@ const Chat: FC<ChatProps> = props => {
       case 'user-published':
         // getIdMap
         if (!info.confr) return;
-        let idMap = await rtcConfig?.getIdMap?.({
-          userId: rootStore.client.user,
-          channel: info.confr.channel,
-        });
-        if (idMap && Object.keys(idMap).length > 0) {
-          CallKit.setUserIdMap(idMap);
+        try {
+          let idMap = await rtcConfig?.getIdMap?.({
+            userId: rootStore.client.user,
+            channel: info.confr.channel,
+          });
+          if (idMap && Object.keys(idMap).length > 0) {
+            CallKit.setUserIdMap(idMap);
+          }
+        } catch (e) {
+          console.error(e);
         }
         break;
       default:
@@ -557,8 +561,12 @@ const Chat: FC<ChatProps> = props => {
 
     CallKit.startCall(options);
     // }
-    let idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
-    CallKit.setUserIdMap(idMap);
+    try {
+      let idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
+      CallKit.setUserIdMap(idMap);
+    } catch (e) {
+      console.error(e);
+    }
 
     CallKit.setUserInfo({
       [CVS.conversationId]: {

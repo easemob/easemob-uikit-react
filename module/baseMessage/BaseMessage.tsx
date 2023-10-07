@@ -196,6 +196,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
   const threadNode = () => {
     let { name, messageCount, lastMessage = {} } = chatThreadOverview!;
+
     const { from, type, time } = lastMessage || {};
     let msgContent = '';
     switch (type) {
@@ -249,11 +250,11 @@ let BaseMessage = (props: BaseMessageProps) => {
         </div>
         <div className={`${prefixCls}-thread-message`}>
           {msgContent && (
-            <Avatar size={16} src={appUsersInfo?.[userId]?.avatarurl}>
-              {appUsersInfo?.[userId]?.nickname || userId}
+            <Avatar size={16} src={appUsersInfo?.[from]?.avatarurl}>
+              {appUsersInfo?.[from]?.nickname || from}
             </Avatar>
           )}
-          <span>{msgSenderNickname}</span>
+          <span>{(appUsersInfo[from]?.nickname || from) as unknown as string}</span>
           <span>{msgContent}</span>
           <span>{getConversationTime(time)}</span>
         </div>
