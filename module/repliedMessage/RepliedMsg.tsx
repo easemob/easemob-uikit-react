@@ -17,6 +17,7 @@ const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
   className?: string;
+  style?: React.CSSProperties;
   shape?: 'ground' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
   message: AgoraChat.MessageBody;
@@ -30,6 +31,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     shape = 'square',
     direction = 'ltr',
     message,
+    style = {},
   } = props;
   if (!message) {
     return null;
@@ -249,6 +251,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   return (
     <div
       className={classString}
+      style={{ ...style }}
       onMouseOver={() => setHoverStatus(true)}
       onMouseLeave={() => {
         setHoverStatus(false);

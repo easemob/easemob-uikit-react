@@ -5,16 +5,17 @@ import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
 
 const buttonShapes = tuple('circle', 'round', 'default');
-export type ButtonShape = (typeof buttonShapes)[number];
+export type ButtonShape = typeof buttonShapes[number];
 
 const buttonSizes = tuple('small', 'medium', 'large');
-export type ButtonSize = (typeof buttonSizes)[number];
+export type ButtonSize = typeof buttonSizes[number];
 
 const buttonTypes = tuple('primary', 'default', 'ghost', 'text');
-export type ButtonType = (typeof buttonTypes)[number];
+export type ButtonType = typeof buttonTypes[number];
 
 export interface ButtonProps {
   className?: string;
+  style?: React.CSSProperties;
   children?: React.ReactNode;
   type?: ButtonType;
   shape?: ButtonShape;
@@ -32,6 +33,7 @@ export const Button = ({
   disabled = false,
   icon,
   children = 'button',
+  style = {},
   onClick,
 }: ButtonProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -47,7 +49,13 @@ export const Button = ({
   );
   const kids = children || children === 0 ? ' ' : null;
   return (
-    <button type="button" onClick={onClick} className={classes} disabled={disabled}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={classes}
+      disabled={disabled}
+      style={{ ...style }}
+    >
       {children}
     </button>
   );

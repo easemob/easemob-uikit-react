@@ -30,6 +30,8 @@ import CallKit from 'chat-callkit';
 export interface ChatProps {
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
+  threadModalStyle?: React.CSSProperties;
   renderHeader?: (cvs: {
     chatType: 'singleChat' | 'groupChat';
     conversationId: string;
@@ -87,6 +89,8 @@ const Chat: FC<ChatProps> = props => {
     messageListProps,
     messageEditorProps,
     rtcConfig,
+    style = {},
+    threadModalStyle = {},
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -605,7 +609,7 @@ const Chat: FC<ChatProps> = props => {
   }
 
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       {isEmpty ? (
         renderEmpty ? (
           renderEmpty()
@@ -679,7 +683,7 @@ const Chat: FC<ChatProps> = props => {
               onClear={() => {
                 setRenderThreadList(threadList || []);
               }}
-              style={{ width: '360px' }}
+              style={{ width: '360px', ...threadModalStyle }}
             >
               <div className={`${prefixCls}-threads-box`}>{threadListContent()}</div>
             </ThreadModal>

@@ -7,6 +7,7 @@ export interface CheckboxProps {
   prefix?: string;
   id?: string;
   className?: string;
+  style?: React.CSSProperties;
   checked?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
@@ -23,6 +24,7 @@ const Checkbox = ({
   onChange,
   shape = 'ground',
   prefix,
+  style = {},
 }: CheckboxProps): ReactElement => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('checkbox', prefix);
@@ -38,7 +40,7 @@ const Checkbox = ({
     onChange?.(event);
   };
   return (
-    <label className={`${prefixCls}-wrapper`} htmlFor={id}>
+    <label className={`${prefixCls}-wrapper`} style={{ ...style }} htmlFor={id}>
       <span className={classes}>
         <input
           disabled={disabled}

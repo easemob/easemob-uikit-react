@@ -57,6 +57,7 @@ let MessageList: FC<MsgListProps> = props => {
     conversation,
     isThread,
     messageProps,
+    style = {},
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
@@ -190,7 +191,7 @@ let MessageList: FC<MsgListProps> = props => {
   }, [currentCVS]);
 
   return (
-    <div className={classString} ref={msgContainerRef} id="listContainer">
+    <div className={classString} style={{ ...style }} ref={msgContainerRef} id="listContainer">
       <MessageScrollList
         ref={listRef}
         hasMore={true}

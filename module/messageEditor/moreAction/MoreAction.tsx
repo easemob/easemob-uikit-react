@@ -10,6 +10,8 @@ import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
 export interface MoreActionProps {
+  style?: React.CSSProperties;
+  itemContainerStyle?: React.CSSProperties;
   prefix?: string;
   icon?: ReactNode;
   customActions?: Array<{
@@ -29,6 +31,8 @@ let MoreAction = (props: MoreActionProps) => {
     conversation,
     isChatThread,
     onBeforeSendMessage,
+    style = {},
+    itemContainerStyle = {},
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -42,7 +46,7 @@ let MoreAction = (props: MoreActionProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" title={t('more') as string}>
+    <span className="icon-container" style={{ ...style }} title={t('more') as string}>
       <Icon
         type="PLUS_CIRCLE"
         width={20}
@@ -79,7 +83,7 @@ let MoreAction = (props: MoreActionProps) => {
   }
 
   const menu = (
-    <ul className={classString}>
+    <ul className={classString} style={{ ...itemContainerStyle }}>
       {actions.map((item, index) => {
         if (item.content == 'IMAGE') {
           return (

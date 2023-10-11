@@ -273,9 +273,10 @@ let ImageMessage = (props: ImageMessageProps) => {
     type = bySelf ? 'primary' : 'secondly';
   }
   return (
-    <div style={style}>
+    <div>
       <BaseMessage
         id={message.id}
+        style={style}
         message={message}
         bubbleType={type}
         direction={bySelf ? 'rtl' : 'ltr'}

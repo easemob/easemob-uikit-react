@@ -222,7 +222,7 @@ let Conversations: FC<ConversationListProps> = props => {
             </div>
           )}
       <ConversationScrollList
-        style={{ height: 'calc(100% - 110px)' }}
+        // style={{ height: 'calc(100% - 110px)' }}
         hasMore={hasConversationNext}
         data={renderData}
         scrollDirection="down"

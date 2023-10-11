@@ -10,6 +10,7 @@ import Modal from '../../../component/modal';
 import { CurrentConversation } from '../../store/ConversationStore';
 export interface SelectedControlsProps {
   prefix?: string;
+  style?: React.CSSProperties;
   onHide?: () => void;
   conversation?: CurrentConversation;
   onSendMessage?: (message: AgoraChat.CombineMsgBody) => void;
@@ -18,7 +19,7 @@ export interface SelectedControlsProps {
 const SelectedControls = (props: SelectedControlsProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { t } = useTranslation();
-  const { prefix: customizePrefixCls, onHide, conversation, onSendMessage } = props;
+  const { prefix: customizePrefixCls, onHide, conversation, onSendMessage, style = {} } = props;
   const prefixCls = getPrefixCls('selected-controls', customizePrefixCls);
   const rootStore = useContext(RootContext).rootStore;
   const classString = classNames(prefixCls);
@@ -129,7 +130,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
 
   return (
     <>
-      <div className={classString}>
+      <div className={classString} style={{ ...style }}>
         <div className={`${prefixCls}-content`}>
           <div className={`${prefixCls}-content-left`}>
             <div className={`${prefixCls}-iconBox`} onClick={close}>

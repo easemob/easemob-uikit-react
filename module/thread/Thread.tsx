@@ -31,6 +31,7 @@ import { RootContext } from '../store/rootContext';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
   shape?: 'ground' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
   message: AgoraChat.MessageBody;
@@ -45,7 +46,7 @@ export interface ThreadProps {
 const Thread = (props: ThreadProps) => {
   const context = useContext(RootContext);
   const { rootStore, features, onError } = context;
-  const { prefix, className, messageListProps, messageEditorProps } = props;
+  const { prefix, className, messageListProps, messageEditorProps, style = {} } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('thread', prefix);
   const { t } = useTranslation();
@@ -530,7 +531,7 @@ const Thread = (props: ThreadProps) => {
     setRenderMembers(filterMembers);
   };
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       <div ref={headerRef}>
         <Header
           avatar={<Icon type="THREAD"></Icon>}

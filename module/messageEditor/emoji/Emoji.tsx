@@ -14,6 +14,8 @@ export interface EmojiConfig {
 }
 
 export interface EmojiProps {
+  style?: React.CSSProperties;
+  emojiContainerStyle?: React.CSSProperties;
   icon?: ReactNode;
   onSelected?: (emojiString: string) => void;
   trigger?: 'click' | 'hover';
@@ -33,6 +35,8 @@ const Emoji = (props: EmojiProps) => {
     selectedList,
     onDelete,
     emojiConfig,
+    style = {},
+    emojiContainerStyle = {},
   } = props;
   const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
@@ -49,7 +53,7 @@ const Emoji = (props: EmojiProps) => {
       }
       return (
         <Button key={k} type={btnType}>
-          <div className="cui-emoji-box">
+          <div className="cui-emoji-box" style={{ ...emojiContainerStyle }}>
             {emojiConfig ? (
               typeof v == 'string' ? (
                 <img
@@ -93,7 +97,7 @@ const Emoji = (props: EmojiProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" title={t('emoji') as string}>
+    <span className="icon-container" style={{ ...style }} title={t('emoji') as string}>
       <Icon
         type="FACE"
         width={20}

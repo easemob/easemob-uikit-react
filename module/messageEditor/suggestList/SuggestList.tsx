@@ -22,6 +22,7 @@ const searchUser = (memberList: MemberItem[], queryString?: string) => {
 
 export interface SuggestListProps {
   visible: boolean;
+  style?: React.CSSProperties;
   position: { x: number; y: number };
   queryString?: string;
   className?: string;
@@ -43,6 +44,7 @@ const SuggestList: FC<SuggestListProps> = props => {
   indexRef.current = index;
   const visibleRef = useRef<boolean>();
   visibleRef.current = props.visible;
+  const { style = {} } = props;
   let currentCVS = getStore().messageStore.currentCVS;
   const client = getStore().client;
   const memberList = getGroupItemFromGroupsById(currentCVS.conversationId)?.members || [];
@@ -129,6 +131,7 @@ const SuggestList: FC<SuggestListProps> = props => {
           style={{
             bottom: `calc(100% - ${props.position.y}px)`,
             left: props.position.x,
+            ...style,
           }}
         >
           <div className={listCls}>

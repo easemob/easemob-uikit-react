@@ -16,7 +16,14 @@ export interface SearchProps {
   shape?: 'ground' | 'square';
 }
 export default function Search(props: SearchProps) {
-  const { onChange, prefix: customizePrefixCls, className, shape = 'ground', ...others } = props;
+  const {
+    onChange,
+    prefix: customizePrefixCls,
+    className,
+    shape = 'ground',
+    style = {},
+    ...others
+  } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('search', customizePrefixCls);
   const classString = classNames(
@@ -31,7 +38,7 @@ export default function Search(props: SearchProps) {
     onChange && onChange(e);
   };
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       <Icon type="SEARCH" className={`${prefixCls}-icon`}></Icon>
       <input
         type="text"

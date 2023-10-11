@@ -9,12 +9,13 @@ import './style/style.scss';
 export interface RecalledMessageProps extends TextMessageProps {
   prefixCls?: string;
   className?: string;
+  style?: React.CSSProperties;
   message: AgoraChat.MessageBody;
   onlyContent?: boolean;
 }
 
 const RecalledMessage = (props: RecalledMessageProps) => {
-  const { message, prefixCls: customizePrefixCls, className, onlyContent } = props;
+  const { message, prefixCls: customizePrefixCls, className, onlyContent, style = {} } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-recall', customizePrefixCls);
@@ -37,6 +38,7 @@ const RecalledMessage = (props: RecalledMessageProps) => {
   const msg = { ...message, msg: t('unsupportedMessageType') };
   return (
     <TextMessage
+      style={style}
       onlyContent={onlyContent}
       customAction={{ visible: false }}
       reaction={false}

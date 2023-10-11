@@ -17,6 +17,7 @@ export interface FileMessageProps extends BaseMessageProps {
   iconType?: IconProps['type'];
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
   nickName?: string;
   type?: 'primary' | 'secondly';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;

@@ -545,7 +545,9 @@ class MessageStore {
   }
 
   deleteReaction(cvs: CurrentConversation, messageId: string, emoji: string) {
-    if (!cvs || !messageId || !emoji) return;
+    if (!cvs || !messageId || !emoji) {
+      throw new Error('deleteReaction params error');
+    }
     return this.rootStore.client
       .deleteReaction({
         messageId,
@@ -719,7 +721,7 @@ class MessageStore {
   }
 
   setTyping(cvs: CurrentConversation, typing: boolean) {
-    if (cvs.chatType !== 'singleChat') return;
+    if (cvs.chatType !== 'singleChat') return console.warn('typing is only for singleChat');
 
     this.typing[cvs.conversationId] = typing;
   }

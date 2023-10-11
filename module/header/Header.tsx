@@ -8,6 +8,7 @@ import Button from '../../component/button';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 export interface HeaderProps {
   className?: string;
+  style?: React.CSSProperties;
   prefix?: string;
   content?: ReactNode;
   avatar?: ReactNode; // 头像
@@ -48,6 +49,7 @@ const Header: FC<HeaderProps> = props => {
     close,
     onClickClose,
     suffixIcon,
+    style = {},
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -143,7 +145,11 @@ const Header: FC<HeaderProps> = props => {
     );
   }
 
-  return <div className={classString}>{contentNode}</div>;
+  return (
+    <div className={classString} style={{ ...style }}>
+      {contentNode}
+    </div>
+  );
 };
 
 export { Header };
