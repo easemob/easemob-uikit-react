@@ -111,6 +111,9 @@ class MessageStore {
       | AgoraChat.DeliveryMsgBody
       | AgoraChat.ChannelMsgBody,
   ) {
+    if (!message) {
+      throw new Error('no message');
+    }
     // @ts-ignore
     const { to, chatType } = message;
     // @ts-ignore
@@ -396,7 +399,9 @@ class MessageStore {
   }
 
   deleteMessage(cvs: CurrentConversation, messageId: string | string[]) {
-    if (!cvs) return;
+    if (!cvs || !messageId) {
+      throw new Error('deleteMessage params error');
+    }
 
     let msgIds: string[] = [];
     if (Array.isArray(messageId)) {
@@ -451,7 +456,9 @@ class MessageStore {
   }
 
   recallMessage(cvs: CurrentConversation, messageId: string, isChatThread: boolean = false) {
-    if (!cvs || !messageId) return;
+    if (!cvs || !messageId) {
+      throw new Error('recallMessage params error');
+    }
     let conversation: Conversation = this.rootStore.conversationStore.getConversation(
       // @ts-ignore
       cvs.chatType,
@@ -644,13 +651,16 @@ class MessageStore {
   }
 
   translateMessage(cvs: CurrentConversation, messageId: string, language: string) {
-    if (!cvs || !messageId) return;
+    if (!cvs || !messageId) {
+      throw new Error('translateMessage params error');
+    }
     const messages = getMessages(cvs);
     const messageIndex = getMessageIndex(messages, messageId);
     return new Promise((res, rej) => {
       if (messageIndex > -1) {
         let currentMsg = messages[messageIndex];
         if (currentMsg.type !== 'txt') {
+          rej(false);
           return console.warn('message type is not txt');
         }
         this.rootStore.client
@@ -699,6 +709,9 @@ class MessageStore {
   }
 
   modifyServerMessage(messageId: string, msg: AgoraChat.ModifiedMsg) {
+    if (!messageId || !msg) {
+      throw new Error('modifyServerMessage params error');
+    }
     const { client } = this.rootStore;
     return client
       .modifyMessage({
