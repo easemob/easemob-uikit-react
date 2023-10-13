@@ -10,6 +10,9 @@ import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
 export interface RecorderProps {
   prefix?: string;
+  style?: React.CSSProperties; // container style
+  iconStyle?: React.CSSProperties; // icon style
+  liveContentStyle?: React.CSSProperties; // live content style
   cancelBtnShape?: 'circle' | 'square';
   onShow?: () => void;
   onHide?: () => void;
@@ -35,6 +38,9 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     conversation,
     onBeforeSendMessage,
     isChatThread = false,
+    style = {},
+    iconStyle = {},
+    liveContentStyle = {},
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('recorder', customizePrefixCls);
@@ -159,6 +165,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         onBeforeSendMessage(message).then(cvs => {
           if (cvs) {
             message.to = cvs.conversationId;
+            // @ts-ignore
             message.chatType = cvs.chatType;
           }
 
@@ -171,7 +178,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   };
 
   const initNode = (
-    <div className="icon-container" title={t('module.record') as string}>
+    <div className="icon-container" style={{ ...iconStyle }} title={t('record') as string}>
       <Icon
         type="CIRCLE_WAVE"
         width={20}
@@ -183,9 +190,9 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   );
 
   const liveNode = (
-    <div className={`${prefixCls}-content`}>
+    <div className={`${prefixCls}-content`} style={{ ...liveContentStyle }}>
       <div className={`${prefixCls}-content-left`}>
-        <div className={`${prefixCls}-iconBox`} title={t(`module.cancel`)}>
+        <div className={`${prefixCls}-iconBox`} title={t(`cancel`) as string}>
           <Icon type="DELETE" width={20} height={20} onClick={() => handleClick('stop')}></Icon>
         </div>
         <div className={`${prefixCls}-time`}>
@@ -193,15 +200,15 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         </div>
       </div>
       <div className={`${prefixCls}-content-right`}>
-        <span>{t('module.recording')}...</span>
-        <div onClick={sendAudio} className={`${prefixCls}-send`} title={t(`module.send`)}>
+        <span>{t('recording')}...</span>
+        <div onClick={sendAudio} className={`${prefixCls}-send`} title={t(`send`) as string}>
           <Icon type="AIR_PLANE" width={20} height={20} color="#fff"></Icon>
         </div>
       </div>
     </div>
   );
   return (
-    <div style={{ width: isRecording ? '100%' : 'fit-content' }} className={classString}>
+    <div style={{ width: isRecording ? '100%' : 'fit-content', ...style }} className={classString}>
       {isRecording ? liveNode : initNode}
     </div>
   );

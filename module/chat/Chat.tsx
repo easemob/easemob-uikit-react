@@ -30,6 +30,8 @@ import CallKit from 'chat-callkit';
 export interface ChatProps {
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
+  threadModalStyle?: React.CSSProperties;
   renderHeader?: (cvs: {
     chatType: 'singleChat' | 'groupChat';
     conversationId: string;
@@ -87,6 +89,8 @@ const Chat: FC<ChatProps> = props => {
     messageListProps,
     messageEditorProps,
     rtcConfig,
+    style = {},
+    threadModalStyle = {},
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -156,6 +160,7 @@ const Chat: FC<ChatProps> = props => {
   const threadList = rootStore.threadStore.threadList[CVS.conversationId] || [];
   const openThread = item => {
     // close thread list modal
+    rootStore.threadStore.joinChatThread(item.id || '');
     setModalOpen(false);
     rootStore.threadStore.setThreadVisible(true);
     rootStore.threadStore.getChatThreadDetail(item.id);
@@ -176,22 +181,22 @@ const Chat: FC<ChatProps> = props => {
           lastMsg = item.lastMessage?.msg;
           break;
         case 'img':
-          lastMsg = `/${t('module.image')}/`;
+          lastMsg = `/${t('image')}/`;
           break;
         case 'audio':
-          lastMsg = `/${t('module.audio')}/`;
+          lastMsg = `/${t('audio')}/`;
           break;
         case 'file':
-          lastMsg = `/${t('module.file')}/`;
+          lastMsg = `/${t('file')}/`;
           break;
         case 'video':
-          lastMsg = `/${t('module.video')}/`;
+          lastMsg = `/${t('video')}/`;
           break;
         case 'custom':
-          lastMsg = `/${t('module.custom')}/`;
+          lastMsg = `/${t('custom')}/`;
           break;
         case 'combine':
-          lastMsg = `/${t('module.combine')}/`;
+          lastMsg = `/${t('combine')}/`;
           break;
         default:
           console.warn('unexpected message type:', item.lastMessage?.type);
@@ -254,7 +259,7 @@ const Chat: FC<ChatProps> = props => {
     visible: true,
     actions: [
       {
-        content: t('module.clearMsgs'),
+        content: t('clearMsgs'),
         onClick: () => {
           rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
           rootStore.client.removeHistoryMessages({
@@ -265,7 +270,7 @@ const Chat: FC<ChatProps> = props => {
         },
       },
       {
-        content: t('module.deleteCvs'),
+        content: t('deleteCvs'),
         onClick: () => {
           rootStore.conversationStore.deleteConversation(rootStore.conversationStore.currentCvs);
 
@@ -463,12 +468,16 @@ const Chat: FC<ChatProps> = props => {
       case 'user-published':
         // getIdMap
         if (!info.confr) return;
-        let idMap = await rtcConfig?.getIdMap?.({
-          userId: rootStore.client.user,
-          channel: info.confr.channel,
-        });
-        if (idMap && Object.keys(idMap).length > 0) {
-          CallKit.setUserIdMap(idMap);
+        try {
+          let idMap = await rtcConfig?.getIdMap?.({
+            userId: rootStore.client.user,
+            channel: info.confr.channel,
+          });
+          if (idMap && Object.keys(idMap).length > 0) {
+            CallKit.setUserIdMap(idMap);
+          }
+        } catch (e) {
+          console.error(e);
         }
         break;
       default:
@@ -556,8 +565,12 @@ const Chat: FC<ChatProps> = props => {
 
     CallKit.startCall(options);
     // }
-    let idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
-    CallKit.setUserIdMap(idMap);
+    try {
+      let idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
+      CallKit.setUserIdMap(idMap);
+    } catch (e) {
+      console.error(e);
+    }
 
     CallKit.setUserInfo({
       [CVS.conversationId]: {
@@ -596,12 +609,12 @@ const Chat: FC<ChatProps> = props => {
   }
 
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       {isEmpty ? (
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text={t('module.noConversation')}></Empty>
+          <Empty text={t('noConversation')}></Empty>
         )
       ) : (
         <>
@@ -670,7 +683,7 @@ const Chat: FC<ChatProps> = props => {
               onClear={() => {
                 setRenderThreadList(threadList || []);
               }}
-              style={{ width: '360px' }}
+              style={{ width: '360px', ...threadModalStyle }}
             >
               <div className={`${prefixCls}-threads-box`}>{threadListContent()}</div>
             </ThreadModal>

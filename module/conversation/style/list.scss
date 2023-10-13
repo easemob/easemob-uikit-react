@@ -6,6 +6,8 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationList;
     background: $cvs-background;
     height: 100%;
     position: relative;
+    display: flex;
+    flex-direction: column;
     &-search{
         margin: $cvs-search-margin;
     }

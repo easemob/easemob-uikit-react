@@ -64,6 +64,10 @@ import Provider, { ProviderProps } from './store/Provider';
 import { useClient } from './hooks/useClient';
 import { useConversations } from './hooks/useConversation';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
+import { useConversationContext } from './hooks/useConversationContext';
+import { useChatContext } from './hooks/useChatContext';
+import { useAddressContext } from './hooks/useAddressContext';
+import { useThreadContext } from './hooks/useThreadContext';
 import { useSDK } from './hooks/useSDK';
 import Thread, { ThreadProps } from './thread';
 import UserProfile, { UserProfileProps } from './userProfile';
@@ -154,4 +158,8 @@ export {
   useConversations,
   useHistoryMessages,
   useSDK,
+  useConversationContext,
+  useChatContext,
+  useAddressContext,
+  useThreadContext,
 };

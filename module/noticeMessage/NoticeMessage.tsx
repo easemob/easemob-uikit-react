@@ -1,7 +1,8 @@
 import React from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
-import { getConversationTime, getMsgSenderNickname, BaseMessageType } from '../utils';
+import type { BaseMessageType } from '../baseMessage/BaseMessage';
+import { getConversationTime, getMsgSenderNickname } from '../utils';
 import './style/style.scss';
 import type { RecallMessage } from '../store/MessageStore';
 import rootStore from '../store/index';
@@ -23,21 +24,21 @@ const NoticeMessage = (props: NoticeMessageProps) => {
   const { prefix: customizePrefixCls, className } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-notice', customizePrefixCls);
-  const { noticeMessage } = props;
+  const { noticeMessage, style = {} } = props;
   let { message, time } = noticeMessage;
   const classString = classNames(prefixCls, className);
 
   if ((noticeMessage as RecallMessage).type == 'recall') {
     const myUserId = rootStore.client.user;
     if (myUserId == (noticeMessage as RecallMessage).from) {
-      message = t('module.you') + ' ' + t('module.unsentAMessage');
+      message = t('you') + ' ' + t('unsentAMessage');
     } else {
       message =
-        getMsgSenderNickname(noticeMessage as BaseMessageType) + ' ' + t('module.unsentAMessage');
+        getMsgSenderNickname(noticeMessage as any as BaseMessageType) + ' ' + t('unsentAMessage');
     }
   }
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       <span>{message}</span>
       <span>{getConversationTime(time)}</span>
     </div>

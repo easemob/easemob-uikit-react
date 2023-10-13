@@ -1,8 +1,8 @@
 # UIKitProvider
 
-`agora-chat-uikit` provides the `UIKitProvider` component for data management. `UIKitProvider` does not render any UI, but only provides the global context for components. It automatically listens for SDK events, passes data down in the React component hierarchy, and drives component rendering. Other components in UIKit must be wrapped with `UIKitProvider`.
+`agora-chat-uikit` 提供 `UIKitProvider` 组件来管理数据。 `UIKitProvider` 不渲染任何 UI, 只用来为其他组件提供全局的 context，它自动监听 SDK 事件, 在组件树中向下传递数据来驱动组件更新，UIKit 中其他组件必须用 `UIKitProvider` 包裹。
 
-## Usage example
+## 使用示例
 
 ```jsx
 import React from 'react';
@@ -78,7 +78,7 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
 );
 ```
 
-## Overview of UIKitProvider
+## UIKitProvider props 概览
 
 <table>
     <tr>
@@ -93,7 +93,7 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
       <td style=font-size:10px>
         ProviderProps['initConfig']
       </td>
-	  <td style=font-size:10px>You can configure the appKey.</td>
+	  <td style=font-size:10px>设置你的 appKey</td>
       </tr>
 	   <tr>
 	   <td style=font-size:10px>
@@ -102,7 +102,7 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
         <td style=font-size:10px>
        ProviderProps['local']
         </td>
-	   <td style=font-size:10px>For the local UI texts, you can configure the parameters of the i18next init method.</td>
+	   <td style=font-size:10px>国际化配置参数，你可以在初始化时配置 `i18next` 的参数</td>
 	   </tr>
         <tr>
 	   <td style=font-size:10px>
@@ -111,7 +111,7 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
         <td style=font-size:10px>
        ProviderProps['features']
         </td>
-	   <td style=font-size:10px>What functions are used for global configuration. By default, all functions are displayed. If the features are also configured in the component, the configuration in the component will prevail.</td>
+	   <td style=font-size:10px>全局配置你需要的功能，UIKit 默认展示全部的功能。如果在组件中也配置了需要的功能，会议在组件中的配置为准。</td>
 	   </tr>
         <tr>
 	   <td style=font-size:10px>
@@ -120,7 +120,7 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
         <td style=font-size:10px>
        ProviderProps['reactionConfig']
         </td>
-	   <td style=font-size:10px>Global reaction emoticon configuration. If this parameter is also configured in the message component, the configuration in the message component shall prevail</td>
+	   <td style=font-size:10px>全局配置消息表情回复功能的表情，如果在消息组件中也设置了这个参数，会以消息组件中设置的为准。</td>
 	   </tr>
        <tr>
 	   <td style=font-size:10px>
@@ -129,7 +129,7 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
         <td style=font-size:10px>
        ProviderProps['onError']
         </td>
-	   <td style=font-size:10px>OnError event in SDK.</td>
+	   <td style=font-size:10px>SDK 的 onError 事件。</td>
 	   </tr>
        
 </table>

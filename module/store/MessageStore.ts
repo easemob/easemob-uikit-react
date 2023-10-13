@@ -114,6 +114,9 @@ class MessageStore {
       | AgoraChat.DeliveryMsgBody
       | AgoraChat.ChannelMsgBody,
   ) {
+    if (!message) {
+      throw new Error('no message');
+    }
     // @ts-ignore
     const { to, chatType } = message;
     // @ts-ignore
@@ -286,7 +289,8 @@ class MessageStore {
       this.message[message.chatType][conversationId].push(message);
     }
 
-    if (message.isChatThread) {
+    // @ts-ignore
+    if (message.isChatThread || message.chatThread) {
       return;
     }
 
@@ -398,7 +402,9 @@ class MessageStore {
   }
 
   deleteMessage(cvs: CurrentConversation, messageId: string | string[]) {
-    if (!cvs) return;
+    if (!cvs || !messageId) {
+      throw new Error('deleteMessage params error');
+    }
 
     let msgIds: string[] = [];
     if (Array.isArray(messageId)) {
@@ -441,13 +447,30 @@ class MessageStore {
       .then(() => {
         // console.log('删服务器');
         _deleteMessage(msgIds);
+        let conversation: Conversation = this.rootStore.conversationStore.getConversation(
+          // @ts-ignore
+          cvs.chatType,
+          cvs.conversationId,
+        ) as unknown as Conversation;
+        // @ts-ignore
+        conversation.lastMessage = {};
+        this.rootStore.conversationStore.modifyConversation(conversation);
       });
   }
 
   recallMessage(cvs: CurrentConversation, messageId: string, isChatThread: boolean = false) {
-    if (!cvs || !messageId) return;
+    if (!cvs || !messageId) {
+      throw new Error('recallMessage params error');
+    }
+    let conversation: Conversation = this.rootStore.conversationStore.getConversation(
+      // @ts-ignore
+      cvs.chatType,
+      cvs.conversationId,
+    ) as unknown as Conversation;
+
     // the others recall the message
     const messages = getMessages(cvs);
+    if (!messages) return;
     const msgIndex = getMessageIndex(messages, messageId);
     if (messages[msgIndex].from !== this.rootStore.client.user) {
       if (msgIndex > -1) {
@@ -455,6 +478,14 @@ class MessageStore {
         //@ts-ignore
         messages[msgIndex].ext = {};
       }
+      if (!conversation) return;
+      //@ts-ignore
+      conversation.lastMessage = messages[msgIndex];
+      if (conversation.unreadCount > 0) {
+        conversation.unreadCount -= 1;
+      }
+
+      this.rootStore.conversationStore.modifyConversation(conversation);
       return;
     }
     // mySelf recall the message
@@ -472,6 +503,11 @@ class MessageStore {
           messages[msgIndex].type = 'recall';
           //@ts-ignore
           messages[msgIndex].ext = {};
+
+          if (!conversation) return;
+          // @ts-ignore
+          conversation.lastMessage = messages[msgIndex];
+          this.rootStore.conversationStore.modifyConversation(conversation);
         }
       });
   }
@@ -519,7 +555,9 @@ class MessageStore {
   }
 
   deleteReaction(cvs: CurrentConversation, messageId: string, emoji: string) {
-    if (!cvs || !messageId || !emoji) return;
+    if (!cvs || !messageId || !emoji) {
+      throw new Error('deleteReaction params error');
+    }
     return this.rootStore.client
       .deleteReaction({
         messageId,
@@ -616,13 +654,16 @@ class MessageStore {
   }
 
   translateMessage(cvs: CurrentConversation, messageId: string, language: string) {
-    if (!cvs || !messageId) return;
+    if (!cvs || !messageId) {
+      throw new Error('translateMessage params error');
+    }
     const messages = getMessages(cvs);
     const messageIndex = getMessageIndex(messages, messageId);
     return new Promise((res, rej) => {
       if (messageIndex > -1) {
         let currentMsg = messages[messageIndex];
         if (currentMsg.type !== 'txt') {
+          rej(false);
           return console.warn('message type is not txt');
         }
         this.rootStore.client
@@ -671,6 +712,9 @@ class MessageStore {
   }
 
   modifyServerMessage(messageId: string, msg: AgoraChat.ModifiedMsg) {
+    if (!messageId || !msg) {
+      throw new Error('modifyServerMessage params error');
+    }
     const { client } = this.rootStore;
     return client
       .modifyMessage({
@@ -693,7 +737,7 @@ class MessageStore {
   }
 
   setTyping(cvs: CurrentConversation, typing: boolean) {
-    if (cvs.chatType !== 'singleChat') return;
+    if (cvs.chatType !== 'singleChat') return console.warn('typing is only for singleChat');
 
     this.typing[cvs.conversationId] = typing;
   }

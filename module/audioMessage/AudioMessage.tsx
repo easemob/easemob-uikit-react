@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useRef, useState, useEffect } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
@@ -11,6 +11,7 @@ import { observer } from 'mobx-react-lite';
 import { getCvsIdFromMessage } from '../utils';
 import { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
+import AC from 'agora-chat';
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -61,6 +62,22 @@ const AudioMessage = (props: AudioMessageProps) => {
   );
   const context = useContext(RootContext);
   const { onError } = context;
+
+  const [sourceUrl, setUrl] = useState('');
+  useEffect(() => {
+    let options = {
+      url: audioMessage.url as string,
+      headers: {
+        Accept: 'audio/mp3',
+      },
+      onFileDownloadComplete: function (response: any) {
+        let objectUrl = AC.utils.parseDownloadResponse.call(rootStore.client, response);
+        setUrl(objectUrl);
+      },
+      onFileDownloadError: function () {},
+    };
+    AC.utils.download.call(rootStore.client, options);
+  }, [audioMessage.url]);
   const playAudio = () => {
     setPlayStatus(true);
     (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current
@@ -267,11 +284,11 @@ const AudioMessage = (props: AudioMessageProps) => {
   return (
     <>
       {onlyContent ? (
-        <div className={classString} onClick={playAudio} style={{ ...style }}>
+        <div className={classString} onClick={playAudio} style={{ ...customStyle, ...style }}>
           <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
           <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
           <audio
-            src={file.url || url}
+            src={typeof file.url == 'string' ? file.url : sourceUrl}
             ref={audioRef}
             onEnded={handlePlayEnd}
             onError={handlePlayEnd}
@@ -282,7 +299,6 @@ const AudioMessage = (props: AudioMessageProps) => {
         <BaseMessage
           id={audioMessage.id}
           direction={bySelf ? 'rtl' : 'ltr'}
-          style={customStyle}
           message={audioMessage}
           time={messageTime}
           nickName={nickName}
@@ -306,11 +322,11 @@ const AudioMessage = (props: AudioMessageProps) => {
           onClickThreadTitle={handleClickThreadTitle}
           {...others}
         >
-          <div className={classString} onClick={playAudio} style={{ ...style }}>
+          <div className={classString} onClick={playAudio} style={{ ...customStyle, ...style }}>
             <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
             <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
             <audio
-              src={file.url || url}
+              src={typeof file.url == 'string' ? file.url : sourceUrl}
               ref={audioRef}
               onEnded={handlePlayEnd}
               onError={handlePlayEnd}

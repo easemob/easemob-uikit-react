@@ -375,7 +375,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           id={combinedMessage.id}
           message={combinedMessage}
           direction={bySelf ? 'rtl' : 'ltr'}
-          style={style}
           time={time}
           nickName={nickName}
           bubbleType={type}
@@ -401,7 +400,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           onClickThreadTitle={handleClickThreadTitle}
           {...others}
         >
-          <div className={classString}>
+          <div className={classString} style={style}>
             <div className={`${prefixCls}-title`} onClick={showCombinedMsgs}>
               <Icon className={`${prefixCls}-icon`} type="TIME" width={20} height={20}></Icon>
               <p>{title}</p>
@@ -423,7 +422,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           </div>
         </BaseMessage>
       ) : (
-        <div className={classString}>
+        <div className={classString} style={style}>
           <div className={`${prefixCls}-title`} onClick={showCombinedMsgs}>
             <Icon className={`${prefixCls}-icon`} type="TIME" width={20} height={20}></Icon>
             <p>{title}</p>
@@ -446,7 +445,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
       )}
       <Modal
         open={modalOpen}
-        title={t('module.chatHistory')}
+        title={t('chatHistory')}
         footer=""
         onCancel={() => {
           setModalOpen(false);

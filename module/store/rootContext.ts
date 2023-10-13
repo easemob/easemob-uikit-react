@@ -10,8 +10,8 @@ export interface RootConsumerProps {
 
 export interface ContextProps {
   rootStore: RootStore;
-  initConfig: any;
-  client: any;
+  initConfig: { appKey: string; token?: string; userId?: string };
+  client: AgoraChat.Connection;
   onError?: (err: AgoraChat.ErrorEvent) => void;
   features?: {
     chat?: {
@@ -53,13 +53,23 @@ export interface ContextProps {
       };
     };
   };
+  reactionConfig?: {
+    map: {
+      [key: string]: HTMLImageElement;
+    };
+  };
+  theme?: {
+    primaryColor?: string;
+  };
 }
 
 export const RootContext = React.createContext<ContextProps>({
   rootStore,
-  initConfig: {},
-  client: {},
+  initConfig: {} as { appKey: string },
+  client: {} as AgoraChat.Connection,
   onError: (err: AgoraChat.ErrorEvent) => {},
+  reactionConfig: { map: {} },
+  theme: {},
 });
 
 export const RootConsumer = RootContext.Consumer;

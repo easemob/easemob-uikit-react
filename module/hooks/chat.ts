@@ -83,7 +83,8 @@ const useEventHandler = () => {
       },
       onRecallMessage: message => {
         let chatType: 'singleChat' | 'groupChat' = 'singleChat';
-        let conversationId = message.from;
+        let conversationId =
+          message.from == rootStore.rootStore.client.user ? message.to : message.from;
         if (message.to.length == 15 && Number(message.to) > 0) {
           chatType = 'groupChat';
           conversationId = message.to;
@@ -195,7 +196,16 @@ const useEventHandler = () => {
       },
 
       onChatThreadChange: (message: AgoraChat.ThreadChangeInfo) => {
-        threadStore.updateThreadInfo(message);
+        if (message.operation == 'userRemove') {
+          if (
+            message.userName == rootStore.rootStore.client.user &&
+            threadStore.currentThread?.info?.id == message.id
+          ) {
+            threadStore.setThreadVisible(false);
+          }
+        } else {
+          threadStore.updateThreadInfo(message);
+        }
       },
     });
 

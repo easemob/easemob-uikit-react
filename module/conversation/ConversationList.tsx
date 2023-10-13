@@ -209,7 +209,7 @@ let Conversations: FC<ConversationListProps> = props => {
         <Header
           {...headerProps}
           back={headerProps.back || false}
-          content={headerProps.content || t('module.conversationTitle')}
+          content={headerProps.content || t('conversationTitle')}
           icon={headerProps.icon || <Icon type="PLUS_CIRCLE" height={24} width={24} />}
         ></Header>
       )}
@@ -222,7 +222,7 @@ let Conversations: FC<ConversationListProps> = props => {
             </div>
           )}
       <ConversationScrollList
-        style={{ height: 'calc(100% - 110px)' }}
+        // style={{ height: 'calc(100% - 110px)' }}
         hasMore={hasConversationNext}
         data={renderData}
         scrollDirection="down"

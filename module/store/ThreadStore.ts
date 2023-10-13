@@ -53,10 +53,16 @@ class ThreadStore {
   }
 
   setCurrentThread(thread: CurrentThread) {
+    if (!thread) {
+      throw new Error('no thread');
+    }
     this.currentThread = thread;
   }
 
   setThreadVisible(visible: boolean) {
+    if (typeof visible !== 'boolean') {
+      throw new Error('visible must be boolean');
+    }
     this.showThreadPanel = visible;
   }
 
@@ -168,32 +174,38 @@ class ThreadStore {
     }
   }
 
-  getChatThreadDetail(threadId: string) {
-    if (!threadId) return;
+  getChatThreadDetail(threadId: string): Promise<void> {
+    if (!threadId) {
+      throw new Error('no threadId');
+    }
     const currentThreadInfo = this.currentThread.info;
     // if (currentThreadInfo) {
-    this.rootStore.client.getChatThreadDetail({ chatThreadId: threadId }).then((res: any) => {
-      // 找到原消息
-      const message = this.rootStore.messageStore.message['groupChat'][res.data.parentId];
-      const originalMessage = message.find(
-        (item: any) => item.mid === res.data.messageId || item.id === res.data.messageId,
-      );
-      this.setCurrentThread({
-        ...this.currentThread,
-        originalMessage: originalMessage,
-        info: {
-          // ...currentThreadInfo,
-          // // @ts-ignore
-          // owner: res.data.owner,
-          ...res.data,
-        },
+    return this.rootStore.client
+      .getChatThreadDetail({ chatThreadId: threadId })
+      .then((res: any) => {
+        // 找到原消息
+        const message = this.rootStore.messageStore.message['groupChat'][res.data.parentId];
+        const originalMessage = message.find(
+          (item: any) => item.mid === res.data.messageId || item.id === res.data.messageId,
+        );
+        this.setCurrentThread({
+          ...this.currentThread,
+          originalMessage: originalMessage,
+          info: {
+            // ...currentThreadInfo,
+            // // @ts-ignore
+            // owner: res.data.owner,
+            ...res.data,
+          },
+        });
       });
-    });
     // }
   }
 
-  getThreadMembers(parentId: string, threadId: string) {
-    if (!parentId || !threadId) return;
+  getThreadMembers(parentId: string, threadId: string): Promise<string[]> {
+    if (!parentId || !threadId) {
+      throw new Error('no parentId or threadId');
+    }
     return this.rootStore.client
       .getChatThreadMembers({
         chatThreadId: threadId,
@@ -229,7 +241,9 @@ class ThreadStore {
   }
 
   removeChatThreadMember(parentId: string, threadId: string, userId: string) {
-    if (!parentId || !threadId || !userId) return;
+    if (!parentId || !threadId || !userId) {
+      throw new Error('no parentId or threadId or userId');
+    }
     return this.rootStore.client
       .removeChatThreadMember({
         chatThreadId: threadId,
@@ -241,14 +255,18 @@ class ThreadStore {
   }
 
   joinChatThread(chatThreadId: string) {
-    if (!chatThreadId) return;
+    if (!chatThreadId) {
+      throw new Error('no chatThreadId');
+    }
     return this.rootStore.client.joinChatThread({ chatThreadId }).then((res: any) => {
       // this.getThreadMembers('', chatThreadId);
     });
   }
 
-  getGroupChatThreads(parentId: string, cursor?: string) {
-    if (!parentId) return console.error('no parentId');
+  getGroupChatThreads(parentId: string, cursor?: string): Promise<string | null> {
+    if (!parentId) {
+      throw new Error('no parentId');
+    }
     // if (this.threadList[parentId]?.length > 0 && !cursor) return console.error('no cursor', cursor);
 
     return this.rootStore.client

@@ -212,6 +212,7 @@ export function getMessageIndex(
   messages: (AgoraChat.MessageBody | RecallMessage)[],
   messageId: string,
 ) {
+  if (!messages) return -1;
   //@ts-ignore
   return messages.findIndex(msg => msg.id === messageId || msg.mid === messageId);
 }

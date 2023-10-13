@@ -1,6 +1,7 @@
 @import './reaction-btn.scss';
 
 @import '~/common/style/index.scss';
+@import './reaction-btn.scss';
 $status-prefix-cls: #{$cui-prefix}-reaction-box;
 
 .#{$status-prefix-cls}{

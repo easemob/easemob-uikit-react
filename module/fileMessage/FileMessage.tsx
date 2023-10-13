@@ -17,6 +17,7 @@ export interface FileMessageProps extends BaseMessageProps {
   iconType?: IconProps['type'];
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
   nickName?: string;
   type?: 'primary' | 'secondly';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
@@ -248,7 +249,6 @@ const FileMessage = (props: FileMessageProps) => {
       id={fileMessage.id}
       message={fileMessage}
       bubbleType={type}
-      style={style}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
       nickName={nickName}
@@ -270,7 +270,7 @@ const FileMessage = (props: FileMessageProps) => {
       onClickThreadTitle={handleClickThreadTitle}
       {...baseMsgProps}
     >
-      <div className={classString}>
+      <div className={classString} style={style}>
         <div className={`${prefixCls}-info`}>
           <span onClick={handleClick}>{filename}</span>
           <span>{(file_length / 1024).toFixed(2)}kb</span>

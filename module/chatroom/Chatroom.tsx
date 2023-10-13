@@ -166,7 +166,7 @@ const Chatroom = (props: ChatroomProps) => {
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text={t('module.noConversation')}></Empty>
+          <Empty text={t('noConversation')}></Empty>
         )
       ) : (
         <>

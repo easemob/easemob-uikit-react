@@ -9,12 +9,13 @@ import './style/style.scss';
 export interface RecalledMessageProps extends TextMessageProps {
   prefixCls?: string;
   className?: string;
+  style?: React.CSSProperties;
   message: AgoraChat.MessageBody;
   onlyContent?: boolean;
 }
 
 const RecalledMessage = (props: RecalledMessageProps) => {
-  const { message, prefixCls: customizePrefixCls, className, onlyContent } = props;
+  const { message, prefixCls: customizePrefixCls, className, onlyContent, style = {} } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-recall', customizePrefixCls);
@@ -27,16 +28,17 @@ const RecalledMessage = (props: RecalledMessageProps) => {
   // @ts-ignore
   // if (message.bySelf) {
   //   // @ts-ignore
-  //   message.msg = t('module.you') + t('module.unsentAMessage');
+  //   message.msg = t('you') + t('unsentAMessage');
   // } else {
   //   // @ts-ignore
-  //   message.msg = message.from + t('module.unsentAMessage');
+  //   message.msg = message.from + t('unsentAMessage');
   // }
   // @ts-ignore
-  // message.msg = t('module.unsupportedMessageType');
-  const msg = { ...message, msg: t('module.unsupportedMessageType') };
+  // message.msg = t('unsupportedMessageType');
+  const msg = { ...message, msg: t('unsupportedMessageType') };
   return (
     <TextMessage
+      style={style}
       onlyContent={onlyContent}
       customAction={{ visible: false }}
       reaction={false}

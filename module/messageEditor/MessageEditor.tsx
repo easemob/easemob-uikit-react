@@ -27,6 +27,7 @@ export interface MessageEditorProps {
   enabledTyping?: boolean; // 是否启用正在输入
   onSend?: (message: any) => void; // 消息发送的回调
   className?: string; // wrap 的 class
+  style?: React.CSSProperties; // wrap 的 style
   showSendButton?: boolean; // 是否展示发送按钮
   sendButtonIcon?: ReactNode; // 发送按钮的 icon
   row?: number; //input 行数
@@ -169,6 +170,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     onBeforeSendMessage,
     enabledTyping,
     customActions,
+    style = {},
   } = props;
 
   useEffect(() => {
@@ -226,7 +228,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     onSendMessage && onSendMessage(message);
   };
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       {isShowRecorder && (
         <Recorder
           isChatThread={isChatThread}

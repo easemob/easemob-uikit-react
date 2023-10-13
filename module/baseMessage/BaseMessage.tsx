@@ -12,12 +12,12 @@ import { RepliedMsg } from '../repliedMessage';
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard } from '../reaction';
-import { ReactionMessage, ReactionData } from '../reaction';
+import { ReactionMessage, ReactionData, ReactionMessageProps } from '../reaction';
 import { getStore } from '../store';
 import Checkbox from '../../component/checkbox';
 import UserProfile from '../userProfile';
 import { observer } from 'mobx-react-lite';
-
+import { EmojiConfig } from '../messageEditor/emoji/Emoji';
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -76,6 +76,7 @@ export interface BaseMessageProps {
   thread?: boolean; // whether show thread
   chatThreadOverview?: AgoraChat.ChatThreadOverview;
   onClickThreadTitle?: () => void;
+  reactionConfig?: ReactionMessageProps['reactionConfig'];
 }
 
 const msgSenderIsCurrentUser = (message: BaseMessageType) => {
@@ -151,6 +152,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     messageStatus = true,
     chatThreadOverview,
     onClickThreadTitle,
+    reactionConfig,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -194,6 +196,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
   const threadNode = () => {
     let { name, messageCount, lastMessage = {} } = chatThreadOverview!;
+
     const { from, type, time } = lastMessage || {};
     let msgContent = '';
     switch (type) {
@@ -247,11 +250,11 @@ let BaseMessage = (props: BaseMessageProps) => {
         </div>
         <div className={`${prefixCls}-thread-message`}>
           {msgContent && (
-            <Avatar size={16} src={appUsersInfo?.[userId]?.avatarurl}>
-              {appUsersInfo?.[userId]?.nickname || userId}
+            <Avatar size={16} src={appUsersInfo?.[from]?.avatarurl}>
+              {appUsersInfo?.[from]?.nickname || from}
             </Avatar>
           )}
-          <span>{msgSenderNickname}</span>
+          <span>{(appUsersInfo[from]?.nickname || from) as unknown as string}</span>
           <span>{msgContent}</span>
           <span>{getConversationTime(time)}</span>
         </div>
@@ -366,14 +369,14 @@ let BaseMessage = (props: BaseMessageProps) => {
             return (
               <li key={index} onClick={deleteMessage}>
                 <Icon type="DELETE" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.delete')}
+                {t('delete')}
               </li>
             );
           } else if (item.content === 'REPLY') {
             return (
               <li key={index} onClick={replyMessage}>
                 <Icon type="ARROW_TURN_LEFT" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.reply')}
+                {t('reply')}
               </li>
             );
           } else if (item.content === 'UNSEND') {
@@ -381,7 +384,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               isCurrentUser && (
                 <li key={index} onClick={recallMessage}>
                   <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
-                  {t('module.unsend')}
+                  {t('unsend')}
                 </li>
               )
             );
@@ -390,7 +393,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               message?.type === 'txt' && (
                 <li key={index} onClick={translateMessage}>
                   <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
-                  {t('module.translate')}
+                  {t('translate')}
                 </li>
               )
             );
@@ -400,7 +403,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               message?.type === 'txt' && (
                 <li key={index} onClick={modifyMessage}>
                   <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
-                  {t('module.modify')}
+                  {t('modify')}
                 </li>
               )
             );
@@ -408,14 +411,14 @@ let BaseMessage = (props: BaseMessageProps) => {
             return (
               <li key={index} onClick={selectMessage}>
                 <Icon type="SELECT" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.select')}
+                {t('select')}
               </li>
             );
           } else if (item.content === 'RESEND') {
             return (
               <li key={index} onClick={resendMessage}>
                 <Icon type="LOOP" width={16} height={16} color="#5270AD"></Icon>
-                {t('module.resend')}
+                {t('resend')}
               </li>
             );
           }
@@ -468,7 +471,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
   return (
     <div>
-      <div className="ttt">
+      <div className="thread-container">
         {select && (
           <Checkbox shape={shape} className="checkbox" onChange={handleCheckboxChange}></Checkbox>
         )}
@@ -520,6 +523,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   )}
                   {reaction && status != 'failed' && (
                     <EmojiKeyBoard
+                      reactionConfig={reactionConfig}
                       onSelected={handleClickEmoji}
                       selectedList={selectedList}
                       onDelete={handleDeleteReactionEmoji}
@@ -543,6 +547,7 @@ let BaseMessage = (props: BaseMessageProps) => {
       </div>
       {reactionData && reaction && (
         <ReactionMessage
+          reactionConfig={reactionConfig}
           direction={direction}
           reactionData={reactionData}
           onClick={handleClickEmoji}

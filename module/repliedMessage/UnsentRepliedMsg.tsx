@@ -36,7 +36,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
         content = (
           <div className={`${prefixCls}-summary-desc`}>
             <Icon type="DOC" color="#75828A" width={16} height={16}></Icon>
-            <span>{t('module.file')}:</span>
+            <span>{t('file')}:</span>
             {msg.filename}
           </div>
         );
@@ -45,7 +45,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
         content = (
           <div className={`${prefixCls}-summary-desc`}>
             <Icon type="WAVE3" color="#75828A" width={16} height={16}></Icon>
-            <span>{t('module.audio')}:</span>
+            <span>{t('audio')}:</span>
             {msg.length}"
           </div>
         );
@@ -53,7 +53,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
       case 'img':
         content = (
           <div className={`${prefixCls}-summary-desc`}>
-            <span>{t('module.image')}</span>
+            <span>{t('image')}</span>
             <div className={`${prefixCls}-summary-desc-img`}>
               {/* <Icon type="IMG" color="#75828A" width={24} height={24}></Icon> */}
               <img src={msg.thumb || msg.url}></img>
@@ -65,7 +65,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
         content = (
           <div className={`${prefixCls}-summary-desc`}>
             <Icon type="TIME" color="#75828A" width={16} height={16}></Icon>
-            <span>{t('module.chatHistory')}</span>
+            <span>{t('chatHistory')}</span>
           </div>
         );
         break;
@@ -81,12 +81,12 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
   };
 
   const myUserId = rootStore.client.user;
-  const from = repliedMessage?.from === myUserId ? t('module.you') : repliedMessage?.from;
+  const from = repliedMessage?.from === myUserId ? t('you') : repliedMessage?.from;
 
   return (
     <div className={classString}>
       <div className={`${prefixCls}-summary-title`}>
-        {t('module.replyingTo')} <span>{from}</span>
+        {t('replyingTo')} <span>{from}</span>
       </div>
       {renderMsgContent(repliedMessage)}
       <Icon

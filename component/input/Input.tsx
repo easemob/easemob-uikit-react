@@ -16,6 +16,7 @@ import Icon from '../icon';
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
   size?: 'large' | 'middle' | 'small';
   required?: boolean;
   value?: string;
@@ -44,6 +45,7 @@ const Input: FC<InputProps> = props => {
     shape = 'ground',
     close,
     suffixIcon,
+    style = {},
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('input', prefix);
@@ -136,7 +138,7 @@ const Input: FC<InputProps> = props => {
   };
 
   return (
-    <div className={classes}>
+    <div className={classes} style={{ ...style }}>
       <input
         ref={ref}
         disabled={props.disabled}

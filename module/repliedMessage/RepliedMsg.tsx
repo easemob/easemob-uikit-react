@@ -17,6 +17,7 @@ const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
   className?: string;
+  style?: React.CSSProperties;
   shape?: 'ground' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
   message: AgoraChat.MessageBody;
@@ -30,6 +31,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     shape = 'square',
     direction = 'ltr',
     message,
+    style = {},
   } = props;
   if (!message) {
     return null;
@@ -109,18 +111,18 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     let content: ReactNode;
     if (!repliedMsg) {
       return (content = (
-        <div className={`${prefixCls}-content-text-not`}>{t('module.messageNotFound')}</div>
+        <div className={`${prefixCls}-content-text-not`}>{t('messageNotFound')}</div>
       ));
     }
     // @ts-ignore
     if (repliedMsg.type === 'recall') {
-      let msg = t('module.messageNotFound');
+      let msg = t('messageNotFound');
       // @ts-ignore
       // if (repliedMsg.bySelf) {
-      //   msg = t('module.you') + t('module.unsentAMessage');
+      //   msg = t('you') + t('unsentAMessage');
       // } else {
       //   // @ts-ignore
-      //   msg = repliedMsg.from + t('module.unsentAMessage');
+      //   msg = repliedMsg.from + t('unsentAMessage');
       // }
       return (content = <div className={`${prefixCls}-content-text-not`}>{msg}</div>);
     }
@@ -193,7 +195,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         // content = (
         //   <div className={`${prefixCls}-content-text`}>
         //     <Icon type="TIME" color="#75828A" width={20} height={20}></Icon>
-        //     <span>{t('module.chatHistory')}</span>
+        //     <span>{t('chatHistory')}</span>
         //   </div>
         // );
         content = (
@@ -239,16 +241,17 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     }, 1500);
   };
   const myUserId = rootStore.client.user;
-  const from = message.from === myUserId ? t('module.you') : message.from;
+  const from = message.from === myUserId ? t('you') : message.from;
   const to =
     msgQuote?.msgSender === myUserId
-      ? t('module.you')
+      ? t('you')
       : rootStore.addressStore.appUsersInfo?.[msgQuote?.msgSender as string]?.nickname ||
         msgQuote?.msgSender;
 
   return (
     <div
       className={classString}
+      style={{ ...style }}
       onMouseOver={() => setHoverStatus(true)}
       onMouseLeave={() => {
         setHoverStatus(false);
@@ -257,7 +260,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       <div className={`${prefixCls}-nick`}>
         <Icon type="ARROW_TURN_LEFT" width={20} height={20} color="#5270AD"></Icon>
         <span>{from}</span>
-        {t('module.repliedTo')}
+        {t('repliedTo')}
         <span>{to}</span>
       </div>
       <div className={`${prefixCls}-box`}>

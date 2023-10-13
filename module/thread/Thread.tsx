@@ -8,7 +8,7 @@ import './style/style.scss';
 import { AgoraChat } from 'agora-chat';
 import { useTranslation } from 'react-i18next';
 import Header from '../header';
-import MessageEditor from '../messageEditor';
+import MessageEditor, { MessageEditorProps } from '../messageEditor';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import TextMessage from '../textMessage';
@@ -31,6 +31,7 @@ import { RootContext } from '../store/rootContext';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
+  style?: React.CSSProperties;
   shape?: 'ground' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
   message: AgoraChat.MessageBody;
@@ -39,12 +40,13 @@ export interface ThreadProps {
   groupID: string;
   threadID?: string;
   originalMsg: AgoraChat.MessageBody;
+  messageEditorProps?: MessageEditorProps;
 }
 
 const Thread = (props: ThreadProps) => {
   const context = useContext(RootContext);
   const { rootStore, features, onError } = context;
-  const { prefix, className, messageListProps } = props;
+  const { prefix, className, messageListProps, messageEditorProps, style = {} } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('thread', prefix);
   const { t } = useTranslation();
@@ -140,7 +142,7 @@ const Thread = (props: ThreadProps) => {
   const classString = classNames(prefixCls, className);
 
   const [editorDisable, setEditorDisable] = useState(false);
-  const [threadName, setThreadName] = useState(t('module.aThread'));
+  const [threadName, setThreadName] = useState(t('aThread'));
   const [role, setRole] = useState('member'); // My role in the group
   const handleThreadNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setThreadName(event.target.value);
@@ -155,7 +157,7 @@ const Thread = (props: ThreadProps) => {
     return (
       <div className={`${prefixCls}-original`}>
         <div className={`${prefixCls}-original-start`}>
-          {t('module.startedBy')}{' '}
+          {t('startedBy')}{' '}
           <span>
             {getMsgSenderNickname({
               chatType: 'groupChat',
@@ -173,7 +175,7 @@ const Thread = (props: ThreadProps) => {
   const renderCreateForm = () => {
     return (
       <div className={`${prefixCls}-create`}>
-        <div className={`${prefixCls}-create-title`}>{t('module.threadNameRequired')}</div>
+        <div className={`${prefixCls}-create-title`}>{t('threadNameRequired')}</div>
         <div className={`${prefixCls}-create-content`}>
           <Input
             onChange={handleThreadNameChange}
@@ -182,8 +184,8 @@ const Thread = (props: ThreadProps) => {
             }}
             close
             required
-            value={t('module.aThread') as string}
-            placeholder={t('module.enterThreadName') as string}
+            value={t('aThread') as string}
+            placeholder={t('enterThreadName') as string}
           />
         </div>
 
@@ -209,7 +211,7 @@ const Thread = (props: ThreadProps) => {
     if (currentThread.creating) {
       // 创建thread
       const options = {
-        name: threadName?.replace(/(^\s*)|(\s*$)/g, '') || (t('module.aThread') as string),
+        name: threadName?.replace(/(^\s*)|(\s*$)/g, '') || (t('aThread') as string),
         // @ts-ignore
         messageId: originalMessage.mid || originalMessage.id,
         parentId: originalMessage.to,
@@ -529,11 +531,11 @@ const Thread = (props: ThreadProps) => {
     setRenderMembers(filterMembers);
   };
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       <div ref={headerRef}>
         <Header
           avatar={<Icon type="THREAD"></Icon>}
-          content={threadStore.currentThread.info?.name || t('module.aThread')}
+          content={threadStore.currentThread.info?.name || t('aThread')}
           close
           onClickClose={handleClickClose}
           moreAction={threadMoreAction}
@@ -549,6 +551,7 @@ const Thread = (props: ThreadProps) => {
         // onSendMessage={handleSendMessage}
         onBeforeSendMessage={handleSendMessage}
         conversation={conversation}
+        {...messageEditorProps}
       />
 
       <Modal

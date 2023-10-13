@@ -10,6 +10,8 @@ import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
 export interface MoreActionProps {
+  style?: React.CSSProperties;
+  itemContainerStyle?: React.CSSProperties;
   prefix?: string;
   icon?: ReactNode;
   customActions?: Array<{
@@ -29,6 +31,8 @@ let MoreAction = (props: MoreActionProps) => {
     conversation,
     isChatThread,
     onBeforeSendMessage,
+    style = {},
+    itemContainerStyle = {},
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -42,7 +46,7 @@ let MoreAction = (props: MoreActionProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" title={t('module.more') as string}>
+    <span className="icon-container" style={{ ...style }} title={t('more') as string}>
       <Icon
         type="PLUS_CIRCLE"
         width={20}
@@ -65,11 +69,11 @@ let MoreAction = (props: MoreActionProps) => {
   const defaultActions = [
     {
       content: 'image',
-      title: t('module.image'),
+      title: t('image'),
       onClick: sendImage,
       icon: null,
     },
-    { content: 'file', title: t('module.file'), onClick: sendFile, icon: null },
+    { content: 'file', title: t('file'), onClick: sendFile, icon: null },
   ];
   let actions = [];
   if (customActions) {
@@ -79,7 +83,7 @@ let MoreAction = (props: MoreActionProps) => {
   }
 
   const menu = (
-    <ul className={classString}>
+    <ul className={classString} style={{ ...itemContainerStyle }}>
       {actions.map((item, index) => {
         if (item.content == 'IMAGE') {
           return (
@@ -90,7 +94,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {t('module.image')}
+              {t('image')}
             </li>
           );
         } else if (item.content == 'FILE') {
@@ -102,7 +106,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {t('module.file')}
+              {t('file')}
             </li>
           );
         }
