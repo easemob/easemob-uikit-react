@@ -502,7 +502,6 @@ const TextMessage = (props: TextMessageProps) => {
           <BaseMessage
             id={textMessage.id}
             direction={bySelf ? 'rtl' : 'ltr'}
-            style={style}
             time={time}
             message={textMessage}
             nickName={nickName}
@@ -530,7 +529,9 @@ const TextMessage = (props: TextMessageProps) => {
             {...others}
           >
             <div>
-              <span className={classString}>{renderTxt(msg, true)}</span>
+              <span className={classString} style={{ ...style }}>
+                {renderTxt(msg, true)}
+              </span>
               {!!(urlData?.title || urlData?.description) && (
                 <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
               )}

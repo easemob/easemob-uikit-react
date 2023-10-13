@@ -50,11 +50,12 @@ const Header: FC<HeaderProps> = props => {
     onClickClose,
     suffixIcon,
     style = {},
+    className,
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('header', customizePrefixCls);
-  const classString = classNames(prefixCls);
+  const classString = classNames(prefixCls, className);
 
   const clickClose = () => {
     onClickClose?.();

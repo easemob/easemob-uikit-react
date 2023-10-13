@@ -82,7 +82,7 @@ const useGroupMembers = (groupId: string) => {
 
   const getGroupMemberList = () => {
     if (!hasNext) return;
-    client
+    return client
       .listGroupMembers({
         groupId,
         pageNum: pageNum,

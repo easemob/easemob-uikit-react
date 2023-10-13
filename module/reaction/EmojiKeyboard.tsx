@@ -8,6 +8,7 @@ import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import { emoji } from './emojiConfig';
 import { RootContext } from '../store/rootContext';
+import './style/style.scss';
 export interface EmojiKeyBoardProps {
   prefixCls?: string;
   onSelected?: (emoji: string) => void;

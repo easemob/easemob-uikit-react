@@ -16,6 +16,7 @@ export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
   style?: React.CSSProperties;
+  className?: string;
   type?: 'primary' | 'secondly';
   onClickImage?: (url: string) => void;
   nickName?: string;
@@ -31,6 +32,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     renderUserProfile,
     thread,
     nickName,
+    className,
     ...others
   } = props;
   let type = props.type;
@@ -272,11 +274,12 @@ let ImageMessage = (props: ImageMessageProps) => {
   if (!type) {
     type = bySelf ? 'primary' : 'secondly';
   }
+
+  const classSting = classNames('message-image-content', className);
   return (
     <div>
       <BaseMessage
         id={message.id}
-        style={style}
         message={message}
         bubbleType={type}
         direction={bySelf ? 'rtl' : 'ltr'}
@@ -300,7 +303,9 @@ let ImageMessage = (props: ImageMessageProps) => {
         bubbleStyle={{ padding: '0' }}
         {...others}
       >
-        <div className="message-image-content">{img.current}</div>
+        <div className={classSting} style={style}>
+          {img.current}
+        </div>
       </BaseMessage>
       {previewVisible && (
         <ImagePreview

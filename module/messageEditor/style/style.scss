@@ -3,6 +3,7 @@
 @import './moreAction.scss';
 @import './recorder.scss';
 @import './textarea.scss';
+@import './selectedControls.scss';
 
 $editor-prefix-cls: #{$cui-prefix}-message-editor;
 .#{$editor-prefix-cls}{

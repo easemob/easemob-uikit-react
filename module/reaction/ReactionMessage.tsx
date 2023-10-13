@@ -6,6 +6,7 @@ import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import { EmojiKeyBoard } from './EmojiKeyboard';
 import { RootContext } from '../store/rootContext';
+import './style/style.scss';
 export interface ReactionData {
   count: number;
   isAddedBySelf?: boolean;

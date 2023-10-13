@@ -7,7 +7,7 @@ import { Tooltip } from '../../component/tooltip/Tooltip';
 import Avatar from '../../component/avatar';
 import Icon from '../../component/icon';
 import { RootContext } from '../store/rootContext';
-
+import './style/style.scss';
 let timeoutId: string | number | NodeJS.Timeout | undefined;
 
 export interface ReactionButtonProps {

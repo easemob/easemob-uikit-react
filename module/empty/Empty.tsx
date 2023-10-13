@@ -11,12 +11,12 @@ export interface EmptyProps {
 }
 
 const Empty: FC<EmptyProps> = props => {
-  const { icon, text = 'No Data', prefix: customizePrefixCls, style = {} } = props;
+  const { icon, text = 'No Data', prefix: customizePrefixCls, style = {}, className } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('empty', customizePrefixCls);
 
-  const classString = classNames(prefixCls);
+  const classString = classNames(prefixCls, className);
 
   return (
     <div className={classString} style={{ ...style }}>

@@ -284,7 +284,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   return (
     <>
       {onlyContent ? (
-        <div className={classString} onClick={playAudio} style={{ ...style }}>
+        <div className={classString} onClick={playAudio} style={{ ...customStyle, ...style }}>
           <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
           <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
           <audio
@@ -299,7 +299,6 @@ const AudioMessage = (props: AudioMessageProps) => {
         <BaseMessage
           id={audioMessage.id}
           direction={bySelf ? 'rtl' : 'ltr'}
-          style={customStyle}
           message={audioMessage}
           time={messageTime}
           nickName={nickName}
@@ -323,7 +322,7 @@ const AudioMessage = (props: AudioMessageProps) => {
           onClickThreadTitle={handleClickThreadTitle}
           {...others}
         >
-          <div className={classString} onClick={playAudio} style={{ ...style }}>
+          <div className={classString} onClick={playAudio} style={{ ...customStyle, ...style }}>
             <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
             <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
             <audio

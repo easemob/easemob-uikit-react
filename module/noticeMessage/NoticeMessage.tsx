@@ -24,7 +24,7 @@ const NoticeMessage = (props: NoticeMessageProps) => {
   const { prefix: customizePrefixCls, className } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-notice', customizePrefixCls);
-  const { noticeMessage } = props;
+  const { noticeMessage, style = {} } = props;
   let { message, time } = noticeMessage;
   const classString = classNames(prefixCls, className);
 
@@ -38,7 +38,7 @@ const NoticeMessage = (props: NoticeMessageProps) => {
     }
   }
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       <span>{message}</span>
       <span>{getConversationTime(time)}</span>
     </div>

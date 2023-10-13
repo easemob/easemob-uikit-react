@@ -3,7 +3,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
 $audio-prefix-cls: #{$cui-prefix}-message-audio;
 $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
 $text-msg-prefix-cls: #{$cui-prefix}-message-text;
-
+$moreAction-prefix-cls: #{$cui-prefix}-moreAction;
 .#{$status-prefix-cls} {
     width: 100%;
     font-size: $msg-base-font-size;
@@ -358,7 +358,37 @@ $text-msg-prefix-cls: #{$cui-prefix}-message-text;
     }
 }
 
-.ttt {
+.#{$moreAction-prefix-cls} {
+    padding: 0;
+    margin: 0;
+    display: grid;
+    li{
+        list-style: none;
+        height: 36px;
+        border-radius: 8px;
+        padding: 0 $padding-xs;
+        // line-height: 36px;
+        cursor: pointer;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 20px;
+
+        >div{
+            margin-right: 8px;
+        }
+    }
+    li:hover{
+        /* color_neutral/95 */
+        background-color: $gray-95;
+    }
+}
+
+.thread-container {
     display: flex;
     align-items: center;
 

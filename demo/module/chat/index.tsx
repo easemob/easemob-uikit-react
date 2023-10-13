@@ -22,6 +22,13 @@ import Thread from '../../../module/thread';
 import './index.css';
 import { observer } from 'mobx-react-lite';
 import axios from 'axios';
+import { useConversationContext, useChatContext } from '../../../module';
+import { hexToHsla, generateColors } from '../../../module/utils/color';
+
+console.log('hexToHsla', hexToHsla('#FF0000'));
+console.log('hexToHsla', hexToHsla('#000000'));
+console.log('hexToHsla', hexToHsla('#ffffff'));
+console.log('hexToHsla 1', generateColors(hexToHsla('#FF0000')));
 // import {
 // 	Chat,
 // 	rootStore,
@@ -30,22 +37,22 @@ import axios from 'axios';
 // 	useClient,
 // } from 'chatuim2';
 // import 'chatuim2/style.css';
-
+window.rootStore = rootStore;
 const ChatApp = () => {
   const client = useClient();
-  useEffect(() => {
-    client &&
-      client
-        .open({
-          user: 'zd2',
-          // pwd: '272808',
-          accessToken:
-            'YWMteVQiVFXlQz24UxIfhL7jsShYwv00w0hrtpGKy_Jc3V2wZK1gYksR7I4SWySLBY-5AwMAAAGK0N7CvgABUX6wy9x1evPAbmNLo_cnR4svRIF8xQrpNXeLO01iZla9vA==',
-        })
-        .then(res => {
-          console.log('获取token成功', res, rootStore.client);
-        });
-  }, [client]);
+  // useEffect(() => {
+  //   client &&
+  //     client
+  //       .open({
+  //         user: 'zd3',
+  //         // pwd: '272808',
+  //         accessToken:
+  //           'YWMtgwTHNZPxQviWaqMIJTHfFyhYwv00w0hrtpGKy_Jc3V2J3LcwYk0R7J9BM4gepb6yAwMAAAGLCXYIsQABTnFcluGlL4BdlKN4Qdf0EQThNgjgWh4vB9JhWxj-X18Ucg==',
+  //       })
+  //       .then(res => {
+  //         console.log('获取token成功', res, rootStore.client);
+  //       });
+  // }, [client]);
 
   const getUrlPreviewInfo = () => {
     getLinkPreview(
@@ -56,11 +63,29 @@ const ChatApp = () => {
         console.log(22, e);
       });
   };
-  console.log('rootStore', rootStore);
+  // console.log('rootStore', rootStore.conversationStore.currentCvs);
+
+  let {
+    topConversation: topConversationInner,
+    currentConversation,
+    conversationList,
+    setCurrentConversation,
+  } = useConversationContext();
+
+  let { messages } = useChatContext();
+  console.log(11111, messages);
   const topConversation = () => {
-    rootStore.conversationStore.topConversation({
+    setCurrentConversation({
       chatType: 'singleChat',
-      conversationId: '9a0dac930f',
+      conversationId: 'zd2',
+      name: 'zd2',
+      unreadCount: 0,
+    });
+    console.log(222, currentConversation);
+    console.log('222', rootStore.conversationStore.currentCvs);
+    topConversationInner({
+      chatType: 'singleChat',
+      conversationId: 'zd2',
       lastMessage: {},
     });
   };
@@ -161,7 +186,12 @@ const ChatApp = () => {
             }}
             className="conversation"
             renderItem={csv => (
-              <ConversationItem onClick={handleClickCvs(csv)} key={csv.conversationId} data={csv} />
+              <ConversationItem
+                onClick={handleClickCvs(csv)}
+                key={csv.conversationId}
+                data={csv}
+                // isActive
+              />
             )}
           ></ConversationList>
         )}
@@ -205,11 +235,11 @@ const ChatApp = () => {
           </div>
         )}
       </div>
-      {/* <div>
+      <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
         <Button onClick={topConversation}>top 2808</Button>
         <br />
-      </div> */}
+      </div>
     </>
   );
 };
@@ -234,6 +264,9 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       initConfig={{
         appKey: '41117440#383391',
+        userId: 'zd3',
+        token:
+          '007eJxTYLgsX3Pdju/4lM27zhzf8tfX/87xlKOTHXPOLJ/et6D+/60YBYY0w5Rkc3OLpJSUZDMTs8QUizQjMwNLc7PkRKMUA0PTZOU29dSGQEaGXq1US0YGVgZGIATxVRgsLFOSk8yNDXTNjExSdA0NU5N1LdNMDHWNjS0sDFMTTZNSk4wA6PsqZA==',
         // appKey: 'easemob#easeim',
       }}
       local={{
@@ -250,7 +283,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       features={{
         conversationList: {
-          // search: false,
+          search: true,
           item: {
             moreAction: false,
             deleteConversation: false,
@@ -282,6 +315,11 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
           },
         },
       }}
+      theme={
+        {
+          // primaryColor: '#00CE76',
+        }
+      }
     >
       <App></App>
     </Provider>

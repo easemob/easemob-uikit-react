@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { RootContext } from '../store/rootContext';
 import { reaction } from 'mobx';
+import { useGroupMembers } from './useAddress';
 const useAddressContext = () => {
   const rootStore = useContext(RootContext).rootStore;
   const { addressStore } = rootStore;
@@ -49,6 +50,10 @@ const useAddressContext = () => {
     };
   }, []);
 
+  const getGroupMembers = (groupId: string) => {
+    const { getGroupMemberList } = useGroupMembers(groupId);
+    return getGroupMemberList?.();
+  };
   return {
     appUsersInfo: appUsersInfoInner,
     groups: groupsInner,
@@ -59,6 +64,7 @@ const useAddressContext = () => {
     removeGroupMember: removeGroupMember.bind(addressStore),
     setGroupMemberAttributes: setGroupMemberAttributes.bind(addressStore),
     setGroupAdmins: setGroupAdmins.bind(addressStore),
+    getGroupMembers: getGroupMembers,
   };
 };
 

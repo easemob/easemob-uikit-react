@@ -471,7 +471,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
   return (
     <div>
-      <div className="ttt">
+      <div className="thread-container">
         {select && (
           <Checkbox shape={shape} className="checkbox" onChange={handleCheckboxChange}></Checkbox>
         )}

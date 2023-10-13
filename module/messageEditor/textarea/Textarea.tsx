@@ -46,7 +46,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const {
     placeholder = 'Say something',
     hasSendButton,
-    sendButtonActiveColor = '#009EFF',
+    sendButtonActiveColor = 'var(--cui-primary-color)',
     enableEnterSend = true,
     enabledMention = true,
     isChatThread = false,

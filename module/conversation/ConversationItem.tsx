@@ -238,7 +238,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
               position: 'relative',
             }}
           >
-            <Badge count={data.unreadCount || 0} color={badgeColor || '#009EFF'}></Badge>
+            <Badge
+              count={data.unreadCount || 0}
+              color={badgeColor || 'var(--cui-primary-color)'}
+            ></Badge>
           </div>
         )}
       </div>
