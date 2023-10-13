@@ -8,7 +8,11 @@
 }
 
 // :root {
-//     --cui-primary-color: red;
+//     --cui-primary-color: hsla(203, 100%, 60%, 1);
+//     --cui-primary-color7: hsla(203, 100%, 70%, 1);
+//     --cui-primary-color8: hsla(203, 100%, 80%, 1);
+//     --cui-primary-color9: hsla(203, 100%, 90%, 1);
+//     --cui-primary-color95: hsla(203, 100%, 95%, 1);
 //     --cui-secondary-color: hsla(155, 100%, 60%, 1);
 //     --cui-error-color: hsla(350, 100%, 60%, 1);
 //     --cui-neutral-color: hsla(203, 8%, 60%, 1);
@@ -21,19 +25,21 @@ $cui-error-color: hsla(350, 100%, 60%, 1);
 $cui-neural-color: hsla(203, 8%, 60%, 1);
 $cui-neutral-special-color: hsla(220, 36%, 60%, 1);
 
+
+
 $blue-base: $cui-primary-color;
-$blue-1: adjusted-color($blue-base, -50%);
-$blue-2: adjusted-color($blue-base, -40%);
-$blue-3: adjusted-color($blue-base, -30%);
-$blue-4: adjusted-color($blue-base, -20%);
-$blue-5: adjusted-color($blue-base, -10%);
-$blue-6: $blue-base;
-$blue-7: adjusted-color($blue-base, 10%);
-$blue-8: adjusted-color($blue-base, 20%);
-$blue-9: adjusted-color($blue-base, 30%);
-$blue-95: adjusted-color($blue-base, 35%);
-$blue-98: adjusted-color($blue-base, 38%);
-$blue-10: adjusted-color($blue-base, 40%);
+$blue-1: var(--cui-primary-color1);
+$blue-2: var(--cui-primary-color2);
+$blue-3: var(--cui-primary-color3);
+$blue-4: var(--cui-primary-color4);
+$blue-5: var(--cui-primary-color5);
+$blue-6: var(--cui-primary-color);
+$blue-7: var(--cui-primary-color7);
+$blue-8: var(--cui-primary-color8);
+$blue-9: var(--cui-primary-color9);
+$blue-95: var(--cui-primary-color95);
+$blue-98: var(--cui-primary-color98);
+$blue-10: var(--cui-primary-color10);
 
 
 $green-base: $cui-secondary-color;

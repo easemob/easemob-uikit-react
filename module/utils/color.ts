@@ -23,7 +23,9 @@ function rgbToHsla(rgb: number[]) {
   // 计算最大、最小颜色分量值和亮度值
   var max = Math.max(r, g, b);
   var min = Math.min(r, g, b);
-  var l = (max + min) / 2;
+  var h,
+    s,
+    l = (max + min) / 2;
 
   // 计算饱和度值
   var s = 0;
@@ -52,8 +54,9 @@ function rgbToHsla(rgb: number[]) {
 
   // 计算透明度值，默认为1（不透明）
   var a = 1;
-
-  return [h, s, l, a];
+  // 转换hsl为hsla
+  const hsla = `hsla(${Math.round(h * 360)},${Math.round(s * 100)}%,${Math.round(l * 100)}%,1)`;
+  return hsla; //[h, s, l, a];
 }
 
 function hexToHsla(hex: string) {
@@ -64,4 +67,41 @@ function hexToHsla(hex: string) {
 
   return rgbToHsla(rgb);
 }
-export { hexToHsla };
+
+// console.log(hexToHsla('#ffffff'));
+//  [0, 1, 0.5, 1]
+
+function generateColors(
+  baseColor: string,
+  lights: number[] = [-50, -40, -30, -20, -10, 0, 10, 20, 30, 35, 38, 40],
+) {
+  var colorArr = baseColor.split(',');
+  var lightness = parseInt(colorArr[2]);
+  var colors = [];
+
+  for (var i = 0; i < lights.length; i++) {
+    var light = lightness + lights[i];
+    colorArr[2] = light + '%';
+    var color = colorArr.join(',');
+    colors.push(color);
+  }
+  setGlobalColors(colors);
+  return colors;
+}
+
+function setGlobalColors(colors: string[]) {
+  document.documentElement.style.setProperty('--cui-primary-color1', colors[0]);
+  document.documentElement.style.setProperty('--cui-primary-color2', colors[1]);
+  document.documentElement.style.setProperty('--cui-primary-color3', colors[2]);
+  document.documentElement.style.setProperty('--cui-primary-color4', colors[3]);
+  document.documentElement.style.setProperty('--cui-primary-color5', colors[4]);
+  document.documentElement.style.setProperty('--cui-primary-color', colors[5]);
+  document.documentElement.style.setProperty('--cui-primary-color7', colors[6]);
+  document.documentElement.style.setProperty('--cui-primary-color8', colors[7]);
+  document.documentElement.style.setProperty('--cui-primary-color9', colors[8]);
+  document.documentElement.style.setProperty('--cui-primary-color95', colors[9]);
+  document.documentElement.style.setProperty('--cui-primary-color98', colors[10]);
+  document.documentElement.style.setProperty('--cui-primary-color10', colors[11]);
+}
+
+export { hexToHsla, generateColors };
