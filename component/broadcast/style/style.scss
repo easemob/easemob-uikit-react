@@ -1,0 +1,5 @@
+@import '~/common/style/index.scss';
+$broadcast-prefix-cls: #{$cui-prefix}-broadcast;
+.#{$broadcast-prefix-cls}{
+    display: flex;
+}
