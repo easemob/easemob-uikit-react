@@ -6,6 +6,7 @@ import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji } from '../utils';
 import { RootStore } from './index';
 import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
+import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 export interface RecallMessage {
   type: 'recall';
   [key: string]: any;
@@ -176,6 +177,23 @@ class MessageStore {
         parentId: currentThread.info?.parentId || currentThread.originalMessage.to,
       };
     }
+    //聊天室消息，在消息的ext里添加自己的信息
+    if (chatType === 'chatRoom') {
+      const myInfo = this.rootStore.addressStore.appUsersInfo[this.rootStore.client.user] || {};
+      (message as TextMessageType).ext = {
+        ...(message as TextMessageType).ext,
+        userInfo: {
+          userId: myInfo?.userId,
+          nickName: myInfo?.nickname,
+          avatarURL: myInfo?.avatarurl,
+          gender: myInfo?.gender,
+          identify: myInfo?.ext?.identify,
+        },
+      };
+      console.log('发的聊天室消息', message, this.rootStore.addressStore.appUsersInfo);
+    }
+
+    // @ts-ignore
     if (message.type != 'read' && message.type != 'delivery' && message.type != 'channel') {
       if (!this.message.byId[message.id]) {
         this.message.byId[message.id] = message;
@@ -267,7 +285,12 @@ class MessageStore {
   receiveMessage(message: AgoraChat.MessageBody) {
     const curCvs = this.rootStore.conversationStore.currentCvs;
     //@ts-ignore
-    if (curCvs && curCvs.chatType === message.chatType && curCvs.conversationId === message.from) {
+    if (
+      curCvs &&
+      curCvs.chatType === message.chatType &&
+      curCvs.conversationId === message.from &&
+      message.chatType != 'chatRoom'
+    ) {
       this.sendChannelAck(curCvs);
     }
     this.message.byId[message.id] = message;
@@ -279,7 +302,7 @@ class MessageStore {
       message.bySelf = true;
     }
     const conversationId = getCvsIdFromMessage(message);
-
+    console.log('收到消息', message);
     // @ts-ignore
     if (!this.message[message.chatType][conversationId]) {
       // @ts-ignore
@@ -291,6 +314,19 @@ class MessageStore {
 
     // @ts-ignore
     if (message.isChatThread || message.chatThread) {
+      return;
+    }
+    // @ts-ignore
+    if (message.chatType == 'chatRoom') {
+      // @ts-ignore
+      const ext = message.ext || {};
+      const senderInfo =
+        typeof ext.userInfo == 'string' ? JSON.parse(ext.userInfo) : ext.userInfo || {};
+      const appUsersInfo = this.rootStore.addressStore.appUsersInfo;
+      this.rootStore.addressStore.setAppUserInfo({
+        ...appUsersInfo,
+        [senderInfo.userId]: senderInfo,
+      });
       return;
     }
 
@@ -470,6 +506,7 @@ class MessageStore {
 
     // the others recall the message
     const messages = getMessages(cvs);
+    console.log('获取到的消息', messages);
     if (!messages) return;
     const msgIndex = getMessageIndex(messages, messageId);
     if (messages[msgIndex].from !== this.rootStore.client.user) {

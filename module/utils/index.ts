@@ -50,7 +50,7 @@ export function parseChannel(channelId: string): {
 
 export function getCvsIdFromMessage(message: AgoraChat.MessageBody | RecallMessage) {
   let conversationId = '';
-  if (message.chatType == 'groupChat') {
+  if (message.chatType == 'groupChat' || message.chatType == 'chatRoom') {
     conversationId = message.to;
   } else if (message.from == rootStore.client.user) {
     // self message

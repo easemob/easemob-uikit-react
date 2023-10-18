@@ -10,3 +10,10 @@
     shape-outside: circle(50%);
     shape-margin: 20px;
   }
+  .container-1{
+    display: flex;
+    position: absolute;
+    width: 40%;
+    height: 90%;
+    margin-left: 30%;
+}

@@ -51,6 +51,8 @@ import { ReactComponent as Loop } from '../svgs/icons/arrow_round.svg';
 import { ReactComponent as CameraArrow } from '../svgs/icons/video_camera_arrow_right.svg';
 import { ReactComponent as Mic } from '../svgs/icons/mic.svg';
 import { ReactComponent as Gift } from '../svgs/icons/gift.svg';
+import { ReactComponent as Bell } from '../svgs/icons/bell.svg';
+import { ReactComponent as BellSlash } from '../svgs/icons/bell_slash.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -200,6 +202,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'GIFT':
       return <Gift></Gift>;
+      break;
+    case 'BELL':
+      return <Bell></Bell>;
+      break;
+    case 'BELL_SLASH':
+      return <BellSlash></BellSlash>;
       break;
     default:
       return '';

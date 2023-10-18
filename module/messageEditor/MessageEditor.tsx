@@ -36,7 +36,7 @@ export interface MessageEditorProps {
   isChatThread?: boolean; // 是否是子区聊天
   enabledMention?: boolean; // 是否开启@功能
   onSendMessage?: (message: AgoraChat.MessageBody) => void;
-  conversation?: CurrentConversation & { chatType: 'chatRoom'; conversationId: string };
+  conversation?: CurrentConversation;
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
   onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
 }
@@ -280,7 +280,7 @@ const MessageEditor = (props: MessageEditorProps) => {
                 ></MoreAction>
               );
             } else if (item.name === 'GIFT' && item.visible) {
-              return <GiftKeyboard />;
+              return <GiftKeyboard conversation={conversation} />;
             } else {
               return (
                 <span

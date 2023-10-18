@@ -51,5 +51,7 @@
     "emoji": "Emoji",
     "record": "Record",
     "resend": "Resend",
-    "unsupportedMessageType": "Unsupported message type"
+    "unsupportedMessageType": "Unsupported message type",
+    "mute": "Mute",
+    "unmute": "Unmute"
 }

@@ -1,5 +1,10 @@
 @import '~/common/style/index.scss';
 $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
+.#{$chatroom-prefix-cls}{
+    display: flex;
+    flex-direction: row;
+    margin: 4px 0;
+}
 .#{$chatroom-prefix-cls}-container{
     font-size: 14px;
     font-style: normal;
@@ -7,6 +12,9 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
     line-height: 20px; 
     color: $gray-1;
     word-break: break-word;
+    flex: 1;
+    max-width: calc(100% - 30px);
+    // position: relative;
 }
 
 .#{$chatroom-prefix-cls}-header{
@@ -53,4 +61,32 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
         font-style: italic;
         font-weight: 700;
     }
+}
+
+.#{$chatroom-prefix-cls}-text-box{
+    
+    padding-right: 30px;
+    display: block;
+    // flex: 1;
+    // position: relative;
+        // display: flex;
+        // justify-content: space-between;
+    // &:hover{
+    //     &>div{
+    //         display: block!important;
+    //     }
+    // }
+    // &>div{
+    //     width: 20px;
+    //     position: absolute;
+    //     right: 0;
+    //     top: 0;
+    //     cursor: pointer;
+    // }
+}
+.#{$chatroom-prefix-cls}-body-action{
+    // position: relative;
+    // right: 0;
+    // top: 0;
+    // display: inline-block;
 }

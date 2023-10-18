@@ -1,34 +1,25 @@
 import React, { FC, useEffect, useRef, useState, useContext, ReactNode } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { useSize } from 'ahooks';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
-import Badge from '../../component/badge';
 import Button from '../../component/button';
 import { Search } from '../../component/input/Search';
 import Header, { HeaderProps } from '../header';
 import MessageEditor, { MessageEditorProps } from '../messageEditor';
-import List from '../../component/list';
 import { MessageList, MsgListProps } from '../chat/MessageList';
-import { getStore } from '../store';
 import { RootContext } from '../store/rootContext';
-import { useEventHandler } from '../hooks/chat';
-import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import Empty from '../empty';
-import { UnsentRepliedMsg } from '../repliedMessage';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from 'module/store/ConversationStore';
-import Typing from '../typing';
-import { ThreadModal } from '../thread';
-import ScrollList from '../../component/scrollList';
 import { AgoraChat } from 'agora-chat';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
 import ChatroomMessage from '../chatroomMessage';
 import { GiftKeyboard } from '../messageEditor/gift';
-
+import Broadcast from '../../component/broadcast';
+import { getUsersInfo } from '../utils/index';
 export interface ChatroomProps {
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
   renderHeader?: (cvs: {
@@ -63,34 +54,52 @@ const Chatroom = (props: ChatroomProps) => {
   } = props;
   const context = useContext(RootContext);
   const { rootStore, features } = context;
-  const chatroomId = '226365301391364';
+  // const chatroomId = '225555145359361';
+  const chatroomId = '228706458075137';
   const [isEmpty, setIsEmpty] = useState(false);
-  const classString = '';
+  const classString = 'chatroom-container';
 
   useEffect(() => {
     window.rootStore = rootStore;
     if (!rootStore.loginState) return;
-    rootStore.client
-      .getChatRooms({
-        pagenum: 20,
-        pagesize: 0,
-      })
-      .then(res => {
-        console.log(res, 111);
-      })
-      .catch(err => {
-        console.log('get fail', err);
-      });
+    if (!chatroomId) {
+      setIsEmpty(true);
+      return;
+    }
+    // rootStore.client.getChatRooms({ pagenum: 1, pagesize: 20 }).then(res => {
+    //   console.log('getChatRooms', res);
+    // });
+
+    rootStore.client.getChatRoomDetails({ chatRoomId: chatroomId }).then(res => {
+      console.log('聊天室详情', res);
+      // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
+      rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
+    });
+
     if (chatroomId) {
       //   rootStore.conversationStore.setCurrentCvs(chatroomId);
       rootStore.client
         .joinChatRoom({ roomId: chatroomId })
         .then(() => {
           console.log('join chatroom success');
+          rootStore.client.getChatRoomAdmin({ chatRoomId: chatroomId }).then(res => {
+            console.log('聊天室管理员', res);
+            rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
+          });
         })
         .catch(err => {
           console.log('join chatroom fail', err);
         });
+
+      rootStore.addressStore.getChatroomMuteList(chatroomId);
+    }
+
+    if (rootStore.loginState) {
+      getUsersInfo({
+        userIdList: [rootStore.client.user],
+      });
+
+      rootStore.client;
     }
   }, [chatroomId, rootStore.loginState]);
 
@@ -158,7 +167,9 @@ const Chatroom = (props: ChatroomProps) => {
   //   }
 
   const renderChatroomMessage = msg => {
-    return <ChatroomMessage type="txt" message={msg} />;
+    if (msg.type == 'txt' || msg.type == 'custom') {
+      return <ChatroomMessage type="txt" message={msg} />;
+    }
   };
   return (
     <div className={classString}>
@@ -166,7 +177,7 @@ const Chatroom = (props: ChatroomProps) => {
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text={t('noConversation')}></Empty>
+          <Empty text={t('module.noConversation')}></Empty>
         )
       ) : (
         <>
@@ -182,7 +193,9 @@ const Chatroom = (props: ChatroomProps) => {
               {...headerProps}
             ></Header>
           )}
-
+          <Broadcast loop={1} delay={2} play={true}>
+            <div>重要通知：最近有不法分子分子诈骗钱财，大家交易时消息谨慎 &nbsp; </div>
+          </Broadcast>
           {renderMessageList ? (
             renderMessageList()
           ) : (
@@ -208,6 +221,7 @@ const Chatroom = (props: ChatroomProps) => {
               {...messageEditorProps}
               actions={[
                 { name: 'TEXTAREA', visible: true },
+                { name: 'EMOJI', visible: true },
                 {
                   name: 'GIFT',
                   visible: true,

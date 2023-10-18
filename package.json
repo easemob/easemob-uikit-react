@@ -83,6 +83,7 @@
     "rc-util": "^5.27.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-fast-marquee": "^1.6.2",
     "react-i18next": "^12.2.0",
     "react-sticky": "^6.0.3",
     "react-string-replace": "^1.1.0",

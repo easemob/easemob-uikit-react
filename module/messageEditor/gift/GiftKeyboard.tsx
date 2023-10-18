@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import AC, { AgoraChat } from 'agora-chat';
 import { Gift } from './Gift';
 import { RootContext } from '../../store/rootContext';
+import { CurrentConversation } from '../../store/ConversationStore';
 export interface GiftKeyboardProps {
   prefix?: string;
   className?: string;
@@ -15,7 +16,7 @@ export interface GiftKeyboardProps {
   onSelected?: (emojiString: string) => void;
   trigger?: 'click' | 'hover';
   onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
-  conversation: { chatType: 'chatRoom'; conversationId: string };
+  conversation?: CurrentConversation;
   gifts?: ReactNode[];
   onSendMessage?: (message: AgoraChat.CustomMsgBody) => void;
   onBeforeSendMessage?: (
@@ -35,7 +36,9 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   const { t } = useTranslation();
   const context = useContext(RootContext);
   const { rootStore, onError } = context;
-  const { messageStore } = rootStore;
+  const { messageStore, conversationStore } = rootStore;
+  const currentSvc = conversationStore.currentCvs;
+  let currentConversation = conversation || currentSvc;
   const iconNode = icon ? (
     icon
   ) : (
@@ -52,10 +55,13 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
 
   const sendGiftMessage = (giftId: string) => {
     console.log('conversation', conversation);
+    if (!currentConversation) {
+      throw new Error('currentConversation is null');
+    }
     const options = {
       type: 'custom',
-      to: conversation.conversationId,
-      chatType: conversation.chatType,
+      to: currentConversation.conversationId,
+      chatType: currentConversation.chatType,
       customEvent: 'CHATROOMUIKITGIFT',
       customExts: {
         giftId: 'gift_1',

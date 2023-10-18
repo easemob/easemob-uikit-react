@@ -51,7 +51,12 @@ const Broadcast = (props: BroadcastProps) => {
         play={play}
         pauseOnHover={pauseOnHover}
         onFinish={() => {
+          console.log('完成');
           onFinish?.();
+        }}
+        autoFill={false}
+        onCycleComplete={() => {
+          console.log('完成');
         }}
       >
         {children}

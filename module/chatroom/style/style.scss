@@ -1,0 +1,9 @@
+@import '~/common/style/index.scss';
+$chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
+.chatroom-container{
+    background-color: $component-background;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 16px;
+}
