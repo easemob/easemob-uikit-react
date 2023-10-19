@@ -1,0 +1,54 @@
+@import '~/common/style/index.scss';
+
+$switch-prefix-cls: #{$cui-prefix}-tabs;
+
+.#{$switch-prefix-cls}{
+    width: 100%;
+    height: 100%;
+    color: $gray-3;
+    display: flex;
+    flex-direction: column;
+    &-header{
+        margin: 0;
+        display: flex;
+        padding: 0;
+        border-bottom: 1px solid $gray-9;
+        height: 36px;
+        li{ 
+            display: flex;
+            list-style: none;
+            flex: 1;
+            text-align: center;
+            width: fit-content;
+            padding: 12px 24px;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            &:hover{
+                color: $blue-6;
+            }
+            &:active{
+                color: $blue-4;
+                box-shadow: 0px -4px 0px 0px $blue-4 inset;
+            }
+        }
+        &-li-active{
+            color: $blue-5;
+            box-shadow: 0px -4px 0px 0px $blue-5 inset;
+        }
+        &-li-disabled{
+            color: $gray-8;
+            &:hover{
+                color: $gray-8!important;
+            }
+            &:active{
+                color: $gray-8!important;
+                box-shadow: none!important;
+            }
+            cursor: not-allowed!important;
+        }
+    }
+    &-content{
+        flex: 1;
+    }
+}
