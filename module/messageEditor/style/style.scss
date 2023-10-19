@@ -10,7 +10,7 @@ $editor-prefix-cls: #{$cui-prefix}-message-editor;
     display: flex;
     padding: $padding-s 0;
     align-items: flex-end;
-    overflow: hidden;
+    // overflow: hidden;
     position: relative;
     &-disabled{
         &::after{
@@ -24,4 +24,5 @@ $editor-prefix-cls: #{$cui-prefix}-message-editor;
             background-color: #fff;
         }
     }
+    
 }

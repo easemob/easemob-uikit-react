@@ -7,6 +7,7 @@ import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji }
 import { RootStore } from './index';
 import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
+import { aC } from 'vitest/dist/types-f302dae9';
 export interface RecallMessage {
   type: 'recall';
   [key: string]: any;
@@ -44,6 +45,8 @@ class MessageStore {
   currentCVS: CurrentConversation;
   repliedMessage: AgoraChat.MessageBody | null;
   typing: Typing;
+  holding: boolean;
+  unreadMessageCount: number;
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
 
@@ -62,12 +65,15 @@ class MessageStore {
     this.currentCVS = {} as CurrentConversation;
     this.repliedMessage = null;
     this.typing = {};
+    this.holding = false;
+    this.unreadMessageCount = 0;
     makeObservable(this, {
       currentCVS: observable,
       message: observable,
       selectedMessage: observable,
       repliedMessage: observable,
       typing: observable,
+      unreadMessageCount: observable,
       setCurrentCVS: action,
       currentCvsMsgs: computed,
       sendMessage: action,
@@ -88,6 +94,8 @@ class MessageStore {
       sendTypingCmd: action,
       clear: action,
       deleteMessage: action,
+      setHoldingStatus: action,
+      setUnreadMessageCount: action,
     });
 
     autorun(() => {
@@ -310,6 +318,10 @@ class MessageStore {
     } else {
       // @ts-ignore
       this.message[message.chatType][conversationId].push(message);
+    }
+
+    if (this.holding) {
+      this.unreadMessageCount += 1;
     }
 
     // @ts-ignore
@@ -791,6 +803,14 @@ class MessageStore {
     this.rootStore.client.send(msg).then(() => {
       // console.log('send cmd success');
     });
+  }
+
+  setHoldingStatus(status: boolean) {
+    this.holding = status;
+  }
+
+  setUnreadMessageCount(count: number) {
+    this.unreadMessageCount = count;
   }
 
   clear() {

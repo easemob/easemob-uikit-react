@@ -29,6 +29,7 @@ import { ReactComponent as ArrowLeft } from '../svgs/icons/chevron_left.svg';
 import { ReactComponent as ArrowUp } from '../svgs/icons/chevron_up.svg';
 import { ReactComponent as ArrowUpThick } from '../svgs/icons/arrow_up_thick.svg';
 import { ReactComponent as ArrowDown } from '../svgs/icons/chevron_down.svg';
+import { ReactComponent as ArrowDownThick } from '../svgs/icons/arrow_down_thick.svg';
 import { ReactComponent as PlusCircle } from '../svgs/icons/plus_in_circle.svg';
 import { ReactComponent as Search } from '../svgs/icons/magnifier.svg';
 import { ReactComponent as Delete } from '../svgs/icons/trashdelete.svg';
@@ -154,6 +155,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ARROW_UP_THICK':
       return <ArrowUpThick></ArrowUpThick>;
+      break;
+    case 'ARROW_DOWN_THICK':
+      return <ArrowDownThick></ArrowDownThick>;
       break;
     case 'ARROW_BACK':
       return <ArrowBack></ArrowBack>;

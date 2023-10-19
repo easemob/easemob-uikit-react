@@ -16,6 +16,7 @@ export interface ScrollListProps<T> {
   prefix?: string;
   data: Array<T>;
   loading: boolean;
+  onScroll?: (e: Event) => void;
 }
 
 let ScrollList = function <T>() {
@@ -33,6 +34,7 @@ let ScrollList = function <T>() {
         loading = false,
         scrollDirection = 'up',
         data,
+        onScroll,
       } = props;
       const { run } = useDebounceFn(
         () => {
@@ -68,6 +70,7 @@ let ScrollList = function <T>() {
 
       useEffect(() => {
         const scrollEvent = (event: Event) => {
+          onScroll?.(event);
           if (!hasMore || loading) return;
           //可视区高度
           let scrollHeight = (event.target as HTMLElement)?.scrollHeight;

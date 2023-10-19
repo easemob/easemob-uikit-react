@@ -8,3 +8,23 @@ $chat-prefix-cls: #{$cui-prefix}-messageList;
         overflow: hidden;
     }
 }
+
+.#{$cui-prefix}-unread-message-count{
+    position: absolute;
+    bottom: 64px;
+    right: 12px;
+    padding: 8px 20px 8px 14px;
+    border-radius: 24px;
+    background: $blue-95;
+    box-shadow: 0px 1px 3px 0px rgba(70, 78, 83, 0.15), 0px 4px 8px 0px rgba(23, 26, 28, 0.10);
+    color: $special-5;
+    text-align: center;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

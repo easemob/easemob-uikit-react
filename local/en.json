@@ -53,5 +53,6 @@
     "resend": "Resend",
     "unsupportedMessageType": "Unsupported message type",
     "mute": "Mute",
-    "unmute": "Unmute"
+    "unmute": "Unmute",
+    "newMessage": "new message(s)"
 }

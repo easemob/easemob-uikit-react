@@ -53,5 +53,6 @@
     "resend": "重发",
     "unsupportedMessageType": "不支持的消息类型",
     "mute": "禁言",
-    "unmute": "解除禁言"
+    "unmute": "解除禁言",
+    "newMessage": "新消息"
 }

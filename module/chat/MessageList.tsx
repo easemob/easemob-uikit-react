@@ -32,6 +32,8 @@ import { renderUserProfileProps } from '../baseMessage';
 import { CurrentConversation } from '../store/ConversationStore';
 import NoticeMessage from '../noticeMessage';
 import { BaseMessageProps } from '../baseMessage';
+import { useTranslation } from 'react-i18next';
+import Icon from '../../component/icon';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
@@ -59,6 +61,7 @@ let MessageList: FC<MsgListProps> = props => {
     messageProps,
     style = {},
   } = props;
+  const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
   const classString = classNames(prefixCls, className);
@@ -172,6 +175,7 @@ let MessageList: FC<MsgListProps> = props => {
   // 每次发消息滚动到最新的一条
   const listRef = React.useRef<List>(null);
   useEffect(() => {
+    if (messageStore.holding) return;
     setTimeout(() => {
       (listRef?.current as any)?.scrollTo('bottom');
     }, 10);
@@ -190,6 +194,30 @@ let MessageList: FC<MsgListProps> = props => {
     }
   }, [currentCVS]);
 
+  // const showUnreadCount = messageStore.unreadMessageCount[currentCVS.chatType]?.[
+  //   currentCVS.conversationId
+  // ]?.unreadCount;
+  const handleScroll = (event: Event) => {
+    let scrollHeight = (event.target as HTMLElement)?.scrollHeight;
+    //滚动高度
+    let scrollTop = (event.target as HTMLElement).scrollTop;
+    //列表内容实际高度
+    let offsetHeight = (event.target as HTMLElement).offsetHeight;
+    // 滚动到顶加载更多
+    let offsetBottom = scrollHeight - (scrollTop + offsetHeight);
+    // scroll to bottom load data
+    console.log(scrollTop, offsetHeight, offsetBottom);
+    if (offsetBottom > 10) {
+      !messageStore.holding && messageStore.setHoldingStatus(true);
+    } else {
+      messageStore.holding && messageStore.setHoldingStatus(false);
+      messageStore.setUnreadMessageCount(0);
+    }
+  };
+
+  const scrollToBottom = () => {
+    (listRef?.current as any)?.scrollTo('bottom');
+  };
   return (
     <div className={classString} style={{ ...style }} ref={msgContainerRef} id="listContainer">
       <MessageScrollList
@@ -198,6 +226,7 @@ let MessageList: FC<MsgListProps> = props => {
         data={messageData}
         loading={isLoading}
         loadMoreItems={loadMore}
+        onScroll={handleScroll}
         renderItem={(itemData, index) => {
           return (
             <div key={itemData.id} className={`${classString}-msgItem`}>
@@ -206,6 +235,13 @@ let MessageList: FC<MsgListProps> = props => {
           );
         }}
       ></MessageScrollList>
+      {messageStore.unreadMessageCount > 0 && (
+        <div className={`cui-unread-message-count`} onClick={scrollToBottom}>
+          <Icon type="ARROW_DOWN_THICK" width={20} height={20}></Icon>
+          {messageStore.unreadMessageCount > 99 ? '99+' : messageStore.unreadMessageCount}{' '}
+          {t('newMessage')}
+        </div>
+      )}
     </div>
   );
 };
