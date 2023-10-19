@@ -14,13 +14,24 @@ $header-prefix-cls: #{$cui-prefix}-header;
         align-items: center;
         overflow: hidden;
         flex: 1;
-        &-text{
+        &-box{
+            display: flex;
+            flex-direction: column;
+            margin-left: 12px;
             margin-left: $margin-sm;
+        }
+        &-text{
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             flex: 1;
             text-align: left;
+        }
+        &-sub{
+            color: $gray-5;
+            font-size: 12px;
+            font-style: normal;
+            line-height: 16px;
         }
     }
 

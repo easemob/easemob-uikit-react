@@ -12,6 +12,7 @@ export interface HeaderProps {
   prefix?: string;
   content?: ReactNode;
   avatar?: ReactNode; // 头像
+  subtitle?: ReactNode; // 副标题
   icon?: ReactNode; // 右侧更多按钮 icon
   back?: boolean; // 是否显示左侧返回按钮
   avatarSrc?: string;
@@ -51,6 +52,7 @@ const Header: FC<HeaderProps> = props => {
     suffixIcon,
     style = {},
     className,
+    subtitle,
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -109,7 +111,10 @@ const Header: FC<HeaderProps> = props => {
               {content}
             </Avatar>
           )}
-          <span className={`${prefixCls}-content-text`}>{content ? content : null}</span>
+          <div className={`${prefixCls}-content-box`}>
+            <span className={`${prefixCls}-content-text`}>{content ? content : null}</span>
+            {subtitle && <span className={`${prefixCls}-content-sub`}>{subtitle}</span>}
+          </div>
         </div>
 
         <div
