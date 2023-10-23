@@ -55,6 +55,7 @@ import { ReactComponent as Mic } from '../svgs/icons/mic.svg';
 import { ReactComponent as Gift } from '../svgs/icons/gift.svg';
 import { ReactComponent as Bell } from '../svgs/icons/bell.svg';
 import { ReactComponent as BellSlash } from '../svgs/icons/bell_slash.svg';
+import { ReactComponent as EMPTY } from '../svgs/empty.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -216,6 +217,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'BELL_SLASH':
       return <BellSlash></BellSlash>;
+      break;
+    case 'EMPTY':
+      return <EMPTY></EMPTY>;
       break;
     default:
       return '';

@@ -53,6 +53,8 @@ enum ICON_TYPES {
   GIFT = 'GIFT',
   BELL = 'BELL',
   BELL_SLASH = 'BELL_SLASH',
+
+  EMPTY = 'EMPTY',
 }
 // chevron_down
 export { ICON_TYPES };
