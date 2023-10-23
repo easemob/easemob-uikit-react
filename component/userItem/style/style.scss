@@ -1,0 +1,95 @@
+@import '~/common/style/index.scss';
+$user-prefix-cls: #{$cui-prefix}-userItem;
+
+.#{$user-prefix-cls}{
+    height: $cvs-item-height;
+    // background: $gray-98;
+    display: flex;
+    align-items: center;
+    padding: $cvs-item-padding;
+    box-sizing: border-box;
+    position: relative;
+    border-radius: $cvs-item-border-radius;
+    margin: $cvs-item-margin;
+    &-selected{
+        background-color: $cvs-item-selected-bg-color !important;
+        .#{$user-prefix-cls}-nickname{
+            color: $cvs-item-selected-name-color;
+        }
+    }
+    &:hover{
+        background: $gray-98;
+    }
+    &:active{
+        background-color: $gray-9;
+    }
+    &-content, &-info{
+        display: flex;
+        flex-direction: column;
+        align-items: baseline;
+    }
+    &-content{
+        max-width: calc(100% - 136px);
+        overflow: hidden;
+        flex: 1;
+    }
+    
+    &-info{
+        position: absolute;
+        right: $cvs-item-info-right;
+        align-items: end;
+    }
+    &-nickname{
+        margin: $cvs-item-name-margin;
+        font-size: $cvs-item-name-font-size;
+        line-height: 24px;
+        /* identical to box height, or 150% */
+        color: $cvs-item-name-color;
+        flex: 1;
+        overflow: hidden;
+        font-weight: $cvs-item-name-font-weight;
+        white-space: nowrap;
+    }
+    &-message{
+        margin-left: $cvs-item-message-margin-left;
+        font-size: $cvs-item-message-font-size;
+        font-weight: $cvs-item-message-font-weight;
+        color: $font-color;
+        white-space: nowrap;
+    }
+
+    &-time{
+        font-weight: $cvs-item-time-font-weight;
+        font-size: $cvs-item-time-font-size;
+        line-height: 16px;
+        color: $gray-5;
+        margin-bottom: $cvs-item-time-margin-bottom;
+    }
+}
+
+.#{$user-prefix-cls}-at-tag{
+    display: inline-block;
+    color: $blue-5;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    margin-right: 5px;
+}
+
+.cui-moreAction{
+    padding: 0;
+    margin: 0;
+    display: grid;
+    li{
+        list-style: none;
+        height: 36px;
+        border-radius: 8px;
+        padding: 0 $padding-xs;
+        line-height: 36px;
+        cursor: pointer;
+    }
+    li:hover{
+        /* color_neutral/95 */
+        background-color: $gray-95;
+    }
+}
