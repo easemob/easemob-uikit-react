@@ -34,6 +34,9 @@ import {
   useThreadContext,
   Thread,
   UserProfile,
+  Chatroom,
+  ChatroomMember,
+  ChatroomMessage,
 } from './module/index';
 
 import {
@@ -101,6 +104,9 @@ export {
   ScrollList,
   Thread,
   UserProfile,
+  Chatroom,
+  ChatroomMember,
+  ChatroomMessage,
 };
 
 export type {

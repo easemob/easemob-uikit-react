@@ -58,3 +58,8 @@ $header-prefix-cls: #{$cui-prefix}-header;
         display: flex;
     }
 }
+
+.#{$header-prefix-cls}-dark{
+    color: $gray-98;
+    background-color: $gray-1;
+}

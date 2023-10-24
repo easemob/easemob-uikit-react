@@ -60,6 +60,7 @@ export interface ContextProps {
   };
   theme?: {
     primaryColor?: string;
+    mode?: 'dark' | 'light';
   };
 }
 

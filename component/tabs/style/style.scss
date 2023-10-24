@@ -12,8 +12,10 @@ $switch-prefix-cls: #{$cui-prefix}-tabs;
         margin: 0;
         display: flex;
         padding: 0;
-        border-bottom: 1px solid $gray-9;
+        // border-bottom: 1px solid $gray-9;
+        background-color: $gray-95;
         height: 36px;
+        overflow: hidden;
         li{ 
             display: flex;
             list-style: none;
@@ -50,5 +52,13 @@ $switch-prefix-cls: #{$cui-prefix}-tabs;
     }
     &-content{
         flex: 1;
+    }
+}
+
+.#{$switch-prefix-cls}-dark{
+    background-color: $gray-1;
+    .#{$switch-prefix-cls}-header{
+        background-color: $gray-2;
+        color: $gray-98;
     }
 }

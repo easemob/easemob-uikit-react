@@ -7,7 +7,7 @@ import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
-
+import { RootContext } from '../../module/store/rootContext';
 export interface UserInfoData {
   userId: string;
   nickname?: string;
@@ -53,10 +53,18 @@ let UserItem: FC<UserItemProps> = props => {
 
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
+  const { theme } = useContext(RootContext);
+  const themeMode = theme?.mode;
   const prefixCls = getPrefixCls('userItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
 
-  const classString = classNames(prefixCls, className);
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
 
   const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {
     onClick && onClick(e);
@@ -70,11 +78,13 @@ let UserItem: FC<UserItemProps> = props => {
   };
 
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
-
+  const moreClassString = classNames(morePrefixCls, {
+    [`${morePrefixCls}-${themeMode}`]: !!themeMode,
+  });
   let menuNode: ReactNode | undefined;
   if (moreAction?.visible) {
     menuNode = (
-      <ul className={morePrefixCls}>
+      <ul className={moreClassString}>
         {moreAction.actions.map((item, index) => {
           return (
             <li

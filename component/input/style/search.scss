@@ -40,3 +40,10 @@ $search-prefix-cls: #{$cui-prefix}-search;
         top: 10px;
     }
 }
+
+.#{$search-prefix-cls}-dark{
+    .#{$search-prefix-cls}-input{
+        background-color: $gray-2;
+        color: $gray-98;
+    }
+}

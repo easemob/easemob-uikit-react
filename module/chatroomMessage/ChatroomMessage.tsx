@@ -26,6 +26,7 @@ export interface ChatroomMessageProps {
   type: 'img' | 'txt';
   message: AgoraChat.MessageBody;
   targetLanguage?: string;
+  onReport?: (message: AgoraChat.MessageBody) => void;
 }
 interface CustomAction {
   visible: boolean;
@@ -43,6 +44,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     type = 'txt',
     message,
     targetLanguage = 'en',
+    onReport,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-chatroom', customizePrefixCls);
@@ -50,10 +52,20 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   const { t } = useTranslation();
   const [hoverStatus, setHoverStatus] = useState(false);
   const context = useContext(RootContext);
-  const { onError } = context;
+  const { onError, theme } = context;
+  const themeMode = theme?.mode;
   let customAction;
   let menuNode: ReactNode | undefined;
   let moreAction: CustomAction = { visible: false };
+
+  const [textToShow, setTextToShow] = useState((message as AgoraChat.TextMsgBody).msg);
+
+  const chatroomData =
+    rootStore.addressStore.chatroom.filter(item => item.id === message.to)[0] || {};
+  const muteList = chatroomData.muteList || [];
+  const isMuted = muteList.includes(message.from as string);
+  const owner = chatroomData.owner || '';
+
   if (customAction) {
     moreAction = customAction;
   } else {
@@ -62,26 +74,27 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       icon: null,
       actions: [
         {
-          content: 'DELETE',
-          onClick: () => {},
-        },
-        {
           content: 'TRANSLATE',
           onClick: () => {},
         },
         {
-          content: 'MUTE',
+          content: 'REPORT',
           onClick: () => {},
         },
       ],
     };
   }
-  const [textToShow, setTextToShow] = useState((message as AgoraChat.TextMsgBody).msg);
-
-  const chatroomData =
-    rootStore.addressStore.chatroom.filter(item => item.id === message.to)[0] || {};
-  const muteList = chatroomData.muteList || [];
-  const isMuted = muteList.includes(message.from as string);
+  if (owner === rootStore.client.user) {
+    message.from != rootStore.client.user &&
+      moreAction.actions?.unshift({
+        content: 'MUTE',
+        onClick: () => {},
+      });
+    moreAction.actions?.unshift({
+      content: 'DELETE',
+      onClick: () => {},
+    });
+  }
 
   const translateMessage = () => {
     const { msg } = message as AgoraChat.TextMsgBody;
@@ -141,10 +154,18 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     rootStore.addressStore.muteChatRoomMember(message.to, message.from as string);
   };
 
+  const reportMessage = () => {
+    onReport?.(message);
+  };
+
+  const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
+  const moreClassString = classNames(morePrefixCls, {
+    [`${morePrefixCls}-${themeMode}`]: !!themeMode,
+  });
   // render message menu
   if (moreAction?.visible) {
     menuNode = (
-      <ul className={'cui-moreAction'}>
+      <ul className={moreClassString}>
         {moreAction?.actions?.map((item, index) => {
           if (item.content === 'DELETE') {
             return (
@@ -174,6 +195,16 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
                 {isMuted ? t('unmute') : t('mute')}
               </li>
             );
+          } else if (item.content === 'REPORT') {
+            if (message.from == rootStore.client.user) {
+              return null;
+            }
+            return (
+              <li key={index} onClick={reportMessage}>
+                <Icon type="ENVELOPE" width={16} height={16} color="#5270AD"></Icon>
+                {t('report')}
+              </li>
+            );
           }
           return (
             <li
@@ -196,11 +227,16 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   };
 
   const renderGift = () => {
+    console.log('message', message);
+    let giftData = message?.customExts?.gift || {};
+    if (typeof giftData === 'string') {
+      giftData = JSON.parse(giftData);
+    }
     return (
       <div className={`${prefixCls}-gift`}>
-        <div>礼物</div>
-        <img src={heart as any as string} alt="" className={`${prefixCls}-gift-img`} />
-        <div className={`${prefixCls}-gift-number`}>+1</div>
+        <div>{giftData.giftName}</div>
+        <img src={giftData.giftIcon} alt="" className={`${prefixCls}-gift-img`} />
+        <div className={`${prefixCls}-gift-number`}>x1</div>
       </div>
     );
   };
@@ -226,7 +262,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       <div className={`${prefixCls}-container`}>
         <div className={`${prefixCls}-header`}>
           <div className={`${prefixCls}-header-label`}>{getTime(message.time)}</div>
-          <Icon type="DELETE"></Icon>
+          {/* <Icon type="DELETE"></Icon> */}
           <Avatar size={20} src={userInfo.avatarURL}>
             {userInfo.nickName || message.from}
           </Avatar>
@@ -237,7 +273,12 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       </div>
       {hoverStatus && (
         <Tooltip title={menuNode} trigger="click" placement="bottom" align={{ offset: [5] }}>
-          <Icon type="ELLIPSIS" className={`${prefixCls}-body-action`} height={20}></Icon>
+          <Icon
+            type="ELLIPSIS"
+            color="#33B1FF"
+            className={`${prefixCls}-body-action`}
+            height={20}
+          ></Icon>
         </Tooltip>
       )}
     </div>

@@ -67,6 +67,19 @@ $user-prefix-cls: #{$cui-prefix}-userItem;
     }
 }
 
+.#{$user-prefix-cls}-dark{
+    &:hover{
+        background: $gray-2;
+    }
+
+    &:active{
+        background-color: $gray-2;
+    }
+    .#{$user-prefix-cls}-nickname{
+        color: $gray-98;
+    }
+}
+
 .#{$user-prefix-cls}-at-tag{
     display: inline-block;
     color: $blue-5;
@@ -91,5 +104,12 @@ $user-prefix-cls: #{$cui-prefix}-userItem;
     li:hover{
         /* color_neutral/95 */
         background-color: $gray-95;
+    }
+}
+
+.cui-moreAction-dark{
+    li:hover{
+        /* color_neutral/95 */
+        background-color: $gray-2;
     }
 }

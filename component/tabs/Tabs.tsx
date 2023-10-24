@@ -2,6 +2,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import './style/style.scss';
 import { ConfigContext } from '../config/index';
+import { RootContext } from '../../module/store/rootContext';
 export interface TabsProps {
   className?: string;
   style?: React.CSSProperties;
@@ -19,16 +20,19 @@ export interface TabsProps {
 }
 
 function Tabs(props: TabsProps) {
-  const { tabs, defaultActiveKey, prefix, onTabClick, onChange } = props;
+  const { tabs, defaultActiveKey, prefix, onTabClick, onChange, style } = props;
   if (!tabs || tabs.length === 0) {
     return null;
   }
+  const { theme } = React.useContext(RootContext);
+  const themeMode = theme?.mode;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('tabs', prefix);
   const classString = classNames(
     prefixCls,
     {
       [`${prefixCls}-centered`]: props.centered,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     props.className,
   );
@@ -48,7 +52,7 @@ function Tabs(props: TabsProps) {
   console.log('activeTab', activeTab, activeTabIndex, activeTabKey);
 
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       <ul className={`${prefixCls}-header`}>
         {props.tabs.map((tab, index) => (
           <li

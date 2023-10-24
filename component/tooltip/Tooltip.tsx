@@ -10,6 +10,7 @@ import { getTransitionName } from '../_utils/motion';
 import getPlacements, { AdjustOverflow, PlacementsConfig } from '../_utils/placements';
 import { cloneElement, isValidElement, isFragment } from '../_utils/reactNode';
 import './style/style.scss';
+import { RootContext } from '../../module/store/rootContext';
 export type { AdjustOverflow, PlacementsConfig };
 export type TooltipPlacement =
   | 'top'
@@ -144,7 +145,8 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
     getPrefixCls,
     // direction,
   } = React.useContext(ConfigContext);
-
+  const { theme } = React.useContext(RootContext);
+  const themeMode = theme?.mode;
   const [open, setOpen] = useMergedState(false, {
     value: props.open,
     defaultValue: props.defaultOpen,
@@ -238,11 +240,13 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
     openClassName,
     getTooltipContainer,
     overlayClassName,
-    color,
     overlayInnerStyle,
     children,
   } = props;
-
+  let { color } = props;
+  if (themeMode == 'dark') {
+    color = 'dark';
+  }
   const prefixCls = getPrefixCls('tooltip', customizePrefixCls);
   const rootPrefixCls = getPrefixCls();
 

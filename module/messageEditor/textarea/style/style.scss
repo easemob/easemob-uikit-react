@@ -24,8 +24,6 @@ $lineHeight: 24px;
         word-break: break-all;
     }
 
-    ;
-
     &-input:empty::before {
         content: attr(placeholder);
         color: #919BA1;
@@ -46,4 +44,11 @@ $lineHeight: 24px;
         }
     }
 
+}
+
+.#{$textarea-prefix-cls}-dark{
+    .#{$textarea-prefix-cls}-input{
+        background-color: $gray-2;
+        color: $gray-98;
+    }
 }

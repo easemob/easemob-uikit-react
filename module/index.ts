@@ -72,6 +72,11 @@ import { useSDK } from './hooks/useSDK';
 import Thread, { ThreadProps } from './thread';
 import UserProfile, { UserProfileProps } from './userProfile';
 
+import Chatroom from './chatroom';
+import { ChatroomProps } from './chatroom/Chatroom';
+import ChatroomMember from './chatroomMember';
+import ChatroomMessage from './chatroomMessage';
+
 export type {
   AudioMessageProps,
   BaseMessageProps,
@@ -162,4 +167,7 @@ export {
   useChatContext,
   useAddressContext,
   useThreadContext,
+  Chatroom,
+  ChatroomMember,
+  ChatroomMessage,
 };

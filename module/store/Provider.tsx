@@ -76,6 +76,7 @@ export interface ProviderProps {
   };
   theme?: {
     primaryColor?: string;
+    mode?: 'light' | 'dark';
   };
 }
 const Provider: React.FC<ProviderProps> = props => {
@@ -145,6 +146,7 @@ const Provider: React.FC<ProviderProps> = props => {
         client,
         onError,
         reactionConfig,
+        theme,
       }}
     >
       {props.children}

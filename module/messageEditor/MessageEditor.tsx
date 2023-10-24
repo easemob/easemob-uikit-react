@@ -280,7 +280,7 @@ const MessageEditor = (props: MessageEditorProps) => {
                 ></MoreAction>
               );
             } else if (item.name === 'GIFT' && item.visible) {
-              return <GiftKeyboard conversation={conversation} />;
+              return <GiftKeyboard key={item.name} conversation={conversation} />;
             } else {
               return (
                 <span

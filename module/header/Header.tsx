@@ -6,6 +6,7 @@ import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import Button from '../../component/button';
 import { Tooltip } from '../../component/tooltip/Tooltip';
+import { RootContext } from '../store/rootContext';
 export interface HeaderProps {
   className?: string;
   style?: React.CSSProperties;
@@ -54,10 +55,17 @@ const Header: FC<HeaderProps> = props => {
     className,
     subtitle,
   } = props;
-
+  const { theme } = React.useContext(RootContext);
+  const themeMode = theme?.mode;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('header', customizePrefixCls);
-  const classString = classNames(prefixCls, className);
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
 
   const clickClose = () => {
     onClickClose?.();
@@ -136,14 +144,14 @@ const Header: FC<HeaderProps> = props => {
             >
               {
                 <Button type="text" shape="circle">
-                  <Icon type="ELLIPSIS"></Icon>
+                  <Icon type="ELLIPSIS" color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}></Icon>
                 </Button>
               }
             </Tooltip>
           )}
           {close && (
             <Button type="text" shape="circle" onClick={clickClose}>
-              <Icon type="CLOSE"></Icon>
+              <Icon type="CLOSE" color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}></Icon>
             </Button>
           )}
         </div>

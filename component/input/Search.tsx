@@ -4,7 +4,7 @@ import { tuple } from '../_utils/type';
 import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
 import Icon from '../icon';
-
+import { RootContext } from '../../module/store/rootContext';
 import './style/search.scss';
 
 export interface SearchProps {
@@ -25,11 +25,14 @@ export default function Search(props: SearchProps) {
     ...others
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
+  const { theme } = React.useContext(RootContext);
+  const themeMode = theme?.mode;
   const prefixCls = getPrefixCls('search', customizePrefixCls);
   const classString = classNames(
     prefixCls,
     {
       [`${prefixCls}-${shape}`]: shape,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

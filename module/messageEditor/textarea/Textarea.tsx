@@ -62,7 +62,10 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('textarea', customizePrefixCls);
   const context = useContext(RootContext);
-  const { onError, rootStore } = context;
+  const { onError, rootStore, theme } = context;
+
+  const themeMode = theme?.mode || 'light';
+
   const { client, messageStore, conversationStore } = rootStore;
   let { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);
@@ -129,6 +132,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     prefixCls,
     {
       [`${prefixCls}-hasBtn`]: !!hasSendButton,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

@@ -8,6 +8,7 @@ import AC, { AgoraChat } from 'agora-chat';
 import { Gift } from './Gift';
 import { RootContext } from '../../store/rootContext';
 import { CurrentConversation } from '../../store/ConversationStore';
+import giftConfig from './giftConfig';
 export interface GiftKeyboardProps {
   prefix?: string;
   className?: string;
@@ -53,7 +54,12 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     </span>
   );
 
-  const sendGiftMessage = (giftId: string) => {
+  const sendGiftMessage = (giftData: {
+    giftId: string;
+    giftIcon: string;
+    giftName: string;
+    giftPrice: number;
+  }) => {
     console.log('conversation', conversation);
     if (!currentConversation) {
       throw new Error('currentConversation is null');
@@ -64,11 +70,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
       chatType: currentConversation.chatType,
       customEvent: 'CHATROOMUIKITGIFT',
       customExts: {
-        giftId: 'gift_1',
-        giftName: '小心心',
-        giftPrice: '20',
-        giftCount: '1',
-        giftIcon: 'gift_1',
+        gift: giftData,
       },
       ext: {},
     } as AgoraChat.CreateCustomMsgParameters;
@@ -87,7 +89,16 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   const handleClick = (giftId: string | number) => {
     console.log('e', giftId);
     setIndex(giftId);
-    sendGiftMessage(giftId as string);
+    // sendGiftMessage(giftId as string);
+  };
+  const handleSend = (giftData: {
+    giftId: string;
+    giftIcon: string;
+    giftName: string;
+    giftPrice: number;
+  }) => {
+    console.log('发烧');
+    sendGiftMessage(giftData);
   };
   let titleNode;
   if (gifts) {
@@ -95,32 +106,26 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   }
   titleNode = (
     <div className="content">
-      <Gift
-        giftId="heart1"
-        title="小心心"
-        onClick={handleClick}
-        action={{ visible: true, text: '发送' }}
-        selected={selectedIndex == 'heart1'}
-      ></Gift>
-      <Gift
-        giftId="heart2"
-        title="小心心"
-        action={{ visible: true, text: '发送' }}
-        selected={selectedIndex == 'heart2'}
-        onClick={handleClick}
-      ></Gift>
-      <Gift
-        giftId="heart3"
-        title="红心心"
-        selected={selectedIndex == 'heart3'}
-        action={{ visible: true, text: '发送' }}
-        onClick={handleClick}
-      ></Gift>
-      <Gift giftId="heart4" onClick={handleClick}></Gift>
-      <Gift giftId="heart4" onClick={handleClick}></Gift>
-      <Gift giftId="heart4" title="小心心"></Gift>
-      <Gift giftId="heart4" title="红心心" selected></Gift>
-      <Gift giftId="heart4" subTitle="20元"></Gift>
+      {giftConfig.gifts.map((item, index) => {
+        return (
+          <Gift
+            key={item.giftId}
+            giftId={item.giftId}
+            title={item.giftName}
+            subTitle={item.giftPrice}
+            onClick={handleClick}
+            image={item.giftIcon}
+            action={{
+              visible: true,
+              text: 'Send',
+              onClick: () => {
+                handleSend(item);
+              },
+            }}
+            selected={selectedIndex == item.giftId}
+          ></Gift>
+        );
+      })}
     </div>
   );
 

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import Avatar from '~/component/avatar';
 import image from './avatar.png';
+import { Provider } from '../../module';
+import Tabs from '~/component/tabs';
 import './index.scss';
 ReactDOM.createRoot(document.getElementById('avatarRoot') as Element).render(
   <div className="container" style={{ padding: '100px' }}>
@@ -36,6 +38,37 @@ ReactDOM.createRoot(document.getElementById('avatarRoot') as Element).render(
 
     <div className="container2">
       <div className="dot"></div>
+    </div>
+    <div style={{ width: '400px', height: '400px', border: '1px solid red' }}>
+      <Provider initConfig={{ appKey: 'easre#qws' }}>
+        <Tabs
+          defaultActiveKey="1"
+          onChange={key => {
+            console.log('onChange', key);
+          }}
+          onTabClick={key => {
+            console.log('onTabClick', key);
+          }}
+          tabs={[
+            {
+              label: `Tab 1`,
+              key: '1',
+              content: `Content of Tab Pane 1`,
+            },
+            {
+              disabled: true,
+              label: `Tab 2`,
+              key: '2',
+              content: `Content of Tab Pane 2`,
+            },
+            {
+              label: `Tab 3`,
+              key: '3',
+              content: `Content of Tab Pane 3`,
+            },
+          ]}
+        ></Tabs>
+      </Provider>
     </div>
   </div>,
 );

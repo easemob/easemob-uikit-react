@@ -14,7 +14,7 @@ export interface GiftProps {
   image?: ReactNode | string;
   title?: string;
   titleIcon?: ReactNode;
-  subTitle?: string;
+  subTitle?: string | number;
   subTitleIcon?: ReactNode;
   selected?: boolean;
   action?: {
@@ -36,6 +36,7 @@ const Gift = (props: GiftProps) => {
     action,
     onClick,
     giftId,
+    image,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('gift', customizePrefixCls);
@@ -56,12 +57,17 @@ const Gift = (props: GiftProps) => {
     // action?.visible && setActionVisible(true);
     onClick && onClick?.(giftId);
   };
+  const handleActionClick = () => {};
   return (
-    <div className={classString} onClick={clickGift}>
-      <img src={heart as any as string} alt="heart" />
+    <div className={classString} onClick={clickGift} key={title}>
+      <img src={image as any as string} alt={title} />
       {!selected && <div className={`${prefixCls}-title`}>{title}</div>}
       <div className={`${prefixCls}-subtitle`}>{subTitle}</div>
-      {selected && <div className={`${prefixCls}-button`}>{action?.text}</div>}
+      {selected && (
+        <div className={`${prefixCls}-button`} onClick={action?.onClick || handleActionClick}>
+          {action?.text}
+        </div>
+      )}
     </div>
   );
 };
