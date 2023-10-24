@@ -20,7 +20,14 @@ import ChatroomMessage from '../chatroomMessage';
 import { GiftKeyboard } from '../messageEditor/gift';
 import Broadcast from '../../component/broadcast';
 import { getUsersInfo } from '../utils/index';
+import Modal from '../../component/modal';
+import { set } from 'mobx';
+import Checkbox from '../../component/checkbox';
+import { m } from 'vitest/dist/index-2f5b6168';
 export interface ChatroomProps {
+  prefix?: string;
+  className?: string;
+  style?: React.CSSProperties;
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
   renderHeader?: (cvs: {
     chatType: 'singleChat' | 'groupChat';
@@ -50,14 +57,30 @@ const Chatroom = (props: ChatroomProps) => {
     messageEditorProps,
     renderMessageList,
     messageListProps,
-    // chatroomId,
+    chatroomId = '228706458075137',
+    prefix,
+    className,
+    style,
   } = props;
   const context = useContext(RootContext);
-  const { rootStore, features } = context;
+  const { rootStore, features, theme } = context;
+  console.log('theme', context);
+  const themeMode = theme?.mode || 'light';
   // const chatroomId = '225555145359361';
-  const chatroomId = '228706458075137';
+  // const chatroomId = '228706458075137';
   const [isEmpty, setIsEmpty] = useState(false);
-  const classString = 'chatroom-container';
+  // const classString = classNames()  'chatroom-container';
+
+  const { getPrefixCls } = React.useContext(ConfigContext);
+  const prefixCls = getPrefixCls('chatroom', prefix);
+
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
 
   useEffect(() => {
     window.rootStore = rootStore;
@@ -166,10 +189,40 @@ const Chatroom = (props: ChatroomProps) => {
   //     });
   //   }
 
+  const chatroomData =
+    rootStore.addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
+  const appUsersInfo = rootStore.addressStore.appUsersInfo;
+
+  const [reportMessageId, setReportMessageId] = useState('');
+  const handleReport = message => {
+    console.log('report', message);
+    setReportOpen(true);
+    setReportMessageId(message.mid || message.id);
+  };
   const renderChatroomMessage = msg => {
     if (msg.type == 'txt' || msg.type == 'custom') {
-      return <ChatroomMessage type="txt" message={msg} />;
+      return <ChatroomMessage type="txt" message={msg} onReport={handleReport} />;
     }
+  };
+
+  const [reportOpen, setReportOpen] = useState(false);
+  const [checkedType, setCheckedType] = useState('');
+  const handleCheckChange = (type: string) => {
+    console.log('type', type);
+    setCheckedType(type);
+  };
+  const handleReportMessage = () => {
+    rootStore.client
+      .reportMessage({
+        reportType: checkedType,
+        reportReason: checkedType,
+        messageId: reportMessageId,
+      })
+      .then(() => {
+        setReportOpen(false);
+        console.log('举报成功');
+        setCheckedType('');
+      });
   };
   return (
     <div className={classString}>
@@ -182,20 +235,26 @@ const Chatroom = (props: ChatroomProps) => {
       ) : (
         <>
           {renderHeader ? (
-            renderHeader(rootStore.conversationStore.currentCvs)
+            renderHeader(chatroomData)
           ) : (
             <Header
-              avatarSrc={''}
-              content={
-                rootStore.conversationStore.currentCvs.name ||
-                rootStore.conversationStore.currentCvs.conversationId
+              avatarSrc={appUsersInfo[chatroomData.owner]?.avatarurl}
+              content={chatroomData.name || chatroomId}
+              subtitle="1号"
+              suffixIcon={
+                <Icon
+                  type="PERSON_DOUBLE_FILL"
+                  onClick={() => {}}
+                  color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                ></Icon>
               }
               {...headerProps}
             ></Header>
           )}
-          <Broadcast loop={1} delay={2} play={true}>
+          <p></p>
+          {/* <Broadcast loop={1} delay={2} play={true}>
             <div>重要通知：最近有不法分子分子诈骗钱财，大家交易时消息谨慎 &nbsp; </div>
-          </Broadcast>
+          </Broadcast> */}
           {renderMessageList ? (
             renderMessageList()
           ) : (
@@ -239,6 +298,36 @@ const Chatroom = (props: ChatroomProps) => {
           )}
         </>
       )}
+      <Modal
+        open={reportOpen}
+        title="Report"
+        okText="Report"
+        onOk={handleReportMessage}
+        onCancel={() => {
+          setReportOpen(false);
+        }}
+      >
+        <div>
+          <div className="report-item">
+            <div>Unwelcome commercial content or spam</div>
+            <Checkbox
+              checked={checkedType === 'type1'}
+              onChange={() => {
+                handleCheckChange('type1');
+              }}
+            ></Checkbox>
+          </div>
+          <div className="report-item">
+            <div>Pornographic or explicit content</div>
+            <Checkbox
+              checked={checkedType === 'type2'}
+              onChange={() => {
+                handleCheckChange('type2');
+              }}
+            ></Checkbox>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

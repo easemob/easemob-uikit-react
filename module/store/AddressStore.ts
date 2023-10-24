@@ -4,6 +4,7 @@ import { AgoraChat } from 'agora-chat';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
 import { getUsersInfo } from '../utils';
 import { aC } from 'vitest/dist/types-f302dae9';
+import { rootStore } from 'chatuim2';
 export type MemberRole = 'member' | 'owner' | 'admin';
 
 export interface MemberItem {
@@ -28,9 +29,7 @@ export type AppUserInfo = Partial<Record<AgoraChat.ConfigurableKey, any>> & {
 };
 
 export type ChatroomInfo = AgoraChat.GetChatRoomDetailsResult & {
-  members?: {
-    [key: string]: AppUserInfo;
-  };
+  membersId?: string[];
   admins?: string[];
   muteList?: string[];
 };
@@ -75,6 +74,7 @@ class AddressStore {
       getChatroomMuteList: action,
       removeUserFromMuteList: action,
       unmuteChatRoomMember: action,
+      removerChatroomMember: action,
       clear: action,
     });
   }
@@ -261,6 +261,34 @@ class AddressStore {
       const muteList = this.chatroom[idx].muteList || [];
       this.chatroom[idx].muteList = muteList.filter(item => item !== userId);
     }
+  };
+
+  setChatroomMemberIds = (chatroomId: string, membersId: string[]) => {
+    console.log('设置 --', membersId);
+    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    if (idx > -1) {
+      this.chatroom[idx].membersId = [
+        ...new Set([...(this.chatroom[idx].membersId || []), ...membersId]),
+      ];
+    }
+  };
+
+  removerChatroomMember = (chatroomId: string, userId: string) => {
+    const rootStore = getStore();
+    rootStore.client
+      .removeChatRoomMember({
+        chatRoomId: chatroomId,
+        username: userId,
+      })
+      .then(() => {
+        let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+        if (idx > -1) {
+          this.chatroom[idx].membersId = this.chatroom[idx].membersId?.filter(
+            item => item !== userId,
+          );
+        }
+        console.log('移除成功');
+      });
   };
 
   setSearchList(searchList: any) {
