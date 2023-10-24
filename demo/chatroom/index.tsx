@@ -7,9 +7,10 @@ import Provider from '../../module/store/Provider';
 import { useClient } from '../../module/hooks/useClient';
 import Button from '../../component/button';
 import ChatroomMessage from '../../module/chatroomMessage';
-import { Gift, GiftKeyboard } from '../../module/messageEditor/gift';
+// import { Gift, GiftKeyboard } from '../../module/messageEditor/gift';
 import MessageEditor from '../../module/messageEditor';
 import Chatroom from '../../module/chatroom';
+import ChatroomMember from '../../module/chatroomMember';
 import './index.css';
 import AgoraChat from 'agora-chat';
 const ChatApp = () => {
@@ -26,12 +27,14 @@ const ChatApp = () => {
     //     .then(res => {
     //       console.log('获取token成功', res, rootStore.client);
     //     });
-
-    client.addEventHandler('chatroom', {
-      onConnected: () => {
-        rootStore.setLoginState(true);
-      },
-    });
+    if (client.addEventHandler) {
+      client.addEventHandler('chatroom', {
+        onConnected: () => {
+          console.log('登录成功');
+          rootStore.setLoginState(true);
+        },
+      });
+    }
   }, [client]);
 
   const [userId, setUserId] = useState('');
@@ -48,71 +51,67 @@ const ChatApp = () => {
         console.log('获取token成功', res, rootStore.client);
       });
   };
+
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
   return (
     <>
-      <div>
+      <Provider
+        theme={{
+          mode: themeMode,
+        }}
+        initConfig={{
+          appKey: 'easemob#easeim',
+          // userId: 'lxm',
+          // token:
+          //   '007eJxTYKhcEV1UGPCx/Uyo+ZzsEz+mxeeb7qioWmTs8MxhVtq+VkEFhjTDlGRzc4uklJRkMxOzxBSLNCMzA0tzs+REoxQDQ9NkN3O91IZARoaQtNUKjAysDIxACOKrMFhYpiQnmRsb6JoZmaToGhqmJutappkY6hobW1gYpiaaJqUmGQEAnq8nVg==',
+        }}
+      >
         <div>
-          <label>userID</label>
-          <input
-            onChange={e => {
-              setUserId(e.target.value);
-            }}
-          ></input>
+          <div>
+            <label>userID</label>
+            <input
+              onChange={e => {
+                setUserId(e.target.value);
+              }}
+            ></input>
+          </div>
+          <div>
+            <label>password</label>
+            <input
+              onChange={e => {
+                setPassword(e.target.value);
+              }}
+            ></input>
+          </div>
+          <div>
+            <button onClick={login}>login</button>
+          </div>
+          <div>
+            <button
+              onClick={() => {
+                setThemeMode(() => {
+                  return themeMode === 'light' ? 'dark' : 'light';
+                });
+              }}
+            >
+              change theme
+            </button>
+          </div>
         </div>
-        <div>
-          <label>password</label>
-          <input
-            onChange={e => {
-              setPassword(e.target.value);
-            }}
-          ></input>
-        </div>
-        <div>
-          <button onClick={login}>login</button>
-        </div>
-        {/* <ChatroomMessage />
-        <ChatroomMessage type="img" /> */}
-      </div>
-      <div>
-        {/* <Gift giftId={3} title="小心心" subTitle="20元" />
-        <Gift giftId={2} title="小心心" subTitle="20元" selected />
-        <Gift
-          giftId={1}
-          title="小心心"
-          subTitle="20元"
-          selected
-          action={{ visible: true, text: 'send' }}
-        /> */}
-      </div>
-      <div>{/* <GiftKeyboard></GiftKeyboard> */}</div>
 
-      <div>
-        {/* <MessageEditor
-          actions={[
-            { name: 'TEXTAREA', visible: true },
-            { name: 'GIFT', visible: true, icon: <GiftKeyboard></GiftKeyboard> },
-          ]}
-        ></MessageEditor> */}
-      </div>
-
-      <div>
-        <Chatroom></Chatroom>
-      </div>
+        <div style={{ width: '350px' }}>
+          <Chatroom></Chatroom>
+        </div>
+        <div style={{ width: '350px', background: 'rgb(240 234 234 / 43%)' }}>
+          <ChatroomMember chatroomId="228706458075137"></ChatroomMember>
+        </div>
+      </Provider>
     </>
   );
 };
 
 ReactDOM.createRoot(document.getElementById('chatroomRoot') as Element).render(
   <div className="container-1">
-    <Provider
-      initConfig={{
-        appKey: 'easemob#easeim',
-        // userId: 'lxm',
-        // token:
-        //   '007eJxTYKhcEV1UGPCx/Uyo+ZzsEz+mxeeb7qioWmTs8MxhVtq+VkEFhjTDlGRzc4uklJRkMxOzxBSLNCMzA0tzs+REoxQDQ9NkN3O91IZARoaQtNUKjAysDIxACOKrMFhYpiQnmRsb6JoZmaToGhqmJutappkY6hobW1gYpiaaJqUmGQEAnq8nVg==',
-      }}
-    >
-      <ChatApp></ChatApp>
-    </Provider>
+    <ChatApp></ChatApp>
   </div>,
 );
