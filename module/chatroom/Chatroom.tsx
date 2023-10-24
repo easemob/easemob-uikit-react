@@ -240,7 +240,7 @@ const Chatroom = (props: ChatroomProps) => {
             <Header
               avatarSrc={appUsersInfo[chatroomData.owner]?.avatarurl}
               content={chatroomData.name || chatroomId}
-              subtitle="1号"
+              subtitle={appUsersInfo[chatroomData.owner]?.nickname || chatroomData.owner}
               suffixIcon={
                 <Icon
                   type="PERSON_DOUBLE_FILL"
