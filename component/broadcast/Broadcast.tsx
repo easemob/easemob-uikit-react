@@ -17,6 +17,7 @@ export interface BroadcastProps {
   play?: boolean;
   pauseOnHover?: boolean;
   onFinish?: () => void;
+  onCycleComplete?: () => void;
 }
 
 const Broadcast = (props: BroadcastProps) => {
@@ -31,6 +32,7 @@ const Broadcast = (props: BroadcastProps) => {
     play = true,
     pauseOnHover = true,
     onFinish,
+    onCycleComplete,
     children,
     prefixIcon,
     suffixIcon,
@@ -57,6 +59,7 @@ const Broadcast = (props: BroadcastProps) => {
         autoFill={false}
         onCycleComplete={() => {
           console.log('完成');
+          onCycleComplete?.();
         }}
       >
         {children}

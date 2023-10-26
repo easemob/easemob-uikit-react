@@ -192,7 +192,7 @@ const Chatroom = (props: ChatroomProps) => {
   const chatroomData =
     rootStore.addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
   const appUsersInfo = rootStore.addressStore.appUsersInfo;
-
+  const broadcast = rootStore.messageStore.message.broadcast;
   const [reportMessageId, setReportMessageId] = useState('');
   const handleReport = message => {
     console.log('report', message);
@@ -224,6 +224,10 @@ const Chatroom = (props: ChatroomProps) => {
         setCheckedType('');
       });
   };
+
+  const handleBroadcastFinish = () => {
+    rootStore.messageStore.shiftBroadcastMessage();
+  };
   return (
     <div className={classString}>
       {isEmpty ? (
@@ -252,9 +256,11 @@ const Chatroom = (props: ChatroomProps) => {
             ></Header>
           )}
           <p></p>
-          {/* <Broadcast loop={1} delay={2} play={true}>
-            <div>重要通知：最近有不法分子分子诈骗钱财，大家交易时消息谨慎 &nbsp; </div>
-          </Broadcast> */}
+          {broadcast.length > 0 && (
+            <Broadcast loop={0} delay={1} play={true} onCycleComplete={handleBroadcastFinish}>
+              <div>{broadcast[0].msg || ''}</div>
+            </Broadcast>
+          )}
           {renderMessageList ? (
             renderMessageList()
           ) : (

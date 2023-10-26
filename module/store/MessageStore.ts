@@ -7,7 +7,6 @@ import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji }
 import { RootStore } from './index';
 import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
-import { aC } from 'vitest/dist/types-f302dae9';
 export interface RecallMessage {
   type: 'recall';
   [key: string]: any;
@@ -18,6 +17,7 @@ export interface Message {
   groupChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
   chatRoom: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
   byId: { [key: string]: AgoraChat.MessageBody | RecallMessage };
+  broadcast: AgoraChat.MessageBody[];
 }
 
 export interface SelectedMessage {
@@ -55,6 +55,7 @@ class MessageStore {
       groupChat: {},
       chatRoom: {},
       byId: {},
+      broadcast: [],
     };
 
     this.selectedMessage = {
@@ -96,6 +97,7 @@ class MessageStore {
       deleteMessage: action,
       setHoldingStatus: action,
       setUnreadMessageCount: action,
+      shiftBroadcastMessage: action,
     });
 
     autorun(() => {
@@ -311,6 +313,11 @@ class MessageStore {
     }
     const conversationId = getCvsIdFromMessage(message);
     console.log('收到消息', message);
+    // @ts-ignore
+    if (message.broadcast) {
+      this.message.broadcast.push(message);
+      return;
+    }
     // @ts-ignore
     if (!this.message[message.chatType][conversationId]) {
       // @ts-ignore
@@ -811,6 +818,10 @@ class MessageStore {
 
   setUnreadMessageCount(count: number) {
     this.unreadMessageCount = count;
+  }
+
+  shiftBroadcastMessage() {
+    this.message.broadcast.shift();
   }
 
   clear() {
