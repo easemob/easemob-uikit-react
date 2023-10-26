@@ -70,7 +70,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
       chatType: currentConversation.chatType,
       customEvent: 'CHATROOMUIKITGIFT',
       customExts: {
-        gift: giftData,
+        chatroom_uikit_gift: giftData,
       },
       ext: {},
     } as AgoraChat.CreateCustomMsgParameters;

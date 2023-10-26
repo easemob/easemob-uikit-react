@@ -84,6 +84,13 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
     //     cursor: pointer;
     // }
 }
+
+.#{$chatroom-prefix-cls}-notice-box{
+    padding-right: 30px;
+    display: block;
+    color: $green-4;
+    font-weight: 500;
+}
 .#{$chatroom-prefix-cls}-body-action{
     // position: relative;
     // right: 0;

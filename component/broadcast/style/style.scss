@@ -2,4 +2,5 @@
 $broadcast-prefix-cls: #{$cui-prefix}-broadcast;
 .#{$broadcast-prefix-cls}{
     display: flex;
+    background-color: $blue-5;
 }

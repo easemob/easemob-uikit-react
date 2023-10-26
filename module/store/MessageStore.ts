@@ -192,7 +192,7 @@ class MessageStore {
       const myInfo = this.rootStore.addressStore.appUsersInfo[this.rootStore.client.user] || {};
       (message as TextMessageType).ext = {
         ...(message as TextMessageType).ext,
-        userInfo: {
+        chatroom_uikit_userInfo: {
           userId: myInfo?.userId,
           nickName: myInfo?.nickname,
           avatarURL: myInfo?.avatarurl,
@@ -340,7 +340,9 @@ class MessageStore {
       // @ts-ignore
       const ext = message.ext || {};
       const senderInfo =
-        typeof ext.userInfo == 'string' ? JSON.parse(ext.userInfo) : ext.userInfo || {};
+        typeof ext.chatroom_uikit_userInfo == 'string'
+          ? JSON.parse(ext.chatroom_uikit_userInfo)
+          : ext.chatroom_uikit_userInfo || {};
       const appUsersInfo = this.rootStore.addressStore.appUsersInfo;
       this.rootStore.addressStore.setAppUserInfo({
         ...appUsersInfo,

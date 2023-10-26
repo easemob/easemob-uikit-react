@@ -163,6 +163,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
           renderItem={item => {
             return (
               <UserItem
+                key={item.userId}
                 data={{
                   userId: item.userId,
                   nickname: item.nickname,
@@ -202,6 +203,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
         {muteDataToRender?.map(userId => {
           return (
             <UserItem
+              key={userId}
               moreAction={mutedMoreAction}
               data={{
                 userId: userId,

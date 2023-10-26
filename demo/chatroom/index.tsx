@@ -103,7 +103,7 @@ const ChatApp = () => {
           <Chatroom></Chatroom>
         </div>
         <div style={{ width: '350px', background: 'rgb(240 234 234 / 43%)' }}>
-          <ChatroomMember chatroomId="228706458075137"></ChatroomMember>
+          <ChatroomMember chatroomId="229358390280194"></ChatroomMember>
         </div>
       </Provider>
     </>

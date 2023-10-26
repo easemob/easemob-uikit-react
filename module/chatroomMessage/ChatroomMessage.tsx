@@ -1,17 +1,13 @@
 import React, { useContext, useRef, useState, ReactNode } from 'react';
 import classNames from 'classnames';
-import { renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import type { AudioMessageType } from '../types/messageType';
 import Avatar from '../../component/avatar';
 import rootStore from '../store/index';
 import { observer } from 'mobx-react-lite';
-import { getCvsIdFromMessage } from '../utils';
 import { AgoraChat } from 'agora-chat';
 import { RootContext } from '../store/rootContext';
 import Icon from '../../component/icon';
-import heart from '../assets/gift/heart.png';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
@@ -228,7 +224,15 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
 
   const renderGift = () => {
     console.log('message', message);
-    let giftData = message?.customExts?.gift || {};
+
+    if (message.customEvent == 'CHATROOMUIKIUSERJOIN') {
+      return <div className={`${prefixCls}-notice-box`}>{'Joined'}</div>;
+    }
+
+    if (message.customEvent != 'CHATROOMUIKITGIFT') {
+      return;
+    }
+    let giftData = message?.customExts?.chatroom_uikit_gift || {};
     if (typeof giftData === 'string') {
       giftData = JSON.parse(giftData);
     }
@@ -241,7 +245,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     );
   };
 
-  const userInfo = message?.ext?.userInfo || {};
+  const userInfo = message?.ext?.chatroom_uikit_userInfo || {};
   const getTime = (time: number) => {
     const timeSting =
       new Date(time).getHours() +
@@ -271,7 +275,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         {message.type == 'custom' && renderGift()}
         {message.type == 'txt' && renderText(textToShow)}
       </div>
-      {hoverStatus && (
+      {hoverStatus && message.type == 'txt' && (
         <Tooltip title={menuNode} trigger="click" placement="bottom" align={{ offset: [5] }}>
           <Icon
             type="ELLIPSIS"

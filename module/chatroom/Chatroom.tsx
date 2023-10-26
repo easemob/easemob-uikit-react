@@ -4,26 +4,19 @@ import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import Icon from '../../component/icon';
-import Avatar from '../../component/avatar';
-import Button from '../../component/button';
-import { Search } from '../../component/input/Search';
 import Header, { HeaderProps } from '../header';
 import MessageEditor, { MessageEditorProps } from '../messageEditor';
 import { MessageList, MsgListProps } from '../chat/MessageList';
 import { RootContext } from '../store/rootContext';
 import Empty from '../empty';
 import { useTranslation } from 'react-i18next';
-import { CurrentConversation } from 'module/store/ConversationStore';
-import { AgoraChat } from 'agora-chat';
-import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
+import AC, { AgoraChat } from 'agora-chat';
 import ChatroomMessage from '../chatroomMessage';
 import { GiftKeyboard } from '../messageEditor/gift';
-import Broadcast from '../../component/broadcast';
+import Broadcast, { BroadcastProps } from '../../component/broadcast';
 import { getUsersInfo } from '../utils/index';
 import Modal from '../../component/modal';
-import { set } from 'mobx';
 import Checkbox from '../../component/checkbox';
-import { m } from 'vitest/dist/index-2f5b6168';
 export interface ChatroomProps {
   prefix?: string;
   className?: string;
@@ -44,6 +37,8 @@ export interface ChatroomProps {
   renderMessageEditor?: () => ReactNode; // 自定义渲染 MessageEditor
   messageEditorProps?: MessageEditorProps;
   messageListProps?: MsgListProps;
+  renderBroadcast?: () => ReactNode;
+  broadcastProps?: BroadcastProps;
   chatroomId: string;
 }
 
@@ -57,7 +52,9 @@ const Chatroom = (props: ChatroomProps) => {
     messageEditorProps,
     renderMessageList,
     messageListProps,
-    chatroomId = '228706458075137',
+    renderBroadcast,
+    broadcastProps,
+    chatroomId = '229358390280194',
     prefix,
     className,
     style,
@@ -65,11 +62,10 @@ const Chatroom = (props: ChatroomProps) => {
   const context = useContext(RootContext);
   const { rootStore, features, theme } = context;
   console.log('theme', context);
+  window.rootStore = rootStore;
   const themeMode = theme?.mode || 'light';
-  // const chatroomId = '225555145359361';
-  // const chatroomId = '228706458075137';
+
   const [isEmpty, setIsEmpty] = useState(false);
-  // const classString = classNames()  'chatroom-container';
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('chatroom', prefix);
@@ -82,16 +78,37 @@ const Chatroom = (props: ChatroomProps) => {
     className,
   );
 
+  const sendJoinMessage = () => {
+    const myInfo = rootStore.addressStore.appUsersInfo[rootStore.client.user] || {};
+    const chatroom_uikit_userInfo = {
+      userId: myInfo?.userId,
+      nickName: myInfo?.nickname,
+      avatarURL: myInfo?.avatarurl,
+      gender: myInfo?.gender,
+      identify: myInfo?.ext?.identify,
+    };
+
+    const options = {
+      type: 'custom',
+      to: chatroomId,
+      chatType: 'chatRoom',
+      customEvent: 'CHATROOMUIKIUSERJOIN',
+      customExts: {},
+      ext: {
+        chatroom_uikit_userInfo,
+      },
+    } as AgoraChat.CreateCustomMsgParameters;
+    const customMsg = AC.message.create(options);
+    console.log('发宋加入消息', customMsg);
+    rootStore.messageStore.sendMessage(customMsg);
+  };
+
   useEffect(() => {
-    window.rootStore = rootStore;
     if (!rootStore.loginState) return;
     if (!chatroomId) {
       setIsEmpty(true);
       return;
     }
-    // rootStore.client.getChatRooms({ pagenum: 1, pagesize: 20 }).then(res => {
-    //   console.log('getChatRooms', res);
-    // });
 
     rootStore.client.getChatRoomDetails({ chatRoomId: chatroomId }).then(res => {
       console.log('聊天室详情', res);
@@ -105,6 +122,12 @@ const Chatroom = (props: ChatroomProps) => {
         .joinChatRoom({ roomId: chatroomId })
         .then(() => {
           console.log('join chatroom success');
+          getUsersInfo({
+            userIdList: [rootStore.client.user],
+          })?.then(() => {
+            sendJoinMessage();
+          });
+
           rootStore.client.getChatRoomAdmin({ chatRoomId: chatroomId }).then(res => {
             console.log('聊天室管理员', res);
             rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
@@ -115,14 +138,6 @@ const Chatroom = (props: ChatroomProps) => {
         });
 
       rootStore.addressStore.getChatroomMuteList(chatroomId);
-    }
-
-    if (rootStore.loginState) {
-      getUsersInfo({
-        userIdList: [rootStore.client.user],
-      });
-
-      rootStore.client;
     }
   }, [chatroomId, rootStore.loginState]);
 
@@ -229,7 +244,7 @@ const Chatroom = (props: ChatroomProps) => {
     rootStore.messageStore.shiftBroadcastMessage();
   };
   return (
-    <div className={classString}>
+    <div className={classString} style={{ ...style }}>
       {isEmpty ? (
         renderEmpty ? (
           renderEmpty()
@@ -256,11 +271,20 @@ const Chatroom = (props: ChatroomProps) => {
             ></Header>
           )}
           <p></p>
-          {broadcast.length > 0 && (
-            <Broadcast loop={0} delay={1} play={true} onCycleComplete={handleBroadcastFinish}>
-              <div>{broadcast[0].msg || ''}</div>
-            </Broadcast>
-          )}
+          {typeof renderBroadcast == 'function'
+            ? renderBroadcast()
+            : broadcast.length > 0 && (
+                <Broadcast
+                  loop={0}
+                  delay={1}
+                  play={true}
+                  onCycleComplete={handleBroadcastFinish}
+                  {...broadcastProps}
+                >
+                  <div>{broadcast[0].msg || ''}</div>
+                </Broadcast>
+              )}
+
           {renderMessageList ? (
             renderMessageList()
           ) : (
