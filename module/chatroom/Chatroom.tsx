@@ -54,7 +54,7 @@ const Chatroom = (props: ChatroomProps) => {
     messageListProps,
     renderBroadcast,
     broadcastProps,
-    chatroomId = '229358390280194',
+    chatroomId,
     prefix,
     className,
     style,
@@ -78,7 +78,7 @@ const Chatroom = (props: ChatroomProps) => {
     className,
   );
 
-  const sendJoinMessage = () => {
+  const sendJoinedNoticeMessage = () => {
     const myInfo = rootStore.addressStore.appUsersInfo[rootStore.client.user] || {};
     const chatroom_uikit_userInfo = {
       userId: myInfo?.userId,
@@ -112,33 +112,35 @@ const Chatroom = (props: ChatroomProps) => {
 
     rootStore.client.getChatRoomDetails({ chatRoomId: chatroomId }).then(res => {
       console.log('聊天室详情', res);
+
       // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
       rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
+      // @ts-ignore
+      const owner = res.data?.[0]?.owner;
+      if (owner == rootStore.client.user) {
+        rootStore.addressStore.getChatroomMuteList(chatroomId);
+      }
     });
 
-    if (chatroomId) {
-      //   rootStore.conversationStore.setCurrentCvs(chatroomId);
-      rootStore.client
-        .joinChatRoom({ roomId: chatroomId })
-        .then(() => {
-          console.log('join chatroom success');
-          getUsersInfo({
-            userIdList: [rootStore.client.user],
-          })?.then(() => {
-            sendJoinMessage();
-          });
-
-          rootStore.client.getChatRoomAdmin({ chatRoomId: chatroomId }).then(res => {
-            console.log('聊天室管理员', res);
-            rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
-          });
-        })
-        .catch(err => {
-          console.log('join chatroom fail', err);
+    //   rootStore.conversationStore.setCurrentCvs(chatroomId);
+    rootStore.client
+      .joinChatRoom({ roomId: chatroomId })
+      .then(() => {
+        console.log('join chatroom success');
+        getUsersInfo({
+          userIdList: [rootStore.client.user],
+        })?.then(() => {
+          sendJoinedNoticeMessage();
         });
 
-      rootStore.addressStore.getChatroomMuteList(chatroomId);
-    }
+        rootStore.client.getChatRoomAdmin({ chatRoomId: chatroomId }).then(res => {
+          console.log('聊天室管理员', res);
+          rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
+        });
+      })
+      .catch(err => {
+        console.log('join chatroom fail', err);
+      });
   }, [chatroomId, rootStore.loginState]);
 
   // config messageEditor
