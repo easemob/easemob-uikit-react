@@ -266,7 +266,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd3',
         token:
-          '007eJxTYLgsX3Pdju/4lM27zhzf8tfX/87xlKOTHXPOLJ/et6D+/60YBYY0w5Rkc3OLpJSUZDMTs8QUizQjMwNLc7PkRKMUA0PTZOU29dSGQEaGXq1US0YGVgZGIATxVRgsLFOSk8yNDXTNjExSdA0NU5N1LdNMDHWNjS0sDFMTTZNSk4wA6PsqZA==',
+          '007eJxTYEjZf6JB5QrPg703JM3b/60JTj7I5P7P9lkce2G2Zap8uJgCQ5phSrK5uUVSSkqymYlZYopFmpGZgaW5WXKiUYqBoWlyroZ3akMgI8NtQVd5RgZWBkYgBPFVGCwsU5KTzI0NdM2MTFJ0DQ1Tk3Ut00wMdY2NLSwMUxNNk1KTjAAYUCXv',
         // appKey: 'easemob#easeim',
       }}
       local={{
@@ -281,40 +281,40 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         //   },
         // },
       }}
-      features={{
-        conversationList: {
-          search: true,
-          item: {
-            moreAction: false,
-            deleteConversation: false,
-          },
-        },
-        chat: {
-          header: {
-            threadList: true,
-            moreAction: true,
-            clearMessage: true,
-            deleteConversation: false,
-            audioCall: false,
-          },
-          message: {
-            status: false,
-            reaction: false,
-            thread: true,
-            recall: true,
-            translate: false,
-            edit: false,
-          },
-          messageEditor: {
-            mention: false,
-            typing: false,
-            record: true,
-            emoji: false,
-            moreAction: true,
-            picture: true,
-          },
-        },
-      }}
+      // features={{
+      //   conversationList: {
+      //     search: true,
+      //     item: {
+      //       moreAction: false,
+      //       deleteConversation: false,
+      //     },
+      //   },
+      //   chat: {
+      //     header: {
+      //       threadList: true,
+      //       moreAction: true,
+      //       clearMessage: true,
+      //       deleteConversation: false,
+      //       audioCall: false,
+      //     },
+      //     message: {
+      //       status: false,
+      //       reaction: false,
+      //       thread: true,
+      //       recall: true,
+      //       translate: false,
+      //       edit: false,
+      //     },
+      //     messageEditor: {
+      //       mention: false,
+      //       typing: false,
+      //       record: true,
+      //       emoji: true,
+      //       moreAction: true,
+      //       picture: true,
+      //     },
+      //   },
+      // }}
       theme={
         {
           // primaryColor: '#00CE76',

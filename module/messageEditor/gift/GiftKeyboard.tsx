@@ -70,7 +70,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
       chatType: currentConversation.chatType,
       customEvent: 'CHATROOMUIKITGIFT',
       customExts: {
-        chatroom_uikit_gift: giftData,
+        chatroom_uikit_gift: JSON.stringify(giftData),
       },
       ext: {},
     } as AgoraChat.CreateCustomMsgParameters;
@@ -97,7 +97,6 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     giftName: string;
     giftPrice: number;
   }) => {
-    console.log('发烧');
     sendGiftMessage(giftData);
   };
   let titleNode;
@@ -117,7 +116,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
             image={item.giftIcon}
             action={{
               visible: true,
-              text: 'Send',
+              text: t('send'),
               onClick: () => {
                 handleSend(item);
               },
@@ -129,7 +128,6 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     </div>
   );
 
-  console.log('conversation 111', conversation);
   return (
     <Tooltip title={titleNode} trigger={trigger} arrowPointAtCenter={false} arrow={false}>
       {iconNode}

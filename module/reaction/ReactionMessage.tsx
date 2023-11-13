@@ -63,21 +63,6 @@ const ReactionMessage = (props: ReactionMessageProps) => {
 
   const [hoverStatus, setHoverStatus] = useState(false);
 
-  const arr = [
-    '[):]',
-    '[:@]',
-    '[(W)]',
-    '[(D)]',
-    '[(E)]',
-    '[(T)]',
-    '[(Y)]',
-    '[(I)]',
-    '[(J)]',
-    '[(K)]',
-    '[(L)]',
-    '[(M)]',
-  ];
-
   const handleClickReaction = (emoji: string) => {
     onClick && onClick(emoji);
   };

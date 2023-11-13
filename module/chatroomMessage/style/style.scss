@@ -67,6 +67,7 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
     
     padding-right: 30px;
     display: block;
+    text-align: left;
     // flex: 1;
     // position: relative;
         // display: flex;
@@ -90,6 +91,7 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
     display: block;
     color: $green-4;
     font-weight: 500;
+    text-align: left;
 }
 .#{$chatroom-prefix-cls}-body-action{
     // position: relative;

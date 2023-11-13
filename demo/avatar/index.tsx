@@ -4,7 +4,19 @@ import Avatar from '~/component/avatar';
 import image from './avatar.png';
 import { Provider } from '../../module';
 import Tabs from '~/component/tabs';
+import Drawer from '~/component/drawer';
+
+import Collapse from '~/component/collapse';
 import './index.scss';
+
+const items = [
+  { id: 1, avatar: 'avatar1.png', name: 'User 1' },
+  { id: 2, avatar: 'avatar2.png', name: 'User 2' },
+  { id: 3, avatar: 'avatar3.png', name: 'User 3' },
+  { id: 4, avatar: 'avatar4.png', name: 'User 4' },
+  { id: 5, avatar: 'avatar5.png', name: 'User 5' },
+];
+
 ReactDOM.createRoot(document.getElementById('avatarRoot') as Element).render(
   <div className="container" style={{ padding: '100px' }}>
     {/* <ConfigProvider
@@ -34,6 +46,11 @@ ReactDOM.createRoot(document.getElementById('avatarRoot') as Element).render(
       <Avatar shape="square">群1</Avatar>
       <Avatar shape="square">群2</Avatar>
     </Avatar.Group>
+
+    <Avatar
+      shape="square"
+      src="https://a1.easemob.com/easemob/chatroom-uikit/chatfiles/7345d230-79f8-11ee-a0d1-5f74d88fa308"
+    ></Avatar>
     {/* </ConfigProvider> */}
 
     <div className="container2">
@@ -69,6 +86,12 @@ ReactDOM.createRoot(document.getElementById('avatarRoot') as Element).render(
           ]}
         ></Tabs>
       </Provider>
+    </div>
+    <div>
+      <Drawer>sss</Drawer>
+    </div>
+    <div>
+      <Collapse items={items} isHorizontal={false} title=">>>" content={<div>11</div>}></Collapse>
     </div>
   </div>,
 );

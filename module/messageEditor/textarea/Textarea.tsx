@@ -44,7 +44,7 @@ export interface ForwardRefProps {
 
 let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const {
-    placeholder = 'Say something',
+    placeholder,
     hasSendButton,
     sendButtonActiveColor = 'var(--cui-primary-color)',
     enableEnterSend = true,
@@ -269,7 +269,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   return (
     <div className={classString} style={{ ...style }}>
       <div
-        placeholder={placeholder}
+        placeholder={placeholder || (t('say something') as string)}
         ref={divRef}
         className={`${prefixCls}-input`}
         contentEditable="true"

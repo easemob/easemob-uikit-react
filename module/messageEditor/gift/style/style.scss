@@ -3,13 +3,14 @@ $gift-prefix-cls: #{$cui-prefix}-gift;
 
 .#{$gift-prefix-cls}{
     width: 80px;
+    height: 98px;
     display: flex;
     flex-direction: column;
     align-items: center;
     border-radius: 8px;
     box-sizing: border-box;
     position: relative;
-    height: fit-content;
+    // height: fit-content;
     &>img{
         width: 50px;
         height: 50px;
@@ -18,9 +19,14 @@ $gift-prefix-cls: #{$cui-prefix}-gift;
         font-size: 14px;
         font-style: normal;
         font-weight: 500;
-        line-height: 20px;
+        line-height: 28px;
         // color: $gray-1;
         text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        cursor: default;
     }
 
     &-subtitle{
@@ -30,6 +36,15 @@ $gift-prefix-cls: #{$cui-prefix}-gift;
         line-height: 16px;
         color: $gray-5;
         text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        cursor: default;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
     }
 
     &-button{
@@ -43,7 +58,7 @@ $gift-prefix-cls: #{$cui-prefix}-gift;
         height: 28px;
         color: $gray-98;
         cursor: pointer;
-        // position: absolute;
+        position: absolute;
         bottom: 0;
     }
 

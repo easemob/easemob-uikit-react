@@ -6,7 +6,7 @@ import { Button, Avatar } from '../../component/entry';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 // import '../../dist/style.css';
-
+import Provider from '../../module/store/Provider';
 import { ConfigContext, ConfigProvider, ConfigConsumer } from '../../component/config/index';
 
 import Input from '../../component/input';
@@ -109,7 +109,9 @@ ReactDOM.createRoot(document.getElementById('buttonRoot') as Element).render(
 				iconPrefixCls: 'bamboo',
 			}}
 		> */}
-    <TestButton></TestButton>
+    <Provider initConfig={{ appKey: 'easemob#easeim' }} theme={{ mode: 'dark' }}>
+      <TestButton></TestButton>
+    </Provider>
     {/* </ConfigProvider> */}
   </div>,
 );

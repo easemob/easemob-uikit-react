@@ -56,6 +56,16 @@ import { ReactComponent as Gift } from '../svgs/icons/gift.svg';
 import { ReactComponent as Bell } from '../svgs/icons/bell.svg';
 import { ReactComponent as BellSlash } from '../svgs/icons/bell_slash.svg';
 import { ReactComponent as EMPTY } from '../svgs/empty.svg';
+import { ReactComponent as MOON } from '../svgs/icons/moon.svg';
+import { ReactComponent as SUN } from '../svgs/icons/sun.svg';
+import { ReactComponent as POWER } from '../svgs/icons/power.svg';
+import { ReactComponent as SPINNER } from '../svgs/icons/spinner.svg';
+import { ReactComponent as VERTICAL_ARROW } from '../svgs/icons/vertical_n_arrows.svg';
+import { ReactComponent as VIDEO_CAMERA_PLUS } from '../svgs/icons/video_camera_splus.svg';
+import { ReactComponent as VIDEO_CAMERA_XMARK } from '../svgs/icons/video_camera_xmark.svg';
+import { ReactComponent as BUBBLE_FILL } from '../svgs/icons/bubble_fill.svg';
+import { ReactComponent as EXCLAMATION_MARK_IN_CIRCLE } from '../svgs/icons/exclamation_mark_in_circle.svg';
+
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -220,6 +230,33 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'EMPTY':
       return <EMPTY></EMPTY>;
+      break;
+    case 'MOON':
+      return <MOON></MOON>;
+      break;
+    case 'SUN':
+      return <SUN></SUN>;
+      break;
+    case 'VIDEO_CAMERA_PLUS':
+      return <VIDEO_CAMERA_PLUS></VIDEO_CAMERA_PLUS>;
+      break;
+    case 'VIDEO_CAMERA_XMARK':
+      return <VIDEO_CAMERA_XMARK></VIDEO_CAMERA_XMARK>;
+      break;
+    case 'POWER':
+      return <POWER></POWER>;
+      break;
+    case 'SPINNER':
+      return <SPINNER></SPINNER>;
+      break;
+    case 'VERTICAL_ARROW':
+      return <VERTICAL_ARROW></VERTICAL_ARROW>;
+      break;
+    case 'BUBBLE_FILL':
+      return <BUBBLE_FILL></BUBBLE_FILL>;
+      break;
+    case 'EXCLAMATION_MARK_IN_CIRCLE':
+      return <EXCLAMATION_MARK_IN_CIRCLE></EXCLAMATION_MARK_IN_CIRCLE>;
       break;
     default:
       return '';

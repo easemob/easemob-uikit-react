@@ -1,0 +1,73 @@
+@import '~/common/style/index.scss';
+@import './mixin.scss';
+
+$collapse-prefix-cls: #{$cui-prefix}-collapse;
+.#{$collapse-prefix-cls} {
+    // border: 1px solid $gray-98;
+    border-radius: 4px;
+    // margin-bottom: 1rem;
+
+    &-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        // padding: 1rem;
+        cursor: pointer;
+    }
+
+    &-content {
+        // padding: 1rem;
+    }
+
+    &-icon {
+        transition: transform 0.3s;
+    }
+
+    &-icon.open {
+        transform: rotate(180deg);
+    }
+
+    &-right {
+        @include collapse-direction('right');
+    }
+    &-right.#{$collapse-prefix-cls}-bordered {
+        @include border('right')
+    }
+    &-right.#{$collapse-prefix-cls}-expandIcon-start {
+        @include iconPositionAtStart('right');
+    }
+
+    &-left {
+        @include collapse-direction('left');
+    }
+    &-left.#{$collapse-prefix-cls}-bordered {
+        @include border('left')
+    }
+    &-left.#{$collapse-prefix-cls}-expandIcon-start {
+        @include iconPositionAtStart('left');
+    }
+
+    &-up {
+        @include collapse-direction('up');
+    }
+    &-up.#{$collapse-prefix-cls}-bordered {
+        @include border('up')
+    }
+    &-up.#{$collapse-prefix-cls}-expandIcon-start {
+        @include iconPositionAtStart('up');
+    }
+   
+    &-down {
+        @include collapse-direction('down');
+    }
+    &-down.#{$collapse-prefix-cls}-bordered {
+        @include border('down')
+    }
+    &-down.#{$collapse-prefix-cls}-expandIcon-start {
+        @include iconPositionAtStart('down');
+    }
+}
+
+
+
+  

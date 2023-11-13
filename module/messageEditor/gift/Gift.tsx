@@ -5,7 +5,7 @@ import './style/style.scss';
 import { useTranslation } from 'react-i18next';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config/index';
-import heart from '../../assets/gift/heart.png';
+import coin from '../../assets/gift/dollagora.png';
 
 export interface GiftProps {
   prefix?: string;
@@ -62,7 +62,9 @@ const Gift = (props: GiftProps) => {
     <div className={classString} onClick={clickGift} key={title}>
       <img src={image as any as string} alt={title} />
       {!selected && <div className={`${prefixCls}-title`}>{title}</div>}
-      <div className={`${prefixCls}-subtitle`}>{subTitle}</div>
+      <div className={`${prefixCls}-subtitle`}>
+        <img src={coin as any as string} alt="coin" /> {subTitle}
+      </div>
       {selected && (
         <div className={`${prefixCls}-button`} onClick={action?.onClick || handleActionClick}>
           {action?.text}

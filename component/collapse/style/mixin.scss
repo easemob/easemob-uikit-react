@@ -1,0 +1,90 @@
+@mixin collapse-direction($direction){
+    display: flex;
+    @if $direction == right {
+        flex-direction: row;
+        width: fit-content;
+
+        .#{$collapse-prefix-cls}-icon{
+            transform: rotate(180deg);
+        }
+        .#{$collapse-prefix-cls}-icon.open{
+            transform: rotate(360deg);
+        }
+        .#{$collapse-prefix-cls}-header{
+            flex-direction: row-reverse;
+        }
+    }
+    @else if $direction == left {
+        flex-direction: row-reverse;
+        .#{$collapse-prefix-cls}-icon{
+            // transform: rotate(180deg);
+        }
+        .#{$collapse-prefix-cls}-icon.open{
+            transform: rotate(180deg);
+        }
+    }
+    @else if $direction == up {
+        flex-direction: column-reverse;
+        .#{$collapse-prefix-cls}-icon{
+            transform: rotate(90deg);
+        }
+        .#{$collapse-prefix-cls}-icon.open{
+            transform: rotate(270deg);
+        }
+    }
+    @else if $direction == down {
+        flex-direction: column;
+        .#{$collapse-prefix-cls}-icon{
+            transform: rotate(270deg);
+        }
+        .#{$collapse-prefix-cls}-icon.open{
+            transform: rotate(90deg);
+        }
+    }
+}
+
+@mixin border($direction){
+    @if $direction == right {
+        .#{$collapse-prefix-cls}-header.open{
+            border-right: 1px solid $gray-98;
+        }
+    }
+    @else if $direction == left{
+        .#{$collapse-prefix-cls}-header.open{
+            border-left: 1px solid $gray-98;
+        }
+    }
+    @else if $direction == up{
+        .#{$collapse-prefix-cls}-header.open{
+            border-top: 1px solid $gray-98;
+        }
+    }
+    @else if $direction == down{
+        .#{$collapse-prefix-cls}-header.open{
+            border-bottom: 1px solid $gray-98;
+        }
+    }
+}
+
+@mixin iconPositionAtStart($direction){
+    @if $direction == left {
+        & .#{$collapse-prefix-cls}-header{
+            flex-direction: row-reverse;
+        }
+    }
+    @else if $direction == right {
+        & .#{$collapse-prefix-cls}-header{
+            flex-direction: row;
+        }
+    }
+    @else if $direction == up {
+        & .#{$collapse-prefix-cls}-header{
+            flex-direction: row-reverse;
+        }
+    }
+    @else if $direction == down {
+        .#{$collapse-prefix-cls}-header{
+            flex-direction: row-reverse;
+        }
+    }
+}

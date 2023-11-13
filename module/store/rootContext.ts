@@ -52,6 +52,22 @@ export interface ContextProps {
         deleteConversation?: boolean;
       };
     };
+    chatroom?: {
+      message?: {
+        moreAction?: boolean;
+        delete?: boolean;
+        translate?: boolean;
+        report?: boolean;
+      };
+      messageEditor?: {
+        emoji?: boolean;
+        gift?: boolean;
+      };
+    };
+    chatroomMember?: {
+      mute?: boolean;
+      remove?: boolean;
+    };
   };
   reactionConfig?: {
     map: {

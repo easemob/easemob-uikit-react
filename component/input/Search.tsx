@@ -6,6 +6,7 @@ import { ConfigContext } from '../config/index';
 import Icon from '../icon';
 import { RootContext } from '../../module/store/rootContext';
 import './style/search.scss';
+import { useTranslation } from 'react-i18next';
 
 export interface SearchProps {
   className?: string;
@@ -14,6 +15,7 @@ export interface SearchProps {
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   style?: React.CSSProperties;
   shape?: 'ground' | 'square';
+  placeholder?: string;
 }
 export default function Search(props: SearchProps) {
   const {
@@ -22,8 +24,10 @@ export default function Search(props: SearchProps) {
     className,
     shape = 'ground',
     style = {},
+    placeholder,
     ...others
   } = props;
+  const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
@@ -45,7 +49,7 @@ export default function Search(props: SearchProps) {
       <Icon type="SEARCH" className={`${prefixCls}-icon`}></Icon>
       <input
         type="text"
-        placeholder="Search"
+        placeholder={placeholder || (t('search') as string)}
         onChange={handleChange}
         className={`${prefixCls}-input`}
         {...others}

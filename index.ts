@@ -53,7 +53,10 @@ import {
   Switch,
   Tooltip,
   ScrollList,
+  Collapse,
 } from './component/entry';
+
+import eventHandler, { EventHandlerData, EventName } from './eventHandler';
 
 export {
   AudioMessage,
@@ -102,11 +105,13 @@ export {
   Switch,
   Tooltip,
   ScrollList,
+  Collapse,
   Thread,
   UserProfile,
   Chatroom,
   ChatroomMember,
   ChatroomMessage,
+  eventHandler,
 };
 
 export type {
@@ -126,6 +131,7 @@ export type {
   PopoverProps,
   SwitchProps,
   ScrollListProps,
+  CollapseProps,
 } from './component/entry';
 
 export type {
@@ -181,3 +187,5 @@ export type {
   ThreadProps,
   UserProfileProps,
 } from './module/index';
+
+export type { EventHandlerData, EventName };

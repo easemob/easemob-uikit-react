@@ -1,46 +1,81 @@
 //生成 chatroomMember 组件
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, ReactNode } from 'react';
 import classNames from 'classnames';
 import './style/style.scss';
 import { ConfigContext } from '../../component/config/index';
-import Avatar from '../../component/avatar';
-import { AppUserInfo, getStore } from '../store/index';
+import { AppUserInfo } from '../store/index';
 import { observer } from 'mobx-react-lite';
-import { getUsersInfo } from '../utils/index';
-import Button from '../../component/button';
-import Header from '../header';
+import Header, { HeaderProps } from '../header';
 import Search from '../../component/input/Search';
 import ScrollList from '../../component/scrollList';
-import { ConversationItem } from '../conversation/ConversationItem';
-import UserItem, { UserInfoData } from '../../component/userItem';
+import UserItem, { UserItemProps, UserInfoData } from '../../component/userItem';
 import { useChatroomMember } from '../hooks/useChatroomMember';
 import { RootContext } from '../store/rootContext';
 import Tabs from '../../component/tabs';
 import Empty from '../empty';
 import Icon from '../../component/icon';
 import Modal from '../../component/modal';
-const mockData = [];
-for (let i = 0; i < 50; i++) {
-  mockData.push({
-    userId: 'zd' + i,
-    nickname: 'zd' + i,
-  });
-}
-
+import { useTranslation } from 'react-i18next';
 export interface ChatroomMemberProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
   chatroomId: string;
+  renderEmpty?: () => ReactNode;
+  renderMemberListEmpty?: () => ReactNode;
+  renderMuteListEmpty?: () => ReactNode;
+  renderHeader?: (cvs: {
+    chatType: 'singleChat' | 'groupChat' | 'chatRoom';
+    conversationId: string;
+    name?: string;
+    unreadCount?: number;
+  }) => ReactNode; // 自定义渲染 Header
+  headerProps?: {
+    avatar: ReactNode;
+    onAvatarClick?: () => void; // 点击 Header 中 头像的回调
+    moreAction?: HeaderProps['moreAction'];
+    onCloseClick?: () => void; // 点击 Header 中 关闭按钮的回调
+    content?: ReactNode; // Header 中间的内容
+  };
+
+  memberListProps?: {
+    search?: boolean;
+    placeholder?: string;
+    renderEmpty?: () => ReactNode;
+    renderItem?: (item: AppUserInfo) => ReactNode;
+    UserItemProps?: UserItemProps;
+  };
+
+  muteListProps?: {
+    search?: boolean;
+    placeholder?: string;
+    renderEmpty?: () => ReactNode;
+    renderItem?: (item: AppUserInfo) => ReactNode;
+    UserItemProps?: UserItemProps;
+  };
 }
 
 const MemberScrollList = ScrollList<AppUserInfo>();
 
 const ChatroomMember = (props: ChatroomMemberProps) => {
-  const { prefix, className, style, chatroomId } = props;
-  if (!chatroomId) throw new Error('chatroomId is required');
+  const {
+    prefix,
+    className,
+    style,
+    chatroomId,
+    headerProps,
+    renderHeader,
+    memberListProps,
+    muteListProps,
+  } = props;
+  if (!chatroomId) {
+    console.warn('chatroomId is required');
+    return null;
+  }
+  const { t } = useTranslation();
   const context = useContext(RootContext);
-  const { rootStore, features, theme } = context;
+  const { rootStore, features, theme, onError } = context;
+  const globalConfig = features?.chatroomMember;
   const themeMode = theme?.mode || 'light';
   const { addressStore } = rootStore;
   const { getConversationList } = useChatroomMember(chatroomId);
@@ -48,12 +83,17 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     if (!rootStore.loginState) return;
     const chatroomData = addressStore.chatroom.filter(item => item.id === chatroomId)[0];
     if (!chatroomData) {
-      rootStore.client.getChatRoomDetails({ chatRoomId: chatroomId }).then(res => {
-        console.log('聊天室详情', res);
-        // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
-        rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
-        getConversationList();
-      });
+      rootStore.client
+        .getChatRoomDetails({ chatRoomId: chatroomId })
+        .then(res => {
+          console.log('聊天室详情', res);
+          // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
+          rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
+          getConversationList();
+        })
+        .catch(err => {
+          onError?.(err);
+        });
     } else {
       getConversationList();
     }
@@ -61,10 +101,8 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
 
   const chatroomData = addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
   const owner = chatroomData.owner || '';
-  console.log('-----chatroomData', chatroomData);
   const appUsersInfo = addressStore.appUsersInfo;
   const membersId = chatroomData.membersId || [];
-  console.log('-----membersId', membersId);
 
   const [modalOpen, setModalOpen] = React.useState(false);
   useEffect(() => {
@@ -79,14 +117,11 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
       userId,
     };
   });
-  console.log('-----membersData', membersData);
   const [waitRemoveUserID, setWaitRemoveUserID] = React.useState('');
   const muteMember = (data: UserInfoData) => {
-    console.log(data);
     addressStore.muteChatRoomMember(chatroomId, data.userId);
   };
   const removeMember = (data: UserInfoData) => {
-    console.log(data);
     setWaitRemoveUserID(data.userId);
     setModalOpen(true);
   };
@@ -98,18 +133,29 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     visible: owner == rootStore.client.user,
     actions: [
       {
-        content: 'Mute',
+        content: 'mute',
         onClick: muteMember,
       },
       {
-        content: 'Remove',
+        content: 'remove',
         onClick: removeMember,
       },
     ],
   };
 
+  if (globalConfig) {
+    allMoreAction.actions = allMoreAction.actions.filter(item => {
+      if (item.content == 'mute' && globalConfig?.mute == false) {
+        return false;
+      }
+      if (item.content == 'remove' && globalConfig?.mute == false) {
+        return false;
+      }
+      return true;
+    });
+  }
+
   const unmuteMember = (data: UserInfoData) => {
-    console.log(data);
     addressStore.unmuteChatRoomMember(chatroomId, data.userId);
   };
   const mutedMoreAction = {
@@ -133,10 +179,10 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     setMuteDataToRender(chatroomData?.muteList);
   }, [chatroomData?.muteList?.length]);
 
-  const handleAllSearch = e => {
+  const handleAllSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log(e.target.value);
     const data = membersData.filter(item => {
-      return item.nickname.includes(e.target.value);
+      return item.nickname?.includes(e.target.value) || item.userId?.includes(e.target.value);
     });
     setAllDataToRender(data);
     if (e.target.value == '') {
@@ -147,44 +193,55 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
   const renderAllList = () => {
     return membersData.length > 0 ? (
       <div className={`${'cui'}-member-list`} style={{ flex: '1', overflow: 'hidden' }}>
-        <div style={{ margin: '6px 12px' }}>
-          <Search onChange={handleAllSearch}></Search>
-        </div>
+        {(memberListProps?.search == true || typeof memberListProps?.search == 'undefined') && (
+          <div style={{ margin: '6px 12px' }}>
+            <Search onChange={handleAllSearch} placeholder={memberListProps?.placeholder}></Search>
+          </div>
+        )}
 
         <MemberScrollList
-          //   loading={true}
+          loading={true}
           hasMore={true}
           data={allDataToRender}
           scrollDirection="down"
           loadMoreItems={() => {
-            console.log('加载更多');
             getConversationList();
           }}
-          renderItem={item => {
-            return (
-              <UserItem
-                key={item.userId}
-                data={{
-                  userId: item.userId,
-                  nickname: item.nickname,
-                  avatarUrl: item.avatarurl,
-                  description: owner == item.userId ? 'owner' : '',
-                }}
-                moreAction={owner == item.userId ? { visible: false, actions: [] } : allMoreAction}
-              />
-            );
-          }}
+          renderItem={
+            memberListProps?.renderItem
+              ? item => {
+                  return memberListProps?.renderItem?.(item);
+                }
+              : item => {
+                  return (
+                    <UserItem
+                      key={item.userId}
+                      data={{
+                        userId: item.userId,
+                        nickname: item.nickname,
+                        avatarUrl: item.avatarurl,
+                        description: owner == item.userId ? (t('owner') as string) : '',
+                      }}
+                      moreAction={
+                        owner == item.userId ? { visible: false, actions: [] } : allMoreAction
+                      }
+                      {...memberListProps?.UserItemProps}
+                    />
+                  );
+                }
+          }
         ></MemberScrollList>
       </div>
+    ) : memberListProps?.renderEmpty ? (
+      memberListProps?.renderEmpty?.()
     ) : (
       <Empty text="" icon={<Icon type="EMPTY" width={120} height={120}></Icon>}></Empty>
     );
   };
 
-  const handleMutedSearch = e => {
-    console.log(e.target.value);
+  const handleMutedSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const data = chatroomData?.muteList?.filter(item => {
-      const userName = appUsersInfo[item]?.nickname || '';
+      const userName = appUsersInfo[item]?.nickname || appUsersInfo[item]?.userId || '';
       return userName.includes(e.target.value);
     });
     setMuteDataToRender(data || []);
@@ -214,11 +271,15 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
           );
         })}
       </div>
+    ) : muteListProps?.renderEmpty ? (
+      muteListProps?.renderEmpty?.()
     ) : (
       <Empty text="" icon={<Icon type="EMPTY" width={120} height={120}></Icon>}></Empty>
     );
   };
-  const handleClose = () => {};
+  const handleClose = () => {
+    headerProps?.onCloseClick?.();
+  };
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('chatroom-member', prefix);
@@ -231,23 +292,32 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
   );
   return (
     <div className={classString} style={{ ...style }}>
-      <Header
-        close={true}
-        content="Participants"
-        avatar={<div></div>}
-        onClickClose={handleClose}
-      ></Header>
+      {renderHeader ? (
+        renderHeader({
+          chatType: 'chatRoom',
+          conversationId: chatroomId,
+        })
+      ) : (
+        <Header
+          close={true}
+          content="Participants"
+          avatar={<div></div>}
+          onClickClose={handleClose}
+          {...headerProps}
+        ></Header>
+      )}
+
       <div className="chatroom-member-line"></div>
-      {owner == rootStore.client.user ? (
+      {owner == rootStore.client.user && globalConfig?.mute != false ? (
         <Tabs
           tabs={[
             {
-              label: 'ALL',
+              label: t('all'),
               key: 'all',
               content: renderAllList(),
             },
             {
-              label: 'MUTED',
+              label: t('muted'),
               key: 'muted',
               content: renderMutedList(),
             },
@@ -257,15 +327,18 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
         renderAllList()
       )}
       <Modal
-        title="Remove"
-        okText="Remove"
+        title={t('remove')}
+        okText={t('remove')}
+        cancelText={t('cancel')}
         open={modalOpen}
         onCancel={() => {
           setModalOpen(false);
         }}
         onOk={handleRemove}
       >
-        <div>Want to remove {appUsersInfo[waitRemoveUserID]?.nickname || waitRemoveUserID}</div>
+        <div>
+          {t('wantToRemove')} {appUsersInfo[waitRemoveUserID]?.nickname || waitRemoveUserID}
+        </div>
       </Modal>
     </div>
   );

@@ -93,7 +93,7 @@ let UserItem: FC<UserItemProps> = props => {
                 item.onClick?.(data);
               }}
             >
-              {item.content}
+              {typeof item.content == 'string' ? t(item.content) : item.content}
             </li>
           );
         })}

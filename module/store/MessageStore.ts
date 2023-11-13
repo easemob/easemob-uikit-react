@@ -210,19 +210,20 @@ class MessageStore {
       }
     }
 
-    // @ts-ignore
-    if (!this.message[chatType][to]) {
+    if (chatType !== 'chatRoom') {
       // @ts-ignore
-      this.message[chatType][to] = [this.message.byId[message.id]];
-    } else {
-      // 处理重发的消息，重发的消息不push
-      // @ts-ignore
-      if (this.message.byId[message.id].status !== 'failed') {
+      if (!this.message[chatType][to]) {
         // @ts-ignore
-        this.message[chatType][to].push(this.message.byId[message.id]);
+        this.message[chatType][to] = [this.message.byId[message.id]];
+      } else {
+        // 处理重发的消息，重发的消息不push
+        // @ts-ignore
+        if (this.message.byId[message.id].status !== 'failed') {
+          // @ts-ignore
+          this.message[chatType][to].push(this.message.byId[message.id]);
+        }
       }
     }
-
     if (this.repliedMessage != null) {
       this.setRepliedMessage(null);
     }
@@ -230,6 +231,20 @@ class MessageStore {
     return this.rootStore.client
       .send(message as unknown as AgoraChat.MessageBody)
       .then((data: { serverMsgId: string }) => {
+        if (chatType == 'chatRoom') {
+          // @ts-ignore
+          if (!this.message[chatType][to]) {
+            // @ts-ignore
+            this.message[chatType][to] = [this.message.byId[message.id]];
+          } else {
+            // 处理重发的消息，重发的消息不push
+            // @ts-ignore
+            if (this.message.byId[message.id].status !== 'failed') {
+              // @ts-ignore
+              this.message[chatType][to].push(this.message.byId[message.id]);
+            }
+          }
+        }
         // message.status = 'sent';
         const msg = this.message.byId[message.id];
         // @ts-ignore
@@ -346,7 +361,12 @@ class MessageStore {
       const appUsersInfo = this.rootStore.addressStore.appUsersInfo;
       this.rootStore.addressStore.setAppUserInfo({
         ...appUsersInfo,
-        [senderInfo.userId]: senderInfo,
+        [senderInfo.userId]: {
+          nickname: senderInfo.nickName,
+          userId: senderInfo.userId,
+          avatarurl: senderInfo.avatarURL,
+          gender: senderInfo.gender,
+        },
       });
       return;
     }
@@ -429,7 +449,8 @@ class MessageStore {
       // @ts-ignore
       this.message.byId[msgId].status = status;
       // @ts-ignore
-      const i = this.message[msg.chatType][conversationId].indexOf(this.message.byId[msg.id]);
+      const i = this.message[msg.chatType][conversationId]?.indexOf(this.message.byId[msg.id]); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
+      if (typeof i === 'undefined') return;
       // @ts-ignore
       this.message[msg.chatType][conversationId].splice(i, 1, msg);
       // this.message[chatType][to][i] = msg;

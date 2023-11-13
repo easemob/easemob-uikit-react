@@ -17,17 +17,27 @@ import Broadcast, { BroadcastProps } from '../../component/broadcast';
 import { getUsersInfo } from '../utils/index';
 import Modal from '../../component/modal';
 import Checkbox from '../../component/checkbox';
+import { ChatroomInfo } from '../store/AddressStore';
+import { TextMessageType } from 'chatuim2/types/module/types/messageType';
+import { eventHandler } from '../../eventHandler';
+const reportType = [
+  'Unwelcome commercial content or spam',
+  'Pornographic or explicit content',
+  'Child abuse',
+  'Hate speech or graphic violence',
+  'Promote terrorism',
+  'Harassment or bullying',
+  'Suicide or self harm',
+  'False information',
+  'Others',
+];
+
 export interface ChatroomProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
-  renderHeader?: (cvs: {
-    chatType: 'singleChat' | 'groupChat';
-    conversationId: string;
-    name?: string;
-    unreadCount?: number;
-  }) => ReactNode; // 自定义渲染 Header
+  renderHeader?: (roomInfo: ChatroomInfo) => ReactNode; // 自定义渲染 Header
   headerProps?: {
     avatar: ReactNode;
     onAvatarClick?: () => void; // 点击 Header 中 头像的回调
@@ -60,9 +70,8 @@ const Chatroom = (props: ChatroomProps) => {
     style,
   } = props;
   const context = useContext(RootContext);
-  const { rootStore, features, theme } = context;
-  console.log('theme', context);
-  window.rootStore = rootStore;
+  const { rootStore, features, theme, onError } = context;
+  const globalConfig = features?.chatroom;
   const themeMode = theme?.mode || 'light';
 
   const [isEmpty, setIsEmpty] = useState(false);
@@ -92,15 +101,16 @@ const Chatroom = (props: ChatroomProps) => {
       type: 'custom',
       to: chatroomId,
       chatType: 'chatRoom',
-      customEvent: 'CHATROOMUIKIUSERJOIN',
+      customEvent: 'CHATROOMUIKITUSERJOIN',
       customExts: {},
       ext: {
         chatroom_uikit_userInfo,
       },
     } as AgoraChat.CreateCustomMsgParameters;
     const customMsg = AC.message.create(options);
-    console.log('发宋加入消息', customMsg);
-    rootStore.messageStore.sendMessage(customMsg);
+    rootStore.messageStore.sendMessage(customMsg).catch(err => {
+      onError?.(err);
+    });
   };
 
   useEffect(() => {
@@ -109,49 +119,59 @@ const Chatroom = (props: ChatroomProps) => {
       setIsEmpty(true);
       return;
     }
-
-    rootStore.client.getChatRoomDetails({ chatRoomId: chatroomId }).then(res => {
-      console.log('聊天室详情', res);
-
-      // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
-      rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
-      // @ts-ignore
-      const owner = res.data?.[0]?.owner;
-      if (owner == rootStore.client.user) {
-        rootStore.addressStore.getChatroomMuteList(chatroomId);
-      }
-    });
+    setIsEmpty(false);
+    rootStore.client
+      .getChatRoomDetails({ chatRoomId: chatroomId })
+      .then(res => {
+        // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
+        rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
+        // @ts-ignore
+        const owner = res.data?.[0]?.owner;
+        if (owner == rootStore.client.user) {
+          rootStore.addressStore.getChatroomMuteList(chatroomId);
+        }
+      })
+      .catch(err => {
+        onError?.(err);
+      });
 
     //   rootStore.conversationStore.setCurrentCvs(chatroomId);
     rootStore.client
       .joinChatRoom({ roomId: chatroomId })
       .then(() => {
         console.log('join chatroom success');
+        eventHandler.dispatchSuccess('joinChatRoom');
         getUsersInfo({
           userIdList: [rootStore.client.user],
-        })?.then(() => {
-          sendJoinedNoticeMessage();
-        });
+          withPresence: false,
+        })
+          ?.then(() => {
+            sendJoinedNoticeMessage();
+          })
+          .catch(error => {
+            onError?.(error);
+          });
 
-        rootStore.client.getChatRoomAdmin({ chatRoomId: chatroomId }).then(res => {
-          console.log('聊天室管理员', res);
-          rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
-        });
+        rootStore.client
+          .getChatRoomAdmin({ chatRoomId: chatroomId })
+          .then(res => {
+            console.log('聊天室管理员', res);
+            rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
+          })
+          .catch(err => {
+            onError?.(err);
+          });
       })
-      .catch(err => {
+      .catch((err: AgoraChat.ErrorEvent) => {
         console.log('join chatroom fail', err);
+        eventHandler.dispatchError('joinChatRoom', err);
+        onError?.(err);
       });
   }, [chatroomId, rootStore.loginState]);
 
   // config messageEditor
   let messageEditorConfig: MessageEditorProps = {
-    enabledTyping: true,
-    enabledMention: true,
     actions: [
-      {
-        name: 'GIFT',
-        visible: true,
-      },
       {
         name: 'TEXTAREA',
         visible: true,
@@ -161,84 +181,73 @@ const Chatroom = (props: ChatroomProps) => {
         visible: true,
       },
       {
+        name: 'GIFT',
+        visible: true,
+        icon: (
+          <GiftKeyboard
+            conversation={{
+              chatType: 'chatRoom',
+              conversationId: chatroomId,
+            }}
+          ></GiftKeyboard>
+        ),
+      },
+      {
         name: 'MORE',
         visible: false,
       },
     ],
-    customActions: [
-      {
-        content: 'IMAGE',
-      },
-      {
-        content: 'FILE',
-      },
-    ],
   };
-  //   if (globalConfig?.messageEditor) {
-  //     if (globalConfig?.messageEditor?.mention == false) {
-  //       messageEditorConfig.enabledMention = false;
-  //     }
-  //     if (globalConfig?.messageEditor?.typing == false) {
-  //       messageEditorConfig.enabledTyping = false;
-  //     }
+  if (globalConfig?.messageEditor) {
+    messageEditorConfig.actions = messageEditorConfig.actions?.filter(item => {
+      if (item.name == 'EMOJI' && globalConfig?.messageEditor?.emoji == false) {
+        return false;
+      }
 
-  //     messageEditorConfig.actions = messageEditorConfig.actions?.filter(item => {
-  //       if (item.name == 'EMOJI' && globalConfig?.messageEditor?.emoji == false) {
-  //         return false;
-  //       }
-  //       if (item.name == 'MORE' && globalConfig?.messageEditor?.moreAction == false) {
-  //         return false;
-  //       }
-  //       if (item.name == 'RECORDER' && globalConfig?.messageEditor?.record == false) {
-  //         return false;
-  //       }
+      if (item.name == 'GIFT' && globalConfig?.messageEditor?.gift == false) {
+        return false;
+      }
 
-  //       return true;
-  //     });
-  //     messageEditorConfig.customActions = messageEditorConfig!.customActions?.filter(item => {
-  //       if (item.content == 'IMAGE' && globalConfig?.messageEditor?.picture == false) {
-  //         return false;
-  //       }
-  //       if (item.content == 'FILE' && globalConfig?.messageEditor?.file == false) {
-  //         return false;
-  //       }
-  //       return true;
-  //     });
-  //   }
+      return true;
+    });
+  }
 
   const chatroomData =
     rootStore.addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
   const appUsersInfo = rootStore.addressStore.appUsersInfo;
   const broadcast = rootStore.messageStore.message.broadcast;
   const [reportMessageId, setReportMessageId] = useState('');
-  const handleReport = message => {
+  const handleReport = (message: any) => {
     console.log('report', message);
     setReportOpen(true);
     setReportMessageId(message.mid || message.id);
   };
-  const renderChatroomMessage = msg => {
+  const renderChatroomMessage = (msg: any) => {
     if (msg.type == 'txt' || msg.type == 'custom') {
-      return <ChatroomMessage type="txt" message={msg} onReport={handleReport} />;
+      return <ChatroomMessage message={msg} onReport={handleReport} />;
     }
   };
 
   const [reportOpen, setReportOpen] = useState(false);
-  const [checkedType, setCheckedType] = useState('');
-  const handleCheckChange = (type: string) => {
-    console.log('type', type);
+  const [checkedType, setCheckedType] = useState(-1);
+  const handleCheckChange = (type: number) => {
     setCheckedType(type);
   };
   const handleReportMessage = () => {
     rootStore.client
       .reportMessage({
-        reportType: checkedType,
-        reportReason: checkedType,
+        reportType: reportType[checkedType],
+        reportReason: reportType[checkedType],
         messageId: reportMessageId,
       })
       .then(() => {
+        eventHandler.dispatchSuccess('reportMessage');
         setReportOpen(false);
-        console.log('举报成功');
-        setCheckedType('');
+        setCheckedType(-1);
+      })
+      .catch(err => {
+        onError?.(err);
+        eventHandler.dispatchError('reportMessage', err);
       });
   };
 
@@ -251,7 +260,7 @@ const Chatroom = (props: ChatroomProps) => {
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text={t('module.noConversation')}></Empty>
+          <Empty text={t('noConversation')}></Empty>
         )
       ) : (
         <>
@@ -283,7 +292,7 @@ const Chatroom = (props: ChatroomProps) => {
                   onCycleComplete={handleBroadcastFinish}
                   {...broadcastProps}
                 >
-                  <div>{broadcast[0].msg || ''}</div>
+                  <div>{(broadcast[0] as TextMessageType).msg || ''}</div>
                 </Broadcast>
               )}
 
@@ -310,54 +319,34 @@ const Chatroom = (props: ChatroomProps) => {
               }}
               {...messageEditorConfig}
               {...messageEditorProps}
-              actions={[
-                { name: 'TEXTAREA', visible: true },
-                { name: 'EMOJI', visible: true },
-                {
-                  name: 'GIFT',
-                  visible: true,
-                  icon: (
-                    <GiftKeyboard
-                      conversation={{
-                        chatType: 'chatRoom',
-                        conversationId: chatroomId,
-                      }}
-                    ></GiftKeyboard>
-                  ),
-                },
-              ]}
             ></MessageEditor>
           )}
         </>
       )}
       <Modal
         open={reportOpen}
-        title="Report"
-        okText="Report"
+        title={t('report')}
+        okText={t('report')}
+        cancelText={t('cancel')}
         onOk={handleReportMessage}
         onCancel={() => {
           setReportOpen(false);
         }}
       >
         <div>
-          <div className="report-item">
-            <div>Unwelcome commercial content or spam</div>
-            <Checkbox
-              checked={checkedType === 'type1'}
-              onChange={() => {
-                handleCheckChange('type1');
-              }}
-            ></Checkbox>
-          </div>
-          <div className="report-item">
-            <div>Pornographic or explicit content</div>
-            <Checkbox
-              checked={checkedType === 'type2'}
-              onChange={() => {
-                handleCheckChange('type2');
-              }}
-            ></Checkbox>
-          </div>
+          {reportType.map((item, index) => {
+            return (
+              <div className="report-item">
+                <div>{t(reportType[index])}</div>
+                <Checkbox
+                  checked={checkedType === index}
+                  onChange={() => {
+                    handleCheckChange(index);
+                  }}
+                ></Checkbox>
+              </div>
+            );
+          })}
         </div>
       </Modal>
     </div>

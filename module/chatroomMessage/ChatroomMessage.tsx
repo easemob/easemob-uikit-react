@@ -19,7 +19,7 @@ export interface ChatroomMessageProps {
   avatar?: ReactNode;
   nickname?: string;
   content?: ReactNode;
-  type: 'img' | 'txt';
+  // type: 'img' | 'txt';
   message: AgoraChat.MessageBody;
   targetLanguage?: string;
   onReport?: (message: AgoraChat.MessageBody) => void;
@@ -30,18 +30,11 @@ interface CustomAction {
   actions?: {
     icon?: ReactNode;
     content?: string;
-    onClick?: (message: BaseMessageType) => void;
+    onClick?: (message: AgoraChat.MessageBody) => void;
   }[];
 }
 const ChatroomMessage = (props: ChatroomMessageProps) => {
-  const {
-    prefix: customizePrefixCls,
-    className,
-    type = 'txt',
-    message,
-    targetLanguage = 'en',
-    onReport,
-  } = props;
+  const { prefix: customizePrefixCls, className, message, targetLanguage, onReport } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-chatroom', customizePrefixCls);
   const classString = classNames(prefixCls, className);
@@ -98,8 +91,10 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       // already translated, display original message
       return setTextToShow(msg);
     }
+    // @ts-ignore
     if (message?.translations?.[0]?.text) {
       // already translated, just show
+      // @ts-ignore
       return setTextToShow(message?.translations?.[0]?.text);
     }
     rootStore.messageStore
@@ -110,10 +105,11 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         },
         // @ts-ignore
         message.mid || message.id,
-        targetLanguage,
+        targetLanguage || navigator.language,
       )
       ?.then(() => {
         console.log('message', message);
+        // @ts-ignore
         const translatedMsg = message?.translations?.[0]?.text;
         setTextToShow(translatedMsg);
         // setTransStatus('translated');
@@ -223,16 +219,14 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   };
 
   const renderGift = () => {
-    console.log('message', message);
-
-    if (message.customEvent == 'CHATROOMUIKIUSERJOIN') {
-      return <div className={`${prefixCls}-notice-box`}>{'Joined'}</div>;
+    if ((message as AgoraChat.CustomMsgBody).customEvent == 'CHATROOMUIKITUSERJOIN') {
+      return <div className={`${prefixCls}-notice-box`}>{t('Joined')}</div>;
     }
 
-    if (message.customEvent != 'CHATROOMUIKITGIFT') {
+    if ((message as AgoraChat.CustomMsgBody).customEvent != 'CHATROOMUIKITGIFT') {
       return;
     }
-    let giftData = message?.customExts?.chatroom_uikit_gift || {};
+    let giftData = (message as AgoraChat.CustomMsgBody)?.customExts?.chatroom_uikit_gift || {};
     if (typeof giftData === 'string') {
       giftData = JSON.parse(giftData);
     }
@@ -245,7 +239,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     );
   };
 
-  const userInfo = message?.ext?.chatroom_uikit_userInfo || {};
+  const userInfo = (message as AgoraChat.TextMsgBody)?.ext?.chatroom_uikit_userInfo || {};
   const getTime = (time: number) => {
     const timeSting =
       new Date(time).getHours() +
@@ -265,8 +259,9 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     >
       <div className={`${prefixCls}-container`}>
         <div className={`${prefixCls}-header`}>
-          <div className={`${prefixCls}-header-label`}>{getTime(message.time)}</div>
-          {/* <Icon type="DELETE"></Icon> */}
+          <div className={`${prefixCls}-header-label`}>
+            {getTime((message as AgoraChat.TextMsgBody).time)}
+          </div>
           <Avatar size={20} src={userInfo.avatarURL}>
             {userInfo.nickName || message.from}
           </Avatar>

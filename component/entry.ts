@@ -15,6 +15,7 @@ import Switch, { SwitchProps } from './switch';
 import Tooltip from 'rc-tooltip';
 import ScrollList, { ScrollListProps } from './scrollList';
 import Broadcast, { BroadcastProps } from './broadcast';
+import Collapse, { CollapseProps } from './collapse';
 export type {
   AvatarProps,
   ButtonProps,
@@ -33,6 +34,7 @@ export type {
   SwitchProps,
   ScrollListProps,
   BroadcastProps,
+  CollapseProps,
 };
 
 export {
@@ -50,4 +52,5 @@ export {
   Tooltip,
   ScrollList,
   Broadcast,
+  Collapse,
 };

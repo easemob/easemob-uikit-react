@@ -68,15 +68,15 @@
     border-radius: $border-radius;
 }
 
-@mixin button-variant-primary($color, $background, $backgroundHover: yellow, $backgroundActive: yellow) {
-    @include button-color($color, $background, $background);
+@mixin button-variant-primary($color, $background, $backgroundHover: yellow, $backgroundActive: yellow, $theme: light) {
+    @include button-color($color, $background, $backgroundHover);
     text-shadow: $btn-text-shadow;
     box-shadow: $btn-primary-shadow;
 
     &:hover,
     &:focus {
         @if $theme ==dark {
-            @include button-color($color, $blue-7, $blue-7)
+            @include button-color($blue-6, $gray-1, $blue-6)
         }
         @else if $theme == light {
             @include button-color($color, $blue-7, $blue-7)
@@ -85,14 +85,14 @@
 
     &:active {
         @if $theme ==dark {
-            @include button-color($color, $blue-5, $blue-5)
+            @include button-color($gray-98, $blue-2, $blue-6)
         }
         @else if $theme == light {
             @include button-color($color, $blue-5, $blue-5)
         }
     }
 
-    @include button-disabled()
+    @include button-disabled($theme)
 }
 
 
@@ -141,7 +141,7 @@
     }
 }
 
-@mixin button-disabled($color: $btn-disable-color, $background: $btn-disable-bg, $border: $btn-disable-border) {
+@mixin button-disabled($theme: light, $color: $btn-disable-color, $background: $btn-disable-bg, $border: $btn-disable-border) {
     &[disabled] {
         @if $theme == light {
             &,
@@ -158,7 +158,7 @@
             &:hover,
             &:focus,
             &:active {
-                @include button-color($gray-4, $gray-2, $gray-2);
+                @include button-color($gray-2, $gray-1, $gray-3);
                 text-shadow: none;
                 box-shadow: none;
             }
@@ -223,4 +223,7 @@
     }
 }
 
+@mixin btn-dark() {
+    @include button-variant-primary($gray-95, $gray-1, $gray-4, $primary-color-active, dark);
+}
 @import '~/common/style/index.scss';

@@ -106,7 +106,7 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
   if (findIndex > -1) {
     subList.splice(findIndex, 1);
   }
-  if (subList.length > 0) {
+  if (subList.length > 0 && withPresence) {
     client.subscribePresence({ usernames: subList, expiry: 2592000 });
   }
 

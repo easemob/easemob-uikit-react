@@ -220,6 +220,11 @@ class AddressStore {
   muteChatRoomMember = (chatroomId: string, userId: string, muteDuration?: number) => {
     if (!chatroomId || !userId) throw 'chatroomId or userId is empty';
     const rootStore = getStore();
+    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    if (idx > -1) {
+      const muteList = this.chatroom[idx].muteList || [];
+      if (muteList.includes(userId)) return Promise.resolve();
+    }
     return rootStore.client
       .muteChatRoomMember({
         chatRoomId: chatroomId,
