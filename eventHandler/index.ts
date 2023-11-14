@@ -1,5 +1,5 @@
 import { AgoraChat } from 'agora-chat';
-export type EventName = 'joinChatRoom' | 'leaveChatroom' | 'reportMessage';
+export type EventName = 'joinChatRoom' | 'leaveChatRoom' | 'reportMessage' | 'onError';
 
 export type EventHandlerData = {
   [key in EventName]?: {
@@ -42,6 +42,7 @@ export class EventHandler {
     Object.keys(this.handlerData).forEach(key => {
       if (this.handlerData[key]?.[eventName] && this.handlerData[key][eventName]?.error) {
         this.handlerData[key][eventName]?.error?.(error);
+        this.handlerData[key]?.onError?.error?.(error);
       }
     });
   }

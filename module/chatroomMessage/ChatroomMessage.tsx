@@ -79,8 +79,11 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         content: 'MUTE',
         onClick: () => {},
       });
+  }
+
+  if (message.from == rootStore.client.user) {
     moreAction.actions?.unshift({
-      content: 'DELETE',
+      content: 'RECALL',
       onClick: () => {},
     });
   }
@@ -159,11 +162,11 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     menuNode = (
       <ul className={moreClassString}>
         {moreAction?.actions?.map((item, index) => {
-          if (item.content === 'DELETE') {
+          if (item.content === 'RECALL') {
             return (
               <li key={index} onClick={recallMessage}>
-                <Icon type="DELETE" width={16} height={16} color="#5270AD"></Icon>
-                {t('delete')}
+                <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
+                {t('unsend')}
               </li>
             );
           } else if (item.content === 'TRANSLATE') {

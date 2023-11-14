@@ -167,6 +167,19 @@ const Chatroom = (props: ChatroomProps) => {
         eventHandler.dispatchError('joinChatRoom', err);
         onError?.(err);
       });
+
+    return () => {
+      rootStore.client
+        .leaveChatRoom({
+          roomId: chatroomId,
+        })
+        .then(() => {
+          eventHandler.dispatchSuccess('leaveChatRoom');
+        })
+        .catch(err => {
+          eventHandler.dispatchError('leaveChatRoom', err);
+        });
+    };
   }, [chatroomId, rootStore.loginState]);
 
   // config messageEditor
@@ -224,7 +237,7 @@ const Chatroom = (props: ChatroomProps) => {
   };
   const renderChatroomMessage = (msg: any) => {
     if (msg.type == 'txt' || msg.type == 'custom') {
-      return <ChatroomMessage message={msg} onReport={handleReport} />;
+      return <ChatroomMessage message={msg} key={msg.mid || msg.id} onReport={handleReport} />;
     }
   };
 
@@ -336,7 +349,7 @@ const Chatroom = (props: ChatroomProps) => {
         <div>
           {reportType.map((item, index) => {
             return (
-              <div className="report-item">
+              <div className="report-item" key={index}>
                 <div>{t(reportType[index])}</div>
                 <Checkbox
                   checked={checkedType === index}

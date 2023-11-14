@@ -209,7 +209,7 @@ class MessageStore {
         this.message.byId[message.id] = message;
       }
     }
-
+    console.log('---chatType', chatType);
     if (chatType !== 'chatRoom') {
       // @ts-ignore
       if (!this.message[chatType][to]) {
@@ -450,7 +450,8 @@ class MessageStore {
       this.message.byId[msgId].status = status;
       // @ts-ignore
       const i = this.message[msg.chatType][conversationId]?.indexOf(this.message.byId[msg.id]); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
-      if (typeof i === 'undefined') return;
+      console.log('111 --', i);
+      if (typeof i === 'undefined' || i == -1) return;
       // @ts-ignore
       this.message[msg.chatType][conversationId].splice(i, 1, msg);
       // this.message[chatType][to][i] = msg;
@@ -546,9 +547,16 @@ class MessageStore {
       cvs.conversationId,
     ) as unknown as Conversation;
 
+    if (!conversation && cvs.chatType == 'groupChat') {
+      conversation = this.rootStore.conversationStore.getConversation(
+        // @ts-ignore
+        'chatRoom',
+        cvs.conversationId,
+      ) as unknown as Conversation;
+    }
+
     // the others recall the message
-    const messages = getMessages(cvs);
-    console.log('获取到的消息', messages);
+    const messages = getMessages(conversation);
     if (!messages) return;
     const msgIndex = getMessageIndex(messages, messageId);
     if (messages[msgIndex].from !== this.rootStore.client.user) {

@@ -220,8 +220,7 @@ const ChatApp = () => {
             }}
           ></Chat>
         </div>
-        {thread.showThreadPanel ||
-          (true && (
+        {thread.showThreadPanel ||&& (
             <div
               style={{
                 width: '50%',
@@ -232,7 +231,7 @@ const ChatApp = () => {
             >
               <Thread></Thread>
             </div>
-          ))}
+          )}
       </div>
       <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>

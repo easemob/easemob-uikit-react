@@ -56,7 +56,7 @@ import {
   Collapse,
 } from './component/entry';
 
-import eventHandler, { EventHandlerData, EventName } from './eventHandler';
+import { eventHandler, EventHandlerData, EventName } from './eventHandler';
 
 export {
   AudioMessage,

@@ -12,8 +12,9 @@ import MessageEditor from '../../module/messageEditor';
 import Chatroom from '../../module/chatroom';
 import ChatroomMember from '../../module/chatroomMember';
 import './index.css';
+import { observer } from 'mobx-react-lite';
 import AgoraChat from 'agora-chat';
-const ChatApp = () => {
+const ChatApp = observer(() => {
   const client = useClient();
   useEffect(() => {
     // client &&
@@ -96,7 +97,7 @@ const ChatApp = () => {
       </div>
     </>
   );
-};
+});
 
 ReactDOM.createRoot(document.getElementById('chatroomRoot') as Element).render(
   <div className="container-1">

@@ -68,10 +68,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     memberListProps,
     muteListProps,
   } = props;
-  if (!chatroomId) {
-    console.warn('chatroomId is required');
-    return null;
-  }
+
   const { t } = useTranslation();
   const context = useContext(RootContext);
   const { rootStore, features, theme, onError } = context;
@@ -80,7 +77,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
   const { addressStore } = rootStore;
   const { getConversationList } = useChatroomMember(chatroomId);
   useEffect(() => {
-    if (!rootStore.loginState) return;
+    if (!rootStore.loginState || !chatroomId) return;
     const chatroomData = addressStore.chatroom.filter(item => item.id === chatroomId)[0];
     if (!chatroomData) {
       rootStore.client
@@ -97,7 +94,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     } else {
       getConversationList();
     }
-  }, [rootStore.loginState]);
+  }, [rootStore.loginState, chatroomId]);
 
   const chatroomData = addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
   const owner = chatroomData.owner || '';
@@ -106,10 +103,10 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
 
   const [modalOpen, setModalOpen] = React.useState(false);
   useEffect(() => {
-    if (rootStore.loginState && owner == rootStore.client.user) {
+    if (rootStore.loginState && owner == rootStore.client.user && chatroomId) {
       rootStore.addressStore.getChatroomMuteList(chatroomId);
     }
-  }, [rootStore.loginState, owner]);
+  }, [rootStore.loginState, owner, chatroomId]);
 
   const membersData = membersId.map(userId => {
     return {
@@ -290,6 +287,10 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     },
     className,
   );
+  if (!chatroomId) {
+    console.warn('chatroomId is required');
+    return null;
+  }
   return (
     <div className={classString} style={{ ...style }}>
       {renderHeader ? (
