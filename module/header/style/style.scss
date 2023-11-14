@@ -48,10 +48,14 @@ $header-prefix-cls: #{$cui-prefix}-header;
             padding: 0 $padding-s;
             height: 36px;
             line-height: 36px;
+            border-radius: 8px;
             cursor: pointer;
         }
         li:hover{
             background: #F1F2F3;
+        }
+        .cui-li-dark:hover{
+            background: $gray-2;
         }
     }
 
@@ -62,5 +66,5 @@ $header-prefix-cls: #{$cui-prefix}-header;
 
 .#{$header-prefix-cls}-dark{
     color: $gray-98;
-    background-color: $gray-1;
+    // background-color: $gray-1;
 }

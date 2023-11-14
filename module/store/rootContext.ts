@@ -81,7 +81,7 @@ export interface ContextProps {
 }
 
 export const RootContext = React.createContext<ContextProps>({
-  rootStore,
+  rootStore: {} as RootStore,
   initConfig: {} as { appKey: string },
   client: {} as AgoraChat.Connection,
   onError: (err: AgoraChat.ErrorEvent) => {},

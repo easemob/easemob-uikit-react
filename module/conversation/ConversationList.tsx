@@ -70,14 +70,22 @@ let Conversations: FC<ConversationListProps> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationList', customizePrefixCls);
   const [activeCvsId, setActiveCvsId] = useState<string>();
-  const classString = classNames(prefixCls, className);
+
   const { getJoinedGroupList } = useGroups();
 
   const [isSearch, setIsSearch] = useState(false);
   const [renderData, setRenderData] = useState<ConversationData>([]);
   const [initRenderData, setInitRenderData] = useState<ConversationData>([]);
   const context = useContext(RootContext);
-  const { rootStore, features } = context;
+  const { rootStore, features, theme } = context;
+  const themeMode = theme?.mode || 'light';
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
   const cvsStore = rootStore.conversationStore;
   const { appUsersInfo } = rootStore.addressStore;
   const { t } = useTranslation();

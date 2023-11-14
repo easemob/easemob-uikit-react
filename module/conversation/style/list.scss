@@ -11,4 +11,12 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationList;
     &-search{
         margin: $cvs-search-margin;
     }
+
+    &-dark{
+        background-color: $gray-2;
+        color: $gray-98;
+        .cui-search-input{
+            background-color: $gray-3;
+        }
+    }
 }

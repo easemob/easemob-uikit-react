@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
 export interface RecorderProps {
   prefix?: string;
+  className?: string;
   style?: React.CSSProperties; // container style
   iconStyle?: React.CSSProperties; // icon style
   liveContentStyle?: React.CSSProperties; // live content style
@@ -27,7 +28,8 @@ let recorder: typeof HZRecorder;
 let timer: number;
 const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const context = useContext(RootContext);
-  const { onError, rootStore } = context;
+  const { onError, rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
   const { t } = useTranslation();
   const { messageStore, client } = rootStore;
   const {
@@ -41,10 +43,17 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     style = {},
     iconStyle = {},
     liveContentStyle = {},
+    className,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('recorder', customizePrefixCls);
-  const classString = classNames(prefixCls);
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
 
   const [isRecording, setRecordingState] = useState(false);
 
@@ -193,7 +202,13 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     <div className={`${prefixCls}-content`} style={{ ...liveContentStyle }}>
       <div className={`${prefixCls}-content-left`}>
         <div className={`${prefixCls}-iconBox`} title={t(`cancel`) as string}>
-          <Icon type="DELETE" width={20} height={20} onClick={() => handleClick('stop')}></Icon>
+          <Icon
+            type="DELETE"
+            width={20}
+            height={20}
+            onClick={() => handleClick('stop')}
+            color={'#919BA1'}
+          ></Icon>
         </div>
         <div className={`${prefixCls}-time`}>
           <span>{duration + "''"}</span>

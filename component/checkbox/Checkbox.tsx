@@ -17,7 +17,7 @@ export interface CheckboxProps {
 
 const Checkbox = ({
   id,
-  checked = false,
+  checked,
   disabled = false,
   children,
   className,

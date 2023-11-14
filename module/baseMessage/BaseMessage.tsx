@@ -18,6 +18,7 @@ import Checkbox from '../../component/checkbox';
 import UserProfile from '../userProfile';
 import { observer } from 'mobx-react-lite';
 import { EmojiConfig } from '../messageEditor/emoji/Emoji';
+import { RootContext } from '../store/rootContext';
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -156,6 +157,9 @@ let BaseMessage = (props: BaseMessageProps) => {
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
+  const context = useContext(RootContext);
+  const { theme } = context;
+  const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('message-base', customizePrefixCls);
   let avatarToShow: ReactNode = avatar;
   const [hoverStatus, setHoverStatus] = useState(false);
@@ -367,14 +371,22 @@ let BaseMessage = (props: BaseMessageProps) => {
         {moreAction?.actions?.map((item, index) => {
           if (item.content === 'DELETE') {
             return (
-              <li key={index} onClick={deleteMessage}>
+              <li
+                key={index}
+                onClick={deleteMessage}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
                 <Icon type="DELETE" width={16} height={16} color="#5270AD"></Icon>
                 {t('delete')}
               </li>
             );
           } else if (item.content === 'REPLY') {
             return (
-              <li key={index} onClick={replyMessage}>
+              <li
+                key={index}
+                onClick={replyMessage}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
                 <Icon type="ARROW_TURN_LEFT" width={16} height={16} color="#5270AD"></Icon>
                 {t('reply')}
               </li>
@@ -382,7 +394,11 @@ let BaseMessage = (props: BaseMessageProps) => {
           } else if (item.content === 'UNSEND') {
             return (
               isCurrentUser && (
-                <li key={index} onClick={recallMessage}>
+                <li
+                  key={index}
+                  onClick={recallMessage}
+                  className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+                >
                   <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
                   {t('unsend')}
                 </li>
@@ -391,7 +407,11 @@ let BaseMessage = (props: BaseMessageProps) => {
           } else if (item.content === 'TRANSLATE') {
             return (
               message?.type === 'txt' && (
-                <li key={index} onClick={translateMessage}>
+                <li
+                  key={index}
+                  onClick={translateMessage}
+                  className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+                >
                   <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
                   {t('translate')}
                 </li>
@@ -401,7 +421,11 @@ let BaseMessage = (props: BaseMessageProps) => {
             return (
               (isCurrentUser || isOwner || isAdmin) &&
               message?.type === 'txt' && (
-                <li key={index} onClick={modifyMessage}>
+                <li
+                  key={index}
+                  onClick={modifyMessage}
+                  className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+                >
                   <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
                   {t('modify')}
                 </li>
@@ -409,14 +433,22 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'SELECT') {
             return (
-              <li key={index} onClick={selectMessage}>
+              <li
+                key={index}
+                onClick={selectMessage}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
                 <Icon type="SELECT" width={16} height={16} color="#5270AD"></Icon>
                 {t('select')}
               </li>
             );
           } else if (item.content === 'RESEND') {
             return (
-              <li key={index} onClick={resendMessage}>
+              <li
+                key={index}
+                onClick={resendMessage}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
                 <Icon type="LOOP" width={16} height={16} color="#5270AD"></Icon>
                 {t('resend')}
               </li>
@@ -424,6 +456,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           }
           return (
             <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
               onClick={() => {
                 item.onClick?.(message);
@@ -514,6 +547,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                     <Tooltip title={menuNode} trigger="click" placement="bottom">
                       {moreAction.icon || (
                         <Icon
+                          // color="#919BA1"
                           type="ELLIPSIS"
                           className={`${prefixCls}-body-action`}
                           height={20}

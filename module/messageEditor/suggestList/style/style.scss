@@ -16,12 +16,24 @@ $suggestList-prefix-cls: #{$cui-prefix}-suggest;
       background: $white;
     }
   }
+
+  &-dark{
+    background-color: $gray-1;
+    border: 1px solid $gray-3;
+    .#{$suggestList-prefix-cls}-item{
+      background-color: $gray-1;
+    }
+    .#{$suggestList-prefix-cls}-item:hover{
+      background-color: $gray-2;
+    }
+  }
 }
 
 .#{$suggestList-prefix-cls}-list {
   min-width: 220px;
   max-height: 202px;
-  overflow: scroll;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .#{$suggestList-prefix-cls}-item {
@@ -40,4 +52,7 @@ $suggestList-prefix-cls: #{$cui-prefix}-suggest;
   .avatar {
     margin-right: 8px;
   }
+}
+.#{$suggestList-prefix-cls}-item:hover {
+  background: $gray-9;
 }

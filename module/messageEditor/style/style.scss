@@ -25,4 +25,9 @@ $editor-prefix-cls: #{$cui-prefix}-message-editor;
         }
     }
     
+    &-dark.#{$editor-prefix-cls}-disabled{
+        &::after{
+            opacity: .1;
+        }
+    }
 }

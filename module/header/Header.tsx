@@ -81,6 +81,7 @@ const Header: FC<HeaderProps> = props => {
           if (item.visible == false) return null;
           return (
             <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
               onClick={() => {
                 setMenuOpen(false);

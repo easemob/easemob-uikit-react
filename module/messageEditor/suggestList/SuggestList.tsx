@@ -9,7 +9,7 @@ import Avatar from '../../../component/avatar';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import Icon from '../../../component/icon';
-
+import { RootContext } from '../../store/rootContext';
 export const AT_ALL = 'ALL';
 
 const searchUser = (memberList: MemberItem[], queryString?: string) => {
@@ -34,9 +34,18 @@ export interface SuggestListProps {
 const SuggestList: FC<SuggestListProps> = props => {
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
+  const context = React.useContext(RootContext);
+  const { theme } = context;
+  const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('suggest');
   const listCls = getPrefixCls('suggest-list');
-  const classes = classNames(prefixCls, props.className);
+  const classes = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    props.className,
+  );
   const [index, setIndex] = useState(-1);
   const usersRef = useRef<MemberItem[]>();
   const suggestRef = useRef<HTMLDivElement>(null);

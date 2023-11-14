@@ -56,4 +56,23 @@ $selected-prefix-cls: #{$cui-prefix}-selected-controls;
             }
         }
     }
+
+    &-dark{
+        background-color: $gray-1;
+        .#{$selected-prefix-cls}-content{
+            background-color: $gray-1;
+        }
+
+        .#{$selected-prefix-cls}-iconBox-disable{
+            cursor: not-allowed;
+            &>div>svg{
+                fill: $gray-8;
+            }
+            &:hover{
+                &>div>svg{
+                    fill: $gray-8;
+                }
+            }
+        }
+    }
 }

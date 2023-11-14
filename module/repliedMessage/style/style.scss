@@ -68,4 +68,17 @@ $reply-prefix-cls: #{$cui-prefix}-message-reply;
         }
 
     }
+
+    &-dark{
+        background-color: $gray-2;
+        
+        .#{$reply-prefix-cls}-summary{
+            &-title{
+                color: $gray-98;
+            }
+            &-desc{
+                color: $gray-6;
+            }
+        }
+    }
 }

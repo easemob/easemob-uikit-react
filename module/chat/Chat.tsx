@@ -97,9 +97,17 @@ const Chat: FC<ChatProps> = props => {
   const prefixCls = getPrefixCls('chat', customizePrefixCls);
 
   const [isEmpty, setIsEmpty] = useState(true);
-  const classString = classNames(prefixCls, className);
+
   const context = useContext(RootContext);
-  const { rootStore, features } = context;
+  const { rootStore, features, theme } = context;
+  const themeMode = theme?.mode || 'light';
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
   const { appUsersInfo } = rootStore.addressStore;
   const globalConfig = features?.chat;
   const CVS = rootStore.conversationStore.currentCvs;
@@ -673,7 +681,7 @@ const Chat: FC<ChatProps> = props => {
           )}
           {modalOpen && (
             <ThreadModal
-              headerContent={'Thread List'}
+              headerContent={`${t('thread')} ${t('list')}`}
               open={modalOpen}
               anchorEl={headerRef.current}
               onClose={() => {

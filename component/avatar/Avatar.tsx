@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import './style/style.scss';
 import { tuple } from '../_utils/type';
 import warning from '../_utils/warning';
@@ -6,6 +6,7 @@ import { composeRef } from '../_utils/ref';
 
 import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
+import { RootContext } from '../../module/store/rootContext';
 export interface AvatarProps {
   size?: 'large' | 'small' | 'default' | number;
   shape?: 'circle' | 'square';
@@ -68,7 +69,8 @@ export const InternalAvatar = (props: any, ref: any) => {
   const prefixCls = getPrefixCls('avatar', customizePrefixCls);
   const wrapCls = getPrefixCls('avatar-wrap', customizePrefixCls);
   const presenceCls = getPrefixCls('presence-tag', customizePrefixCls);
-
+  const { theme } = useContext(RootContext);
+  const themeMode = theme?.mode;
   const sizeCls = classNames({
     [`${prefixCls}-lg`]: customSize === 'large',
     [`${prefixCls}-sm`]: customSize === 'small',
@@ -82,6 +84,7 @@ export const InternalAvatar = (props: any, ref: any) => {
       [`${prefixCls}-${shape}`]: !!shape,
       // [`${prefixCls}-image`]: hasImageElement || (src && isImgExist),
       [`${prefixCls}-icon`]: !!icon,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

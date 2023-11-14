@@ -65,6 +65,17 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         color: $gray-5;
         margin-bottom: $cvs-item-time-margin-bottom;
     }
+    &-dark{
+        .#{$conversation-prefix-cls}-nickname{
+            color: $gray-98;
+        }
+        .#{$conversation-prefix-cls}-message{
+            color: $gray-8;
+        }
+    }
+    &-dark:hover{
+        background: $blue-2;
+    }
 }
 
 .#{$conversation-prefix-cls}-at-tag{
@@ -91,5 +102,8 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     li:hover{
         /* color_neutral/95 */
         background-color: $gray-95;
+    }
+    .cui-li-dark:hover{
+        background: $gray-2;
     }
 }

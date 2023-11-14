@@ -55,63 +55,63 @@ const ChatApp = () => {
   const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
   return (
     <>
-      <Provider
-        theme={{
-          mode: themeMode,
-        }}
-        initConfig={{
-          appKey: 'easemob#easeim',
-          // userId: 'lxm',
-          // token:
-          //   '007eJxTYKhcEV1UGPCx/Uyo+ZzsEz+mxeeb7qioWmTs8MxhVtq+VkEFhjTDlGRzc4uklJRkMxOzxBSLNCMzA0tzs+REoxQDQ9NkN3O91IZARoaQtNUKjAysDIxACOKrMFhYpiQnmRsb6JoZmaToGhqmJutappkY6hobW1gYpiaaJqUmGQEAnq8nVg==',
-        }}
-      >
+      <div>
         <div>
-          <div>
-            <label>userID</label>
-            <input
-              onChange={e => {
-                setUserId(e.target.value);
-              }}
-            ></input>
-          </div>
-          <div>
-            <label>password</label>
-            <input
-              onChange={e => {
-                setPassword(e.target.value);
-              }}
-            ></input>
-          </div>
-          <div>
-            <button onClick={login}>login</button>
-          </div>
-          <div>
-            <button
-              onClick={() => {
-                setThemeMode(() => {
-                  return themeMode === 'light' ? 'dark' : 'light';
-                });
-              }}
-            >
-              change theme
-            </button>
-          </div>
+          <label>userID</label>
+          <input
+            onChange={e => {
+              setUserId(e.target.value);
+            }}
+          ></input>
         </div>
+        <div>
+          <label>password</label>
+          <input
+            onChange={e => {
+              setPassword(e.target.value);
+            }}
+          ></input>
+        </div>
+        <div>
+          <button onClick={login}>login</button>
+        </div>
+        <div>
+          <button
+            onClick={() => {
+              setThemeMode(() => {
+                return themeMode === 'light' ? 'dark' : 'light';
+              });
+            }}
+          >
+            change theme
+          </button>
+        </div>
+      </div>
 
-        <div style={{ width: '350px' }}>
-          <Chatroom chatroomId="229358390280194"></Chatroom>
-        </div>
-        <div style={{ width: '350px', background: 'rgb(240 234 234 / 43%)' }}>
-          <ChatroomMember chatroomId="229358390280194"></ChatroomMember>
-        </div>
-      </Provider>
+      <div style={{ width: '350px' }}>
+        <Chatroom chatroomId="229358390280194"></Chatroom>
+      </div>
+      <div style={{ width: '350px', background: 'rgb(240 234 234 / 43%)' }}>
+        <ChatroomMember chatroomId="229358390280194"></ChatroomMember>
+      </div>
     </>
   );
 };
 
 ReactDOM.createRoot(document.getElementById('chatroomRoot') as Element).render(
   <div className="container-1">
-    <ChatApp></ChatApp>
+    <Provider
+      theme={{
+        mode: 'dark',
+      }}
+      initConfig={{
+        appKey: 'easemob#easeim',
+        // userId: 'lxm',
+        // token:
+        //   '007eJxTYKhcEV1UGPCx/Uyo+ZzsEz+mxeeb7qioWmTs8MxhVtq+VkEFhjTDlGRzc4uklJRkMxOzxBSLNCMzA0tzs+REoxQDQ9NkN3O91IZARoaQtNUKjAysDIxACOKrMFhYpiQnmRsb6JoZmaToGhqmJutappkY6hobW1gYpiaaJqUmGQEAnq8nVg==',
+      }}
+    >
+      <ChatApp></ChatApp>
+    </Provider>
   </div>,
 );

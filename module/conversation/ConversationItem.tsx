@@ -72,7 +72,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const [showMore, setShowMore] = useState(false);
   const [active, setActive] = useState(isActive);
   const context = useContext(RootContext);
-  const { rootStore, onError } = context;
+  const { rootStore, onError, theme } = context;
+  const themeMode = theme?.mode || 'light';
 
   const cvsStore = rootStore.conversationStore;
 
@@ -80,6 +81,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     prefixCls,
     {
       [`${prefixCls}-selected`]: !!isActive,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
@@ -132,13 +134,18 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         {moreAction.actions.map((item, index) => {
           if (item.content === 'DELETE') {
             return (
-              <li key={index} onClick={deleteCvs}>
+              <li
+                key={index}
+                onClick={deleteCvs}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
                 {t('deleteCvs')}
               </li>
             );
           }
           return (
             <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
               onClick={() => {
                 item.onClick?.();

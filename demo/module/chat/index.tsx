@@ -76,16 +76,16 @@ const ChatApp = () => {
   console.log(11111, messages);
   const topConversation = () => {
     setCurrentConversation({
-      chatType: 'singleChat',
-      conversationId: 'zd2',
+      chatType: 'groupChat',
+      conversationId: '226377652568065',
       name: 'zd2',
       unreadCount: 0,
     });
     console.log(222, currentConversation);
     console.log('222', rootStore.conversationStore.currentCvs);
     topConversationInner({
-      chatType: 'singleChat',
-      conversationId: 'zd2',
+      chatType: 'groupChat',
+      conversationId: '226377652568065',
       lastMessage: {},
     });
   };
@@ -172,7 +172,6 @@ const ChatApp = () => {
       <div
         style={{
           width: '35%',
-          border: '1px solid transparent',
           background: '#fff',
         }}
       >
@@ -184,7 +183,7 @@ const ChatApp = () => {
                 actions: [{ content: 'DELETE' }],
               },
             }}
-            className="conversation"
+            // className="conversation"
             renderItem={csv => (
               <ConversationItem
                 onClick={handleClickCvs(csv)}
@@ -201,7 +200,6 @@ const ChatApp = () => {
       <div
         style={{
           width: '65%',
-          borderLeft: '1px solid transparent',
           overflow: 'hidden',
           display: 'flex',
         }}
@@ -222,18 +220,19 @@ const ChatApp = () => {
             }}
           ></Chat>
         </div>
-        {thread.showThreadPanel && (
-          <div
-            style={{
-              width: '50%',
-              borderLeft: '1px solid #eee',
-              overflow: 'hidden',
-              background: '#fff',
-            }}
-          >
-            <Thread></Thread>
-          </div>
-        )}
+        {thread.showThreadPanel ||
+          (true && (
+            <div
+              style={{
+                width: '50%',
+                borderLeft: '1px solid #eee',
+                overflow: 'hidden',
+                background: '#fff',
+              }}
+            >
+              <Thread></Thread>
+            </div>
+          ))}
       </div>
       <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -264,14 +263,18 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       initConfig={{
         appKey: '41117440#383391',
-        userId: 'zd3',
+        userId: 'zd2',
         token:
-          '007eJxTYEjZf6JB5QrPg703JM3b/60JTj7I5P7P9lkce2G2Zap8uJgCQ5phSrK5uUVSSkqymYlZYopFmpGZgaW5WXKiUYqBoWlyroZ3akMgI8NtQVd5RgZWBkYgBPFVGCwsU5KTzI0NdM2MTFJ0DQ1Tk3Ut00wMdY2NLSwMUxNNk1KTjAAYUCXv',
+          '007eJxTYKhK5DrUfCJsxuXbqrIZcaEfP+WbnpW58YHRbbL8FSkNvxkKDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJ+yWCUxsCGRn2tZobMzKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAVa4mwg==',
         // appKey: 'easemob#easeim',
+      }}
+      theme={{
+        // primaryColor: '#33ffaa',
+        mode: 'dark',
       }}
       local={{
         fallbackLng: 'en',
-        lng: 'zh',
+        lng: 'en',
         // resources: {
         //   en: {
         //     translation: {
@@ -315,11 +318,6 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       //     },
       //   },
       // }}
-      theme={
-        {
-          // primaryColor: '#00CE76',
-        }
-      }
     >
       <App></App>
     </Provider>

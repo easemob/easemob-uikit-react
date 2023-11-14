@@ -72,4 +72,16 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
         }
         
     }
+
+    &-dark{
+        background-color: $gray-1;
+
+        .#{$thread-prefix-cls}-create{
+            &-content input{
+                background-color: $gray-2;
+                border: none;
+                color: $gray-98
+            }
+        }
+    }
 }
