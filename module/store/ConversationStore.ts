@@ -1,16 +1,19 @@
 import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
 import { ChatType } from '../types/messageType';
 import { ChatSDK } from '../SDK';
+import { sortByPinned } from '../utils';
 export type AT_TYPE = 'NONE' | 'ALL' | 'ME';
 export interface Conversation {
   chatType: ChatType;
   conversationId: string;
-  lastMessage: ChatSDK.MessageBody;
+  lastMessage: Exclude<ChatSDK.MessageBody, ChatSDK.ReadMsgBody | ChatSDK.DeliveryMsgBody>;
   unreadCount: number;
   name?: string;
   atType?: AT_TYPE;
   isOnline?: boolean;
   avatarUrl?: string;
+  isPinned?: boolean;
+  silent?: boolean;
 }
 
 export interface CurrentConversation {
@@ -59,6 +62,8 @@ class ConversationStore {
       topConversation: action,
       setAtType: action,
       updateConversationName: action,
+      pinConversation: action,
+      getServerPinnedConversations: action,
       clear: action,
     });
   }
@@ -103,7 +108,7 @@ class ConversationStore {
       return item.conversationId === conversation.conversationId;
     });
     if (exist) return;
-    this.conversationList = [conversation, ...this.conversationList];
+    this.conversationList = [conversation, ...this.conversationList].sort(sortByPinned);
     this.byId[`${conversation.chatType}_${conversation.conversationId}`] = conversation;
   }
 
@@ -149,29 +154,32 @@ class ConversationStore {
         this.conversationList[index] = conversation;
       }
     });
-    this.conversationList = [...this.conversationList];
+    this.conversationList = [...this.conversationList].sort(sortByPinned);
   }
 
   topConversation(conversation: Conversation) {
-    let findCvs: Conversation = {} as Conversation;
-    const filteredList = this.conversationList?.filter(cvs => {
-      if (
-        cvs.chatType == conversation.chatType &&
-        cvs.conversationId == conversation.conversationId
-      ) {
-        findCvs = cvs;
-        return false;
-      }
-      return true;
-      // return (
-      //   cvs.chatType !== conversation.chatType || cvs.conversationId !== conversation.conversationId
-      // );
-    });
-    if (JSON.stringify(findCvs) === '{}') {
-      console.warn('not find conversation');
-      return;
-    }
-    this.conversationList = [findCvs, ...filteredList];
+    this.conversationList = [...this.conversationList.sort(sortByPinned)];
+
+    // let findCvs: Conversation = {} as Conversation;
+    // const filteredList = this.conversationList?.filter(cvs => {
+    //   if (
+    //     cvs.chatType == conversation.chatType &&
+    //     cvs.conversationId == conversation.conversationId
+    //   ) {
+    //     findCvs = cvs;
+    //     return false;
+    //   }
+    //   return true;
+    //   // return (
+    //   //   cvs.chatType !== conversation.chatType || cvs.conversationId !== conversation.conversationId
+    //   // );
+    // });
+    // if (JSON.stringify(findCvs) === '{}') {
+    //   console.warn('not find conversation');
+    //   return;
+    // }
+
+    // this.conversationList = [findCvs, ...filteredList];
   }
 
   getConversation(chatType: ChatType, cvsId: string) {
@@ -199,16 +207,52 @@ class ConversationStore {
   }
 
   updateConversationName(chatType: ChatType, cvsId: string) {
-    this.rootStore.client.getGroupInfo({ groupId: cvsId }).then(res => {
-      this.conversationList?.forEach(cvs => {
-        if (cvs.conversationId === cvsId) {
-          cvs.name = res?.data?.[0]?.name;
-        }
+    this.rootStore.client
+      .getGroupInfo({ groupId: cvsId })
+      .then((res: ChatSDK.AsyncResult<ChatSDK.GroupDetailInfo[]>) => {
+        this.conversationList?.forEach(cvs => {
+          if (cvs.conversationId === cvsId) {
+            cvs.name = res?.data?.[0]?.name;
+          }
+        });
+        this.conversationList = [...this.conversationList];
       });
-      this.conversationList = [...this.conversationList];
-    });
   }
 
+  sortConversationList() {
+    this.conversationList = this.conversationList;
+  }
+
+  pinConversation(chatType: ChatType, cvsId: string, isPinned: boolean) {
+    this.rootStore.client
+      .pinConversation({ conversationType: chatType, conversationId: cvsId, isPinned })
+      .then((res: ChatSDK.AsyncResult<ChatSDK.PinConversation>) => {
+        console.log('置顶成功', res);
+        this.conversationList?.forEach(cvs => {
+          if (cvs.conversationId === cvsId) {
+            cvs.isPinned = isPinned;
+          }
+        });
+        this.conversationList = [...this.conversationList.sort(sortByPinned)];
+      });
+  }
+
+  getServerPinnedConversations() {
+    this.rootStore.client
+      .getServerPinnedConversations({ pageSize: 50 })
+      .then((res: ChatSDK.AsyncResult<ChatSDK.ServerConversations>) => {
+        console.log('----res', res);
+        const conversations = res.data?.conversations || [];
+        conversations.forEach(item => {
+          this.conversationList?.forEach(cvs => {
+            if (cvs.conversationId === item.conversationId) {
+              cvs.isPinned = true;
+            }
+          });
+        });
+        this.conversationList = [...this.conversationList.sort(sortByPinned)];
+      });
+  }
   clear() {
     this.currentCvs = {
       conversationId: '',

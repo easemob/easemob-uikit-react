@@ -65,6 +65,18 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         color: $gray-5;
         margin-bottom: $cvs-item-time-margin-bottom;
     }
+    &-sticky{
+        background-color: $gray-9;
+        border-radius: 0;
+        margin: 4px 0;
+        padding: 12px 20px;
+
+        .#{$conversation-prefix-cls}-info{
+            position: absolute;
+            right: 24px;
+            align-items: end;
+        }
+    }
     &-dark{
         .#{$conversation-prefix-cls}-nickname{
             color: $gray-98;
@@ -92,6 +104,9 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     margin: 0;
     display: grid;
     li{
+        display: flex;
+        align-items: center;
+        justify-content: center;
         list-style: none;
         height: 36px;
         border-radius: 8px;

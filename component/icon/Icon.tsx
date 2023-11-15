@@ -65,6 +65,8 @@ import { ReactComponent as VIDEO_CAMERA_PLUS } from '../svgs/icons/video_camera_
 import { ReactComponent as VIDEO_CAMERA_XMARK } from '../svgs/icons/video_camera_xmark.svg';
 import { ReactComponent as BUBBLE_FILL } from '../svgs/icons/bubble_fill.svg';
 import { ReactComponent as EXCLAMATION_MARK_IN_CIRCLE } from '../svgs/icons/exclamation_mark_in_circle.svg';
+import { ReactComponent as LineArrow } from '../svgs/icons/line_n_arrow.svg';
+import { ReactComponent as ArrowLine } from '../svgs/icons/arrow_n_line.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -257,6 +259,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'EXCLAMATION_MARK_IN_CIRCLE':
       return <EXCLAMATION_MARK_IN_CIRCLE></EXCLAMATION_MARK_IN_CIRCLE>;
+      break;
+    case 'LINE_ARROW':
+      return <LineArrow></LineArrow>;
+      break;
+    case 'ARROW_LINE':
+      return <ArrowLine></ArrowLine>;
       break;
     default:
       return '';

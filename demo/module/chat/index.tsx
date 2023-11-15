@@ -177,21 +177,21 @@ const ChatApp = () => {
       >
         {tab == 'chat' && (
           <ConversationList
-            itemProps={{
-              moreAction: {
-                visible: true,
-                actions: [{ content: 'DELETE' }],
-              },
-            }}
-            // className="conversation"
-            renderItem={csv => (
-              <ConversationItem
-                onClick={handleClickCvs(csv)}
-                key={csv.conversationId}
-                data={csv}
-                // isActive
-              />
-            )}
+            // itemProps={{
+            //   moreAction: {
+            //     visible: true,
+            //     actions: [{ content: 'DELETE' }],
+            //   },
+            // }}
+            className="conversation"
+            // renderItem={csv => (
+            //   <ConversationItem
+            //     onClick={handleClickCvs(csv)}
+            //     key={csv.conversationId}
+            //     data={csv}
+            //     // isActive
+            //   />
+            // )}
           ></ConversationList>
         )}
 
@@ -220,18 +220,18 @@ const ChatApp = () => {
             }}
           ></Chat>
         </div>
-        {thread.showThreadPanel ||&& (
-            <div
-              style={{
-                width: '50%',
-                borderLeft: '1px solid #eee',
-                overflow: 'hidden',
-                background: '#fff',
-              }}
-            >
-              <Thread></Thread>
-            </div>
-          )}
+        {thread.showThreadPanel || (
+          <div
+            style={{
+              width: '50%',
+              borderLeft: '1px solid #eee',
+              overflow: 'hidden',
+              background: '#fff',
+            }}
+          >
+            <Thread></Thread>
+          </div>
+        )}
       </div>
       <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -264,12 +264,12 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYKhK5DrUfCJsxuXbqrIZcaEfP+WbnpW58YHRbbL8FSkNvxkKDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJ+yWCUxsCGRn2tZobMzKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAVa4mwg==',
+          '007eJxTYFhaPIuJuTbe0edF8qflP3ZsdfK568Wn27FqYfCv1Fy3CesUGNIMU5LNzS2SUlKSzUzMElMs0ozMDCzNzZITjVIMDE2Tl7SEpDYEMjIIz+m5wMjAysAIhCC+CkOSgZlJYoqZga6ZkUmSrqFharKuRaqhka5pkpGJRZKBqUVakiUAuHcoKQ==',
         // appKey: 'easemob#easeim',
       }}
       theme={{
         // primaryColor: '#33ffaa',
-        mode: 'dark',
+        mode: 'light',
       }}
       local={{
         fallbackLng: 'en',

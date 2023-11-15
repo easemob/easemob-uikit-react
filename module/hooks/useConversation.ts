@@ -9,7 +9,7 @@ const useConversations = () => {
   const { client, conversationStore } = rootStore;
   const { hasConversationNext } = conversationStore;
   const getConversationList = () => {
-    client
+    return client
       .getConversationlist({
         pageSize,
         pageNum: pageNum,

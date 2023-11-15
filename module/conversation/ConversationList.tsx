@@ -13,24 +13,9 @@ import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import ScrollList from '../../component/scrollList';
 import { getUsersInfo } from '../utils/index';
-import { AT_TYPE } from '../store/ConversationStore';
+import { AT_TYPE, Conversation } from '../store/ConversationStore';
 
-export type ConversationData = Array<{
-  chatType: 'singleChat' | 'groupChat';
-  conversationId: string;
-  name?: string; // 昵称/群组名称
-  atType?: AT_TYPE;
-  avatarUrl?: string;
-  isOnline?: boolean;
-  unreadCount: number; // 会话未读数
-  lastMessage: {
-    type: 'txt' | 'img' | 'audio' | 'video' | 'file' | 'custom';
-    msg?: string;
-    time: number;
-    chatType: 'singleChat' | 'groupChat';
-    from: string;
-  }; // 会话最后一条消息
-}>;
+export type ConversationData = Array<Conversation>;
 
 export type ServerCvs = Array<{
   channel_id: string;
@@ -43,16 +28,16 @@ export interface ConversationListProps {
   className?: string;
   style?: React.CSSProperties;
   // data?: ConversationData;
-  onItemClick?: (data: ConversationData[0]) => void; // 点击会话事件
+  onItemClick?: (data: Conversation) => void; // 点击会话事件
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean; // search 组件 change 事件，默认根据 会话 Id和name搜索， 如果返回 false， 会阻止默认行为
   renderHeader?: () => React.ReactNode; // 自定义渲染 header
   renderSearch?: () => React.ReactNode; // 自定义渲染 search
-  renderItem?: (cvs: ConversationData[0], index: number) => React.ReactNode; // 自定义渲染 item
+  renderItem?: (cvs: Conversation, index: number) => React.ReactNode; // 自定义渲染 item
   headerProps?: HeaderProps;
   itemProps?: ConversationItemProps;
 }
 
-const ConversationScrollList = ScrollList<ConversationData[0]>();
+const ConversationScrollList = ScrollList<Conversation>();
 
 let Conversations: FC<ConversationListProps> = props => {
   const {
@@ -177,7 +162,9 @@ let Conversations: FC<ConversationListProps> = props => {
 
   useEffect(() => {
     if (rootStore.loginState) {
-      getConversationList();
+      getConversationList().then(() => {
+        rootStore.conversationStore.getServerPinnedConversations();
+      });
       getJoinedGroupList();
       getUsersInfo({
         userIdList: [rootStore.client.user],

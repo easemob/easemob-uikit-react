@@ -244,3 +244,15 @@ export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) =>
     return appUsersInfo?.[from]?.nickname || from;
   }
 };
+
+export function sortByPinned(a: any, b: any) {
+  if (a.isPinned && !b.isPinned) {
+    return -1; // a排在b前面
+  } else if (!a.isPinned && b.isPinned) {
+    return 1; // b排在a前面
+  } else if ((!a.isPinned && !b.isPinned) || (a.isPinned && b.isPinned)) {
+    return a.lastMessage.time > b.lastMessage.time ? -1 : 1; // 保持原有顺序
+  } else {
+    return 0; // 保持原有顺序
+  }
+}

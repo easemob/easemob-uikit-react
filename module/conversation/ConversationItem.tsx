@@ -62,6 +62,12 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         {
           content: 'DELETE',
         },
+        {
+          content: 'PIN',
+        },
+        {
+          content: 'SILENT',
+        },
       ],
     },
     ...others
@@ -83,6 +89,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     {
       [`${prefixCls}-selected`]: !!isActive,
       [`${prefixCls}-${themeMode}`]: !!themeMode,
+      [`${prefixCls}-sticky`]: data.isPinned,
     },
     className,
   );
@@ -115,7 +122,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     rootStore.client
       .deleteConversation({
         channel: data.conversationId,
-        chatType: data.chatType,
+        chatType: data.chatType as 'singleChat' | 'groupChat',
         deleteRoam: true,
       })
       .then(() => {
@@ -125,9 +132,18 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         eventHandler.dispatchError('deleteConversation', err);
       });
   };
+
+  const pinCvs = () => {
+    rootStore?.conversationStore.pinConversation(
+      data.chatType,
+      data.conversationId,
+      !data.isPinned,
+    );
+  };
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
 
   let menuNode: ReactNode | undefined;
+
   if (moreAction?.visible) {
     menuNode = (
       <ul className={morePrefixCls}>
@@ -139,7 +155,22 @@ let ConversationItem: FC<ConversationItemProps> = props => {
                 onClick={deleteCvs}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
+                <Icon type="DELETE"></Icon>
                 {t('deleteCvs')}
+              </li>
+            );
+          } else if (item.content === 'PIN') {
+            return (
+              <li key={index} onClick={pinCvs} className={themeMode == 'dark' ? 'cui-li-dark' : ''}>
+                <Icon type={data.isPinned ? 'ARROW_LINE' : 'LINE_ARROW'}></Icon>
+                {data.isPinned ? t('unSticky') : t('sticky')}
+              </li>
+            );
+          } else if (item.content === 'SILENT') {
+            return (
+              <li key={index} onClick={pinCvs} className={themeMode == 'dark' ? 'cui-li-dark' : ''}>
+                <Icon type={data.silent ? 'BELL_SLASH' : 'BELL'}></Icon>
+                {data.silent ? t('unmuteNotification') : t('muteNotification')}
               </li>
             );
           }
@@ -196,7 +227,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       break;
   }
   if (data.chatType == 'groupChat') {
-    let msgFrom = data.lastMessage.from;
+    let msgFrom = data.lastMessage.from || '';
     let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}: ` : '';
     const groupItem = getGroupItemFromGroupsById(data.conversationId);
     if (groupItem) {
@@ -234,7 +265,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       </div>
       <div className={`${prefixCls}-info`}>
         <span className={`${prefixCls}-time`}>{getConversationTime(data.lastMessage.time)}</span>
-        {showMore ? (
+        {showMore || true ? (
           <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
             {moreAction.icon || <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>}
           </Tooltip>
