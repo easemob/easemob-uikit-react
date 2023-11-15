@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { RootContext } from '../store/rootContext';
 import { reaction } from 'mobx';
 
-const userChatroomContext = () => {
+const useChatroomContext = () => {
   const rootStore = useContext(RootContext).rootStore;
   const { addressStore } = rootStore;
   const { muteChatRoomMember, unmuteChatRoomMember, removerChatroomMember } = addressStore;
@@ -31,4 +31,4 @@ const userChatroomContext = () => {
   };
 };
 
-export { userChatroomContext };
+export { useChatroomContext };
