@@ -28,6 +28,7 @@ import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
 // import rootStore from '../store/index';
 import { getMsgSenderNickname } from '../utils/index';
 import { RootContext } from '../store/rootContext';
+import { eventHandler } from '../../eventHandler';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
@@ -45,7 +46,7 @@ export interface ThreadProps {
 
 const Thread = (props: ThreadProps) => {
   const context = useContext(RootContext);
-  const { rootStore, features, onError, theme } = context;
+  const { rootStore, features, theme } = context;
   const themeMode = theme?.mode || 'light';
   const { prefix, className, messageListProps, messageEditorProps, style = {} } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -237,13 +238,14 @@ const Thread = (props: ThreadProps) => {
               creating: false,
             });
             // onOpenThreadModal && onOpenThreadModal({ id: threadId })
+            eventHandler.dispatchSuccess('createChatThread');
             resolve({
               chatType: 'groupChat',
               conversationId: res.data?.chatThreadId || '',
             });
           })
           .catch(err => {
-            onError && onError?.(err);
+            eventHandler.dispatchError('createChatThread', err);
             reject(err);
           });
       });
@@ -337,9 +339,10 @@ const Thread = (props: ThreadProps) => {
               open: false,
             });
             handleClickClose();
+            eventHandler.dispatchSuccess('destroyChatThread');
           })
           .catch(err => {
-            onError && onError?.(err);
+            eventHandler.dispatchError('destroyChatThread', err);
             console.error(err);
           });
       },
@@ -365,10 +368,10 @@ const Thread = (props: ThreadProps) => {
               open: false,
             });
             handleClickClose();
+            eventHandler.dispatchSuccess('leaveChatThread');
           })
           .catch(err => {
-            onError && onError?.(err);
-            console.error(err);
+            eventHandler.dispatchError('leaveChatThread', err);
           });
       },
     });

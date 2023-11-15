@@ -16,6 +16,7 @@ import Empty from '../empty';
 import Icon from '../../component/icon';
 import Modal from '../../component/modal';
 import { useTranslation } from 'react-i18next';
+import { eventHandler } from '../../eventHandler';
 export interface ChatroomMemberProps {
   prefix?: string;
   className?: string;
@@ -71,7 +72,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
 
   const { t } = useTranslation();
   const context = useContext(RootContext);
-  const { rootStore, features, theme, onError } = context;
+  const { rootStore, features, theme } = context;
   const globalConfig = features?.chatroomMember;
   const themeMode = theme?.mode || 'light';
   const { addressStore } = rootStore;
@@ -83,13 +84,13 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
       rootStore.client
         .getChatRoomDetails({ chatRoomId: chatroomId })
         .then(res => {
-          console.log('聊天室详情', res);
           // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
           rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
           getConversationList();
+          eventHandler.dispatchSuccess('getChatRoomDetails');
         })
         .catch(err => {
-          onError?.(err);
+          eventHandler.dispatchError('getChatRoomDetails', err);
         });
     } else {
       getConversationList();
@@ -177,7 +178,6 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
   }, [chatroomData?.muteList?.length]);
 
   const handleAllSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value);
     const data = membersData.filter(item => {
       return item.nickname?.includes(e.target.value) || item.userId?.includes(e.target.value);
     });

@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { observer } from 'mobx-react-lite';
 import { AT_TYPE } from '../store/ConversationStore';
+import { eventHandler } from '../../eventHandler';
 import {
   getGroupMemberIndexByUserId,
   getGroupItemFromGroupsById,
@@ -72,7 +73,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const [showMore, setShowMore] = useState(false);
   const [active, setActive] = useState(isActive);
   const context = useContext(RootContext);
-  const { rootStore, onError, theme } = context;
+  const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
 
   const cvsStore = rootStore.conversationStore;
@@ -118,11 +119,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         deleteRoam: true,
       })
       .then(() => {
-        // console.log('delete success');
+        eventHandler.dispatchSuccess('deleteConversation');
       })
       .catch(err => {
-        // console.error('delete fail', err);
-        onError && onError?.(err);
+        eventHandler.dispatchError('deleteConversation', err);
       });
   };
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);

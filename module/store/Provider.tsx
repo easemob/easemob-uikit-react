@@ -9,6 +9,7 @@ import { initReactI18next } from 'react-i18next';
 import i18n from 'i18next';
 import { resource } from '../../local/resource';
 import { hexToHsla, generateColors } from '../utils/color';
+import { eventHandler } from '../../eventHandler';
 export interface ProviderProps {
   initConfig: {
     appKey: string;
@@ -27,7 +28,6 @@ export interface ProviderProps {
       };
     };
   };
-  onError?: (err: AgoraChat.ErrorEvent) => void;
   children?: ReactNode;
   features?: {
     chat?: {
@@ -80,7 +80,7 @@ export interface ProviderProps {
   };
 }
 const Provider: React.FC<ProviderProps> = props => {
-  const { initConfig, local, onError, features, reactionConfig, theme } = props;
+  const { initConfig, local, features, reactionConfig, theme } = props;
   const { appKey } = initConfig;
   const client = useMemo(() => {
     return new AC.connection({
@@ -116,11 +116,10 @@ const Provider: React.FC<ProviderProps> = props => {
           agoraToken: initConfig.token,
         })
         .then(() => {
-          // console.log('login success');
+          eventHandler.dispatchSuccess('open');
         })
         .catch(err => {
-          // console.error('login fail', err);
-          onError && onError?.(err);
+          eventHandler.dispatchError('open', err);
         });
     }
   }, [initConfig.userId, initConfig.token]);
@@ -144,7 +143,6 @@ const Provider: React.FC<ProviderProps> = props => {
         initConfig,
         features,
         client,
-        onError,
         reactionConfig,
         theme,
       }}

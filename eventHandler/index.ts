@@ -4,6 +4,16 @@ export type EventName =
   | 'leaveChatRoom'
   | 'reportMessage'
   | 'getChatRoomDetails'
+  | 'sendMessage'
+  | 'fetchUserInfoById'
+  | 'translateMessage'
+  | 'recallMessage'
+  | 'deleteConversation'
+  | 'modifyMessage'
+  | 'createChatThread'
+  | 'destroyChatThread'
+  | 'leaveChatThread'
+  | 'open'
   | 'onError';
 
 export type EventHandlerData = {
@@ -48,6 +58,7 @@ export class EventHandler {
       if (this.handlerData[key]?.[eventName] && this.handlerData[key][eventName]?.error) {
         this.handlerData[key][eventName]?.error?.(error);
         this.handlerData[key]?.onError?.error?.(error);
+        console.error(error);
       }
     });
   }

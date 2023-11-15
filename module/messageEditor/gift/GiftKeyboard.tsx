@@ -36,7 +36,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   } = props;
   const { t } = useTranslation();
   const context = useContext(RootContext);
-  const { rootStore, onError } = context;
+  const { rootStore } = context;
   const { messageStore, conversationStore } = rootStore;
   const currentSvc = conversationStore.currentCvs;
   let currentConversation = conversation || currentSvc;
@@ -75,14 +75,9 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
       ext: {},
     } as AgoraChat.CreateCustomMsgParameters;
     const customMsg = AC.message.create(options);
-    messageStore
-      .sendMessage(customMsg)
-      .then(() => {
-        onSendMessage && onSendMessage(customMsg as AgoraChat.CustomMsgBody);
-      })
-      .catch(err => {
-        onError && onError?.(err);
-      });
+    messageStore.sendMessage(customMsg).then(() => {
+      onSendMessage && onSendMessage(customMsg as AgoraChat.CustomMsgBody);
+    });
   };
 
   const [selectedIndex, setIndex] = useState<string | number>('');

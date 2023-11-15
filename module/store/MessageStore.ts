@@ -7,6 +7,7 @@ import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji }
 import { RootStore } from './index';
 import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
+import { eventHandler } from '../../eventHandler';
 export interface RecallMessage {
   type: 'recall';
   [key: string]: any;
@@ -299,10 +300,12 @@ class MessageStore {
         }
         cvs.lastMessage = message as unknown as Conversation['lastMessage'];
         this.rootStore.conversationStore.modifyConversation({ ...cvs });
+        eventHandler.dispatchSuccess('sendMessage');
       })
-      .catch((error: ErrorEvent) => {
+      .catch((error: AgoraChat.ErrorEvent) => {
         console.warn('send fail', error);
         this.updateMessageStatus(message.id, 'failed');
+        eventHandler.dispatchError('sendMessage', error);
         throw error;
       });
   }
@@ -595,7 +598,11 @@ class MessageStore {
           // @ts-ignore
           conversation.lastMessage = messages[msgIndex];
           this.rootStore.conversationStore.modifyConversation(conversation);
+          eventHandler.dispatchSuccess('recallMessage');
         }
+      })
+      .catch(err => {
+        eventHandler.dispatchError('recallMessage', err);
       });
   }
 
@@ -810,6 +817,10 @@ class MessageStore {
       })
       .then(res => {
         this.modifyLocalMessage(messageId, res.message);
+        eventHandler.dispatchSuccess('modifyMessage');
+      })
+      .catch(err => {
+        eventHandler.dispatchError('modifyMessage', err);
       });
   }
 

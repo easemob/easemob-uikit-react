@@ -28,7 +28,7 @@ let recorder: typeof HZRecorder;
 let timer: number;
 const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const context = useContext(RootContext);
-  const { onError, rootStore, theme } = context;
+  const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
   const { t } = useTranslation();
   const { messageStore, client } = rootStore;
@@ -127,14 +127,8 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   }, [currentCVS]);
 
   const _sendMessage = (message: AgoraChat.MessageBody) => {
-    messageStore
-      .sendMessage(message)
-      .then(() => {
-        console.log('send success');
-      })
-      .catch(err => {
-        onError && onError(err);
-      });
+    messageStore.sendMessage(message);
+
     stopRecording();
     setDuration(0);
     clearInterval(timer);

@@ -70,7 +70,7 @@ const Chatroom = (props: ChatroomProps) => {
     style,
   } = props;
   const context = useContext(RootContext);
-  const { rootStore, features, theme, onError } = context;
+  const { rootStore, features, theme } = context;
   const globalConfig = features?.chatroom;
   const themeMode = theme?.mode || 'light';
 
@@ -108,9 +108,7 @@ const Chatroom = (props: ChatroomProps) => {
       },
     } as AgoraChat.CreateCustomMsgParameters;
     const customMsg = AC.message.create(options);
-    rootStore.messageStore.sendMessage(customMsg).catch(err => {
-      onError?.(err);
-    });
+    rootStore.messageStore.sendMessage(customMsg);
   };
 
   useEffect(() => {
@@ -133,7 +131,6 @@ const Chatroom = (props: ChatroomProps) => {
         eventHandler.dispatchSuccess('getChatRoomDetails');
       })
       .catch(err => {
-        // onError?.(err);
         eventHandler.dispatchError('getChatRoomDetails', err);
       });
 
@@ -141,7 +138,6 @@ const Chatroom = (props: ChatroomProps) => {
     rootStore.client
       .joinChatRoom({ roomId: chatroomId })
       .then(() => {
-        console.log('join chatroom success');
         eventHandler.dispatchSuccess('joinChatRoom');
         getUsersInfo({
           userIdList: [rootStore.client.user],
@@ -149,25 +145,21 @@ const Chatroom = (props: ChatroomProps) => {
         })
           ?.then(() => {
             sendJoinedNoticeMessage();
+            eventHandler.dispatchSuccess('fetchUserInfoById');
           })
           .catch(error => {
-            onError?.(error);
+            eventHandler.dispatchError('fetchUserInfoById', error);
           });
 
-        rootStore.client
-          .getChatRoomAdmin({ chatRoomId: chatroomId })
-          .then(res => {
-            console.log('聊天室管理员', res);
-            rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
-          })
-          .catch(err => {
-            onError?.(err);
-          });
+        // rootStore.client
+        //   .getChatRoomAdmin({ chatRoomId: chatroomId })
+        //   .then(res => {
+        //     console.log('聊天室管理员', res);
+        //     rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
+        //   })
       })
       .catch((err: AgoraChat.ErrorEvent) => {
-        console.log('join chatroom fail', err);
         eventHandler.dispatchError('joinChatRoom', err);
-        onError?.(err);
       });
 
     return () => {
@@ -233,7 +225,6 @@ const Chatroom = (props: ChatroomProps) => {
   const broadcast = rootStore.messageStore.message.broadcast;
   const [reportMessageId, setReportMessageId] = useState('');
   const handleReport = (message: any) => {
-    console.log('report', message);
     setReportOpen(true);
     setReportMessageId(message.mid || message.id);
   };
@@ -261,7 +252,6 @@ const Chatroom = (props: ChatroomProps) => {
         setCheckedType(-1);
       })
       .catch(err => {
-        onError?.(err);
         eventHandler.dispatchError('reportMessage', err);
       });
   };

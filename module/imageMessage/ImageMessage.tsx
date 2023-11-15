@@ -39,8 +39,6 @@ let ImageMessage = (props: ImageMessageProps) => {
   let { bySelf, from, reactions } = message;
   const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
   const [previewVisible, setPreviewVisible] = useState(false);
-  const context = useContext(RootContext);
-  const { onError } = context;
 
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
     var img = new Image();
@@ -174,19 +172,15 @@ let ImageMessage = (props: ImageMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(message);
-    rootStore.messageStore
-      .recallMessage(
-        {
-          chatType: message.chatType,
-          conversationId: conversationId,
-        },
-        // @ts-ignore
-        message.mid || message.id,
-        message.isChatThread,
-      )
-      ?.catch(err => {
-        onError?.(err);
-      });
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: message.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      message.mid || message.id,
+      message.isChatThread,
+    );
   };
 
   let conversationId = getCvsIdFromMessage(message);

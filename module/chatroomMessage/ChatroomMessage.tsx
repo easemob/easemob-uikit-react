@@ -11,6 +11,7 @@ import Icon from '../../component/icon';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
+import { eventHandler } from '../../eventHandler';
 export interface ChatroomMessageProps {
   prefix?: string;
   className?: string;
@@ -41,7 +42,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   const { t } = useTranslation();
   const [hoverStatus, setHoverStatus] = useState(false);
   const context = useContext(RootContext);
-  const { onError, theme } = context;
+  const { theme } = context;
   const themeMode = theme?.mode;
   let customAction;
   let menuNode: ReactNode | undefined;
@@ -116,9 +117,10 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         const translatedMsg = message?.translations?.[0]?.text;
         setTextToShow(translatedMsg);
         // setTransStatus('translated');
+        eventHandler.dispatchSuccess('translateMessage');
       })
       .catch(error => {
-        onError?.(error);
+        eventHandler.dispatchError('translateMessage', error);
         // setTransStatus('translationFailed');
         // setBtnText('retry');
       });
@@ -134,11 +136,10 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         message.mid || message.id,
       )
       ?.then(() => {
-        console.log('撤回成功');
+        eventHandler.dispatchSuccess('recallMessage');
       })
       ?.catch(err => {
-        console.log('撤回失败');
-        onError?.(err);
+        eventHandler.dispatchError('recallMessage', err);
       });
   };
   const muteMember = () => {

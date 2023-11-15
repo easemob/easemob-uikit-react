@@ -30,7 +30,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
   } = props;
   const prefixCls = getPrefixCls('selected-controls', customizePrefixCls);
   const context = useContext(RootContext);
-  const { onError, rootStore, theme } = context;
+  const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
 
   const classString = classNames(

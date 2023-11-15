@@ -12,7 +12,6 @@ export interface ContextProps {
   rootStore: RootStore;
   initConfig: { appKey: string; token?: string; userId?: string };
   client: AgoraChat.Connection;
-  onError?: (err: AgoraChat.ErrorEvent) => void;
   features?: {
     chat?: {
       header?: {
@@ -84,7 +83,6 @@ export const RootContext = React.createContext<ContextProps>({
   rootStore: {} as RootStore,
   initConfig: {} as { appKey: string },
   client: {} as AgoraChat.Connection,
-  onError: (err: AgoraChat.ErrorEvent) => {},
   reactionConfig: { map: {} },
   theme: {},
 });

@@ -62,7 +62,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('textarea', customizePrefixCls);
   const context = useContext(RootContext);
-  const { onError, rootStore, theme } = context;
+  const { rootStore, theme } = context;
 
   const themeMode = theme?.mode || 'light';
 
@@ -153,14 +153,9 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   };
 
   const _sendMessage = (message: AgoraChat.MessageBody) => {
-    messageStore
-      .sendMessage(message)
-      .then(() => {
-        onSendMessage && onSendMessage(message);
-      })
-      .catch(err => {
-        onError && onError?.(err);
-      });
+    messageStore.sendMessage(message).then(() => {
+      onSendMessage && onSendMessage(message);
+    });
     divRef.current!.innerHTML = '';
 
     setTextValue('');

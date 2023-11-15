@@ -160,8 +160,6 @@ const TextMessage = (props: TextMessageProps) => {
   const textareaRef = useRef<ForwardRefProps>(null);
   const [modifyMessageVisible, setModifyMessageVisible] = useState<boolean>(false);
 
-  const context = useContext(RootContext);
-  const { onError } = context;
   let urlTxtClass = '';
   if (urlData?.images?.length > 0) {
     urlTxtClass = 'message-text-hasImage';
@@ -295,19 +293,15 @@ const TextMessage = (props: TextMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(textMessage);
-    rootStore.messageStore
-      .recallMessage(
-        {
-          chatType: textMessage.chatType,
-          conversationId: conversationId,
-        },
-        // @ts-ignore
-        textMessage.mid || textMessage.id,
-        textMessage.isChatThread,
-      )
-      ?.catch(err => {
-        onError?.(err);
-      });
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: textMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      textMessage.mid || textMessage.id,
+      textMessage.isChatThread,
+    );
   };
 
   const switchShowTranslation = () => {
@@ -415,11 +409,7 @@ const TextMessage = (props: TextMessageProps) => {
       msg: msg,
     }) as AgoraChat.TextMsgBody;
     // @ts-ignore
-    rootStore.messageStore
-      .modifyServerMessage(textMessage?.mid || textMessage?.id, message)
-      ?.catch(e => {
-        onError?.(e);
-      });
+    rootStore.messageStore.modifyServerMessage(textMessage?.mid || textMessage?.id, message);
   };
 
   useEffect(() => {

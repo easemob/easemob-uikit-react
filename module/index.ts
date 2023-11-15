@@ -65,6 +65,7 @@ import { useClient } from './hooks/useClient';
 import { useConversations } from './hooks/useConversation';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
 import { useConversationContext } from './hooks/useConversationContext';
+import { userChatroomContext } from './hooks/useChatroomContext';
 import { useChatContext } from './hooks/useChatContext';
 import { useAddressContext } from './hooks/useAddressContext';
 import { useThreadContext } from './hooks/useThreadContext';
@@ -167,6 +168,7 @@ export {
   useChatContext,
   useAddressContext,
   useThreadContext,
+  userChatroomContext,
   Chatroom,
   ChatroomMember,
   ChatroomMessage,
