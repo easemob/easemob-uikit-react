@@ -1,11 +1,11 @@
 import CallKit from 'chat-callkit';
-import AgoraChat from 'agora-chat';
+import { chatSDK } from '../SDK';
 const AgoraRTC = CallKit.getAgoraRTC?.();
 
 const useSDK = () => {
   return {
     AgoraRTC,
-    AgoraChat,
+    ChatSDK: chatSDK,
   };
 };
 

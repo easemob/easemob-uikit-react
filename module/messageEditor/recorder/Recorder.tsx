@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useContext } from 'react';
 import classNames from 'classnames';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../../SDK';
 import './style/style.scss';
 import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
@@ -17,9 +17,9 @@ export interface RecorderProps {
   cancelBtnShape?: 'circle' | 'square';
   onShow?: () => void;
   onHide?: () => void;
-  onSend?: (message: AgoraChat.MessageBody) => void;
+  onSend?: (message: ChatSDK.MessageBody) => void;
   conversation?: CurrentConversation;
-  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
   isChatThread?: boolean;
 }
 
@@ -126,7 +126,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     clearInterval(timer);
   }, [currentCVS]);
 
-  const _sendMessage = (message: AgoraChat.MessageBody) => {
+  const _sendMessage = (message: ChatSDK.MessageBody) => {
     messageStore.sendMessage(message);
 
     stopRecording();
@@ -145,7 +145,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       // 获取语音二进制文件
       let blob = (recorder as any).getBlob();
       const uri = {
-        url: AC.utils.parseDownloadResponse.call(client, blob),
+        url: chatSDK.utils.parseDownloadResponse.call(client, blob),
         filename: 'audio-message.wav',
         filetype: 'audio',
         data: blob,
@@ -154,7 +154,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       };
       MediaStream.getTracks()[0].stop();
 
-      const message = AC.message.create({
+      const message = chatSDK.message.create({
         type: 'audio',
         to: currentCVS.conversationId,
         chatType: currentCVS.chatType,

@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 // @ts-ignore
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../../SDK';
 import { useTranslation } from 'react-i18next';
 import Header from '../header';
 import MessageEditor, { MessageEditorProps } from '../messageEditor';
@@ -35,12 +35,12 @@ export interface ThreadProps {
   style?: React.CSSProperties;
   shape?: 'ground' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
-  message: AgoraChat.MessageBody;
+  message: ChatSDK.MessageBody;
   messageListProps?: MsgListProps;
   createThread?: boolean;
   groupID: string;
   threadID?: string;
-  originalMsg: AgoraChat.MessageBody;
+  originalMsg: ChatSDK.MessageBody;
   messageEditorProps?: MessageEditorProps;
 }
 
@@ -56,7 +56,7 @@ const Thread = (props: ThreadProps) => {
   // 为什么 currentThread 不会自动更新？ 但是currentCVS会自动更新， 用一个变量能表示rootStore.threadStore.currentThread， 会自动更新
 
   const { threadStore } = rootStore;
-  const renderMsgDom = (msg: AgoraChat.MessagesType = {}) => {
+  const renderMsgDom = (msg: ChatSDK.MessagesType = {}) => {
     let content;
     switch (msg.type) {
       case 'txt':
@@ -212,7 +212,7 @@ const Thread = (props: ThreadProps) => {
   const showReply = repliedMsg && replyCvsId === conversation.conversationId;
 
   const handleSendMessage: (
-    message: AgoraChat.MessageBody,
+    message: ChatSDK.MessageBody,
   ) => Promise<CurrentConversation | void> = message => {
     const originalMessage = rootStore.threadStore.currentThread.originalMessage || {};
     const currentThread = rootStore.threadStore.currentThread;
@@ -234,7 +234,7 @@ const Thread = (props: ThreadProps) => {
             });
             rootStore.threadStore.setCurrentThread({
               ...currentThread,
-              info: { owner: rootStore.client.user } as unknown as AgoraChat.ThreadChangeInfo,
+              info: { owner: rootStore.client.user } as unknown as ChatSDK.ThreadChangeInfo,
               creating: false,
             });
             // onOpenThreadModal && onOpenThreadModal({ id: threadId })

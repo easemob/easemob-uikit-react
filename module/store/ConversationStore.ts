@@ -1,12 +1,11 @@
 import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
 import { ChatType } from '../types/messageType';
-import { AgoraChat } from 'agora-chat';
-
+import { ChatSDK } from '../SDK';
 export type AT_TYPE = 'NONE' | 'ALL' | 'ME';
 export interface Conversation {
   chatType: ChatType;
   conversationId: string;
-  lastMessage: AgoraChat.MessageBody;
+  lastMessage: ChatSDK.MessageBody;
   unreadCount: number;
   name?: string;
   atType?: AT_TYPE;

@@ -1,6 +1,6 @@
 import { observable, action, makeObservable } from 'mobx';
 import { getStore } from './index';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
 import { getUsersInfo } from '../utils';
 import { aC } from 'vitest/dist/types-f302dae9';
@@ -8,27 +8,27 @@ import { rootStore } from 'chatuim2';
 export type MemberRole = 'member' | 'owner' | 'admin';
 
 export interface MemberItem {
-  userId: AgoraChat.UserId;
+  userId: ChatSDK.UserId;
   role: MemberRole;
   // @ts-ignore
-  attributes?: AgoraChat.MemberAttributes;
+  attributes?: ChatSDK.MemberAttributes;
 }
 
-export interface GroupItem extends AgoraChat.BaseGroupInfo {
+export interface GroupItem extends ChatSDK.BaseGroupInfo {
   disabled?: boolean;
-  info?: AgoraChat.GroupDetailInfo;
+  info?: ChatSDK.GroupDetailInfo;
   members?: MemberItem[];
   hasMembersNext?: boolean;
-  admins?: AgoraChat.UserId[];
+  admins?: ChatSDK.UserId[];
 }
 
-export type AppUserInfo = Partial<Record<AgoraChat.ConfigurableKey, any>> & {
+export type AppUserInfo = Partial<Record<ChatSDK.ConfigurableKey, any>> & {
   userId: string;
   isOnline?: boolean;
   presenceExt?: string;
 };
 
-export type ChatroomInfo = AgoraChat.GetChatRoomDetailsResult & {
+export type ChatroomInfo = ChatSDK.GetChatRoomDetailsResult & {
   membersId?: string[];
   admins?: string[];
   muteList?: string[];
@@ -42,7 +42,7 @@ class AddressStore {
   chatroom: ChatroomInfo[];
   searchList: any;
   thread: {
-    [key: string]: AgoraChat.ThreadChangeInfo[];
+    [key: string]: ChatSDK.ThreadChangeInfo[];
   };
   constructor() {
     this.appUsersInfo = {};
@@ -107,7 +107,7 @@ class AddressStore {
     this.hasGroupsNext = hasNext;
   }
 
-  setGroupMembers(groupId: string, membersList: AgoraChat.GroupMember[]) {
+  setGroupMembers(groupId: string, membersList: ChatSDK.GroupMember[]) {
     let idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       let currentMembers = this.groups[idx]?.members?.map(item => item.userId);
@@ -154,7 +154,7 @@ class AddressStore {
     groupId: string,
     userId: string,
     // @ts-ignore
-    attributes: AgoraChat.MemberAttributes,
+    attributes: ChatSDK.MemberAttributes,
   ) {
     let groupIdx = getGroupItemIndexFromGroupsById(groupId);
     let idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) ?? -1;

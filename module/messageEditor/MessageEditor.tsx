@@ -10,7 +10,7 @@ import rootStore from '../store/index';
 import SelectedControls from './selectedControls';
 import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import { CurrentConversation } from '../store/ConversationStore';
 import { GiftKeyboard } from './gift/GiftKeyboard';
 import { RootContext } from '../store/rootContext';
@@ -36,10 +36,10 @@ export interface MessageEditorProps {
   disabled?: boolean; // 是否禁用
   isChatThread?: boolean; // 是否是子区聊天
   enabledMention?: boolean; // 是否开启@功能
-  onSendMessage?: (message: AgoraChat.MessageBody) => void;
+  onSendMessage?: (message: ChatSDK.MessageBody) => void;
   conversation?: CurrentConversation;
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
-  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
 }
 
 function converToMessage(e: string) {

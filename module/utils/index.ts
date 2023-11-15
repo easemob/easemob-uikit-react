@@ -1,5 +1,5 @@
 import { ChatType } from '../types/messageType';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import rootStore, { getStore } from '../store/index';
 import type { RecallMessage } from '../store/MessageStore';
 import { GroupItem, MemberItem } from '../store/AddressStore';
@@ -48,7 +48,7 @@ export function parseChannel(channelId: string): {
   };
 }
 
-export function getCvsIdFromMessage(message: AgoraChat.MessageBody | RecallMessage) {
+export function getCvsIdFromMessage(message: ChatSDK.MessageBody | RecallMessage) {
   let conversationId = '';
   if (message.chatType == 'groupChat' || message.chatType == 'chatRoom') {
     conversationId = message.to;
@@ -120,7 +120,7 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
       'sign',
       'birth',
       'ext',
-    ] as AgoraChat.ConfigurableKey[];
+    ] as ChatSDK.ConfigurableKey[];
     const reUserInfo: Record<string, AppUserInfo> = {};
     userIdList.forEach(item => {
       reUserInfo[item] = {
@@ -209,7 +209,7 @@ export function getMessages(cvs: CurrentConversation) {
 }
 
 export function getMessageIndex(
-  messages: (AgoraChat.MessageBody | RecallMessage)[],
+  messages: (ChatSDK.MessageBody | RecallMessage)[],
   messageId: string,
 ) {
   if (!messages) return -1;
@@ -217,7 +217,7 @@ export function getMessageIndex(
   return messages.findIndex(msg => msg.id === messageId || msg.mid === messageId);
 }
 
-export function getReactionByEmoji(message: AgoraChat.MessageBody | RecallMessage, emoji: string) {
+export function getReactionByEmoji(message: ChatSDK.MessageBody | RecallMessage, emoji: string) {
   // @ts-ignore
   return message.reactions?.find(reaction => reaction.reaction === emoji);
 }

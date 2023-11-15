@@ -7,7 +7,7 @@ import React, {
   useImperativeHandle,
   useCallback,
 } from 'react';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../../SDK';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config/index';
 import { convertToMessage } from './util';
@@ -32,9 +32,9 @@ export interface TextareaProps {
   enabledMention?: boolean;
   enabledTyping?: boolean;
   isChatThread?: boolean;
-  onSendMessage?: (message: AgoraChat.TextMessage) => void;
+  onSendMessage?: (message: ChatSDK.TextMessage) => void;
   conversation?: CurrentConversation;
-  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
 }
 
 export interface ForwardRefProps {
@@ -152,7 +152,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     }
   };
 
-  const _sendMessage = (message: AgoraChat.MessageBody) => {
+  const _sendMessage = (message: ChatSDK.MessageBody) => {
     messageStore.sendMessage(message).then(() => {
       onSendMessage && onSendMessage(message);
     });
@@ -180,7 +180,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     });
     if (atUserIds.includes(AT_ALL)) isAtAll = true;
 
-    const message = AC.message.create({
+    const message = chatSDK.message.create({
       to: usedCvs.conversationId,
       chatType: usedCvs.chatType,
       type: 'txt',

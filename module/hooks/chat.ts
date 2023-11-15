@@ -1,5 +1,5 @@
 import { useCallback, useEffect, MutableRefObject, useContext } from 'react';
-import AC, { AgoraChat } from 'agora-chat';
+import { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import { useClient } from './useClient';
 import { getStore } from '../store';
@@ -33,7 +33,7 @@ const useEventHandler = () => {
         messageStore.receiveMessage(message);
       },
       onCmdMessage: message => {
-        const conversationId = getCvsIdFromMessage(message as unknown as AgoraChat.MessageBody);
+        const conversationId = getCvsIdFromMessage(message as unknown as ChatSDK.MessageBody);
 
         const cvs = {
           chatType: message.chatType,
@@ -108,7 +108,7 @@ const useEventHandler = () => {
       },
 
       onReactionChange: data => {
-        const conversationId = getCvsIdFromMessage(data as unknown as AgoraChat.MessageBody);
+        const conversationId = getCvsIdFromMessage(data as unknown as ChatSDK.MessageBody);
 
         const cvs = {
           chatType: data.chatType,
@@ -193,11 +193,11 @@ const useEventHandler = () => {
           });
       },
       // @ts-ignore
-      onCombineMessage: (message: AgoraChat.MessageBody) => {
+      onCombineMessage: (message: ChatSDK.MessageBody) => {
         messageStore.receiveMessage(message);
       },
 
-      onChatThreadChange: (message: AgoraChat.ThreadChangeInfo) => {
+      onChatThreadChange: (message: ChatSDK.ThreadChangeInfo) => {
         if (message.operation == 'userRemove') {
           if (
             message.userName == rootStore.client.user &&

@@ -10,7 +10,7 @@ import { MessageList, MsgListProps } from '../chat/MessageList';
 import { RootContext } from '../store/rootContext';
 import Empty from '../empty';
 import { useTranslation } from 'react-i18next';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../SDK';
 import ChatroomMessage from '../chatroomMessage';
 import { GiftKeyboard } from '../messageEditor/gift';
 import Broadcast, { BroadcastProps } from '../../component/broadcast';
@@ -106,8 +106,8 @@ const Chatroom = (props: ChatroomProps) => {
       ext: {
         chatroom_uikit_userInfo,
       },
-    } as AgoraChat.CreateCustomMsgParameters;
-    const customMsg = AC.message.create(options);
+    } as ChatSDK.CreateCustomMsgParameters;
+    const customMsg = chatSDK.message.create(options);
     rootStore.messageStore.sendMessage(customMsg);
   };
 
@@ -122,7 +122,7 @@ const Chatroom = (props: ChatroomProps) => {
       .getChatRoomDetails({ chatRoomId: chatroomId })
       .then(res => {
         // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
-        rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
+        rootStore.addressStore.setChatroom(res.data as ChatSDK.GetChatRoomDetailsResult);
         // @ts-ignore
         const owner = res.data?.[0]?.owner;
         if (owner == rootStore.client.user) {
@@ -158,7 +158,7 @@ const Chatroom = (props: ChatroomProps) => {
         //     rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
         //   })
       })
-      .catch((err: AgoraChat.ErrorEvent) => {
+      .catch((err: ChatSDK.ErrorEvent) => {
         eventHandler.dispatchError('joinChatRoom', err);
       });
 

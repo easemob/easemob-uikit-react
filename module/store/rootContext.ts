@@ -1,17 +1,17 @@
 import React, { useEffect } from 'react';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from 'module/SDK';
 import rootStore, { RootStore } from './index';
 // import client from './agoraChatConfig';
 
 export interface RootConsumerProps {
   rootStore: RootStore;
-  client: AgoraChat.Connection;
+  client: ChatSDK.Connection;
 }
 
 export interface ContextProps {
   rootStore: RootStore;
   initConfig: { appKey: string; token?: string; userId?: string };
-  client: AgoraChat.Connection;
+  client: ChatSDK.Connection;
   features?: {
     chat?: {
       header?: {
@@ -77,20 +77,12 @@ export interface ContextProps {
     primaryColor?: string;
     mode?: 'dark' | 'light';
   };
-  reactionConfig?: {
-    map: {
-      [key: string]: HTMLImageElement;
-    };
-  };
-  theme?: {
-    primaryColor?: string;
-  };
 }
 
 export const RootContext = React.createContext<ContextProps>({
   rootStore: {} as RootStore,
   initConfig: {} as { appKey: string },
-  client: {} as AgoraChat.Connection,
+  client: {} as ChatSDK.Connection,
   reactionConfig: { map: {} },
   theme: {},
 });

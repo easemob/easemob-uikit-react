@@ -22,7 +22,7 @@ import FileMessage from '../fileMessage';
 import ImageMessage, { ImagePreview } from '../imageMessage';
 import VideoMessage from '../videoMessage';
 import { RootContext } from '../store/rootContext';
-import AC, { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import { cloneElement } from '../../component/_utils/reactNode';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import type { RecallMessage } from '../store/MessageStore';
@@ -39,13 +39,13 @@ export interface MsgListProps {
   className?: string;
   style?: React.CSSProperties;
   isThread?: boolean;
-  renderMessage?: (message: AgoraChat.MessageBody | RecallMessage) => ReactNode;
+  renderMessage?: (message: ChatSDK.MessageBody | RecallMessage) => ReactNode;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
   messageProps?: BaseMessageProps;
 }
 
-const MessageScrollList = ScrollList<AgoraChat.MessageBody | RecallMessage>();
+const MessageScrollList = ScrollList<ChatSDK.MessageBody | RecallMessage>();
 
 let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
@@ -90,7 +90,7 @@ let MessageList: FC<MsgListProps> = props => {
         <AudioMessage
           key={messageData[data.index].id}
           //@ts-ignore
-          audioMessage={messageData[data.index] as AgoraChat.AudioMsgBody}
+          audioMessage={messageData[data.index] as ChatSDK.AudioMsgBody}
           style={data.style}
           renderUserProfile={renderUserProfile}
           thread={isThread}
@@ -138,7 +138,7 @@ let MessageList: FC<MsgListProps> = props => {
           thread={isThread}
           {...messageProps}
         >
-          {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
+          {(messageData[data.index] as ChatSDK.TextMsgBody).msg}
         </TextMessage>
       );
     } else if (messageData[data.index].type == 'combine') {
@@ -165,7 +165,7 @@ let MessageList: FC<MsgListProps> = props => {
           //@ts-ignore
           message={messageData[data.index]}
         >
-          {(messageData[data.index] as AgoraChat.TextMsgBody).msg}
+          {(messageData[data.index] as ChatSDK.TextMsgBody).msg}
         </RecalledMessage>
       );
     }

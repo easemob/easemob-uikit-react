@@ -9,7 +9,7 @@ import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Icon from '../../component/icon';
 import { RepliedMsg } from '../repliedMessage';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard } from '../reaction';
 import { ReactionMessage, ReactionData, ReactionMessageProps } from '../reaction';
@@ -30,8 +30,8 @@ interface CustomAction {
 }
 
 export type BaseMessageType = Exclude<
-  AgoraChat.MessageBody,
-  AgoraChat.DeliveryMsgBody | AgoraChat.ReadMsgBody | AgoraChat.ChannelMsgBody
+  ChatSDK.MessageBody,
+  ChatSDK.DeliveryMsgBody | ChatSDK.ReadMsgBody | ChatSDK.ChannelMsgBody
 >;
 
 export interface renderUserProfileProps {
@@ -55,7 +55,7 @@ export interface BaseMessageProps {
   style?: React.CSSProperties;
   time?: number;
   hasRepliedMsg?: boolean;
-  repliedMessage?: AgoraChat.MessageBody;
+  repliedMessage?: ChatSDK.MessageBody;
   customAction?: CustomAction; // whether show more
   reaction?: boolean; // whether show reaction
   select?: boolean; // whether show message checkbox
@@ -75,7 +75,7 @@ export interface BaseMessageProps {
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
   thread?: boolean; // whether show thread
-  chatThreadOverview?: AgoraChat.ChatThreadOverview;
+  chatThreadOverview?: ChatSDK.ChatThreadOverview;
   onClickThreadTitle?: () => void;
   reactionConfig?: ReactionMessageProps['reactionConfig'];
 }

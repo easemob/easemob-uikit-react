@@ -3,7 +3,7 @@ import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import Icon from '../../component/icon';
 import './style/style.scss';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
@@ -20,7 +20,7 @@ export interface RepliedMsgProps {
   style?: React.CSSProperties;
   shape?: 'ground' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
-  message: AgoraChat.MessageBody;
+  message: ChatSDK.MessageBody;
 }
 
 const RepliedMsg = (props: RepliedMsgProps) => {
@@ -54,11 +54,11 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         msgID: string;
         msgPreview: string; //原消息的描述，用于显示在消息列表气泡中，超过字符限制将被截取,
         msgSender: string; //原消息的发送者，建议使用备注名或昵称,
-        msgType: AgoraChat.MessageBody['type']; //原消息类型,
+        msgType: ChatSDK.MessageBody['type']; //原消息类型,
       }
     | undefined
   >();
-  const [repliedMsg, setRepliedMsg] = useState<AgoraChat.MessageBody | undefined>();
+  const [repliedMsg, setRepliedMsg] = useState<ChatSDK.MessageBody | undefined>();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>();
   // 找到被引用的消息
   const cvsId = getCvsIdFromMessage(message);
@@ -78,7 +78,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       const findMsgs = messages.filter(msg => {
         // @ts-ignore
         return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;
-      }) as AgoraChat.MessageBody[];
+      }) as ChatSDK.MessageBody[];
 
       if (findMsgs.length > 0) {
         setRepliedMsg(findMsgs[0]);
@@ -142,7 +142,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
             }}
           >
             <Icon type="DOC" color="#75828A" width={20} height={20}></Icon>
-            <span>Attachment:</span> {(repliedMsg as AgoraChat.FileMsgBody).filename}
+            <span>Attachment:</span> {(repliedMsg as ChatSDK.FileMsgBody).filename}
           </div>
         );
         break;
@@ -151,7 +151,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         //   <div className={`${prefixCls}-content-text`}>
         //     <Icon type="WAVE3" color="#75828A" width={20} height={20}></Icon>
         //     <span>Audio:</span>
-        //     {(repliedMsg as AgoraChat.AudioMsgBody).length}"
+        //     {(repliedMsg as ChatSDK.AudioMsgBody).length}"
         //   </div>
         // );
         const bySelf = rootStore.client.user == message.from;
@@ -176,14 +176,13 @@ const RepliedMsg = (props: RepliedMsgProps) => {
                 }}
                 height={75}
                 src={
-                  (repliedMsg as AgoraChat.ImgMsgBody).thumb ||
-                  (repliedMsg as AgoraChat.ImgMsgBody).url
+                  (repliedMsg as ChatSDK.ImgMsgBody).thumb || (repliedMsg as ChatSDK.ImgMsgBody).url
                 }
               ></img>
             </div>
             <ImagePreview
               visible={imgPreviewVisible}
-              previewImageUrl={(repliedMsg as AgoraChat.ImgMsgBody).url as string}
+              previewImageUrl={(repliedMsg as ChatSDK.ImgMsgBody).url as string}
               onCancel={() => {
                 setImgVisible(false);
               }}

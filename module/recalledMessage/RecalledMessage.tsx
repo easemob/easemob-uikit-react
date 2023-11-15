@@ -1,5 +1,5 @@
 import React from 'react';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from 'module/SDK';
 import TextMessage, { TextMessageProps } from '../textMessage';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
@@ -10,7 +10,7 @@ export interface RecalledMessageProps extends TextMessageProps {
   prefixCls?: string;
   className?: string;
   style?: React.CSSProperties;
-  message: AgoraChat.MessageBody;
+  message: ChatSDK.MessageBody;
   onlyContent?: boolean;
 }
 

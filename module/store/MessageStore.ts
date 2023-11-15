@@ -1,5 +1,5 @@
 // import client from './agoraChatConfig';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../SDK';
 import { observable, action, computed, makeObservable, autorun, runInAction } from 'mobx';
 import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
@@ -14,24 +14,24 @@ export interface RecallMessage {
 }
 
 export interface Message {
-  singleChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
-  groupChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
-  chatRoom: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
-  byId: { [key: string]: AgoraChat.MessageBody | RecallMessage };
-  broadcast: AgoraChat.MessageBody[];
+  singleChat: { [key: string]: (ChatSDK.MessageBody | RecallMessage)[] };
+  groupChat: { [key: string]: (ChatSDK.MessageBody | RecallMessage)[] };
+  chatRoom: { [key: string]: (ChatSDK.MessageBody | RecallMessage)[] };
+  byId: { [key: string]: ChatSDK.MessageBody | RecallMessage };
+  broadcast: ChatSDK.MessageBody[];
 }
 
 export interface SelectedMessage {
   singleChat: {
     [key: string]: {
       selectable: boolean;
-      selectedMessage: (AgoraChat.MessageBody | RecallMessage)[];
+      selectedMessage: (ChatSDK.MessageBody | RecallMessage)[];
     };
   };
   groupChat: {
     [key: string]: {
       selectable: boolean;
-      selectedMessage: (AgoraChat.MessageBody | RecallMessage)[];
+      selectedMessage: (ChatSDK.MessageBody | RecallMessage)[];
     };
   };
 }
@@ -44,7 +44,7 @@ class MessageStore {
   message: Message;
   selectedMessage: SelectedMessage;
   currentCVS: CurrentConversation;
-  repliedMessage: AgoraChat.MessageBody | null;
+  repliedMessage: ChatSDK.MessageBody | null;
   typing: Typing;
   holding: boolean;
   unreadMessageCount: number;
@@ -121,10 +121,10 @@ class MessageStore {
 
   sendMessage(
     message:
-      | AgoraChat.MessageBody
-      | AgoraChat.ReadMsgBody
-      | AgoraChat.DeliveryMsgBody
-      | AgoraChat.ChannelMsgBody,
+      | ChatSDK.MessageBody
+      | ChatSDK.ReadMsgBody
+      | ChatSDK.DeliveryMsgBody
+      | ChatSDK.ChannelMsgBody,
   ) {
     if (!message) {
       throw new Error('no message');
@@ -230,7 +230,7 @@ class MessageStore {
     }
 
     return this.rootStore.client
-      .send(message as unknown as AgoraChat.MessageBody)
+      .send(message as unknown as ChatSDK.MessageBody)
       .then((data: { serverMsgId: string }) => {
         if (chatType == 'chatRoom') {
           // @ts-ignore
@@ -302,7 +302,7 @@ class MessageStore {
         this.rootStore.conversationStore.modifyConversation({ ...cvs });
         eventHandler.dispatchSuccess('sendMessage');
       })
-      .catch((error: AgoraChat.ErrorEvent) => {
+      .catch((error: ChatSDK.ErrorEvent) => {
         console.warn('send fail', error);
         this.updateMessageStatus(message.id, 'failed');
         eventHandler.dispatchError('sendMessage', error);
@@ -310,7 +310,7 @@ class MessageStore {
       });
   }
 
-  receiveMessage(message: AgoraChat.MessageBody) {
+  receiveMessage(message: ChatSDK.MessageBody) {
     const curCvs = this.rootStore.conversationStore.currentCvs;
     //@ts-ignore
     if (
@@ -428,12 +428,12 @@ class MessageStore {
     }
   }
 
-  modifyMessage(id: string, message: AgoraChat.MessageBody | RecallMessage) {
+  modifyMessage(id: string, message: ChatSDK.MessageBody | RecallMessage) {
     this.message.byId[id] = message;
   }
 
   sendChannelAck(cvs: CurrentConversation) {
-    const channelMsg = AC.message.create({
+    const channelMsg = chatSDK.message.create({
       type: 'channel',
       chatType: cvs.chatType,
       to: cvs.conversationId,
@@ -478,7 +478,7 @@ class MessageStore {
     this.message[cvs.chatType][cvs.conversationId] = [];
   }
 
-  setRepliedMessage(message: AgoraChat.MessageBody | null) {
+  setRepliedMessage(message: ChatSDK.MessageBody | null) {
     if (typeof message === 'undefined') return;
     this.repliedMessage = message;
   }
@@ -643,7 +643,7 @@ class MessageStore {
         // });
         // this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
       })
-      .catch((err: AgoraChat.ErrorEvent) => {
+      .catch((err: ChatSDK.ErrorEvent) => {
         console.error(err);
       });
   }
@@ -675,7 +675,7 @@ class MessageStore {
           }
         }
       })
-      .catch((err: AgoraChat.ErrorEvent) => {
+      .catch((err: ChatSDK.ErrorEvent) => {
         console.error(err);
       });
   }
@@ -735,7 +735,7 @@ class MessageStore {
         reaction,
         pageSize: 100,
       })
-      .then((data: AgoraChat.AsyncResult<AgoraChat.GetReactionDetailResult>) => {
+      .then((data: ChatSDK.AsyncResult<ChatSDK.GetReactionDetailResult>) => {
         const reactionData = data.data;
         const messages = getMessages(cvs);
         const messageIndex = getMessageIndex(messages, messageId);
@@ -781,7 +781,7 @@ class MessageStore {
     });
   }
 
-  modifyLocalMessage(messageId: string, msg: AgoraChat.TextMsgBody, isReceivedModify?: boolean) {
+  modifyLocalMessage(messageId: string, msg: ChatSDK.TextMsgBody, isReceivedModify?: boolean) {
     if (msg.chatType !== 'chatRoom') {
       let cvsId = '';
       if (isReceivedModify) {
@@ -805,7 +805,7 @@ class MessageStore {
     }
   }
 
-  modifyServerMessage(messageId: string, msg: AgoraChat.ModifiedMsg) {
+  modifyServerMessage(messageId: string, msg: ChatSDK.ModifiedMsg) {
     if (!messageId || !msg) {
       throw new Error('modifyServerMessage params error');
     }
@@ -828,7 +828,7 @@ class MessageStore {
     cvs: CurrentConversation,
     selectedData: {
       selectable: boolean;
-      selectedMessage: (AgoraChat.MessageBody | RecallMessage)[];
+      selectedMessage: (ChatSDK.MessageBody | RecallMessage)[];
     },
   ) {
     this.selectedMessage[cvs.chatType][cvs.conversationId] = selectedData;
@@ -848,7 +848,7 @@ class MessageStore {
       isChatThread: false,
       action: 'TypingBegin',
     };
-    const msg = AC.message.create(option);
+    const msg = chatSDK.message.create(option);
     this.rootStore.client.send(msg).then(() => {
       // console.log('send cmd success');
     });

@@ -4,7 +4,7 @@ import './style/style.scss';
 import { ConfigContext } from '../../../component/config/index';
 import { Tooltip } from '../../../component/tooltip/Tooltip';
 import Icon from '../../../component/icon';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../../SDK';
 import { RootContext } from '../../store/rootContext';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +21,7 @@ export interface MoreActionProps {
   }>;
   conversation?: CurrentConversation;
   isChatThread?: boolean;
-  onBeforeSendMessage?: (message: AgoraChat.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
 }
 let MoreAction = (props: MoreActionProps) => {
   const {
@@ -130,7 +130,7 @@ let MoreAction = (props: MoreActionProps) => {
   );
   const currentCVS = conversation ? conversation : messageStore.currentCVS;
   const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = e => {
-    let file = AC.utils.getFileUrl(e.target);
+    let file = chatSDK.utils.getFileUrl(e.target);
     if (!file.filename) {
       return false;
     }
@@ -151,8 +151,8 @@ let MoreAction = (props: MoreActionProps) => {
         (sendMsg as any).url = data.url;
         messageStore.modifyMessage(imageMessage.id, sendMsg);
       },
-    } as AgoraChat.CreateImgMsgParameters;
-    const imageMessage = AC.message.create(option);
+    } as ChatSDK.CreateImgMsgParameters;
+    const imageMessage = chatSDK.message.create(option);
 
     if (onBeforeSendMessage) {
       onBeforeSendMessage(imageMessage).then(cvs => {
@@ -170,7 +170,7 @@ let MoreAction = (props: MoreActionProps) => {
   };
 
   const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = e => {
-    let file = AC.utils.getFileUrl(e.target);
+    let file = chatSDK.utils.getFileUrl(e.target);
     if (!file.filename) {
       return false;
     }
@@ -188,8 +188,8 @@ let MoreAction = (props: MoreActionProps) => {
       file_length: file.data.size,
       url: file.url,
       isChatThread,
-    } as AgoraChat.CreateFileMsgParameters;
-    const fileMessage = AC.message.create(option);
+    } as ChatSDK.CreateFileMsgParameters;
+    const fileMessage = chatSDK.message.create(option);
 
     if (onBeforeSendMessage) {
       onBeforeSendMessage(fileMessage).then(cvs => {

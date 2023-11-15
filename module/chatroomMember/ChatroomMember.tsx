@@ -17,6 +17,7 @@ import Icon from '../../component/icon';
 import Modal from '../../component/modal';
 import { useTranslation } from 'react-i18next';
 import { eventHandler } from '../../eventHandler';
+import { ChatSDK } from '../SDK';
 export interface ChatroomMemberProps {
   prefix?: string;
   className?: string;
@@ -85,7 +86,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
         .getChatRoomDetails({ chatRoomId: chatroomId })
         .then(res => {
           // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
-          rootStore.addressStore.setChatroom(res.data as AgoraChat.GetChatRoomDetailsResult);
+          rootStore.addressStore.setChatroom(res.data as ChatSDK.GetChatRoomDetailsResult);
           getConversationList();
           eventHandler.dispatchSuccess('getChatRoomDetails');
         })

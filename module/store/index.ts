@@ -10,7 +10,7 @@ import ConversationStore, {
 } from './ConversationStore';
 import AddressStore, { MemberRole, MemberItem, GroupItem, AppUserInfo } from './AddressStore';
 import ThreadStore, { ThreadData, CurrentThread } from './ThreadStore';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from 'module/SDK';
 interface InitConfig {
   appKey: string;
 }
@@ -19,11 +19,11 @@ class RootStore {
   conversationStore;
   addressStore;
   threadStore;
-  client: AgoraChat.Connection;
+  client: ChatSDK.Connection;
   loginState = false;
   initConfig = { appKey: '' };
   constructor() {
-    this.client = {} as AgoraChat.Connection;
+    this.client = {} as ChatSDK.Connection;
     this.messageStore = new MessageStore(this);
     this.conversationStore = new ConversationStore(this);
     this.addressStore = new AddressStore();
@@ -40,7 +40,7 @@ class RootStore {
     });
   }
 
-  setClient(client: AgoraChat.Connection) {
+  setClient(client: ChatSDK.Connection) {
     this.client = client;
   }
 

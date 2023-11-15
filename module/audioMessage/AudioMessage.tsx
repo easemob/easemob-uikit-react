@@ -9,9 +9,9 @@ import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
 import { observer } from 'mobx-react-lite';
 import { getCvsIdFromMessage } from '../utils';
-import { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../SDK';
 import { RootContext } from '../store/rootContext';
-import AC from 'agora-chat';
+
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
   audioMessage: AudioMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -69,12 +69,12 @@ const AudioMessage = (props: AudioMessageProps) => {
         Accept: 'audio/mp3',
       },
       onFileDownloadComplete: function (response: any) {
-        let objectUrl = AC.utils.parseDownloadResponse.call(rootStore.client, response);
+        let objectUrl = chatSDK.utils.parseDownloadResponse.call(rootStore.client, response);
         setUrl(objectUrl);
       },
       onFileDownloadError: function () {},
     };
-    AC.utils.download.call(rootStore.client, options);
+    chatSDK.utils.download.call(rootStore.client, options);
   }, [audioMessage.url]);
   const playAudio = () => {
     setPlayStatus(true);
@@ -269,7 +269,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       visible: true,
       creating: false,
       originalMessage: audioMessage,
-      info: audioMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+      info: audioMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
     });
     rootStore.threadStore.setThreadVisible(true);
 

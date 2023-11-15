@@ -2,7 +2,7 @@ import React, { useEffect, ReactNode, memo, useMemo } from 'react';
 import { RootProvider } from './rootContext';
 import rootStore from './index';
 
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK } from '../SDK';
 import { useEventHandler } from '../hooks/chat';
 
 import { initReactI18next } from 'react-i18next';
@@ -83,7 +83,7 @@ const Provider: React.FC<ProviderProps> = props => {
   const { initConfig, local, features, reactionConfig, theme } = props;
   const { appKey } = initConfig;
   const client = useMemo(() => {
-    return new AC.connection({
+    return new chatSDK.connection({
       appKey: appKey,
       delivery: true,
     });

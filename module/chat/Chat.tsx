@@ -24,7 +24,7 @@ import { CurrentConversation } from 'module/store/ConversationStore';
 import Typing from '../typing';
 import { ThreadModal } from '../thread';
 import ScrollList from '../../component/scrollList';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from 'module/SDK';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
 import CallKit from 'chat-callkit';
 export interface ChatProps {
@@ -173,7 +173,7 @@ const Chat: FC<ChatProps> = props => {
     rootStore.threadStore.setThreadVisible(true);
     rootStore.threadStore.getChatThreadDetail(item.id);
   };
-  const ThreadScrollList = ScrollList<AgoraChat.ChatThreadOverview>();
+  const ThreadScrollList = ScrollList<ChatSDK.ChatThreadOverview>();
 
   const [renderThreadList, setRenderThreadList] = useState(threadList);
 
@@ -182,7 +182,7 @@ const Chat: FC<ChatProps> = props => {
   }, [threadList.length, CVS.conversationId]);
   // render thread list
   const threadListContent = () => {
-    const renderItem = (item: AgoraChat.ChatThreadOverview, index: number) => {
+    const renderItem = (item: ChatSDK.ChatThreadOverview, index: number) => {
       let lastMsg = '';
       switch (item.lastMessage?.type) {
         case 'txt':

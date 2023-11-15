@@ -1,12 +1,11 @@
 import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
-import { AgoraChat } from 'agora-chat';
-import { A } from 'vitest/dist/types-71ccd11d';
+import { ChatSDK } from '../SDK';
 
 export interface ThreadData {
   [key: string]: {
     [key: string]: {
-      info?: AgoraChat.ThreadChangeInfo & { owner?: string };
-      originalMessage: AgoraChat.MessageBody;
+      info?: ChatSDK.ThreadChangeInfo & { owner?: string };
+      originalMessage: ChatSDK.MessageBody;
     };
   };
 }
@@ -14,8 +13,8 @@ export interface ThreadData {
 export interface CurrentThread {
   visible: boolean;
   creating: boolean;
-  info?: AgoraChat.ThreadChangeInfo & { owner?: string; members?: string[] };
-  originalMessage: AgoraChat.MessageBody;
+  info?: ChatSDK.ThreadChangeInfo & { owner?: string; members?: string[] };
+  originalMessage: ChatSDK.MessageBody;
 }
 
 class ThreadStore {
@@ -23,7 +22,7 @@ class ThreadStore {
   thread: ThreadData;
   currentThread: CurrentThread;
   showThreadPanel: boolean;
-  threadList: { [key: string]: (AgoraChat.ChatThreadDetail & { members?: string[] })[] };
+  threadList: { [key: string]: (ChatSDK.ChatThreadDetail & { members?: string[] })[] };
   constructor(rootStore: any) {
     this.rootStore = rootStore;
     this.thread = {};
@@ -66,8 +65,8 @@ class ThreadStore {
     this.showThreadPanel = visible;
   }
 
-  updateThreadInfo(threadInfo: AgoraChat.ThreadChangeInfo) {
-    let chatThreadOverview: AgoraChat.ThreadChangeInfo | undefined;
+  updateThreadInfo(threadInfo: ChatSDK.ThreadChangeInfo) {
+    let chatThreadOverview: ChatSDK.ThreadChangeInfo | undefined;
 
     const { operation, messageId, parentId, id, operator } = threadInfo;
     const currentThreadInfo = this.currentThread.info;
@@ -75,7 +74,7 @@ class ThreadStore {
     // @ts-ignore
     const orgMsgId = originalMessage?.mid || originalMessage?.id;
 
-    let foundThread: AgoraChat.ThreadChangeInfo = {} as AgoraChat.ThreadChangeInfo;
+    let foundThread: ChatSDK.ThreadChangeInfo = {} as ChatSDK.ThreadChangeInfo;
 
     if (operation != 'create') {
       this.threadList[parentId]?.forEach(item => {
@@ -99,7 +98,7 @@ class ThreadStore {
             visible: false,
             creating: false,
             info: undefined,
-            originalMessage: {} as AgoraChat.MessageBody,
+            originalMessage: {} as ChatSDK.MessageBody,
           });
         }
         break;
@@ -136,7 +135,7 @@ class ThreadStore {
             visible: false,
             creating: false,
             info: undefined,
-            originalMessage: {} as AgoraChat.MessageBody,
+            originalMessage: {} as ChatSDK.MessageBody,
           });
 
           // const warnText = operation === 'userRemove' ? t('You have been removed from the thread') : t('The thread has been disbanded')

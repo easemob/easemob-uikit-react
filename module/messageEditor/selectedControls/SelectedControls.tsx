@@ -4,7 +4,7 @@ import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
 import './style/style.scss';
 import { RootContext } from '../../store/rootContext';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../../SDK';
 import { useTranslation } from 'react-i18next';
 import Modal from '../../../component/modal';
 import { CurrentConversation } from '../../store/ConversationStore';
@@ -14,7 +14,7 @@ export interface SelectedControlsProps {
   className?: string;
   onHide?: () => void;
   conversation?: CurrentConversation;
-  onSendMessage?: (message: AgoraChat.CombineMsgBody) => void;
+  onSendMessage?: (message: ChatSDK.CombineMsgBody) => void;
 }
 
 const SelectedControls = (props: SelectedControlsProps) => {
@@ -112,7 +112,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
       },
     };
     // @ts-ignore
-    let msg = AC.message.create(option);
+    let msg = chatSDK.message.create(option);
     onSendMessage?.(msg);
     return;
   };

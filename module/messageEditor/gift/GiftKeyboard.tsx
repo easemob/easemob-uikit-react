@@ -4,7 +4,7 @@ import Button, { ButtonProps } from '../../../component/button';
 import Icon from '../../../component/icon';
 import './style/style.scss';
 import { useTranslation } from 'react-i18next';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../../SDK';
 import { Gift } from './Gift';
 import { RootContext } from '../../store/rootContext';
 import { CurrentConversation } from '../../store/ConversationStore';
@@ -19,9 +19,9 @@ export interface GiftKeyboardProps {
   onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
   conversation?: CurrentConversation;
   gifts?: ReactNode[];
-  onSendMessage?: (message: AgoraChat.CustomMsgBody) => void;
+  onSendMessage?: (message: ChatSDK.CustomMsgBody) => void;
   onBeforeSendMessage?: (
-    message: AgoraChat.MessageBody,
+    message: ChatSDK.MessageBody,
   ) => Promise<{ chatType: 'chatRoom'; conversationId: string } | void>;
 }
 
@@ -73,10 +73,10 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
         chatroom_uikit_gift: JSON.stringify(giftData),
       },
       ext: {},
-    } as AgoraChat.CreateCustomMsgParameters;
-    const customMsg = AC.message.create(options);
+    } as ChatSDK.CreateCustomMsgParameters;
+    const customMsg = chatSDK.message.create(options);
     messageStore.sendMessage(customMsg).then(() => {
-      onSendMessage && onSendMessage(customMsg as AgoraChat.CustomMsgBody);
+      onSendMessage && onSendMessage(customMsg as ChatSDK.CustomMsgBody);
     });
   };
 

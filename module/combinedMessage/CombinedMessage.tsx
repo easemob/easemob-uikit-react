@@ -1,6 +1,6 @@
 import React, { ReactNode, useState, useContext } from 'react';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
 import classNames from 'classnames';
@@ -20,13 +20,13 @@ export interface CombinedMessageProps extends BaseMessageProps {
   prefix?: string;
   className?: string;
   // @ts-ignore
-  combinedMessage: AgoraChat.CombineMsgBody;
+  combinedMessage: ChatSDK.CombineMsgBody;
   style?: React.CSSProperties;
   nickName?: string;
   type?: 'primary' | 'secondly';
   bubbleClass?: string;
   // @ts-ignore
-  onShowDetail?: (msg: AgoraChat.CombineMsgBody) => void;
+  onShowDetail?: (msg: ChatSDK.CombineMsgBody) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   showSummary?: boolean; // whether show summary
   onlyContent?: boolean; // only show message content
@@ -74,7 +74,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     );
   };
 
-  let repliedMsg: undefined | AgoraChat.MessageBody;
+  let repliedMsg: undefined | ChatSDK.MessageBody;
   if (combinedMessage.ext?.msgQuote) {
     repliedMsg = combinedMessage;
   }
@@ -163,7 +163,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     <Loading size={48} visible={true} />,
   );
 
-  const createDetailContent = (data: AgoraChat.MessageType[]) => {
+  const createDetailContent = (data: ChatSDK.MessageType[]) => {
     let node = data.map(msg => {
       let content;
 
@@ -264,7 +264,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
         url: combinedMessage.url,
         secret: combinedMessage.secret,
       })
-      .then((data: AgoraChat.MessageType[]) => {
+      .then((data: ChatSDK.MessageType[]) => {
         combinedMessage.messages = data;
         createDetailContent(data);
       })
@@ -355,7 +355,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
       visible: true,
       creating: false,
       originalMessage: combinedMessage,
-      info: combinedMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+      info: combinedMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
     });
     rootStore.threadStore.setThreadVisible(true);
 

@@ -10,7 +10,7 @@ import download from '../utils/download';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from '../SDK';
 import { RootContext } from '../store/rootContext';
 export interface FileMessageProps extends BaseMessageProps {
   fileMessage: FileMessageType; // 从SDK收到的文件消息
@@ -231,7 +231,7 @@ const FileMessage = (props: FileMessageProps) => {
       visible: true,
       creating: false,
       originalMessage: fileMessage,
-      info: fileMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+      info: fileMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
     });
     rootStore.threadStore.setThreadVisible(true);
 

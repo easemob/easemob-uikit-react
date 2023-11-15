@@ -12,7 +12,7 @@ import type { TextMessageType } from '../types/messageType';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import { UrlMessage } from './UrlMessage';
 import reactStringReplace from 'react-string-replace';
-import AC, { AgoraChat } from 'agora-chat';
+import { chatSDK, ChatSDK } from '../SDK';
 import Modal from '../../component/modal';
 import { getCvsIdFromMessage, renderHtml, formatHtmlString } from '../utils';
 import { convertToMessage } from '../messageEditor/textarea/util';
@@ -231,7 +231,7 @@ const TextMessage = (props: TextMessageProps) => {
     );
   };
 
-  let repliedMsg: undefined | AgoraChat.MessageBody;
+  let repliedMsg: undefined | ChatSDK.MessageBody;
   if (textMessage.ext?.msgQuote) {
     repliedMsg = textMessage;
   }
@@ -401,13 +401,13 @@ const TextMessage = (props: TextMessageProps) => {
     let msg = convertToMessage(textareaRef?.current?.divRef?.current?.innerHTML || '').trim();
     const { isChatThread, to, chatThread } = textMessage;
     const isThread = !!(isChatThread || chatThread);
-    const message = AC.message.create({
+    const message = chatSDK.message.create({
       to: isThread ? to : currentCVS.conversationId,
       chatType: currentCVS.chatType,
       type: 'txt',
       isChatThread: isThread,
       msg: msg,
-    }) as AgoraChat.TextMsgBody;
+    }) as ChatSDK.TextMsgBody;
     // @ts-ignore
     rootStore.messageStore.modifyServerMessage(textMessage?.mid || textMessage?.id, message);
   };
@@ -448,7 +448,7 @@ const TextMessage = (props: TextMessageProps) => {
       visible: true,
       creating: false,
       originalMessage: textMessage,
-      info: textMessage.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+      info: textMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
     });
     rootStore.threadStore.setThreadVisible(true);
 

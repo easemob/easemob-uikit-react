@@ -10,7 +10,7 @@ import Modal from '../../component/modal';
 import rootStore from '../store/index';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
-import { AgoraChat } from 'agora-chat';
+import { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
@@ -259,7 +259,7 @@ let ImageMessage = (props: ImageMessageProps) => {
       visible: true,
       creating: false,
       originalMessage: message,
-      info: message.chatThreadOverview as unknown as AgoraChat.ThreadChangeInfo,
+      info: message.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
     });
     rootStore.threadStore.setThreadVisible(true);
 
