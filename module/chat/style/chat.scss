@@ -51,6 +51,18 @@ $chat-prefix-cls: #{$cui-prefix}-chat;
             }
         }
     }
+
+    &-dark{
+        background-color: $gray-1;
+        color: $gray-98;
+
+        .#{$chat-prefix-cls}-thread-item{
+            background-color: $gray-2;
+            &:hover{
+                background-color: $gray-3;
+            }
+        }
+    }
 }
 .cui-callkit-groupAvatar{
     width: 64px;

@@ -20,4 +20,13 @@ $status-prefix-cls: #{$cui-prefix}-reaction-box;
         // justify-content: flex-end;
         flex-direction: row-reverse
     }
+    
+}
+
+.#{$cui-prefix}-reaction-icon{
+    fill: $gray-6;
+    &:hover {
+        fill: $blue-5;
+        cursor: pointer;
+    }
 }

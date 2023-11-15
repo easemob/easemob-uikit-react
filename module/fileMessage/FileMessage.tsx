@@ -41,8 +41,6 @@ const FileMessage = (props: FileMessageProps) => {
   const { filename, file_length, from, reactions } = fileMessage;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
-  const context = useContext(RootContext);
-  const { onError } = context;
   let { bySelf } = fileMessage;
   if (typeof bySelf == 'undefined') {
     bySelf = fileMessage.from === rootStore.client.context.userId;
@@ -146,19 +144,15 @@ const FileMessage = (props: FileMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(fileMessage);
-    rootStore.messageStore
-      .recallMessage(
-        {
-          chatType: fileMessage.chatType,
-          conversationId: conversationId,
-        },
-        // @ts-ignore
-        fileMessage.mid || fileMessage.id,
-        fileMessage.isChatThread,
-      )
-      ?.catch(err => {
-        onError?.(err);
-      });
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: fileMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      fileMessage.mid || fileMessage.id,
+      fileMessage.isChatThread,
+    );
   };
 
   let conversationId = getCvsIdFromMessage(fileMessage);

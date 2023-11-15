@@ -1,0 +1,80 @@
+@import '~/common/style/index.scss';
+$gift-prefix-cls: #{$cui-prefix}-gift;
+
+.#{$gift-prefix-cls}{
+    width: 80px;
+    height: 98px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 8px;
+    box-sizing: border-box;
+    position: relative;
+    // height: fit-content;
+    &>img{
+        width: 50px;
+        height: 50px;
+    }
+    &-title{
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 28px;
+        // color: $gray-1;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        cursor: default;
+    }
+
+    &-subtitle{
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 16px;
+        color: $gray-5;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        cursor: default;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+    }
+
+    &-button{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        background: $blue-5;
+        width: 100%;
+        border-radius: 0px 0px 8px 8px;
+        height: 28px;
+        color: $gray-98;
+        cursor: pointer;
+        position: absolute;
+        bottom: 0;
+    }
+
+    &-selected{
+        border: 1px solid $blue-5;
+        background: $blue-9;
+    }
+}
+
+.container{
+    width: 340px;
+}
+
+.content{
+    width: 340px;
+    display: flex;
+    flex-flow: wrap;
+    gap: 8px 4px;
+}

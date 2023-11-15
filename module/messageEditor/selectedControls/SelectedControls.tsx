@@ -11,6 +11,7 @@ import { CurrentConversation } from '../../store/ConversationStore';
 export interface SelectedControlsProps {
   prefix?: string;
   style?: React.CSSProperties;
+  className?: string;
   onHide?: () => void;
   conversation?: CurrentConversation;
   onSendMessage?: (message: AgoraChat.CombineMsgBody) => void;
@@ -19,10 +20,26 @@ export interface SelectedControlsProps {
 const SelectedControls = (props: SelectedControlsProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { t } = useTranslation();
-  const { prefix: customizePrefixCls, onHide, conversation, onSendMessage, style = {} } = props;
+  const {
+    prefix: customizePrefixCls,
+    onHide,
+    conversation,
+    onSendMessage,
+    style = {},
+    className,
+  } = props;
   const prefixCls = getPrefixCls('selected-controls', customizePrefixCls);
-  const rootStore = useContext(RootContext).rootStore;
-  const classString = classNames(prefixCls);
+  const context = useContext(RootContext);
+  const { rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
+
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
   const currentCVS = conversation ? conversation : rootStore.messageStore.currentCVS;
   const selectedMessages =
     rootStore.messageStore.selectedMessage[currentCVS.chatType][currentCVS.conversationId]
@@ -134,7 +151,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
         <div className={`${prefixCls}-content`}>
           <div className={`${prefixCls}-content-left`}>
             <div className={`${prefixCls}-iconBox`} onClick={close}>
-              <Icon type="CLOSE_THIN" width={24} height={24}></Icon>
+              <Icon type="CLOSE_THIN" width={24} height={24} color="#464E53"></Icon>
             </div>
           </div>
           <div className={`${prefixCls}-content-right`}>

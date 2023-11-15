@@ -12,7 +12,6 @@ export interface ContextProps {
   rootStore: RootStore;
   initConfig: { appKey: string; token?: string; userId?: string };
   client: AgoraChat.Connection;
-  onError?: (err: AgoraChat.ErrorEvent) => void;
   features?: {
     chat?: {
       header?: {
@@ -52,6 +51,31 @@ export interface ContextProps {
         deleteConversation?: boolean;
       };
     };
+    chatroom?: {
+      message?: {
+        moreAction?: boolean;
+        delete?: boolean;
+        translate?: boolean;
+        report?: boolean;
+      };
+      messageEditor?: {
+        emoji?: boolean;
+        gift?: boolean;
+      };
+    };
+    chatroomMember?: {
+      mute?: boolean;
+      remove?: boolean;
+    };
+  };
+  reactionConfig?: {
+    map: {
+      [key: string]: HTMLImageElement;
+    };
+  };
+  theme?: {
+    primaryColor?: string;
+    mode?: 'dark' | 'light';
   };
   reactionConfig?: {
     map: {
@@ -64,10 +88,9 @@ export interface ContextProps {
 }
 
 export const RootContext = React.createContext<ContextProps>({
-  rootStore,
+  rootStore: {} as RootStore,
   initConfig: {} as { appKey: string },
   client: {} as AgoraChat.Connection,
-  onError: (err: AgoraChat.ErrorEvent) => {},
   reactionConfig: { map: {} },
   theme: {},
 });

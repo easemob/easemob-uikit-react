@@ -1,0 +1,23 @@
+@import '~/common/style/index.scss';
+$chatroom-prefix-cls: #{$cui-prefix}-chatroom-member;
+
+.#{$chatroom-prefix-cls}{
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .chatroom-member-line{
+        height: 1px;
+        background: $gray-9;
+        width: calc(100%);
+        position: relative;
+    }
+}
+
+.#{$chatroom-prefix-cls}-dark{
+    background-color: $gray-1;
+    color: $gray-98;
+    .chatroom-member-line{
+        background: $gray-2;
+    }
+}

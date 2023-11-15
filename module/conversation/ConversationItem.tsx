@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { observer } from 'mobx-react-lite';
 import { AT_TYPE } from '../store/ConversationStore';
+import { eventHandler } from '../../eventHandler';
 import {
   getGroupMemberIndexByUserId,
   getGroupItemFromGroupsById,
@@ -72,7 +73,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const [showMore, setShowMore] = useState(false);
   const [active, setActive] = useState(isActive);
   const context = useContext(RootContext);
-  const { rootStore, onError } = context;
+  const { rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
 
   const cvsStore = rootStore.conversationStore;
 
@@ -80,6 +82,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     prefixCls,
     {
       [`${prefixCls}-selected`]: !!isActive,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
@@ -116,11 +119,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         deleteRoam: true,
       })
       .then(() => {
-        // console.log('delete success');
+        eventHandler.dispatchSuccess('deleteConversation');
       })
       .catch(err => {
-        // console.error('delete fail', err);
-        onError && onError?.(err);
+        eventHandler.dispatchError('deleteConversation', err);
       });
   };
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -132,13 +134,18 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         {moreAction.actions.map((item, index) => {
           if (item.content === 'DELETE') {
             return (
-              <li key={index} onClick={deleteCvs}>
+              <li
+                key={index}
+                onClick={deleteCvs}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
                 {t('deleteCvs')}
               </li>
             );
           }
           return (
             <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
               onClick={() => {
                 item.onClick?.();

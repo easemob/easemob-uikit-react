@@ -50,7 +50,7 @@ export function parseChannel(channelId: string): {
 
 export function getCvsIdFromMessage(message: AgoraChat.MessageBody | RecallMessage) {
   let conversationId = '';
-  if (message.chatType == 'groupChat') {
+  if (message.chatType == 'groupChat' || message.chatType == 'chatRoom') {
     conversationId = message.to;
   } else if (message.from == rootStore.client.user) {
     // self message
@@ -106,7 +106,7 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
   if (findIndex > -1) {
     subList.splice(findIndex, 1);
   }
-  if (subList.length > 0) {
+  if (subList.length > 0 && withPresence) {
     client.subscribePresence({ usernames: subList, expiry: 2592000 });
   }
 

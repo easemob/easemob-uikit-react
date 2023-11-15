@@ -19,7 +19,7 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
     
     &-title {
         margin: 0;
-        color: $modal-heading-color;
+        // color: $modal-heading-color;
         font-weight: 500;
         font-size: $modal-header-title-font-size;
         line-height: $modal-header-title-line-height;
@@ -75,7 +75,7 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
 
     &-header {
         padding: $modal-header-padding;
-        color: $text-color;
+        color: $gray-2;
         background: $modal-header-bg;
         border-bottom: $modal-header-border-width $modal-header-border-style
           $modal-header-border-color-split;
@@ -87,6 +87,7 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
         font-size: $font-size-base;
         line-height: $line-height-base;
         word-wrap: break-word;
+        color: $gray-2;
     }
 
     &-footer {
@@ -140,4 +141,21 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
         flex: 1;
       }
     }
+}
+
+.#{$dialog-prefix-cls}-content-dark{
+  background-color: $gray-1;
+  color: $gray-98;
+
+  .#{$dialog-prefix-cls}-header{
+    background-color: $gray-1;
+    color: $gray-98;
+    border-bottom: 1px solid $gray-2;
+  }
+  .#{$dialog-prefix-cls}-body{
+    color: $gray-98;
+  }
+  .#{$dialog-prefix-cls}-footer{
+    border-top: 1px solid $gray-2;
+  }
 }

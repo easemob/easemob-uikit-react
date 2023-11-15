@@ -65,12 +65,18 @@ import { useClient } from './hooks/useClient';
 import { useConversations } from './hooks/useConversation';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
 import { useConversationContext } from './hooks/useConversationContext';
+import { userChatroomContext } from './hooks/useChatroomContext';
 import { useChatContext } from './hooks/useChatContext';
 import { useAddressContext } from './hooks/useAddressContext';
 import { useThreadContext } from './hooks/useThreadContext';
 import { useSDK } from './hooks/useSDK';
 import Thread, { ThreadProps } from './thread';
 import UserProfile, { UserProfileProps } from './userProfile';
+
+import Chatroom from './chatroom';
+import { ChatroomProps } from './chatroom/Chatroom';
+import ChatroomMember from './chatroomMember';
+import ChatroomMessage from './chatroomMessage';
 
 export type {
   AudioMessageProps,
@@ -162,4 +168,8 @@ export {
   useChatContext,
   useAddressContext,
   useThreadContext,
+  userChatroomContext,
+  Chatroom,
+  ChatroomMember,
+  ChatroomMessage,
 };

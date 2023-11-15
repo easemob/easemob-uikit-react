@@ -18,7 +18,7 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
             .#{$recorder-prefix-cls}-iconBox{
                 width: 36px;
                 height: 36px;
-                background-color: transparent;
+                background-color: $gray-95;
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -73,6 +73,18 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
                 display: flex;
             }
         }
+    }
+
+    &-dark{
+        .#{$recorder-prefix-cls}-content{
+            background-color: $gray-1;
+            color: $gray-98;
+            &-left{
+                .#{$recorder-prefix-cls}-iconBox{
+                    background-color: $gray-2;
+                }
+            }
+        }   
     }
 }
 

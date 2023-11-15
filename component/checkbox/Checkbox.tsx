@@ -17,7 +17,7 @@ export interface CheckboxProps {
 
 const Checkbox = ({
   id,
-  checked = false,
+  checked,
   disabled = false,
   children,
   className,
@@ -46,8 +46,11 @@ const Checkbox = ({
           disabled={disabled}
           id={id}
           type="checkbox"
-          checked={isChecked}
+          checked={typeof checked != undefined ? checked : isChecked}
           onClick={() => {
+            if (typeof checked != undefined) {
+              return;
+            }
             if (!disabled) setIsCheck(!isChecked);
           }}
           onChange={handleChange}

@@ -60,8 +60,6 @@ const AudioMessage = (props: AudioMessageProps) => {
     },
     className,
   );
-  const context = useContext(RootContext);
-  const { onError } = context;
 
   const [sourceUrl, setUrl] = useState('');
   useEffect(() => {
@@ -183,19 +181,15 @@ const AudioMessage = (props: AudioMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(audioMessage);
-    rootStore.messageStore
-      .recallMessage(
-        {
-          chatType: audioMessage.chatType,
-          conversationId: conversationId,
-        },
-        // @ts-ignore
-        audioMessage.mid || audioMessage.id,
-        audioMessage.isChatThread,
-      )
-      ?.catch(err => {
-        onError?.(err);
-      });
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: audioMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      audioMessage.mid || audioMessage.id,
+      audioMessage.isChatThread,
+    );
   };
 
   let conversationId = getCvsIdFromMessage(audioMessage);

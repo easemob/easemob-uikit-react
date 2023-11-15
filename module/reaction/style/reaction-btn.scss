@@ -61,7 +61,10 @@ $status-prefix-cls: #{$cui-prefix}-reaction-btn;
             box-sizing: border-box;
             &:hover{
                 background-color: $gray-95;
-            } 
+            }
+        }
+        .cui-li-dark:hover{
+            background-color: $gray-2;
         }
 
         &-name{
@@ -70,6 +73,13 @@ $status-prefix-cls: #{$cui-prefix}-reaction-btn;
 
         &-close{
             cursor: pointer;
+        }
+    }
+
+    &-dark{
+        background-color: $gray-2;
+        &:hover{
+            background: $blue-2;
         }
     }
 }

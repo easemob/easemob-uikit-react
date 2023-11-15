@@ -76,16 +76,16 @@ const ChatApp = () => {
   console.log(11111, messages);
   const topConversation = () => {
     setCurrentConversation({
-      chatType: 'singleChat',
-      conversationId: 'zd2',
+      chatType: 'groupChat',
+      conversationId: '226377652568065',
       name: 'zd2',
       unreadCount: 0,
     });
     console.log(222, currentConversation);
     console.log('222', rootStore.conversationStore.currentCvs);
     topConversationInner({
-      chatType: 'singleChat',
-      conversationId: 'zd2',
+      chatType: 'groupChat',
+      conversationId: '226377652568065',
       lastMessage: {},
     });
   };
@@ -172,7 +172,6 @@ const ChatApp = () => {
       <div
         style={{
           width: '35%',
-          border: '1px solid transparent',
           background: '#fff',
         }}
       >
@@ -184,7 +183,7 @@ const ChatApp = () => {
                 actions: [{ content: 'DELETE' }],
               },
             }}
-            className="conversation"
+            // className="conversation"
             renderItem={csv => (
               <ConversationItem
                 onClick={handleClickCvs(csv)}
@@ -201,7 +200,6 @@ const ChatApp = () => {
       <div
         style={{
           width: '65%',
-          borderLeft: '1px solid transparent',
           overflow: 'hidden',
           display: 'flex',
         }}
@@ -222,18 +220,18 @@ const ChatApp = () => {
             }}
           ></Chat>
         </div>
-        {thread.showThreadPanel && (
-          <div
-            style={{
-              width: '50%',
-              borderLeft: '1px solid #eee',
-              overflow: 'hidden',
-              background: '#fff',
-            }}
-          >
-            <Thread></Thread>
-          </div>
-        )}
+        {thread.showThreadPanel ||&& (
+            <div
+              style={{
+                width: '50%',
+                borderLeft: '1px solid #eee',
+                overflow: 'hidden',
+                background: '#fff',
+              }}
+            >
+              <Thread></Thread>
+            </div>
+          )}
       </div>
       <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -264,14 +262,18 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       initConfig={{
         appKey: '41117440#383391',
-        userId: 'zd3',
+        userId: 'zd2',
         token:
-          '007eJxTYLgsX3Pdju/4lM27zhzf8tfX/87xlKOTHXPOLJ/et6D+/60YBYY0w5Rkc3OLpJSUZDMTs8QUizQjMwNLc7PkRKMUA0PTZOU29dSGQEaGXq1US0YGVgZGIATxVRgsLFOSk8yNDXTNjExSdA0NU5N1LdNMDHWNjS0sDFMTTZNSk4wA6PsqZA==',
+          '007eJxTYKhK5DrUfCJsxuXbqrIZcaEfP+WbnpW58YHRbbL8FSkNvxkKDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJ+yWCUxsCGRn2tZobMzKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAVa4mwg==',
         // appKey: 'easemob#easeim',
+      }}
+      theme={{
+        // primaryColor: '#33ffaa',
+        mode: 'dark',
       }}
       local={{
         fallbackLng: 'en',
-        lng: 'zh',
+        lng: 'en',
         // resources: {
         //   en: {
         //     translation: {
@@ -281,45 +283,40 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         //   },
         // },
       }}
-      features={{
-        conversationList: {
-          search: true,
-          item: {
-            moreAction: false,
-            deleteConversation: false,
-          },
-        },
-        chat: {
-          header: {
-            threadList: true,
-            moreAction: true,
-            clearMessage: true,
-            deleteConversation: false,
-            audioCall: false,
-          },
-          message: {
-            status: false,
-            reaction: false,
-            thread: true,
-            recall: true,
-            translate: false,
-            edit: false,
-          },
-          messageEditor: {
-            mention: false,
-            typing: false,
-            record: true,
-            emoji: false,
-            moreAction: true,
-            picture: true,
-          },
-        },
-      }}
-      theme={
-        {
-          // primaryColor: '#00CE76',
-        }
-      }
+      // features={{
+      //   conversationList: {
+      //     search: true,
+      //     item: {
+      //       moreAction: false,
+      //       deleteConversation: false,
+      //     },
+      //   },
+      //   chat: {
+      //     header: {
+      //       threadList: true,
+      //       moreAction: true,
+      //       clearMessage: true,
+      //       deleteConversation: false,
+      //       audioCall: false,
+      //     },
+      //     message: {
+      //       status: false,
+      //       reaction: false,
+      //       thread: true,
+      //       recall: true,
+      //       translate: false,
+      //       edit: false,
+      //     },
+      //     messageEditor: {
+      //       mention: false,
+      //       typing: false,
+      //       record: true,
+      //       emoji: true,
+      //       moreAction: true,
+      //       picture: true,
+      //     },
+      //   },
+      // }}
     >
       <App></App>
     </Provider>

@@ -1,0 +1,29 @@
+.drawer {
+    width: 300px;
+    height: 100%;
+    background-color: white;
+    position: fixed;
+    top: 0;
+    left: -300px;
+    transition: left 0.3s ease-in-out;
+  }
+  
+  .drawer.open {
+    left: 0;
+  }
+  
+  .drawer-bar {
+    width: 50px;
+    height: 100%;
+    background-color: #333;
+    position: absolute;
+    top: 0;
+    right: -50px;
+    cursor: pointer;
+  }
+  
+  .drawer-content {
+    padding: 16px;
+  }
+
+  

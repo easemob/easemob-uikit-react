@@ -27,4 +27,23 @@ $thread-prefix-cls: #{$cui-prefix}-thread-panel;
     &-content{
         border-top: 1px solid $gray-95;
     }
+
+    &-dark{
+        background-color: $gray-1;
+        color: $gray-98;
+
+        .#{$thread-prefix-cls}-content{
+            border-top: 1px solid $gray-2;
+        }
+
+        .#{$thread-prefix-cls}-header{
+            &-title{
+                color: $gray-98;
+                &-input>input{
+                    background-color: $gray-2;
+                    color: $gray-98;
+                }
+            }
+        }
+    }
 }

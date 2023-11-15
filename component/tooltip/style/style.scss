@@ -178,6 +178,14 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
 
 }
 
+.#{$tooltip-prefix-cls}-dark{
+    color: $gray-6;
+    .#{$tooltip-prefix-cls}-inner {
+        background-color: $gray-1;
+        border: 1px solid $gray-2
+    }
+}
+
 @function sqrt($num) {
     $temp:1;
     @while abs($temp - $num / $temp) > 1e-6 {

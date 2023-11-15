@@ -20,5 +20,5 @@
     //   "~": ["/"]
     // }
   },
-  "include": ["component", "module"]
+  "include": ["component", "module", "eventHandler"]
 }

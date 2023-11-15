@@ -41,7 +41,8 @@ let MoreAction = (props: MoreActionProps) => {
   const fileEl = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
   const context = useContext(RootContext);
-  const { onError, rootStore } = context;
+  const { rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
   const { client, messageStore } = rootStore;
   const iconNode = icon ? (
     icon
@@ -88,6 +89,7 @@ let MoreAction = (props: MoreActionProps) => {
         if (item.content == 'IMAGE') {
           return (
             <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               onClick={() => {
                 setMenuOpen(false);
                 sendImage();
@@ -100,6 +102,7 @@ let MoreAction = (props: MoreActionProps) => {
         } else if (item.content == 'FILE') {
           return (
             <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               onClick={() => {
                 setMenuOpen(false);
                 sendFile();
@@ -112,6 +115,7 @@ let MoreAction = (props: MoreActionProps) => {
         }
         return (
           <li
+            className={themeMode == 'dark' ? 'cui-li-dark' : ''}
             onClick={() => {
               setMenuOpen(false);
               item.onClick && item?.onClick();
@@ -157,24 +161,10 @@ let MoreAction = (props: MoreActionProps) => {
           imageMessage.chatType = cvs.chatType;
         }
 
-        messageStore
-          .sendMessage(imageMessage)
-          .then(() => {
-            // console.log('send success');
-          })
-          .catch(err => {
-            onError && onError(err);
-          });
+        messageStore.sendMessage(imageMessage);
       });
     } else {
-      messageStore
-        .sendMessage(imageMessage)
-        .then(() => {
-          // console.log('send success');
-        })
-        .catch(err => {
-          onError && onError(err);
-        });
+      messageStore.sendMessage(imageMessage);
     }
     imageEl!.current!.value = '';
   };
@@ -208,24 +198,10 @@ let MoreAction = (props: MoreActionProps) => {
           fileMessage.chatType = cvs.chatType;
         }
 
-        messageStore
-          .sendMessage(fileMessage)
-          .then(() => {
-            // console.log('send success');
-          })
-          .catch(err => {
-            onError && onError(err);
-          });
+        messageStore.sendMessage(fileMessage);
       });
     } else {
-      messageStore
-        .sendMessage(fileMessage)
-        .then(() => {
-          // console.log('send success');
-        })
-        .catch(err => {
-          onError && onError(err);
-        });
+      messageStore.sendMessage(fileMessage);
     }
     fileEl!.current!.value = '';
   };

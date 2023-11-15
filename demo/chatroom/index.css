@@ -1,0 +1,19 @@
+.wrapper {
+    position: relative;
+  }
+  
+  .float-div {
+    float: left; /* 或者设置为right */
+    width: 100px;
+    height: 100px;
+    background-color: #f00;
+    shape-outside: circle(50%);
+    shape-margin: 20px;
+  }
+  .container-1{
+    display: flex;
+    position: absolute;
+    /* width: 40%; */
+    height: 90%;
+    margin-left: 15%;
+}

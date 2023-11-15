@@ -14,7 +14,8 @@ import Popover, { PopoverProps } from './popover';
 import Switch, { SwitchProps } from './switch';
 import Tooltip from 'rc-tooltip';
 import ScrollList, { ScrollListProps } from './scrollList';
-
+import Broadcast, { BroadcastProps } from './broadcast';
+import Collapse, { CollapseProps } from './collapse';
 export type {
   AvatarProps,
   ButtonProps,
@@ -32,6 +33,8 @@ export type {
   PopoverProps,
   SwitchProps,
   ScrollListProps,
+  BroadcastProps,
+  CollapseProps,
 };
 
 export {
@@ -48,4 +51,6 @@ export {
   Switch,
   Tooltip,
   ScrollList,
+  Broadcast,
+  Collapse,
 };

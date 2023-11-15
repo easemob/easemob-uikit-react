@@ -6,6 +6,8 @@ import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji } from '../utils';
 import { RootStore } from './index';
 import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
+import { TextMessageType } from 'chatuim2/types/module/types/messageType';
+import { eventHandler } from '../../eventHandler';
 export interface RecallMessage {
   type: 'recall';
   [key: string]: any;
@@ -14,7 +16,9 @@ export interface RecallMessage {
 export interface Message {
   singleChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
   groupChat: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
+  chatRoom: { [key: string]: (AgoraChat.MessageBody | RecallMessage)[] };
   byId: { [key: string]: AgoraChat.MessageBody | RecallMessage };
+  broadcast: AgoraChat.MessageBody[];
 }
 
 export interface SelectedMessage {
@@ -42,28 +46,36 @@ class MessageStore {
   currentCVS: CurrentConversation;
   repliedMessage: AgoraChat.MessageBody | null;
   typing: Typing;
+  holding: boolean;
+  unreadMessageCount: number;
   constructor(rootStore: RootStore) {
     this.rootStore = rootStore;
 
     this.message = {
       singleChat: {},
       groupChat: {},
+      chatRoom: {},
       byId: {},
+      broadcast: [],
     };
 
     this.selectedMessage = {
       singleChat: {},
       groupChat: {},
+      chatRoom: {},
     };
     this.currentCVS = {} as CurrentConversation;
     this.repliedMessage = null;
     this.typing = {};
+    this.holding = false;
+    this.unreadMessageCount = 0;
     makeObservable(this, {
       currentCVS: observable,
       message: observable,
       selectedMessage: observable,
       repliedMessage: observable,
       typing: observable,
+      unreadMessageCount: observable,
       setCurrentCVS: action,
       currentCvsMsgs: computed,
       sendMessage: action,
@@ -84,6 +96,9 @@ class MessageStore {
       sendTypingCmd: action,
       clear: action,
       deleteMessage: action,
+      setHoldingStatus: action,
+      setUnreadMessageCount: action,
+      shiftBroadcastMessage: action,
     });
 
     autorun(() => {
@@ -173,25 +188,43 @@ class MessageStore {
         parentId: currentThread.info?.parentId || currentThread.originalMessage.to,
       };
     }
+    //聊天室消息，在消息的ext里添加自己的信息
+    if (chatType === 'chatRoom') {
+      const myInfo = this.rootStore.addressStore.appUsersInfo[this.rootStore.client.user] || {};
+      (message as TextMessageType).ext = {
+        ...(message as TextMessageType).ext,
+        chatroom_uikit_userInfo: {
+          userId: myInfo?.userId,
+          nickName: myInfo?.nickname,
+          avatarURL: myInfo?.avatarurl,
+          gender: myInfo?.gender,
+          identify: myInfo?.ext?.identify,
+        },
+      };
+      console.log('发的聊天室消息', message, this.rootStore.addressStore.appUsersInfo);
+    }
+
+    // @ts-ignore
     if (message.type != 'read' && message.type != 'delivery' && message.type != 'channel') {
       if (!this.message.byId[message.id]) {
         this.message.byId[message.id] = message;
       }
     }
-
-    // @ts-ignore
-    if (!this.message[chatType][to]) {
+    console.log('---chatType', chatType);
+    if (chatType !== 'chatRoom') {
       // @ts-ignore
-      this.message[chatType][to] = [this.message.byId[message.id]];
-    } else {
-      // 处理重发的消息，重发的消息不push
-      // @ts-ignore
-      if (this.message.byId[message.id].status !== 'failed') {
+      if (!this.message[chatType][to]) {
         // @ts-ignore
-        this.message[chatType][to].push(this.message.byId[message.id]);
+        this.message[chatType][to] = [this.message.byId[message.id]];
+      } else {
+        // 处理重发的消息，重发的消息不push
+        // @ts-ignore
+        if (this.message.byId[message.id].status !== 'failed') {
+          // @ts-ignore
+          this.message[chatType][to].push(this.message.byId[message.id]);
+        }
       }
     }
-
     if (this.repliedMessage != null) {
       this.setRepliedMessage(null);
     }
@@ -199,6 +232,20 @@ class MessageStore {
     return this.rootStore.client
       .send(message as unknown as AgoraChat.MessageBody)
       .then((data: { serverMsgId: string }) => {
+        if (chatType == 'chatRoom') {
+          // @ts-ignore
+          if (!this.message[chatType][to]) {
+            // @ts-ignore
+            this.message[chatType][to] = [this.message.byId[message.id]];
+          } else {
+            // 处理重发的消息，重发的消息不push
+            // @ts-ignore
+            if (this.message.byId[message.id].status !== 'failed') {
+              // @ts-ignore
+              this.message[chatType][to].push(this.message.byId[message.id]);
+            }
+          }
+        }
         // message.status = 'sent';
         const msg = this.message.byId[message.id];
         // @ts-ignore
@@ -253,10 +300,12 @@ class MessageStore {
         }
         cvs.lastMessage = message as unknown as Conversation['lastMessage'];
         this.rootStore.conversationStore.modifyConversation({ ...cvs });
+        eventHandler.dispatchSuccess('sendMessage');
       })
-      .catch((error: ErrorEvent) => {
+      .catch((error: AgoraChat.ErrorEvent) => {
         console.warn('send fail', error);
         this.updateMessageStatus(message.id, 'failed');
+        eventHandler.dispatchError('sendMessage', error);
         throw error;
       });
   }
@@ -264,7 +313,12 @@ class MessageStore {
   receiveMessage(message: AgoraChat.MessageBody) {
     const curCvs = this.rootStore.conversationStore.currentCvs;
     //@ts-ignore
-    if (curCvs && curCvs.chatType === message.chatType && curCvs.conversationId === message.from) {
+    if (
+      curCvs &&
+      curCvs.chatType === message.chatType &&
+      curCvs.conversationId === message.from &&
+      message.chatType != 'chatRoom'
+    ) {
       this.sendChannelAck(curCvs);
     }
     this.message.byId[message.id] = message;
@@ -276,7 +330,12 @@ class MessageStore {
       message.bySelf = true;
     }
     const conversationId = getCvsIdFromMessage(message);
-
+    console.log('收到消息', message);
+    // @ts-ignore
+    if (message.broadcast) {
+      this.message.broadcast.push(message);
+      return;
+    }
     // @ts-ignore
     if (!this.message[message.chatType][conversationId]) {
       // @ts-ignore
@@ -286,8 +345,32 @@ class MessageStore {
       this.message[message.chatType][conversationId].push(message);
     }
 
+    if (this.holding) {
+      this.unreadMessageCount += 1;
+    }
+
     // @ts-ignore
     if (message.isChatThread || message.chatThread) {
+      return;
+    }
+    // @ts-ignore
+    if (message.chatType == 'chatRoom') {
+      // @ts-ignore
+      const ext = message.ext || {};
+      const senderInfo =
+        typeof ext.chatroom_uikit_userInfo == 'string'
+          ? JSON.parse(ext.chatroom_uikit_userInfo)
+          : ext.chatroom_uikit_userInfo || {};
+      const appUsersInfo = this.rootStore.addressStore.appUsersInfo;
+      this.rootStore.addressStore.setAppUserInfo({
+        ...appUsersInfo,
+        [senderInfo.userId]: {
+          nickname: senderInfo.nickName,
+          userId: senderInfo.userId,
+          avatarurl: senderInfo.avatarURL,
+          gender: senderInfo.gender,
+        },
+      });
       return;
     }
 
@@ -369,7 +452,9 @@ class MessageStore {
       // @ts-ignore
       this.message.byId[msgId].status = status;
       // @ts-ignore
-      const i = this.message[msg.chatType][conversationId].indexOf(this.message.byId[msg.id]);
+      const i = this.message[msg.chatType][conversationId]?.indexOf(this.message.byId[msg.id]); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
+      console.log('111 --', i);
+      if (typeof i === 'undefined' || i == -1) return;
       // @ts-ignore
       this.message[msg.chatType][conversationId].splice(i, 1, msg);
       // this.message[chatType][to][i] = msg;
@@ -465,8 +550,16 @@ class MessageStore {
       cvs.conversationId,
     ) as unknown as Conversation;
 
+    if (!conversation && cvs.chatType == 'groupChat') {
+      conversation = this.rootStore.conversationStore.getConversation(
+        // @ts-ignore
+        'chatRoom',
+        cvs.conversationId,
+      ) as unknown as Conversation;
+    }
+
     // the others recall the message
-    const messages = getMessages(cvs);
+    const messages = getMessages(conversation);
     if (!messages) return;
     const msgIndex = getMessageIndex(messages, messageId);
     if (messages[msgIndex].from !== this.rootStore.client.user) {
@@ -505,7 +598,11 @@ class MessageStore {
           // @ts-ignore
           conversation.lastMessage = messages[msgIndex];
           this.rootStore.conversationStore.modifyConversation(conversation);
+          eventHandler.dispatchSuccess('recallMessage');
         }
+      })
+      .catch(err => {
+        eventHandler.dispatchError('recallMessage', err);
       });
   }
 
@@ -720,6 +817,10 @@ class MessageStore {
       })
       .then(res => {
         this.modifyLocalMessage(messageId, res.message);
+        eventHandler.dispatchSuccess('modifyMessage');
+      })
+      .catch(err => {
+        eventHandler.dispatchError('modifyMessage', err);
       });
   }
 
@@ -751,6 +852,18 @@ class MessageStore {
     this.rootStore.client.send(msg).then(() => {
       // console.log('send cmd success');
     });
+  }
+
+  setHoldingStatus(status: boolean) {
+    this.holding = status;
+  }
+
+  setUnreadMessageCount(count: number) {
+    this.unreadMessageCount = count;
+  }
+
+  shiftBroadcastMessage() {
+    this.message.broadcast.shift();
   }
 
   clear() {

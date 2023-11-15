@@ -1,6 +1,6 @@
 // 一个展示面板组件， 用于展示一个帖子的内容， 有heder和body两个部分, 可以控制显示的位置，anchorEl 为锚点元素， 用于控制显示的位置  anchorOrigin 为锚点元素的位置， transformOrigin 为展示面板的位置
 
-import React, { useEffect, useState, useRef, ReactElement } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
@@ -10,6 +10,7 @@ import Button from '../../component/button';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Header from '../header';
 import Input from '../../component/input';
+import { RootContext } from '../store/rootContext';
 // export interface HeaderProps {
 //   className?: string;
 //   prefix?: string;
@@ -55,10 +56,18 @@ export interface ThreadModalProps {
 }
 const ThreadModal = (props: ThreadModalProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
-  const { anchorEl, prefix, open, style, onSearch, onClear, headerContent } = props;
-
+  const { anchorEl, prefix, open, style, onSearch, onClear, headerContent, className } = props;
+  const context = useContext(RootContext);
+  const { theme } = context;
+  const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('thread-panel', prefix);
-  const classString = classNames(prefixCls);
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
 
   const [position, setPosition] = useState({});
   // 用来更新组件的位置

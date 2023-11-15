@@ -29,11 +29,15 @@ import {
   useHistoryMessages,
   useSDK,
   useConversationContext,
+  userChatroomContext,
   useChatContext,
   useAddressContext,
   useThreadContext,
   Thread,
   UserProfile,
+  Chatroom,
+  ChatroomMember,
+  ChatroomMessage,
 } from './module/index';
 
 import {
@@ -50,7 +54,10 @@ import {
   Switch,
   Tooltip,
   ScrollList,
+  Collapse,
 } from './component/entry';
+
+import { eventHandler, EventHandlerData, EventName } from './eventHandler';
 
 export {
   AudioMessage,
@@ -83,6 +90,7 @@ export {
   useHistoryMessages,
   useSDK,
   useConversationContext,
+  userChatroomContext,
   useChatContext,
   useAddressContext,
   useThreadContext,
@@ -99,8 +107,13 @@ export {
   Switch,
   Tooltip,
   ScrollList,
+  Collapse,
   Thread,
   UserProfile,
+  Chatroom,
+  ChatroomMember,
+  ChatroomMessage,
+  eventHandler,
 };
 
 export type {
@@ -120,6 +133,7 @@ export type {
   PopoverProps,
   SwitchProps,
   ScrollListProps,
+  CollapseProps,
 } from './component/entry';
 
 export type {
@@ -175,3 +189,5 @@ export type {
   ThreadProps,
   UserProfileProps,
 } from './module/index';
+
+export type { EventHandlerData, EventName };

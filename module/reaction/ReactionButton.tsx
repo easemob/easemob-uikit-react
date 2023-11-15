@@ -44,7 +44,9 @@ const ReactionButton = (props: ReactionButtonProps) => {
     emojiConfig,
   } = props;
   const prefixCls = getPrefixCls('reaction-btn', customizePrefixCls);
-  const rootStore = useContext(RootContext).rootStore;
+  const context = useContext(RootContext);
+  const { rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
   const myUserId = rootStore.client.user;
   const { appUsersInfo } = rootStore.addressStore;
   const path = emoji.map[reaction as keyof typeof emoji.map];
@@ -53,6 +55,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
     prefixCls,
     {
       [`${prefixCls}-checked`]: isAddedBySelf,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
@@ -74,7 +77,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
       <ul className={`${prefixCls}-userList`}>
         {userList.map(userId => {
           return (
-            <li key={userId}>
+            <li key={userId} className={themeMode == 'dark' ? 'cui-li-dark' : ''}>
               <Avatar src={appUsersInfo[userId]?.avatarurl} size={24}>
                 {appUsersInfo[userId]?.nickname || userId}
               </Avatar>

@@ -28,6 +28,7 @@ import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
 // import rootStore from '../store/index';
 import { getMsgSenderNickname } from '../utils/index';
 import { RootContext } from '../store/rootContext';
+import { eventHandler } from '../../eventHandler';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
@@ -45,7 +46,8 @@ export interface ThreadProps {
 
 const Thread = (props: ThreadProps) => {
   const context = useContext(RootContext);
-  const { rootStore, features, onError } = context;
+  const { rootStore, features, theme } = context;
+  const themeMode = theme?.mode || 'light';
   const { prefix, className, messageListProps, messageEditorProps, style = {} } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('thread', prefix);
@@ -139,7 +141,13 @@ const Thread = (props: ThreadProps) => {
     return content;
   };
 
-  const classString = classNames(prefixCls, className);
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
 
   const [editorDisable, setEditorDisable] = useState(false);
   const [threadName, setThreadName] = useState(t('aThread'));
@@ -230,13 +238,14 @@ const Thread = (props: ThreadProps) => {
               creating: false,
             });
             // onOpenThreadModal && onOpenThreadModal({ id: threadId })
+            eventHandler.dispatchSuccess('createChatThread');
             resolve({
               chatType: 'groupChat',
               conversationId: res.data?.chatThreadId || '',
             });
           })
           .catch(err => {
-            onError && onError?.(err);
+            eventHandler.dispatchError('createChatThread', err);
             reject(err);
           });
       });
@@ -315,10 +324,10 @@ const Thread = (props: ThreadProps) => {
   const handleDisbandThread = () => {
     setModalData({
       open: true,
-      title: 'Disband Thread',
-      content: 'Are you sure you want to disband this thread?',
-      okText: 'Disband',
-      cancelText: 'Cancel',
+      title: t('disbandThread'),
+      content: t('are you sure you want to disband this thread'),
+      okText: t('disband'),
+      cancelText: t('cancel'),
       onOk: () => {
         rootStore.client
           .destroyChatThread({
@@ -330,9 +339,10 @@ const Thread = (props: ThreadProps) => {
               open: false,
             });
             handleClickClose();
+            eventHandler.dispatchSuccess('destroyChatThread');
           })
           .catch(err => {
-            onError && onError?.(err);
+            eventHandler.dispatchError('destroyChatThread', err);
             console.error(err);
           });
       },
@@ -343,10 +353,10 @@ const Thread = (props: ThreadProps) => {
   const handleLeaveThread = () => {
     setModalData({
       open: true,
-      title: 'Leave Thread',
-      content: 'Are you sure you want to leave this thread?',
-      okText: 'Leave',
-      cancelText: 'Cancel',
+      title: `${t('leave')} ${t('thread')}`,
+      content: t('Are you sure you want to leave this thread'),
+      okText: t('leave'),
+      cancelText: t('cancel'),
       onOk: () => {
         rootStore.client
           .leaveChatThread({
@@ -358,10 +368,10 @@ const Thread = (props: ThreadProps) => {
               open: false,
             });
             handleClickClose();
+            eventHandler.dispatchSuccess('leaveChatThread');
           })
           .catch(err => {
-            onError && onError?.(err);
-            console.error(err);
+            eventHandler.dispatchError('leaveChatThread', err);
           });
       },
     });
@@ -374,7 +384,7 @@ const Thread = (props: ThreadProps) => {
   const handleEditThreadName = () => {
     setModalData({
       open: true,
-      title: 'Edit Thread Name',
+      title: t('editThreadName'),
       content: (
         <Input
           value={threadStore.currentThread.info?.name}
@@ -383,8 +393,8 @@ const Thread = (props: ThreadProps) => {
           }}
         ></Input>
       ),
-      okText: 'Save',
-      cancelText: 'Cancel',
+      okText: t('save'),
+      cancelText: t('cancel'),
       onOk: () => {
         rootStore.client
           .changeChatThreadName({
@@ -405,7 +415,7 @@ const Thread = (props: ThreadProps) => {
   };
 
   // thread modal title name
-  const [modalName, setModalName] = useState<string>('Thread Members');
+  const [modalName, setModalName] = useState<string>(`${t('thread')} ${t('members')}`);
 
   // 获取thread members
   const handleGetThreadMembers = () => {
@@ -420,7 +430,7 @@ const Thread = (props: ThreadProps) => {
           ...modalData,
           open: false,
         });
-        setModalName(`Thread Members(${data.length})`);
+        setModalName(`${t('thread')} ${t('members')}(${data.length})`);
       });
   };
 
@@ -428,27 +438,27 @@ const Thread = (props: ThreadProps) => {
     visible: true,
     actions: [
       {
-        content: 'Thread Members',
+        content: `${t('thread')} ${t('members')}`,
         onClick: () => {
           handleGetThreadMembers();
         },
       },
       {
         visible: role != 'member',
-        content: 'Edit Thread',
+        content: `${t('modify')} ${t('thread')}`,
         onClick: () => {
           handleEditThreadName();
         },
       },
       {
-        content: 'Leave Thread',
+        content: `${t('leave')} ${t('thread')}`,
         onClick: () => {
           handleLeaveThread();
         },
       },
       {
         visible: role == 'admin' || role == 'owner',
-        content: 'Disband Thread',
+        content: `${t('disband')} ${t('thread')}`,
         onClick: () => {
           handleDisbandThread();
         },
@@ -460,7 +470,7 @@ const Thread = (props: ThreadProps) => {
 
   const actions: any[] = [
     {
-      content: 'Remove',
+      content: t('remove'),
       onClick: (item: string) => {
         threadStore.removeChatThreadMember(
           threadStore.currentThread.info?.parentId || '',

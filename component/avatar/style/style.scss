@@ -115,12 +115,14 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
 
     &-square {
         border-radius: $avatar-border-radius;
-        &-image{
+        .#{$avatar-prefix-cls}-image{
             border-radius: $avatar-border-radius;
         }
     }
    
-
+    &-dark{
+        
+    }
 }
 
 .#{$presence-tag-cls}-wrap {

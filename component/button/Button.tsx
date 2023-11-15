@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import './style/style.scss';
 import { tuple } from '../_utils/type';
 import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
+import { RootContext } from '../../module/store/rootContext';
 
 const buttonShapes = tuple('circle', 'round', 'default');
 export type ButtonShape = typeof buttonShapes[number];
@@ -36,6 +37,9 @@ export const Button = ({
   style = {},
   onClick,
 }: ButtonProps) => {
+  const { theme } = useContext(RootContext);
+  const themeMode = theme?.mode;
+
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('button');
   const classes = classNames(
@@ -44,6 +48,7 @@ export const Button = ({
       [`${prefixCls}-${type}`]: type,
       [`${prefixCls}-${size}`]: size,
       [`${prefixCls}-${shape}`]: shape,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

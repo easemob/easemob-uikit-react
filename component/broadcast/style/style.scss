@@ -1,0 +1,8 @@
+@import '~/common/style/index.scss';
+$broadcast-prefix-cls: #{$cui-prefix}-broadcast;
+.#{$broadcast-prefix-cls}{
+    display: flex;
+    background-color: $blue-5;
+    color: $gray-98;
+    padding: 0 8px;
+}

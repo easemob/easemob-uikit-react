@@ -25,4 +25,8 @@ $btn-prefix-cls: #{$cui-prefix}-button;
     &-circle {
         @include btn-circle($btn-prefix-cls);
     }
+
+    &-dark{
+        @include btn-dark();
+    }
 }

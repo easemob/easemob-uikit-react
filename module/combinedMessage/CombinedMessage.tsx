@@ -57,8 +57,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     type = bySelf ? 'primary' : 'secondly';
   }
   const { t } = useTranslation();
-  const context = useContext(RootContext);
-  const { onError } = context;
   const handleReplyMsg = () => {
     // TODO: reply message add combine type
     rootStore.messageStore.setRepliedMessage(combinedMessage);
@@ -140,19 +138,15 @@ const CombinedMessage = (props: CombinedMessageProps) => {
 
   const handleRecallMessage = () => {
     let conversationId = getCvsIdFromMessage(combinedMessage);
-    rootStore.messageStore
-      .recallMessage(
-        {
-          chatType: combinedMessage.chatType,
-          conversationId: conversationId,
-        },
-        // @ts-ignore
-        combinedMessage.mid || combinedMessage.id,
-        combinedMessage.isChatThread,
-      )
-      ?.catch(err => {
-        onError?.(err);
-      });
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: combinedMessage.chatType,
+        conversationId: conversationId,
+      },
+      // @ts-ignore
+      combinedMessage.mid || combinedMessage.id,
+      combinedMessage.isChatThread,
+    );
   };
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-combine', customizePrefixCls);

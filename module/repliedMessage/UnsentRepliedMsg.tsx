@@ -1,11 +1,11 @@
-import React, { ReactElement, ReactNode } from 'react';
+import React, { ReactElement, ReactNode, useContext } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import Icon from '../../component/icon';
 import './style/style.scss';
-import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
+import { RootContext } from '../store/rootContext';
 export interface UnsentRepliedMsgProps {
   prefixCls?: string;
   className?: string;
@@ -14,6 +14,9 @@ export interface UnsentRepliedMsgProps {
 
 const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
+  const context = useContext(RootContext);
+  const { rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
   const { prefixCls: customizePrefixCls, className, type } = props;
   const prefixCls = getPrefixCls('message-reply', customizePrefixCls);
   const { t } = useTranslation();
@@ -21,6 +24,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
     prefixCls,
     {
       [`${prefixCls}-${type}`]: type == 'summary',
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

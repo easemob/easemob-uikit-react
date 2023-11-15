@@ -147,6 +147,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         margin: 0 8px;
 
         &-action {
+            fill: $gray-6;
             &:hover {
                 fill: $blue-5;
                 cursor: pointer;
@@ -385,6 +386,9 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     li:hover{
         /* color_neutral/95 */
         background-color: $gray-95;
+    }
+    .cui-li-dark:hover{
+        background: $gray-2;
     }
 }
 

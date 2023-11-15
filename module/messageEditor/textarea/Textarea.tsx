@@ -44,7 +44,7 @@ export interface ForwardRefProps {
 
 let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const {
-    placeholder = 'Say something',
+    placeholder,
     hasSendButton,
     sendButtonActiveColor = 'var(--cui-primary-color)',
     enableEnterSend = true,
@@ -62,7 +62,10 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('textarea', customizePrefixCls);
   const context = useContext(RootContext);
-  const { onError, rootStore } = context;
+  const { rootStore, theme } = context;
+
+  const themeMode = theme?.mode || 'light';
+
   const { client, messageStore, conversationStore } = rootStore;
   let { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);
@@ -72,17 +75,21 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     x: 0,
     y: 0,
   });
-
+  const [usedCvs, setUsedCvs] = useState<CurrentConversation>(currentCVS);
   // if (conversation && conversation.conversationId) {
   //   currentCVS = conversation;
   // }
   useEffect(() => {
-    if (conversation) {
-      currentCVS = conversation;
+    console.log('收到的会话', conversation);
+    if (currentCVS?.conversationId) {
+      setUsedCvs(currentCVS);
     }
-  }, [conversation?.conversationId]);
+    if (conversation?.conversationId) {
+      setUsedCvs(conversation);
+    }
+  }, [conversation?.conversationId, currentCVS]);
 
-  const canAtUser = enabledMention && currentCVS.chatType === 'groupChat';
+  const canAtUser = enabledMention && usedCvs.chatType === 'groupChat';
 
   const handleKeyUp = useCallback(() => {
     if (!canAtUser) return;
@@ -125,6 +132,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     prefixCls,
     {
       [`${prefixCls}-hasBtn`]: !!hasSendButton,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
@@ -135,9 +143,9 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     const str = convertToMessage(value).trim();
     setTextValue(str);
 
-    if (currentCVS.chatType == 'singleChat' && !isTyping && enabledTyping) {
+    if (usedCvs.chatType == 'singleChat' && !isTyping && enabledTyping) {
       setIsTyping(true);
-      messageStore.sendTypingCmd(currentCVS);
+      messageStore.sendTypingCmd(usedCvs);
       setTimeout(() => {
         setIsTyping(false);
       }, 10000);
@@ -145,25 +153,21 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   };
 
   const _sendMessage = (message: AgoraChat.MessageBody) => {
-    messageStore
-      .sendMessage(message)
-      .then(() => {
-        onSendMessage && onSendMessage(message);
-      })
-      .catch(err => {
-        onError && onError?.(err);
-      });
+    messageStore.sendMessage(message).then(() => {
+      onSendMessage && onSendMessage(message);
+    });
     divRef.current!.innerHTML = '';
 
     setTextValue('');
   };
 
   const sendMessage = () => {
+    console.log('发消息', usedCvs);
     if (!textValue) {
       console.warn('No text message');
       return;
     }
-    if (!currentCVS.conversationId) {
+    if (!usedCvs.conversationId) {
       console.warn('No specified conversation');
       return;
     }
@@ -177,8 +181,8 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     if (atUserIds.includes(AT_ALL)) isAtAll = true;
 
     const message = AC.message.create({
-      to: currentCVS.conversationId,
-      chatType: currentCVS.chatType,
+      to: usedCvs.conversationId,
+      chatType: usedCvs.chatType,
       type: 'txt',
       msg: textValue,
       isChatThread,
@@ -260,7 +264,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   return (
     <div className={classString} style={{ ...style }}>
       <div
-        placeholder={placeholder}
+        placeholder={placeholder || (t('say something') as string)}
         ref={divRef}
         className={`${prefixCls}-input`}
         contentEditable="true"

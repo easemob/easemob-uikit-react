@@ -7,17 +7,25 @@
     @return hsla($hue, $saturation, $lightness, $alpha);
 }
 
-// :root {
-//     --cui-primary-color: hsla(203, 100%, 60%, 1);
-//     --cui-primary-color7: hsla(203, 100%, 70%, 1);
-//     --cui-primary-color8: hsla(203, 100%, 80%, 1);
-//     --cui-primary-color9: hsla(203, 100%, 90%, 1);
-//     --cui-primary-color95: hsla(203, 100%, 95%, 1);
-//     --cui-secondary-color: hsla(155, 100%, 60%, 1);
-//     --cui-error-color: hsla(350, 100%, 60%, 1);
-//     --cui-neutral-color: hsla(203, 8%, 60%, 1);
-//     --cui-neutral-special-color: hsla(220, 36%, 60%, 1);
-// }
+:root {
+    
+    --cui-primary-color10: hsla(203, 100%, 10%, 1);
+    --cui-primary-color1: hsla(203, 100%, 10%, 1);
+    --cui-primary-color2: hsla(203, 100%, 20%, 1);
+    --cui-primary-color3: hsla(203, 100%, 30%, 1);
+    --cui-primary-color4: hsla(203, 100%, 40%, 1);
+    --cui-primary-color5: hsla(203, 100%, 50%, 1);
+    --cui-primary-color6: hsla(203, 100%, 60%, 1);
+    --cui-primary-color: hsla(203, 100%, 60%, 1);
+    --cui-primary-color7: hsla(203, 100%, 70%, 1);
+    --cui-primary-color8: hsla(203, 100%, 80%, 1);
+    --cui-primary-color9: hsla(203, 100%, 90%, 1);
+    --cui-primary-color95: hsla(203, 100%, 95%, 1);
+    --cui-secondary-color: hsla(155, 100%, 60%, 1);
+    --cui-error-color: hsla(350, 100%, 60%, 1);
+    --cui-neutral-color: hsla(203, 8%, 60%, 1);
+    --cui-neutral-special-color: hsla(220, 36%, 60%, 1);
+}
 
 $cui-primary-color: hsla(203, 100%, 60%, 1);
 $cui-secondary-color: hsla(155, 100%, 60%, 1);

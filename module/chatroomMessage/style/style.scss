@@ -1,0 +1,137 @@
+@import '~/common/style/index.scss';
+$chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
+.#{$chatroom-prefix-cls}{
+    display: flex;
+    flex-direction: row;
+    margin: 4px 0;
+}
+.#{$chatroom-prefix-cls}-container{
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px; 
+    // color: $gray-1;
+    word-break: break-word;
+    flex: 1;
+    max-width: calc(100% - 30px);
+    // position: relative;
+}
+
+.#{$chatroom-prefix-cls}-header{
+    display: flex;
+    align-items: center;
+    width: fit-content;
+    height: fit-content;
+    float: left;
+    gap: 4px;
+
+    float: left;
+    align-items: center;
+    margin-right: 4px;
+
+    &-label{
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        color: $green-4;
+    }
+
+    &-nick{
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        color: $blue-5;
+    }
+}
+
+.#{$chatroom-prefix-cls}-gift{
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 20px;
+    // color: $gray-1;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    &-img{
+        width: 20px;
+    }
+    &-number{
+        font-size: 14px;
+        font-style: italic;
+        font-weight: 700;
+    }
+}
+
+.#{$chatroom-prefix-cls}-text-box{
+    
+    padding-right: 30px;
+    display: block;
+    text-align: left;
+    // flex: 1;
+    // position: relative;
+        // display: flex;
+        // justify-content: space-between;
+    // &:hover{
+    //     &>div{
+    //         display: block!important;
+    //     }
+    // }
+    // &>div{
+    //     width: 20px;
+    //     position: absolute;
+    //     right: 0;
+    //     top: 0;
+    //     cursor: pointer;
+    // }
+}
+
+.#{$chatroom-prefix-cls}-notice-box{
+    padding-right: 30px;
+    display: block;
+    color: $green-4;
+    font-weight: 500;
+    text-align: left;
+}
+.#{$chatroom-prefix-cls}-body-action{
+    // position: relative;
+    // right: 0;
+    // top: 0;
+    // display: inline-block;
+}
+
+.#{$cui-prefix}-moreAction{
+    padding: 0;
+    margin: 0;
+    display: grid;
+    li{
+        list-style: none;
+        height: 36px;
+        border-radius: 8px;
+        padding: 0 $padding-xs;
+        // line-height: 36px;
+        cursor: pointer;
+        display: flex;
+        justify-content: left;
+        align-items: center;
+
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 20px;
+
+        >div{
+            margin-right: 8px;
+        }
+    }
+    li:hover{
+        /* color_neutral/95 */
+        background-color: $gray-95;
+    }
+}
+
+.#{$cui-prefix}-moreAction-dark{
+    li:hover{
+        background: $gray-2;
+    }
+}

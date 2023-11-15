@@ -1,4 +1,4 @@
-import React, { ReactNode, useState, useRef, useEffect } from 'react';
+import React, { ReactNode, useState, useRef, useEffect, useContext } from 'react';
 import classNames from 'classnames';
 import Emoji from './emoji';
 import Recorder from './recorder';
@@ -12,10 +12,13 @@ import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
 import { AgoraChat } from 'agora-chat';
 import { CurrentConversation } from '../store/ConversationStore';
+import { GiftKeyboard } from './gift/GiftKeyboard';
+import { RootContext } from '../store/rootContext';
 export type Actions = {
   name: string;
   visible: boolean;
   icon?: ReactNode;
+  onClick?: () => void;
 }[];
 
 export interface MessageEditorProps {
@@ -93,6 +96,9 @@ const MessageEditor = (props: MessageEditorProps) => {
   const [isShowSelect, setIsShowSelect] = useState(false);
   const [editorNode, setEditorNode] = useState<null | React.ReactFragment>(null);
   const textareaRef = useRef(null);
+  const context = useContext(RootContext);
+  const { rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
 
   const insertCustomHtml = (t: string, e: keyof typeof emoji.map) => {
     if (!textareaRef.current) return;
@@ -218,6 +224,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     prefixCls,
     {
       [`${prefixCls}-disabled`]: disabled,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
@@ -277,9 +284,17 @@ const MessageEditor = (props: MessageEditorProps) => {
                   customActions={customActions}
                 ></MoreAction>
               );
+            } else if (item.name === 'GIFT' && item.visible) {
+              return <GiftKeyboard key={item.name} conversation={conversation} />;
             } else {
               return (
-                <span key={item.name} className="icon-container">
+                <span
+                  key={item.name}
+                  className="icon-container"
+                  onClick={() => {
+                    item?.onClick?.();
+                  }}
+                >
                   {item.icon}
                 </span>
               );

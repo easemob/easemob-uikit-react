@@ -29,6 +29,9 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         /* color_neutral/95 */
         background-color: $gray-95;
     }
+    .cui-li-dark:hover{
+        background: $gray-2;
+    }
 }
 .icon-container{
     margin: $margin-xs;

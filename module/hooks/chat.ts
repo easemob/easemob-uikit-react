@@ -6,12 +6,15 @@ import { getStore } from '../store';
 import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
 import { useGroupMembersAttributes } from '../hooks/useAddress';
 const useEventHandler = () => {
-  const rootStore = useContext(RootContext);
-  const { messageStore, threadStore } = rootStore.rootStore;
-  const client = useClient();
+  const rootStore = getStore();
+  const { messageStore, threadStore } = rootStore;
+  const client = rootStore.client;
+  console.log('useEventHandler ---', rootStore);
   useEffect(() => {
+    console.log('****client', client);
     client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
+        console.log('onTextMessage 22', message);
         messageStore.receiveMessage(message);
       },
       onImageMessage: message => {
@@ -69,7 +72,7 @@ const useEventHandler = () => {
         const { chatType, from = '' } = message;
         if (chatType === 'singleChat') {
           setTimeout(() => {
-            rootStore.rootStore.messageStore.message?.[chatType]?.[from]
+            rootStore.messageStore.message?.[chatType]?.[from]
               .filter(message => {
                 //@ts-ignore
                 return message.status === 'received';
@@ -82,9 +85,8 @@ const useEventHandler = () => {
         }
       },
       onRecallMessage: message => {
-        let chatType: 'singleChat' | 'groupChat' = 'singleChat';
-        let conversationId =
-          message.from == rootStore.rootStore.client.user ? message.to : message.from;
+        let chatType: 'singleChat' | 'groupChat' | 'chatRoom' = 'singleChat';
+        let conversationId = message.from == rootStore.client.user ? message.to : message.from;
         if (message.to.length == 15 && Number(message.to) > 0) {
           chatType = 'groupChat';
           conversationId = message.to;
@@ -99,10 +101,10 @@ const useEventHandler = () => {
       },
 
       onConnected: () => {
-        rootStore.rootStore.setLoginState(true);
+        rootStore.setLoginState(true);
       },
       onDisconnected: () => {
-        rootStore.rootStore.setLoginState(false);
+        rootStore.setLoginState(false);
       },
 
       onReactionChange: data => {
@@ -112,14 +114,14 @@ const useEventHandler = () => {
           chatType: data.chatType,
           conversationId: conversationId,
         };
-        rootStore.rootStore.messageStore.updateReactions(cvs, data.messageId, data.reactions);
+        rootStore.messageStore.updateReactions(cvs, data.messageId, data.reactions);
       },
       onModifiedMessage: message => {
         getStore().messageStore.modifyLocalMessage(message.id, message, true);
       },
       onGroupEvent: message => {
         const { operation, id } = message;
-        const { addressStore, client } = rootStore.rootStore;
+        const { addressStore, client } = rootStore;
         const groupItem = getGroupItemFromGroupsById(id);
         switch (operation) {
           case 'memberAttributesUpdate':
@@ -172,7 +174,7 @@ const useEventHandler = () => {
         }
       },
       onPresenceStatusChange: message => {
-        const { addressStore } = rootStore.rootStore;
+        const { addressStore } = rootStore;
         message.length > 0 &&
           message.forEach(presenceInfo => {
             const appUserInfo = addressStore.appUsersInfo;
@@ -198,7 +200,7 @@ const useEventHandler = () => {
       onChatThreadChange: (message: AgoraChat.ThreadChangeInfo) => {
         if (message.operation == 'userRemove') {
           if (
-            message.userName == rootStore.rootStore.client.user &&
+            message.userName == rootStore.client.user &&
             threadStore.currentThread?.info?.id == message.id
           ) {
             threadStore.setThreadVisible(false);
