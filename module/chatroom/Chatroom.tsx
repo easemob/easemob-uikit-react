@@ -130,9 +130,11 @@ const Chatroom = (props: ChatroomProps) => {
         if (owner == rootStore.client.user) {
           rootStore.addressStore.getChatroomMuteList(chatroomId);
         }
+        eventHandler.dispatchSuccess('getChatRoomDetails');
       })
       .catch(err => {
-        onError?.(err);
+        // onError?.(err);
+        eventHandler.dispatchError('getChatRoomDetails', err);
       });
 
     //   rootStore.conversationStore.setCurrentCvs(chatroomId);

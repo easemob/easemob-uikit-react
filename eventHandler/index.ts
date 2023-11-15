@@ -1,5 +1,10 @@
 import { AgoraChat } from 'agora-chat';
-export type EventName = 'joinChatRoom' | 'leaveChatRoom' | 'reportMessage' | 'onError';
+export type EventName =
+  | 'joinChatRoom'
+  | 'leaveChatRoom'
+  | 'reportMessage'
+  | 'getChatRoomDetails'
+  | 'onError';
 
 export type EventHandlerData = {
   [key in EventName]?: {
