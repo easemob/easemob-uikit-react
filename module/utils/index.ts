@@ -144,7 +144,7 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
             client
               .getPresenceStatus({ usernames: userIdList })
               .then(res => {
-                res?.data?.result.forEach(item => {
+                res?.data?.result.forEach((item: ChatSDK.SubscribePresence) => {
                   if (reUserInfo[item.uid]) {
                     reUserInfo[item.uid].presenceExt = item.ext;
                     if (

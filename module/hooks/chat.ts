@@ -7,7 +7,7 @@ import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
 import { useGroupMembersAttributes } from '../hooks/useAddress';
 const useEventHandler = () => {
   const rootStore = getStore();
-  const { messageStore, threadStore } = rootStore;
+  const { messageStore, threadStore, conversationStore } = rootStore;
   const client = rootStore.client;
   console.log('useEventHandler ---', rootStore);
   useEffect(() => {
@@ -191,6 +191,21 @@ const useEventHandler = () => {
               addressStore.setAppUserInfo({ ...appUserInfo });
             }
           });
+        const changeList = message.map(item => {
+          let status: Record<string, string> = {};
+          item.statusDetails.forEach(s => {
+            status[s.device] = String(s.status);
+          });
+          return {
+            ...item,
+            uid: item.userId,
+            status: status,
+            expiry: item.expire,
+            last_time: item.lastTime,
+            presenceExt: item.ext,
+          };
+        });
+        conversationStore.setOnlineStatus(changeList);
       },
       // @ts-ignore
       onCombineMessage: (message: ChatSDK.MessageBody) => {

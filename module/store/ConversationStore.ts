@@ -346,6 +346,12 @@ class ConversationStore {
             cvsItem.isOnline = true;
           }
         });
+      } else {
+        this.conversationList?.forEach(cvsItem => {
+          if (cvsItem.conversationId === item.uid) {
+            cvsItem.isOnline = false;
+          }
+        });
       }
     });
 
