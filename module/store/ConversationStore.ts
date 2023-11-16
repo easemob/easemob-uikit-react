@@ -67,6 +67,7 @@ class ConversationStore {
       setSilentModeForConversation: action,
       clearRemindTypeForConversation: action,
       getSilentModeForConversations: action,
+      setOnlineStatus: action,
       clear: action,
     });
   }
@@ -332,6 +333,23 @@ class ConversationStore {
           }
         });
       });
+  }
+
+  setOnlineStatus(result: ChatSDK.SubscribePresence[]) {
+    result.forEach(item => {
+      if (
+        Object.prototype.toString.call(item.status) === '[object Object]' &&
+        Object.values(item.status).indexOf('1') > -1
+      ) {
+        this.conversationList?.forEach(cvsItem => {
+          if (cvsItem.conversationId === item.uid) {
+            cvsItem.isOnline = true;
+          }
+        });
+      }
+    });
+
+    this.conversationList = [...this.conversationList];
   }
 
   clear() {

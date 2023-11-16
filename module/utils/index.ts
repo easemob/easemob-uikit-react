@@ -98,7 +98,7 @@ export const renderHtml = (txt: string): string => {
 
 export function getUsersInfo(props: { userIdList: string[]; withPresence?: boolean }) {
   const { userIdList, withPresence = true } = props;
-  let { client, addressStore } = getStore();
+  let { client, addressStore, conversationStore } = getStore();
   if (!client.context) return;
   const findIndex = userIdList.indexOf(client.user);
   let subList = [...userIdList];
@@ -155,6 +155,7 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
                     }
                   }
                 });
+                conversationStore.setOnlineStatus(res.data?.result as ChatSDK.SubscribePresence[]);
                 const list = addressStore.appUsersInfo;
                 addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
                 resolve(Object.assign({}, result, reUserInfo));
