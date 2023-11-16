@@ -93,7 +93,7 @@ const Chatroom = (props: ChatroomProps) => {
       userId: myInfo?.userId,
       nickName: myInfo?.nickname,
       avatarURL: myInfo?.avatarurl,
-      gender: myInfo?.gender,
+      gender: Number(myInfo?.gender),
       identify: myInfo?.ext?.identify,
     };
 

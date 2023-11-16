@@ -126,21 +126,14 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       });
   };
   const recallMessage = () => {
-    rootStore.messageStore
-      .recallMessage(
-        {
-          chatType: 'chatRoom',
-          conversationId: message.to,
-        },
-        // @ts-ignore
-        message.mid || message.id,
-      )
-      ?.then(() => {
-        eventHandler.dispatchSuccess('recallMessage');
-      })
-      ?.catch(err => {
-        eventHandler.dispatchError('recallMessage', err);
-      });
+    rootStore.messageStore.recallMessage(
+      {
+        chatType: 'chatRoom',
+        conversationId: message.to,
+      },
+      // @ts-ignore
+      message.mid || message.id,
+    );
   };
   const muteMember = () => {
     if (isMuted) {
