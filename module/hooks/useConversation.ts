@@ -39,6 +39,7 @@ const useConversations = () => {
               lastMessage: cvs.lastMessage,
             };
           });
+        conversationStore.getSilentModeForConversations(conversation || []);
         //@ts-ignore
         conversationStore.setConversation(conversation);
       })

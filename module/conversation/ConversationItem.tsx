@@ -140,6 +140,21 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       !data.isPinned,
     );
   };
+
+  const setSilent = () => {
+    if (data.silent) {
+      rootStore?.conversationStore.clearRemindTypeForConversation({
+        chatType: data.chatType,
+        conversationId: data.conversationId,
+      });
+    } else {
+      rootStore?.conversationStore.setSilentModeForConversation({
+        chatType: data.chatType,
+        conversationId: data.conversationId,
+      });
+    }
+  };
+
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
 
   let menuNode: ReactNode | undefined;
@@ -168,7 +183,11 @@ let ConversationItem: FC<ConversationItemProps> = props => {
             );
           } else if (item.content === 'SILENT') {
             return (
-              <li key={index} onClick={pinCvs} className={themeMode == 'dark' ? 'cui-li-dark' : ''}>
+              <li
+                key={index}
+                onClick={setSilent}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
                 <Icon type={data.silent ? 'BELL_SLASH' : 'BELL'}></Icon>
                 {data.silent ? t('unmuteNotification') : t('muteNotification')}
               </li>
@@ -257,7 +276,12 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       )}
 
       <div className={`${prefixCls}-content`}>
-        <span className={`${prefixCls}-nickname`}>{data.name || data.conversationId}</span>
+        <span className={`${prefixCls}-nickname`}>
+          {data.name || data.conversationId}
+          {data.silent && (
+            <Icon type="BELL_SLASH" className={`${prefixCls}-nickname-silent`}></Icon>
+          )}
+        </span>
         <span className={`${prefixCls}-message`}>
           {<AtTag type={data?.atType} />}
           {lastMsg}
@@ -265,7 +289,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       </div>
       <div className={`${prefixCls}-info`}>
         <span className={`${prefixCls}-time`}>{getConversationTime(data.lastMessage.time)}</span>
-        {showMore || true ? (
+        {showMore ? (
           <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
             {moreAction.icon || <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>}
           </Tooltip>
@@ -277,6 +301,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
             }}
           >
             <Badge
+              dot={data.silent}
               count={data.unreadCount || 0}
               color={badgeColor || 'var(--cui-primary-color)'}
             ></Badge>

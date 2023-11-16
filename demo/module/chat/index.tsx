@@ -264,7 +264,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYFhaPIuJuTbe0edF8qflP3ZsdfK568Wn27FqYfCv1Fy3CesUGNIMU5LNzS2SUlKSzUzMElMs0ozMDCzNzZITjVIMDE2Tl7SEpDYEMjIIz+m5wMjAysAIhCC+CkOSgZlJYoqZga6ZkUmSrqFharKuRaqhka5pkpGJRZKBqUVakiUAuHcoKQ==',
+          '007eJxTYFg/83jlv1171nxW+fxC11ozQdtLbReL43OTT4Y3c4uUc48pMKQZpiSbm1skpaQkm5mYJaZYpBmZGViamyUnGqUYGJom77gemtoQyMhwyH3CLEYGVgZGIATxVRiSDMxMElPMDHTNjEySdA0NU5N1LVINjXRNk4xMLJIMTC3SkiwBQsgpWw==',
         // appKey: 'easemob#easeim',
       }}
       theme={{

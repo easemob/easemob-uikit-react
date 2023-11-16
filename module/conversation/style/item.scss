@@ -15,6 +15,9 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         background-color: $cvs-item-selected-bg-color !important;
         .#{$conversation-prefix-cls}-nickname{
             color: $cvs-item-selected-name-color;
+            &-silent{
+                fill: $blue-5;
+            }
         }
     }
     &:hover{
@@ -49,6 +52,9 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         overflow: hidden;
         font-weight: $cvs-item-name-font-weight;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 2px;
     }
     &-message{
         margin-left: $cvs-item-message-margin-left;

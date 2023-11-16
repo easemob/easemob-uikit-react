@@ -64,6 +64,9 @@ class ConversationStore {
       updateConversationName: action,
       pinConversation: action,
       getServerPinnedConversations: action,
+      setSilentModeForConversation: action,
+      clearRemindTypeForConversation: action,
+      getSilentModeForConversations: action,
       clear: action,
     });
   }
@@ -110,6 +113,7 @@ class ConversationStore {
     if (exist) return;
     this.conversationList = [conversation, ...this.conversationList].sort(sortByPinned);
     this.byId[`${conversation.chatType}_${conversation.conversationId}`] = conversation;
+    this.getSilentModeForConversations([conversation]);
   }
 
   setSearchList(conversations: Conversation[]) {
@@ -253,6 +257,83 @@ class ConversationStore {
         this.conversationList = [...this.conversationList.sort(sortByPinned)];
       });
   }
+
+  setSilentModeForConversation(cvs: CurrentConversation) {
+    this.rootStore.client
+      .setSilentModeForConversation({
+        conversationId: cvs.conversationId,
+        type: cvs.chatType,
+        options: {
+          paramType: 0,
+          remindType: cvs.chatType == 'groupChat' ? 'AT' : 'NONE',
+        },
+      })
+      .then((res: any) => {
+        console.log('设置勿扰成功', res);
+        this.conversationList?.forEach(item => {
+          if (item.conversationId === cvs.conversationId) {
+            item.silent = true;
+          }
+        });
+        this.conversationList = [...this.conversationList];
+      });
+  }
+
+  clearRemindTypeForConversation(cvs: CurrentConversation) {
+    this.rootStore.client
+      .clearRemindTypeForConversation({
+        conversationId: cvs.conversationId,
+        type: cvs.chatType,
+      })
+      .then((res: any) => {
+        console.log('清除勿扰成功', res);
+        this.conversationList?.forEach(item => {
+          if (item.conversationId === cvs.conversationId) {
+            item.silent = false;
+          }
+        });
+        this.conversationList = [...this.conversationList];
+      });
+  }
+
+  getSilentModeForConversations(cvs: CurrentConversation[]) {
+    if (!cvs || cvs.length == 0) {
+      return;
+    }
+    const cvsList = cvs.map(item => {
+      return {
+        id: item.conversationId,
+        type: item.chatType,
+      };
+    });
+    this.rootStore.client
+      .getSilentModeForConversations({
+        conversationList: cvsList,
+      })
+      .then((res: any) => {
+        console.log('获取勿扰成功', res);
+        const userSetting = res.data.user;
+        const groupSetting = res.data.group;
+        this.conversationList?.forEach(item => {
+          if (item.chatType === 'singleChat') {
+            if (
+              userSetting[item.conversationId] &&
+              userSetting[item.conversationId]?.type == 'NONE'
+            ) {
+              item.silent = true;
+            }
+          } else if (
+            item.chatType === 'groupChat' &&
+            groupSetting[item.conversationId]?.type == 'AT'
+          ) {
+            if (groupSetting[item.conversationId]) {
+              item.silent = true;
+            }
+          }
+        });
+      });
+  }
+
   clear() {
     this.currentCvs = {
       conversationId: '',
