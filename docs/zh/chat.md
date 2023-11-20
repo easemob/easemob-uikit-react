@@ -11,13 +11,13 @@ Chat 组件提供了以下功能:
 ## 使用示例
 
 ```jsx
-import React from 'react';
-import { Chat } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import { Chat } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
   return (
-    <div style={{ width: '70%', height: '100%' }}>
+    <div style={{ width: "70%", height: "100%" }}>
       <Chat />
     </div>
   );
@@ -37,32 +37,34 @@ const ChatContainer = () => {
 - 通过使用 `TextMessage` 的 props 来自定义文本消息。
 
 ```jsx
-import React from 'react';
-import { Chat, MessageList, TextMessage } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import { Chat, MessageList, TextMessage } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
-  const renderTxtMsg = msg => {
+  const renderTxtMsg = (msg) => {
     return (
       <TextMessage
-        bubbleStyle={{ background: 'hsl(135.79deg 88.79% 36.46%)' }}
+        bubbleStyle={{ background: "hsl(135.79deg 88.79% 36.46%)" }}
         shape="square"
         status={msg.status}
-        avatar={<Avatar style={{ background: 'pink' }}>A</Avatar>}
+        avatar={<Avatar style={{ background: "pink" }}>A</Avatar>}
         textMessage={msg}
       ></TextMessage>
     );
   };
 
-  const renderMessage = msg => {
-    if (msg.type === 'txt') {
+  const renderMessage = (msg) => {
+    if (msg.type === "txt") {
       return renderTxtMsg(msg);
     }
   };
 
   return (
-    <div style={{ width: '70%', height: '100%' }}>
-      <Chat renderMessageList={() => <MessageList renderMessage={renderMessage} />} />
+    <div style={{ width: "70%", height: "100%" }}>
+      <Chat
+        renderMessageList={() => <MessageList renderMessage={renderMessage} />}
+      />
     </div>
   );
 };
@@ -78,20 +80,20 @@ const ChatContainer = () => {
 2. 使用 `actions` 来自定义 `MessageEditor` 组件。
 
 ```jsx
-import React from 'react';
-import { Chat, Icon, MessageEditor } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import { Chat, Icon, MessageEditor } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
   // Add an icon to the message editor
   const CustomIcon = {
     visible: true,
-    name: 'CUSTOM',
+    name: "CUSTOM",
     icon: (
       <Icon
         type="DOC"
         onClick={() => {
-          console.log('click custom icon');
+          console.log("click custom icon");
         }}
       ></Icon>
     ),
@@ -101,7 +103,7 @@ const ChatContainer = () => {
   // Insert a custom icon after textarea
   actions.splice(2, 0, CustomIcon);
   return (
-    <div style={{ width: '70%', height: '100%' }}>
+    <div style={{ width: "70%", height: "100%" }}>
       <Chat renderMessageEditor={() => <MessageEditor actions={actions} />} />
     </div>
   );
@@ -120,13 +122,20 @@ const ChatContainer = () => {
 为了保证消息展示在当前会话中，消息中的 `to` 字段必须是对方的 userID，或者群组的 ID。
 
 ```jsx
-import React from 'react';
-import { Chat, MessageList, TextMessage, rootStore, MessageEditor, Icon } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import {
+  Chat,
+  MessageList,
+  TextMessage,
+  rootStore,
+  MessageEditor,
+  Icon,
+} from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
   // Display custom messages
-  const renderCustomMsg = msg => {
+  const renderCustomMsg = (msg) => {
     return (
       <div>
         <h1>Business Card </h1>
@@ -134,8 +143,8 @@ const ChatContainer = () => {
       </div>
     );
   };
-  const renderMessage = msg => {
-    if (msg.type === 'custom') {
+  const renderMessage = (msg) => {
+    if (msg.type === "custom") {
       return renderCustomMsg(msg);
     }
   };
@@ -143,7 +152,7 @@ const ChatContainer = () => {
   // Add an icon to the message editor
   const CustomIcon = {
     visible: true,
-    name: 'CUSTOM',
+    name: "CUSTOM",
     icon: (
       <Icon
         type="DOC"
@@ -159,20 +168,20 @@ const ChatContainer = () => {
   // Implement the sending of a custom message
   const sendCustomMessage = () => {
     const customMsg = AgoraChat.message.create({
-      type: 'custom',
-      to: 'targetId', // The user ID of the peer user for one-to-one chat or the current group ID for group chat.
-      chatType: 'singleChat',
-      customEvent: 'CARD',
+      type: "custom",
+      to: "targetId", // The user ID of the peer user for one-to-one chat or the current group ID for group chat.
+      chatType: "singleChat",
+      customEvent: "CARD",
       customExts: {
-        id: 'userId3',
+        id: "userId3",
       },
     });
     rootStore.messageStore.sendMessage(customMsg).then(() => {
-      console.log('send success');
+      console.log("send success");
     });
   };
   return (
-    <div style={{ width: '70%', height: '100%' }}>
+    <div style={{ width: "70%", height: "100%" }}>
       <Chat
         renderMessageList={() => <MessageList renderMessage={renderMessage} />}
         renderMessageEditor={() => <MessageEditor actions={actions} />}

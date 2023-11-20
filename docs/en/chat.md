@@ -10,13 +10,13 @@ The Chat component provides the following functions:
 ## Usage example
 
 ```jsx
-import React from 'react';
-import { Chat } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import { Chat } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
   return (
-    <div style={{ width: '70%', height: '100%' }}>
+    <div style={{ width: "70%", height: "100%" }}>
       <Chat />
     </div>
   );
@@ -25,7 +25,7 @@ const ChatContainer = () => {
 
 <div align=center> <img src="../image/buble1.png" width = "400" height = "450" /></div>
 
-## How to Customize Chat component 添加截图？
+## How to Customize Chat component
 
 ### Modify the message bubble style
 
@@ -36,32 +36,34 @@ Take text messages as an example. You can modify the message bubble style as fol
 - Customize text messages through the props of the `TextMessage` component.
 
 ```jsx
-import React from 'react';
-import { Chat, MessageList, TextMessage } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import { Chat, MessageList, TextMessage } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
-  const renderTxtMsg = msg => {
+  const renderTxtMsg = (msg) => {
     return (
       <TextMessage
-        bubbleStyle={{ background: 'hsl(135.79deg 88.79% 36.46%)' }}
+        bubbleStyle={{ background: "hsl(135.79deg 88.79% 36.46%)" }}
         shape="square"
         status={msg.status}
-        avatar={<Avatar style={{ background: 'pink' }}>A</Avatar>}
+        avatar={<Avatar style={{ background: "pink" }}>A</Avatar>}
         textMessage={msg}
       ></TextMessage>
     );
   };
 
-  const renderMessage = msg => {
-    if (msg.type === 'txt') {
+  const renderMessage = (msg) => {
+    if (msg.type === "txt") {
       return renderTxtMsg(msg);
     }
   };
 
   return (
-    <div style={{ width: '70%', height: '100%' }}>
-      <Chat renderMessageList={() => <MessageList renderMessage={renderMessage} />} />
+    <div style={{ width: "70%", height: "100%" }}>
+      <Chat
+        renderMessageList={() => <MessageList renderMessage={renderMessage} />}
+      />
     </div>
   );
 };
@@ -77,20 +79,20 @@ Add an icon to the MessageEditor component to implement a specific custom functi
 2. Customize `MessageEditor` with `actions` props.
 
 ```jsx
-import React from 'react';
-import { Chat, Icon, MessageEditor } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import { Chat, Icon, MessageEditor } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
   // Add an icon to the message editor
   const CustomIcon = {
     visible: true,
-    name: 'CUSTOM',
+    name: "CUSTOM",
     icon: (
       <Icon
         type="DOC"
         onClick={() => {
-          console.log('click custom icon');
+          console.log("click custom icon");
         }}
       ></Icon>
     ),
@@ -100,7 +102,7 @@ const ChatContainer = () => {
   // Insert a custom icon after textarea
   actions.splice(2, 0, CustomIcon);
   return (
-    <div style={{ width: '70%', height: '100%' }}>
+    <div style={{ width: "70%", height: "100%" }}>
       <Chat renderMessageEditor={() => <MessageEditor actions={actions} />} />
     </div>
   );
@@ -119,13 +121,22 @@ const ChatContainer = () => {
 To make sure that the message is displayed in the current conversation, the `to` parameter in the `sendCustomMessage` method must be the user ID of the peer user for one-to-one chat or the current group ID for group chat.
 
 ```jsx
-import React from 'react';
-import { Chat, MessageList, TextMessage, rootStore, MessageEditor, Icon } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import {
+  Chat,
+  MessageList,
+  TextMessage,
+  rootStore,
+  MessageEditor,
+  Icon,
+  useChatContext,
+} from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatContainer = () => {
+  const { sendMessage } = useChatContext();
   // Display custom messages
-  const renderCustomMsg = msg => {
+  const renderCustomMsg = (msg) => {
     return (
       <div>
         <h1>Business Card </h1>
@@ -133,8 +144,8 @@ const ChatContainer = () => {
       </div>
     );
   };
-  const renderMessage = msg => {
-    if (msg.type === 'custom') {
+  const renderMessage = (msg) => {
+    if (msg.type === "custom") {
       return renderCustomMsg(msg);
     }
   };
@@ -142,7 +153,7 @@ const ChatContainer = () => {
   // Add an icon to the message editor
   const CustomIcon = {
     visible: true,
-    name: 'CUSTOM',
+    name: "CUSTOM",
     icon: (
       <Icon
         type="DOC"
@@ -158,20 +169,20 @@ const ChatContainer = () => {
   // Implement the sending of a custom message
   const sendCustomMessage = () => {
     const customMsg = AgoraChat.message.create({
-      type: 'custom',
-      to: 'targetId', // The user ID of the peer user for one-to-one chat or the current group ID for group chat.
-      chatType: 'singleChat',
-      customEvent: 'CARD',
+      type: "custom",
+      to: "targetId", // The user ID of the peer user for one-to-one chat or the current group ID for group chat.
+      chatType: "singleChat",
+      customEvent: "CARD",
       customExts: {
-        id: 'userId3',
+        id: "userId3",
       },
     });
-    rootStore.messageStore.sendMessage(customMsg).then(() => {
-      console.log('send success');
+    sendMessage(customMsg).then(() => {
+      console.log("send success");
     });
   };
   return (
-    <div style={{ width: '70%', height: '100%' }}>
+    <div style={{ width: "70%", height: "100%" }}>
       <Chat
         renderMessageList={() => <MessageList renderMessage={renderMessage} />}
         renderMessageEditor={() => <MessageEditor actions={actions} />}
@@ -184,7 +195,7 @@ const ChatContainer = () => {
 <div align=center> <img src="../image/custom-msg.png" width = "400" height = "450" /></div>
 ### Modify the theme
 
-Chat provides the following variables related to the chat page theme. For how to modify the theme, see the [Github URL](https://github.com/easemob/Easemob-UIKit-web/blob/dev/docs/theme.md).
+Chat provides the following variables related to the chat page theme. For how to modify the theme, see the [how to modify the theme](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/tree/UIKit-1.2/docs/en/theme.md).
 
 ```scss
 $chat-bg: $component-background;

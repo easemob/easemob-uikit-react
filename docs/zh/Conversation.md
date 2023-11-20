@@ -5,13 +5,13 @@
 ## 使用示例
 
 ```jsx
-import React, { useEffect, useState } from 'react';
-import { ConversationList } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React, { useEffect, useState } from "react";
+import { ConversationList } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const Conversation = () => {
   return (
-    <div style={{ width: '30%', height: '100%' }}>
+    <div style={{ width: "30%", height: "100%" }}>
       <ConversationList />
     </div>
   );
@@ -29,14 +29,14 @@ const Conversation = () => {
 给组件添加 `className` 来定义样式
 
 ```jsx
-import React from 'react';
-import { ConversationList } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
-import './index.css';
+import React from "react";
+import { ConversationList } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
+import "./index.css";
 
 const Conversation = () => {
   return (
-    <div style={{ width: '30%', height: '100%' }}>
+    <div style={{ width: "30%", height: "100%" }}>
       <ConversationList className="conversation" />
     </div>
   );
@@ -47,7 +47,7 @@ Define the conversation UI style in index.css:
 
 ```css
 .conversation {
-  background-color: '#03A9F4';
+  background-color: "#03A9F4";
   height: 100%;
   width: 100%;
 }
@@ -58,13 +58,13 @@ Define the conversation UI style in index.css:
 2. 自定义 `ConversationList` 组件的 header 元素。
 
 ```jsx
-import React from 'react';
-import { ConversationList, Header, Avatar } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import { ConversationList, Header, Avatar } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const Conversation = () => {
   return (
-    <div style={{ width: '30%', height: '100%' }}>
+    <div style={{ width: "30%", height: "100%" }}>
       <ConversationList
         renderHeader={() => (
           <Header
@@ -74,9 +74,9 @@ const Conversation = () => {
               visible: true,
               actions: [
                 {
-                  content: 'my info',
+                  content: "my info",
                   onClick: () => {
-                    console.log('my info');
+                    console.log("my info");
                   },
                 },
               ],
@@ -97,34 +97,37 @@ const Conversation = () => {
 - 使用 `ConversationItem` 组件的 props 来自定义组件。
 
 ```jsx
-import React from 'react';
-import { ConversationList, ConversationItem, Avatar } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
-import './index.css';
+import React from "react";
+import { ConversationList, ConversationItem, Avatar } from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
+import "./index.css";
 
 const Conversation = () => {
   // Maps the user ID of the peer user in the one-to-one chat to the nickname of the peer user.
   const idToName = {
-    userId1: 'name1',
-    zd2: 'Henry 2',
+    userId1: "name1",
+    zd2: "Henry 2",
   };
   return (
-    <div style={{ width: '30%', height: '100%' }}>
+    <div style={{ width: "30%", height: "100%" }}>
       <ConversationList
         className="conversation"
-        renderItem={cvs => {
+        renderItem={(cvs) => {
           return (
             <ConversationItem
               avatar={
                 <Avatar
                   size="normal"
                   shape="square"
-                  style={{ background: 'yellow', color: 'black' }}
+                  style={{ background: "yellow", color: "black" }}
                 >
                   {idToName[cvs.conversationId] || cvs.conversationId}
                 </Avatar>
               }
-              data={{ ...cvs, name: idToName[cvs.conversationId] || cvs.conversationId }}
+              data={{
+                ...cvs,
+                name: idToName[cvs.conversationId] || cvs.conversationId,
+              }}
             />
           );
         }}
@@ -143,16 +146,21 @@ const Conversation = () => {
 - 使用 `addConversation` 方法添加一个会话。
 
 ```jsx
-import React from 'react';
-import { ConversationList, ConversationItem, rootStore, Button } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React from "react";
+import {
+  ConversationList,
+  ConversationItem,
+  rootStore,
+  Button,
+} from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const Conversation = () => {
   // Pins a conversation.
   const topConversation = () => {
     rootStore.conversationStore.topConversation({
-      chatType: 'singleChat', // For group chats, the value is `groupChat`.
-      conversationId: 'userID', // Enter a conversation ID obtained from your conversation list.
+      chatType: "singleChat", // For group chats, the value is `groupChat`.
+      conversationId: "userID", // Enter a conversation ID obtained from your conversation list.
       lastMessage: {},
     });
   };
@@ -160,16 +168,16 @@ const Conversation = () => {
   // Creates a new conversation.
   const createConversation = () => {
     rootStore.conversationStore.addConversation({
-      chatType: 'singleChat',
-      conversationId: 'conversationId',
+      chatType: "singleChat",
+      conversationId: "conversationId",
       lastMessage: {},
       unreadCount: 3,
     });
   };
   return (
-    <div style={{ width: '30%', height: '100%' }}>
+    <div style={{ width: "30%", height: "100%" }}>
       <ConversationList
-        renderItem={cvs => {
+        renderItem={(cvs) => {
           return (
             <ConversationItem
               moreAction={{
@@ -177,10 +185,10 @@ const Conversation = () => {
                 actions: [
                   {
                     // UIKit provides the conversation deletion event by default.
-                    content: 'DELETE',
+                    content: "DELETE",
                   },
                   {
-                    content: 'Top Conversation',
+                    content: "Top Conversation",
                     onClick: topConversation,
                   },
                 ],

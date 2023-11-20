@@ -2,11 +2,11 @@
 
 ## 简介
 
-agora-chat-uikit 是基于声网 Chat SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件， 容器组件允许用户使用 renderX 方法来进行自定义。agora-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
+agora-chat-uikit 是基于声网 Chat SDK 的一款 UI 组件库，包含三个级别的组件：通用的纯 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件, 组件内部集成了 Chat SDK，用户可以使用 UIKit 快速搭建应用，同时 UIKit 也提供扩展和定制化能力，开发者可根据实际业务需求利用该库自定义 IM 应用。
 
 ## 技术原理
 
-UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI 组件包含容器组件 container 复合组件 module, 以及纯 UI 组件 components, 这些不同级别的组件全部对外暴露，用户可以引用任意组件构建自己的应用。UIkit 使用 mobx 管理全局数据，用户可以引用 rootStore 来获得全部数据和 action 方法，可以用 action 方法来操作数据。 UIKit 内部集成了 chat SDK，通过 chat SDK 和服务器交互。<div align=center> <img src="../image/uikit.png" width = "400" height = "450" /></div>
+UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI 组件包含容器组件 container 复合组件 module, 以及纯 UI 组件 components, 这些不同级别的组件全部对外暴露，用户可以引用任意组件构建自己的应用。UIkit 使用 React Context 管理全局数据，用户可以使用自定义 hooks 来从全局数据 rootStore 中获取需要的数据，也可以用自定义 hooks 获取操作这些数据的方法。UIKit 内部集成了 chat SDK，通过 chat SDK 和服务器交互。<div align=center> <img src="../image/uikit.png" width = "400" height = "450" /></div>
 
 ## 功能
 
@@ -361,9 +361,15 @@ yarn add agora-chat-uikit
 
 ```javascript
 // App.js
-import React, { Component, useEffect } from 'react';
-import { Provider, Chat, ConversationList, useClient, rootStore } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import React, { Component, useEffect } from "react";
+import {
+  Provider,
+  Chat,
+  ConversationList,
+  useClient,
+  rootStore,
+} from "agora-chat-uikit";
+import "agora-chat-uikit/style.css";
 
 const ChatApp = () => {
   const client = useClient();
@@ -371,16 +377,16 @@ const ChatApp = () => {
     client &&
       client
         .open({
-          user: '',
-          agoraToken: '',
+          user: "",
+          agoraToken: "",
         })
-        .then(res => {
-          console.log('get token success', res);
+        .then((res) => {
+          console.log("get token success", res);
           // create a conversation
           rootStore.conversationStore.addConversation({
-            chatType: '', // 'singleChat' || 'groupChat'
-            conversationId: '', // target user id or group id
-            name: '', // target user nickname or group name
+            chatType: "", // 'singleChat' || 'groupChat'
+            conversationId: "", // target user id or group id
+            name: "", // target user nickname or group name
           });
         });
   }, [client]);
@@ -402,7 +408,7 @@ class App extends Component {
     return (
       <Provider
         initConfig={{
-          appKey: 'you app key',
+          appKey: "you app key",
         }}
       >
         <ChatApp />
@@ -440,13 +446,13 @@ Agora 在 GitHub 上提供一个开源的 AgoraChat-UIKit-web 项目，你可以
 可以通过组件 props 传递 className, style, prefix 修改样式
 
 ```javascript
-import { Chat, Button } from 'agora-chat-uikit';
+import { Chat, Button } from "agora-chat-uikit";
 
 const ChatApp = () => {
   return (
     <div>
       <Chat className="customClass" prefix="custom" />
-      <Button style={{ width: '100px' }}>Button</Button>
+      <Button style={{ width: "100px" }}>Button</Button>
     </div>
   );
 };

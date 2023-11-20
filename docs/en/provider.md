@@ -14,6 +14,8 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
     <UIKitProvider
       initConfig={{
         appKey: 'your app key',
+        userId: 'userId',
+        token: 'chat token'
       }}
       // All the UI texts can be viewed in the URL: https://github.com/easemob/Easemob-UIKit-web/tree/dev/local
       local={{
@@ -22,8 +24,8 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
         resources: {
           en: {
             translation: {
-              'module.conversationTitle': 'Conversation List',
-              'module.deleteCvs': 'Delete Conversation',
+              'conversationTitle': 'Conversation List',
+              'deleteCvs': 'Delete Conversation',
               // ...
             },
           },
@@ -70,6 +72,9 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
             picture: true,
           },
         },
+      }}
+      theme={{
+        primaryColor: '#00CE76' // Hexadecimal color value
       }}
     >
       <ChatApp></ChatApp>
