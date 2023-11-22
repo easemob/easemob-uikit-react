@@ -101,7 +101,7 @@ export const InternalAvatar = (props: any, ref: any) => {
 
   let childrenToRender: React.ReactNode;
 
-  if (typeof src === 'string' && isImgExist) {
+  if (typeof src === 'string' && isImgExist && src !== '') {
     childrenToRender = (
       <div className={`${prefixCls}-image`}>
         <img

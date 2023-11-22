@@ -1,12 +1,12 @@
 # What is Agora Chat UIKit for Web
 
-`agora-chat-uikit` is a UI component library based on the Chat SDK. It provides common UI components, module components containing the chat business logic, and container components, allowing users to customize the UI using the renderX methods. `agora-chat-uikit` provides a UIKitProvider for data management. The UIKitProvider automatically listens for Chat SDK events to modify data for UI updates. Developers can use the library to quickly build custom instant messaging applications based on actual business requirements.
+`agora-chat-uikit` is a UI component library based on the SoundNet Chat SDK, which includes three levels of components: pure UI components, module components and container components. The component integrates the Chat SDK internally, allowing users to quickly build applications using UIKit. At the same time, UIKit also provides extension and customization capabilities, Developers can use this library to customize IM applications based on actual business needs.
 
 ## Technical principles
 
-Agora Chat UIKit consists of three parts: UI components, mobx store for data management, and chat SDK. UI components include container components, compound components module, and pure UI components. These components at different levels are accessible to the public. Users can reference any of these components to build their own applications. UIKit uses mobx to manage global data, and users can reference the rootStore to get all the data and the action methods for data manipulation. UIKit integrates the chat SDK and interacts with the server through the Chat SDK.
+Agora Chat UIKit consists of three parts: UI components, rootStore for managing data, and chat SDK. UI components include container components, module components, and pure UI components. These different levels of components are accessible to the public, and users can reference any of these components to build their own applications. UIkit uses React Context to manage global data. Users can use custom hooks to obtain the required data from the global data rootStore, or they can use custom hooks to obtain methods for manipulating this data. UIKit integrates the chat SDK internally and interacts with the server through the chat SDK.
 
-![img](https://github.com/easemob/Easemob-UIKit-web/raw/dev/docs/uikit.png)
+![img](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/blob/UIKit-1.2/docs/uikit.png)
 
 ## Functions
 
@@ -28,20 +28,15 @@ The `agora-chat-uikit` repository provides the following functions:
 
 `agora-chat-uikit` provides the following components:
 
-- Container components: [`UIKitProvider`](https://github.com/easemob/Easemob-UIKit-web/blob/dev/docs/provider.md)， [`Chat`](https://github.com/easemob/Easemob-UIKit-web/blob/dev/docs/chat.md)，and [`ConversationList`](https://github.com/easemob/Easemob-UIKit-web/blob/dev/docs/conversation.md).
+- Container components: [`UIKitProvider`](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/tree/UIKit-1.2/docs/en/provider.md), [`Chat`](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/tree/UIKit-1.2/docs/en/chat.md)，and [`ConversationList`](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/tree/UIKit-1.2/docs/en/conversation.md).
 - Module components: `BaseMessage`，`AudioMessage`，`FileMessage`， `VideoMessage`，`ImageMessage`，`TextMessage`，`Header`，`Empty`，`MessageList`， `ConversationItem`，`MessageEditor`，`MessageStatus`.
 - Pure UI components: `Avatar`，`Badge`，`Button`，`Checkbox`，`Icon`，`Modal`，`Tooltip`.
 
-## store
+## Context
 
-UIKit provides the rootStore that contains all the data. rootStore consists of the following parts:
+UIKit uses React context manage global data. Users can use customized hooks to get the data and methods which can be used to modify the data. UIKit provided `RootContext`, `useConversationContext`, `useChatContext`, `useAddressContext`, `useThreadContext`.
 
-- initConfig: UIKit initialization data
-- client: Chat SDK instance
-- conversationStore: Conversation list data
-- messageStore: Message data
-
-For attributes and methods in the rootStore, see the [rootStore document](https://github.com/easemob/Easemob-UIKit-web/blob/dev/docs/store.md).
+For attributes and methods in the Context, see the [Context document](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/tree/UIKit-1.2/docs/en/context.md).
 
 ## How to customize the UIKit
 
@@ -49,16 +44,16 @@ For attributes and methods in the rootStore, see the [rootStore document](https:
 
 In this section, the `Chat` and `Button` components are used as an example to describe how to modify the component style.
 
-You can modify the style of the `Chat` and `Button` components by passing in `className`, `style`, and `prefix` through the component props.
+You can modify the style of the `Chat` and `Button` components by passing in `className` and `style` through the component props.
 
 ```jsx
-import { Chat, Button } from 'agora-chat-uikit';
+import { Chat, Button } from "agora-chat-uikit";
 
 const ChatApp = () => {
   return (
     <div>
-      <Chat className="customClass" prefix="custom" />
-      <Button style={{ width: '100px' }}>Button</Button>
+      <Chat className="customClass" />
+      <Button style={{ width: "100px" }}>Button</Button>
     </div>
   );
 };
@@ -85,8 +80,10 @@ const ChatApp = () => {
 
 ### Modify the theme
 
-The UIKit style is developed using the SCSS framework and defines a series of global style variables, including but not limited to global styles (the primary color, background color, rounded corners, borders, and font size).
+1. You can set the theme.primaryColor in the Provider component to set the primary color of the UIKit.
 
-For how to modify the theme, see the [Github URL](https://github.com/easemob/Easemob-UIKit-web/blob/dev/docs/theme.md).
+2. The UIKit style is developed using the SCSS framework and defines a series of global style variables, including but not limited to global styles (the primary color, background color, rounded corners, borders, and font size).
 
-If the above three UIKit customization methods cannot meet your requirements, you can also locate the elements to overwrite the style of UIKit.
+For how to modify the theme, see the [Github URL](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/tree/UIKit-1.2/docs/en/theme.md).
+
+If the above three UIKit customization methods cannot meet your requirements, you can also find the elements to overwrite the style of UIKit.

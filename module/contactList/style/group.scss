@@ -30,7 +30,17 @@ $contact-prefix-cls: #{$cui-prefix}-contactGroup;
     &-children{
         overflow: hidden;
         transition: height .3s ease;
-        height: 0;
         box-sizing: border-box;
+        &-hide{
+            height: 0;
+        }
     }
+
+    &-dark{
+        .#{$contact-prefix-cls}-title{
+            background-color: $gray-2;
+            color: $gray-98;
+        }
+    }
+
 }

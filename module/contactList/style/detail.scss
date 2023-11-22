@@ -1,0 +1,91 @@
+$contact-detail-prefix-cls: #{$cui-prefix}-contact-detail;
+
+.#{$contact-detail-prefix-cls}{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    // justify-content: center;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 0 14px;
+    overflow: hidden;
+    color: $gray-1;
+    background-color: $gray-98;
+    &-content{
+        width: 376px;
+        display: flex;
+        padding: 100px 0px;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 36px;
+
+        &-header{
+            display: flex;
+            flex-direction: column;
+            padding-top: 16px;
+            align-items: center;
+            &-name{
+                font-size: 18px;
+                font-style: normal;
+                font-weight: 500;
+                line-height: 26px;
+            }
+            &-id{
+                margin-top: 2px;
+                display: flex;
+                font-size: 14px;
+                font-style: normal;
+                font-weight: 400;
+                line-height: 20px;
+                color: $gray-7;
+                align-items: center;
+                gap: 4px;
+            }
+        }
+        &-header>div{
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        &-switch{
+            width: 360px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        &-switch>div{
+            display: flex;
+            gap: 8px;
+        }
+
+        &-btn{
+            margin-top: 16px;
+            width: fit-content;
+            font-size: 16px;
+            font-weight: 500;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 4px;
+            & svg{
+                fill: $gray-98;
+            }
+        }
+        &-body{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+
+    &-dark{
+        background-color: $gray-1;
+        color: $gray-98;
+    }
+}

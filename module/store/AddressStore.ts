@@ -20,6 +20,7 @@ export interface GroupItem extends ChatSDK.BaseGroupInfo {
   members?: MemberItem[];
   hasMembersNext?: boolean;
   admins?: ChatSDK.UserId[];
+  silent?: boolean;
 }
 
 export type AppUserInfo = Partial<Record<ChatSDK.ConfigurableKey, any>> & {
@@ -36,7 +37,7 @@ export type ChatroomInfo = ChatSDK.GetChatRoomDetailsResult & {
 
 class AddressStore {
   appUsersInfo: Record<string, AppUserInfo>;
-  contacts: [];
+  contacts: { userId: string; nickname: string; silent?: boolean }[];
   groups: GroupItem[];
   hasGroupsNext: boolean;
   chatroom: ChatroomInfo[];
@@ -75,6 +76,7 @@ class AddressStore {
       removeUserFromMuteList: action,
       unmuteChatRoomMember: action,
       removerChatroomMember: action,
+      getSilentModeForConversations: action,
       clear: action,
     });
   }
@@ -172,9 +174,9 @@ class AddressStore {
   };
 
   getUserInfo = (userId: string) => {
-    let userInfo = this.appUsersInfo?.[userId];
+    let userInfo: any = this.appUsersInfo?.[userId];
     if (!userInfo) {
-      getUsersInfo({ userIdList: [userId], withPresence: false }).then(() => {
+      getUsersInfo({ userIdList: [userId] as string[], withPresence: false }).then(() => {
         userInfo = this.appUsersInfo?.[userId];
       });
     }
@@ -299,6 +301,103 @@ class AddressStore {
   setSearchList(searchList: any) {
     this.searchList = searchList;
   }
+
+  getSilentModeForConversations(
+    cvs: { conversationId: string; chatType: 'singleChat' | 'groupChat' }[],
+  ) {
+    if (!cvs || cvs.length == 0) {
+      return;
+    }
+    const cvsList = cvs.map(item => {
+      return {
+        id: item.conversationId,
+        type: item.chatType,
+      };
+    });
+    const rootStore = getStore();
+    rootStore.client
+      .getSilentModeForConversations({
+        conversationList: cvsList,
+      })
+      .then((res: any) => {
+        console.log('获取勿扰成功', res);
+        const userSetting = res.data.user;
+        const groupSetting = res.data.group;
+        this.contacts.forEach(item => {
+          if (userSetting[item.userId] && userSetting[item.userId]?.type == 'NONE') {
+            item.silent = true;
+          } else if (userSetting[item.userId]) {
+            item.silent = false;
+          }
+        });
+        console.log('this.contacts', this.contacts);
+        this.groups.forEach(item => {
+          if (groupSetting[item.groupid] && groupSetting[item.groupid]?.type == 'AT') {
+            item.silent = true;
+          } else if (groupSetting[item.groupid]) {
+            item.silent = false;
+          }
+        });
+      });
+  }
+
+  setSilentModeForConversation(
+    cvs: { conversationId: string; chatType: 'singleChat' | 'groupChat' },
+    silent: boolean,
+  ) {
+    const rootStore = getStore();
+    if (silent) {
+      rootStore.client
+        .setSilentModeForConversation({
+          conversationId: cvs.conversationId,
+          type: cvs.chatType as ChatSDK.CONVERSATIONTYPE,
+          options: {
+            paramType: 0,
+            remindType: (cvs.chatType == 'groupChat' ? 'AT' : 'NONE') as ChatSDK.SILENTMODETYPE,
+          },
+        })
+        .then((res: any) => {
+          console.log('设置勿扰成功', res);
+          if (cvs.chatType === 'singleChat') {
+            this.contacts.forEach(item => {
+              if (item.userId === cvs.conversationId) {
+                item.silent = true;
+              }
+            });
+          } else if (cvs.chatType === 'groupChat') {
+            this.groups.forEach(item => {
+              if (item.groupid === cvs.conversationId) {
+                item.silent = true;
+              }
+            });
+          }
+          // 不同同步会话列表里的数据， 因为会话列表里的数据每次都会重新获取， 同理在会话列表设置后也不要同步联系人列表里的数据，后面优化
+        });
+    } else {
+      rootStore.client
+        .clearRemindTypeForConversation({
+          conversationId: cvs.conversationId,
+          type: cvs.chatType as ChatSDK.CONVERSATIONTYPE,
+        })
+        .then((res: any) => {
+          console.log('清除勿扰成功', res);
+          if (cvs.chatType === 'singleChat') {
+            this.contacts.forEach(item => {
+              if (item.userId === cvs.conversationId) {
+                item.silent = false;
+              }
+            });
+          } else if (cvs.chatType === 'groupChat') {
+            this.groups.forEach(item => {
+              if (item.groupid === cvs.conversationId) {
+                item.silent = false;
+              }
+            });
+          }
+        });
+    }
+  }
+
   clear() {
     this.appUsersInfo = {};
     this.contacts = [];

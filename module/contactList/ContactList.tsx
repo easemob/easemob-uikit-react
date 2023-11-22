@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState, useContext } from 'react';
+import React, { FC, useEffect, useRef, useState, useContext, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 import classNames from 'classnames';
 import { ContactItem } from './ContactItem';
@@ -11,192 +11,217 @@ import { Search } from '../../component/input/Search';
 import Header from '../header';
 import { ContactGroup } from './ContactGroup';
 import { RootContext } from '../store/rootContext';
-import { useContacts, useGroups } from '../hooks/useAddress';
+import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { observer } from 'mobx-react-lite';
-import { StickyContainer } from 'react-sticky';
+import UserItem, { UserInfoData } from '../../component/userItem';
+import { pinyin } from 'pinyin-pro';
+import rootStore from '../store/index';
+import { checkCharacter } from '../utils/index';
+import ContactDetail from './ContactDetail';
+// pinyin('汉语拼音', { toneType: 'none' }); // "han yu pin yin"
 export interface ContactListProps {
+  style?: React.CSSProperties;
   className?: string;
   prefix?: string;
-  data?: {
-    group?: Array<{
-      groupId: string;
-      groupName: string;
-    }>;
-    chatroom?: Array<{
-      chatroomId: string;
-      chatroomName: string;
-    }>;
-    contact?: Array<{
-      userId: string;
-      nickname: string;
-    }>;
-  };
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean;
+  onItemClick?: (info: { id: string; type: 'contact' | 'group'; name: string }) => void;
+  menu: ('contacts' | 'groups')[];
+  hasMenu?: boolean; // 是否显示分类的menu, 默认值true, 只有menu中只有一个条目时才能设置false
+  checkable?: boolean; // 是否显示checkbox
+  onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
+  // checkedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
+}
+// TODO 监听加好友 加群组 更新数据
+function getBrands(members: any) {
+  if (members.length === 0) return [];
+  const innerMembers = members.concat();
+  innerMembers.forEach((item: any) => {
+    item.name = item.userId
+      ? rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
+      : item.groupname;
+    console.log('item.name', item.name);
+    item.userId && (item.nickname = item.name);
+    if (checkCharacter(item.name.substring(0, 1)) == 'en') {
+      item.initial = item.name.substring(0, 1).toUpperCase();
+    } else if (checkCharacter(item.name.substring(0, 1)) == 'zh') {
+      item.initial = pinyin(item.name.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
+    } else {
+      item.initial = '#';
+    }
+  });
+
+  innerMembers.sort((a: any, b: any) => a.initial.charCodeAt(0) - b.initial.charCodeAt(0));
+  console.log('innerMembers', innerMembers);
+  let someTitle = null;
+  let someArr: Array<{
+    id: number;
+    region: string;
+    brands: Array<{
+      brandId: string;
+      name: string;
+    }>;
+  }> = [];
+
+  let lastObj;
+  let newObj;
+
+  for (var i = 0; i < innerMembers.length; i++) {
+    var newBrands = {
+      brandId: innerMembers[i].userId || innerMembers[i].groupid,
+      name: innerMembers[i].name,
+    };
+
+    if (innerMembers[i].initial === '#') {
+      if (!lastObj) {
+        lastObj = {
+          id: i,
+          region: '#',
+          brands: [] as any,
+        };
+      }
+      lastObj.brands.push(newBrands);
+    } else {
+      if (innerMembers[i].initial !== someTitle) {
+        someTitle = innerMembers[i].initial;
+        newObj = {
+          id: i,
+          region: someTitle,
+          brands: [] as any,
+        };
+        someArr.push(newObj);
+      }
+      newObj?.brands.push(newBrands);
+    }
+  }
+  someArr.sort((a, b) => a.region.charCodeAt(0) - b.region.charCodeAt(0));
+  if (lastObj) {
+    someArr.push(lastObj);
+  }
+  // someArr.forEach((item) => {
+  // 	item.brands.forEach((val) => {
+  // 		presenceList.length &&
+  // 			presenceList.forEach((innerItem) => {
+  // 				if (val.name === innerItem.uid) {
+  // 					val.presence = innerItem;
+  // 				}
+  // 			});
+  // 	});
+  // });
+  return someArr;
 }
 
-// function getBrands(members) {
-//   const reg = /[a-z]/i;
-//   members.forEach(item => {
-//     item.name = item.nickname || item.groupName || item.chatroomName || item.name;
-//     if (reg.test(item.name.substring(0, 1))) {
-//       item.initial = item.name.substring(0, 1).toUpperCase();
-//     } else {
-//       item.initial = '#';
-//     }
-//   });
-
-//   members.sort((a, b) => a.initial.charCodeAt(0) - b.initial.charCodeAt(0));
-
-//   let someTitle = null;
-//   let someArr: Array<{
-//     id: number;
-//     region: string;
-//     brands: Array<{
-//       brandId: string;
-//       name: string;
-//     }>;
-//   }> = [];
-
-//   let lastObj;
-//   let newObj;
-
-//   for (var i = 0; i < members.length; i++) {
-//     var newBrands = {
-//       brandId: members[i].userId || members[i].groupId,
-//       name: members[i].nickname || members[i].groupName,
-//     };
-
-//     if (members[i].initial === '#') {
-//       if (!lastObj) {
-//         lastObj = {
-//           id: i,
-//           region: '#',
-//           brands: [],
-//         };
-//       }
-//       lastObj.brands.push(newBrands);
-//     } else {
-//       if (members[i].initial !== someTitle) {
-//         someTitle = members[i].initial;
-//         newObj = {
-//           id: i,
-//           region: someTitle,
-//           brands: [],
-//         };
-//         someArr.push(newObj);
-//       }
-//       newObj.brands.push(newBrands);
-//     }
-//   }
-//   someArr.sort((a, b) => a.region.charCodeAt(0) - b.region.charCodeAt(0));
-//   if (lastObj) {
-//     someArr.push(lastObj);
-//   }
-//   // someArr.forEach((item) => {
-//   // 	item.brands.forEach((val) => {
-//   // 		presenceList.length &&
-//   // 			presenceList.forEach((innerItem) => {
-//   // 				if (val.name === innerItem.uid) {
-//   // 					val.presence = innerItem;
-//   // 				}
-//   // 			});
-//   // 	});
-//   // });
-//   return someArr;
-// }
-
 let ContactList: FC<ContactListProps> = props => {
-  const { prefix: customizePrefixCls, className, onSearch } = props;
+  const {
+    prefix: customizePrefixCls,
+    className,
+    onSearch,
+    onItemClick,
+    menu = ['contacts', 'groups'],
+    style,
+    hasMenu = true,
+    checkable = false,
+    onCheckboxChange,
+  } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contactList', customizePrefixCls);
 
-  const classString = classNames(prefixCls, className);
-  const listRef = useRef<HTMLDivElement>(null);
-  const [listHeight, setListHeight] = useState(0);
-  const size = useSize(listRef);
-
-  const [renderItemData, setItemData] = useState({});
-
   const [addressNode, setAddressNode] = useState<JSX.Element[]>([]);
 
-  const rootStore = useContext(RootContext).rootStore;
+  const context = useContext(RootContext);
+  const { rootStore, theme, features } = context;
+  const themeMode = theme?.mode || 'light';
   const { addressStore } = rootStore;
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
+    },
+    className,
+  );
 
   // 获取联系人列表
-  const contactsData = useContacts();
-  useEffect(() => {
-    addressStore.setContacts(contactsData);
-  }, [contactsData]);
+  useContacts();
+  useUserInfo('contacts');
+  const { getJoinedGroupList } = useGroups();
+  getJoinedGroupList();
 
-  // 自适应高度
-  useEffect(() => {
-    const height = listRef.current!.clientHeight;
-    setListHeight(height);
-  }, [size]);
+  console.log('addressStore.groups', addressStore.groups);
 
-  //   const groupTag = tagName => {
-  //     return <span>{tagName}</span>;
-  //   };
-
-  const [activeKey, setActiveKey] = useState<number>(9999);
   const [itemActiveKey, setItemActiveKey] = useState('');
 
   const [isSearch, setIsSearch] = useState(false);
 
+  const handleCheckboxChange = (checked: boolean, data: UserInfoData) => {
+    onCheckboxChange?.(checked, data);
+  };
   // 渲染联系人列表
   useEffect(() => {
-    // const mockDatas = { ...mockData };
-    const renderData = {
-      contact: addressStore.contacts,
-      groups: addressStore.groups,
+    let renderData: { contacts: any; groups: any } = {
+      contacts: undefined,
+      groups: undefined,
     };
-
-    let menu = Object.keys(renderData).map((menuItem, index2) => {
-      // mockDatas[menuItem] = getBrands(mockDatas[menuItem]);
-      let contacts = renderData[menuItem as 'contact' | 'groups']?.map(
-        (contactItem: { userId: string; groupid: string; nickname: string; groupname: string }) => {
-          const id = contactItem.userId || contactItem.groupid;
-          const name = contactItem.nickname || contactItem.groupname;
-          return (
-            <ContactItem
-              contactId={id}
-              onClick={e => {
-                setItemActiveKey(id);
-              }}
-              key={id + Math.random().toString()}
-              isActive={id == itemActiveKey}
-            >
-              {name || id}
-            </ContactItem>
-          );
-        },
-      );
+    menu.forEach(item => {
+      if (item == 'contacts') {
+        renderData.contacts = getBrands(addressStore.contacts);
+      } else if (item == 'groups') {
+        renderData.groups = getBrands(addressStore.groups);
+      }
+    });
+    let menuNode = Object.keys(renderData).map((menuItem, index2) => {
+      let contacts = renderData[menuItem as 'contacts' | 'groups']?.map((contactItem: any) => {
+        console.log('---contactItem', contactItem);
+        const id = contactItem.brandId;
+        const name = contactItem.name;
+        return (
+          <ContactItem
+            data={contactItem}
+            contactId={id}
+            onClick={(e, contactId) => {
+              console.log('点击 item', contactId, id);
+              const info = getNameAndType(contactId);
+              onItemClick?.({
+                id: contactId,
+                type: info.type,
+                name: info.name,
+              });
+              setItemActiveKey(contactId);
+            }}
+            key={id}
+            selectedId={itemActiveKey}
+            checkable={checkable}
+            onCheckboxChange={handleCheckboxChange}
+          >
+            {name || id}
+          </ContactItem>
+        );
+      });
+      if (!contacts) return <></>;
       return (
         <ContactGroup
-          onclickTitle={title => {
-            setActiveKey(index2);
-          }}
           title={menuItem}
           key={menuItem}
-          itemCount={contacts.length}
+          itemCount={
+            menuItem == 'contacts' ? addressStore.contacts.length : addressStore.groups.length
+          }
           itemHeight={74}
+          hasMenu={hasMenu || menu.length !== 1}
         >
           {contacts}
         </ContactGroup>
       );
     });
 
-    setAddressNode(menu);
-  }, [itemActiveKey, addressStore.contacts, addressStore.groups]);
+    setAddressNode(menuNode);
+  }, [itemActiveKey, addressStore.contacts, addressStore.groups, addressStore.appUsersInfo]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const returnValue = onSearch?.(e);
     if (returnValue === false) return;
-
+    console.log('addressStore.contacts', addressStore.contacts);
     const contactSearchList = addressStore.contacts.filter(
       (user: { userId: string | string[]; nickname: string | string[] }) => {
-        if (user.userId.includes(value) || user.nickname.includes(value)) {
+        if (user.nickname.includes(value)) {
           return true;
         }
         return false;
@@ -205,7 +230,7 @@ let ContactList: FC<ContactListProps> = props => {
 
     const groupSearchList = addressStore.groups.filter(
       (group: { groupid: string | string[]; groupname: string | string[] }) => {
-        if (group.groupid.includes(value) || group.groupname.includes(value)) {
+        if (group.groupname.includes(value)) {
           return true;
         }
         return false;
@@ -214,46 +239,71 @@ let ContactList: FC<ContactListProps> = props => {
 
     setIsSearch(value.length > 0 ? true : false);
 
-    addressStore.setSearchList(contactSearchList.concat(groupSearchList));
+    addressStore.setSearchList(contactSearchList.concat(groupSearchList as any));
   };
 
   const [searchNode, setSearchNode] = useState<JSX.Element[]>();
 
   // 渲染搜索列表
   useEffect(() => {
+    console.log('搜做列表', addressStore.searchList);
     const searchList = addressStore.searchList.map(
       (item: { userId: any; groupid: any; nickname: any; groupname: any }) => {
         const id = item.userId || item.groupid;
         const name = item.nickname || item.groupname;
+        const data = {
+          userId: id,
+          nickname: name,
+        };
         return (
-          <ContactItem
-            contactId={id}
+          <UserItem
             onClick={e => {
+              console.log('点击 item', id);
               setItemActiveKey(id);
+              onItemClick?.({
+                id: id,
+                type: item.userId ? 'contact' : 'group',
+                name: name,
+              });
             }}
-            key={id + Math.random().toString()}
-            isActive={id == itemActiveKey}
-          >
-            {name || id}
-          </ContactItem>
+            data={data}
+            key={id}
+            selected={itemActiveKey == item.userId}
+            checkable={checkable}
+            onCheckboxChange={handleCheckboxChange}
+          ></UserItem>
         );
       },
     );
 
     setSearchNode(searchList);
-  }, [addressStore.searchList]);
+  }, [addressStore.searchList, itemActiveKey]);
+
+  const getNameAndType = useCallback((id: string) => {
+    let name;
+    let type: 'contact' | 'group' = 'contact';
+    if (addressStore.appUsersInfo[itemActiveKey]?.nickname) {
+      name = addressStore.appUsersInfo[itemActiveKey]?.nickname;
+      type = 'contact';
+    } else {
+      addressStore.groups.forEach(item => {
+        if (item.groupid == id) {
+          name = item.groupname;
+          type = 'group';
+        }
+      });
+    }
+    if (!name) {
+      name = id;
+    }
+    return { name, type };
+  }, []);
 
   return (
-    <div className={classString} ref={listRef} style={{ display: 'flex', flexDirection: 'column' }}>
-      <Header></Header>
+    <div className={classString} style={{ ...style }}>
+      <Header avatar={<></>} content="Contacts List"></Header>
       <Search onChange={handleSearch}></Search>
-      <div>
-        <StickyContainer style={{ height: '500px', overflow: 'auto' }}>
-          {isSearch ? searchNode : addressNode}
-        </StickyContainer>
-      </div>
-
-      {/* 太多的情况考虑使用 List 组件优化 */}
+      <div className={`${prefixCls}-content`}>{isSearch ? searchNode : addressNode}</div>
     </div>
   );
 };

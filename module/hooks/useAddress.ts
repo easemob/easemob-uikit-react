@@ -9,8 +9,14 @@ const useContacts = () => {
 
   const { client, addressStore } = rootStore;
 
-  let [contacts, setContacts] = useState<Array<{ userId: string; nickname: string }>>([]);
+  let [contacts, setContacts] = useState<Array<{ userId: string; nickname: string }>>(
+    rootStore.addressStore.contacts,
+  );
+
   useEffect(() => {
+    if (rootStore.addressStore.contacts?.length > 0) {
+      return;
+    }
     rootStore.loginState &&
       client
         .getContacts()
@@ -20,6 +26,7 @@ const useContacts = () => {
             nickname: '',
           }));
           setContacts(contacts || []);
+          addressStore.setContacts(contacts);
         })
         .catch(err => {
           console.warn('get contacts failed', err);
@@ -28,18 +35,23 @@ const useContacts = () => {
   return contacts;
 };
 
-const useUserInfo = () => {
+const useUserInfo = (userList: 'conversation' | 'contacts') => {
   const rootStore = useContext(RootContext).rootStore;
   useEffect(() => {
     let keys = Object.keys(rootStore.addressStore.appUsersInfo);
     let cvsUserIds = rootStore.conversationStore.conversationList
       .filter(item => item.chatType === 'singleChat' && !keys.includes(item.conversationId))
       .map(cvs => cvs.conversationId);
+    let contactsUserIds = rootStore.addressStore.contacts
+      .filter(item => {
+        return !keys.includes(item.userId);
+      })
+      .map(item => item.userId);
 
     getUsersInfo({
-      userIdList: cvsUserIds,
+      userIdList: userList == 'conversation' ? cvsUserIds : contactsUserIds,
     });
-  }, [rootStore.conversationStore.conversationList.length]);
+  }, [rootStore.conversationStore.conversationList.length, rootStore.addressStore.contacts.length]);
 };
 
 const useGroups = () => {

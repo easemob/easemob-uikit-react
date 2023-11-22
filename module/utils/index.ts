@@ -7,6 +7,7 @@ import { emoji } from '../messageEditor/emoji/emojiConfig';
 import { AppUserInfo } from '../store/AddressStore';
 import { CurrentConversation } from '../store/ConversationStore';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
+import { f } from 'vitest/dist/index-2f5b6168';
 
 export function getConversationTime(time: number) {
   if (!time) return '';
@@ -99,7 +100,7 @@ export const renderHtml = (txt: string): string => {
 export function getUsersInfo(props: { userIdList: string[]; withPresence?: boolean }) {
   const { userIdList, withPresence = true } = props;
   let { client, addressStore, conversationStore } = getStore();
-  if (!client.context) return;
+  if (!client.context) return Promise.reject('client is not initialized');
   const findIndex = userIdList.indexOf(client.user);
   let subList = [...userIdList];
   const result = {};
@@ -255,5 +256,22 @@ export function sortByPinned(a: any, b: any) {
     return a.lastMessage.time > b.lastMessage.time ? -1 : 1; // 保持原有顺序
   } else {
     return 0; // 保持原有顺序
+  }
+}
+
+export function checkCharacter(character: string) {
+  var pattern = /[\u4E00-\u9FA5]/; // 中文字符的unicode范围
+  var isChinese = pattern.test(character);
+  var isLetter = /^[a-zA-Z]$/.test(character);
+
+  if (isChinese) {
+    console.log('该字符是汉字');
+    return 'zh';
+  } else if (isLetter) {
+    console.log('该字符是字母');
+    return 'en';
+  } else {
+    console.log('该字符既不是字母也不是汉字');
+    return 'unknown';
   }
 }

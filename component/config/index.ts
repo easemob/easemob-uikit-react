@@ -6,7 +6,10 @@ export interface ConfigConsumerProps {
   getPopupContainer?: (triggerNode?: HTMLElement) => HTMLElement;
 }
 
-const defaultGetPrefixCls = (suffixCls?: string, customizePrefixCls?: string) => {
+const defaultGetPrefixCls: (suffixCls?: string, customizePrefixCls?: string) => string = (
+  suffixCls,
+  customizePrefixCls,
+) => {
   if (customizePrefixCls) return customizePrefixCls;
 
   return suffixCls ? `cui-${suffixCls}` : 'cui';

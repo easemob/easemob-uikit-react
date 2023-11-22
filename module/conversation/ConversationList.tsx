@@ -75,7 +75,7 @@ let Conversations: FC<ConversationListProps> = props => {
   const { appUsersInfo } = rootStore.addressStore;
   const { t } = useTranslation();
   const { getConversationList, hasConversationNext } = useConversations();
-  useUserInfo();
+  useUserInfo('conversation');
 
   const groupData = rootStore.addressStore.groups;
   // 获取加入群组，把群组名放在 conversationList

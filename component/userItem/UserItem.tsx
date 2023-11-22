@@ -8,6 +8,7 @@ import { Tooltip } from '../../component/tooltip/Tooltip';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../../module/store/rootContext';
+import Checkbox from '../../component/checkbox';
 export interface UserInfoData {
   userId: string;
   nickname?: string;
@@ -26,6 +27,10 @@ export interface UserItemProps {
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   style?: React.CSSProperties;
   data: UserInfoData;
+  selected?: boolean;
+  checkable?: boolean;
+  onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
+  checked?: boolean;
   // 右侧更多按钮配置
   moreAction?: {
     visible?: boolean;
@@ -48,6 +53,10 @@ let UserItem: FC<UserItemProps> = props => {
     onClick,
     data,
     moreAction,
+    selected,
+    checkable,
+    onCheckboxChange,
+    checked,
     ...others
   } = props;
 
@@ -62,6 +71,7 @@ let UserItem: FC<UserItemProps> = props => {
     prefixCls,
     {
       [`${prefixCls}-${themeMode}`]: !!themeMode,
+      [`${prefixCls}-selected`]: selected,
     },
     className,
   );
@@ -101,6 +111,10 @@ let UserItem: FC<UserItemProps> = props => {
     );
   }
 
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleCheckboxChange', e.target.checked);
+    onCheckboxChange?.(e.target.checked, data);
+  };
   return (
     <div
       className={classString}
@@ -128,6 +142,11 @@ let UserItem: FC<UserItemProps> = props => {
           </Tooltip>
         )}
       </div>
+      {checkable && (
+        <div>
+          <Checkbox checked={checked} onChange={handleCheckboxChange}></Checkbox>
+        </div>
+      )}
     </div>
   );
 };

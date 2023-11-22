@@ -4,7 +4,7 @@ import TextMessage from '../../../module/textMessage';
 
 import List from '../../../component/list';
 import Header from '../../../module/header';
-import { ContactItem, ContactList } from '../../../module/contactList';
+import { ContactItem, ContactList, ContactDetail } from '../../../module/contactList';
 import { Search } from '../../../component/input/Search';
 import Chat from '../../../module/chat';
 import Icon from '../../../component/icon';
@@ -115,7 +115,7 @@ const ChatApp = () => {
 
   let MsgList = <MessageList renderMessage={msg => TxtMsg(msg)}></MessageList>;
 
-  const [tab, setTab] = useState('chat');
+  const [tab, setTab] = useState('contact');
   const changeTab = (tab: string) => {
     setTab(tab);
   };
@@ -149,6 +149,8 @@ const ChatApp = () => {
       });
     };
   };
+
+  const [contactData, setContactData] = useState({ id: '', name: '', type: 'contact' });
   return (
     <>
       <div className="tab-box">
@@ -195,7 +197,14 @@ const ChatApp = () => {
           ></ConversationList>
         )}
 
-        {tab == 'contact' && <ContactList className="conversation"></ContactList>}
+        {tab == 'contact' && (
+          <ContactList
+            // className="conversation"
+            onItemClick={data => {
+              setContactData(data);
+            }}
+          ></ContactList>
+        )}
       </div>
       <div
         style={{
@@ -205,22 +214,32 @@ const ChatApp = () => {
         }}
       >
         <div style={{ flex: 1, borderLeft: '1px solid transparent', overflow: 'hidden' }}>
-          <Chat
-            messageListProps={{
-              renderUserProfile: () => {
-                return null;
-              },
-            }}
-            messageEditorProps={{
-              enabledTyping: true,
-            }}
-            rtcConfig={{
-              getRTCToken: getRTCToken,
-              getIdMap: () => {},
-            }}
-          ></Chat>
+          {tab == 'chat' && (
+            <Chat
+              messageListProps={{
+                renderUserProfile: () => {
+                  return null;
+                },
+              }}
+              messageEditorProps={{
+                enabledTyping: true,
+              }}
+              rtcConfig={{
+                getRTCToken: getRTCToken,
+                getIdMap: () => {},
+              }}
+            ></Chat>
+          )}
+          {tab == 'contact' && (
+            <ContactDetail
+              data={contactData}
+              onMessageBtnClick={() => {
+                setTab('chat');
+              }}
+            ></ContactDetail>
+          )}
         </div>
-        {thread.showThreadPanel || (
+        {thread.showThreadPanel && (
           <div
             style={{
               width: '50%',
@@ -264,7 +283,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYFg/83jlv1171nxW+fxC11ozQdtLbReL43OTT4Y3c4uUc48pMKQZpiSbm1skpaQkm5mYJaZYpBmZGViamyUnGqUYGJom77gemtoQyMhwyH3CLEYGVgZGIATxVRiSDMxMElPMDHTNjEySdA0NU5N1LVINjXRNk4xMLJIMTC3SkiwBQsgpWw==',
+          '007eJxTYBCZNoFTSvnUt1lHPy5dnfd9mfermzyXVIL3eNh47mR/XRqqwJBmmJJsbm6RlJKSbGZilphikWZkZmBpbpacaJRiYGiaXLwqNrUhkJFBp+5ZASMDKwMjEIL4KgxJBmYmiSlmBrpmRiZJuoaGqcm6FqmGRrqmSUYmFkkGphZpSZYA92UomQ==',
         // appKey: 'easemob#easeim',
       }}
       theme={{

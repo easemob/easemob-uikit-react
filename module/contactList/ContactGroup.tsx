@@ -1,20 +1,17 @@
-import React, { FC, useState, ReactNode, useEffect } from 'react';
+import React, { FC, useState, ReactNode, useEffect, useRef } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import Icon from '../../component/icon';
-import Avatar from '../../component/avatar';
-import Badge from '../../component/badge';
-import { string } from 'prop-types';
-import { Sticky } from 'react-sticky';
+import { RootContext } from '../store/rootContext';
 export interface ContactGroupProps {
   prefix?: string;
   children?: ReactNode;
   title?: string;
   itemCount?: number;
   itemHeight?: number;
-  open?: boolean;
   onclickTitle?: (data: any) => void;
+  hasMenu?: boolean; // 是否显示分类的menu
 }
 
 const ContactGroup: FC<ContactGroupProps> = props => {
@@ -23,61 +20,53 @@ const ContactGroup: FC<ContactGroupProps> = props => {
     children,
     title,
     itemCount,
-    itemHeight,
-    open = false,
     onclickTitle,
+    hasMenu = true,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contactGroup', customizePrefixCls);
+  const context = React.useContext(RootContext);
+  const { rootStore, theme, features } = context;
+  const themeMode = theme?.mode || 'light';
+  const groupClass = classNames(prefixCls, {
+    [`${prefixCls}-${themeMode}`]: !!themeMode,
+  });
 
-  const groupClass = classNames(prefixCls);
-
-  const [childrenVisible, setChildrenVisible] = useState(false);
+  const [childrenVisible, setChildrenVisible] = useState(!hasMenu);
   const [iconType, setIconType] = useState(0);
+  const [height, setHeight] = useState<number | string>(hasMenu ? 0 : 'auto');
   const handleClickTitle = (title?: string) => {
     setChildrenVisible(childrenVisible => !childrenVisible);
     setIconType(type => (type == 0 ? 90 : 0));
     onclickTitle?.(title);
+    setHeight(childrenVisible ? 0 : `${panelRef?.current?.scrollHeight}px`);
   };
 
-  const childrenClass = classNames(`${groupClass}-children`, {
-    [`${groupClass}-children-show`]: childrenVisible,
-    [`${groupClass}-children-hide`]: !childrenVisible,
+  const childrenClass = classNames(`${prefixCls}-children`, {
+    [`${prefixCls}-children-show`]: childrenVisible,
+    [`${prefixCls}-children-hide`]: !childrenVisible,
   });
 
-  const ITEM_HEIGHT = itemHeight || 64;
-
-  let itemNum = 1;
-  if (Array.isArray(children)) {
-    itemNum = children.length;
-  } else if (typeof children == 'undefined') {
-    itemNum = 0;
-  }
-
+  const panelRef = useRef<HTMLDivElement>(null);
   return (
     <div className={groupClass}>
-      <Sticky relative={childrenVisible}>
-        {({ style }: { style: React.CSSProperties }) => (
-          <div
-            className={`${groupClass}-title`}
-            onClick={() => handleClickTitle(title)}
-            style={{ ...style, zIndex: 2 }}
-          >
-            <div> {title}</div>
-            <div>
-              <span>{itemCount}</span>
-              <div className={`${groupClass}-icon`} style={{ transform: `rotate(${iconType}deg)` }}>
-                <Icon type="ARROW_RIGHT"></Icon>
-              </div>
+      {hasMenu && (
+        <div className={`${prefixCls}-title`} onClick={() => handleClickTitle(title)}>
+          <div> {title}</div>
+          <div>
+            <span>{itemCount}</span>
+            <div className={`${prefixCls}-icon`} style={{ transform: `rotate(${iconType}deg)` }}>
+              <Icon type="ARROW_RIGHT"></Icon>
             </div>
           </div>
-        )}
-      </Sticky>
+        </div>
+      )}
 
       <div
         className={childrenClass}
+        ref={panelRef}
         style={{
-          height: childrenVisible ? ITEM_HEIGHT * itemNum : 0,
+          height: height,
         }}
       >
         {children}
