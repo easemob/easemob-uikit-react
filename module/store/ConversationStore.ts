@@ -247,15 +247,28 @@ class ConversationStore {
       .getServerPinnedConversations({ pageSize: 50 })
       .then((res: ChatSDK.AsyncResult<ChatSDK.ServerConversations>) => {
         console.log('----res', res);
-        const conversations = res.data?.conversations || [];
+        const conversations = (res.data?.conversations || []) as unknown as Conversation[];
+
+        // conversations.forEach(item => {
+        //   this.conversationList?.forEach(cvs => {
+        //     if (cvs.conversationId === item.conversationId) {
+        //       cvs.isPinned = true;
+        //     }
+        //   });
+        // });
+
+        const mergedList = [...this.conversationList];
         conversations.forEach(item => {
-          this.conversationList?.forEach(cvs => {
-            if (cvs.conversationId === item.conversationId) {
-              cvs.isPinned = true;
-            }
-          });
+          const idx = this.conversationList.findIndex(
+            cvs => cvs.conversationId === item.conversationId,
+          );
+          if (idx === -1) {
+            mergedList.push(item);
+          } else {
+            this.conversationList[idx].isPinned = true;
+          }
         });
-        this.conversationList = [...this.conversationList.sort(sortByPinned)];
+        this.conversationList = [...mergedList.sort(sortByPinned)];
       });
   }
 
