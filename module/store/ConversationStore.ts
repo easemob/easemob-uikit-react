@@ -65,6 +65,7 @@ class ConversationStore {
       pinConversation: action,
       getServerPinnedConversations: action,
       setSilentModeForConversation: action,
+      setSilentModeForConversationSync: action,
       clearRemindTypeForConversation: action,
       getSilentModeForConversations: action,
       setOnlineStatus: action,
@@ -128,6 +129,7 @@ class ConversationStore {
     if (typeof conversation != 'object') {
       return console.error('Invalid parameter: conversation');
     }
+    // TODO: 改造，把调api移到这里面，增加是否删除历史消息的参数
     this.conversationList = this.conversationList?.filter(cvs => {
       if (
         cvs.chatType == conversation.chatType &&
@@ -272,6 +274,14 @@ class ConversationStore {
       });
   }
 
+  setSilentModeForConversationSync(cvs: CurrentConversation, result: boolean) {
+    this.conversationList?.forEach(item => {
+      if (item.conversationId === cvs.conversationId) {
+        item.silent = result;
+      }
+    });
+    this.conversationList = [...this.conversationList];
+  }
   setSilentModeForConversation(cvs: CurrentConversation) {
     this.rootStore.client
       .setSilentModeForConversation({
@@ -284,12 +294,8 @@ class ConversationStore {
       })
       .then((res: any) => {
         console.log('设置勿扰成功', res);
-        this.conversationList?.forEach(item => {
-          if (item.conversationId === cvs.conversationId) {
-            item.silent = true;
-          }
-        });
-        this.conversationList = [...this.conversationList];
+        this.setSilentModeForConversationSync(cvs, true);
+        this.rootStore.addressStore.setSilentModeForConversationSync(cvs, true);
       });
   }
 
@@ -301,12 +307,8 @@ class ConversationStore {
       })
       .then((res: any) => {
         console.log('清除勿扰成功', res);
-        this.conversationList?.forEach(item => {
-          if (item.conversationId === cvs.conversationId) {
-            item.silent = false;
-          }
-        });
-        this.conversationList = [...this.conversationList];
+        this.setSilentModeForConversationSync(cvs, false);
+        this.rootStore.addressStore.setSilentModeForConversationSync(cvs, false);
       });
   }
 

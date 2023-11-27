@@ -118,7 +118,7 @@ let ContactList: FC<ContactListProps> = props => {
     onItemClick,
     menu = ['contacts', 'groups'],
     style,
-    hasMenu = true,
+    hasMenu = false,
     checkable = false,
     onCheckboxChange,
   } = props;

@@ -1,0 +1,93 @@
+@import '~/common/style/index.scss';
+
+$contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
+
+.#{$contactInfo-prefix-cls}{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: $gray-98;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 20px 0;
+
+    &-header{
+        display: flex;
+        flex-direction: column;
+        padding-top: 16px;
+        align-items: center;
+        background-color: $gray-98;
+        width: 100%;
+        &-name{
+            font-size: 18px;
+            font-style: normal;
+            font-weight: 500;
+            line-height: 26px;
+        }
+        &-id{
+            margin-top: 2px;
+            display: flex;
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 20px;
+            color: $gray-7;
+            align-items: center;
+            gap: 4px;
+        }
+    }
+    &-header>div{
+        margin-top: 16px;
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    &-content{
+        width: 100%;
+        background-color: $gray-95;
+        &-item{
+            background-color: $gray-98;
+            display: flex;
+            justify-content: space-between;
+            height: 54px;
+            box-sizing: border-box;
+            align-items: center;
+            gap: 8px;
+            padding: 0 12px;
+            &-box{
+                cursor: default;
+                height: 100%;
+                align-items: center;
+                display: flex;
+                justify-content: space-between;
+                flex: 1;
+                border-bottom: 1px solid $gray-9;
+                &>div{
+                    display: flex;
+                    align-items: center;
+                }
+            }
+        }
+
+        &-section{
+            margin-top: 12px;
+        }
+    }
+}
+
+.cui-group-nickname-input input{
+    background-color: $gray-95;
+}
+
+.#{$contactInfo-prefix-cls}-infoModal div{
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 20px; 
+    margin-bottom: 4px;
+}
+
+.#{$contactInfo-prefix-cls}-infoModal:nth-of-type(2){
+    margin-top: 16px;
+}

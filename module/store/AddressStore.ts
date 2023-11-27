@@ -1,4 +1,4 @@
-import { observable, action, makeObservable } from 'mobx';
+import { observable, action, makeObservable, runInAction } from 'mobx';
 import { getStore } from './index';
 import { ChatSDK } from '../SDK';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
@@ -77,6 +77,11 @@ class AddressStore {
       unmuteChatRoomMember: action,
       removerChatroomMember: action,
       getSilentModeForConversations: action,
+      setSilentModeForConversationSync: action,
+      getGroupInfo: action,
+      modifyGroup: action,
+      destroyGroup: action,
+      leaveGroup: action,
       clear: action,
     });
   }
@@ -152,18 +157,30 @@ class AddressStore {
     }
   }
 
-  setGroupMemberAttributes(
-    groupId: string,
-    userId: string,
-    // @ts-ignore
-    attributes: ChatSDK.MemberAttributes,
-  ) {
+  setGroupMemberAttributes(groupId: string, userId: string, attributes: ChatSDK.MemberAttributes) {
     let groupIdx = getGroupItemIndexFromGroupsById(groupId);
     let idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) ?? -1;
     if (idx > -1) {
       let memberList = this.groups[groupIdx].members || [];
       memberList[idx].attributes = attributes;
     }
+  }
+
+  setGroupMemberAttributesAsync(
+    groupId: string,
+    userId: string,
+    attributes: ChatSDK.MemberAttributes,
+  ) {
+    const rootStore = getStore();
+    rootStore.client
+      .setGroupMemberAttributes({
+        groupId: groupId,
+        userId: userId,
+        memberAttributes: attributes,
+      })
+      .then(() => {
+        this.setGroupMemberAttributes(groupId, userId, attributes);
+      });
   }
 
   setGroupAdmins = (groupId: string, admins: string[]) => {
@@ -341,6 +358,24 @@ class AddressStore {
       });
   }
 
+  setSilentModeForConversationSync(
+    cvs: { conversationId: string; chatType: 'singleChat' | 'groupChat' },
+    silent: boolean,
+  ) {
+    if (cvs.chatType === 'singleChat') {
+      this.contacts.forEach(item => {
+        if (item.userId === cvs.conversationId) {
+          item.silent = silent;
+        }
+      });
+    } else if (cvs.chatType === 'groupChat') {
+      this.groups.forEach(item => {
+        if (item.groupid === cvs.conversationId) {
+          item.silent = silent;
+        }
+      });
+    }
+  }
   setSilentModeForConversation(
     cvs: { conversationId: string; chatType: 'singleChat' | 'groupChat' },
     silent: boolean,
@@ -358,20 +393,8 @@ class AddressStore {
         })
         .then((res: any) => {
           console.log('设置勿扰成功', res);
-          if (cvs.chatType === 'singleChat') {
-            this.contacts.forEach(item => {
-              if (item.userId === cvs.conversationId) {
-                item.silent = true;
-              }
-            });
-          } else if (cvs.chatType === 'groupChat') {
-            this.groups.forEach(item => {
-              if (item.groupid === cvs.conversationId) {
-                item.silent = true;
-              }
-            });
-          }
-          // 不同同步会话列表里的数据， 因为会话列表里的数据每次都会重新获取， 同理在会话列表设置后也不要同步联系人列表里的数据，后面优化
+          rootStore.conversationStore.setSilentModeForConversationSync(cvs, true);
+          this.setSilentModeForConversationSync(cvs, true);
         });
     } else {
       rootStore.client
@@ -381,21 +404,99 @@ class AddressStore {
         })
         .then((res: any) => {
           console.log('清除勿扰成功', res);
-          if (cvs.chatType === 'singleChat') {
-            this.contacts.forEach(item => {
-              if (item.userId === cvs.conversationId) {
-                item.silent = false;
-              }
-            });
-          } else if (cvs.chatType === 'groupChat') {
-            this.groups.forEach(item => {
-              if (item.groupid === cvs.conversationId) {
-                item.silent = false;
+          rootStore.conversationStore.setSilentModeForConversationSync(cvs, false);
+
+          this.setSilentModeForConversationSync(cvs, false);
+        });
+    }
+  }
+
+  getGroupInfo(groupId: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .getGroupInfo({
+        groupId: groupId,
+      })
+      .then(res => {
+        console.log('getGroupInfo', res);
+        const found = this.groups.filter(item => item.groupid === groupId);
+        if (found.length === 0) {
+          this.groups.push({
+            info: res.data?.[0],
+            groupid: groupId,
+            groupname: res.data?.[0].name || '',
+          });
+        } else {
+          found[0].info = res.data?.[0];
+        }
+      });
+  }
+
+  modifyGroup(groupId: string, groupName: string, description: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .modifyGroup({
+        groupId,
+        groupName,
+        description,
+      })
+      .then(() => {
+        this.groups.forEach(item => {
+          if (item.groupid === groupId) {
+            runInAction(() => {
+              item.groupname = groupName;
+
+              if (item.info) {
+                item.info.description = description;
+                item.info.name = groupName;
               }
             });
           }
         });
-    }
+        const conversation = rootStore.conversationStore.conversationList.find(item => {
+          return item.conversationId === groupId;
+        });
+        if (conversation) {
+          conversation.name = groupName;
+        }
+        conversation && rootStore.conversationStore.modifyConversation(conversation);
+      });
+  }
+
+  destroyGroup(groupId: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .destroyGroup({
+        groupId,
+      })
+      .then(() => {
+        runInAction(() => {
+          this.groups = this.groups.filter(item => item.groupid !== groupId);
+        });
+
+        rootStore.conversationStore.deleteConversation({
+          chatType: 'groupChat',
+          conversationId: groupId,
+        });
+      });
+  }
+
+  leaveGroup(groupId: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .leaveGroup({
+        groupId,
+      })
+      .then(() => {
+        runInAction(() => {
+          this.groups = this.groups.filter(item => item.groupid !== groupId);
+        });
+
+        rootStore.conversationStore.deleteConversation({
+          chatType: 'groupChat',
+          conversationId: groupId,
+        });
+      });
   }
 
   clear() {

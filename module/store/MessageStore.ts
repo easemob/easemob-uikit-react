@@ -475,6 +475,11 @@ class MessageStore {
 
   clearMessage(cvs: CurrentConversation) {
     if (!cvs) return;
+    this.rootStore.client.removeHistoryMessages({
+      targetId: cvs.conversationId,
+      chatType: cvs.chatType as 'singleChat' | 'groupChat',
+      beforeTimeStamp: Date.now(),
+    });
     this.message[cvs.chatType][cvs.conversationId] = [];
   }
 

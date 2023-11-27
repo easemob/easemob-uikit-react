@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, FC } from 'react';
 import ReactDOM from 'react-dom/client';
 import TextMessage from '../../../module/textMessage';
 
 import List from '../../../component/list';
 import Header from '../../../module/header';
 import { ContactItem, ContactList, ContactDetail } from '../../../module/contactList';
+import ContactInfo from '../../../module/contactInfo';
 import { Search } from '../../../component/input/Search';
 import Chat from '../../../module/chat';
 import Icon from '../../../component/icon';
@@ -38,7 +39,7 @@ console.log('hexToHsla 1', generateColors(hexToHsla('#FF0000')));
 // } from 'chatuim2';
 // import 'chatuim2/style.css';
 window.rootStore = rootStore;
-const ChatApp = () => {
+const ChatApp: FC<any> = () => {
   const client = useClient();
   // useEffect(() => {
   //   client &&
@@ -173,7 +174,7 @@ const ChatApp = () => {
       </div>
       <div
         style={{
-          width: '35%',
+          width: '350px',
           background: '#fff',
         }}
       >
@@ -251,12 +252,17 @@ const ChatApp = () => {
             <Thread></Thread>
           </div>
         )}
+        <div style={{ width: '350px', borderLeft: '1px solid green' }}>
+          <ContactInfo
+            conversation={{ chatType: 'groupChat', conversationId: contactData.id }}
+          ></ContactInfo>
+        </div>
       </div>
-      <div>
+      {/* <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
         <Button onClick={topConversation}>top 2808</Button>
         <br />
-      </div>
+      </div> */}
     </>
   );
 };
@@ -283,7 +289,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYBCZNoFTSvnUt1lHPy5dnfd9mfermzyXVIL3eNh47mR/XRqqwJBmmJJsbm6RlJKSbGZilphikWZkZmBpbpacaJRiYGiaXLwqNrUhkJFBp+5ZASMDKwMjEIL4KgxJBmYmiSlmBrpmRiZJuoaGqcm6FqmGRrqmSUYmFkkGphZpSZYA92UomQ==',
+          '007eJxTYFA7ONXo5ef9IucmRD8My2nefCXI49l2Q678lIq26X0n+JcoMKQZpiSbm1skpaQkm5mYJaZYpBmZGViamyUnGqUYGJomN/1LTm0IZGRoUVOaxsjAysAIhCC+CkOSgZlJYoqZga6ZkUmSrqFharKuRaqhka5pkpGJRZKBqUVakiUAH4Yovg==',
         // appKey: 'easemob#easeim',
       }}
       theme={{
