@@ -1,7 +1,6 @@
 import React, { useEffect, useState, FC } from 'react';
 import ReactDOM from 'react-dom/client';
 import TextMessage from '../../../module/textMessage';
-
 import List from '../../../component/list';
 import Header from '../../../module/header';
 import { ContactItem, ContactList, ContactDetail } from '../../../module/contactList';
@@ -252,11 +251,11 @@ const ChatApp: FC<any> = () => {
             <Thread></Thread>
           </div>
         )}
-        <div style={{ width: '350px', borderLeft: '1px solid green' }}>
+        {/* <div style={{ width: '350px', borderLeft: '1px solid green' }}>
           <ContactInfo
             conversation={{ chatType: 'groupChat', conversationId: contactData.id }}
           ></ContactInfo>
-        </div>
+        </div> */}
       </div>
       {/* <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -289,7 +288,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYFA7ONXo5ef9IucmRD8My2nefCXI49l2Q678lIq26X0n+JcoMKQZpiSbm1skpaQkm5mYJaZYpBmZGViamyUnGqUYGJomN/1LTm0IZGRoUVOaxsjAysAIhCC+CkOSgZlJYoqZga6ZkUmSrqFharKuRaqhka5pkpGJRZKBqUVakiUAH4Yovg==',
+          '007eJxTYNh2K0q3T9oy6rrrimtbnJsms5y+e8bl8Z6JASbWlx5mrNqgwJBmmJJsbm6RlJKSbGZilphikWZkZmBpbpacaJRiYGia3DsrNbUhkJFhndrldkYGVgZGIATxVRiSDMxMElPMDHTNjEySdA0NU5N1LVINjXRNk4xMLJIMTC3SkiwBUWgppg==',
         // appKey: 'easemob#easeim',
       }}
       theme={{

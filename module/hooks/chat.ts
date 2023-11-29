@@ -5,9 +5,10 @@ import { useClient } from './useClient';
 import { getStore } from '../store';
 import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
 import { useGroupMembersAttributes } from '../hooks/useAddress';
+import ts from 'typescript';
 const useEventHandler = () => {
   const rootStore = getStore();
-  const { messageStore, threadStore, conversationStore } = rootStore;
+  const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
   const client = rootStore.client;
   console.log('useEventHandler ---', rootStore);
   useEffect(() => {
@@ -125,6 +126,7 @@ const useEventHandler = () => {
         const groupItem = getGroupItemFromGroupsById(id);
         switch (operation) {
           case 'memberAttributesUpdate':
+            // @ts-ignore
             const { userId, attributes } = message;
             addressStore.setGroupMemberAttributes(id, userId, attributes);
             break;
@@ -223,6 +225,23 @@ const useEventHandler = () => {
         } else {
           threadStore.updateThreadInfo(message);
         }
+      },
+
+      onContactInvited: message => {
+        addressStore.addContactRequest({
+          ...message,
+          type: 'subscribe',
+          requestStatus: 'pending',
+        });
+        addressStore.getUserInfo(message.from);
+      },
+      onContactDeleted: message => {
+        const { addressStore } = rootStore;
+        // addressStore.removeContact(message.from);
+      },
+      onContactAdded: message => {
+        const { addressStore } = rootStore;
+        // addressStore.addContact(message.from);
       },
     });
 

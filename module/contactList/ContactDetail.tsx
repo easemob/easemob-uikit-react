@@ -14,12 +14,19 @@ export interface ContactDetailProps {
   prefix?: string;
   style?: React.CSSProperties;
   className?: string;
-  data: {
-    // avatar: string | React.ReactNode;
-    id: string;
-    name: string;
-    type: 'contact' | 'group';
-  };
+  data:
+    | {
+        // avatar: string | React.ReactNode;
+        id: string;
+        name: string;
+        type: 'contact' | 'group';
+      }
+    | {
+        id: string;
+        name: string;
+        requestStatus: 'pending' | 'read' | 'accepted';
+        type: 'request';
+      };
   onUserIdCopied?: (id: string) => void;
   onMessageBtnClick?: () => void | boolean;
 }
@@ -107,6 +114,10 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
       name: data.name,
     });
   };
+
+  const addContact = () => {
+    addressStore.acceptContactInvite(data.id);
+  };
   return (
     <div className={classString} style={{ ...style }}>
       {data.id ? (
@@ -146,14 +157,21 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                 <Switch checked></Switch>
               </div> */}
 
-              <Button
-                type="primary"
-                className={`${prefixCls}-content-btn`}
-                onClick={handleClickMessage}
-              >
-                <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
-                Message
-              </Button>
+              {type === 'request' && data.requestStatus !== 'accepted' ? (
+                <Button type="primary" className={`${prefixCls}-content-btn`} onClick={addContact}>
+                  <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
+                  添加联系人
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  className={`${prefixCls}-content-btn`}
+                  onClick={handleClickMessage}
+                >
+                  <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
+                  Message
+                </Button>
+              )}
             </div>
           </div>
         </>

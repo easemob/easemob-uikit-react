@@ -23,9 +23,6 @@ export interface ChatroomMemberProps {
   className?: string;
   style?: React.CSSProperties;
   chatroomId: string;
-  renderEmpty?: () => ReactNode;
-  renderMemberListEmpty?: () => ReactNode;
-  renderMuteListEmpty?: () => ReactNode;
   renderHeader?: (cvs: {
     chatType: 'singleChat' | 'groupChat' | 'chatRoom';
     conversationId: string;

@@ -35,6 +35,14 @@ export type ChatroomInfo = ChatSDK.GetChatRoomDetailsResult & {
   muteList?: string[];
 };
 
+export interface ContactRequest {
+  from: string;
+  to: string;
+  type: 'subscribe';
+  status?: string;
+  requestStatus: 'pending' | 'accepted' | 'read';
+}
+
 class AddressStore {
   appUsersInfo: Record<string, AppUserInfo>;
   contacts: { userId: string; nickname: string; silent?: boolean }[];
@@ -45,6 +53,7 @@ class AddressStore {
   thread: {
     [key: string]: ChatSDK.ThreadChangeInfo[];
   };
+  requests: ContactRequest[];
   constructor() {
     this.appUsersInfo = {};
     this.contacts = [];
@@ -53,6 +62,7 @@ class AddressStore {
     this.hasGroupsNext = true;
     this.searchList = [];
     this.thread = {};
+    this.requests = [];
     makeObservable(this, {
       appUsersInfo: observable,
       contacts: observable,
@@ -61,6 +71,7 @@ class AddressStore {
       searchList: observable,
       hasGroupsNext: observable,
       thread: observable,
+      requests: observable,
       setHasGroupsNext: action,
       setContacts: action,
       setGroups: action,
@@ -82,6 +93,8 @@ class AddressStore {
       modifyGroup: action,
       destroyGroup: action,
       leaveGroup: action,
+      addContactRequest: action,
+      readContactInvite: action,
       clear: action,
     });
   }
@@ -497,6 +510,39 @@ class AddressStore {
           conversationId: groupId,
         });
       });
+  }
+
+  addContact(userId: string) {
+    const rootStore = getStore();
+    rootStore.client.addContact(userId, '');
+  }
+
+  addContactRequest(request: ContactRequest) {
+    this.requests.forEach(item => {
+      if (item.from === request.from && item.to === request.to) {
+        item = request;
+        return;
+      }
+    });
+    this.requests.push(request);
+  }
+
+  acceptContactInvite(userId: string) {
+    const rootStore = getStore();
+    rootStore.client.acceptContactInvite(userId);
+    this.requests.forEach(item => {
+      if (item.from === userId) {
+        item.requestStatus = 'accepted';
+      }
+    });
+  }
+
+  readContactInvite(userId: string) {
+    this.requests.forEach(item => {
+      if (item.from === userId) {
+        item.requestStatus = 'read';
+      }
+    });
   }
 
   clear() {

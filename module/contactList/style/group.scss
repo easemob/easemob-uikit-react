@@ -13,7 +13,7 @@ $contact-prefix-cls: #{$cui-prefix}-contactGroup;
         border-radius: 8px;
         align-items: center;
         padding: 0 14px;
-
+        user-select: none;
         div:nth-child(2){
             display: flex;
             align-items: center;
@@ -23,6 +23,22 @@ $contact-prefix-cls: #{$cui-prefix}-contactGroup;
                 transition: transform .3s ease;
             }
 
+        }
+
+        &-count{
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 16px; /* 133.333% */
+
+            &-unread{
+                border-radius: 8px;
+                background-color: $blue-5;
+                color: $gray-98;
+                width: 16px;
+                height: 16px;
+                font-weight: 400;
+                text-align: center;
+            }
         }
     }
 

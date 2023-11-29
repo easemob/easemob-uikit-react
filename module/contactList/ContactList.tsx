@@ -18,13 +18,14 @@ import { pinyin } from 'pinyin-pro';
 import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
 import ContactDetail from './ContactDetail';
+import { ContactRequest } from 'module/store/AddressStore';
 // pinyin('汉语拼音', { toneType: 'none' }); // "han yu pin yin"
 export interface ContactListProps {
   style?: React.CSSProperties;
   className?: string;
   prefix?: string;
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean;
-  onItemClick?: (info: { id: string; type: 'contact' | 'group'; name: string }) => void;
+  onItemClick?: (info: { id: string; type: 'contact' | 'group' | 'request'; name: string }) => void;
   menu: ('contacts' | 'groups')[];
   hasMenu?: boolean; // 是否显示分类的menu, 默认值true, 只有menu中只有一个条目时才能设置false
   checkable?: boolean; // 是否显示checkbox
@@ -116,7 +117,7 @@ let ContactList: FC<ContactListProps> = props => {
     className,
     onSearch,
     onItemClick,
-    menu = ['contacts', 'groups'],
+    menu = ['contacts', 'groups', 'requests'],
     style,
     hasMenu = false,
     checkable = false,
@@ -156,15 +157,18 @@ let ContactList: FC<ContactListProps> = props => {
   };
   // 渲染联系人列表
   useEffect(() => {
-    let renderData: { contacts: any; groups: any } = {
+    let renderData: { contacts: any; groups: any; newRequests: ContactRequest[] } = {
       contacts: undefined,
       groups: undefined,
+      newRequests: [],
     };
     menu.forEach(item => {
       if (item == 'contacts') {
         renderData.contacts = getBrands(addressStore.contacts);
       } else if (item == 'groups') {
         renderData.groups = getBrands(addressStore.groups);
+      } else if (item == 'requests') {
+        renderData.newRequests = addressStore.requests;
       }
     });
     let menuNode = Object.keys(renderData).map((menuItem, index2) => {
@@ -195,7 +199,46 @@ let ContactList: FC<ContactListProps> = props => {
           </ContactItem>
         );
       });
+
+      if (menuItem == 'newRequests') {
+        const unreadCount = addressStore.requests.filter(
+          item => item.requestStatus == 'pending',
+        ).length;
+        return (
+          <ContactGroup
+            title={menuItem}
+            key={menuItem}
+            itemCount={unreadCount}
+            itemHeight={74}
+            hasMenu={hasMenu || menu.length !== 1}
+            highlightUnread
+          >
+            <div>
+              {renderData.newRequests.map(item => {
+                const name = addressStore.appUsersInfo[item.from]?.nickname || item.from;
+                return (
+                  <UserItem
+                    key={item.from}
+                    data={{ nickname: name, userId: item.from, description: '请求添加好友' }}
+                    onClick={e => {
+                      setItemActiveKey(item.from);
+                      addressStore.readContactInvite(item.from);
+                      onItemClick?.({
+                        id: item.from,
+                        type: 'request',
+                        name: name,
+                      });
+                    }}
+                    selected={itemActiveKey == item.from}
+                  />
+                );
+              })}
+            </div>
+          </ContactGroup>
+        );
+      }
       if (!contacts) return <></>;
+
       return (
         <ContactGroup
           title={menuItem}
@@ -212,7 +255,13 @@ let ContactList: FC<ContactListProps> = props => {
     });
 
     setAddressNode(menuNode);
-  }, [itemActiveKey, addressStore.contacts, addressStore.groups, addressStore.appUsersInfo]);
+  }, [
+    itemActiveKey,
+    addressStore.contacts,
+    addressStore.groups,
+    addressStore.appUsersInfo,
+    addressStore.requests.length,
+  ]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;

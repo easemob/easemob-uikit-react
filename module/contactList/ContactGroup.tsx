@@ -12,6 +12,7 @@ export interface ContactGroupProps {
   itemHeight?: number;
   onclickTitle?: (data: any) => void;
   hasMenu?: boolean; // 是否显示分类的menu
+  highlightUnread?: boolean; // 是否高亮未读数
 }
 
 const ContactGroup: FC<ContactGroupProps> = props => {
@@ -22,6 +23,7 @@ const ContactGroup: FC<ContactGroupProps> = props => {
     itemCount,
     onclickTitle,
     hasMenu = true,
+    highlightUnread = false,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contactGroup', customizePrefixCls);
@@ -48,13 +50,18 @@ const ContactGroup: FC<ContactGroupProps> = props => {
   });
 
   const panelRef = useRef<HTMLDivElement>(null);
+
+  const countClass = classNames(`${prefixCls}-title-count`, {
+    [`${prefixCls}-title-count-unread`]: highlightUnread,
+  });
   return (
     <div className={groupClass}>
       {hasMenu && (
         <div className={`${prefixCls}-title`} onClick={() => handleClickTitle(title)}>
           <div> {title}</div>
           <div>
-            <span>{itemCount}</span>
+            {itemCount ?? 0 > 0 ? <span className={countClass}>{itemCount}</span> : null}
+
             <div className={`${prefixCls}-icon`} style={{ transform: `rotate(${iconType}deg)` }}>
               <Icon type="ARROW_RIGHT"></Icon>
             </div>

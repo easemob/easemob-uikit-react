@@ -34,6 +34,7 @@ export interface HeaderProps {
   };
   onAvatarClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   onClickClose?: () => void;
+  onClickBack?: () => void;
 }
 
 const Header: FC<HeaderProps> = props => {
@@ -44,6 +45,7 @@ const Header: FC<HeaderProps> = props => {
     content = <div>Header</div>,
     prefix: customizePrefixCls,
     back = false,
+    onClickBack,
     renderContent,
     onIconClick,
     moreAction,
@@ -104,7 +106,12 @@ const Header: FC<HeaderProps> = props => {
       <>
         <div className={`${prefixCls}-content`}>
           {back ? (
-            <Button type="text">
+            <Button
+              type="text"
+              onClick={() => {
+                onClickBack?.();
+              }}
+            >
               <Icon type="ARROW_LEFT" width={24} height={24}></Icon>
             </Button>
           ) : null}

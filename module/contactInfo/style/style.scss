@@ -10,7 +10,7 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
     height: 100%;
     box-sizing: border-box;
     padding: 20px 0;
-
+    position: relative;
     &-header{
         display: flex;
         flex-direction: column;
@@ -74,6 +74,17 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
             margin-top: 12px;
         }
     }
+
+    // member list container
+    &-member-box{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: $gray-98;
+        height: 100%;
+        box-sizing: border-box;
+    }
+    
 }
 
 .cui-group-nickname-input input{
@@ -91,3 +102,4 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
 .#{$contactInfo-prefix-cls}-infoModal:nth-of-type(2){
     margin-top: 16px;
 }
+
