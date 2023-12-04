@@ -1,0 +1,41 @@
+
+@import '~/common/style/index.scss';
+
+$userSelect-prefix-cls: #{$cui-prefix}-user-select;
+
+.#{$userSelect-prefix-cls}{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: hidden;
+    height: 544px;
+    &>div{
+        flex: 1;
+    }
+    &-container{
+        display: flex;
+        flex-direction: column;
+    }
+
+    &-header{
+        font-size: 18px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 26px;
+        // height: 60px;
+        // border-bottom: 1px solid $gray-9;
+        line-height: 60px;
+        padding: 0 16px;
+    }
+    &-body{
+        flex: 1;
+        overflow-y: auto;
+    }
+    &-footer{
+        height: 84px;
+        display: flex;
+        padding: 24px;
+        justify-content: flex-end;
+        box-sizing: border-box;
+    }
+}

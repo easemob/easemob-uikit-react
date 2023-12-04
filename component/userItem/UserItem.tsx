@@ -29,8 +29,10 @@ export interface UserItemProps {
   data: UserInfoData;
   selected?: boolean;
   checkable?: boolean;
+  closeable?: boolean;
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
   checked?: boolean;
+  onClose?: (data: UserInfoData) => void;
   // 右侧更多按钮配置
   moreAction?: {
     visible?: boolean;
@@ -57,6 +59,8 @@ let UserItem: FC<UserItemProps> = props => {
     checkable,
     onCheckboxChange,
     checked,
+    closeable,
+    onClose,
     ...others
   } = props;
 
@@ -145,6 +149,16 @@ let UserItem: FC<UserItemProps> = props => {
       {checkable && (
         <div>
           <Checkbox checked={checked} onChange={handleCheckboxChange}></Checkbox>
+        </div>
+      )}
+      {closeable && (
+        <div>
+          <Icon
+            type="CLOSE"
+            onClick={() => {
+              onClose?.(data);
+            }}
+          ></Icon>
         </div>
       )}
     </div>

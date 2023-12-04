@@ -34,6 +34,8 @@ import NoticeMessage from '../noticeMessage';
 import { BaseMessageProps } from '../baseMessage';
 import { useTranslation } from 'react-i18next';
 import Icon from '../../component/icon';
+import UserCardMessage from '../userCardMessage';
+import { CustomMessageType } from 'module/types/messageType';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
@@ -168,6 +170,11 @@ let MessageList: FC<MsgListProps> = props => {
           {(messageData[data.index] as ChatSDK.TextMsgBody).msg}
         </RecalledMessage>
       );
+    } else if (
+      messageData[data.index].type == 'custom' &&
+      (messageData[data.index] as CustomMessageType).customEvent == 'chatUIKit_userCard'
+    ) {
+      return <UserCardMessage customMessage={messageData[data.index] as any}></UserCardMessage>;
     }
   };
 

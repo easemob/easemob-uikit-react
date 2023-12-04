@@ -21,6 +21,7 @@ export interface ContactItemProps {
   data: any;
   selectedId?: string;
   checkable?: boolean;
+  checkedUserList?: string[];
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
 }
 
@@ -37,6 +38,7 @@ const ContactItem: FC<ContactItemProps> = props => {
     data,
     selectedId,
     checkable,
+    checkedUserList,
     onCheckboxChange,
     ...others
   } = props;
@@ -49,7 +51,6 @@ const ContactItem: FC<ContactItemProps> = props => {
   const classString = classNames(prefixCls, className);
   const { addressStore } = rootStore;
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>, contactId: string) => {
-    console.log(e);
     onClick && onClick(e, contactId);
   };
 
@@ -76,6 +77,7 @@ const ContactItem: FC<ContactItemProps> = props => {
             key={item.brandId}
           >
             <UserItem
+              checked={checkedUserList && checkedUserList.includes(item.brandId)}
               nickname={item.name}
               data={{
                 userId: item.brandId,

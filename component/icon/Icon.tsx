@@ -46,6 +46,7 @@ import { ReactComponent as Select } from '../svgs/icons/checked_ellipse.svg';
 import { ReactComponent as GoToChat } from '../svgs/icons/gotoMessage.svg';
 import { ReactComponent as AddFriend } from '../svgs/icons/person_add_fill.svg';
 import { ReactComponent as PersonDoubleFill } from '../svgs/icons/person_double_fill.svg';
+import { ReactComponent as PersonSingleFill } from '../svgs/icons/person_single_fill.svg';
 import { ReactComponent as Thread } from '../svgs/icons/hashtag_in_bubble.svg';
 import { ReactComponent as Envelope } from '../svgs/icons/envelope.svg';
 import { ReactComponent as MemberGroup } from '../svgs/all.svg';
@@ -202,6 +203,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'PERSON_DOUBLE_FILL':
       return <PersonDoubleFill></PersonDoubleFill>;
+      break;
+    case 'PERSON_SINGLE_FILL':
+      return <PersonSingleFill></PersonSingleFill>;
       break;
     case 'THREAD':
       return <Thread></Thread>;

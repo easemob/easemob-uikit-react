@@ -30,7 +30,8 @@ export interface ContactListProps {
   hasMenu?: boolean; // 是否显示分类的menu, 默认值true, 只有menu中只有一个条目时才能设置false
   checkable?: boolean; // 是否显示checkbox
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
-  // checkedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
+  header?: React.ReactNode;
+  checkedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
 }
 // TODO 监听加好友 加群组 更新数据
 function getBrands(members: any) {
@@ -40,7 +41,6 @@ function getBrands(members: any) {
     item.name = item.userId
       ? rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
       : item.groupname;
-    console.log('item.name', item.name);
     item.userId && (item.nickname = item.name);
     if (checkCharacter(item.name.substring(0, 1)) == 'en') {
       item.initial = item.name.substring(0, 1).toUpperCase();
@@ -52,7 +52,6 @@ function getBrands(members: any) {
   });
 
   innerMembers.sort((a: any, b: any) => a.initial.charCodeAt(0) - b.initial.charCodeAt(0));
-  console.log('innerMembers', innerMembers);
   let someTitle = null;
   let someArr: Array<{
     id: number;
@@ -122,6 +121,8 @@ let ContactList: FC<ContactListProps> = props => {
     hasMenu = false,
     checkable = false,
     onCheckboxChange,
+    header,
+    checkedList,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contactList', customizePrefixCls);
@@ -145,8 +146,6 @@ let ContactList: FC<ContactListProps> = props => {
   useUserInfo('contacts');
   const { getJoinedGroupList } = useGroups();
   getJoinedGroupList();
-
-  console.log('addressStore.groups', addressStore.groups);
 
   const [itemActiveKey, setItemActiveKey] = useState('');
 
@@ -173,15 +172,12 @@ let ContactList: FC<ContactListProps> = props => {
     });
     let menuNode = Object.keys(renderData).map((menuItem, index2) => {
       let contacts = renderData[menuItem as 'contacts' | 'groups']?.map((contactItem: any) => {
-        console.log('---contactItem', contactItem);
-        const id = contactItem.brandId;
-        const name = contactItem.name;
         return (
           <ContactItem
+            checkedUserList={checkedList && checkedList.map(item => item.id)}
             data={contactItem}
-            contactId={id}
+            contactId={contactItem.region}
             onClick={(e, contactId) => {
-              console.log('点击 item', contactId, id);
               const info = getNameAndType(contactId);
               onItemClick?.({
                 id: contactId,
@@ -190,12 +186,12 @@ let ContactList: FC<ContactListProps> = props => {
               });
               setItemActiveKey(contactId);
             }}
-            key={id}
+            key={contactItem.region}
             selectedId={itemActiveKey}
             checkable={checkable}
             onCheckboxChange={handleCheckboxChange}
           >
-            {name || id}
+            {/* {name || id} */}
           </ContactItem>
         );
       });
@@ -237,7 +233,7 @@ let ContactList: FC<ContactListProps> = props => {
           </ContactGroup>
         );
       }
-      if (!contacts) return <></>;
+      if (!contacts) return <div key="no"></div>;
 
       return (
         <ContactGroup
@@ -261,13 +257,13 @@ let ContactList: FC<ContactListProps> = props => {
     addressStore.groups,
     addressStore.appUsersInfo,
     addressStore.requests.length,
+    checkedList,
   ]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const returnValue = onSearch?.(e);
     if (returnValue === false) return;
-    console.log('addressStore.contacts', addressStore.contacts);
     const contactSearchList = addressStore.contacts.filter(
       (user: { userId: string | string[]; nickname: string | string[] }) => {
         if (user.nickname.includes(value)) {
@@ -295,7 +291,6 @@ let ContactList: FC<ContactListProps> = props => {
 
   // 渲染搜索列表
   useEffect(() => {
-    console.log('搜做列表', addressStore.searchList);
     const searchList = addressStore.searchList.map(
       (item: { userId: any; groupid: any; nickname: any; groupname: any }) => {
         const id = item.userId || item.groupid;
@@ -306,8 +301,8 @@ let ContactList: FC<ContactListProps> = props => {
         };
         return (
           <UserItem
+            checked={checkedList && checkedList.map(item => item.id).includes(id)}
             onClick={e => {
-              console.log('点击 item', id);
               setItemActiveKey(id);
               onItemClick?.({
                 id: id,
@@ -326,7 +321,7 @@ let ContactList: FC<ContactListProps> = props => {
     );
 
     setSearchNode(searchList);
-  }, [addressStore.searchList, itemActiveKey]);
+  }, [addressStore.searchList, itemActiveKey, checkedList?.length]);
 
   const getNameAndType = useCallback((id: string) => {
     let name;
@@ -350,7 +345,7 @@ let ContactList: FC<ContactListProps> = props => {
 
   return (
     <div className={classString} style={{ ...style }}>
-      <Header avatar={<></>} content="Contacts List"></Header>
+      {header ? header : <Header avatar={<></>} content="Contacts List"></Header>}
       <Search onChange={handleSearch}></Search>
       <div className={`${prefixCls}-content`}>{isSearch ? searchNode : addressNode}</div>
     </div>

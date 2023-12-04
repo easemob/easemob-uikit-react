@@ -9,6 +9,9 @@ import { RootContext } from '../../store/rootContext';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
+import { FileMessageType, ImageMessageType } from 'module/types/messageType';
+import UserSelect, { UserSelectInfo } from '../../userSelect';
+import Button from '../../../component/button';
 export interface MoreActionProps {
   style?: React.CSSProperties;
   itemContainerStyle?: React.CSSProperties;
@@ -67,6 +70,47 @@ let MoreAction = (props: MoreActionProps) => {
     fileEl.current?.click();
   };
 
+  // ------- card -------
+  const [cardModalVisible, setCardModalVisible] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<UserSelectInfo[]>([]); // [{uid: 'userId', nickname: '', avatar: ''}]
+  const sendCard = () => {
+    setCardModalVisible(true);
+  };
+  const sendCardMessage = () => {
+    console.log('我要发消息了');
+    if (selectedUsers.length == 0) {
+      return;
+    }
+    const userInfo = selectedUsers[0];
+    const customEvent = 'userCard'; // 创建自定义事件
+    const customExts = {
+      uid: userInfo.userId,
+      nickname: userInfo.nickname,
+      avatar: userInfo.avatarUrl,
+    };
+
+    const option = {
+      type: 'custom' as 'custom',
+      customEvent,
+      customExts,
+      to: currentCVS.conversationId,
+      chatType: currentCVS.chatType,
+      isChatThread,
+    };
+    const customMessage = chatSDK.message.create(option);
+
+    if (onBeforeSendMessage) {
+      onBeforeSendMessage(customMessage).then(cvs => {
+        if (cvs) {
+          customMessage.to = cvs.conversationId;
+          (customMessage as ImageMessageType).chatType = cvs.chatType;
+        }
+        messageStore.sendMessage(customMessage);
+      });
+    } else {
+      messageStore.sendMessage(customMessage);
+    }
+  };
   const defaultActions = [
     {
       content: 'image',
@@ -75,6 +119,7 @@ let MoreAction = (props: MoreActionProps) => {
       icon: null,
     },
     { content: 'file', title: t('file'), onClick: sendFile, icon: null },
+    { content: 'card', title: t('card'), onClick: sendCard, icon: null },
   ];
   let actions = [];
   if (customActions) {
@@ -110,6 +155,19 @@ let MoreAction = (props: MoreActionProps) => {
               key={item.content || index}
             >
               {t('file')}
+            </li>
+          );
+        } else if (item.content == 'CARD') {
+          return (
+            <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              onClick={() => {
+                setMenuOpen(false);
+                sendCard();
+              }}
+              key={item.content || index}
+            >
+              {t('card')}
             </li>
           );
         }
@@ -158,7 +216,7 @@ let MoreAction = (props: MoreActionProps) => {
       onBeforeSendMessage(imageMessage).then(cvs => {
         if (cvs) {
           imageMessage.to = cvs.conversationId;
-          imageMessage.chatType = cvs.chatType;
+          (imageMessage as ImageMessageType).chatType = cvs.chatType;
         }
 
         messageStore.sendMessage(imageMessage);
@@ -195,7 +253,7 @@ let MoreAction = (props: MoreActionProps) => {
       onBeforeSendMessage(fileMessage).then(cvs => {
         if (cvs) {
           fileMessage.to = cvs.conversationId;
-          fileMessage.chatType = cvs.chatType;
+          (fileMessage as FileMessageType).chatType = cvs.chatType;
         }
 
         messageStore.sendMessage(fileMessage);
@@ -231,6 +289,48 @@ let MoreAction = (props: MoreActionProps) => {
         />
       }
       {<input ref={fileEl} onChange={handleFileChange} type="file" style={{ display: 'none' }} />}
+      {
+        <UserSelect
+          title={'分享联系人'}
+          selectedPanelHeader={<></>}
+          onCancel={() => {
+            setCardModalVisible(false);
+          }}
+          selectedPanelFooter={
+            <div>
+              <Button
+                style={{ marginRight: '24px', width: '68px' }}
+                type="primary"
+                onClick={() => {
+                  sendCardMessage();
+                  setCardModalVisible(false);
+                }}
+              >
+                确定
+              </Button>
+              <Button
+                style={{ width: '68px' }}
+                type="default"
+                onClick={() => {
+                  setCardModalVisible(false);
+                }}
+              >
+                取消
+              </Button>
+            </div>
+          }
+          closable={true}
+          enableMultipleSelection={false}
+          open={cardModalVisible}
+          onUserSelect={(user, users) => {
+            console.log('onUserSelect', user, users);
+            setSelectedUsers(users);
+          }}
+          onOk={users => {
+            console.log('onOk', users);
+          }}
+        />
+      }
     </>
   );
 };

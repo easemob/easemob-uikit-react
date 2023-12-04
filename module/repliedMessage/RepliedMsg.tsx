@@ -13,6 +13,7 @@ import { ImagePreview } from '../imageMessage';
 import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
 import AudioMessage, { AudioMessageProps } from '../audioMessage';
 import RecalledMessage from '../recalledMessage';
+import UserCardMessage from '../userCardMessage';
 const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
@@ -75,7 +76,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       setMsgQuote(msgQuote);
 
       // const messages = rootStore.messageStore.currentCvsMsgs;
-      const findMsgs = messages.filter(msg => {
+      const findMsgs = messages.filter((msg: ChatSDK.MessageBody) => {
         // @ts-ignore
         return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;
       }) as ChatSDK.MessageBody[];
@@ -129,7 +130,9 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     switch (msgQuote?.msgType) {
       case 'txt':
         content = (
-          <div className={`${prefixCls}-content-text`}>{renderTxt(msgQuote.msgPreview, '')}</div>
+          <div className={`${prefixCls}-content-text`}>
+            {renderTxt(msgQuote.msgPreview, '' as unknown as false)}
+          </div>
         );
         break;
       case 'file':
@@ -216,6 +219,16 @@ const RepliedMsg = (props: RepliedMsgProps) => {
             onlyContent={true}
           ></RecalledMessage>
         );
+        break;
+      case 'custom':
+        if ((repliedMsg as ChatSDK.CustomMsgBody).customEvent === 'chatUIKit_userCard') {
+          content = (
+            <div className={`${prefixCls}-content-text`}>
+              <Icon type="PERSON_SINGLE_FILL" color="#75828A" width={20} height={20}></Icon>
+              <span>Contact:</span> {(repliedMsg as ChatSDK.CustomMsgBody).customExts?.nickname}
+            </div>
+          );
+        }
         break;
       default:
         content = (

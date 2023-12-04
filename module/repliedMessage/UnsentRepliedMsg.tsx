@@ -34,7 +34,11 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
     let content: ReactNode;
     switch (msg.type) {
       case 'txt':
-        content = <div className={`${prefixCls}-summary-desc`}>{renderTxt(msg.msg, '')}</div>;
+        content = (
+          <div className={`${prefixCls}-summary-desc`}>
+            {renderTxt(msg.msg, '' as unknown as false)}
+          </div>
+        );
         break;
       case 'file':
         content = (
@@ -72,6 +76,17 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
             <span>{t('chatHistory')}</span>
           </div>
         );
+        break;
+      case 'custom':
+        if (msg.customEvent === 'chatUIKit_userCard') {
+          content = (
+            <div className={`${prefixCls}-summary-desc`}>
+              <Icon type="PERSON_SINGLE_FILL" color="#75828A" width={16} height={16}></Icon>
+              <span>{t('Contact')}:</span>
+              {msg.customExts?.nickname}
+            </div>
+          );
+        }
         break;
       default:
         content = '';

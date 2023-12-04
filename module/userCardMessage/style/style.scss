@@ -1,0 +1,70 @@
+@import '~/common/style/index.scss';
+$card-prefix-cls: #{$cui-prefix}-message-card;
+.#{$card-prefix-cls}{
+    width: 244px;
+    height: 90px;
+    padding: 12px 12px 0 12px;
+    box-sizing: border-box;
+    cursor: default;
+    &-info{
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 16px;
+        font-weight: 500;
+        border-bottom: 1px solid $gray-9;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-bottom: 12px;
+    }
+
+    &-tag{
+        font-size: 12px;
+        font-weight: 400;
+    }
+    // ---- modal ----
+    &-modal{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+    }
+    &-content{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        &-name{
+            font-size: 18px;
+            font-weight: 500;
+            line-height: 26px; 
+            text-align: center;
+        }
+
+        &-id{
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            color: $gray-7;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 20px; /* 142.857% */
+        }
+
+        &-btn{
+            width: fit-content;
+            font-size: 16px;
+            font-weight: 500;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            gap: 4px;
+            & svg{
+                fill: $gray-98;
+            }
+        }
+    }
+}
