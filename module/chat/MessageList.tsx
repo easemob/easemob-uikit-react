@@ -213,7 +213,6 @@ let MessageList: FC<MsgListProps> = props => {
     // 滚动到顶加载更多
     let offsetBottom = scrollHeight - (scrollTop + offsetHeight);
     // scroll to bottom load data
-    // console.log(scrollTop, offsetHeight, offsetBottom);
     if (offsetBottom > 10) {
       !messageStore.holding && messageStore.setHoldingStatus(true);
     } else {

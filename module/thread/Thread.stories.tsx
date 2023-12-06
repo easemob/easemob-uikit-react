@@ -3,7 +3,7 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import Thread from './index';
 import rootStore from '../store';
-
+import Provider from '../store/Provider';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
   title: 'Container/Thread',
@@ -17,7 +17,13 @@ export default {
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 const Template: ComponentStory<typeof Thread> = args => (
   <div style={{ height: '500px' }}>
-    <Thread {...args} />
+    <Provider
+      initConfig={{
+        appKey: 'a#b',
+      }}
+    >
+      <Thread {...args} />
+    </Provider>
   </div>
 );
 

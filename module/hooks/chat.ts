@@ -10,12 +10,9 @@ const useEventHandler = () => {
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
   const client = rootStore.client;
-  console.log('useEventHandler ---', rootStore);
   useEffect(() => {
-    console.log('****client', client);
     client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
-        console.log('onTextMessage 22', message);
         messageStore.receiveMessage(message);
       },
       onImageMessage: message => {

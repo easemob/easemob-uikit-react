@@ -27,7 +27,6 @@ const useThreadContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 message', newValue, oldValue);
         setCurrentThreadInner(newValue);
       },
     );
@@ -39,7 +38,6 @@ const useThreadContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 message', newValue, oldValue);
         setThreadListInner(newValue);
       },
     );
@@ -51,7 +49,6 @@ const useThreadContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 message', newValue, oldValue);
         setThreadVisibleInner(newValue);
       },
     );

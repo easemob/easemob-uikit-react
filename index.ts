@@ -39,7 +39,7 @@ import {
   ChatroomMember,
   ChatroomMessage,
 } from './module/index';
-
+const UIKitProvider = Provider;
 import {
   Avatar,
   Button,
@@ -104,6 +104,7 @@ export {
   List,
   Modal,
   Popover,
+  UIKitProvider,
   Switch,
   Tooltip,
   ScrollList,

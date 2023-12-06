@@ -26,7 +26,6 @@ const useConversationContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 currentCvs', newValue, oldValue);
         setCurrentCVS(newValue);
       },
     );
@@ -38,7 +37,6 @@ const useConversationContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 conversationList', newValue, oldValue);
         setConversationListInner(newValue);
       },
     );

@@ -124,7 +124,7 @@ const FileMessage = (props: FileMessageProps) => {
               conversationId: conversationId,
             },
             // @ts-ignore
-            textMessage.mid || textMessage.id,
+            fileMessage.mid || fileMessage.id,
             emojiString,
           );
         }
@@ -158,7 +158,9 @@ const FileMessage = (props: FileMessageProps) => {
   let conversationId = getCvsIdFromMessage(fileMessage);
   const handleSelectMessage = () => {
     const selectable =
-      rootStore.messageStore.selectedMessage[fileMessage.chatType][conversationId]?.selectable;
+      rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
+        conversationId
+      ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
@@ -178,11 +180,15 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const select =
-    rootStore.messageStore.selectedMessage[fileMessage.chatType][conversationId]?.selectable;
+    rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
+      conversationId
+    ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[fileMessage.chatType][conversationId]?.selectedMessage;
+      rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
+        conversationId
+      ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {

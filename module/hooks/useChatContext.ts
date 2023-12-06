@@ -34,7 +34,6 @@ const useChatContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 message', newValue, oldValue);
         setMessageInner(newValue);
       },
     );
@@ -45,7 +44,6 @@ const useChatContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 disposerRepliedMsg', newValue, oldValue);
         setRepliedMessageInner(newValue);
       },
     );
@@ -56,7 +54,6 @@ const useChatContext = () => {
       },
       (newValue, oldValue) => {
         // 监听 MobX 变化的代码逻辑
-        console.log('MobX 变化了 typing', newValue, oldValue);
         setTypingInner(newValue);
       },
     );
