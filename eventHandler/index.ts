@@ -13,15 +13,14 @@ export type EventName =
   | 'createChatThread'
   | 'destroyChatThread'
   | 'leaveChatThread'
-  | 'open'
-  | 'onError';
+  | 'open';
 
 export type EventHandlerData = {
   [key in EventName]?: {
     success?: () => void;
     error?: (err: AgoraChat.ErrorEvent) => void;
   };
-};
+} & { onError: (err: AgoraChat.ErrorEvent) => void };
 
 export class EventHandler {
   handlerData: { [key: string]: EventHandlerData } = {};
@@ -57,7 +56,7 @@ export class EventHandler {
     Object.keys(this.handlerData).forEach(key => {
       if (this.handlerData[key]?.[eventName] && this.handlerData[key][eventName]?.error) {
         this.handlerData[key][eventName]?.error?.(error);
-        this.handlerData[key]?.onError?.error?.(error);
+        this.handlerData[key]?.onError?.(error);
         console.error(error);
       }
     });

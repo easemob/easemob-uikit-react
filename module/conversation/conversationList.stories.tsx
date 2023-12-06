@@ -3,7 +3,7 @@ import { ComponentStory, ComponentMeta } from '@storybook/react';
 
 import { ConversationList } from './index';
 import rootStore from '../store';
-
+import Provider from '../store/Provider';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
   title: 'Container/ConversationList',
@@ -13,7 +13,12 @@ export default {
 } as ComponentMeta<typeof ConversationList>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof ConversationList> = args => <ConversationList {...args} />;
+const Template: ComponentStory<typeof ConversationList> = args => (
+  <Provider initConfig={{ appKey: 'a#b' }}>
+    {' '}
+    <ConversationList {...args} />
+  </Provider>
+);
 
 rootStore.conversationStore.setConversation([
   {

@@ -450,18 +450,20 @@ const Chat: FC<ChatProps> = props => {
   const [currentCall, setCurrentCall] = useState<any>({});
   const showInvite = async (conf: any) => {
     // rtcConfig?.onAddPerson?.(conf);
+    console.log('添加人', conf);
     const members = await rtcConfig?.onAddPerson?.(conf);
     const rtcMembers = members?.map(item => {
       return item.id;
     });
+    console.log('添加人2', members, rtcMembers);
     let options = {
       callType: currentCall.callType,
       chatType: 'groupChat',
       to: rtcMembers,
       // agoraUid: agoraUid,
       message: `Start a ${currentCall.callType == 2 ? 'video' : 'audio'} call`,
-      groupId: currentCall.groupId,
-      groupName: currentCall.groupName,
+      groupId: conf.groupId,
+      groupName: conf.groupName,
       accessToken: currentCall.accessToken,
       channel: currentCall.channel,
     };
@@ -477,12 +479,24 @@ const Chat: FC<ChatProps> = props => {
         // getIdMap
         if (!info.confr) return;
         try {
-          let idMap = await rtcConfig?.getIdMap?.({
-            userId: rootStore.client.user,
-            channel: info.confr.channel,
+          let idMap =
+            (await rtcConfig?.getIdMap?.({
+              userId: rootStore.client.user,
+              channel: info.confr.channel,
+            })) || {};
+
+          let membersId = Object.values(idMap);
+          let userInfo = {};
+          membersId.forEach(item => {
+            // @ts-ignore
+            userInfo[item] = {
+              nickname: rootStore.addressStore.appUsersInfo[item]?.nickname,
+              avatarUrl: rootStore.addressStore.appUsersInfo[item]?.avatarurl,
+            };
           });
           if (idMap && Object.keys(idMap).length > 0) {
             CallKit.setUserIdMap(idMap);
+            CallKit.setUserInfo(userInfo);
           }
         } catch (e) {
           console.error(e);
@@ -492,13 +506,19 @@ const Chat: FC<ChatProps> = props => {
         break;
     }
   };
-  const handleInvite = async (data: { channel: string }) => {
+  const handleInvite = async (data: { channel: string; type: number }) => {
+    console.log('收到邀请', data);
     if (!getRTCToken) return console.error('need getRTCToken method to get token');
     const { agoraUid, accessToken } = await getRTCToken({
       channel: data.channel,
       chatUserId: rootStore.client.user,
     });
-
+    console;
+    setCurrentCall({
+      ...data,
+      accessToken,
+      callType: data.type,
+    });
     CallKit.answerCall(true, accessToken);
   };
 

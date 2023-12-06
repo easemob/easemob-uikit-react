@@ -306,7 +306,7 @@ class MessageStore {
         console.warn('send fail', error);
         this.updateMessageStatus(message.id, 'failed');
         eventHandler.dispatchError('sendMessage', error);
-        throw error;
+        // throw error;
       });
   }
 
