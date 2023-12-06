@@ -67,7 +67,7 @@
     "@testing-library/jest-dom": "^5.16.5",
     "@types/react": "^18.0.25",
     "ahooks": "^3.7.5",
-    "chat-callkit": "^1.0.1",
+    "chat-callkit": "1.2.0",
     "chatuim2": "1.1.0",
     "classnames": "^2.3.2",
     "core-js": "3",

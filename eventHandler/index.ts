@@ -56,9 +56,9 @@ export class EventHandler {
     Object.keys(this.handlerData).forEach(key => {
       if (this.handlerData[key]?.[eventName] && this.handlerData[key][eventName]?.error) {
         this.handlerData[key][eventName]?.error?.(error);
-        this.handlerData[key]?.onError?.(error);
-        console.error(error);
       }
+      this.handlerData[key]?.onError?.(error);
+      console.error(error);
     });
   }
 }

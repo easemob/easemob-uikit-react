@@ -41,9 +41,9 @@ const VideoMessage = (props: VideoMessageProps) => {
   }, []);
 
   let { bySelf, time, from } = videoMessage;
-  console.log('textMessage --->', from, bySelf, rootStore.client);
+  // console.log('textMessage --->', from, bySelf, rootStore.client);
   if (typeof bySelf == 'undefined') {
-    console.log('bySelf 是 undefined', rootStore.client.context.userId, from, rootStore);
+    // console.log('bySelf 是 undefined', rootStore.client.context.userId, from, rootStore);
     bySelf = from == rootStore.client.context.userId;
   }
 

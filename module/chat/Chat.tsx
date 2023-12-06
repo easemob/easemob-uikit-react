@@ -108,7 +108,7 @@ const Chat: FC<ChatProps> = props => {
     },
     className,
   );
-  const { appUsersInfo } = rootStore.addressStore;
+  const { appUsersInfo } = rootStore.addressStore || {};
   const globalConfig = features?.chat;
   const CVS = rootStore.conversationStore.currentCvs;
   const getRTCToken = rtcConfig?.getRTCToken;
@@ -450,12 +450,10 @@ const Chat: FC<ChatProps> = props => {
   const [currentCall, setCurrentCall] = useState<any>({});
   const showInvite = async (conf: any) => {
     // rtcConfig?.onAddPerson?.(conf);
-    console.log('添加人', conf);
     const members = await rtcConfig?.onAddPerson?.(conf);
     const rtcMembers = members?.map(item => {
       return item.id;
     });
-    console.log('添加人2', members, rtcMembers);
     let options = {
       callType: currentCall.callType,
       chatType: 'groupChat',
@@ -507,13 +505,11 @@ const Chat: FC<ChatProps> = props => {
     }
   };
   const handleInvite = async (data: { channel: string; type: number }) => {
-    console.log('收到邀请', data);
     if (!getRTCToken) return console.error('need getRTCToken method to get token');
     const { agoraUid, accessToken } = await getRTCToken({
       channel: data.channel,
       chatUserId: rootStore.client.user,
     });
-    console;
     setCurrentCall({
       ...data,
       accessToken,

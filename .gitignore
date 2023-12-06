@@ -11,3 +11,4 @@ package-lock.json
 /.history
 *.tmp
 /.vscode/
+agora-chat-uikit-*

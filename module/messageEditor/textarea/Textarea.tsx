@@ -80,7 +80,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   //   currentCVS = conversation;
   // }
   useEffect(() => {
-    console.log('收到的会话', conversation);
     if (currentCVS?.conversationId) {
       setUsedCvs(currentCVS);
     }
@@ -162,7 +161,6 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   };
 
   const sendMessage = () => {
-    console.log('发消息', usedCvs);
     if (!textValue) {
       console.warn('No text message');
       return;

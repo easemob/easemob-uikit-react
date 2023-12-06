@@ -201,7 +201,6 @@ class MessageStore {
           identify: myInfo?.ext?.identify,
         },
       };
-      console.log('发的聊天室消息', message, this.rootStore.addressStore.appUsersInfo);
     }
 
     // @ts-ignore
@@ -210,7 +209,6 @@ class MessageStore {
         this.message.byId[message.id] = message;
       }
     }
-    console.log('---chatType', chatType);
     if (chatType !== 'chatRoom') {
       // @ts-ignore
       if (!this.message[chatType][to]) {
@@ -330,7 +328,6 @@ class MessageStore {
       message.bySelf = true;
     }
     const conversationId = getCvsIdFromMessage(message);
-    console.log('收到消息', message);
     // @ts-ignore
     if (message.broadcast) {
       this.message.broadcast.push(message);

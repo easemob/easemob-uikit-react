@@ -220,18 +220,18 @@ const ChatApp = () => {
             }}
           ></Chat>
         </div>
-        {thread.showThreadPanel ||&& (
-            <div
-              style={{
-                width: '50%',
-                borderLeft: '1px solid #eee',
-                overflow: 'hidden',
-                background: '#fff',
-              }}
-            >
-              <Thread></Thread>
-            </div>
-          )}
+        {thread.showThreadPanel && (
+          <div
+            style={{
+              width: '50%',
+              borderLeft: '1px solid #eee',
+              overflow: 'hidden',
+              background: '#fff',
+            }}
+          >
+            <Thread></Thread>
+          </div>
+        )}
       </div>
       <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -264,7 +264,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYKhK5DrUfCJsxuXbqrIZcaEfP+WbnpW58YHRbbL8FSkNvxkKDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJ+yWCUxsCGRn2tZobMzKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAVa4mwg==',
+          '007eJxTYPgocpnnt2PLlAneTOuMfX4ey5wg9nUB6/d7Ww3On2SanfROgSHNMCXZ3NwiKSUl2czELDHFIs3IzMDS3Cw50SjFwNA0+dH/vNSGQEaGIK3atYwMrAyMQAjiqzAkGZiZJKaYGeiaGZkk6RoapibrWqQaGumaJhmZWCQZmFqkJVkCAFBlKbE=',
         // appKey: 'easemob#easeim',
       }}
       theme={{
