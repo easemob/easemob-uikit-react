@@ -21,27 +21,10 @@ export interface VideoMessageProps {
 }
 const VideoMessage = (props: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [imgSrc, setImgsrc] = useState('');
-  const { videoMessage, style, status = 'default', renderUserProfile } = props;
-  const getFirstFrame = () => {
-    const canvas = document.createElement('canvas');
-    const videoEle = document.getElementById('videoEle') as HTMLVideoElement;
-    canvas.width = 200;
-    canvas.height = 200;
-    canvas.getContext('2d')?.drawImage(videoEle, 0, 0, canvas.width, canvas.height);
-    const firstFrame = canvas.toDataURL('image/png', 1);
-    console.log('firstFrame', firstFrame);
-    return firstFrame;
-  };
-  useEffect(() => {
-    setTimeout(() => {
-      // const src = getFirstFrame();
-      // setImgsrc(src);
-    }, 1000);
-  }, []);
+  const { videoMessage, renderUserProfile } = props;
 
-  let { bySelf, time, from } = videoMessage;
-  // console.log('textMessage --->', from, bySelf, rootStore.client);
+  let { bySelf, from } = videoMessage;
+  console.log('textMessage --->', from, bySelf, rootStore.client);
   if (typeof bySelf == 'undefined') {
     // console.log('bySelf 是 undefined', rootStore.client.context.userId, from, rootStore);
     bySelf = from == rootStore.client.context.userId;
@@ -49,27 +32,41 @@ const VideoMessage = (props: VideoMessageProps) => {
 
   return (
     <BaseMessage
-      bubbleType="none"
+      id={videoMessage.id}
+      message={videoMessage}
+      bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
-      style={style}
-      time={time}
-      nickName={props?.nickName}
-      status={status}
+      shape={shape}
+      nickName={nickName}
+      onReplyMessage={handleReplyMsg}
+      onDeleteMessage={handleDeleteMsg}
+      reactionData={reactions}
+      onAddReactionEmoji={handleClickEmoji}
+      onDeleteReactionEmoji={handleDeleteEmoji}
+      onShowReactionUserList={handleShowReactionUserList}
+      onRecallMessage={handleRecallMessage}
+      onSelectMessage={handleSelectMessage}
+      onResendMessage={handleResendMessage}
       renderUserProfile={renderUserProfile}
+      select={select}
+      onMessageCheckChange={handleMsgCheckChange}
+      onCreateThread={handleCreateThread}
+      thread={_thread}
+      chatThreadOverview={videoMessage.chatThreadOverview}
+      onClickThreadTitle={handleClickThreadTitle}
+      {...baseMsgProps}
     >
       <div>
         <video
           id="videoEle"
           ref={videoRef}
-          width={374}
-          autoPlay
+          autoPlay={false}
           controls
           crossOrigin="anonymous"
           preload="metadata"
           src={videoData}
           // src="https://a5-v2.easemob.com/easemob/easeim/chatfiles/4db7f110-b676-11ed-929f-1fcef06124f9?em-redirect=true&share-secret=TbgYILZ2Ee2IYD1BAxWxusBH_NV8dnJY6jFq1PwVkIaY3uys"
         ></video>
-        {/* <img src={imgSrc}></img> */}
       </div>
     </BaseMessage>
   );

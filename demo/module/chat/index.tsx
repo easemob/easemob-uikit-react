@@ -24,7 +24,7 @@ import { observer } from 'mobx-react-lite';
 import axios from 'axios';
 import { useConversationContext, useChatContext } from '../../../module';
 import { hexToHsla, generateColors } from '../../../module/utils/color';
-
+import UserSelect from '../../../module/userSelect';
 console.log('hexToHsla', hexToHsla('#FF0000'));
 console.log('hexToHsla', hexToHsla('#000000'));
 console.log('hexToHsla', hexToHsla('#ffffff'));
@@ -151,6 +151,10 @@ const ChatApp: FC<any> = () => {
   };
 
   const [contactData, setContactData] = useState({ id: '', name: '', type: 'contact' });
+
+  // create group
+  const [userSelectVisible, setUserSelectVisible] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
   return (
     <>
       <div className="tab-box">
@@ -179,6 +183,22 @@ const ChatApp: FC<any> = () => {
       >
         {tab == 'chat' && (
           <ConversationList
+            renderHeader={() => (
+              <Header
+                moreAction={{
+                  visible: true,
+                  actions: [
+                    {
+                      content: 'Create Group',
+                      onClick: () => {
+                        console.log('create group');
+                        setUserSelectVisible(true);
+                      },
+                    },
+                  ],
+                }}
+              ></Header>
+            )}
             // itemProps={{
             //   moreAction: {
             //     visible: true,
@@ -262,6 +282,20 @@ const ChatApp: FC<any> = () => {
         <Button onClick={topConversation}>top 2808</Button>
         <br />
       </div> */}
+      <UserSelect
+        onCancel={() => {
+          setUserSelectVisible(false);
+        }}
+        onOk={() => {
+          rootStore.addressStore.createGroup(selectedUsers.map(user => user.userId));
+          setUserSelectVisible(false);
+        }}
+        enableMultipleSelection
+        onUserSelect={(user, users) => {
+          setSelectedUsers(users);
+        }}
+        open={userSelectVisible}
+      ></UserSelect>
     </>
   );
 };
@@ -288,7 +322,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYNh2K0q3T9oy6rrrimtbnJsms5y+e8bl8Z6JASbWlx5mrNqgwJBmmJJsbm6RlJKSbGZilphikWZkZmBpbpacaJRiYGia3DsrNbUhkJFhndrldkYGVgZGIATxVRiSDMxMElPMDHTNjEySdA0NU5N1LVINjXRNk4xMLJIMTC3SkiwBUWgppg==',
+          '007eJxTYHA8vOilum/epuqbtbd/aYhqhT36oOxn8H3hm/R91SpcmkwKDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJsVNzUxsCGRmefF9UzsjAysAIhCC+CkOSgZlJYoqZga6ZkUmSrqFharKuRaqhka5pkpGJRZKBqUVakiUA2cwonA==',
         // appKey: 'easemob#easeim',
       }}
       theme={{

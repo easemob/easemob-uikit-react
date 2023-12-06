@@ -186,7 +186,9 @@ let ImageMessage = (props: ImageMessageProps) => {
   let conversationId = getCvsIdFromMessage(message);
   const handleSelectMessage = () => {
     const selectable =
-      rootStore.messageStore.selectedMessage[message.chatType][conversationId]?.selectable;
+      rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+        conversationId
+      ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
@@ -206,11 +208,15 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const select =
-    rootStore.messageStore.selectedMessage[message.chatType][conversationId]?.selectable;
+    rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+      conversationId
+    ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[message.chatType][conversationId]?.selectedMessage;
+      rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+        conversationId
+      ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {

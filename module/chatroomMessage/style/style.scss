@@ -103,7 +103,6 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
 .#{$cui-prefix}-moreAction{
     padding: 0;
     margin: 0;
-    display: grid;
     li{
         list-style: none;
         height: 36px;
@@ -112,6 +111,7 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
         // line-height: 36px;
         cursor: pointer;
         display: flex;
+        flex-shrink: 0;
         justify-content: left;
         align-items: center;
 
@@ -119,6 +119,10 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
         font-style: normal;
         font-weight: 500;
         line-height: 20px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        width: fit-content;
 
         >div{
             margin-right: 8px;

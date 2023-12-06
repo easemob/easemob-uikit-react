@@ -42,6 +42,7 @@ let MoreAction = (props: MoreActionProps) => {
   const classString = classNames(prefixCls);
   const imageEl = useRef<HTMLInputElement>(null);
   const fileEl = useRef<HTMLInputElement>(null);
+  const videoEl = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
@@ -77,14 +78,13 @@ let MoreAction = (props: MoreActionProps) => {
     setCardModalVisible(true);
   };
   const sendCardMessage = () => {
-    console.log('我要发消息了');
     if (selectedUsers.length == 0) {
       return;
     }
     const userInfo = selectedUsers[0];
-    const customEvent = 'userCard'; // 创建自定义事件
+    const customEvent = 'chatUIKit_userCard'; // 创建自定义事件
     const customExts = {
-      uid: userInfo.userId,
+      userId: userInfo.userId,
       nickname: userInfo.nickname,
       avatar: userInfo.avatarUrl,
     };
@@ -111,6 +111,11 @@ let MoreAction = (props: MoreActionProps) => {
       messageStore.sendMessage(customMessage);
     }
   };
+  const sendVideo = () => {
+    console.log('发送视频');
+    videoEl.current?.focus();
+    videoEl.current?.click();
+  };
   const defaultActions = [
     {
       content: 'image',
@@ -118,6 +123,7 @@ let MoreAction = (props: MoreActionProps) => {
       onClick: sendImage,
       icon: null,
     },
+    { content: 'video', title: t('video'), onClick: sendVideo, icon: null },
     { content: 'file', title: t('file'), onClick: sendFile, icon: null },
     { content: 'card', title: t('card'), onClick: sendCard, icon: null },
   ];
@@ -168,6 +174,19 @@ let MoreAction = (props: MoreActionProps) => {
               key={item.content || index}
             >
               {t('card')}
+            </li>
+          );
+        } else if (item.content == 'VIDEO') {
+          return (
+            <li
+              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              onClick={() => {
+                setMenuOpen(false);
+                sendVideo();
+              }}
+              key={item.content || index}
+            >
+              {t('video')}
             </li>
           );
         }
@@ -227,7 +246,7 @@ let MoreAction = (props: MoreActionProps) => {
     imageEl!.current!.value = '';
   };
 
-  const handleFileChange: React.ChangeEventHandler<HTMLInputElement> = e => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'file' | 'video') => {
     let file = chatSDK.utils.getFileUrl(e.target);
     if (!file.filename) {
       return false;
@@ -238,7 +257,7 @@ let MoreAction = (props: MoreActionProps) => {
     }
 
     const option = {
-      type: 'file',
+      type: type,
       to: currentCVS.conversationId,
       chatType: currentCVS.chatType,
       file: file,
@@ -247,6 +266,7 @@ let MoreAction = (props: MoreActionProps) => {
       url: file.url,
       isChatThread,
     } as ChatSDK.CreateFileMsgParameters;
+    debugger;
     const fileMessage = chatSDK.message.create(option);
 
     if (onBeforeSendMessage) {
@@ -288,7 +308,27 @@ let MoreAction = (props: MoreActionProps) => {
           style={{ display: 'none' }}
         />
       }
-      {<input ref={fileEl} onChange={handleFileChange} type="file" style={{ display: 'none' }} />}
+      {
+        <input
+          ref={fileEl}
+          onChange={e => {
+            handleFileChange(e, 'file');
+          }}
+          type="file"
+          style={{ display: 'none' }}
+        />
+      }
+      {
+        <input
+          ref={videoEl}
+          onChange={e => {
+            handleFileChange(e, 'video');
+          }}
+          type="file"
+          style={{ display: 'none' }}
+          accept="video/*"
+        />
+      }
       {
         <UserSelect
           title={'分享联系人'}

@@ -412,6 +412,12 @@ const Chat: FC<ChatProps> = props => {
       {
         content: 'FILE',
       },
+      {
+        content: 'CARD',
+      },
+      {
+        content: 'VIDEO',
+      },
     ],
   };
   if (globalConfig?.messageEditor) {
@@ -450,10 +456,12 @@ const Chat: FC<ChatProps> = props => {
   const [currentCall, setCurrentCall] = useState<any>({});
   const showInvite = async (conf: any) => {
     // rtcConfig?.onAddPerson?.(conf);
+    console.log('添加人', conf);
     const members = await rtcConfig?.onAddPerson?.(conf);
     const rtcMembers = members?.map(item => {
       return item.id;
     });
+    console.log('添加人2', members, rtcMembers);
     let options = {
       callType: currentCall.callType,
       chatType: 'groupChat',

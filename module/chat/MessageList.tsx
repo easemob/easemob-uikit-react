@@ -157,7 +157,19 @@ let MessageList: FC<MsgListProps> = props => {
           {...messageProps}
         ></CombinedMessage>
       );
-    } else if (messageData[data.index].type == 'video' || messageData[data.index].type == 'loc') {
+    } else if (messageData[data.index].type == 'video') {
+      return (
+        <VideoMessage
+          key={messageData[data.index].id}
+          //@ts-ignore
+          videoMessage={messageData[data.index]}
+          style={data.style}
+          renderUserProfile={renderUserProfile}
+          thread={isThread}
+          {...messageProps}
+        ></VideoMessage>
+      );
+    } else if (messageData[data.index].type == 'loc') {
       return (
         <RecalledMessage
           key={messageData[data.index].id}

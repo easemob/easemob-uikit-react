@@ -9,6 +9,7 @@ export interface CheckboxProps {
   className?: string;
   style?: React.CSSProperties;
   checked?: boolean;
+  defaultChecked?: boolean;
   disabled?: boolean;
   children?: React.ReactNode;
   onChange?(e: ChangeEvent<HTMLInputElement>): void;
@@ -18,6 +19,7 @@ export interface CheckboxProps {
 const Checkbox = ({
   id,
   checked,
+  defaultChecked,
   disabled = false,
   children,
   className,
@@ -39,6 +41,11 @@ const Checkbox = ({
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange?.(event);
   };
+  let checkedInner = defaultChecked || isChecked;
+  if (checked != undefined) {
+    checkedInner = checked;
+  }
+
   return (
     <label className={`${prefixCls}-wrapper`} style={{ ...style }} htmlFor={id}>
       <span className={classes}>
@@ -46,7 +53,7 @@ const Checkbox = ({
           disabled={disabled}
           id={id}
           type="checkbox"
-          checked={typeof checked != undefined ? checked : isChecked}
+          checked={checkedInner}
           onClick={() => {
             if (typeof checked != undefined) {
               return;

@@ -265,13 +265,10 @@ export function checkCharacter(character: string) {
   var isLetter = /^[a-zA-Z]$/.test(character);
 
   if (isChinese) {
-    console.log('该字符是汉字');
     return 'zh';
   } else if (isLetter) {
-    console.log('该字符是字母');
     return 'en';
   } else {
-    console.log('该字符既不是字母也不是汉字');
     return 'unknown';
   }
 }

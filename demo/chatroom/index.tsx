@@ -48,6 +48,10 @@ const ChatApp = observer(() => {
         initConfig={{
           appKey: 'easemob#easeim',
         }}
+        local={{
+          fallbackLng: 'en',
+          lng: 'zh',
+        }}
       >
         <div>
           <div>

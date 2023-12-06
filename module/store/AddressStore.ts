@@ -2,9 +2,10 @@ import { observable, action, makeObservable, runInAction } from 'mobx';
 import { getStore } from './index';
 import { ChatSDK } from '../SDK';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
-import { getUsersInfo } from '../utils';
-import { aC } from 'vitest/dist/types-f302dae9';
+import { getUsersInfo, checkCharacter } from '../utils';
 import { rootStore } from 'chatuim2';
+import { pinyin } from 'pinyin-pro';
+
 export type MemberRole = 'member' | 'owner' | 'admin';
 
 export interface MemberItem {
@@ -21,6 +22,8 @@ export interface GroupItem extends ChatSDK.BaseGroupInfo {
   hasMembersNext?: boolean;
   admins?: ChatSDK.UserId[];
   silent?: boolean;
+  initial?: string;
+  name?: string;
 }
 
 export type AppUserInfo = Partial<Record<ChatSDK.ConfigurableKey, any>> & {
@@ -95,6 +98,7 @@ class AddressStore {
       leaveGroup: action,
       addContactRequest: action,
       readContactInvite: action,
+      createGroup: action,
       clear: action,
     });
   }
@@ -543,6 +547,83 @@ class AddressStore {
         item.requestStatus = 'read';
       }
     });
+  }
+
+  createGroup(members: string[]) {
+    const rootStore = getStore();
+    // groupname 是前三个用户的昵称， 其中第一个用户是自己
+    const groupnameArr = members.slice(0, 2).map(item => {
+      return rootStore.addressStore.appUsersInfo?.[item]?.nickname || item;
+    });
+    groupnameArr.unshift(
+      rootStore.addressStore.appUsersInfo?.[rootStore.client.user]?.nickname ||
+        rootStore.client.user,
+    );
+    const groupName = groupnameArr.join('、');
+    console.log('创建群组参数', {
+      groupname: groupName,
+      members,
+      desc: '',
+      public: false,
+      approval: false,
+      allowinvites: true,
+      inviteNeedConfirm: false,
+      maxusers: 1000,
+    });
+    rootStore.client
+      .createGroup({
+        data: {
+          groupname: groupName,
+          members,
+          desc: groupName,
+          public: false,
+          approval: false,
+          allowinvites: true,
+          inviteNeedConfirm: false,
+          maxusers: 1000,
+        },
+      })
+      .then((res: ChatSDK.AsyncResult<ChatSDK.CreateGroupResult>) => {
+        console.log('创建群组成功', res);
+        const groupMembers = members.map(item => {
+          return {
+            userId: item,
+            role: 'member' as 'member' | 'owner' | 'admin',
+          };
+        });
+        groupMembers.push({
+          userId: rootStore.client.user,
+          role: 'owner',
+        });
+        let initial = '#';
+        if (checkCharacter(groupName.substring(0, 1)) == 'en') {
+          initial = groupName.substring(0, 1).toUpperCase();
+        } else if (checkCharacter(groupName.substring(0, 1)) == 'zh') {
+          initial = pinyin(groupName.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
+        }
+
+        this.groups.push({
+          disabled: false,
+          groupid: res.data?.groupid || '',
+          initial: initial,
+          name: groupName,
+          groupname: groupName,
+          members: groupMembers,
+        });
+
+        rootStore.conversationStore.addConversation({
+          chatType: 'groupChat',
+          conversationId: res.data?.groupid || '',
+          name: groupName,
+          lastMessage: {} as any,
+          unreadCount: 0,
+        });
+        rootStore.conversationStore.setCurrentCvs({
+          chatType: 'groupChat',
+          conversationId: res.data?.groupid || '',
+          name: groupName,
+        });
+      });
   }
 
   clear() {
