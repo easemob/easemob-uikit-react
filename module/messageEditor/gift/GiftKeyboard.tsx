@@ -58,7 +58,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     giftId: string;
     giftIcon: string;
     giftName: string;
-    giftPrice: number;
+    giftPrice: string;
   }) => {
     console.log('conversation', conversation);
     if (!currentConversation) {
@@ -90,7 +90,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     giftId: string;
     giftIcon: string;
     giftName: string;
-    giftPrice: number;
+    giftPrice: string;
   }) => {
     sendGiftMessage(giftData);
   };
@@ -105,7 +105,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
           <Gift
             key={item.giftId}
             giftId={item.giftId}
-            title={item.giftName}
+            title={t(item.giftName) as string}
             subTitle={item.giftPrice}
             onClick={handleClick}
             image={item.giftIcon}

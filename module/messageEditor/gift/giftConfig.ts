@@ -3,25 +3,25 @@ const gift = {
     {
       giftId: '2665752a-e273-427c-ac5a-4b2a9c82b255',
       giftIcon: 'https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift1.png',
-      giftName: 'Sweet Heart',
+      giftName: 'Heart',
       giftPrice: '1',
     },
     {
       giftId: 'ff3bbb9e-ef18-430f-aa61-5bddf75eb722',
       giftIcon: 'https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift2.png',
-      giftName: 'Flower',
+      giftName: 'Rose',
       giftPrice: '2',
     },
     {
       giftId: '94f296fa-86d9-4552-84db-025b05ed9f8d',
       giftIcon: 'https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift3.png',
-      giftName: 'Sweet Heart',
+      giftName: 'Super Cube',
       giftPrice: '5',
     },
     {
       giftId: 'd4cd0526-d8db-4e00-8fc0-d5228907a517',
       giftIcon: 'https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift4.png',
-      giftName: 'Super Agora',
+      giftName: 'Alpha',
       giftPrice: '10',
     },
     {
@@ -66,7 +66,7 @@ const gift = {
       giftId: '0c832b52-8f2e-4202-958b-9410db2d9438',
       giftIcon: 'https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift11.png',
       giftEffect: 'https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pag/planet.pag',
-      giftName: 'Plant',
+      giftName: 'Planet',
       giftPrice: '888',
       effectMD5: '41f3eeff249be268004d82a1d1eaf481',
     },

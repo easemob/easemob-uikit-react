@@ -174,7 +174,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
             );
           } else if (item.content === 'MUTE') {
             return (
-              <li key={index} onClick={muteMember}>
+              <li key={isMuted ? index : -index} onClick={muteMember}>
                 <Icon
                   type={isMuted ? 'BELL' : 'BELL_SLASH'}
                   width={16}
@@ -229,7 +229,8 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     }
     return (
       <div className={`${prefixCls}-gift`}>
-        <div>{giftData.giftName}</div>
+        {t('sent')}
+        <div>{t(giftData.giftName)}</div>
         <img src={giftData.giftIcon} alt="" className={`${prefixCls}-gift-img`} />
         <div className={`${prefixCls}-gift-number`}>x1</div>
       </div>

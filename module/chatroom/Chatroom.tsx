@@ -21,7 +21,7 @@ import { ChatroomInfo } from '../store/AddressStore';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
 const reportType = [
-  'Unwelcome commercial content or spam',
+  'Unwelcome commercial content',
   'Pornographic or explicit content',
   'Child abuse',
   'Hate speech or graphic violence',
@@ -265,7 +265,7 @@ const Chatroom = (props: ChatroomProps) => {
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text={t('noConversation')}></Empty>
+          <Empty text={t('Enter chatroom to start chatting')}></Empty>
         )
       ) : (
         <>
@@ -318,6 +318,7 @@ const Chatroom = (props: ChatroomProps) => {
             renderMessageEditor()
           ) : (
             <MessageEditor
+              placeHolder={t("Let's Chat") as string}
               conversation={{
                 chatType: 'chatRoom',
                 conversationId: chatroomId,

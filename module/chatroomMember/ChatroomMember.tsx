@@ -299,7 +299,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
       ) : (
         <Header
           close={true}
-          content="Participants"
+          content={t('Participants')}
           avatar={<div></div>}
           onClickClose={handleClose}
           {...headerProps}
