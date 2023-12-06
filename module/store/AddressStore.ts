@@ -3,16 +3,25 @@ import { getStore } from './index';
 import { ChatSDK } from '../SDK';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
 import { getUsersInfo, checkCharacter } from '../utils';
-import { rootStore } from 'chatuim2';
 import { pinyin } from 'pinyin-pro';
-
 export type MemberRole = 'member' | 'owner' | 'admin';
+
+export interface ContactRequest {
+  from: string;
+  to: string;
+  type: 'subscribe';
+  status?: string;
+  requestStatus: 'pending' | 'accepted' | 'read';
+}
 
 export interface MemberItem {
   userId: ChatSDK.UserId;
   role: MemberRole;
   // @ts-ignore
   attributes?: ChatSDK.MemberAttributes;
+  silent?: boolean;
+  initial?: string;
+  name?: string;
 }
 
 export interface GroupItem extends ChatSDK.BaseGroupInfo {
@@ -21,9 +30,6 @@ export interface GroupItem extends ChatSDK.BaseGroupInfo {
   members?: MemberItem[];
   hasMembersNext?: boolean;
   admins?: ChatSDK.UserId[];
-  silent?: boolean;
-  initial?: string;
-  name?: string;
 }
 
 export type AppUserInfo = Partial<Record<ChatSDK.ConfigurableKey, any>> & {
@@ -38,25 +44,17 @@ export type ChatroomInfo = ChatSDK.GetChatRoomDetailsResult & {
   muteList?: string[];
 };
 
-export interface ContactRequest {
-  from: string;
-  to: string;
-  type: 'subscribe';
-  status?: string;
-  requestStatus: 'pending' | 'accepted' | 'read';
-}
-
 class AddressStore {
   appUsersInfo: Record<string, AppUserInfo>;
-  contacts: { userId: string; nickname: string; silent?: boolean }[];
+  contacts: [];
   groups: GroupItem[];
   hasGroupsNext: boolean;
   chatroom: ChatroomInfo[];
   searchList: any;
+  requests: ContactRequest[];
   thread: {
     [key: string]: ChatSDK.ThreadChangeInfo[];
   };
-  requests: ContactRequest[];
   constructor() {
     this.appUsersInfo = {};
     this.contacts = [];
@@ -174,30 +172,18 @@ class AddressStore {
     }
   }
 
-  setGroupMemberAttributes(groupId: string, userId: string, attributes: ChatSDK.MemberAttributes) {
+  setGroupMemberAttributes(
+    groupId: string,
+    userId: string,
+    // @ts-ignore
+    attributes: ChatSDK.MemberAttributes,
+  ) {
     let groupIdx = getGroupItemIndexFromGroupsById(groupId);
     let idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) ?? -1;
     if (idx > -1) {
       let memberList = this.groups[groupIdx].members || [];
       memberList[idx].attributes = attributes;
     }
-  }
-
-  setGroupMemberAttributesAsync(
-    groupId: string,
-    userId: string,
-    attributes: ChatSDK.MemberAttributes,
-  ) {
-    const rootStore = getStore();
-    rootStore.client
-      .setGroupMemberAttributes({
-        groupId: groupId,
-        userId: userId,
-        memberAttributes: attributes,
-      })
-      .then(() => {
-        this.setGroupMemberAttributes(groupId, userId, attributes);
-      });
   }
 
   setGroupAdmins = (groupId: string, admins: string[]) => {
@@ -208,9 +194,9 @@ class AddressStore {
   };
 
   getUserInfo = (userId: string) => {
-    let userInfo: any = this.appUsersInfo?.[userId];
+    let userInfo = this.appUsersInfo?.[userId];
     if (!userInfo) {
-      getUsersInfo({ userIdList: [userId] as string[], withPresence: false }).then(() => {
+      getUsersInfo({ userIdList: [userId], withPresence: false }).then(() => {
         userInfo = this.appUsersInfo?.[userId];
       });
     }
@@ -247,9 +233,7 @@ class AddressStore {
   setChatroomMuteList = (chatroomId: string, muteList: string[]) => {
     let idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
-      console.log('找到了', this.chatroom[idx]);
       this.chatroom[idx].muteList = [...muteList];
-      console.log('找到了', this.chatroom[idx]);
     }
   };
 
@@ -268,7 +252,6 @@ class AddressStore {
         muteDuration: muteDuration || 60 * 60 * 24 * 30,
       })
       .then(res => {
-        console.log('禁言成功', res);
         this.addUserToMuteList(chatroomId, userId);
       });
   };
@@ -277,7 +260,6 @@ class AddressStore {
     if (!chatroomId) throw 'chatroomId is empty';
     const rootStore = getStore();
     return rootStore.client.getChatRoomMutelist({ chatRoomId: chatroomId }).then(res => {
-      console.log('获取禁言列表成功', res);
       const muteList = res.data?.map(item => item.user) || [];
       this.setChatroomMuteList(chatroomId, muteList);
     });
@@ -292,7 +274,6 @@ class AddressStore {
         username: userId, //message.from as string,
       })
       .then(res => {
-        console.log('取消禁言成功', res);
         this.removeUserFromMuteList(chatroomId, userId);
       });
   };
@@ -305,7 +286,6 @@ class AddressStore {
   };
 
   setChatroomMemberIds = (chatroomId: string, membersId: string[]) => {
-    console.log('设置 --', membersId);
     let idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
       this.chatroom[idx].membersId = [
@@ -328,14 +308,12 @@ class AddressStore {
             item => item !== userId,
           );
         }
-        console.log('移除成功');
       });
   };
 
   setSearchList(searchList: any) {
     this.searchList = searchList;
   }
-
   getSilentModeForConversations(
     cvs: { conversationId: string; chatType: 'singleChat' | 'groupChat' }[],
   ) {
@@ -625,7 +603,6 @@ class AddressStore {
         });
       });
   }
-
   clear() {
     this.appUsersInfo = {};
     this.contacts = [];

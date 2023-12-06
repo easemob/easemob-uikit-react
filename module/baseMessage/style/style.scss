@@ -41,7 +41,6 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
 
         .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-border-radius-right;
-
             &::after {
                 border: $msg-bubble-arrow-border-size solid transparent;
                 border-left: $msg-bubble-arrow-border-size solid $msg-bubble-color-primary;
@@ -80,7 +79,6 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     &-left {
         .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-border-radius-left;
-
             &::before {
                 border: $msg-bubble-arrow-border-size solid transparent;
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly;
@@ -157,6 +155,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
 
     &-content {
         // flex: 1;
+        display: flex;
         max-width: calc(100% - 120px);
         // margin: $msg-base-content-margin;
         padding: $msg-base-content-padding;

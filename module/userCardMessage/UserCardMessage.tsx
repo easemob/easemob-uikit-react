@@ -210,7 +210,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
   // @ts-ignore
   let _thread =
     // @ts-ignore
-    fileMessage.chatType == 'groupChat' &&
+    message.chatType == 'groupChat' &&
     thread &&
     // @ts-ignore
     !message.chatThread &&
