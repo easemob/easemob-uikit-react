@@ -84,7 +84,17 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
         height: 100%;
         box-sizing: border-box;
     }
-    
+
+
+    &-select{
+        color: $blue-5;
+        text-align: center;
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 20px; /* 142.857% */
+        cursor: pointer;
+    }
 }
 
 .cui-group-nickname-input input{

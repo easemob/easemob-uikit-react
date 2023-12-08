@@ -68,6 +68,12 @@ import { ReactComponent as BUBBLE_FILL } from '../svgs/icons/bubble_fill.svg';
 import { ReactComponent as EXCLAMATION_MARK_IN_CIRCLE } from '../svgs/icons/exclamation_mark_in_circle.svg';
 import { ReactComponent as LineArrow } from '../svgs/icons/line_n_arrow.svg';
 import { ReactComponent as ArrowLine } from '../svgs/icons/arrow_n_line.svg';
+import { ReactComponent as DocOnDoc } from '../svgs/icons/doc_on_doc.svg';
+import { ReactComponent as PersonSingleLineFill } from '../svgs/icons/person_single_line_fill.svg';
+import { ReactComponent as SlashInBox } from '../svgs/icons/slash_in_box.svg';
+import { ReactComponent as Eraser } from '../svgs/icons/eraser.svg';
+import { ReactComponent as ArrowSquareRightFill } from '../svgs/icons/arrow_right_square_fill.svg';
+import { ReactComponent as ArrowsRound } from '../svgs/icons/arrow_round.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -269,6 +275,24 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ARROW_LINE':
       return <ArrowLine></ArrowLine>;
+      break;
+    case 'DOC_ON_DOC':
+      return <DocOnDoc></DocOnDoc>;
+      break;
+    case 'PERSON_SINGLE_LINE_FILL':
+      return <PersonSingleLineFill></PersonSingleLineFill>;
+      break;
+    case 'SLASH_IN_BOX':
+      return <SlashInBox></SlashInBox>;
+      break;
+    case 'ERASER':
+      return <Eraser></Eraser>;
+      break;
+    case 'ARROW_RIGHT_SQUARE_FILL':
+      return <ArrowSquareRightFill></ArrowSquareRightFill>;
+      break;
+    case 'ARROWS_ROUND':
+      return <ArrowsRound></ArrowsRound>;
       break;
     default:
       return '';

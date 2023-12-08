@@ -271,11 +271,11 @@ const ChatApp: FC<any> = () => {
             <Thread></Thread>
           </div>
         )}
-        {/* <div style={{ width: '350px', borderLeft: '1px solid green' }}>
+        <div style={{ width: '350px', borderLeft: '1px solid green' }}>
           <ContactInfo
             conversation={{ chatType: 'groupChat', conversationId: contactData.id }}
           ></ContactInfo>
-        </div> */}
+        </div>
       </div>
       {/* <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -322,7 +322,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYHhWvur3jJ/se4U4v1+8390dYxwSosMx66Tdh+iJPe3syrcVGNIMU5LNzS2SUlKSzUzMElMs0ozMDCzNzZITjVIMDE2TQ4QKUhsCGRkunwy7ycjAysAIhCC+CkOSgZlJYoqZga6ZkUmSrqFharKuRaqhka5pkpGJRZKBqUVakiUAAdEoow==',
+          '007eJxTYLh/6Pr6OfJPtoh8jV/ILfB7z7VXB34L2qXN/yhunsQjrcCuwJBmmJJsbm6RlJKSbGZilphikWZkZmBpbpacaJRiYGiazJtVmNoQyMhwdNlqZUYGVgZGIATxVRiSDMxMElPMDHTNjEySdA0NU5N1LVINjXRNk4xMLJIMTC3SkiwB8wQoBw==',
         // appKey: 'easemob#easeim',
       }}
       theme={{

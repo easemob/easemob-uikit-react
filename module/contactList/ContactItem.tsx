@@ -22,6 +22,7 @@ export interface ContactItemProps {
   selectedId?: string;
   checkable?: boolean;
   checkedUserList?: string[];
+  defaultCheckedList?: string[];
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
 }
 
@@ -39,6 +40,7 @@ const ContactItem: FC<ContactItemProps> = props => {
     selectedId,
     checkable,
     checkedUserList,
+    defaultCheckedList,
     onCheckboxChange,
     ...others
   } = props;
@@ -77,7 +79,11 @@ const ContactItem: FC<ContactItemProps> = props => {
             key={item.brandId}
           >
             <UserItem
-              checked={checkedUserList && checkedUserList.includes(item.brandId)}
+              checked={
+                (checkedUserList && checkedUserList.includes(item.brandId)) ||
+                (defaultCheckedList && defaultCheckedList.includes(item.brandId))
+              }
+              disabled={defaultCheckedList && defaultCheckedList.includes(item.brandId)}
               nickname={item.name}
               data={{
                 userId: item.brandId,

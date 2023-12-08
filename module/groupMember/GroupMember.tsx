@@ -8,18 +8,20 @@ import Icon from '../../component/icon';
 import { useParentName } from '../hooks/dom';
 import { useSize } from 'ahooks';
 import { Search } from '../../component/input/Search';
-import Header from '../header';
+import Header, { HeaderProps } from '../header';
 import { RootContext } from '../store/rootContext';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { observer } from 'mobx-react-lite';
 import UserItem, { UserInfoData } from '../../component/userItem';
 import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
-
+import UserSelect, { UserSelectInfo } from '../userSelect';
+import Button from '../../component/button';
 export interface GroupMemberProps {
   style?: React.CSSProperties;
   className?: string;
   prefix?: string;
+  headerProps?: HeaderProps;
   onItemClick?: (info: { id: string; type: 'contact' | 'group'; name: string }) => void;
   checkable?: boolean; // 是否显示checkbox
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
@@ -27,6 +29,13 @@ export interface GroupMemberProps {
   onPrivateChat?: (userId: string) => void | boolean;
   onAddContact?: (userId: string) => void | boolean;
   onClickBack?: () => void;
+  groupId: string;
+  isOwner?: boolean;
+  onUserSelect?: (
+    user: UserSelectInfo & { type: 'add' | 'delete' },
+    users: UserSelectInfo[],
+  ) => void;
+  enableMultipleSelection?: boolean;
 }
 
 const GroupMember: FC<GroupMemberProps> = props => {
@@ -36,11 +45,15 @@ const GroupMember: FC<GroupMemberProps> = props => {
     prefix,
     onItemClick,
     checkable,
-    onCheckboxChange,
     groupMembers,
     onPrivateChat,
     onAddContact,
     onClickBack,
+    groupId,
+    onUserSelect,
+    enableMultipleSelection,
+    isOwner = true,
+    headerProps,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('group-member', prefix);
@@ -55,6 +68,8 @@ const GroupMember: FC<GroupMemberProps> = props => {
     },
     className,
   );
+
+  const groupData = rootStore.addressStore.groups.find(item => item.groupid == groupId);
 
   const privateChat = (userId: string) => {
     console.log('privateChat', userId);
@@ -88,11 +103,140 @@ const GroupMember: FC<GroupMemberProps> = props => {
     if (result == false) return;
     rootStore.addressStore.addContact(userId);
   };
+
+  const addGroupMember = () => {
+    console.log('addGroupMember');
+    if (addMemberData.type == 'add') {
+      const userIds = selectedUsers.map(item => item.userId);
+      rootStore.addressStore.inviteToGroup(groupId, userIds);
+    } else {
+      const userIds = selectedUsers.map(item => item.userId);
+      rootStore.addressStore.removeGroupMembers(groupId, userIds);
+    }
+    setAddMemberData({
+      ...addMemberData,
+      open: false,
+    });
+  };
+  const deleteGroupMember = () => {
+    console.log('groupMembers', groupMembers, groupData);
+    const users = groupMembers.map((item: any) => {
+      return {
+        userId: item.userId,
+        nickname: addressStore.appUsersInfo?.[item.userId]?.nickname,
+        avatar: addressStore.appUsersInfo?.[item.userId]?.avatarurl,
+      };
+    });
+    setAddMemberData({
+      title: '移除群成员',
+      users: users,
+      type: 'delete',
+      open: true,
+    });
+    // removeGroupMembers
+    // rootStore.addressStore.inviteToGroup(groupId, groupId);
+  };
+
+  const [addMemberData, setAddMemberData] = useState({
+    title: '添加群成员',
+    users: [],
+    type: 'add',
+    open: false,
+  });
+
+  const [selectedUsers, setSelectedUsers] = useState<UserInfoData[]>([]);
+
+  const [selectedUsersOut, setSelectedUsersOut] = useState<UserInfoData[]>([]);
+  const handleSelect = (checked: boolean, userInfo: UserInfoData) => {
+    // enableMultipleSelection 参数控制是不是可以多选
+    if (checked) {
+      if (!enableMultipleSelection) {
+        setSelectedUsersOut(value => [userInfo]);
+        onUserSelect?.(
+          {
+            ...userInfo,
+            type: 'add',
+          },
+          [userInfo],
+        );
+        return;
+      }
+      setSelectedUsersOut(value => {
+        onUserSelect?.(
+          {
+            ...userInfo,
+            type: 'add',
+          },
+          [...value, userInfo],
+        );
+        return [...value, userInfo];
+      });
+    } else {
+      if (!enableMultipleSelection) {
+        setSelectedUsersOut([]);
+        onUserSelect?.(
+          {
+            ...userInfo,
+            type: 'delete',
+          },
+          [],
+        );
+        return;
+      }
+      setSelectedUsersOut(value => {
+        const userArr = value.filter(user => {
+          return user.userId !== userInfo.userId;
+        });
+        onUserSelect?.(
+          {
+            ...userInfo,
+            type: 'delete',
+          },
+          userArr,
+        );
+        return userArr;
+      });
+    }
+  };
+
+  // 给groupMember 加上 isInContact属性
+  const renderData =
+    groupMembers?.map((item: any) => {
+      let renderItem = { ...item };
+      renderItem.isInContact = addressStore.contacts.some((contact: any) => {
+        return contact.userId === item.userId;
+      });
+      return renderItem;
+    }) || [];
   return (
     <div className={classString} style={{ ...style }}>
-      <Header avatar={<></>} back content="群成员" onClickBack={onClickBack}></Header>
+      <Header
+        avatar={<></>}
+        back
+        content="群成员"
+        onClickBack={onClickBack}
+        suffixIcon={
+          isOwner ? (
+            <div>
+              <Icon
+                type="ADD_FRIEND"
+                onClick={() => {
+                  setAddMemberData({
+                    title: '添加群成员',
+                    users: [],
+                    type: 'add',
+                    open: true,
+                  });
+                }}
+              ></Icon>
+              <Icon type="PERSON_SINGLE_FILL" onClick={deleteGroupMember}></Icon>
+            </div>
+          ) : null
+        }
+        {...headerProps}
+      ></Header>
       <div className={`${prefixCls}-container`}>
-        {groupMembers?.map((item: any) => {
+        {renderData?.map((item: any) => {
           let name = addressStore.appUsersInfo?.[item.userId]?.nickname;
           if (item.attributes?.nickName) {
             name = item.attributes?.nickName;
@@ -102,7 +246,11 @@ const GroupMember: FC<GroupMemberProps> = props => {
               key={item.userId}
               data={{ userId: item.userId, nickname: name }}
               checkable={checkable}
-              onCheckboxChange={onCheckboxChange}
+              checked={
+                selectedUsersOut &&
+                selectedUsersOut.map(item2 => item2.userId).includes(item.userId)
+              }
+              onCheckboxChange={handleSelect}
               moreAction={{
                 visible: true,
                 icon: <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>,
@@ -119,6 +267,52 @@ const GroupMember: FC<GroupMemberProps> = props => {
           );
         })}
       </div>
+
+      <UserSelect
+        title={addMemberData.title}
+        selectedPanelHeader={<></>}
+        onCancel={() => {
+          setAddMemberData({
+            ...addMemberData,
+            open: false,
+          });
+        }}
+        selectedPanelFooter={
+          <div>
+            <Button
+              style={{ marginRight: '24px', width: '68px' }}
+              type="primary"
+              onClick={() => {
+                addGroupMember();
+              }}
+              disabled={selectedUsers.length === 0}
+            >
+              确定
+            </Button>
+            <Button
+              style={{ width: '68px' }}
+              type="default"
+              onClick={() => {
+                setAddMemberData({
+                  ...addMemberData,
+                  open: false,
+                });
+              }}
+            >
+              取消
+            </Button>
+          </div>
+        }
+        closable={true}
+        enableMultipleSelection={true}
+        open={addMemberData.open}
+        onUserSelect={(user, users) => {
+          console.log('onUserSelect', user, users);
+          setSelectedUsers(users);
+        }}
+        users={addMemberData.users}
+        checkedUsers={groupMembers}
+      />
     </div>
   );
 };

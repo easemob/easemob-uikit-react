@@ -30,6 +30,8 @@ export interface UserSelectProps extends ModalProps {
   enableMultipleSelection?: boolean;
   selectedPanelHeader?: React.ReactNode;
   selectedPanelFooter?: React.ReactNode;
+  users?: UserSelectInfo[];
+  checkedUsers?: UserSelectInfo[];
 }
 
 export interface UserSelectInfo {
@@ -53,6 +55,8 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     selectedPanelFooter,
     onCancel,
     onOk,
+    users,
+    checkedUsers,
     ...others
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -70,7 +74,11 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   );
   const [modalOpen, setModalOpen] = useState(open);
   const [selectedUsers, setSelectedUsers] = useState<UserInfoData[]>([]);
-
+  useEffect(() => {
+    if (!open) {
+      setSelectedUsers([]);
+    }
+  }, [open]);
   const handleSelect = (checked: boolean, userInfo: UserInfoData) => {
     // enableMultipleSelection 参数控制是不是可以多选
     if (checked) {
@@ -141,14 +149,21 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   const checkedList = selectedUsers.map(user => ({
     id: user.userId,
     type: 'contact' as 'contact',
+    name: user.nickname,
   }));
 
   const createGroup = () => {
     console.log('createGroup');
     //addressStore.createGroup(selectedUsers.map(user => user.userId));
     // onUserSelect(group);
-    setModalOpen(false);
+    // setModalOpen(false);
   };
+  // 如果传了users 则左面的panel使用users的数据渲染， 没传的话展示ContactList
+  console.log('%%%%%%%', checkedUsers);
+  const defaultCheckedUsers = checkedUsers?.map(user => ({
+    type: 'contact' as 'contact',
+    id: user.userId,
+  }));
   return (
     <Modal
       open={open}
@@ -164,14 +179,33 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     >
       <div className={classString}>
         <div>
-          <ContactList
-            onCheckboxChange={handleSelect}
-            checkable
-            menu={['contacts']}
-            hasMenu={false}
-            header={<></>}
-            checkedList={checkedList}
-          ></ContactList>
+          {users && users.length > 0 ? (
+            users.map(item => {
+              return (
+                <UserItem
+                  key={item.userId}
+                  data={item}
+                  onCheckboxChange={handleSelect}
+                  checkable
+                  disabled={checkedUsers?.some(item2 => item2.userId == item.userId)}
+                  checked={
+                    (checkedList && checkedList.map(item => item.id).includes(item.userId)) ||
+                    checkedUsers?.some(item2 => item2.userId == item.userId)
+                  }
+                ></UserItem>
+              );
+            })
+          ) : (
+            <ContactList
+              onCheckboxChange={handleSelect}
+              checkable
+              menu={['contacts']}
+              hasMenu={false}
+              header={<></>}
+              checkedList={checkedList}
+              defaultCheckedList={defaultCheckedUsers || []}
+            ></ContactList>
+          )}
         </div>
         <div className={`${prefixCls}-container`}>
           {selectedPanelHeader ? (

@@ -172,6 +172,15 @@ const useEventHandler = () => {
           default:
         }
       },
+      onGroupChange: message => {
+        const { type, gid } = message;
+        const { addressStore } = rootStore;
+        switch (type) {
+          case 'changeOwner':
+            addressStore.setGroupOwner(gid, message.to);
+            break;
+        }
+      },
       onPresenceStatusChange: message => {
         const { addressStore } = rootStore;
         message.length > 0 &&

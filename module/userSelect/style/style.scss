@@ -9,6 +9,9 @@ $userSelect-prefix-cls: #{$cui-prefix}-user-select;
     display: flex;
     overflow: hidden;
     height: 544px;
+    &>div:first-child{
+        background-color: $gray-95;
+    }
     &>div{
         flex: 1;
     }

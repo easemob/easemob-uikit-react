@@ -27,7 +27,6 @@ import Switch from '../../component/switch';
 import Modal from '../../component/modal';
 import { useGroupMembersAttributes, useGroupMembers } from '../hooks/useAddress';
 import GroupMember from '../groupMember';
-import { set } from 'mobx';
 export interface ContactInfoProps {
   prefix?: string;
   className?: string;
@@ -195,10 +194,32 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   };
 
   // ------------ members ------
-  const [memberVisible, setMemberVisible] = useState(false);
+  const [memberVisible, setMemberVisible] = useState({
+    open: false,
+    type: 'showMember',
+  });
+
+  // ---- transfer owner
+  const [transferModalVisible, setTransferModalVisible] = useState(false);
+  const [selectedOwner, setSelectedOwner] = useState<UserInfoData | null>(null);
+  const transferOwner = () => {
+    if (!selectedOwner) {
+      return console.warn('no selected owner');
+    } else {
+      addressStore.changeGroupOwner(conversation.conversationId, selectedOwner.userId);
+    }
+    setTransferModalVisible(false);
+    setMemberVisible({
+      open: false,
+      type: 'showMember',
+    });
+  };
   return (
     <>
-      <div className={classString} style={{ ...style, display: memberVisible ? 'none' : 'flex' }}>
+      <div
+        className={classString}
+        style={{ ...style, display: memberVisible.open ? 'none' : 'flex' }}
+      >
         <div className={`${prefixCls}-header`}>
           <Avatar src={avatarUrl} size={100}>
             {infoData?.name}
@@ -209,7 +230,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             <div className={`${prefixCls}-header-id`}>
               <div>User ID:</div>
               {infoData?.id}
-              <Icon type="FILE" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
+              <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
             </div>
             <div>{infoData?.description}</div>
           </div>
@@ -221,7 +242,10 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             <div
               className={`${prefixCls}-content-item-box`}
               onClick={() => {
-                setMemberVisible(true);
+                setMemberVisible({
+                  open: true,
+                  type: 'showMember',
+                });
               }}
             >
               <span>Members</span>
@@ -233,13 +257,13 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
           </div>
 
           <div className={`${prefixCls}-content-item`}>
-            <Icon type="ADD_FRIEND" width={24} height={24}></Icon>
+            <Icon type="PERSON_SINGLE_LINE_FILL" width={24} height={24}></Icon>
             <div className={`${prefixCls}-content-item-box`}>
               <span>我在本群的昵称</span>
               <div>
                 {nicknameInGroup}
                 <Icon
-                  type="EXCLAMATION_MARK_IN_CIRCLE"
+                  type="SLASH_IN_BOX"
                   width={24}
                   height={24}
                   onClick={() => {
@@ -261,7 +285,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
           </div>
 
           <div className={`${prefixCls}-content-item`}>
-            <Icon type="USER" width={24} height={24}></Icon>
+            <Icon type="ERASER" width={24} height={24}></Icon>
             <div
               className={`${prefixCls}-content-item-box`}
               onClick={() => {
@@ -293,8 +317,16 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
 
           <div className={`${prefixCls}-content-section`}>
             {isOwner && (
-              <div className={`${prefixCls}-content-item`}>
-                <Icon type="USER" width={24} height={24}></Icon>
+              <div
+                className={`${prefixCls}-content-item`}
+                onClick={() => {
+                  setMemberVisible({
+                    open: true,
+                    type: 'transferOwner',
+                  });
+                }}
+              >
+                <Icon type="ARROWS_ROUND" width={24} height={24}></Icon>
                 <div className={`${prefixCls}-content-item-box`}>
                   <span>转移群主</span>
                 </div>
@@ -303,7 +335,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
 
             <div className={`${prefixCls}-content-item`}>
               <Icon
-                type="USER"
+                type={isOwner ? 'DELETE' : 'ARROW_RIGHT_SQUARE_FILL'}
                 width={24}
                 height={24}
                 style={{ fill: '#FF002B', width: '24px', height: '24px' }}
@@ -314,7 +346,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
                   setLeaveModalVisible(true);
                 }}
               >
-                <span style={{ color: '#FF002B' }}>解散群组</span>
+                <span style={{ color: '#FF002B' }}>{isOwner ? '解散群组' : '离开群组'}</span>
               </div>
             </div>
           </div>
@@ -383,27 +415,70 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
         </Modal>
 
         <Modal
-          title={'解散群组'}
+          title={isOwner ? '解散群组' : '离开群组'}
           open={leaveModalVisible}
           onCancel={() => {
             setLeaveModalVisible(false);
           }}
           onOk={leaveGroup}
         >
-          <div>{`确定解散群组 “${infoData?.name}”，同时删除聊天记录吗？`}</div>
+          <div>{`确定${isOwner ? '解散群组' : '离开群组'} “${
+            infoData?.name
+          }”，同时删除聊天记录吗？`}</div>
         </Modal>
       </div>
 
       <div
         className={memberBoxClass}
-        style={{ ...style, display: memberVisible ? 'flex' : 'none' }}
+        style={{ ...style, display: memberVisible.open ? 'flex' : 'none' }}
       >
         <GroupMember
+          headerProps={
+            (memberVisible.type === 'transferOwner' && {
+              content: '转移群主',
+              suffixIcon: (
+                <div
+                  className={`${prefixCls}-select`}
+                  onClick={() => {
+                    setTransferModalVisible(true);
+                  }}
+                >
+                  选择
+                </div>
+              ),
+            }) ||
+            {}
+          }
           onClickBack={() => {
-            setMemberVisible(false);
+            setMemberVisible({
+              open: false,
+              type: 'showMember',
+            });
           }}
+          checkable={memberVisible.type == 'transferOwner'}
           groupMembers={groupData?.members}
+          groupId={infoData?.id || ''}
+          onUserSelect={(userInfo: UserInfoData, selectedUsers: UserInfoData[]) => {
+            console.log('======', userInfo, selectedUsers);
+            setSelectedOwner(userInfo);
+          }}
+          isOwner={isOwner}
         ></GroupMember>
+
+        <Modal
+          title={'转让群主'}
+          open={transferModalVisible}
+          onCancel={() => {
+            setTransferModalVisible(false);
+          }}
+          onOk={transferOwner}
+        >
+          <div>
+            {selectedOwner
+              ? `确定转让群主身份给 “${selectedOwner.nickname || selectedOwner.userId}”吗？`
+              : '请选择要转让的人'}
+          </div>
+        </Modal>
       </div>
     </>
   );

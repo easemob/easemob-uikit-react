@@ -30,6 +30,9 @@ export interface GroupItem extends ChatSDK.BaseGroupInfo {
   members?: MemberItem[];
   hasMembersNext?: boolean;
   admins?: ChatSDK.UserId[];
+  silent?: boolean;
+  initial?: string;
+  name?: string;
 }
 
 export type AppUserInfo = Partial<Record<ChatSDK.ConfigurableKey, any>> & {
@@ -46,7 +49,7 @@ export type ChatroomInfo = ChatSDK.GetChatRoomDetailsResult & {
 
 class AddressStore {
   appUsersInfo: Record<string, AppUserInfo>;
-  contacts: [];
+  contacts: { userId: string; nickname: string; silent?: boolean }[];
   groups: GroupItem[];
   hasGroupsNext: boolean;
   chatroom: ChatroomInfo[];
@@ -97,6 +100,8 @@ class AddressStore {
       addContactRequest: action,
       readContactInvite: action,
       createGroup: action,
+      inviteToGroup: action,
+      setGroupOwner: action,
       clear: action,
     });
   }
@@ -171,7 +176,22 @@ class AddressStore {
       this.groups[idx].hasMembersNext = hasNext;
     }
   }
-
+  setGroupMemberAttributesAsync = (
+    groupId: string,
+    userId: string,
+    attributes: ChatSDK.MemberAttributes,
+  ) => {
+    const rootStore = getStore();
+    rootStore.client
+      .setGroupMemberAttributes({
+        groupId,
+        userId,
+        memberAttributes: attributes,
+      })
+      .then(res => {
+        this.setGroupMemberAttributes(groupId, userId, attributes);
+      });
+  };
   setGroupMemberAttributes(
     groupId: string,
     userId: string,
@@ -601,6 +621,58 @@ class AddressStore {
           conversationId: res.data?.groupid || '',
           name: groupName,
         });
+      });
+  }
+
+  inviteToGroup(groupId: string, userIds: string[]) {
+    const rootStore = getStore();
+    rootStore.client
+      .inviteUsersToGroup({
+        groupId: groupId,
+        users: userIds,
+      })
+      .then(res => {
+        console.log('inviteToGroup', res);
+      });
+  }
+  removeGroupMembers(groupId: string, userIds: string[]) {
+    const rootStore = getStore();
+    rootStore.client
+      .removeGroupMembers({
+        groupId: groupId,
+        users: userIds,
+      })
+      .then(res => {
+        console.log('removeGroupMembers', res);
+      });
+  }
+  setGroupOwner(groupId: string, userId: string) {
+    this.groups.forEach(item => {
+      if (item.groupid === groupId) {
+        item.members?.forEach(member => {
+          if (member.userId === userId) {
+            member.role = 'owner';
+          } else if (member.role === 'owner') {
+            member.role = 'member';
+          }
+        });
+        if (item.info) {
+          item.info.owner = userId;
+        }
+      }
+    });
+    this.groups = [...this.groups];
+  }
+  changeGroupOwner(groupId: string, newOwner: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .changeGroupOwner({
+        groupId: groupId,
+        newOwner: newOwner,
+      })
+      .then(res => {
+        console.log('changeGroupOwner', res);
+        this.setGroupOwner(groupId, newOwner);
       });
   }
   clear() {

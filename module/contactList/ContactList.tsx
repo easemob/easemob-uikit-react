@@ -32,6 +32,7 @@ export interface ContactListProps {
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
   header?: React.ReactNode;
   checkedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
+  defaultCheckedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
 }
 // TODO 监听加好友 加群组 更新数据
 function getBrands(members: any) {
@@ -123,6 +124,7 @@ let ContactList: FC<ContactListProps> = props => {
     onCheckboxChange,
     header,
     checkedList,
+    defaultCheckedList,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contactList', customizePrefixCls);
@@ -175,6 +177,7 @@ let ContactList: FC<ContactListProps> = props => {
         return (
           <ContactItem
             checkedUserList={checkedList && checkedList.map(item => item.id)}
+            defaultCheckedList={defaultCheckedList && defaultCheckedList.map(item => item.id)}
             data={contactItem}
             contactId={contactItem.region}
             onClick={(e, contactId) => {
