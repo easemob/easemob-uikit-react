@@ -251,7 +251,11 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     const groupItem = getGroupItemFromGroupsById(data.conversationId);
     if (groupItem) {
       const memberIdx = getGroupMemberIndexByUserId(groupItem, msgFrom) ?? -1;
-      if (memberIdx > -1) {
+      const ease_chat_uikit_info = data.lastMessage?.ext?.ease_chat_uikit_info;
+      if (ease_chat_uikit_info) {
+        const infoData = JSON.parse(ease_chat_uikit_info);
+        from = `${infoData.nickname}:`;
+      } else if (memberIdx > -1) {
         let memberItem = groupItem?.members?.[memberIdx]!;
         from = `${getGroupMemberNickName(memberItem)}: `;
       }

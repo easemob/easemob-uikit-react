@@ -66,7 +66,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   const themeMode = theme?.mode || 'light';
 
-  const { client, messageStore, conversationStore } = rootStore;
+  const { client, messageStore, conversationStore, addressStore } = rootStore;
   let { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);
   const [queryString, setQueryString] = useState('');

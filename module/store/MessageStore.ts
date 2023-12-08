@@ -8,6 +8,13 @@ import { RootStore } from './index';
 import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
+import {
+  getGroupMemberIndexByUserId,
+  getGroupItemFromGroupsById,
+  getGroupMemberNickName,
+  getMsgSenderNickname,
+} from '../utils/index';
+
 export interface RecallMessage {
   type: 'recall';
   [key: string]: any;
@@ -188,9 +195,9 @@ class MessageStore {
         parentId: currentThread.info?.parentId || currentThread.originalMessage.to,
       };
     }
+    const myInfo = this.rootStore.addressStore.appUsersInfo[this.rootStore.client.user] || {};
     //聊天室消息，在消息的ext里添加自己的信息
     if (chatType === 'chatRoom') {
-      const myInfo = this.rootStore.addressStore.appUsersInfo[this.rootStore.client.user] || {};
       (message as TextMessageType).ext = {
         ...(message as TextMessageType).ext,
         chatroom_uikit_userInfo: {
@@ -200,6 +207,25 @@ class MessageStore {
           gender: Number(myInfo?.gender),
           identify: myInfo?.ext?.identify,
         },
+      };
+    } else {
+      if (chatType == 'groupChat') {
+        const groupItem = getGroupItemFromGroupsById(to);
+        if (groupItem) {
+          const memberIdx =
+            getGroupMemberIndexByUserId(groupItem, this.rootStore.client.user) ?? -1;
+          if (memberIdx > -1) {
+            let memberItem = groupItem?.members?.[memberIdx]!;
+            myInfo.nickname = getGroupMemberNickName(memberItem);
+          }
+        }
+      }
+      (message as TextMessageType).ext = {
+        ...(message as TextMessageType).ext,
+        ease_chat_uikit_info: JSON.stringify({
+          nickname: myInfo?.nickname,
+          avatarUrl: myInfo?.avatarurl,
+        }),
       };
     }
 
