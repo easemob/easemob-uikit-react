@@ -32,9 +32,10 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         align-items: baseline;
     }
     &-content{
-        max-width: calc(100% - 136px);
+        max-width: calc(100% - 96px); //136
         overflow: hidden;
-        flex: 1;
+        // flex: 1;
+        // position: relative;
     }
     
     &-info{
@@ -43,7 +44,10 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         align-items: end;
     }
     &-nickname{
-        margin: $cvs-item-name-margin;
+        max-width: calc(100% - 34px);
+        width: fit-content;
+        position: relative;
+        margin: 0 0 0 12px;//$cvs-item-name-margin;
         font-size: $cvs-item-name-font-size;
         line-height: 24px;
         /* identical to box height, or 150% */
@@ -52,9 +56,16 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         overflow: hidden;
         font-weight: $cvs-item-name-font-weight;
         white-space: nowrap;
-        display: flex;
+        // display: flex;
         align-items: center;
         gap: 2px;
+        padding-right: 20px;
+        text-overflow: ellipsis;
+        &-silent{
+            position: absolute;
+            right: 0;
+            top: 4px;
+        }
     }
     &-message{
         margin-left: $cvs-item-message-margin-left;
