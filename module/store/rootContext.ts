@@ -76,6 +76,8 @@ export interface ContextProps {
   theme?: {
     primaryColor?: string;
     mode?: 'dark' | 'light';
+    avatarShape?: 'circle' | 'square';
+    bubbleShape?: 'ground' | 'square';
   };
 }
 

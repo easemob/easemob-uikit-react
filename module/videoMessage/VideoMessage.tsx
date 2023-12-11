@@ -21,10 +21,20 @@ export interface VideoMessageProps extends BaseMessageProps {
   status?: 'received' | 'read' | 'sent' | 'sending';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   type?: 'primary' | 'secondly';
+  className?: string;
 }
 const VideoMessage = (props: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { videoMessage, renderUserProfile, type, shape, nickName, thread, ...baseMsgProps } = props;
+  const {
+    videoMessage,
+    renderUserProfile,
+    type,
+    shape,
+    nickName,
+    thread,
+    className,
+    ...baseMsgProps
+  } = props;
 
   let { bySelf, from, reactions } = videoMessage;
   console.log('textMessage --->', from, bySelf, rootStore.client);
@@ -206,7 +216,7 @@ const VideoMessage = (props: VideoMessageProps) => {
 
     rootStore.threadStore.getChatThreadDetail(videoMessage?.chatThreadOverview?.id || '');
   };
-
+  const classSting = classNames('cui-message-video', className);
   return (
     <BaseMessage
       id={videoMessage.id}
@@ -234,17 +244,18 @@ const VideoMessage = (props: VideoMessageProps) => {
       bubbleStyle={{ padding: '0' }}
       {...baseMsgProps}
     >
-      <video
-        id="videoEle"
-        ref={videoRef}
-        autoPlay={false}
-        controls
-        height={374}
-        crossOrigin="anonymous"
-        preload="metadata"
-        src={videoData}
-        // src="https://a5-v2.easemob.com/easemob/easeim/chatfiles/4db7f110-b676-11ed-929f-1fcef06124f9?em-redirect=true&share-secret=TbgYILZ2Ee2IYD1BAxWxusBH_NV8dnJY6jFq1PwVkIaY3uys"
-      ></video>
+      <div className={classSting}>
+        <video
+          id="videoEle"
+          ref={videoRef}
+          autoPlay={false}
+          controls
+          crossOrigin="anonymous"
+          preload="metadata"
+          src={videoData}
+          // src="https://a5-v2.easemob.com/easemob/easeim/chatfiles/4db7f110-b676-11ed-929f-1fcef06124f9?em-redirect=true&share-secret=TbgYILZ2Ee2IYD1BAxWxusBH_NV8dnJY6jFq1PwVkIaY3uys"
+        ></video>
+      </div>
     </BaseMessage>
   );
 };

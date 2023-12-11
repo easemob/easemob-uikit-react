@@ -90,7 +90,6 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   const groupMembers = groupData?.members;
   const myInfo = groupMembers?.filter(item => item.userId === rootStore.client.user)[0];
   var avatarUrl = '';
-  console.log('====', myInfo?.attributes?.nickName);
   const handleCopy = () => {
     var textArea = document.createElement('textarea');
     textArea.value = conversation.conversationId;
@@ -107,11 +106,11 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
 
   // --------- nickname modal ---
   const [nicknameModalVisible, setNicknameModalVisible] = useState(false);
-  const [nicknameInGroup, setNicknameInGroup] = useState(myInfo?.attributes?.nickName || '');
+  const [nicknameInGroup, setNicknameInGroup] = useState(myInfo?.attributes?.nickname || '');
 
   useEffect(() => {
-    setNicknameInGroup(myInfo?.attributes?.nickName || '');
-  }, [myInfo?.attributes?.nickName]);
+    setNicknameInGroup(myInfo?.attributes?.nickname || '');
+  }, [myInfo?.attributes?.nickname]);
 
   const handleNicknameInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     console.log(e.target.value);
@@ -123,7 +122,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
       conversation.conversationId,
       rootStore.client.user,
       {
-        nickName: nicknameInGroup,
+        nickname: nicknameInGroup,
       },
     );
     setNicknameModalVisible(false);

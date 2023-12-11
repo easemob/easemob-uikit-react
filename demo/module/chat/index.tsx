@@ -155,6 +155,13 @@ const ChatApp: FC<any> = () => {
   // create group
   const [userSelectVisible, setUserSelectVisible] = useState(false);
   const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+
+  const [groupSettingVisible, setGroupSettingVisible] = useState(false);
+  const [cvsItem, setCvsItem] = useState([]);
+  const showGroupSetting = () => {
+    setGroupSettingVisible(value => !value);
+    console.log('showGroupSetting');
+  };
   return (
     <>
       <div className="tab-box">
@@ -199,6 +206,10 @@ const ChatApp: FC<any> = () => {
                 }}
               ></Header>
             )}
+            onItemClick={item => {
+              console.log('cvsItem', item);
+              setCvsItem(item);
+            }}
             // itemProps={{
             //   moreAction: {
             //     visible: true,
@@ -233,22 +244,45 @@ const ChatApp: FC<any> = () => {
           display: 'flex',
         }}
       >
-        <div style={{ flex: 1, borderLeft: '1px solid transparent', overflow: 'hidden' }}>
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            borderLeft: '1px solid transparent',
+            overflow: 'hidden',
+          }}
+        >
           {tab == 'chat' && (
-            <Chat
-              messageListProps={{
-                renderUserProfile: () => {
-                  return null;
-                },
-              }}
-              messageEditorProps={{
-                enabledTyping: true,
-              }}
-              rtcConfig={{
-                getRTCToken: getRTCToken,
-                getIdMap: () => {},
-              }}
-            ></Chat>
+            <>
+              <Chat
+                messageListProps={{
+                  renderUserProfile: () => {
+                    return null;
+                  },
+                }}
+                messageEditorProps={{
+                  enabledTyping: true,
+                }}
+                headerProps={{
+                  moreAction: {
+                    visible: false,
+                    actions: [{ content: '' }],
+                  },
+                  suffixIcon: <Icon type="ELLIPSIS" onClick={showGroupSetting}></Icon>,
+                }}
+                rtcConfig={{
+                  getRTCToken: getRTCToken,
+                  getIdMap: () => {},
+                }}
+              ></Chat>
+              {groupSettingVisible && (
+                <div style={{ width: '350px', borderLeft: '1px solid green' }}>
+                  <ContactInfo
+                    conversation={{ chatType: 'groupChat', conversationId: cvsItem.conversationId }}
+                  ></ContactInfo>
+                </div>
+              )}
+            </>
           )}
           {tab == 'contact' && (
             <ContactDetail
@@ -271,11 +305,11 @@ const ChatApp: FC<any> = () => {
             <Thread></Thread>
           </div>
         )}
-        <div style={{ width: '350px', borderLeft: '1px solid green' }}>
+        {/* <div style={{ width: '350px', borderLeft: '1px solid green' }}>
           <ContactInfo
             conversation={{ chatType: 'groupChat', conversationId: contactData.id }}
           ></ContactInfo>
-        </div>
+        </div> */}
       </div>
       {/* <div>
         <Button onClick={getUrlPreviewInfo}>getUrlPreviewInfo</Button>
@@ -322,16 +356,18 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: '41117440#383391',
         userId: 'zd2',
         token:
-          '007eJxTYLh/6Pr6OfJPtoh8jV/ILfB7z7VXB34L2qXN/yhunsQjrcCuwJBmmJJsbm6RlJKSbGZilphikWZkZmBpbpacaJRiYGiazJtVmNoQyMhwdNlqZUYGVgZGIATxVRiSDMxMElPMDHTNjEySdA0NU5N1LVINjXRNk4xMLJIMTC3SkiwB8wQoBw==',
+          '007eJxTYDjHtFbVRvdMj1XL1SilV5NfrF4TYrTRkvXJGfFt/94rZogqMKQZpiSbm1skpaQkm5mYJaZYpBmZGViamyUnGqUYGJom799dlNoQyMigmj3jOSMDKwMjEIL4KgxJBmYmiSlmBrpmRiZJuoaGqcm6FqmGRrqmSUYmFkkGphZpSZYAxn0oeQ==',
         // appKey: 'easemob#easeim',
       }}
       theme={{
         // primaryColor: '#33ffaa',
         mode: 'light',
+        bubbleShape: 'square',
+        avatarShape: 'square',
       }}
       local={{
         fallbackLng: 'en',
-        lng: 'en',
+        lng: 'zh',
         // resources: {
         //   en: {
         //     translation: {
@@ -341,40 +377,40 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         //   },
         // },
       }}
-      // features={{
-      //   conversationList: {
-      //     search: true,
-      //     item: {
-      //       moreAction: false,
-      //       deleteConversation: false,
-      //     },
-      //   },
-      //   chat: {
-      //     header: {
-      //       threadList: true,
-      //       moreAction: true,
-      //       clearMessage: true,
-      //       deleteConversation: false,
-      //       audioCall: false,
-      //     },
-      //     message: {
-      //       status: false,
-      //       reaction: false,
-      //       thread: true,
-      //       recall: true,
-      //       translate: false,
-      //       edit: false,
-      //     },
-      //     messageEditor: {
-      //       mention: false,
-      //       typing: false,
-      //       record: true,
-      //       emoji: true,
-      //       moreAction: true,
-      //       picture: true,
-      //     },
-      //   },
-      // }}
+      features={{
+        conversationList: {
+          search: true,
+          item: {
+            moreAction: true,
+            deleteConversation: true,
+          },
+        },
+        chat: {
+          header: {
+            threadList: false,
+            moreAction: true,
+            clearMessage: true,
+            deleteConversation: true,
+            audioCall: true,
+          },
+          message: {
+            status: true,
+            reaction: true,
+            thread: false,
+            recall: true,
+            translate: true,
+            edit: true,
+          },
+          messageEditor: {
+            mention: true,
+            typing: true,
+            record: true,
+            emoji: true,
+            moreAction: true,
+            picture: true,
+          },
+        },
+      }}
     >
       <App></App>
     </Provider>

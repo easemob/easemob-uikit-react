@@ -238,11 +238,12 @@ const GroupMember: FC<GroupMemberProps> = props => {
       <div className={`${prefixCls}-container`}>
         {renderData?.map((item: any) => {
           let name = addressStore.appUsersInfo?.[item.userId]?.nickname;
-          if (item.attributes?.nickName) {
-            name = item.attributes?.nickName;
+          if (item.attributes?.nickname) {
+            name = item.attributes?.nickname;
           }
           return (
             <UserItem
+              avatarShape={theme?.avatarShape}
               key={item.userId}
               data={{ userId: item.userId, nickname: name }}
               checkable={checkable}
@@ -311,7 +312,15 @@ const GroupMember: FC<GroupMemberProps> = props => {
           setSelectedUsers(users);
         }}
         users={addMemberData.users}
-        checkedUsers={groupMembers}
+        checkedUsers={
+          addMemberData.type == 'add'
+            ? groupMembers
+            : [
+                {
+                  userId: rootStore.client.user,
+                },
+              ]
+        }
       />
     </div>
   );

@@ -49,7 +49,7 @@ const ContactItem: FC<ContactItemProps> = props => {
   const context = useContext(RootContext);
   const { rootStore, theme, features } = context;
   const themeMode = theme?.mode || 'light';
-
+  let aShape = theme?.avatarShape ? theme?.avatarShape : avatarShape;
   const classString = classNames(prefixCls, className);
   const { addressStore } = rootStore;
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>, contactId: string) => {
@@ -79,6 +79,7 @@ const ContactItem: FC<ContactItemProps> = props => {
             key={item.brandId}
           >
             <UserItem
+              avatarShape={aShape}
               checked={
                 (checkedUserList && checkedUserList.includes(item.brandId)) ||
                 (defaultCheckedList && defaultCheckedList.includes(item.brandId))

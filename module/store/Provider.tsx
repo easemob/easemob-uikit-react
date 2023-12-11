@@ -77,6 +77,8 @@ export interface ProviderProps {
   theme?: {
     primaryColor?: string;
     mode?: 'light' | 'dark';
+    avatarShape?: 'circle' | 'square';
+    bubbleShape?: 'ground' | 'square';
   };
 }
 const Provider: React.FC<ProviderProps> = props => {

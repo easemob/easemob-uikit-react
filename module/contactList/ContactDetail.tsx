@@ -124,7 +124,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
         <>
           <div className={`${prefixCls}-content`}>
             <div className={`${prefixCls}-content-header`}>
-              <Avatar src={avatarUrl} size={100}>
+              <Avatar src={avatarUrl} size={100} shape={theme?.avatarShape}>
                 {name}
               </Avatar>
               <div>

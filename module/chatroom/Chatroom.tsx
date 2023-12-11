@@ -91,7 +91,7 @@ const Chatroom = (props: ChatroomProps) => {
     const myInfo = rootStore.addressStore.appUsersInfo[rootStore.client.user] || {};
     const chatroom_uikit_userInfo = {
       userId: myInfo?.userId,
-      nickName: myInfo?.nickname,
+      nickname: myInfo?.nickname,
       avatarURL: myInfo?.avatarurl,
       gender: Number(myInfo?.gender),
       identify: myInfo?.ext?.identify,

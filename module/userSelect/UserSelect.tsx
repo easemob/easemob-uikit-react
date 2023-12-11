@@ -183,6 +183,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
             users.map(item => {
               return (
                 <UserItem
+                  avatarShape={theme?.avatarShape}
                   key={item.userId}
                   data={item}
                   onCheckboxChange={handleSelect}

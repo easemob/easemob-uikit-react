@@ -45,6 +45,7 @@ export interface BaseMessageProps {
   bubbleStyle?: React.CSSProperties;
   status?: MessageStatusProps['status'];
   avatar?: ReactNode;
+  avatarShape?: 'circle' | 'square';
   direction?: 'ltr' | 'rtl'; // 左侧布局/右侧布局
   prefix?: string;
   shape?: 'ground' | 'square'; // 气泡形状
@@ -118,6 +119,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   const {
     message,
     avatar,
+    avatarShape = 'circle',
     direction = 'ltr',
     status = 'default',
     prefix: customizePrefixCls,
@@ -128,7 +130,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     time,
     nickName,
     shape = 'ground',
-    arrow = false,
+    arrow,
     hasRepliedMsg = false,
     onReplyMessage,
     repliedMessage,
@@ -169,11 +171,27 @@ let BaseMessage = (props: BaseMessageProps) => {
   if (avatar) {
     avatarToShow = avatar;
   } else {
+    let shape = avatarShape;
+    if (theme?.avatarShape) {
+      shape = theme?.avatarShape;
+    }
     avatarToShow = (
-      <Avatar src={appUsersInfo?.[userId]?.avatarurl}>
+      <Avatar src={appUsersInfo?.[userId]?.avatarurl} shape={shape}>
         {appUsersInfo?.[userId]?.nickname || userId}
       </Avatar>
     );
+  }
+
+  let bubbleShape = shape;
+  let bubbleArrow = arrow;
+  if (theme?.bubbleShape) {
+    bubbleShape = theme?.bubbleShape;
+  }
+  if (bubbleShape == 'square' && typeof arrow == 'undefined') {
+    bubbleArrow = true;
+  }
+  if (message?.type == 'video' || message?.type == 'img') {
+    bubbleArrow = false;
   }
   const showRepliedMsg =
     typeof repliedMessage == 'object' && typeof repliedMessage.type == 'string';
@@ -184,9 +202,9 @@ let BaseMessage = (props: BaseMessageProps) => {
       [`${prefixCls}-right`]: direction == 'rtl',
       [`${prefixCls}-hasAvatar`]: !!avatar,
       [`${prefixCls}-${bubbleType}`]: !!bubbleType,
-      [`${prefixCls}-${shape}`]: !!shape,
-      [`${prefixCls}-arrow`]: !!arrow,
-      [`${prefixCls}-reply`]: showRepliedMsg && shape === 'ground',
+      [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
+      [`${prefixCls}-arrow`]: !!bubbleArrow,
+      [`${prefixCls}-reply`]: showRepliedMsg && bubbleShape === 'ground',
     },
     className,
   );

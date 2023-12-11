@@ -81,7 +81,9 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
-
+  if (theme?.avatarShape) {
+    avatarShape = theme?.avatarShape;
+  }
   const cvsStore = rootStore.conversationStore;
 
   const classString = classNames(
@@ -251,10 +253,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     const groupItem = getGroupItemFromGroupsById(data.conversationId);
     if (groupItem) {
       const memberIdx = getGroupMemberIndexByUserId(groupItem, msgFrom) ?? -1;
-      const ease_chat_uikit_info = data.lastMessage?.ext?.ease_chat_uikit_info;
-      if (ease_chat_uikit_info) {
-        const infoData = JSON.parse(ease_chat_uikit_info);
-        from = `${infoData.nickname}:`;
+      // @ts-ignore
+      const ease_chat_uikit_user_info = data.lastMessage?.ext?.ease_chat_uikit_user_info;
+      if (ease_chat_uikit_user_info) {
+        from = `${ease_chat_uikit_user_info.nickname}:`;
       } else if (memberIdx > -1) {
         let memberItem = groupItem?.members?.[memberIdx]!;
         from = `${getGroupMemberNickName(memberItem)}: `;

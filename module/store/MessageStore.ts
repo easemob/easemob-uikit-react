@@ -202,7 +202,7 @@ class MessageStore {
         ...(message as TextMessageType).ext,
         chatroom_uikit_userInfo: {
           userId: myInfo?.userId,
-          nickName: myInfo?.nickname,
+          nickname: myInfo?.nickname,
           avatarURL: myInfo?.avatarurl,
           gender: Number(myInfo?.gender),
           identify: myInfo?.ext?.identify,
@@ -222,10 +222,10 @@ class MessageStore {
       }
       (message as TextMessageType).ext = {
         ...(message as TextMessageType).ext,
-        ease_chat_uikit_info: JSON.stringify({
+        ease_chat_uikit_user_info: {
           nickname: myInfo?.nickname,
-          avatarUrl: myInfo?.avatarurl,
-        }),
+          avatarURL: myInfo?.avatarurl,
+        },
       };
     }
 
@@ -252,7 +252,7 @@ class MessageStore {
     if (this.repliedMessage != null) {
       this.setRepliedMessage(null);
     }
-
+    console.log('message', message);
     return this.rootStore.client
       .send(message as unknown as ChatSDK.MessageBody)
       .then((data: { serverMsgId: string }) => {
@@ -388,7 +388,7 @@ class MessageStore {
       this.rootStore.addressStore.setAppUserInfo({
         ...appUsersInfo,
         [senderInfo.userId]: {
-          nickname: senderInfo.nickName,
+          nickname: senderInfo.nickname,
           userId: senderInfo.userId,
           avatarurl: senderInfo.avatarURL,
           gender: senderInfo.gender,

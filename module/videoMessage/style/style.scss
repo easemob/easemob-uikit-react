@@ -1,0 +1,17 @@
+@import '~/common/style/index.scss';
+
+$video-msg-prefix-cls: #{$cui-prefix}-message-video;
+
+.#{$video-msg-prefix-cls} {
+    max-width: 300px;
+    // max-height: 300px;
+    overflow: hidden;
+    position: relative;
+    width: fit-content;
+    display: flex;
+    &>video{
+        width: 100%;
+        height: 100%;
+        object-fit:contain;
+    }
+}

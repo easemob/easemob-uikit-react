@@ -17,6 +17,7 @@ export interface HeaderProps {
   icon?: ReactNode; // 右侧更多按钮 icon
   back?: boolean; // 是否显示左侧返回按钮
   avatarSrc?: string;
+  avatarShape?: 'circle' | 'square';
   close?: boolean; // 是否显示右侧关闭按钮
   suffixIcon?: ReactNode; // 右侧自定义 icon
   renderContent?: () => React.ReactElement; // 自定义渲染中间内容部分；
@@ -59,6 +60,10 @@ const Header: FC<HeaderProps> = props => {
   } = props;
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
+  let avatarShape = props.avatarShape || 'circle';
+  if (theme?.avatarShape) {
+    avatarShape = theme?.avatarShape;
+  }
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('header', customizePrefixCls);
   const classString = classNames(
@@ -119,6 +124,7 @@ const Header: FC<HeaderProps> = props => {
             avatar
           ) : (
             <Avatar
+              shape={avatarShape}
               src={avatarSrc}
               onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
                 onAvatarClick?.(e);

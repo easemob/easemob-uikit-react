@@ -42,11 +42,7 @@ export interface ChatProps {
   renderMessageEditor?: () => ReactNode; // 自定义渲染 MessageEditor
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
   // Header 的 props
-  headerProps?: {
-    avatar: ReactNode;
-    onAvatarClick?: () => void; // 点击 Header 中 头像的回调
-    moreAction?: HeaderProps['moreAction'];
-  };
+  headerProps?: HeaderProps;
   messageListProps?: MsgListProps;
   messageEditorProps?: MessageEditorProps;
 
