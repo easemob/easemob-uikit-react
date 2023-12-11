@@ -353,10 +353,11 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         console.log('回调出的err', err);
       }}
       initConfig={{
-        appKey: '41117440#383391',
+        appKey: 'easemob#easeim',
         userId: 'zd2',
-        token:
-          '007eJxTYDjHtFbVRvdMj1XL1SilV5NfrF4TYrTRkvXJGfFt/94rZogqMKQZpiSbm1skpaQkm5mYJaZYpBmZGViamyUnGqUYGJom799dlNoQyMigmj3jOSMDKwMjEIL4KgxJBmYmiSlmBrpmRiZJuoaGqcm6FqmGRrqmSUYmFkkGphZpSZYAxn0oeQ==',
+        password: '1',
+        // token:
+        //   '007eJxTYFBRW8PxsjzKTEt3t/q21aylFwrC37GaPK73k382686EjO8KDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJh06XpTYEMjIY6nO0MjKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAHZsmnQ==',
         // appKey: 'easemob#easeim',
       }}
       theme={{

@@ -40,7 +40,7 @@ function getBrands(members: any) {
   const innerMembers = members.concat();
   innerMembers.forEach((item: any) => {
     item.name = item.userId
-      ? rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
+      ? item.remark || rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
       : item.groupname;
     item.userId && (item.nickname = item.name);
     if (checkCharacter(item.name.substring(0, 1)) == 'en') {

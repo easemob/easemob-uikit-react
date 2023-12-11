@@ -49,7 +49,7 @@ export type ChatroomInfo = ChatSDK.GetChatRoomDetailsResult & {
 
 class AddressStore {
   appUsersInfo: Record<string, AppUserInfo>;
-  contacts: { userId: string; nickname: string; silent?: boolean }[];
+  contacts: { userId: string; nickname: string; silent?: boolean; remark?: string }[];
   groups: GroupItem[];
   hasGroupsNext: boolean;
   chatroom: ChatroomInfo[];

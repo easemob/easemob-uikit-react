@@ -123,6 +123,18 @@ const Provider: React.FC<ProviderProps> = props => {
         .catch(err => {
           eventHandler.dispatchError('open', err);
         });
+    } else if (initConfig.userId && initConfig.password) {
+      client
+        .open({
+          user: initConfig.userId,
+          pwd: initConfig.password,
+        })
+        .then(() => {
+          eventHandler.dispatchSuccess('open');
+        })
+        .catch(err => {
+          eventHandler.dispatchError('open', err);
+        });
     }
   }, [initConfig.userId, initConfig.token]);
 

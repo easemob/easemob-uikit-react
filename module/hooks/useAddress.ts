@@ -3,6 +3,7 @@ import { RootContext } from '../store/rootContext';
 import { getStore } from '../store/index';
 import { getGroupItemFromGroupsById } from '../../module/utils';
 import { getUsersInfo } from '../utils';
+import { ChatSDK } from 'module/SDK';
 
 const useContacts = () => {
   const rootStore = useContext(RootContext).rootStore;
@@ -19,11 +20,12 @@ const useContacts = () => {
     }
     rootStore.loginState &&
       client
-        .getContacts()
-        .then(res => {
-          const contacts = res.data?.map(userId => ({
-            userId: userId,
+        .getAllContacts()
+        .then((res: ChatSDK.AsyncResult<ChatSDK.ContactItem[]>) => {
+          const contacts = res.data?.map(userItem => ({
+            userId: userItem.userId,
             nickname: '',
+            remark: userItem.remark,
           }));
           setContacts(contacts || []);
           addressStore.setContacts(contacts);

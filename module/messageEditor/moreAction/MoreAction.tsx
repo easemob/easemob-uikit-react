@@ -84,9 +84,9 @@ let MoreAction = (props: MoreActionProps) => {
     const userInfo = selectedUsers[0];
     const customEvent = 'chatUIKit_userCard'; // 创建自定义事件
     const customExts = {
-      userId: userInfo.userId,
-      nickname: userInfo.nickname,
-      avatar: userInfo.avatarUrl,
+      userId: userInfo.userId || '',
+      nickname: userInfo.nickname || '',
+      avatar: userInfo.avatarUrl || '',
     };
 
     const option = {

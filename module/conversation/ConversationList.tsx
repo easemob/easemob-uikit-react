@@ -72,7 +72,7 @@ let Conversations: FC<ConversationListProps> = props => {
     className,
   );
   const cvsStore = rootStore.conversationStore;
-  const { appUsersInfo } = rootStore.addressStore;
+  const { appUsersInfo, contacts } = rootStore.addressStore;
   const { t } = useTranslation();
   const { getConversationList, hasConversationNext } = useConversations();
   useUserInfo('conversation');
@@ -120,6 +120,13 @@ let Conversations: FC<ConversationListProps> = props => {
             renderItem.name || appUsersInfo?.[item.conversationId as string]?.nickname;
           renderItem.avatarUrl = appUsersInfo?.[item.conversationId as string]?.avatarurl;
           // renderItem.isOnline = appUsersInfo?.[item.conversationId as string]?.isOnline;
+          // 如果contacts里包含这个联系人，并且有remark 则 name = remark
+          const contact = contacts?.find(contact => {
+            return contact.userId == item.conversationId;
+          });
+          if (contact?.remark) {
+            renderItem.name = contact.remark;
+          }
         }
         return renderItem;
       });
