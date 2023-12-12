@@ -242,11 +242,16 @@ const useEventHandler = () => {
         addressStore.getUserInfo(message.from);
       },
       onContactDeleted: message => {
+        console.log('onContactDeleted', message);
         const { addressStore } = rootStore;
+        addressStore.deleteContactFromContactList(message.from);
         // addressStore.removeContact(message.from);
       },
       onContactAdded: message => {
+        console.log('onContactAdded', message);
+
         const { addressStore } = rootStore;
+        addressStore.addContactToContactList(message.from);
         // addressStore.addContact(message.from);
       },
     });

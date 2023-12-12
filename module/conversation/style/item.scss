@@ -44,7 +44,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         align-items: end;
     }
     &-nickname{
-        max-width: calc(100% - 34px);
+        max-width: calc(100% - 10px);
         width: fit-content;
         position: relative;
         margin: 0 0 0 12px;//$cvs-item-name-margin;
@@ -115,7 +115,9 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     font-weight: 500;
     margin-right: 5px;
 }
-
+.has-silent{
+    max-width: calc(100% - 34px);
+}
 .cui-moreAction{
     padding: 0;
     margin: 0;

@@ -78,6 +78,7 @@ class AddressStore {
       requests: observable,
       setHasGroupsNext: action,
       setContacts: action,
+      deleteContactFromContactList: action,
       setGroups: action,
       setGroupMembers: action,
       setGroupMemberAttributes: action,
@@ -102,6 +103,7 @@ class AddressStore {
       createGroup: action,
       inviteToGroup: action,
       setGroupOwner: action,
+      addContactToContactList: action,
       clear: action,
     });
   }
@@ -112,6 +114,37 @@ class AddressStore {
 
   setContacts(contacts: any) {
     this.contacts = contacts;
+  }
+
+  deleteContactFromContactList(userId: string) {
+    this.contacts = this.contacts.filter(item => item.userId !== userId);
+  }
+
+  addContactToContactList(userId: string) {
+    this.getUserInfo(userId).then(userInfo => {
+      const name = userInfo.nickname || userId;
+      let initial = '#';
+      if (checkCharacter(name.substring(0, 1)) == 'en') {
+        initial = name.substring(0, 1).toUpperCase();
+      } else if (checkCharacter(name.substring(0, 1)) == 'zh') {
+        initial = pinyin(name.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
+      } else {
+        initial = '#';
+      }
+
+      runInAction(() => {
+        this.contacts.push({
+          userId,
+          nickname: userInfo.nickname,
+          // @ts-ignore
+          name: userInfo.nickname,
+          remark: '',
+          avatar: userInfo.avatarurl,
+          initial: initial,
+        });
+        this.contacts = [...this.contacts];
+      });
+    });
   }
 
   setGroups(groups: GroupItem[]) {
@@ -216,10 +249,12 @@ class AddressStore {
   getUserInfo = (userId: string) => {
     let userInfo = this.appUsersInfo?.[userId];
     if (!userInfo) {
-      getUsersInfo({ userIdList: [userId], withPresence: false }).then(() => {
+      return getUsersInfo({ userIdList: [userId], withPresence: false }).then(() => {
         userInfo = this.appUsersInfo?.[userId];
+        return userInfo;
       });
     }
+    return Promise.resolve(userInfo);
   };
 
   getUserInfoWithPresence = (userIdList: string[]) => {

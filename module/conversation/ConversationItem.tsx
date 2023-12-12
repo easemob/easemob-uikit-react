@@ -282,7 +282,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       )}
 
       <div className={`${prefixCls}-content`}>
-        <span className={`${prefixCls}-nickname`}>
+        <span className={`${prefixCls}-nickname ${data.silent ? 'has-silent' : ''}`}>
           {data.name || data.conversationId}
           {data.silent && (
             <Icon type="BELL_SLASH" className={`${prefixCls}-nickname-silent`}></Icon>
