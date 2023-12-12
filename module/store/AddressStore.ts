@@ -572,11 +572,12 @@ class AddressStore {
         item.requestStatus = 'accepted';
       }
     });
+    this.requests = [...this.requests];
   }
 
   readContactInvite(userId: string) {
     this.requests.forEach(item => {
-      if (item.from === userId) {
+      if (item.from === userId && item.requestStatus === 'pending') {
         item.requestStatus = 'read';
       }
     });

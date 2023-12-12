@@ -227,7 +227,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             <div className={`${prefixCls}-header-name`}>{infoData?.name}</div>
 
             <div className={`${prefixCls}-header-id`}>
-              <div>User ID:</div>
+              <div>群组 ID:</div>
               {infoData?.id}
               <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
             </div>

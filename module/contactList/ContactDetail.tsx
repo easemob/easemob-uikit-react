@@ -33,11 +33,13 @@ export interface ContactDetailProps {
 
 export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetailProps) => {
   const { style, className, prefix, data, onUserIdCopied, onMessageBtnClick } = props;
+
   const { type, id, name } = data;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contact-detail', prefix);
   const context = React.useContext(RootContext);
   const { rootStore, theme, features } = context;
+  const requestData = rootStore.addressStore.requests.find((item: any) => item.from === id);
   const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
@@ -118,6 +120,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   const addContact = () => {
     addressStore.acceptContactInvite(data.id);
   };
+  console.log('>>>>>', requestData, data);
   return (
     <div className={classString} style={{ ...style }}>
       {data.id ? (
@@ -131,9 +134,9 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                 <div className={`${prefixCls}-content-header-name`}>{name}</div>
 
                 <div className={`${prefixCls}-content-header-id`}>
-                  <div>User ID:</div>
+                  <div>{data.type == 'group' ? 'group' : 'user'} ID:</div>
                   {id}
-                  <Icon type="FILE" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
+                  <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
                 </div>
               </div>
             </div>
@@ -157,7 +160,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                 <Switch checked></Switch>
               </div> */}
 
-              {type === 'request' && data.requestStatus !== 'accepted' ? (
+              {type === 'request' && requestData?.requestStatus !== 'accepted' ? (
                 <Button type="primary" className={`${prefixCls}-content-btn`} onClick={addContact}>
                   <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
                   添加联系人
