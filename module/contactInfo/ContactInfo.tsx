@@ -231,7 +231,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
               {infoData?.id}
               <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
             </div>
-            <div>{infoData?.description}</div>
+            <div className={`${prefixCls}-header-description`}>{infoData?.description}</div>
           </div>
         </div>
 
@@ -298,7 +298,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
           {isOwner && (
             <div className={`${prefixCls}-content-section`}>
               <div className={`${prefixCls}-content-item`}>
-                <Icon type="PERSON_DOUBLE_FILL" width={24} height={24}></Icon>
+                <Icon type="SLASH_IN_BOX" width={24} height={24}></Icon>
                 <div
                   className={`${prefixCls}-content-item-box`}
                   onClick={() => {
@@ -462,6 +462,10 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             setSelectedOwner(userInfo);
           }}
           isOwner={isOwner}
+          moreAction={{
+            visible: false,
+            actions: [],
+          }}
         ></GroupMember>
 
         <Modal

@@ -74,6 +74,8 @@ import { ReactComponent as SlashInBox } from '../svgs/icons/slash_in_box.svg';
 import { ReactComponent as Eraser } from '../svgs/icons/eraser.svg';
 import { ReactComponent as ArrowSquareRightFill } from '../svgs/icons/arrow_right_square_fill.svg';
 import { ReactComponent as ArrowsRound } from '../svgs/icons/arrow_round.svg';
+import { ReactComponent as PERSON_ADD } from '../svgs/icons/person_add.svg';
+import { ReactComponent as PERSON_MINUS } from '../svgs/icons/person_minus.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -293,6 +295,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ARROWS_ROUND':
       return <ArrowsRound></ArrowsRound>;
+      break;
+    case 'PERSON_ADD':
+      return <PERSON_ADD></PERSON_ADD>;
+      break;
+    case 'PERSON_MINUS':
+      return <PERSON_MINUS></PERSON_MINUS>;
       break;
     default:
       return '';

@@ -12,12 +12,12 @@ import Header, { HeaderProps } from '../header';
 import { RootContext } from '../store/rootContext';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { observer } from 'mobx-react-lite';
-import UserItem, { UserInfoData } from '../../component/userItem';
+import UserItem, { UserInfoData, UserItemProps } from '../../component/userItem';
 import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
 import UserSelect, { UserSelectInfo } from '../userSelect';
 import Button from '../../component/button';
-export interface GroupMemberProps {
+export interface GroupMemberProps extends UserItemProps {
   style?: React.CSSProperties;
   className?: string;
   prefix?: string;
@@ -54,6 +54,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
     enableMultipleSelection,
     isOwner = true,
     headerProps,
+    moreAction,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('group-member', prefix);
@@ -219,7 +220,13 @@ const GroupMember: FC<GroupMemberProps> = props => {
           isOwner ? (
             <div>
               <Icon
-                type="ADD_FRIEND"
+                type="PERSON_ADD"
+                style={{
+                  padding: '6px',
+                  margin: '2px',
+                  width: '24px',
+                  height: '24px',
+                }}
                 onClick={() => {
                   setAddMemberData({
                     title: '添加群成员',
@@ -229,7 +236,16 @@ const GroupMember: FC<GroupMemberProps> = props => {
                   });
                 }}
               ></Icon>
-              <Icon type="PERSON_SINGLE_FILL" onClick={deleteGroupMember}></Icon>
+              <Icon
+                type="PERSON_MINUS"
+                style={{
+                  padding: '6px',
+                  margin: '2px',
+                  width: '24px',
+                  height: '24px',
+                }}
+                onClick={deleteGroupMember}
+              ></Icon>
             </div>
           ) : null
         }
@@ -252,18 +268,20 @@ const GroupMember: FC<GroupMemberProps> = props => {
                 selectedUsersOut.map(item2 => item2.userId).includes(item.userId)
               }
               onCheckboxChange={handleSelect}
-              moreAction={{
-                visible: true,
-                icon: <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>,
-                actions: [
-                  {
-                    content: item.isInContact ? '私聊' : '添加联系人',
-                    onClick: () => {
-                      item.isInContact ? privateChat(item.userId) : addContact(item.userId);
+              moreAction={
+                moreAction || {
+                  visible: true,
+                  icon: <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>,
+                  actions: [
+                    {
+                      content: item.isInContact ? '私聊' : '添加联系人',
+                      onClick: () => {
+                        item.isInContact ? privateChat(item.userId) : addContact(item.userId);
+                      },
                     },
-                  },
-                ],
-              }}
+                  ],
+                }
+              }
             ></UserItem>
           );
         })}

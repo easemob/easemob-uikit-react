@@ -23,6 +23,7 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
             font-style: normal;
             font-weight: 500;
             line-height: 26px;
+            padding: 0 12px;
         }
         &-id{
             margin-top: 2px;
@@ -34,6 +35,14 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
             color: $gray-7;
             align-items: center;
             gap: 4px;
+        }
+        &-description{
+            font-size: 14px;
+            line-height: 20px;
+            margin-top: 4px;
+            padding: 0 12px;
+            max-height: 60px;
+            overflow-y: auto;
         }
     }
     &-header>div{
@@ -66,6 +75,14 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
                 &>div{
                     display: flex;
                     align-items: center;
+                    font-size: 14px;
+                    color: $gray-5;
+                }
+                &>span{
+                    font-size: 14px;
+                    font-weight: 500;
+                    line-height: 20px;
+                    color: $gray-1;
                 }
             }
         }
