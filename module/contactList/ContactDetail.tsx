@@ -97,7 +97,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     const result = onMessageBtnClick?.();
     if (result == false) return;
     conversationStore.addConversation({
-      chatType: data.type == 'contact' ? 'singleChat' : 'groupChat',
+      chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
       conversationId: data.id,
       name: data.name,
       lastMessage: {
@@ -105,13 +105,13 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
         type: 'txt',
         msg: '',
         id: '',
-        chatType: data.type == 'contact' ? 'singleChat' : 'groupChat',
+        chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
         to: data.id,
       },
       unreadCount: 0,
     });
     conversationStore.setCurrentCvs({
-      chatType: data.type == 'contact' ? 'singleChat' : 'groupChat',
+      chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
       conversationId: data.id,
       name: data.name,
     });

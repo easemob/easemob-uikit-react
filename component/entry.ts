@@ -16,6 +16,7 @@ import Tooltip from 'rc-tooltip';
 import ScrollList, { ScrollListProps } from './scrollList';
 import Broadcast, { BroadcastProps } from './broadcast';
 import Collapse, { CollapseProps } from './collapse';
+import UserItem, { UserItemProps } from './userItem';
 export type {
   AvatarProps,
   ButtonProps,
@@ -35,6 +36,7 @@ export type {
   ScrollListProps,
   BroadcastProps,
   CollapseProps,
+  UserItemProps,
 };
 
 export {
@@ -53,4 +55,5 @@ export {
   ScrollList,
   Broadcast,
   Collapse,
+  UserItem,
 };

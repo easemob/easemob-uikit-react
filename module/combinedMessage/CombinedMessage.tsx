@@ -12,6 +12,8 @@ import TextMessage from '../textMessage';
 import ImageMessage from '../imageMessage';
 import FileMessage from '../fileMessage';
 import AudioMessage from '../audioMessage';
+import UserCardMessage from '../userCardMessage';
+import VideoMessage from '../videoMessage';
 import { observer } from 'mobx-react-lite';
 import Loading from '../../component/loading';
 import { useTranslation } from 'react-i18next';
@@ -218,6 +220,21 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               select={false}
               key={msg.id}
               audioMessage={msg}
+              type="secondly"
+              reaction={false}
+              customAction={{ visible: false }}
+              direction="ltr"
+              thread={false}
+              renderUserProfile={renderUserProfile}
+            />
+          );
+          break;
+        case 'video':
+          content = (
+            <VideoMessage
+              select={false}
+              key={msg.id}
+              videoMessage={msg}
               direction="ltr"
               type="secondly"
               reaction={false}
@@ -226,6 +243,37 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               renderUserProfile={renderUserProfile}
             />
           );
+          break;
+        case 'custom':
+          if (msg.customEvent == 'chatUIKit_userCard') {
+            content = (
+              <UserCardMessage
+                select={false}
+                key={msg.id}
+                customMessage={msg}
+                direction="ltr"
+                type="secondly"
+                reaction={false}
+                customAction={{ visible: false }}
+                thread={false}
+                renderUserProfile={renderUserProfile}
+              />
+            );
+          } else {
+            content = (
+              <TextMessage
+                select={false}
+                key={msg.id}
+                bubbleType="none"
+                textMessage={msg}
+                direction="ltr"
+                thread={false}
+                renderUserProfile={renderUserProfile}
+              >
+                {t('customMessage')}
+              </TextMessage>
+            );
+          }
           break;
         case 'combine':
           content = (

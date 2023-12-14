@@ -115,7 +115,7 @@ const ChatApp: FC<any> = () => {
 
   let MsgList = <MessageList renderMessage={msg => TxtMsg(msg)}></MessageList>;
 
-  const [tab, setTab] = useState('contact');
+  const [tab, setTab] = useState('chat');
   const changeTab = (tab: string) => {
     setTab(tab);
   };
@@ -382,8 +382,8 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         conversationList: {
           search: true,
           item: {
-            moreAction: true,
-            deleteConversation: true,
+            // moreAction: true,
+            // deleteConversation: true,
           },
         },
         chat: {

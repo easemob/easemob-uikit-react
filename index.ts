@@ -38,6 +38,12 @@ import {
   Chatroom,
   ChatroomMember,
   ChatroomMessage,
+  ContactDetail,
+  ContactItem,
+  ContactInfo,
+  GroupMember,
+  UserCardMessage,
+  UserSelect,
 } from './module/index';
 const UIKitProvider = Provider;
 import {
@@ -55,6 +61,7 @@ import {
   Tooltip,
   ScrollList,
   Collapse,
+  UserItem,
 } from './component/entry';
 
 import { eventHandler, EventHandlerData, EventName } from './eventHandler';
@@ -115,6 +122,13 @@ export {
   ChatroomMember,
   ChatroomMessage,
   eventHandler,
+  ContactDetail,
+  ContactItem,
+  ContactInfo,
+  GroupMember,
+  UserCardMessage,
+  UserItem,
+  UserSelect,
 };
 
 export type {
@@ -135,6 +149,7 @@ export type {
   SwitchProps,
   ScrollListProps,
   CollapseProps,
+  UserItemProps,
 } from './component/entry';
 
 export type {
@@ -189,6 +204,12 @@ export type {
   ContextProps,
   ThreadProps,
   UserProfileProps,
+  ContactListProps,
+  ContactDetailProps,
+  ContactInfoProps,
+  GroupMemberProps,
+  UserCardMessageProps,
+  UserSelectProps,
 } from './module/index';
 
 export type { EventHandlerData, EventName };

@@ -31,6 +31,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
   const prefixCls = getPrefixCls('selected-controls', customizePrefixCls);
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
+  const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
 
   const classString = classNames(
@@ -69,27 +70,44 @@ const SelectedControls = (props: SelectedControlsProps) => {
     summaryMsgs.forEach(msg => {
       switch (msg.type) {
         case 'txt':
-          summary = summary + msg.from + ': ' + msg.msg + '\n';
+          summary =
+            summary +
+            (addressStore.appUsersInfo[msg.from]?.nickname || msg.from) +
+            ': ' +
+            msg.msg +
+            '\n';
           break;
         case 'img':
-          summary = `${summary}${msg.from}: /${t('image')}/\n`;
+          summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
+            'image',
+          )}/\n`;
           break;
         case 'audio':
-          summary = `${summary}${msg.from}: /${t('audio')}/\n`;
+          summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
+            'audio',
+          )}/\n`;
           break;
         case 'file':
-          summary = `${summary}${msg.from}: /${t('file')}/\n`;
+          summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
+            'file',
+          )}/\n`;
           break;
         case 'video':
-          summary = `${summary}${msg.from}: /${t('video')}/\n`;
+          summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
+            'video',
+          )}/\n`;
           break;
         case 'custom':
-          summary = `${summary}${msg.from}: /${t('custom')}/\n`;
+          summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
+            'custom',
+          )}/\n`;
           break;
         // @ts-ignore
         case 'combine':
           // @ts-ignore
-          summary = `${summary}${msg.from}: /${t('chatHistory')}/\n`;
+          summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
+            'chatHistory',
+          )}/\n`;
           break;
         default:
           break;

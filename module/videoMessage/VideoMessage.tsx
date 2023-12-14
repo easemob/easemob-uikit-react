@@ -37,7 +37,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   } = props;
 
   let { bySelf, from, reactions } = videoMessage;
-  console.log('textMessage --->', from, bySelf, rootStore.client);
+  console.log('videoMessage --->', videoMessage);
   if (typeof bySelf == 'undefined') {
     // console.log('bySelf 是 undefined', rootStore.client.context.userId, from, rootStore);
     bySelf = from == rootStore.client.context.userId;
@@ -224,6 +224,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
+      time={videoMessage.time}
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
@@ -252,7 +253,7 @@ const VideoMessage = (props: VideoMessageProps) => {
           controls
           crossOrigin="anonymous"
           preload="metadata"
-          src={videoData}
+          src={videoMessage.url || videoMessage.file.url}
           // src="https://a5-v2.easemob.com/easemob/easeim/chatfiles/4db7f110-b676-11ed-929f-1fcef06124f9?em-redirect=true&share-secret=TbgYILZ2Ee2IYD1BAxWxusBH_NV8dnJY6jFq1PwVkIaY3uys"
         ></video>
       </div>

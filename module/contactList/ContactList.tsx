@@ -26,7 +26,7 @@ export interface ContactListProps {
   prefix?: string;
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean;
   onItemClick?: (info: { id: string; type: 'contact' | 'group' | 'request'; name: string }) => void;
-  menu: ('contacts' | 'groups')[];
+  menu: ('contacts' | 'groups' | 'requests')[];
   hasMenu?: boolean; // 是否显示分类的menu, 默认值true, 只有menu中只有一个条目时才能设置false
   checkable?: boolean; // 是否显示checkbox
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
@@ -158,11 +158,15 @@ let ContactList: FC<ContactListProps> = props => {
   };
   // 渲染联系人列表
   useEffect(() => {
-    let renderData: { contacts: any; groups: any; newRequests: ContactRequest[] } = {
-      contacts: undefined,
-      groups: undefined,
-      newRequests: [],
-    };
+    let renderData: { contacts: any; groups: any; newRequests: any } = {} as any;
+
+    menu.forEach(item => {
+      if (item == 'requests') {
+        renderData.newRequests = [];
+      } else {
+        renderData[item] = undefined;
+      }
+    });
     menu.forEach(item => {
       if (item == 'contacts') {
         renderData.contacts = getBrands(addressStore.contacts);
@@ -213,7 +217,7 @@ let ContactList: FC<ContactListProps> = props => {
             highlightUnread
           >
             <div>
-              {renderData.newRequests.map(item => {
+              {renderData.newRequests?.map(item => {
                 const name = addressStore.appUsersInfo[item.from]?.nickname || item.from;
                 return (
                   <UserItem
@@ -267,23 +271,29 @@ let ContactList: FC<ContactListProps> = props => {
     const value = e.target.value;
     const returnValue = onSearch?.(e);
     if (returnValue === false) return;
-    const contactSearchList = addressStore.contacts.filter(
-      (user: { userId: string | string[]; nickname: string | string[] }) => {
-        if (user.nickname.includes(value)) {
-          return true;
-        }
-        return false;
-      },
-    );
+    const contactSearchList =
+      (menu.includes('contacts') &&
+        addressStore.contacts.filter(
+          (user: { userId: string | string[]; nickname: string | string[] }) => {
+            if (user.nickname.includes(value)) {
+              return true;
+            }
+            return false;
+          },
+        )) ||
+      [];
 
-    const groupSearchList = addressStore.groups.filter(
-      (group: { groupid: string | string[]; groupname: string | string[] }) => {
-        if (group.groupname.includes(value)) {
-          return true;
-        }
-        return false;
-      },
-    );
+    const groupSearchList =
+      (menu.includes('groups') &&
+        addressStore.groups.filter(
+          (group: { groupid: string | string[]; groupname: string | string[] }) => {
+            if (group.groupname.includes(value)) {
+              return true;
+            }
+            return false;
+          },
+        )) ||
+      [];
 
     setIsSearch(value.length > 0 ? true : false);
 

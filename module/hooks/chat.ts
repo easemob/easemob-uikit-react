@@ -71,7 +71,7 @@ const useEventHandler = () => {
         if (chatType === 'singleChat') {
           setTimeout(() => {
             rootStore.messageStore.message?.[chatType]?.[from]
-              .filter(message => {
+              ?.filter(message => {
                 //@ts-ignore
                 return message.status === 'received';
               })

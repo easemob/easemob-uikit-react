@@ -26,7 +26,7 @@ import rootStore from '../store/index';
 import Switch from '../../component/switch';
 import Modal from '../../component/modal';
 import { useGroupMembersAttributes, useGroupMembers } from '../hooks/useAddress';
-import GroupMember from '../groupMember';
+import GroupMember, { GroupMemberProps } from '../groupMember';
 export interface ContactInfoProps {
   prefix?: string;
   className?: string;
@@ -36,10 +36,22 @@ export interface ContactInfoProps {
     conversationId: string;
   };
   onUserIdCopied?: (id: string) => void;
+  groupMemberProps?: GroupMemberProps;
+  onLeaveGroup?: () => void;
+  onDestroyGroup?: () => void;
 }
 
 const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
-  const { conversation, style, className, prefix, onUserIdCopied } = props;
+  const {
+    conversation,
+    style,
+    className,
+    prefix,
+    onUserIdCopied,
+    groupMemberProps,
+    onLeaveGroup,
+    onDestroyGroup,
+  } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contactInfo', prefix);
@@ -185,10 +197,11 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   const leaveGroup = () => {
     if (isOwner) {
       rootStore.addressStore.destroyGroup(conversation.conversationId);
+      onDestroyGroup?.();
     } else {
       rootStore.addressStore.leaveGroup(conversation.conversationId);
+      onLeaveGroup?.();
     }
-
     setLeaveModalVisible(false);
   };
 
@@ -247,7 +260,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
                 });
               }}
             >
-              <span>Members</span>
+              <span>群成员</span>
               <div>
                 {infoData?.affiliations_count}
                 <Icon type="ARROW_RIGHT" width={24} height={24}></Icon>
@@ -461,11 +474,25 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             console.log('======', userInfo, selectedUsers);
             setSelectedOwner(userInfo);
           }}
+          checkedUsers={
+            memberVisible.type == 'transferOwner'
+              ? [
+                  {
+                    userId: rootStore.client.user,
+                  },
+                ]
+              : []
+          }
           isOwner={isOwner}
-          moreAction={{
-            visible: false,
-            actions: [],
-          }}
+          moreAction={
+            memberVisible.type === 'transferOwner'
+              ? {
+                  visible: false,
+                  actions: [],
+                }
+              : undefined
+          }
+          {...groupMemberProps}
         ></GroupMember>
 
         <Modal

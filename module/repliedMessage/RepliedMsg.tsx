@@ -193,6 +193,25 @@ const RepliedMsg = (props: RepliedMsgProps) => {
           </div>
         );
         break;
+      case 'video':
+        content = (
+          <div className={`${prefixCls}-content-text`}>
+            <div className={`${prefixCls}-summary-desc-img`}>
+              <video
+                onClick={() => {
+                  setImgVisible(true);
+                }}
+                height={75}
+                src={
+                  (repliedMsg as ChatSDK.VideoMsgBody).url ||
+                  (repliedMsg as ChatSDK.VideoMsgBody).file.url
+                }
+              ></video>
+            </div>
+          </div>
+        );
+        break;
+
       case 'combine':
         // content = (
         //   <div className={`${prefixCls}-content-text`}>

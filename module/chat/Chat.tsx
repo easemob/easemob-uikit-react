@@ -27,6 +27,7 @@ import ScrollList from '../../component/scrollList';
 import { ChatSDK } from 'module/SDK';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
 import CallKit from 'chat-callkit';
+import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 export interface ChatProps {
   prefix?: string;
   className?: string;
@@ -107,6 +108,7 @@ const Chat: FC<ChatProps> = props => {
   const { appUsersInfo } = rootStore.addressStore || {};
   const globalConfig = features?.chat;
   const CVS = rootStore.conversationStore.currentCvs;
+  useContacts();
   const getRTCToken = rtcConfig?.getRTCToken;
   useEffect(() => {
     if (!rootStore.conversationStore.currentCvs.conversationId) {

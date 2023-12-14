@@ -186,7 +186,16 @@ let MessageList: FC<MsgListProps> = props => {
       messageData[data.index].type == 'custom' &&
       (messageData[data.index] as CustomMessageType).customEvent == 'chatUIKit_userCard'
     ) {
-      return <UserCardMessage customMessage={messageData[data.index] as any}></UserCardMessage>;
+      console.log('@@@@@', isThread);
+      return (
+        <UserCardMessage
+          style={data.style}
+          key={messageData[data.index].id}
+          thread={isThread}
+          customMessage={messageData[data.index] as any}
+          {...messageProps}
+        ></UserCardMessage>
+      );
     }
   };
 

@@ -251,6 +251,7 @@ const FileMessage = (props: FileMessageProps) => {
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
+      time={fileMessage.time}
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}

@@ -15,7 +15,6 @@ import {
 } from './repliedMessage';
 
 import Chat, { MessageList, ChatProps, MsgListProps } from './chat';
-import { ContactList } from './contactList';
 import {
   ConversationList,
   ConversationItem,
@@ -37,6 +36,19 @@ import Header, { HeaderProps } from './header';
 import Empty, { EmptyProps } from './empty';
 import RecalledMessage, { RecalledMessageProps } from './recalledMessage';
 
+import {
+  ContactItem,
+  ContactList,
+  ContactDetail,
+  ContactListProps,
+  ContactDetailProps,
+} from './contactList';
+
+import UserSelect, { UserSelectProps } from './userSelect';
+
+import ContactInfo, { ContactInfoProps } from './contactInfo';
+import GroupMember, { GroupMemberProps } from './groupMember';
+import UserCardMessage, { UserCardMessageProps } from './userCardMessage';
 import rootStore, {
   RootStore,
   InitConfig,
@@ -130,6 +142,12 @@ export type {
   ContextProps,
   ThreadProps,
   UserProfileProps,
+  ContactListProps,
+  ContactDetailProps,
+  ContactInfoProps,
+  GroupMemberProps,
+  UserCardMessageProps,
+  UserSelectProps,
 };
 
 export {
@@ -172,4 +190,10 @@ export {
   Chatroom,
   ChatroomMember,
   ChatroomMessage,
+  ContactItem,
+  ContactDetail,
+  ContactInfo,
+  GroupMember,
+  UserCardMessage,
+  UserSelect,
 };

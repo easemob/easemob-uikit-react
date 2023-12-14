@@ -76,6 +76,7 @@ import { ReactComponent as ArrowSquareRightFill } from '../svgs/icons/arrow_righ
 import { ReactComponent as ArrowsRound } from '../svgs/icons/arrow_round.svg';
 import { ReactComponent as PERSON_ADD } from '../svgs/icons/person_add.svg';
 import { ReactComponent as PERSON_MINUS } from '../svgs/icons/person_minus.svg';
+import { ReactComponent as TriangleInRectangleFill } from '../svgs/icons/triangle_in_rectangle_fill.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -301,6 +302,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'PERSON_MINUS':
       return <PERSON_MINUS></PERSON_MINUS>;
+      break;
+    case 'TRIANGLE_IN_RECTANGLE_FILL':
+      return <TriangleInRectangleFill></TriangleInRectangleFill>;
       break;
     default:
       return '';

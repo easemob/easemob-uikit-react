@@ -88,6 +88,18 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
           );
         }
         break;
+      case 'video':
+        content = (
+          <div className={`${prefixCls}-summary-desc`}>
+            <span>{t('video')}</span>
+            <div className={`${prefixCls}-summary-desc-img`}>
+              {/* <Icon type="IMG" color="#75828A" width={24} height={24}></Icon> */}
+              {/* <img src={msg.thumb || msg.url}></img> */}
+              <Icon type="TRIANGLE_IN_RECTANGLE_FILL" color="#75828A" width={24} height={24}></Icon>
+            </div>
+          </div>
+        );
+        break;
       default:
         content = '';
         break;

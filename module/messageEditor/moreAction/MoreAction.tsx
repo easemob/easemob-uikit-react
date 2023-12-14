@@ -85,7 +85,8 @@ let MoreAction = (props: MoreActionProps) => {
     const customEvent = 'chatUIKit_userCard'; // 创建自定义事件
     const customExts = {
       userId: userInfo.userId || '',
-      nickname: userInfo.nickname || '',
+      nickname:
+        rootStore.addressStore.appUsersInfo[userInfo.userId]?.nickname || userInfo.nickname || '',
       avatar: userInfo.avatarUrl || '',
     };
 
@@ -173,7 +174,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {t('card')}
+              {'名片'}
             </li>
           );
         } else if (item.content == 'VIDEO') {
@@ -186,7 +187,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {t('video')}
+              {'视频'}
             </li>
           );
         }
@@ -266,7 +267,6 @@ let MoreAction = (props: MoreActionProps) => {
       url: file.url,
       isChatThread,
     } as ChatSDK.CreateFileMsgParameters;
-    debugger;
     const fileMessage = chatSDK.message.create(option);
 
     if (onBeforeSendMessage) {

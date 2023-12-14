@@ -272,12 +272,13 @@ const UserCardMessage = (props: UserCardMessageProps) => {
   };
 
   const isContact = addressStore.contacts.some(item => item.userId === userId);
-
+  console.log('名片消息', isContact, userId, addressStore.contacts);
   const [modalVisible, setModalVisible] = useState(false);
   const [disabled, setDisabled] = useState(false);
   return (
     <div>
       <BaseMessage
+        time={message.time}
         id={message.id}
         message={message}
         bubbleType={type}
@@ -338,11 +339,20 @@ const UserCardMessage = (props: UserCardMessageProps) => {
             <div className={`${prefixCls}-content-id`}>
               <div>User ID:</div>
               {userId}
-              <Icon type="FILE" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
+              <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
             </div>
           </div>
 
           {isContact ? (
+            <Button
+              type="primary"
+              className={`${prefixCls}-content-btn`}
+              onClick={handleClickMessage}
+            >
+              <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
+              发消息
+            </Button>
+          ) : (
             <Button
               type="primary"
               className={`${prefixCls}-content-btn`}
@@ -351,15 +361,6 @@ const UserCardMessage = (props: UserCardMessageProps) => {
             >
               <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
               添加联系人
-            </Button>
-          ) : (
-            <Button
-              type="primary"
-              className={`${prefixCls}-content-btn`}
-              onClick={handleClickMessage}
-            >
-              <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
-              发消息
             </Button>
           )}
         </div>

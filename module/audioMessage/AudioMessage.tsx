@@ -27,7 +27,6 @@ const AudioMessage = (props: AudioMessageProps) => {
   const [isPlaying, setPlayStatus] = useState(false);
   const {
     audioMessage,
-    direction,
     style: customStyle,
     prefix: customizePrefixCls,
     className,
@@ -106,7 +105,6 @@ const AudioMessage = (props: AudioMessageProps) => {
     bySelf = from == rootStore.client.context.userId;
   }
   const bubbleType = type ? type : bySelf ? 'primary' : 'secondly';
-
   const handleReplyMsg = () => {
     rootStore.messageStore.setRepliedMessage(audioMessage);
   };

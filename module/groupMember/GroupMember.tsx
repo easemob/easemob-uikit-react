@@ -36,6 +36,7 @@ export interface GroupMemberProps extends UserItemProps {
     users: UserSelectInfo[],
   ) => void;
   enableMultipleSelection?: boolean;
+  checkedUsers?: UserInfoData[];
 }
 
 const GroupMember: FC<GroupMemberProps> = props => {
@@ -55,6 +56,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
     isOwner = true,
     headerProps,
     moreAction,
+    checkedUsers,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('group-member', prefix);
@@ -62,6 +64,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
   const { rootStore, theme, features } = context;
   const { addressStore, conversationStore } = rootStore;
   const themeMode = theme?.mode || 'light';
+  useContacts();
   const classString = classNames(
     prefixCls,
     {
@@ -96,6 +99,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
       conversationId: userId,
       name: name,
     });
+    onPrivateChat?.(userId);
   };
 
   const addContact = (userId: string) => {
@@ -209,6 +213,8 @@ const GroupMember: FC<GroupMemberProps> = props => {
       });
       return renderItem;
     }) || [];
+
+  console.log('联系人', moreAction);
   return (
     <div className={classString} style={{ ...style }}>
       <Header
@@ -254,33 +260,46 @@ const GroupMember: FC<GroupMemberProps> = props => {
       <div className={`${prefixCls}-container`}>
         {renderData?.map((item: any) => {
           let name = addressStore.appUsersInfo?.[item.userId]?.nickname;
+          const avatarUrl = addressStore.appUsersInfo?.[item.userId]?.avatarurl;
           if (item.attributes?.nickname) {
             name = item.attributes?.nickname;
+          }
+          const contactData = addressStore.contacts.find((contact: any) => {
+            return contact.userId === item.userId;
+          });
+
+          if (contactData && contactData.remark) {
+            name = contactData.remark;
           }
           return (
             <UserItem
               avatarShape={theme?.avatarShape}
               key={item.userId}
-              data={{ userId: item.userId, nickname: name }}
+              data={{ userId: item.userId, nickname: name, avatarUrl: avatarUrl }}
               checkable={checkable}
+              disabled={checkedUsers?.some(item2 => item2.userId == item.userId)}
               checked={
-                selectedUsersOut &&
-                selectedUsersOut.map(item2 => item2.userId).includes(item.userId)
+                (selectedUsersOut &&
+                  selectedUsersOut.map(item2 => item2.userId).includes(item.userId)) ||
+                checkedUsers?.some(item2 => item2.userId == item.userId)
               }
               onCheckboxChange={handleSelect}
               moreAction={
-                moreAction || {
-                  visible: true,
-                  icon: <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>,
-                  actions: [
-                    {
-                      content: item.isInContact ? '私聊' : '添加联系人',
-                      onClick: () => {
-                        item.isInContact ? privateChat(item.userId) : addContact(item.userId);
-                      },
-                    },
-                  ],
-                }
+                moreAction ||
+                (item.userId == rootStore.client.user
+                  ? undefined
+                  : {
+                      visible: true,
+                      icon: <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>,
+                      actions: [
+                        {
+                          content: item.isInContact ? '私聊' : '添加联系人',
+                          onClick: () => {
+                            item.isInContact ? privateChat(item.userId) : addContact(item.userId);
+                          },
+                        },
+                      ],
+                    })
               }
             ></UserItem>
           );

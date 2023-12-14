@@ -281,6 +281,7 @@ let ImageMessage = (props: ImageMessageProps) => {
       <BaseMessage
         id={message.id}
         message={message}
+        time={message.time}
         bubbleType={type}
         direction={bySelf ? 'rtl' : 'ltr'}
         nickName={nickName}
