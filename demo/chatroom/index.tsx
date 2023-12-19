@@ -11,6 +11,7 @@ import ChatroomMessage from '../../module/chatroomMessage';
 import MessageEditor from '../../module/messageEditor';
 import Chatroom from '../../module/chatroom';
 import ChatroomMember from '../../module/chatroomMember';
+import { MessageList } from '../../module/chat/MessageList';
 import './index.css';
 import { observer } from 'mobx-react-lite';
 
@@ -38,6 +39,13 @@ const ChatApp = observer(() => {
       .then(res => {
         console.log('获取token成功');
       });
+  };
+  const renderMessage = message => {
+    console.log('msg-', message);
+    switch (message.type) {
+      case 'txt':
+        return <div>{message.msg}</div>;
+    }
   };
   return (
     <>
@@ -76,7 +84,33 @@ const ChatApp = observer(() => {
         </div>
 
         <div style={{ width: '350px' }}>
-          <Chatroom chatroomId="229358390280194"></Chatroom>
+          <Chatroom
+            chatroomId="229358390280194"
+            renderMessageList={() => (
+              <MessageList
+                conversation={{
+                  chatType: 'chatRoom',
+                  conversationId: '229358390280194',
+                }}
+                renderMessage={renderMessage}
+              />
+            )}
+            messageEditorProps={{
+              giftKeyboardProps: {
+                giftConfig: {
+                  gifts: [
+                    {
+                      giftId: '2665752a-e273-427c-ac5a-4b2a9c82b255',
+                      giftIcon:
+                        'https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift1.png',
+                      giftName: 'Heart',
+                      giftPrice: '1',
+                    },
+                  ],
+                },
+              },
+            }}
+          ></Chatroom>
         </div>
         <div style={{ width: '350px' }}>
           <ChatroomMember chatroomId="229358390280194"></ChatroomMember>

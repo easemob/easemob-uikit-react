@@ -61,6 +61,7 @@ $user-prefix-cls: #{$cui-prefix}-userItem;
         white-space: nowrap;
         text-overflow: ellipsis;
         width: calc(100% - 34px);
+        text-align: left;
     }
     &-message{
         margin-left: $cvs-item-message-margin-left;

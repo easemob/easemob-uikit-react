@@ -12,7 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
 import { ChatSDK } from '../SDK';
 import { CurrentConversation } from '../store/ConversationStore';
-import { GiftKeyboard } from './gift/GiftKeyboard';
+import { GiftKeyboard, GiftKeyboardProps } from './gift/GiftKeyboard';
 import { RootContext } from '../store/rootContext';
 export type Actions = {
   name: string;
@@ -40,6 +40,7 @@ export interface MessageEditorProps {
   conversation?: CurrentConversation;
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
+  giftKeyboardProps?: GiftKeyboardProps;
 }
 
 function converToMessage(e: string) {
@@ -175,6 +176,7 @@ const MessageEditor = (props: MessageEditorProps) => {
     enabledTyping,
     customActions,
     style = {},
+    giftKeyboardProps,
   } = props;
 
   useEffect(() => {
@@ -285,7 +287,9 @@ const MessageEditor = (props: MessageEditorProps) => {
                 ></MoreAction>
               );
             } else if (item.name === 'GIFT' && item.visible) {
-              return <GiftKeyboard key={item.name} conversation={conversation} />;
+              return (
+                <GiftKeyboard key={item.name} conversation={conversation} {...giftKeyboardProps} />
+              );
             } else {
               return (
                 <span

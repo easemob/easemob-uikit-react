@@ -260,7 +260,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       // @ts-ignore
       const ease_chat_uikit_user_info = data.lastMessage?.ext?.ease_chat_uikit_user_info;
       if (ease_chat_uikit_user_info) {
-        from = `${ease_chat_uikit_user_info.nickname}:`;
+        from = `${ease_chat_uikit_user_info.nickname}: `;
       } else if (memberIdx > -1) {
         let memberItem = groupItem?.members?.[memberIdx]!;
         from = `${getGroupMemberNickName(memberItem)}: `;

@@ -23,6 +23,7 @@ export interface GiftKeyboardProps {
   onBeforeSendMessage?: (
     message: ChatSDK.MessageBody,
   ) => Promise<{ chatType: 'chatRoom'; conversationId: string } | void>;
+  giftConfig?: typeof giftConfig;
 }
 
 const GiftKeyboard = (props: GiftKeyboardProps) => {
@@ -33,6 +34,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     conversation,
     onSendMessage,
     onBeforeSendMessage,
+    giftConfig: customGiftConfig,
   } = props;
   const { t } = useTranslation();
   const context = useContext(RootContext);
@@ -98,9 +100,11 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   if (gifts) {
     titleNode = <div className="content">{gifts}</div>;
   }
+
+  const usedGiftConfig = customGiftConfig ? customGiftConfig : giftConfig;
   titleNode = (
     <div className="content">
-      {giftConfig.gifts.map((item, index) => {
+      {usedGiftConfig.gifts.map((item, index) => {
         return (
           <Gift
             key={item.giftId}

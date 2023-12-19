@@ -261,9 +261,9 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
             {getTime((message as ChatSDK.TextMsgBody).time)}
           </div>
           <Avatar size={20} src={userInfo.avatarURL}>
-            {userInfo.nickName || message.from}
+            {userInfo.nickname || message.from}
           </Avatar>
-          <div className={`${prefixCls}-header-nick`}>{userInfo.nickName || message.from}</div>
+          <div className={`${prefixCls}-header-nick`}>{userInfo.nickname || message.from}</div>
         </div>
         {message.type == 'custom' && renderGift()}
         {message.type == 'txt' && renderText(textToShow)}
