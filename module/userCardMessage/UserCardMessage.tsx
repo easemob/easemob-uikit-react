@@ -352,7 +352,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
               <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
               发消息
             </Button>
-          ) : (
+          ) : userId == rootStore.client.user ? null : (
             <Button
               type="primary"
               className={`${prefixCls}-content-btn`}
