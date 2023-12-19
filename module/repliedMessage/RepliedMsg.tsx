@@ -240,7 +240,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         );
         break;
       case 'custom':
-        if ((repliedMsg as ChatSDK.CustomMsgBody).customEvent === 'chatUIKit_userCard') {
+        if ((repliedMsg as ChatSDK.CustomMsgBody).customEvent === 'userCard') {
           content = (
             <div className={`${prefixCls}-content-text`}>
               <Icon type="PERSON_SINGLE_FILL" color="#75828A" width={20} height={20}></Icon>

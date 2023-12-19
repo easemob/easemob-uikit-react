@@ -184,7 +184,7 @@ let MessageList: FC<MsgListProps> = props => {
       );
     } else if (
       messageData[data.index].type == 'custom' &&
-      (messageData[data.index] as CustomMessageType).customEvent == 'chatUIKit_userCard'
+      (messageData[data.index] as CustomMessageType).customEvent == 'userCard'
     ) {
       console.log('@@@@@', isThread);
       return (

@@ -118,11 +118,11 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
 
   // --------- nickname modal ---
   const [nicknameModalVisible, setNicknameModalVisible] = useState(false);
-  const [nicknameInGroup, setNicknameInGroup] = useState(myInfo?.attributes?.nickname || '');
+  const [nicknameInGroup, setNicknameInGroup] = useState(myInfo?.attributes?.nickName || '');
 
   useEffect(() => {
-    setNicknameInGroup(myInfo?.attributes?.nickname || '');
-  }, [myInfo?.attributes?.nickname]);
+    setNicknameInGroup(myInfo?.attributes?.nickName || '');
+  }, [myInfo?.attributes?.nickName]);
 
   const handleNicknameInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     console.log(e.target.value);
@@ -134,7 +134,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
       conversation.conversationId,
       rootStore.client.user,
       {
-        nickname: nicknameInGroup,
+        nickName: nicknameInGroup,
       },
     );
     setNicknameModalVisible(false);

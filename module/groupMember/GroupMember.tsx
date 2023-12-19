@@ -261,8 +261,8 @@ const GroupMember: FC<GroupMemberProps> = props => {
         {renderData?.map((item: any) => {
           let name = addressStore.appUsersInfo?.[item.userId]?.nickname;
           const avatarUrl = addressStore.appUsersInfo?.[item.userId]?.avatarurl;
-          if (item.attributes?.nickname) {
-            name = item.attributes?.nickname;
+          if (item.attributes?.nickName) {
+            name = item.attributes?.nickName;
           }
           const contactData = addressStore.contacts.find((contact: any) => {
             return contact.userId === item.userId;

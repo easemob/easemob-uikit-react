@@ -78,7 +78,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
         );
         break;
       case 'custom':
-        if (msg.customEvent === 'chatUIKit_userCard') {
+        if (msg.customEvent === 'userCard') {
           content = (
             <div className={`${prefixCls}-summary-desc`}>
               <Icon type="PERSON_SINGLE_FILL" color="#75828A" width={16} height={16}></Icon>

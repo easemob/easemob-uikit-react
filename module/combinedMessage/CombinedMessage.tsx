@@ -245,7 +245,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           );
           break;
         case 'custom':
-          if (msg.customEvent == 'chatUIKit_userCard') {
+          if (msg.customEvent == 'userCard') {
             content = (
               <UserCardMessage
                 select={false}

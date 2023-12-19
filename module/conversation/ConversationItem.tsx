@@ -233,7 +233,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       lastMsg = `/${t('video')}/`;
       break;
     case 'custom':
-      if (data.lastMessage.customEvent == 'chatUIKit_userCard') {
+      if (data.lastMessage.customEvent == 'userCard') {
         lastMsg = `/${t('contact')}/`;
       } else {
         lastMsg = `/${t('custom')}/`;

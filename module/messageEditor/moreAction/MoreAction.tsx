@@ -82,7 +82,7 @@ let MoreAction = (props: MoreActionProps) => {
       return;
     }
     const userInfo = selectedUsers[0];
-    const customEvent = 'chatUIKit_userCard'; // 创建自定义事件
+    const customEvent = 'userCard'; // 创建自定义事件
     const customExts = {
       userId: userInfo.userId || '',
       nickname:

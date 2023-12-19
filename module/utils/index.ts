@@ -197,7 +197,7 @@ export function getGroupMemberIndexByUserId(group: GroupItem, userId: string) {
 
 export function getGroupMemberNickName(member: MemberItem) {
   const { appUsersInfo } = rootStore.addressStore;
-  return member.attributes?.nickname || appUsersInfo?.[member.userId]?.nickname || member.userId;
+  return member.attributes?.nickName || appUsersInfo?.[member.userId]?.nickname || member.userId;
 }
 
 export function getAppUserInfo(userId: string) {
