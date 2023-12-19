@@ -79,6 +79,7 @@ export interface BaseMessageProps {
   chatThreadOverview?: ChatSDK.ChatThreadOverview;
   onClickThreadTitle?: () => void;
   reactionConfig?: ReactionMessageProps['reactionConfig'];
+  formatDateTime?: (time: number) => string;
 }
 
 const msgSenderIsCurrentUser = (message: BaseMessageType) => {
@@ -156,6 +157,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     chatThreadOverview,
     onClickThreadTitle,
     reactionConfig,
+    formatDateTime,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -278,7 +280,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           )}
           <span>{(appUsersInfo[from]?.nickname || from) as unknown as string}</span>
           <span>{msgContent}</span>
-          <span>{getConversationTime(time)}</span>
+          <span>{formatDateTime?.(time) || getConversationTime(time)}</span>
         </div>
       </div>
     );
@@ -553,7 +555,9 @@ let BaseMessage = (props: BaseMessageProps) => {
             ) : (
               <div className={`${prefixCls}-info`}>
                 <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
-                <span className={`${prefixCls}-time`}>{getConversationTime(time as number)}</span>
+                <span className={`${prefixCls}-time`}>
+                  {formatDateTime?.(time as number) || getConversationTime(time as number)}
+                </span>
               </div>
             )}
             <div className={`${prefixCls}-body`}>

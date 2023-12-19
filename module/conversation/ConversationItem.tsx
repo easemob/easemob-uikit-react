@@ -42,6 +42,7 @@ export interface ConversationItemProps {
       onClick?: () => void;
     }>;
   };
+  formatDateTime?: (time: number) => string;
 }
 
 let ConversationItem: FC<ConversationItemProps> = props => {
@@ -70,6 +71,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         },
       ],
     },
+    formatDateTime,
     ...others
   } = props;
 
@@ -298,7 +300,9 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         </span>
       </div>
       <div className={`${prefixCls}-info`}>
-        <span className={`${prefixCls}-time`}>{getConversationTime(data.lastMessage.time)}</span>
+        <span className={`${prefixCls}-time`}>
+          {formatDateTime?.(data.lastMessage.time) || getConversationTime(data.lastMessage.time)}
+        </span>
         {showMore ? (
           <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
             {moreAction.icon || <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>}
