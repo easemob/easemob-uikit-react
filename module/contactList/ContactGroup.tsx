@@ -8,6 +8,7 @@ export interface ContactGroupProps {
   prefix?: string;
   children?: ReactNode;
   title?: string;
+  unreadCount?: number;
   itemCount?: number;
   itemHeight?: number;
   onclickTitle?: (data: any) => void;
@@ -23,6 +24,8 @@ const ContactGroup: FC<ContactGroupProps> = props => {
     itemCount,
     onclickTitle,
     hasMenu = true,
+    itemHeight,
+    unreadCount,
     highlightUnread = false,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -44,6 +47,12 @@ const ContactGroup: FC<ContactGroupProps> = props => {
     setHeight(childrenVisible ? 0 : `${panelRef?.current?.scrollHeight}px`);
   };
 
+  useEffect(() => {
+    if (childrenVisible) {
+      setHeight((itemHeight || 0) * (itemCount || 0) + 'px');
+    }
+  }, [itemCount, childrenVisible]);
+
   const childrenClass = classNames(`${prefixCls}-children`, {
     [`${prefixCls}-children-show`]: childrenVisible,
     [`${prefixCls}-children-hide`]: !childrenVisible,
@@ -60,7 +69,7 @@ const ContactGroup: FC<ContactGroupProps> = props => {
         <div className={`${prefixCls}-title`} onClick={() => handleClickTitle(title)}>
           <div> {title}</div>
           <div>
-            {itemCount ?? 0 > 0 ? <span className={countClass}>{itemCount}</span> : null}
+            {unreadCount ?? 0 > 0 ? <span className={countClass}>{unreadCount}</span> : null}
 
             <div className={`${prefixCls}-icon`} style={{ transform: `rotate(${iconType}deg)` }}>
               <Icon type="ARROW_RIGHT"></Icon>

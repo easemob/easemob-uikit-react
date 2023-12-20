@@ -555,13 +555,16 @@ class AddressStore {
   }
 
   addContactRequest(request: ContactRequest) {
-    this.requests.forEach(item => {
-      if (item.from === request.from && item.to === request.to) {
-        item = request;
-        return;
-      }
-    });
-    this.requests.push(request);
+    let foundIndex = this.requests.findIndex(
+      item => item.from === request.from && item.to === request.to,
+    );
+    if (foundIndex >= 0) {
+      this.requests[foundIndex] = request;
+    } else {
+      this.requests.push(request);
+    }
+    this.requests = [...this.requests];
+    console.log('addContactRequest', this.requests, foundIndex);
   }
 
   acceptContactInvite(userId: string) {
@@ -581,6 +584,7 @@ class AddressStore {
         item.requestStatus = 'read';
       }
     });
+    this.requests = [...this.requests];
   }
 
   createGroup(members: string[]) {
