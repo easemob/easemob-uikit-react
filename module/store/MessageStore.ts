@@ -252,7 +252,7 @@ class MessageStore {
     if (this.repliedMessage != null) {
       this.setRepliedMessage(null);
     }
-    console.log('message', message);
+    console.log('message', message, this.message.byId[message.id]);
     return this.rootStore.client
       .send(message as unknown as ChatSDK.MessageBody)
       .then((data: { serverMsgId: string }) => {
@@ -289,7 +289,12 @@ class MessageStore {
           //@ts-ignore
           msg.combineLevel = level + 1;
         }
-
+        if ((message as ChatSDK.ImgMsgBody).url) {
+          (msg as ChatSDK.ImgMsgBody).url = (message as ChatSDK.ImgMsgBody).url;
+          if (msg && (msg as ChatSDK.ImgMsgBody).file) {
+            msg.file.url = (message as ChatSDK.ImgMsgBody).url;
+          }
+        }
         this.message.byId[data.serverMsgId] = this.message.byId[message.id];
         // @ts-ignore
         this.message.byId[message.id].status = 'sent';
