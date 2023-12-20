@@ -372,8 +372,8 @@ class MessageStore {
       // @ts-ignore
       this.message[message.chatType][conversationId].push(message);
     }
-
-    if (this.holding) {
+    // 是当前会话的消息，并且是holding状态， unreadMessageCount +1
+    if (this.holding && this.currentCVS.conversationId == conversationId) {
       this.unreadMessageCount += 1;
     }
 
