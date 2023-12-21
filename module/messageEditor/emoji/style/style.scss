@@ -1,4 +1,10 @@
 @import '~/common/style/index.scss';
+
+$emoji-prefix-cls: #{$cui-prefix}-emoji-container;
+
+.#{$emoji-prefix-cls}{
+    width: 260px;
+}
 .icon-container{
     margin: $margin-xs;
     cursor: pointer;

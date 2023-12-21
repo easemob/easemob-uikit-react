@@ -5,6 +5,8 @@ import { emoji as defaultEmojiConfig } from './emojiConfig';
 import Icon from '../../../component/icon';
 import './style/style.scss';
 import { useTranslation } from 'react-i18next';
+import classNames from 'classnames';
+import { ConfigContext } from '../../../component/config/index';
 const emojiWidth = 25;
 const emojiPadding = 5;
 
@@ -14,7 +16,9 @@ export interface EmojiConfig {
 }
 
 export interface EmojiProps {
+  prefix?: string;
   style?: React.CSSProperties;
+  className?: string;
   emojiContainerStyle?: React.CSSProperties;
   icon?: ReactNode;
   onSelected?: (emojiString: string) => void;
@@ -36,11 +40,23 @@ const Emoji = (props: EmojiProps) => {
     onDelete,
     emojiConfig,
     style = {},
+    className,
+    prefix,
     emojiContainerStyle = {},
   } = props;
   const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
   const emoji: EmojiConfig = emojiConfig ? emojiConfig : defaultEmojiConfig;
+  const { getPrefixCls } = React.useContext(ConfigContext);
+  const prefixCls = getPrefixCls('emoji-container', prefix);
+  const classString = classNames(
+    prefixCls,
+    // {
+    //   [`${prefixCls}-${themeMode}`]: !!themeMode,
+    // },
+    className,
+  );
+
   const renderEmoji = () => {
     const emojiString = Object.keys(emoji.map);
     return emojiString.map(k => {
@@ -52,7 +68,7 @@ const Emoji = (props: EmojiProps) => {
         }
       }
       return (
-        <Button key={k} type={btnType}>
+        <Button key={k} type={btnType} style={{ border: 'none' }}>
           <div className="cui-emoji-box" style={{ ...emojiContainerStyle }}>
             {emojiConfig ? (
               typeof v == 'string' ? (
@@ -93,7 +109,11 @@ const Emoji = (props: EmojiProps) => {
   const handleClickIcon = (e: React.MouseEvent<Element, MouseEvent>) => {
     onClick && onClick(e);
   };
-  const titleNode = <div onClick={handleEmojiClick}>{renderEmoji()}</div>;
+  const titleNode = (
+    <div className={classString} onClick={handleEmojiClick}>
+      {renderEmoji()}
+    </div>
+  );
   const iconNode = icon ? (
     icon
   ) : (
