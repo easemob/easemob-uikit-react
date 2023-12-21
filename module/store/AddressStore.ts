@@ -104,6 +104,7 @@ class AddressStore {
       inviteToGroup: action,
       setGroupOwner: action,
       addContactToContactList: action,
+      removeGroupFromContactList: action,
       clear: action,
     });
   }
@@ -714,6 +715,9 @@ class AddressStore {
         console.log('changeGroupOwner', res);
         this.setGroupOwner(groupId, newOwner);
       });
+  }
+  removeGroupFromContactList(groupId: string) {
+    this.groups = this.groups.filter(item => item.groupid !== groupId);
   }
   clear() {
     this.appUsersInfo = {};

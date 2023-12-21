@@ -169,6 +169,9 @@ const useEventHandler = () => {
               },
             ]);
             break;
+          case 'destroy':
+            addressStore.removeGroupFromContactList(id);
+            break;
           default:
         }
       },
@@ -178,6 +181,11 @@ const useEventHandler = () => {
         switch (type) {
           case 'changeOwner':
             addressStore.setGroupOwner(gid, message.to);
+            break;
+          case 'removedFromGroup':
+            if (message.kicked == rootStore.client.user) {
+              addressStore.removeGroupFromContactList(gid);
+            }
             break;
         }
       },
@@ -253,6 +261,10 @@ const useEventHandler = () => {
         const { addressStore } = rootStore;
         addressStore.addContactToContactList(message.from);
         // addressStore.addContact(message.from);
+      },
+      onContactAgreed: message => {
+        const { addressStore } = rootStore;
+        addressStore.addContactToContactList(message.from);
       },
     });
 
