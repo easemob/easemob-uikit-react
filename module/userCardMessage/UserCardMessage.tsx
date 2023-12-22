@@ -14,6 +14,7 @@ import { observer } from 'mobx-react-lite';
 import { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import Button from '../../component/button';
+import { useTranslation } from 'react-i18next';
 export interface UserCardMessageProps extends BaseMessageProps {
   customMessage: CustomMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -43,9 +44,9 @@ const UserCardMessage = (props: UserCardMessageProps) => {
   const { conversationStore, addressStore } = rootStore;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-card', prefix);
-
+  const { t } = useTranslation();
   const userInfo = message.customExts;
-  const { nickname, userId, avatar } = userInfo;
+  const { nickname, uid: userId, avatar } = userInfo;
 
   if (typeof bySelf == 'undefined') {
     bySelf = from === rootStore.client.context.userId;
@@ -272,7 +273,6 @@ const UserCardMessage = (props: UserCardMessageProps) => {
   };
 
   const isContact = addressStore.contacts.some(item => item.userId === userId);
-  console.log('名片消息', isContact, userId, addressStore.contacts);
   const [modalVisible, setModalVisible] = useState(false);
   const [disabled, setDisabled] = useState(false);
   return (
@@ -316,7 +316,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
             </Avatar>
             {nickname}
           </div>
-          <div className={`${prefixCls}-tag`}>联系人</div>
+          <div className={`${prefixCls}-tag`}>{t('contact')}</div>
         </div>
       </BaseMessage>
 
@@ -337,7 +337,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
           <div className={`${prefixCls}-modal-content`}>
             <div className={`${prefixCls}-content-name`}>{nickname}</div>
             <div className={`${prefixCls}-content-id`}>
-              <div>User ID:</div>
+              <div>{t('user')} ID:</div>
               {userId}
               <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
             </div>
@@ -350,7 +350,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
               onClick={handleClickMessage}
             >
               <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
-              发消息
+              {t('message')}
             </Button>
           ) : userId == rootStore.client.user ? null : (
             <Button
@@ -360,7 +360,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
               disabled={disabled}
             >
               <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
-              添加联系人
+              {t('addContact')}
             </Button>
           )}
         </div>

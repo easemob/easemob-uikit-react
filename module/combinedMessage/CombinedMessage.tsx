@@ -168,7 +168,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   const createDetailContent = (data: ChatSDK.MessageType[]) => {
     let node = data.map(msg => {
       let content;
-
+      msg.bySelf = false;
       switch (msg?.type) {
         case 'txt':
           content = (

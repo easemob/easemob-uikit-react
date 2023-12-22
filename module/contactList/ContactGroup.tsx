@@ -49,9 +49,10 @@ const ContactGroup: FC<ContactGroupProps> = props => {
 
   useEffect(() => {
     if (childrenVisible) {
-      setHeight((itemHeight || 0) * (itemCount || 0) + 'px');
+      console.log('冲洗甲酸');
+      setHeight(`auto`);
     }
-  }, [itemCount, childrenVisible]);
+  }, [itemCount]);
 
   const childrenClass = classNames(`${prefixCls}-children`, {
     [`${prefixCls}-children-show`]: childrenVisible,

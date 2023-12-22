@@ -361,14 +361,14 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         // appKey: 'easemob#easeim',
       }}
       theme={{
-        // primaryColor: '#33ffaa',
-        mode: 'light',
+        primaryColor: '#33ffaa',
+        mode: 'dark',
         bubbleShape: 'square',
         avatarShape: 'square',
       }}
       local={{
         fallbackLng: 'en',
-        lng: 'zh',
+        lng: 'en',
         // resources: {
         //   en: {
         //     translation: {

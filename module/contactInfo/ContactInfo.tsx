@@ -27,6 +27,7 @@ import Switch from '../../component/switch';
 import Modal from '../../component/modal';
 import { useGroupMembersAttributes, useGroupMembers } from '../hooks/useAddress';
 import GroupMember, { GroupMemberProps } from '../groupMember';
+import { useTranslation } from 'react-i18next';
 export interface ContactInfoProps {
   prefix?: string;
   className?: string;
@@ -59,7 +60,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   const { rootStore, theme, features } = context;
   const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
-
+  const { t } = useTranslation();
   const classString = classNames(
     prefixCls,
     {
@@ -156,6 +157,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   const [clearMsgModalVisible, setClearMsgModalVisible] = useState(false);
   const clearMessages = () => {
     rootStore.messageStore.clearMessage(conversation);
+    setClearMsgModalVisible(false);
   };
 
   // -------  edit group info ---------
@@ -216,6 +218,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   const [selectedOwner, setSelectedOwner] = useState<UserInfoData | null>(null);
   const transferOwner = () => {
     if (!selectedOwner) {
+      setTransferModalVisible(false);
       return console.warn('no selected owner');
     } else {
       addressStore.changeGroupOwner(conversation.conversationId, selectedOwner.userId);
@@ -240,7 +243,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             <div className={`${prefixCls}-header-name`}>{infoData?.name}</div>
 
             <div className={`${prefixCls}-header-id`}>
-              <div>群组 ID:</div>
+              <div>{t('group')} ID:</div>
               {infoData?.id}
               <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
             </div>
@@ -260,7 +263,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
                 });
               }}
             >
-              <span>群成员</span>
+              <span>{t('groupMembers')}</span>
               <div>
                 {infoData?.affiliations_count}
                 <Icon type="ARROW_RIGHT" width={24} height={24}></Icon>
@@ -271,7 +274,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
           <div className={`${prefixCls}-content-item`}>
             <Icon type="PERSON_SINGLE_LINE_FILL" width={24} height={24}></Icon>
             <div className={`${prefixCls}-content-item-box`}>
-              <span>我在本群的昵称</span>
+              <span>{t('myAliasInGroup')}</span>
               <div>
                 {nicknameInGroup}
                 <Icon
@@ -289,7 +292,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
           <div className={`${prefixCls}-content-item`}>
             <Icon type="BELL" width={24} height={24}></Icon>
             <div className={`${prefixCls}-content-item-box`}>
-              <span>消息免打扰</span>
+              <span>{t('muteNotifications')}</span>
               <div>
                 <Switch checked={!!groupData?.silent} onChange={handleNotificationChange}></Switch>
               </div>
@@ -304,7 +307,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
                 setClearMsgModalVisible(true);
               }}
             >
-              <span>清空聊天记录</span>
+              <span>{t('clearChatHistory')}</span>
             </div>
           </div>
 
@@ -318,7 +321,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
                     setEditGroupInfoModalVisible(true);
                   }}
                 >
-                  <span>修改群信息</span>
+                  <span>{t('editGroupDetail')}</span>
                   <div>
                     <Icon type="ARROW_RIGHT" width={24} height={24}></Icon>
                   </div>
@@ -340,7 +343,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
               >
                 <Icon type="ARROWS_ROUND" width={24} height={24}></Icon>
                 <div className={`${prefixCls}-content-item-box`}>
-                  <span>转移群主</span>
+                  <span>{t('transferOwner')}</span>
                 </div>
               </div>
             )}
@@ -358,7 +361,9 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
                   setLeaveModalVisible(true);
                 }}
               >
-                <span style={{ color: '#FF002B' }}>{isOwner ? '解散群组' : '离开群组'}</span>
+                <span style={{ color: '#FF002B' }}>
+                  {isOwner ? t('disbandGroup') : t('leaveGroup')}
+                </span>
               </div>
             </div>
           </div>
@@ -370,7 +375,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             setNicknameModalVisible(false);
           }}
           onOk={editNicknameInGroup}
-          title={'我的群昵称'}
+          title={t('myAliasInGroup')}
           wrapClassName="modify-message-modal"
         >
           <Input
@@ -381,14 +386,14 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
           />
         </Modal>
         <Modal
-          title={'清空聊天记录'}
+          title={t('clearChatHistory')}
           open={clearMsgModalVisible}
           onCancel={() => {
             setClearMsgModalVisible(false);
           }}
           onOk={clearMessages}
         >
-          <div>{`确定清空 “${infoData?.name}” 的聊天记录吗？`}</div>
+          <div>{`${t('Want to delete all chat history')}?`}</div>
         </Modal>
 
         <Modal
@@ -397,11 +402,14 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             setEditGroupInfoModalVisible(false);
           }}
           onOk={editGroupInfo}
-          title={'修改群组信息'}
+          title={t('editGroupDetail')}
           wrapClassName="modify-message-modal"
         >
           <div className={`${prefixCls}-infoModal`}>
-            <div>群名称</div>
+            <div>
+              {t('group')}
+              {t('name')}
+            </div>
             <Input
               name="name"
               className="cui-group-nickname-input"
@@ -413,7 +421,10 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
             />
           </div>
           <div className={`${prefixCls}-infoModal`}>
-            <div>群公告</div>
+            <div>
+              {t('group')}
+              {t('announcement')}
+            </div>
             <Input
               name="description"
               className="cui-group-nickname-input"
@@ -427,16 +438,16 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
         </Modal>
 
         <Modal
-          title={isOwner ? '解散群组' : '离开群组'}
+          title={isOwner ? t('disbandGroup') : t('leaveGroup')}
           open={leaveModalVisible}
           onCancel={() => {
             setLeaveModalVisible(false);
           }}
           onOk={leaveGroup}
         >
-          <div>{`确定${isOwner ? '解散群组' : '离开群组'} “${
-            infoData?.name
-          }”，同时删除聊天记录吗？`}</div>
+          <div>{`${t('want')}${
+            isOwner ? t('disbandGroup').toLocaleLowerCase() : t('leaveGroup').toLocaleLowerCase()
+          } “${infoData?.name}” ${t('and delete all chat history')}?`}</div>
         </Modal>
       </div>
 
@@ -447,7 +458,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
         <GroupMember
           headerProps={
             (memberVisible.type === 'transferOwner' && {
-              content: '转移群主',
+              content: t('transferOwner'),
               suffixIcon: (
                 <div
                   className={`${prefixCls}-select`}
@@ -455,7 +466,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
                     setTransferModalVisible(true);
                   }}
                 >
-                  选择
+                  {t('choose')}
                 </div>
               ),
             }) ||
@@ -470,9 +481,16 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
           checkable={memberVisible.type == 'transferOwner'}
           groupMembers={groupData?.members}
           groupId={infoData?.id || ''}
-          onUserSelect={(userInfo: UserInfoData, selectedUsers: UserInfoData[]) => {
+          onUserSelect={(
+            userInfo: UserInfoData & { type: 'add' | 'delete' },
+            selectedUsers: UserInfoData[],
+          ) => {
             console.log('======', userInfo, selectedUsers);
-            setSelectedOwner(userInfo);
+            if (userInfo.type == 'add') {
+              setSelectedOwner(userInfo);
+            } else {
+              setSelectedOwner(null);
+            }
           }}
           checkedUsers={
             memberVisible.type == 'transferOwner'
@@ -496,7 +514,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
         ></GroupMember>
 
         <Modal
-          title={'转让群主'}
+          title={t('transferOwner')}
           open={transferModalVisible}
           onCancel={() => {
             setTransferModalVisible(false);
@@ -505,8 +523,10 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
         >
           <div>
             {selectedOwner
-              ? `确定转让群主身份给 “${selectedOwner.nickname || selectedOwner.userId}”吗？`
-              : '请选择要转让的人'}
+              ? `${t('Want to transfer group ownership to')} “${
+                  selectedOwner.nickname || selectedOwner.userId
+                }”?`
+              : t('Please select the person to be transferred')}
           </div>
         </Modal>
       </div>

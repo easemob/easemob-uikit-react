@@ -17,6 +17,7 @@ import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
 import UserSelect, { UserSelectInfo } from '../userSelect';
 import Button from '../../component/button';
+import { useTranslation } from 'react-i18next';
 export interface GroupMemberProps extends UserItemProps {
   style?: React.CSSProperties;
   className?: string;
@@ -64,6 +65,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
   const { rootStore, theme, features } = context;
   const { addressStore, conversationStore } = rootStore;
   const themeMode = theme?.mode || 'light';
+  const { t } = useTranslation();
   useContacts();
   const classString = classNames(
     prefixCls,
@@ -133,7 +135,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
       };
     });
     setAddMemberData({
-      title: '移除群成员',
+      title: t('removeGroupMembers'),
       users: users,
       type: 'delete',
       open: true,
@@ -214,13 +216,12 @@ const GroupMember: FC<GroupMemberProps> = props => {
       return renderItem;
     }) || [];
 
-  console.log('联系人', moreAction);
   return (
     <div className={classString} style={{ ...style }}>
       <Header
         avatar={<></>}
         back
-        content="群成员"
+        content={t('groupMembers')}
         onClickBack={onClickBack}
         suffixIcon={
           isOwner ? (
@@ -235,7 +236,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                 }}
                 onClick={() => {
                   setAddMemberData({
-                    title: '添加群成员',
+                    title: t('addGroupMembers'),
                     users: [],
                     type: 'add',
                     open: true,
@@ -293,7 +294,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                       icon: <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>,
                       actions: [
                         {
-                          content: item.isInContact ? '私聊' : '添加联系人',
+                          content: item.isInContact ? t('privateChat') : t('addGroupMembers'),
                           onClick: () => {
                             item.isInContact ? privateChat(item.userId) : addContact(item.userId);
                           },
@@ -325,7 +326,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
               }}
               disabled={selectedUsers.length === 0}
             >
-              确定
+              {t('confirmBtn')}
             </Button>
             <Button
               style={{ width: '68px' }}
@@ -337,7 +338,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                 });
               }}
             >
-              取消
+              {t('cancelBtn')}
             </Button>
           </div>
         }

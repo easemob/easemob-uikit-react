@@ -19,6 +19,7 @@ import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
 import ContactDetail from './ContactDetail';
 import { ContactRequest } from 'module/store/AddressStore';
+import { useTranslation } from 'react-i18next';
 // pinyin('汉语拼音', { toneType: 'none' }); // "han yu pin yin"
 export interface ContactListProps {
   style?: React.CSSProperties;
@@ -130,7 +131,7 @@ let ContactList: FC<ContactListProps> = props => {
   const prefixCls = getPrefixCls('contactList', customizePrefixCls);
 
   const [addressNode, setAddressNode] = useState<JSX.Element[]>([]);
-
+  const { t } = useTranslation();
   const context = useContext(RootContext);
   const { rootStore, theme, features } = context;
   const themeMode = theme?.mode || 'light';
@@ -209,15 +210,16 @@ let ContactList: FC<ContactListProps> = props => {
         ).length;
         return (
           <ContactGroup
-            title={menuItem}
+            title={t('newRequests')}
             key={menuItem}
-            itemCount={unreadCount}
-            itemHeight={74}
+            itemCount={addressStore.requests.length}
+            unreadCount={unreadCount}
+            itemHeight={84}
             hasMenu={hasMenu || menu.length !== 1}
             highlightUnread
           >
             <div>
-              {renderData.newRequests?.map(item => {
+              {addressStore.requests?.map((item, index: number) => {
                 const name = addressStore.appUsersInfo[item.from]?.nickname || item.from;
                 return (
                   <UserItem
@@ -244,8 +246,11 @@ let ContactList: FC<ContactListProps> = props => {
 
       return (
         <ContactGroup
-          title={menuItem}
+          title={t(menuItem)}
           key={menuItem}
+          unreadCount={
+            menuItem == 'contacts' ? addressStore.contacts.length : addressStore.groups.length
+          }
           itemCount={
             menuItem == 'contacts' ? addressStore.contacts.length : addressStore.groups.length
           }
@@ -263,7 +268,7 @@ let ContactList: FC<ContactListProps> = props => {
     addressStore.contacts,
     addressStore.groups,
     addressStore.appUsersInfo,
-    addressStore.requests.length,
+    addressStore.requests,
     checkedList,
   ]);
 
@@ -336,11 +341,17 @@ let ContactList: FC<ContactListProps> = props => {
     setSearchNode(searchList);
   }, [addressStore.searchList, itemActiveKey, checkedList?.length]);
 
-  const getNameAndType = useCallback((id: string) => {
+  const getNameAndType = (id: string) => {
+    console.log('###', itemActiveKey);
     let name;
     let type: 'contact' | 'group' = 'contact';
-    if (addressStore.appUsersInfo[itemActiveKey]?.nickname) {
-      name = addressStore.appUsersInfo[itemActiveKey]?.nickname;
+
+    const findUser = addressStore.contacts.find(item => item.userId == id);
+    if (findUser && findUser.remark) {
+      name = findUser.remark;
+      type = 'contact';
+    } else if (addressStore.appUsersInfo[id]?.nickname) {
+      name = addressStore.appUsersInfo[id]?.nickname;
       type = 'contact';
     } else {
       addressStore.groups.forEach(item => {
@@ -350,15 +361,16 @@ let ContactList: FC<ContactListProps> = props => {
         }
       });
     }
+
     if (!name) {
       name = id;
     }
     return { name, type };
-  }, []);
+  };
 
   return (
     <div className={classString} style={{ ...style }}>
-      {header ? header : <Header avatar={<></>} content="Contacts List"></Header>}
+      {header ? header : <Header avatar={<></>} content={t('contacts')}></Header>}
       <Search onChange={handleSearch}></Search>
       <div className={`${prefixCls}-content`}>{isSearch ? searchNode : addressNode}</div>
     </div>

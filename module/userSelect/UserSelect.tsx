@@ -18,7 +18,7 @@ import rootStore from '../store/index';
 import Modal, { ModalProps } from '../../component/modal';
 import { ContactList } from '../contactList';
 import { use } from 'i18next';
-
+import { useTranslation } from 'react-i18next';
 export interface UserSelectProps extends ModalProps {
   prefix?: string;
   className?: string;
@@ -65,6 +65,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   const { rootStore, theme, features } = context;
   const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
+  const { t } = useTranslation();
   const classString = classNames(
     prefixCls,
     {
@@ -178,7 +179,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
       {...others}
     >
       <div className={classString}>
-        <div>
+        <div className={`${prefixCls}-container-left`}>
           {users && users.length > 0 ? (
             users.map(item => {
               return (
@@ -212,7 +213,9 @@ const UserSelect: React.FC<UserSelectProps> = props => {
           {selectedPanelHeader ? (
             <div className={`${prefixCls}-header`}>{selectedPanelHeader}</div>
           ) : (
-            <div className={`${prefixCls}-header`}>{`已选群成员（${selectedUsers.length}）`}</div>
+            <div className={`${prefixCls}-header`}>{`${t('Selected group members')}（${
+              selectedUsers.length
+            }）`}</div>
           )}
 
           <div className={`${prefixCls}-body`}>
@@ -246,7 +249,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   }}
                   disabled={selectedUsers.length === 0}
                 >
-                  确定
+                  {t('confirmBtn')}
                 </Button>
                 <Button
                   style={{ width: '68px' }}
@@ -255,7 +258,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                     onCancel?.(e);
                   }}
                 >
-                  取消
+                  {t('cancelBtn')}
                 </Button>
               </div>
             </div>

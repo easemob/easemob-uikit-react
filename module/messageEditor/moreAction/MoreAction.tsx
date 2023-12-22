@@ -84,7 +84,7 @@ let MoreAction = (props: MoreActionProps) => {
     const userInfo = selectedUsers[0];
     const customEvent = 'userCard'; // 创建自定义事件
     const customExts = {
-      userId: userInfo.userId || '',
+      uid: userInfo.userId || '',
       nickname:
         rootStore.addressStore.appUsersInfo[userInfo.userId]?.nickname || userInfo.nickname || '',
       avatar: userInfo.avatarUrl || '',
@@ -331,7 +331,7 @@ let MoreAction = (props: MoreActionProps) => {
       }
       {
         <UserSelect
-          title={'分享联系人'}
+          title={`${t('share')} ${t('contact')}`}
           selectedPanelHeader={<></>}
           onCancel={() => {
             setCardModalVisible(false);
@@ -346,7 +346,7 @@ let MoreAction = (props: MoreActionProps) => {
                   setCardModalVisible(false);
                 }}
               >
-                确定
+                {t('confirmBtn')}
               </Button>
               <Button
                 style={{ width: '68px' }}
@@ -355,7 +355,7 @@ let MoreAction = (props: MoreActionProps) => {
                   setCardModalVisible(false);
                 }}
               >
-                取消
+                {t('cancelBtn')}
               </Button>
             </div>
           }

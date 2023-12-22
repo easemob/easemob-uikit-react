@@ -6,7 +6,8 @@ import type { ButtonProps, ButtonType } from '../button/Button';
 import { ConfigContext } from '../config/index';
 import { canUseDocElement } from '../_utils/styleChecker';
 import { getTransitionName } from '../_utils/motion';
-
+import { useTranslation } from 'react-i18next';
+import Icon from '../icon';
 let mousePosition: { x: number; y: number } | null;
 
 const getClickPosition = (e: MouseEvent) => {
@@ -115,14 +116,14 @@ const Modal: React.FC<ModalProps> = props => {
 
   const prefixCls = getPrefixCls('modal', customizePrefixCls);
   const rootPrefixCls = getPrefixCls();
-
+  const { t } = useTranslation();
   const defaultFooter = (
     <>
-      <Button onClick={handleCancel} type={cancelType} {...props.cancelButtonProps}>
-        {cancelText || 'cancel'}
-      </Button>
       <Button type={okType} onClick={handleOk} {...props.okButtonProps}>
-        {okText ?? 'OK'}
+        {okText ?? t('confirmBtn')}
+      </Button>
+      <Button onClick={handleCancel} type={cancelType} {...props.cancelButtonProps}>
+        {cancelText || t('cancelBtn')}
       </Button>
     </>
   );
@@ -130,7 +131,7 @@ const Modal: React.FC<ModalProps> = props => {
   const closeIconToRender = (
     <span className={`${prefixCls}-close-x`}>
       {
-        closeIcon || 'x'
+        closeIcon || <Icon type="CLOSE_THIN" width={24} height={24}></Icon>
         // TODO 替换 ICON
         // <CloseOutlined className={`${prefixCls}-close-icon`} />
       }

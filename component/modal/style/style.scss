@@ -55,7 +55,7 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
         transition: color 0.3s;
     
         &-x {
-          display: block;
+          display: flex;
           width: $modal-header-close-size;
           height: $modal-header-close-size;
           font-size: $font-size-lg;
@@ -64,6 +64,8 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
           text-align: center;
           text-transform: none;
           text-rendering: auto;
+          justify-content: center;
+          align-items: center;
         }
     
         &:focus,

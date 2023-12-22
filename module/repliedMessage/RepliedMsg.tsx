@@ -228,7 +228,6 @@ const RepliedMsg = (props: RepliedMsgProps) => {
           ></CombinedMessage>
         );
         break;
-      case 'video':
       case 'loc':
         content = (
           //@ts-ignore

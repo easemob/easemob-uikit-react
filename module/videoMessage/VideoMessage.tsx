@@ -49,7 +49,6 @@ const VideoMessage = (props: VideoMessageProps) => {
   if (theme?.bubbleShape) {
     bubbleShape = theme?.bubbleShape;
   }
-  bubbleShape = 'ground';
   const classString = classNames(
     prefixCls,
     {

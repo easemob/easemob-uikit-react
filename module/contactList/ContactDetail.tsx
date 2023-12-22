@@ -10,6 +10,7 @@ import './style/style.scss';
 import Empty from '../empty';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
+import { useTranslation } from 'react-i18next';
 export interface ContactDetailProps {
   prefix?: string;
   style?: React.CSSProperties;
@@ -35,6 +36,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   const { style, className, prefix, data, onUserIdCopied, onMessageBtnClick } = props;
 
   const { type, id, name } = data;
+  const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contact-detail', prefix);
   const context = React.useContext(RootContext);
@@ -121,6 +123,9 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     addressStore.acceptContactInvite(data.id);
   };
   console.log('>>>>>', requestData, data);
+  const isContact = addressStore.contacts.findIndex((item: any) => item.userId === data.id) >= 0;
+  console.log('isContact', isContact);
+
   return (
     <div className={classString} style={{ ...style }}>
       {data.id ? (
@@ -134,7 +139,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                 <div className={`${prefixCls}-content-header-name`}>{name}</div>
 
                 <div className={`${prefixCls}-content-header-id`}>
-                  <div>{data.type == 'group' ? 'group' : 'user'} ID:</div>
+                  <div>{data.type == 'group' ? t('group') : t('user')} ID:</div>
                   {id}
                   <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
                 </div>
@@ -160,10 +165,10 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                 <Switch checked></Switch>
               </div> */}
 
-              {type === 'request' && requestData?.requestStatus !== 'accepted' ? (
+              {type === 'request' && requestData?.requestStatus !== 'accepted' && !isContact ? (
                 <Button type="primary" className={`${prefixCls}-content-btn`} onClick={addContact}>
                   <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
-                  添加联系人
+                  {t('addContact')}
                 </Button>
               ) : (
                 <Button
@@ -172,14 +177,17 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                   onClick={handleClickMessage}
                 >
                   <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
-                  Message
+                  {t('message')}
                 </Button>
               )}
             </div>
           </div>
         </>
       ) : (
-        <Empty text="no contact" icon={<Icon type="EMPTY" width={120} height={120}></Icon>}></Empty>
+        <Empty
+          text={t('no contact')}
+          icon={<Icon type="EMPTY" width={120} height={120}></Icon>}
+        ></Empty>
       )}
     </div>
   );
