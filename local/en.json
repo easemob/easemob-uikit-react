@@ -7,6 +7,8 @@
     "audio": "Audio message",
     "video": "Video message",
     "file": "File",
+    "userCard": "Contact",
+    "videoBtn": "Video",
     "custom": "Custom message",
     "combine": "Combined message",
     "noConversation": "No Conversation",

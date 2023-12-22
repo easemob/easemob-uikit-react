@@ -174,7 +174,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {'名片'}
+              {t('userCard')}
             </li>
           );
         } else if (item.content == 'VIDEO') {
@@ -187,7 +187,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
-              {'视频'}
+              {t('videoBtn')}
             </li>
           );
         }
