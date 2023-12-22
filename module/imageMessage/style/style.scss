@@ -1,7 +1,10 @@
-.message-image-content{
+@import '~/common/style/index.scss';
+$img-msg-prefix-cls: #{$cui-prefix}-message-img;
+
+.#{$img-msg-prefix-cls}{
     max-width: 100%;
     overflow: hidden;
-    background-color: #fff;
+    // background-color: #fff;
     &+div{
         padding: 0 8px 8px;
     }
@@ -11,6 +14,13 @@
         max-width: 300px;
         max-height: 300px;
         object-fit: contain;
+        border-radius: 16px;
+    }
+
+    &-square{
+        img {
+            border-radius: 4px;
+        }
     }
 }
 

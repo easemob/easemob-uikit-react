@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
@@ -13,6 +13,7 @@ import videoData from './video.mp4';
 import { ChatSDK } from '../SDK';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
+import { RootContext } from '../store/rootContext';
 export interface VideoMessageProps extends BaseMessageProps {
   videoMessage: ChatSDK.VideoMsgBody; // 从SDK收到的视频消息
   prefix?: string;
@@ -33,11 +34,30 @@ const VideoMessage = (props: VideoMessageProps) => {
     nickName,
     thread,
     className,
+    prefix,
     ...baseMsgProps
   } = props;
 
   let { bySelf, from, reactions } = videoMessage;
   console.log('videoMessage --->', videoMessage);
+
+  const { getPrefixCls } = React.useContext(ConfigContext);
+  const prefixCls = getPrefixCls('message-video', prefix);
+  const context = useContext(RootContext);
+  const { theme } = context;
+  let bubbleShape = shape;
+  if (theme?.bubbleShape) {
+    bubbleShape = theme?.bubbleShape;
+  }
+  bubbleShape = 'ground';
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
+    },
+    className,
+  );
+
   if (typeof bySelf == 'undefined') {
     // console.log('bySelf 是 undefined', rootStore.client.context.userId, from, rootStore);
     bySelf = from == rootStore.client.context.userId;
@@ -216,7 +236,6 @@ const VideoMessage = (props: VideoMessageProps) => {
 
     rootStore.threadStore.getChatThreadDetail(videoMessage?.chatThreadOverview?.id || '');
   };
-  const classSting = classNames('cui-message-video', className);
   return (
     <BaseMessage
       id={videoMessage.id}
@@ -224,6 +243,8 @@ const VideoMessage = (props: VideoMessageProps) => {
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
+      // shape="ground"
+      bubbleStyle={{ background: 'transparent', padding: 0 }}
       time={videoMessage.time}
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
@@ -242,10 +263,10 @@ const VideoMessage = (props: VideoMessageProps) => {
       thread={_thread}
       chatThreadOverview={videoMessage.chatThreadOverview}
       onClickThreadTitle={handleClickThreadTitle}
-      bubbleStyle={{ padding: '0' }}
+      // bubbleStyle={{ padding: '0' }}
       {...baseMsgProps}
     >
-      <div className={classSting}>
+      <div className={classString}>
         <video
           id="videoEle"
           ref={videoRef}

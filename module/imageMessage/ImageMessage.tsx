@@ -26,18 +26,38 @@ export interface ImageMessageProps extends BaseMessageProps {
 let ImageMessage = (props: ImageMessageProps) => {
   const {
     imageMessage: message,
-    shape,
     style,
     onClickImage,
     renderUserProfile,
     thread,
     nickName,
     className,
+    shape,
+    prefix,
     ...others
   } = props;
   let type = props.type;
   let { bySelf, from, reactions } = message;
-  const [previewImageUrl, setPreviewImageUrl] = useState(message?.file?.url || message.thumb);
+  const { getPrefixCls } = React.useContext(ConfigContext);
+  const prefixCls = getPrefixCls('message-img', prefix);
+  const context = useContext(RootContext);
+  const { theme } = context;
+  let bubbleShape = shape;
+  if (theme?.bubbleShape) {
+    bubbleShape = theme?.bubbleShape;
+  }
+
+  const classString = classNames(
+    prefixCls,
+    {
+      [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
+    },
+    className,
+  );
+
+  const [previewImageUrl, setPreviewImageUrl] = useState(
+    message.url || message?.file?.url || message.thumb,
+  );
   const [previewVisible, setPreviewVisible] = useState(false);
 
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
@@ -82,8 +102,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     canvasDataURL(url, { quality: 1 });
     onClickImage?.(url);
   };
-
-  let renderImgUrl = bySelf ? message?.file?.url : (message.thumb as string);
+  let renderImgUrl = bySelf ? message.url || message?.file?.url : (message.thumb as string);
 
   const img = useRef(
     <img
@@ -275,7 +294,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     type = bySelf ? 'primary' : 'secondly';
   }
 
-  const classSting = classNames('message-image-content', className);
+  // const classSting = classNames('message-image-content', className);
   return (
     <div>
       <BaseMessage
@@ -301,10 +320,11 @@ let ImageMessage = (props: ImageMessageProps) => {
         thread={_thread}
         chatThreadOverview={message.chatThreadOverview}
         onClickThreadTitle={handleClickThreadTitle}
-        bubbleStyle={{ padding: '0' }}
+        bubbleStyle={{ background: 'transparent', padding: 0 }}
+        shape={shape}
         {...others}
       >
-        <div className={classSting} style={style}>
+        <div className={classString} style={style}>
           {img.current}
         </div>
       </BaseMessage>
