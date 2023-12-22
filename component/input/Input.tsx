@@ -12,7 +12,7 @@ import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
 import './style/style.scss';
 import Icon from '../icon';
-
+import { RootContext } from '../../module/store/rootContext';
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   prefix?: string;
   className?: string;
@@ -53,7 +53,8 @@ const Input: FC<InputProps> = props => {
   const [inputValue, setInputValue] = useState(value);
   const [isFocus, setIsFocus] = useState(false);
   const [isClear, setIsClear] = useState(false);
-
+  const { theme } = React.useContext(RootContext);
+  const themeMode = theme?.mode;
   const classes = classNames(
     prefixCls,
     {
@@ -63,6 +64,7 @@ const Input: FC<InputProps> = props => {
       [`${prefixCls}-${shape}`]: shape,
       [`${prefixCls}-error`]: required && !inputValue,
       [`${prefixCls}-suffixIcon`]: suffixIcon,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

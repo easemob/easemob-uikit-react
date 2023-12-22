@@ -33,6 +33,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     }
     &-content{
         max-width: calc(100% - 96px); //136
+        width: 100%;
         overflow: hidden;
         // flex: 1;
         // position: relative;
@@ -102,6 +103,10 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
             color: $gray-8;
         }
     }
+    &-dark.#{$conversation-prefix-cls}-sticky{
+        background-color: $blue-2;
+    }
+    
     &-dark:hover{
         background: $blue-2;
     }

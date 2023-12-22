@@ -112,6 +112,30 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
         line-height: 20px; /* 142.857% */
         cursor: pointer;
     }
+
+    &-dark{
+        background-color: $gray-1;
+        .#{$contactInfo-prefix-cls}-header{
+            background-color: $gray-1;
+            color: $gray-98;
+        }
+        .#{$contactInfo-prefix-cls}-content{
+            background-color: #000;
+            &-item{
+                background-color: $gray-1;
+                &-box{
+                    
+                    border-bottom: 1px solid $gray-2;
+                    &>div{
+                        color: $gray-6;
+                    }
+                    &>span{
+                        color: $gray-98;
+                    }
+                }
+            }
+        }
+    }
 }
 
 .cui-group-nickname-input input{

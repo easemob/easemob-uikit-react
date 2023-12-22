@@ -54,5 +54,13 @@ $input-prefix-cls: #{$cui-prefix}-input;
             padding-right: 32px;
         }
     }
+
+    &-dark{
+        .#{$input-prefix-cls}-input{
+            background-color: $gray-2;
+            color: $gray-98;
+        }
+    }
     
 }
+

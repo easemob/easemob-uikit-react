@@ -11,6 +11,7 @@ $userSelect-prefix-cls: #{$cui-prefix}-user-select;
     height: 544px;
     &>div:first-child{
         background-color: $gray-95;
+        overflow-y: auto;
     }
     &>div{
         flex: 1;
@@ -40,5 +41,13 @@ $userSelect-prefix-cls: #{$cui-prefix}-user-select;
         padding: 24px;
         justify-content: flex-end;
         box-sizing: border-box;
+    }
+
+    &-dark{
+        background-color: $gray-1;
+        &>div:first-child{
+            background-color: $gray-3;
+        }
+        
     }
 }
