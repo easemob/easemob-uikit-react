@@ -144,7 +144,14 @@ let UserItem: FC<UserItemProps> = props => {
       <div className={`${prefixCls}-info`}>
         {showMore && (
           <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
-            {moreAction?.icon || <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>}
+            {moreAction?.icon || (
+              <Icon
+                type="ELLIPSIS"
+                color="#33B1FF"
+                height={20}
+                style={{ cursor: 'pointer' }}
+              ></Icon>
+            )}
           </Tooltip>
         )}
       </div>

@@ -65,7 +65,7 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
             gap: 8px;
             padding: 0 12px;
             &-box{
-                cursor: default;
+                cursor: pointer;
                 height: 100%;
                 align-items: center;
                 display: flex;

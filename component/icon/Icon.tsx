@@ -320,6 +320,7 @@ const Icon = ({
   height,
   color,
   onClick,
+  style,
   ...otherProps
 }: IconProps): ReactElement => {
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -347,6 +348,7 @@ const Icon = ({
       onClick={handleClick}
       style={{
         ...iconStyle,
+        ...style,
       }}
       {...otherProps}
     >

@@ -362,7 +362,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       theme={{
         primaryColor: '#33ffaa',
-        mode: 'dark',
+        mode: 'light',
         bubbleShape: 'square',
         avatarShape: 'square',
       }}

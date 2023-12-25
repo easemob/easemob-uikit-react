@@ -233,6 +233,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                   margin: '2px',
                   width: '24px',
                   height: '24px',
+                  cursor: 'pointer',
                 }}
                 onClick={() => {
                   setAddMemberData({
@@ -250,6 +251,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                   margin: '2px',
                   width: '24px',
                   height: '24px',
+                  cursor: 'pointer',
                 }}
                 onClick={deleteGroupMember}
               ></Icon>
@@ -291,7 +293,14 @@ const GroupMember: FC<GroupMemberProps> = props => {
                   ? undefined
                   : {
                       visible: true,
-                      icon: <Icon type="ELLIPSIS" color="#33B1FF" height={20}></Icon>,
+                      icon: (
+                        <Icon
+                          type="ELLIPSIS"
+                          color="#33B1FF"
+                          height={20}
+                          style={{ cursor: 'pointer' }}
+                        ></Icon>
+                      ),
                       actions: [
                         {
                           content: item.isInContact ? t('privateChat') : t('addGroupMembers'),

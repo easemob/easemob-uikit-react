@@ -273,18 +273,16 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
 
           <div className={`${prefixCls}-content-item`}>
             <Icon type="PERSON_SINGLE_LINE_FILL" width={24} height={24}></Icon>
-            <div className={`${prefixCls}-content-item-box`}>
+            <div
+              className={`${prefixCls}-content-item-box`}
+              onClick={() => {
+                setNicknameModalVisible(true);
+              }}
+            >
               <span>{t('myAliasInGroup')}</span>
               <div>
                 {nicknameInGroup}
-                <Icon
-                  type="SLASH_IN_BOX"
-                  width={24}
-                  height={24}
-                  onClick={() => {
-                    setNicknameModalVisible(true);
-                  }}
-                ></Icon>
+                <Icon type="SLASH_IN_BOX" width={24} height={24}></Icon>
               </div>
             </div>
           </div>

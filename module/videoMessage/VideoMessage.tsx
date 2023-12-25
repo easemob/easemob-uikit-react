@@ -23,6 +23,7 @@ export interface VideoMessageProps extends BaseMessageProps {
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   type?: 'primary' | 'secondly';
   className?: string;
+  videoProps: React.VideoHTMLAttributes<HTMLVideoElement>;
 }
 const VideoMessage = (props: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -35,6 +36,7 @@ const VideoMessage = (props: VideoMessageProps) => {
     thread,
     className,
     prefix,
+    videoProps,
     ...baseMsgProps
   } = props;
 
@@ -274,6 +276,8 @@ const VideoMessage = (props: VideoMessageProps) => {
           crossOrigin="anonymous"
           preload="metadata"
           src={videoMessage.url || videoMessage.file.url}
+          {...videoProps}
+
           // src="https://a5-v2.easemob.com/easemob/easeim/chatfiles/4db7f110-b676-11ed-929f-1fcef06124f9?em-redirect=true&share-secret=TbgYILZ2Ee2IYD1BAxWxusBH_NV8dnJY6jFq1PwVkIaY3uys"
         ></video>
       </div>
