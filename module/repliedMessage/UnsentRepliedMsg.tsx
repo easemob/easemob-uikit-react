@@ -6,6 +6,7 @@ import './style/style.scss';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { RootContext } from '../store/rootContext';
+import { ChatSDK } from 'module/SDK';
 export interface UnsentRepliedMsgProps {
   prefixCls?: string;
   className?: string;
@@ -112,12 +113,22 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
   };
 
   const myUserId = rootStore.client.user;
-  const from = repliedMessage?.from === myUserId ? t('you') : repliedMessage?.from;
+  const from = repliedMessage?.from === myUserId ? t('yourself') : repliedMessage?.from;
+
+  let msgQuote = (repliedMessage as ChatSDK.TextMsgBody)?.ext?.msgQuote;
+  if (typeof msgQuote === 'string') {
+    msgQuote = JSON.parse(msgQuote);
+  }
+  const to =
+    repliedMessage?.from === myUserId
+      ? t('yourself')
+      : rootStore.addressStore.appUsersInfo?.[repliedMessage?.from as string]?.nickname ||
+        msgQuote?.msgSender;
 
   return (
     <div className={classString}>
       <div className={`${prefixCls}-summary-title`}>
-        {t('replyingTo')} <span>{from}</span>
+        {t('replyingTo')} <span>{to}</span>
       </div>
       {renderMsgContent(repliedMessage)}
       <Icon

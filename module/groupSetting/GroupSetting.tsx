@@ -404,10 +404,7 @@ const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
           wrapClassName="modify-message-modal"
         >
           <div className={`${prefixCls}-infoModal`}>
-            <div>
-              {t('group')}
-              {t('name')}
-            </div>
+            <div>{`${t('group')} ${t('name')}`}</div>
             <Input
               name="name"
               className="cui-group-nickname-input"
@@ -419,10 +416,7 @@ const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
             />
           </div>
           <div className={`${prefixCls}-infoModal`}>
-            <div>
-              {t('group')}
-              {t('announcement')}
-            </div>
+            <div>{`${t('group')} ${t('announcement')}`}</div>
             <Input
               name="description"
               className="cui-group-nickname-input"

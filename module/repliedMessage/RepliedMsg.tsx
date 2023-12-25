@@ -282,7 +282,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   const from = message.from === myUserId ? t('you') : message.from;
   const to =
     msgQuote?.msgSender === myUserId
-      ? t('you')
+      ? t('yourself')
       : rootStore.addressStore.appUsersInfo?.[msgQuote?.msgSender as string]?.nickname ||
         msgQuote?.msgSender;
 

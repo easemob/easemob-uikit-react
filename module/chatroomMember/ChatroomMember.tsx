@@ -158,7 +158,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     visible: owner == rootStore.client.user,
     actions: [
       {
-        content: 'Unmute',
+        content: t('unmute'),
         onClick: unmuteMember,
       },
     ],
