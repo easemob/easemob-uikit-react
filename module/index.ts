@@ -22,15 +22,15 @@ import {
   ConversationListProps,
   ConversationData,
 } from './conversation';
-import MessageEditor, {
-  MessageEditorProps,
+import MessageInput, {
+  MessageInputProps,
   MoreActionProps,
   RecorderProps,
   EmojiProps,
   SelectedControlsProps,
   SuggestListProps,
   TextareaProps,
-} from './messageEditor';
+} from './messageInput';
 
 import Header, { HeaderProps } from './header';
 import Empty, { EmptyProps } from './empty';
@@ -108,7 +108,7 @@ export type {
   ConversationItemProps,
   ConversationListProps,
   ConversationData,
-  MessageEditorProps,
+  MessageInputProps,
   MoreActionProps,
   RecorderProps,
   EmojiProps,
@@ -167,7 +167,7 @@ export {
   ContactList,
   ConversationList,
   ConversationItem,
-  MessageEditor,
+  MessageInput,
   Header,
   Empty,
   RecalledMessage,

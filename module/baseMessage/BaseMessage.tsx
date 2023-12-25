@@ -17,7 +17,7 @@ import { getStore } from '../store';
 import Checkbox from '../../component/checkbox';
 import UserProfile from '../userProfile';
 import { observer } from 'mobx-react-lite';
-import { EmojiConfig } from '../messageEditor/emoji/Emoji';
+import { EmojiConfig } from '../messageInput/emoji/Emoji';
 import { RootContext } from '../store/rootContext';
 interface CustomAction {
   visible: boolean;

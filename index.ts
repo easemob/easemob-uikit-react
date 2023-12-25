@@ -15,7 +15,7 @@ import {
   ContactList,
   ConversationList,
   ConversationItem,
-  MessageEditor,
+  MessageInput,
   Header,
   Empty,
   RecalledMessage,
@@ -66,6 +66,11 @@ import {
 
 import { eventHandler, EventHandlerData, EventName } from './eventHandler';
 
+import { MessageInputProps } from './module/index';
+const MessageEditor = MessageInput;
+type MessageEditorProps = MessageInputProps;
+
+export type { MessageEditorProps };
 export {
   AudioMessage,
   BaseMessage,
@@ -83,6 +88,7 @@ export {
   ContactList,
   ConversationList,
   ConversationItem,
+  MessageInput,
   MessageEditor,
   Header,
   Empty,
@@ -170,7 +176,7 @@ export type {
   ConversationItemProps,
   ConversationListProps,
   ConversationData,
-  MessageEditorProps,
+  MessageInputProps,
   MoreActionProps,
   RecorderProps,
   EmojiProps,

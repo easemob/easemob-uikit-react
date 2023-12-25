@@ -5,7 +5,7 @@ import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji } from '../utils';
 import { RootStore } from './index';
-import { AT_ALL } from '../messageEditor/suggestList/SuggestList';
+import { AT_ALL } from '../messageInput/suggestList/SuggestList';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
 import {

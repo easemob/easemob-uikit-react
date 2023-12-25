@@ -8,7 +8,7 @@ import './style/style.scss';
 import { ChatSDK } from '../../SDK';
 import { useTranslation } from 'react-i18next';
 import Header from '../header';
-import MessageEditor, { MessageEditorProps } from '../messageEditor';
+import MessageInput, { MessageInputProps } from '../messageInput';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import TextMessage from '../textMessage';
@@ -41,14 +41,14 @@ export interface ThreadProps {
   groupID: string;
   threadID?: string;
   originalMsg: ChatSDK.MessageBody;
-  messageEditorProps?: MessageEditorProps;
+  messageInputProps?: MessageInputProps;
 }
 
 const Thread = (props: ThreadProps) => {
   const context = useContext(RootContext);
   const { rootStore, features, theme } = context;
   const themeMode = theme?.mode || 'light';
-  const { prefix, className, messageListProps, messageEditorProps, style = {} } = props;
+  const { prefix, className, messageListProps, messageInputProps, style = {} } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('thread', prefix);
   const { t } = useTranslation();
@@ -554,14 +554,14 @@ const Thread = (props: ThreadProps) => {
       {threadStore.currentThread.creating ? renderCreateForm() : renderOriginalMsg()}
       <MessageList {...messageListProps} isThread={true} conversation={conversation}></MessageList>
       {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
-      <MessageEditor
+      <MessageInput
         disabled={threadStore.currentThread.creating && editorDisable}
         isChatThread={true}
         enabledMenton={false}
         // onSendMessage={handleSendMessage}
         onBeforeSendMessage={handleSendMessage}
         conversation={conversation}
-        {...messageEditorProps}
+        {...messageInputProps}
       />
 
       <Modal

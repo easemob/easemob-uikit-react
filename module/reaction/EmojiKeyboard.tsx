@@ -1,8 +1,8 @@
 import React, { ReactNode, useState, useContext } from 'react';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Button from '../../component/button';
-// import { emoji } from '../messageEditor/emoji/emojiConfig';
-import { Emoji, EmojiProps } from '../messageEditor/emoji/Emoji';
+// import { emoji } from '../messageInput/emoji/emojiConfig';
+import { Emoji, EmojiProps } from '../messageInput/emoji/Emoji';
 import Icon from '../../component/icon';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';

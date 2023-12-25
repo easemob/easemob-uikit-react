@@ -5,14 +5,14 @@ import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import Icon from '../../component/icon';
 import Header, { HeaderProps } from '../header';
-import MessageEditor, { MessageEditorProps } from '../messageEditor';
+import MessageInput, { MessageInputProps } from '../messageInput';
 import { MessageList, MsgListProps } from '../chat/MessageList';
 import { RootContext } from '../store/rootContext';
 import Empty from '../empty';
 import { useTranslation } from 'react-i18next';
 import { chatSDK, ChatSDK } from '../SDK';
 import ChatroomMessage from '../chatroomMessage';
-import { GiftKeyboard } from '../messageEditor/gift';
+import { GiftKeyboard } from '../messageInput/gift';
 import Broadcast, { BroadcastProps } from '../../component/broadcast';
 import { getUsersInfo } from '../utils/index';
 import Modal from '../../component/modal';
@@ -44,8 +44,8 @@ export interface ChatroomProps {
     moreAction?: HeaderProps['moreAction'];
   };
   renderMessageList?: () => ReactNode; // 自定义渲染 MessageList
-  renderMessageEditor?: () => ReactNode; // 自定义渲染 MessageEditor
-  messageEditorProps?: MessageEditorProps;
+  renderMessageInput?: () => ReactNode; // 自定义渲染 MessageInput
+  messageInputProps?: MessageInputProps;
   messageListProps?: MsgListProps;
   renderBroadcast?: () => ReactNode;
   broadcastProps?: BroadcastProps;
@@ -58,8 +58,8 @@ const Chatroom = (props: ChatroomProps) => {
     renderEmpty,
     renderHeader,
     headerProps,
-    renderMessageEditor,
-    messageEditorProps,
+    renderMessageInput,
+    messageInputProps,
     renderMessageList,
     messageListProps,
     renderBroadcast,
@@ -176,8 +176,8 @@ const Chatroom = (props: ChatroomProps) => {
     };
   }, [chatroomId, rootStore.loginState]);
 
-  // config messageEditor
-  let messageEditorConfig: MessageEditorProps = {
+  // config messageInput
+  let messageInputConfig: MessageInputProps = {
     actions: [
       {
         name: 'TEXTAREA',
@@ -205,13 +205,13 @@ const Chatroom = (props: ChatroomProps) => {
       },
     ],
   };
-  if (globalConfig?.messageEditor) {
-    messageEditorConfig.actions = messageEditorConfig.actions?.filter(item => {
-      if (item.name == 'EMOJI' && globalConfig?.messageEditor?.emoji == false) {
+  if (globalConfig?.messageInput) {
+    messageInputConfig.actions = messageInputConfig.actions?.filter(item => {
+      if (item.name == 'EMOJI' && globalConfig?.messageInput?.emoji == false) {
         return false;
       }
 
-      if (item.name == 'GIFT' && globalConfig?.messageEditor?.gift == false) {
+      if (item.name == 'GIFT' && globalConfig?.messageInput?.gift == false) {
         return false;
       }
 
@@ -314,18 +314,18 @@ const Chatroom = (props: ChatroomProps) => {
             ></MessageList>
           )}
 
-          {renderMessageEditor ? (
-            renderMessageEditor()
+          {renderMessageInput ? (
+            renderMessageInput()
           ) : (
-            <MessageEditor
+            <MessageInput
               placeHolder={t("Let's Chat") as string}
               conversation={{
                 chatType: 'chatRoom',
                 conversationId: chatroomId,
               }}
-              {...messageEditorConfig}
-              {...messageEditorProps}
-            ></MessageEditor>
+              {...messageInputConfig}
+              {...messageInputProps}
+            ></MessageInput>
           )}
         </>
       )}

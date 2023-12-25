@@ -51,7 +51,7 @@ export interface ProviderProps {
         edit?: boolean;
         select?: boolean;
       };
-      messageEditor?: {
+      messageInput?: {
         mention?: boolean;
         typing?: boolean;
         record?: boolean;

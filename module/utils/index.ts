@@ -3,7 +3,7 @@ import { ChatSDK } from '../SDK';
 import rootStore, { getStore } from '../store/index';
 import type { RecallMessage } from '../store/MessageStore';
 import { GroupItem, MemberItem } from '../store/AddressStore';
-import { emoji } from '../messageEditor/emoji/emojiConfig';
+import { emoji } from '../messageInput/emoji/emojiConfig';
 import { AppUserInfo } from '../store/AddressStore';
 import { CurrentConversation } from '../store/ConversationStore';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';

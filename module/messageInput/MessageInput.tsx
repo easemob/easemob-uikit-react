@@ -21,7 +21,7 @@ export type Actions = {
   onClick?: () => void;
 }[];
 
-export interface MessageEditorProps {
+export interface MessageInputProps {
   prefix?: string;
   actions?: Actions;
   customActions?: MoreActionProps['customActions'];
@@ -91,7 +91,7 @@ const defaultActions: Actions = [
   },
 ];
 
-const MessageEditor = (props: MessageEditorProps) => {
+const MessageInput = (props: MessageInputProps) => {
   const [isShowTextarea, setTextareaShow] = useState(true);
   const [isShowRecorder, setShowRecorder] = useState(true);
   const [isShowSelect, setIsShowSelect] = useState(false);
@@ -319,5 +319,5 @@ const MessageEditor = (props: MessageEditorProps) => {
     </div>
   );
 };
-MessageEditor.defaultActions = defaultActions;
-export default observer(MessageEditor);
+MessageInput.defaultActions = defaultActions;
+export default observer(MessageInput);

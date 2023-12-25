@@ -34,7 +34,7 @@ export interface ContextProps {
         edit?: boolean;
         select?: boolean;
       };
-      messageEditor?: {
+      messageInput?: {
         mention?: boolean;
         typing?: boolean;
         record?: boolean;
@@ -58,7 +58,7 @@ export interface ContextProps {
         translate?: boolean;
         report?: boolean;
       };
-      messageEditor?: {
+      messageInput?: {
         emoji?: boolean;
         gift?: boolean;
       };

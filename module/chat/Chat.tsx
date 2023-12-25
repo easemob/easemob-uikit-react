@@ -10,7 +10,7 @@ import Badge from '../../component/badge';
 import Button from '../../component/button';
 import { Search } from '../../component/input/Search';
 import Header, { HeaderProps } from '../header';
-import MessageEditor, { MessageEditorProps } from '../messageEditor';
+import MessageInput, { MessageInputProps } from '../messageInput';
 import List from '../../component/list';
 import { MessageList, MsgListProps } from './MessageList';
 import { getStore } from '../store';
@@ -40,12 +40,12 @@ export interface ChatProps {
     unreadCount?: number;
   }) => ReactNode; // 自定义渲染 Header
   renderMessageList?: () => ReactNode; // 自定义渲染 MessageList
-  renderMessageEditor?: () => ReactNode; // 自定义渲染 MessageEditor
+  renderMessageInput?: () => ReactNode; // 自定义渲染 MessageInput
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
   // Header 的 props
   headerProps?: HeaderProps;
   messageListProps?: MsgListProps;
-  messageEditorProps?: MessageEditorProps;
+  messageInputProps?: MessageInputProps;
 
   rtcConfig?: {
     appId: string;
@@ -80,11 +80,11 @@ const Chat: FC<ChatProps> = props => {
     className,
     renderHeader,
     renderMessageList,
-    renderMessageEditor,
+    renderMessageInput,
     renderEmpty,
     headerProps,
     messageListProps,
-    messageEditorProps,
+    messageInputProps,
     rtcConfig,
     style = {},
     threadModalStyle = {},
@@ -381,8 +381,8 @@ const Chat: FC<ChatProps> = props => {
     });
   }
 
-  // config messageEditor
-  let messageEditorConfig: MessageEditorProps = {
+  // config messageInput
+  let messageInputConfig: MessageInputProps = {
     enabledTyping: true,
     enabledMention: true,
     actions: [
@@ -418,32 +418,32 @@ const Chat: FC<ChatProps> = props => {
       },
     ],
   };
-  if (globalConfig?.messageEditor) {
-    if (globalConfig?.messageEditor?.mention == false) {
-      messageEditorConfig.enabledMention = false;
+  if (globalConfig?.messageInput) {
+    if (globalConfig?.messageInput?.mention == false) {
+      messageInputConfig.enabledMention = false;
     }
-    if (globalConfig?.messageEditor?.typing == false) {
-      messageEditorConfig.enabledTyping = false;
+    if (globalConfig?.messageInput?.typing == false) {
+      messageInputConfig.enabledTyping = false;
     }
 
-    messageEditorConfig.actions = messageEditorConfig.actions?.filter(item => {
-      if (item.name == 'EMOJI' && globalConfig?.messageEditor?.emoji == false) {
+    messageInputConfig.actions = messageInputConfig.actions?.filter(item => {
+      if (item.name == 'EMOJI' && globalConfig?.messageInput?.emoji == false) {
         return false;
       }
-      if (item.name == 'MORE' && globalConfig?.messageEditor?.moreAction == false) {
+      if (item.name == 'MORE' && globalConfig?.messageInput?.moreAction == false) {
         return false;
       }
-      if (item.name == 'RECORDER' && globalConfig?.messageEditor?.record == false) {
+      if (item.name == 'RECORDER' && globalConfig?.messageInput?.record == false) {
         return false;
       }
 
       return true;
     });
-    messageEditorConfig.customActions = messageEditorConfig!.customActions?.filter(item => {
-      if (item.content == 'IMAGE' && globalConfig?.messageEditor?.picture == false) {
+    messageInputConfig.customActions = messageInputConfig!.customActions?.filter(item => {
+      if (item.content == 'IMAGE' && globalConfig?.messageInput?.picture == false) {
         return false;
       }
-      if (item.content == 'FILE' && globalConfig?.messageEditor?.file == false) {
+      if (item.content == 'FILE' && globalConfig?.messageInput?.file == false) {
         return false;
       }
       return true;
@@ -685,7 +685,7 @@ const Chat: FC<ChatProps> = props => {
           ) : (
             <MessageList messageProps={messageProps} {...messageListProps}></MessageList>
           )}
-          {messageEditorProps?.enabledTyping && (
+          {messageInputProps?.enabledTyping && (
             <Typing
               conversation={rootStore.conversationStore.currentCvs}
               onHide={() => {
@@ -696,10 +696,10 @@ const Chat: FC<ChatProps> = props => {
 
           {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
 
-          {renderMessageEditor ? (
-            renderMessageEditor()
+          {renderMessageInput ? (
+            renderMessageInput()
           ) : (
-            <MessageEditor {...messageEditorConfig} {...messageEditorProps}></MessageEditor>
+            <MessageInput {...messageInputConfig} {...messageInputProps}></MessageInput>
           )}
           {modalOpen && (
             <ThreadModal

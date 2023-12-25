@@ -1,20 +1,20 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
 
-import MessageEditor from './index';
+import MessageInput from './index';
 import Provider from '../store/Provider';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
-  title: 'Module/MessageEditor',
-  component: MessageEditor,
+  title: 'Module/MessageInput',
+  component: MessageInput,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
-} as ComponentMeta<typeof MessageEditor>;
+} as ComponentMeta<typeof MessageInput>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof MessageEditor> = args => (
+const Template: ComponentStory<typeof MessageInput> = args => (
   <Provider initConfig={{ appKey: 'z#b' }}>
-    <MessageEditor {...args} conversation={{ chatType: 'singleChat', conversationId: 'zd2' }} />
+    <MessageInput {...args} conversation={{ chatType: 'singleChat', conversationId: 'zd2' }} />
   </Provider>
 );
 

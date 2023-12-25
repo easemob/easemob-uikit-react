@@ -1,6 +1,6 @@
-import MessageEditor from './MessageEditor';
+import MessageInput from './MessageInput';
 
-export type { MessageEditorProps } from './MessageEditor';
+export type { MessageInputProps } from './MessageInput';
 export type { MoreActionProps } from './moreAction';
 export type { RecorderProps } from './recorder';
 export type { EmojiProps } from './emoji';
@@ -8,4 +8,4 @@ export type { SelectedControlsProps } from './selectedControls';
 export type { SuggestListProps } from './suggestList';
 export type { TextareaProps } from './textarea';
 
-export default MessageEditor;
+export default MessageInput;
