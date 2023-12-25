@@ -1,8 +1,8 @@
 @import '~/common/style/index.scss';
 
-$contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
+$groupSetting-prefix-cls: #{$cui-prefix}-groupSetting;
 
-.#{$contactInfo-prefix-cls}{
+.#{$groupSetting-prefix-cls}{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -115,11 +115,11 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
 
     &-dark{
         background-color: $gray-1;
-        .#{$contactInfo-prefix-cls}-header{
+        .#{$groupSetting-prefix-cls}-header{
             background-color: $gray-1;
             color: $gray-98;
         }
-        .#{$contactInfo-prefix-cls}-content{
+        .#{$groupSetting-prefix-cls}-content{
             background-color: #000;
             &-item{
                 background-color: $gray-1;
@@ -142,7 +142,7 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
     background-color: $gray-95;
 }
 
-.#{$contactInfo-prefix-cls}-infoModal div{
+.#{$groupSetting-prefix-cls}-infoModal div{
     font-size: 14px;
     font-style: normal;
     font-weight: 500;
@@ -150,7 +150,7 @@ $contactInfo-prefix-cls: #{$cui-prefix}-contactInfo;
     margin-bottom: 4px;
 }
 
-.#{$contactInfo-prefix-cls}-infoModal:nth-of-type(2){
+.#{$groupSetting-prefix-cls}-infoModal:nth-of-type(2){
     margin-top: 16px;
 }
 

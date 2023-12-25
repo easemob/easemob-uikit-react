@@ -4,7 +4,7 @@ import TextMessage from '../../../module/textMessage';
 import List from '../../../component/list';
 import Header from '../../../module/header';
 import { ContactItem, ContactList, ContactDetail } from '../../../module/contactList';
-import ContactInfo from '../../../module/contactInfo';
+import ContactInfo from '../../../module/groupSetting';
 import { Search } from '../../../component/input/Search';
 import Chat from '../../../module/chat';
 import Icon from '../../../component/icon';

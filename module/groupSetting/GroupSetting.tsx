@@ -28,7 +28,7 @@ import Modal from '../../component/modal';
 import { useGroupMembersAttributes, useGroupMembers } from '../hooks/useAddress';
 import GroupMember, { GroupMemberProps } from '../groupMember';
 import { useTranslation } from 'react-i18next';
-export interface ContactInfoProps {
+export interface GroupSettingProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -42,7 +42,7 @@ export interface ContactInfoProps {
   onDestroyGroup?: () => void;
 }
 
-const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
+const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
   const {
     conversation,
     style,
@@ -55,7 +55,7 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
-  const prefixCls = getPrefixCls('contactInfo', prefix);
+  const prefixCls = getPrefixCls('groupSetting', prefix);
   const context = useContext(RootContext);
   const { rootStore, theme, features } = context;
   const { addressStore } = rootStore;
@@ -532,4 +532,4 @@ const ContactInfo: FC<ContactInfoProps> = (props: ContactInfoProps) => {
   );
 };
 
-export default observer(ContactInfo);
+export default observer(GroupSetting);
