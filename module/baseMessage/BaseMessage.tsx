@@ -551,7 +551,11 @@ let BaseMessage = (props: BaseMessageProps) => {
 
           <div className={`${prefixCls}-box`}>
             {showRepliedMsg ? (
-              <RepliedMsg message={repliedMessage} shape={shape} direction={direction}></RepliedMsg>
+              <RepliedMsg
+                message={repliedMessage}
+                shape={bubbleShape}
+                direction={direction}
+              ></RepliedMsg>
             ) : (
               <div className={`${prefixCls}-info`}>
                 <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>

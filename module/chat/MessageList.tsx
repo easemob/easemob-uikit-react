@@ -166,6 +166,14 @@ let MessageList: FC<MsgListProps> = props => {
           style={data.style}
           renderUserProfile={renderUserProfile}
           thread={isThread}
+          videoProps={{
+            onCanPlay: () => {
+              if (messageStore.unreadMessageCount <= 0) {
+                // listRef.current.scrollTo(listRef.current.scrollHeight);
+                // scrollToBottom();
+              }
+            },
+          }}
           {...messageProps}
         ></VideoMessage>
       );
@@ -198,12 +206,17 @@ let MessageList: FC<MsgListProps> = props => {
       );
     }
   };
-
-  let lastMsgId = messageData[messageData.length - 1]?.id || '';
+  let lastMessage = messageData[messageData.length - 1];
+  let lastMsgId = lastMessage?.id || '';
   // 每次发消息滚动到最新的一条
   const listRef = React.useRef<List>(null);
   useEffect(() => {
-    if (messageStore.holding) return;
+    if (
+      messageStore.holding &&
+      lastMessage?.from != '' &&
+      lastMessage?.from != rootStore.client.user
+    )
+      return;
     setTimeout(() => {
       (listRef?.current as any)?.scrollTo('bottom');
     }, 10);
@@ -262,6 +275,7 @@ let MessageList: FC<MsgListProps> = props => {
           );
         }}
       ></MessageScrollList>
+      {/** 未读数大于0，并且当前的会话有未读消息时展示 */}
       {messageStore.unreadMessageCount > 0 && (
         <div className={`cui-unread-message-count`} onClick={scrollToBottom}>
           <Icon type="ARROW_DOWN_THICK" width={20} height={20}></Icon>

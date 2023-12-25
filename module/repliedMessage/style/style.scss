@@ -68,7 +68,11 @@ $reply-prefix-cls: #{$cui-prefix}-message-reply;
         }
 
     }
-
+    &-square {
+        .#{$reply-prefix-cls}-content {
+            border-radius: $msg-bubble-square-border-radius;
+        }
+    }
     &-dark{
         background-color: $gray-2;
         

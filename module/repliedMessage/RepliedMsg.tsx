@@ -14,6 +14,7 @@ import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
 import AudioMessage, { AudioMessageProps } from '../audioMessage';
 import RecalledMessage from '../recalledMessage';
 import UserCardMessage from '../userCardMessage';
+import { RootContext } from '../store/rootContext';
 const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
@@ -40,10 +41,17 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   const { t } = useTranslation();
   const prefixCls = getPrefixCls('reply-message', customizePrefixCls);
   const [hoverStatus, setHoverStatus] = useState(false);
+  const context = React.useContext(RootContext);
+  const { rootStore, theme } = context;
+  let bubbleShape = shape;
+  if (theme?.bubbleShape && !shape) {
+    bubbleShape = theme?.bubbleShape;
+  }
+
   const classString = classNames(
     prefixCls,
     {
-      [`${prefixCls}-${shape}`]: !!shape,
+      [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
       [`${prefixCls}-left`]: direction == 'ltr',
       [`${prefixCls}-right`]: direction == 'rtl',
     },
