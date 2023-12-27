@@ -37,7 +37,7 @@ const useContacts = () => {
   return contacts;
 };
 
-const useUserInfo = (userList: 'conversation' | 'contacts') => {
+const useUserInfo = (userList: 'conversation' | 'contacts', withPresence?: boolean) => {
   const rootStore = useContext(RootContext).rootStore;
   useEffect(() => {
     let keys = Object.keys(rootStore.addressStore.appUsersInfo);
@@ -52,6 +52,7 @@ const useUserInfo = (userList: 'conversation' | 'contacts') => {
 
     getUsersInfo({
       userIdList: userList == 'conversation' ? cvsUserIds : contactsUserIds,
+      withPresence,
     });
   }, [rootStore.conversationStore.conversationList.length, rootStore.addressStore.contacts.length]);
 };

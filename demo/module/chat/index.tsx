@@ -190,6 +190,7 @@ const ChatApp: FC<any> = () => {
       >
         {tab == 'chat' && (
           <ConversationList
+            presence={true}
             renderHeader={() => (
               <Header
                 moreAction={{
@@ -349,9 +350,6 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
     }}
   >
     <Provider
-      onError={err => {
-        console.log('回调出的err', err);
-      }}
       initConfig={{
         appKey: 'easemob#easeim',
         userId: 'zd2',
@@ -382,8 +380,9 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         conversationList: {
           search: true,
           item: {
-            // moreAction: true,
-            // deleteConversation: true,
+            moreAction: true,
+            deleteConversation: true,
+            presence: false,
           },
         },
         chat: {
@@ -402,7 +401,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
             translate: true,
             edit: true,
           },
-          messageEditor: {
+          messageInput: {
             mention: true,
             typing: true,
             record: true,

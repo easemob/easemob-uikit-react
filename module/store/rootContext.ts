@@ -49,6 +49,9 @@ export interface ContextProps {
       item?: {
         moreAction?: boolean;
         deleteConversation?: boolean;
+        pinConversation?: boolean;
+        muteConversation?: boolean;
+        presence?: boolean;
       };
     };
     chatroom?: {

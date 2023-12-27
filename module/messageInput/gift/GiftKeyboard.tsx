@@ -45,7 +45,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" title={t('module.emoji') as string}>
+    <span className="icon-container" title={t('gift') as string}>
       <Icon
         type="GIFT"
         width={20}

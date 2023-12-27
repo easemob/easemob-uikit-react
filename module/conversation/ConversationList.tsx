@@ -35,6 +35,7 @@ export interface ConversationListProps {
   renderItem?: (cvs: Conversation, index: number) => React.ReactNode; // 自定义渲染 item
   headerProps?: HeaderProps;
   itemProps?: ConversationItemProps;
+  presence?: boolean; // 是否显示在线状态
 }
 
 const ConversationScrollList = ScrollList<Conversation>();
@@ -51,6 +52,7 @@ let Conversations: FC<ConversationListProps> = props => {
     headerProps = {},
     itemProps = {},
     style = {},
+    presence,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationList', customizePrefixCls);
@@ -75,11 +77,14 @@ let Conversations: FC<ConversationListProps> = props => {
   const { appUsersInfo, contacts } = rootStore.addressStore;
   const { t } = useTranslation();
   const { getConversationList, hasConversationNext } = useConversations();
-  useUserInfo('conversation');
+  const globalConfig = features?.conversationList || {};
+
+  const withPresence = presence || globalConfig?.item?.presence != false;
+  useUserInfo('conversation', withPresence);
 
   const groupData = rootStore.addressStore.groups;
   // 获取加入群组，把群组名放在 conversationList
-  const globalConfig = features?.conversationList || {};
+
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
     setActiveCvsId(cvs.conversationId);
     cvsStore.setCurrentCvs({
@@ -170,7 +175,9 @@ let Conversations: FC<ConversationListProps> = props => {
   useEffect(() => {
     if (rootStore.loginState) {
       getConversationList().then(() => {
-        rootStore.conversationStore.getServerPinnedConversations();
+        if (globalConfig?.item?.pinConversation != false) {
+          rootStore.conversationStore.getServerPinnedConversations();
+        }
       });
       getJoinedGroupList();
       getUsersInfo({
@@ -185,12 +192,20 @@ let Conversations: FC<ConversationListProps> = props => {
       visible: true,
       actions: [],
     };
-    if (globalConfig?.item?.deleteConversation) {
-      itemMoreAction.actions = [
-        {
-          content: 'DELETE',
-        },
-      ];
+    if (globalConfig?.item?.deleteConversation != false) {
+      itemMoreAction.actions.push({
+        content: 'DELETE',
+      });
+    }
+    if (globalConfig?.item?.pinConversation != false) {
+      itemMoreAction.actions.push({
+        content: 'PIN',
+      });
+    }
+    if (globalConfig?.item?.muteConversation != false) {
+      itemMoreAction.actions.push({
+        content: 'SILENT',
+      });
     }
   }
   if (globalConfig?.item?.moreAction == false) {
