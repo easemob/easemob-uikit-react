@@ -20,17 +20,18 @@ import Checkbox from '../../component/checkbox';
 import { ChatroomInfo } from '../store/AddressStore';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
-const reportType = [
-  'Unwelcome commercial content',
-  'Pornographic or explicit content',
-  'Child abuse',
-  'Hate speech or graphic violence',
-  'Promote terrorism',
-  'Harassment or bullying',
-  'Suicide or self harm',
-  'False information',
-  'Others',
-];
+
+let reportType: Record<string, string> = {
+  tag1: 'Unwelcome commercial content',
+  tag2: 'Pornographic or explicit content',
+  tag3: 'Child abuse',
+  tag4: 'Hate speech or graphic violence',
+  tag5: 'Promote terrorism',
+  tag6: 'Harassment or bullying',
+  tag7: 'Suicide or self harm',
+  tag8: 'False information',
+  tag9: 'Others',
+};
 
 export interface ChatroomProps {
   prefix?: string;
@@ -50,6 +51,7 @@ export interface ChatroomProps {
   renderBroadcast?: () => ReactNode;
   broadcastProps?: BroadcastProps;
   chatroomId: string;
+  reportType?: Record<string, string>; // 自定义举报内容 {'举报类型': "举报原因"}
 }
 
 const Chatroom = (props: ChatroomProps) => {
@@ -68,7 +70,11 @@ const Chatroom = (props: ChatroomProps) => {
     prefix,
     className,
     style,
+    reportType: reportTypeProps,
   } = props;
+  if (reportTypeProps) {
+    reportType = reportTypeProps;
+  }
   const context = useContext(RootContext);
   const { rootStore, features, theme } = context;
   const globalConfig = features?.chatroom;
@@ -235,21 +241,21 @@ const Chatroom = (props: ChatroomProps) => {
   };
 
   const [reportOpen, setReportOpen] = useState(false);
-  const [checkedType, setCheckedType] = useState(-1);
-  const handleCheckChange = (type: number) => {
+  const [checkedType, setCheckedType] = useState('');
+  const handleCheckChange = (type: string) => {
     setCheckedType(type);
   };
   const handleReportMessage = () => {
     rootStore.client
       .reportMessage({
-        reportType: reportType[checkedType],
+        reportType: checkedType,
         reportReason: reportType[checkedType],
         messageId: reportMessageId,
       })
       .then(() => {
         eventHandler.dispatchSuccess('reportMessage');
         setReportOpen(false);
-        setCheckedType(-1);
+        setCheckedType('');
       })
       .catch(err => {
         eventHandler.dispatchError('reportMessage', err);
@@ -340,14 +346,14 @@ const Chatroom = (props: ChatroomProps) => {
         }}
       >
         <div>
-          {reportType.map((item, index) => {
+          {Object.keys(reportType).map((item, index) => {
             return (
               <div className="report-item" key={index}>
-                <div>{t(reportType[index])}</div>
+                <div>{t(reportType[item] as string)}</div>
                 <Checkbox
-                  checked={checkedType === index}
+                  checked={checkedType === item}
                   onChange={() => {
-                    handleCheckChange(index);
+                    handleCheckChange(item);
                   }}
                 ></Checkbox>
               </div>
