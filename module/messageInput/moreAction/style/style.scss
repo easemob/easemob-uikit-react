@@ -32,9 +32,13 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     .cui-li-dark:hover{
         background: $gray-2;
     }
-}
-.icon-container{
-    margin: $margin-xs;
-    cursor: pointer;
-    line-height: 100%;
+
+    &-iconBox{
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 }

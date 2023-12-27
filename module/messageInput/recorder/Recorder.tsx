@@ -181,11 +181,11 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   };
 
   const initNode = (
-    <div className="icon-container" style={{ ...iconStyle }} title={t('record') as string}>
+    <div className={`${prefixCls}-iconBox`} style={{ ...iconStyle }} title={t('record') as string}>
       <Icon
         type="CIRCLE_WAVE"
-        width={20}
-        height={20}
+        width={24}
+        height={24}
         color="#fff"
         onClick={() => handleClick('start')}
       ></Icon>
@@ -198,8 +198,8 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         <div className={`${prefixCls}-iconBox`} title={t(`cancel`) as string}>
           <Icon
             type="DELETE"
-            width={20}
-            height={20}
+            width={24}
+            height={24}
             onClick={() => handleClick('stop')}
             color={'#919BA1'}
           ></Icon>
@@ -211,7 +211,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       <div className={`${prefixCls}-content-right`}>
         <span>{t('recording')}...</span>
         <div onClick={sendAudio} className={`${prefixCls}-send`} title={t(`send`) as string}>
-          <Icon type="AIR_PLANE" width={20} height={20} color="#fff"></Icon>
+          <Icon type="AIR_PLANE" width={24} height={24} color="#fff"></Icon>
         </div>
       </div>
     </div>

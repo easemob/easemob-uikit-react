@@ -14,6 +14,7 @@ import UserSelect, { UserSelectInfo } from '../../userSelect';
 import Button from '../../../component/button';
 export interface MoreActionProps {
   style?: React.CSSProperties;
+  className?: string;
   itemContainerStyle?: React.CSSProperties;
   prefix?: string;
   icon?: ReactNode;
@@ -36,10 +37,11 @@ let MoreAction = (props: MoreActionProps) => {
     onBeforeSendMessage,
     style = {},
     itemContainerStyle = {},
+    className,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('moreAction', customizePrefixCls);
-  const classString = classNames(prefixCls);
+  const classString = classNames(prefixCls, className);
   const imageEl = useRef<HTMLInputElement>(null);
   const fileEl = useRef<HTMLInputElement>(null);
   const videoEl = useRef<HTMLInputElement>(null);
@@ -51,11 +53,11 @@ let MoreAction = (props: MoreActionProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" style={{ ...style }} title={t('more') as string}>
+    <span className={`${prefixCls}-iconBox`} style={{ ...style }} title={t('more') as string}>
       <Icon
         type="PLUS_CIRCLE"
-        width={20}
-        height={20}
+        width={24}
+        height={24}
         // onClick={handleClickIcon}
       ></Icon>
     </span>
@@ -305,7 +307,7 @@ let MoreAction = (props: MoreActionProps) => {
           accept="image/gif,image/jpeg,image/jpg,image/png,image/svg"
           ref={imageEl}
           onChange={handleImageChange}
-          style={{ display: 'none' }}
+          style={{ display: 'none', position: 'absolute' }}
         />
       }
       {
@@ -315,7 +317,7 @@ let MoreAction = (props: MoreActionProps) => {
             handleFileChange(e, 'file');
           }}
           type="file"
-          style={{ display: 'none' }}
+          style={{ display: 'none', position: 'absolute' }}
         />
       }
       {
@@ -325,51 +327,53 @@ let MoreAction = (props: MoreActionProps) => {
             handleFileChange(e, 'video');
           }}
           type="file"
-          style={{ display: 'none' }}
+          style={{ display: 'none', position: 'absolute' }}
           accept="video/*"
         />
       }
       {
-        <UserSelect
-          title={`${t('share')} ${t('contact')}`}
-          selectedPanelHeader={<></>}
-          onCancel={() => {
-            setCardModalVisible(false);
-          }}
-          selectedPanelFooter={
-            <div>
-              <Button
-                style={{ marginRight: '24px', width: '68px' }}
-                type="primary"
-                onClick={() => {
-                  sendCardMessage();
-                  setCardModalVisible(false);
-                }}
-              >
-                {t('confirmBtn')}
-              </Button>
-              <Button
-                style={{ width: '68px' }}
-                type="default"
-                onClick={() => {
-                  setCardModalVisible(false);
-                }}
-              >
-                {t('cancelBtn')}
-              </Button>
-            </div>
-          }
-          closable={true}
-          enableMultipleSelection={false}
-          open={cardModalVisible}
-          onUserSelect={(user, users) => {
-            console.log('onUserSelect', user, users);
-            setSelectedUsers(users);
-          }}
-          onOk={users => {
-            console.log('onOk', users);
-          }}
-        />
+        <div style={{ position: 'absolute' }}>
+          <UserSelect
+            title={`${t('share')} ${t('contact')}`}
+            selectedPanelHeader={<></>}
+            onCancel={() => {
+              setCardModalVisible(false);
+            }}
+            selectedPanelFooter={
+              <div>
+                <Button
+                  style={{ marginRight: '24px', width: '68px' }}
+                  type="primary"
+                  onClick={() => {
+                    sendCardMessage();
+                    setCardModalVisible(false);
+                  }}
+                >
+                  {t('confirmBtn')}
+                </Button>
+                <Button
+                  style={{ width: '68px' }}
+                  type="default"
+                  onClick={() => {
+                    setCardModalVisible(false);
+                  }}
+                >
+                  {t('cancelBtn')}
+                </Button>
+              </div>
+            }
+            closable={true}
+            enableMultipleSelection={false}
+            open={cardModalVisible}
+            onUserSelect={(user, users) => {
+              console.log('onUserSelect', user, users);
+              setSelectedUsers(users);
+            }}
+            onOk={users => {
+              console.log('onOk', users);
+            }}
+          />
+        </div>
       }
     </>
   );

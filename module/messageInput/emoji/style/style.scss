@@ -4,9 +4,18 @@ $emoji-prefix-cls: #{$cui-prefix}-emoji-container;
 
 .#{$emoji-prefix-cls}{
     width: 260px;
+
+    &-iconBox{
+        width: 36px;
+        height: 36px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+    }
 }
 .icon-container{
-    margin: $margin-xs;
+    // margin: $margin-xs;
     cursor: pointer;
     line-height: 100%;
 }

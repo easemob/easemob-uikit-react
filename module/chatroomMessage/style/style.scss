@@ -3,7 +3,7 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
 .#{$chatroom-prefix-cls}{
     display: flex;
     flex-direction: row;
-    margin: 4px 0;
+    margin: 4px 16px;
 }
 .#{$chatroom-prefix-cls}-container{
     font-size: 14px;

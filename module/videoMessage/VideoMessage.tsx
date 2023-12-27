@@ -9,7 +9,6 @@ import Mask from '../../component/modal/Mast';
 import Modal from '../../component/modal';
 import rootStore from '../store/index';
 // @ts-ignore
-import videoData from './video.mp4';
 import { ChatSDK } from '../SDK';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
@@ -277,8 +276,6 @@ const VideoMessage = (props: VideoMessageProps) => {
           preload="metadata"
           src={videoMessage.url || videoMessage.file.url}
           {...videoProps}
-
-          // src="https://a5-v2.easemob.com/easemob/easeim/chatfiles/4db7f110-b676-11ed-929f-1fcef06124f9?em-redirect=true&share-secret=TbgYILZ2Ee2IYD1BAxWxusBH_NV8dnJY6jFq1PwVkIaY3uys"
         ></video>
       </div>
     </BaseMessage>

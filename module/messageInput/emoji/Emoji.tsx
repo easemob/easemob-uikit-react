@@ -117,11 +117,11 @@ const Emoji = (props: EmojiProps) => {
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" style={{ ...style }} title={t('emoji') as string}>
+    <span className={`${prefixCls}-iconBox`} style={{ ...style }} title={t('emoji') as string}>
       <Icon
         type="FACE"
-        width={20}
-        height={20}
+        width={24}
+        height={24}
         onClick={handleClickIcon}
         // onClick={() => setOpen(true)}
       ></Icon>

@@ -51,7 +51,7 @@ const ChatApp = observer(() => {
     <>
       <Provider
         theme={{
-          mode: 'dark',
+          mode: 'light',
         }}
         initConfig={{
           appKey: 'easemob#easeim',
@@ -86,15 +86,15 @@ const ChatApp = observer(() => {
         <div style={{ width: '350px' }}>
           <Chatroom
             chatroomId="229358390280194"
-            renderMessageList={() => (
-              <MessageList
-                conversation={{
-                  chatType: 'chatRoom',
-                  conversationId: '229358390280194',
-                }}
-                renderMessage={renderMessage}
-              />
-            )}
+            // renderMessageList={() => (
+            //   <MessageList
+            //     conversation={{
+            //       chatType: 'chatRoom',
+            //       conversationId: '229358390280194',
+            //     }}
+            //     renderMessage={renderMessage}
+            //   />
+            // )}
             messageEditorProps={{
               giftKeyboardProps: {
                 giftConfig: {

@@ -5,14 +5,13 @@ $chatroom-prefix-cls: #{$cui-prefix}-chatroom;
     height: 100%;
     display: flex;
     flex-direction: column;
-    padding: 0 16px;
+    // padding: 0 16px;
     color: $gray-1;
     p{
         height: 1px;
         background: $gray-9;
-        width: calc(100% + 32px);
+        width: 100%;
         position: relative;
-        left: -16px;
         margin: 0;
         padding: 0;
     }

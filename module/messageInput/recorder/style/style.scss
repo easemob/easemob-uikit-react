@@ -2,10 +2,11 @@
 $recorder-prefix-cls: #{$cui-prefix}-recorder;
 
 .#{$recorder-prefix-cls} {
-    padding: 0 5px;
+    // padding: 0 5px;
     display: flex;
     align-items: center;
     height: 36px;
+    width: 36px;
     // border: 1px solid #FF002B;
     &-content{
         display: flex;
@@ -18,11 +19,11 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
             .#{$recorder-prefix-cls}-iconBox{
                 width: 36px;
                 height: 36px;
-                background-color: $gray-95;
+                background-color: transparent;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: $red-5;
+                background: $gray-95;
                 border-radius: 4px;
             }
 
@@ -66,8 +67,8 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
             &>div{
                 width: 36px;
                 height: 36px;
-                // border-radius: 18px;
-                // background-color: $blue-5;
+                border-radius: 4px;
+                background-color: $blue-5;
                 justify-content: center;
                 align-items: center;
                 display: flex;
@@ -75,16 +76,14 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
         }
     }
 
-    &-dark{
-        .#{$recorder-prefix-cls}-content{
-            background-color: $gray-1;
-            color: $gray-98;
-            &-left{
-                .#{$recorder-prefix-cls}-iconBox{
-                    background-color: $gray-2;
-                }
-            }
-        }   
+    &-iconBox{
+        width: 36px;
+        height: 36px;
+        background-color: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
     }
 }
 

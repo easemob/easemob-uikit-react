@@ -14,6 +14,8 @@ import { ChatSDK } from '../SDK';
 import { CurrentConversation } from '../store/ConversationStore';
 import { GiftKeyboard, GiftKeyboardProps } from './gift/GiftKeyboard';
 import { RootContext } from '../store/rootContext';
+import Icon from '../../component/icon';
+import { useTranslation } from 'react-i18next';
 export type Actions = {
   name: string;
   visible: boolean;
@@ -100,7 +102,7 @@ const MessageInput = (props: MessageInputProps) => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
-
+  const { t } = useTranslation();
   const insertCustomHtml = (t: string, e: keyof typeof emoji.map) => {
     if (!textareaRef.current) return;
     // @ts-ignore
@@ -234,9 +236,18 @@ const MessageInput = (props: MessageInputProps) => {
   const handleSendCombineMessage = (message: any) => {
     onSendMessage && onSendMessage(message);
   };
+
+  const [inputHaveValue, setInputHaveValue] = useState(false);
+  const showSendBtn =
+    actions?.find(item => {
+      return item.name === 'TEXTAREA';
+    }) &&
+    isShowTextarea &&
+    inputHaveValue;
+
   return (
     <div className={classString} style={{ ...style }}>
-      {isShowRecorder && (
+      {isShowRecorder && !inputHaveValue && (
         <Recorder
           isChatThread={isChatThread}
           onBeforeSendMessage={onBeforeSendMessage}
@@ -261,9 +272,16 @@ const MessageInput = (props: MessageInputProps) => {
                   isChatThread={isChatThread}
                   key={item.name}
                   ref={textareaRef}
-                  hasSendButton
+                  hasSendButton={false}
                   placeholder={placeHolder}
                   onSendMessage={onSendMessage}
+                  onChange={value => {
+                    if (value.length > 0) {
+                      setInputHaveValue(true);
+                    } else {
+                      setInputHaveValue(false);
+                    }
+                  }}
                   conversation={conversation}
                   enabledMention={props.enabledMention}
                   onBeforeSendMessage={onBeforeSendMessage}
@@ -278,7 +296,7 @@ const MessageInput = (props: MessageInputProps) => {
                 ></Emoji>
               );
             } else if (item.name === 'MORE' && item.visible) {
-              return (
+              return inputHaveValue ? null : (
                 <MoreAction
                   key={item.name}
                   isChatThread={isChatThread}
@@ -287,10 +305,10 @@ const MessageInput = (props: MessageInputProps) => {
                 ></MoreAction>
               );
             } else if (item.name === 'GIFT' && item.visible) {
-              return (
+              return inputHaveValue ? null : (
                 <GiftKeyboard key={item.name} conversation={conversation} {...giftKeyboardProps} />
               );
-            } else {
+            } else if (item.visible) {
               return (
                 <span
                   key={item.name}
@@ -305,6 +323,19 @@ const MessageInput = (props: MessageInputProps) => {
             }
           })}
         </>
+      )}
+      {showSendBtn && (
+        <div className={`${prefixCls}-sendBtn`} title={t('send') as string}>
+          <Icon
+            type="AIR_PLANE"
+            width={24}
+            height={24}
+            color={'#F9FAFA'}
+            onClick={() => {
+              textareaRef.current?.sendMessage();
+            }}
+          ></Icon>
+        </div>
       )}
       {isShowSelect && (
         <SelectedControls

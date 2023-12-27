@@ -35,6 +35,7 @@ export interface TextareaProps {
   onSendMessage?: (message: ChatSDK.TextMessage) => void;
   conversation?: CurrentConversation;
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
+  onChange?: (value: string) => void;
 }
 
 export interface ForwardRefProps {
@@ -55,6 +56,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     onBeforeSendMessage,
     enabledTyping = true,
     style = {},
+    onChange,
   } = props;
   const { t } = useTranslation();
   const [textValue, setTextValue] = useState('');
@@ -141,7 +143,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     const value = (e.target as HTMLDivElement).innerHTML;
     const str = convertToMessage(value).trim();
     setTextValue(str);
-
+    onChange?.(str);
     if (usedCvs.chatType == 'singleChat' && !isTyping && enabledTyping) {
       setIsTyping(true);
       messageStore.sendTypingCmd(usedCvs);
@@ -158,6 +160,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     divRef.current!.innerHTML = '';
 
     setTextValue('');
+    onChange?.('');
   };
 
   const sendMessage = () => {
@@ -240,6 +243,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   useImperativeHandle(ref, () => ({
     setTextareaValue,
+    sendMessage,
     divRef,
   }));
 

@@ -8,10 +8,11 @@
 $editor-prefix-cls: #{$cui-prefix}-message-editor;
 .#{$editor-prefix-cls}{
     display: flex;
-    padding: $padding-s 0;
+    padding: $padding-s 20px;
     align-items: flex-end;
     // overflow: hidden;
     position: relative;
+    gap: 10px;
     &-disabled{
         &::after{
             content: ' ';
@@ -29,5 +30,20 @@ $editor-prefix-cls: #{$cui-prefix}-message-editor;
         &::after{
             opacity: .1;
         }
+    }
+
+    &-sendBtn {
+        // position: absolute;
+        // right: 12px;
+        // bottom: 7px;
+        width: 36px;
+        height: 36px;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        cursor: pointer;
+        line-height: 100%;
+        background-color: $blue-5;
+        border-radius: 4px;
     }
 }
