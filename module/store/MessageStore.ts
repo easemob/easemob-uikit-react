@@ -481,7 +481,6 @@ class MessageStore {
       this.message.byId[msgId].status = status;
       // @ts-ignore
       const i = this.message[msg.chatType][conversationId]?.indexOf(this.message.byId[msg.id]); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
-      console.log('111 --', i);
       if (typeof i === 'undefined' || i == -1) return;
       // @ts-ignore
       this.message[msg.chatType][conversationId].splice(i, 1, msg);
@@ -570,6 +569,10 @@ class MessageStore {
         // @ts-ignore
         conversation.lastMessage = {};
         this.rootStore.conversationStore.modifyConversation(conversation);
+        eventHandler.dispatchSuccess('removeHistoryMessages');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('removeHistoryMessages', error);
       });
   }
 
@@ -675,9 +678,10 @@ class MessageStore {
         //   return msg.id != messageId && msg.mid != messageId;
         // });
         // this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
+        eventHandler.dispatchSuccess('addReaction');
       })
       .catch((err: ChatSDK.ErrorEvent) => {
-        console.error(err);
+        eventHandler.dispatchError('addReaction', err);
       });
   }
 
@@ -707,9 +711,11 @@ class MessageStore {
             }
           }
         }
+        eventHandler.dispatchSuccess('deleteReaction');
       })
       .catch((err: ChatSDK.ErrorEvent) => {
         console.error(err);
+        eventHandler.dispatchError('deleteReaction', err);
       });
   }
 
@@ -777,6 +783,10 @@ class MessageStore {
           const message = messages[messageIndex];
           message.reactions.userList = reactionData.userList;
         }
+        eventHandler.dispatchSuccess('getReactionDetail');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('getReactionDetail', error);
       });
   }
 
@@ -806,9 +816,11 @@ class MessageStore {
               currentMsg.translations = translations;
             }
             res(true);
+            eventHandler.dispatchSuccess('translateMessage');
           })
-          .catch(() => {
+          .catch(error => {
             rej(false);
+            eventHandler.dispatchError('translateMessage', error);
           });
       }
     });
@@ -904,6 +916,8 @@ class MessageStore {
       singleChat: {},
       groupChat: {},
       byId: {},
+      chatRoom: {},
+      broadcast: [],
     };
 
     this.selectedMessage = {

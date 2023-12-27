@@ -4,6 +4,8 @@ import { ChatSDK } from '../SDK';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
 import { getUsersInfo, checkCharacter } from '../utils';
 import { pinyin } from 'pinyin-pro';
+import { eventHandler } from '../../eventHandler';
+
 export type MemberRole = 'member' | 'owner' | 'admin';
 
 export interface ContactRequest {
@@ -224,6 +226,10 @@ class AddressStore {
       })
       .then(res => {
         this.setGroupMemberAttributes(groupId, userId, attributes);
+        eventHandler.dispatchSuccess('setGroupMemberAttributes');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('setGroupMemberAttributes', error);
       });
   };
   setGroupMemberAttributes(
@@ -309,16 +315,26 @@ class AddressStore {
       })
       .then(res => {
         this.addUserToMuteList(chatroomId, userId);
+        eventHandler.dispatchSuccess('muteChatRoomMember');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('muteChatRoomMember', error);
       });
   };
 
   getChatroomMuteList = (chatroomId: string) => {
     if (!chatroomId) throw 'chatroomId is empty';
     const rootStore = getStore();
-    return rootStore.client.getChatRoomMutelist({ chatRoomId: chatroomId }).then(res => {
-      const muteList = res.data?.map(item => item.user) || [];
-      this.setChatroomMuteList(chatroomId, muteList);
-    });
+    return rootStore.client
+      .getChatRoomMutelist({ chatRoomId: chatroomId })
+      .then(res => {
+        const muteList = res.data?.map(item => item.user) || [];
+        this.setChatroomMuteList(chatroomId, muteList);
+        eventHandler.dispatchSuccess('getChatRoomMutelist');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('getChatRoomMutelist', error);
+      });
   };
 
   unmuteChatRoomMember = (chatroomId: string, userId: string) => {
@@ -331,6 +347,10 @@ class AddressStore {
       })
       .then(res => {
         this.removeUserFromMuteList(chatroomId, userId);
+        eventHandler.dispatchSuccess('unmuteChatRoomMember');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('unmuteChatRoomMember', error);
       });
   };
   removeUserFromMuteList = (chatroomId: string, userId: string) => {
@@ -364,6 +384,10 @@ class AddressStore {
             item => item !== userId,
           );
         }
+        eventHandler.dispatchSuccess('removeChatRoomMember');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('removeChatRoomMember', error);
       });
   };
 
@@ -388,7 +412,6 @@ class AddressStore {
         conversationList: cvsList,
       })
       .then((res: any) => {
-        console.log('获取勿扰成功', res);
         const userSetting = res.data.user;
         const groupSetting = res.data.group;
         this.contacts.forEach(item => {
@@ -406,6 +429,10 @@ class AddressStore {
             item.silent = false;
           }
         });
+        eventHandler.dispatchSuccess('getSilentModeForConversations');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('getSilentModeForConversations', error);
       });
   }
 
@@ -446,6 +473,10 @@ class AddressStore {
           console.log('设置勿扰成功', res);
           rootStore.conversationStore.setSilentModeForConversationSync(cvs, true);
           this.setSilentModeForConversationSync(cvs, true);
+          eventHandler.dispatchSuccess('setSilentModeForConversation');
+        })
+        .catch(error => {
+          eventHandler.dispatchError('setSilentModeForConversation', error);
         });
     } else {
       rootStore.client
@@ -458,6 +489,10 @@ class AddressStore {
           rootStore.conversationStore.setSilentModeForConversationSync(cvs, false);
 
           this.setSilentModeForConversationSync(cvs, false);
+          eventHandler.dispatchSuccess('clearRemindTypeForConversation');
+        })
+        .catch(error => {
+          eventHandler.dispatchError('clearRemindTypeForConversation', error);
         });
     }
   }
@@ -480,6 +515,10 @@ class AddressStore {
         } else {
           found[0].info = res.data?.[0];
         }
+        eventHandler.dispatchSuccess('getGroupInfo');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('getGroupInfo', error);
       });
   }
 
@@ -511,6 +550,10 @@ class AddressStore {
           conversation.name = groupName;
         }
         conversation && rootStore.conversationStore.modifyConversation(conversation);
+        eventHandler.dispatchSuccess('modifyGroup');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('modifyGroup', error);
       });
   }
 
@@ -529,6 +572,10 @@ class AddressStore {
           chatType: 'groupChat',
           conversationId: groupId,
         });
+        eventHandler.dispatchSuccess('destroyGroup');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('destroyGroup', error);
       });
   }
 
@@ -547,6 +594,10 @@ class AddressStore {
           chatType: 'groupChat',
           conversationId: groupId,
         });
+        eventHandler.dispatchSuccess('leaveGroup');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('leaveGroup', error);
       });
   }
 
@@ -662,6 +713,10 @@ class AddressStore {
           conversationId: res.data?.groupid || '',
           name: groupName,
         });
+        eventHandler.dispatchSuccess('createGroup');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('createGroup', error);
       });
   }
 
@@ -674,6 +729,10 @@ class AddressStore {
       })
       .then(res => {
         console.log('inviteToGroup', res);
+        eventHandler.dispatchSuccess('inviteToGroup');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('inviteToGroup', error);
       });
   }
   removeGroupMembers(groupId: string, userIds: string[]) {
@@ -685,6 +744,10 @@ class AddressStore {
       })
       .then(res => {
         console.log('removeGroupMembers', res);
+        eventHandler.dispatchSuccess('removeGroupMembers');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('removeGroupMembers', error);
       });
   }
   setGroupOwner(groupId: string, userId: string) {
@@ -714,6 +777,10 @@ class AddressStore {
       .then(res => {
         console.log('changeGroupOwner', res);
         this.setGroupOwner(groupId, newOwner);
+        eventHandler.dispatchSuccess('changeGroupOwner');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('changeGroupOwner', error);
       });
   }
   removeGroupFromContactList(groupId: string) {

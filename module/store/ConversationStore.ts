@@ -2,6 +2,7 @@ import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
 import { ChatType } from '../types/messageType';
 import { ChatSDK } from '../SDK';
 import { sortByPinned } from '../utils';
+import { eventHandler } from '../../eventHandler';
 export type AT_TYPE = 'NONE' | 'ALL' | 'ME';
 export interface Conversation {
   chatType: ChatType;
@@ -223,6 +224,10 @@ class ConversationStore {
           }
         });
         this.conversationList = [...this.conversationList];
+        eventHandler.dispatchSuccess('getGroupInfo');
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('getGroupInfo', error);
       });
   }
 
@@ -234,13 +239,16 @@ class ConversationStore {
     this.rootStore.client
       .pinConversation({ conversationType: chatType, conversationId: cvsId, isPinned })
       .then((res: ChatSDK.AsyncResult<ChatSDK.PinConversation>) => {
-        console.log('置顶成功', res);
         this.conversationList?.forEach(cvs => {
           if (cvs.conversationId === cvsId) {
             cvs.isPinned = isPinned;
           }
         });
         this.conversationList = [...this.conversationList.sort(sortByPinned)];
+        eventHandler.dispatchSuccess('pinConversation');
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('pinConversation', error);
       });
   }
 
@@ -248,16 +256,7 @@ class ConversationStore {
     this.rootStore.client
       .getServerPinnedConversations({ pageSize: 50 })
       .then((res: ChatSDK.AsyncResult<ChatSDK.ServerConversations>) => {
-        console.log('----res', res);
         const conversations = (res.data?.conversations || []) as unknown as Conversation[];
-
-        // conversations.forEach(item => {
-        //   this.conversationList?.forEach(cvs => {
-        //     if (cvs.conversationId === item.conversationId) {
-        //       cvs.isPinned = true;
-        //     }
-        //   });
-        // });
 
         const mergedList = [...this.conversationList];
         conversations.forEach(item => {
@@ -271,6 +270,11 @@ class ConversationStore {
           }
         });
         this.conversationList = [...mergedList.sort(sortByPinned)];
+
+        eventHandler.dispatchSuccess('getServerPinnedConversations');
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('getServerPinnedConversations', error);
       });
   }
 
@@ -293,9 +297,12 @@ class ConversationStore {
         },
       })
       .then((res: any) => {
-        console.log('设置勿扰成功', res);
         this.setSilentModeForConversationSync(cvs, true);
         this.rootStore.addressStore.setSilentModeForConversationSync(cvs, true);
+        eventHandler.dispatchSuccess('setSilentModeForConversation');
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('setSilentModeForConversation', error);
       });
   }
 
@@ -306,9 +313,12 @@ class ConversationStore {
         type: cvs.chatType,
       })
       .then((res: any) => {
-        console.log('清除勿扰成功', res);
         this.setSilentModeForConversationSync(cvs, false);
         this.rootStore.addressStore.setSilentModeForConversationSync(cvs, false);
+        eventHandler.dispatchSuccess('clearRemindTypeForConversation');
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('clearRemindTypeForConversation', error);
       });
   }
 
@@ -347,6 +357,10 @@ class ConversationStore {
             }
           }
         });
+        eventHandler.dispatchSuccess('getSilentModeForConversations');
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('getSilentModeForConversations', error);
       });
   }
 

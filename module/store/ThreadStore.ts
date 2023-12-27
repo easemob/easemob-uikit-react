@@ -1,6 +1,6 @@
 import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
 import { ChatSDK } from '../SDK';
-
+import { eventHandler } from '../../eventHandler';
 export interface ThreadData {
   [key: string]: {
     [key: string]: {
@@ -257,9 +257,15 @@ class ThreadStore {
     if (!chatThreadId) {
       throw new Error('no chatThreadId');
     }
-    return this.rootStore.client.joinChatThread({ chatThreadId }).then((res: any) => {
-      // this.getThreadMembers('', chatThreadId);
-    });
+    return this.rootStore.client
+      .joinChatThread({ chatThreadId })
+      .then((res: any) => {
+        // this.getThreadMembers('', chatThreadId);
+        eventHandler.dispatchSuccess('joinChatThread');
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('joinChatThread', error);
+      });
   }
 
   getGroupChatThreads(parentId: string, cursor?: string): Promise<string | null> {
@@ -283,6 +289,7 @@ class ThreadStore {
         const chatThreadIds = threads.map((item: { id: any }) => {
           return item.id;
         });
+        eventHandler.dispatchSuccess('getChatThreads');
         return this.rootStore.client
           .getChatThreadLastMessage({
             chatThreadIds: chatThreadIds,
@@ -299,9 +306,15 @@ class ThreadStore {
             if (threads.length < 20) {
               return null;
             }
-
+            eventHandler.dispatchSuccess('getChatThreadLastMessage');
             return res.properties.cursor;
+          })
+          .catch((error: ChatSDK.ErrorEvent) => {
+            eventHandler.dispatchError('getChatThreadLastMessage', error);
           });
+      })
+      .catch((error: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('getChatThreads', error);
       });
   }
   clear() {
