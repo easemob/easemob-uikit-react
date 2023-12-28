@@ -252,7 +252,6 @@ class MessageStore {
     if (this.repliedMessage != null) {
       this.setRepliedMessage(null);
     }
-    console.log('message', message, this.message.byId[message.id]);
     return this.rootStore.client
       .send(message as unknown as ChatSDK.MessageBody)
       .then((data: { serverMsgId: string }) => {
@@ -490,7 +489,6 @@ class MessageStore {
 
   addHistoryMsgs(cvs: CurrentConversation, msgs: any) {
     if (!cvs || !msgs.length) return;
-    // console.log('-->addHistoryMsgs', cvs, msgs, this.message[cvs.chatType]);
     if (!this.message[cvs.chatType]?.[cvs.conversationId]) {
       this.message[cvs.chatType][cvs.conversationId] = msgs;
     } else {
@@ -714,7 +712,6 @@ class MessageStore {
         eventHandler.dispatchSuccess('deleteReaction');
       })
       .catch((err: ChatSDK.ErrorEvent) => {
-        console.error(err);
         eventHandler.dispatchError('deleteReaction', err);
       });
   }

@@ -421,7 +421,6 @@ class AddressStore {
             item.silent = false;
           }
         });
-        console.log('this.contacts', this.contacts);
         this.groups.forEach(item => {
           if (groupSetting[item.groupid] && groupSetting[item.groupid]?.type == 'AT') {
             item.silent = true;
@@ -470,7 +469,6 @@ class AddressStore {
           },
         })
         .then((res: any) => {
-          console.log('设置勿扰成功', res);
           rootStore.conversationStore.setSilentModeForConversationSync(cvs, true);
           this.setSilentModeForConversationSync(cvs, true);
           eventHandler.dispatchSuccess('setSilentModeForConversation');
@@ -485,7 +483,6 @@ class AddressStore {
           type: cvs.chatType as ChatSDK.CONVERSATIONTYPE,
         })
         .then((res: any) => {
-          console.log('清除勿扰成功', res);
           rootStore.conversationStore.setSilentModeForConversationSync(cvs, false);
 
           this.setSilentModeForConversationSync(cvs, false);
@@ -504,7 +501,6 @@ class AddressStore {
         groupId: groupId,
       })
       .then(res => {
-        console.log('getGroupInfo', res);
         const found = this.groups.filter(item => item.groupid === groupId);
         if (found.length === 0) {
           this.groups.push({
@@ -616,7 +612,6 @@ class AddressStore {
       this.requests.push(request);
     }
     this.requests = [...this.requests];
-    console.log('addContactRequest', this.requests, foundIndex);
   }
 
   acceptContactInvite(userId: string) {
@@ -650,16 +645,7 @@ class AddressStore {
         rootStore.client.user,
     );
     const groupName = groupnameArr.join('、');
-    console.log('创建群组参数', {
-      groupname: groupName,
-      members,
-      desc: '',
-      public: false,
-      approval: false,
-      allowinvites: true,
-      inviteNeedConfirm: false,
-      maxusers: 1000,
-    });
+
     rootStore.client
       .createGroup({
         data: {
@@ -674,7 +660,6 @@ class AddressStore {
         },
       })
       .then((res: ChatSDK.AsyncResult<ChatSDK.CreateGroupResult>) => {
-        console.log('创建群组成功', res);
         const groupMembers = members.map(item => {
           return {
             userId: item,
@@ -728,7 +713,6 @@ class AddressStore {
         users: userIds,
       })
       .then(res => {
-        console.log('inviteToGroup', res);
         eventHandler.dispatchSuccess('inviteToGroup');
       })
       .catch(error => {
@@ -743,7 +727,6 @@ class AddressStore {
         users: userIds,
       })
       .then(res => {
-        console.log('removeGroupMembers', res);
         eventHandler.dispatchSuccess('removeGroupMembers');
       })
       .catch(error => {
@@ -775,7 +758,6 @@ class AddressStore {
         newOwner: newOwner,
       })
       .then(res => {
-        console.log('changeGroupOwner', res);
         this.setGroupOwner(groupId, newOwner);
         eventHandler.dispatchSuccess('changeGroupOwner');
       })

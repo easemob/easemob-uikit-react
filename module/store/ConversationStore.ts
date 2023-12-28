@@ -337,7 +337,6 @@ class ConversationStore {
         conversationList: cvsList,
       })
       .then((res: any) => {
-        console.log('获取勿扰成功', res);
         const userSetting = res.data.user;
         const groupSetting = res.data.group;
         this.conversationList?.forEach(item => {

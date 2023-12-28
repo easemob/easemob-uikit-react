@@ -112,7 +112,6 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         targetLanguage || navigator.language,
       )
       ?.then(() => {
-        console.log('message', message);
         // @ts-ignore
         const translatedMsg = message?.translations?.[0]?.text;
         setTextToShow(translatedMsg);
