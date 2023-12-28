@@ -1,171 +1,386 @@
-# Get Started with Agora Chat UIKit for Web
+# Easemob Chat UIKit Web 使用指南
 
-To use the UIKit 1.2 beta version, use `chatuim2` instead of `agora-chat-uikit`
+## 简介
 
-```bash
-npm i chatuim2 -S
-```
+easemob-chat-uikit 是基于环信 Chat SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件， 容器组件允许用户使用 renderX 方法来进行自定义。agora-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
 
-## Overview
+## 技术原理
 
-`agora-chat-uikit` is a UI component library based on the Chat SDK. It provides pure UI components, module components containing chat business logic, and container components, which allows users to customize using renderX method. `agora-chat-uikit` provides a provider to manage data. The provider automatically listens for chat SDK events to update data and drive UI updates. Developers can use the library to quickly build custom IM applications based on actual business requirements.
+UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI 组件包含容器组件 container 复合组件 module, 以及纯 UI 组件 components, 这些不同级别的组件全部对外暴露，用户可以引用任意组件构建自己的应用。UIkit 使用 mobx 管理全局数据，用户可以引用 rootStore 来获得全部数据和 action 方法，可以用 action 方法来操作数据。 UIKit 内部集成了 chat SDK，通过 chat SDK 和服务器交互。<div align=center> <img src="./uikit.png" width = "400" height = "450" /></div>
 
-## Technical principles
+## 功能
 
-UIKIt consists of three parts: UI component, mobx store for managing data, chat SDK. UI components include container components, composite Components module, and pure UI components. These components at different levels are exposed to the outside world. Users can reference any of these components to build their own applications. UIkit uses mobx to manage global data, and users can reference the rootStore to get all the data and the action method, which can be used to modify the data. UIKit integrates chat SDK internally and interacts with the server through chat SDK.
+`easemob-chat-uikit` 库提供以下功能：
 
-<div align=center> <img src="./docs/uikit.png" width = "400" height = "450" /></div>
-
-## Function
-
-The `agora-chat-uikit` library provides the following functions:
-
-- Automatic layout to match the width and height of the container;
-- Send and receive messages, message display, message unread count, clear messages, message types include: (text, picture, file, expression, audio, video message);
-- Search for and delete conversation.
-- Customize the UI.
+- 自动布局，适配容器的宽高；
+- 实现收发消息、消息上屏、消息未读数、清空消息、消息类型包括：（文本、图片、文件、表情、音频、视频消息）；
+- 搜索，删除会话；
+- 定制化 UI。
 
 <table>
     <tr>
-        <td>module</td>
-        <td>function</td>
-        <td>description</td>
+        <td>模块</td>
+        <td>功能</td>
+        <td>说明</td>
     </tr>
    <tr>
-      <td rowspan="3" style=font-weight:bold>Conversation List</td>
+      <td rowspan="5" style=font-weight:bold>会话列表</td>
    </tr>
    <tr>
-      <td>Display conversation information</td>
-      <td style=font-size:10px>Display information such as avatars, nicknames, last message, unread message count etc. of the conversation</td>
+      <td>会话列表</td>
+      <td style=font-size:10px>会话列表显示头像、昵称、最新消息内容、未读消息提醒和时间</td>
    </tr>
    <tr>
-      <td>Delete conversation</td>
-      <td style=font-size:10px>Deletes the conversation from the conversation list</td>
+      <td>删除会话</td>
+      <td style=font-size:10px>将会话从会话列表中删除</td>
+   </tr>
+   <tr>
+      <td>免打扰（开发中）</td>
+      <td style=font-size:10px>开启消息免打扰或关闭消息免打扰</td>
+   </tr>
+   <tr>
+      <td>置顶（开发中）</td>
+      <td style=font-size:10px>将会话固定在列表顶部</td>
    </tr>
     <tr>
-      <td rowspan="6" style=font-weight:bold>Chat</td>
+      <td rowspan="6" style=font-weight:bold>聊天</td>
    </tr>
    <tr>
-      <td>Message sender</td>
-      <td style=font-size:10px>Support to send text, emoji, picture, file, voice</td>
+      <td>消息发送器</td>
+      <td style=font-size:10px>支持发送文本 表情 图片 文件 语音</td>
    </tr>
    <tr>
-      <td>Display message </td>
-      <td style=font-size:10px>Single or group chat message display, including profile avatar, nickname, message content, time, sent status, and read status. Message types include text, picture, video, file, and voice</td>
+      <td>消息展示</td>
+      <td style=font-size:10px>单、群聊消息展示，包括头像、昵称、消息内容、时间、发送状态、已读状态，消息包括：文本、表情、图片、视频、文件、语音</td>
    </tr>
    <tr>
-      <td>Operate on messages </td>
+      <td>撤回消息（开发中）</td>
+      <td style=font-size:10px>已发出的消息默认 2 分钟内可撤回</td>
+   </tr>
+   <tr>
+      <td>reaction（开发中）</td>
+      <td style=font-size:10px>对消息回复自定义表情</td>
+   </tr>
+   <tr>
+      <td>名片（开发中）</td>
+      <td style=font-size:10px>点击头像显示好友名片，可以发送好友的个人名片信息</td>
+   </tr>
+   <tr>
+   <td colspan="3">
+     更多功能开发中 ...
+	 </td>
+   </tr>
+
+</table>
+
+## 组件
+
+`easemob-chat-uikit` 目前提供的组件：
+
+- 容器组件：`Provider`， `Chat`，`ConversationList`；
+- module 组件：`BaseMessage`，`AudioMessage`，`FileMessage`， `VideoMessage`，`ImageMessage`，`TextMessage`，`Header`，`Empty`，`MessageList`， `ConversationItem`，`MessageInput`，`MessageStatus`；
+- 纯 UI 组件：`Avatar`，`Badge`，`Button`，`Checkbox`，`Icon`，`Modal`，`Tooltip`
+
+容器组件介绍
+
+<table>
+    <tr>
+        <td>组件</td>
+        <td>描述</td>
+        <td>参数</td>
+		<td>参数描述</td>
+    </tr> 
+   <tr>
+      <td rowspan="2" style=font-weight:bold>Provider</td>
+      <td rowspan="2"  style=font-size:10px>Provider 不渲染任何UI, 只为组件提供全局上下文，自动监听SDK事件，向下传递数据，驱动组件渲染</td>
       <td style=font-size:10px>
-      Including editing, deleting, replying, recalling, translating, selecting, reacting, threading, and other operations on messages
+      initConfig: {
+        appkey: string
+      }
       </td>
+	  <td style=font-size:10px>可以配置 appKey</td>
+	   <tr>
+	   <td style=font-size:10px>
+	   </pre>
+       local
+		<pre>
+      </td>
+	   <td style=font-size:10px>配置本地化文案，具体参见 i18next init方法的参数</td>
+	   </tr>
+   </tr>
+   <tr>
+      <td rowspan="8" style=font-weight:bold>ConversationList</td>
+      <td rowspan="8"  style=font-size:10px>会话列表组件</td>
+      <td style=font-size:10px>
+      className
+	  </td>
+	  <td style=font-size:10px>
+	  组件类名
+	  </td>
+	  <tr>
+		<td style=font-size:10px>prefix</td>
+		<td style=font-size:10px>css 类名前缀</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>headerProps</td>
+		<td style=font-size:10px>Header组件的props</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>itemProps</td>
+		<td style=font-size:10px>ConversationItem组件的props</td>
+	  </tr>
+	   <tr>
+		<td style=font-size:10px>renderHeader?: () => React.ReactNode</td>
+		<td style=font-size:10px>自定义渲染 header, 该参数接收一个函数，这个函数返回一个react 节点</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>renderSearch?: () => React.ReactNode</td>
+		<td style=font-size:10px>自定义渲染搜索组件, 该参数接收一个函数，这个函数返回一个react 节点</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>onItemClick?: (data: ConversationData[0]) => void</td>
+		<td style=font-size:10px>点击会话事件，返回当前会话的数据</td>
+	  </tr>
+	  <tr>
+		<td style=font-size:10px>onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean</td>
+		<td style=font-size:10px>搜索框change事件，如果函数返回false会阻止默认搜索行为，用户可自行按条件搜索</td>
+	  </tr>
+   </tr>
+   <tr>
+      <td rowspan="9" style=font-weight:bold>Chat</td>
+      <td rowspan="9" style=font-size:10px>聊天组件</td>
+      <td style=font-size:10px>
+	  className: string
+	  </td>
+	  <td style=font-size:10px>
+	  组件 css 类名
+	  </td>
+	  <tr>
+	    <td style=font-size:10px>prefix: string</td>
+		<td style=font-size:10px>css 类名前缀</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>headerProps: HeaderProps</td>
+		<td style=font-size:10px>Header组件的props</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>messageListProps: MsgListProps</td>
+		<td style=font-size:10px>MessageList组件的props</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>messageInputProps: MessageInputProps</td>
+		<td style=font-size:10px>messageInput组件的props</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>renderHeader: (cvs: CurrentCvs) => React.ReactNode</td>
+		<td style=font-size:10px>自定义渲染Header组件, 该参数接收一个函数，这个函数返回一个react 节点, CurrentCvs 为当前会话</td>
+	  </tr>
+	   <tr>
+	    <td style=font-size:10px>renderMessageList?: () => ReactNode; </td>
+		<td style=font-size:10px>自定义渲染消息列表组件</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>renderMessageInput?: () => ReactNode; </td>
+		<td style=font-size:10px>自定义渲染消息发送器组件</td>
+	  </tr>
+	  <tr>
+	    <td style=font-size:10px>renderEmpty?: () => ReactNode; </td>
+		<td style=font-size:10px>自定义渲染没有会话时的空页面</td>
+	  </tr>
    </tr>
 </table>
 
-## Prerequisites
+## store
 
-In order to follow the procedure in this page, you must have:
+UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
 
-- React 16.8.0 or later
-- React DOM 16.8.0 or later
-- A valid [Agora account](https://docs.agora.io/cn/AgoraPlatform/sign_in_and_sign_up).
-- A valid [Agora project](https://docs.agora.io/cn/AgoraPlatform/sign_in_and_sign_up) with an App Key.
+- initConfig：UIKit 初始化数据
+- client：Chat SDK 实例
+- conversationStore: 会话列表相关数据
+- messageStore： 消息相关数据
+- addressStore：通讯录相关数据
 
-## Compatible browsers
+<table>
+    <tr>
+        <td>store</td>
+        <td>属性/方法</td>
+        <td>说明</td>
+    </tr> 
+    <tr>
+      <td rowspan="10" >conversationStore</td>
+    </<tr>
+    <tr>
+        <td>currentCvs</td>
+        <td style=font-size:10px>当前的会话</td>
+    </tr> 
+    <tr>
+        <td>conversationList</td>
+        <td style=font-size:10px>全部会话</td>
+    </tr> 
+    <tr>
+        <td>searchList</td>
+        <td style=font-size:10px>搜索出来的会话</td>
+    </tr> 
+   <tr>
+        <td style=color:blue>setCurrentCvs</td>
+        <td style=font-size:10px>设置当前的会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>setConversation</td>
+        <td style=font-size:10px>设置全部的会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>deleteConversation</td>
+        <td style=font-size:10px>删除会话</td>
+    </tr> 
+   <tr>
+        <td style=color:blue>addConversation</td>
+        <td style=font-size:10px>添加一个会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>topConversation</td>
+        <td style=font-size:10px>置顶一个会话</td>
+    </tr> 
+    <tr>
+        <td style=color:blue>modifyConversation</td>
+        <td style=font-size:10px>修改一个会话</td>
+    </tr>
+     <tr>
+      <td rowspan="10" >messageStore</td>
+    </tr>
+   <tr>
+        <td>message</td>
+        <td style=font-size:10px>全部会话的消息，里面包含singleChat, groupChat, byId</td style=font-size:10px>
+    </tr>
+   <tr>
+        <td style=color:blue>currentCvsMsgs</td>
+        <td style=font-size:10px>设置当前会话的消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>sendMessage</td>
+        <td style=font-size:10px>发送一条消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>receiveMessage</td>
+        <td style=font-size:10px>接收一条消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>modifyMessage</td>
+        <td style=font-size:10px>编辑一条消息</td>
+    </tr>
+    <tr>
+        <td style=color:blue>sendChannelAck</td>
+        <td style=font-size:10px>回复一条channel ack, 清空会话中的未读数</td>
+    </tr>
+   <tr>
+        <td style=color:blue>updateMessageStatus</td>
+        <td style=font-size:10px>更新消息状态</td>
+    </tr>
+     <tr>
+        <td style=color:blue>clearMessage</td>
+        <td style=font-size:10px>清空一个会话的消息</td>
+    </tr>
+    
+</table>
 
-| Browser | Supported Version |
-| ------- | ----------------- |
-| IE      | 11 or later       |
-| Edge    | 43 or later       |
-| Firefox | 10 or later       |
-| Chrome  | 54 or later       |
-| Safari  | 11 or later       |
+## 前提条件
 
-## Project setup
+开启 Easemob Chat 服务前，请确保已经具备以下要素：
 
-### 1. Create a Web Chat UIKit project
+- React 16.8.0 或以上版本；
+- React DOM 16.8.0 或以上版本；
+- Easemob Chat 项目和 App Key。
+
+## 支持的浏览器
+
+| 浏览器    | 支持的版本 |
+| --------- | ---------- |
+| IE 浏览器 | 11 或以上  |
+| Edge      | 43 或以上  |
+| Firefox   | 10 或以上  |
+| Chrome    | 54 或以上  |
+| Safari    | 11 或以上  |
+
+## UIKit 中用到的服务
+
+- 会话列表
+- 漫游消息
+- 单向删除漫游消息
+- 用户属性
+
+## 使用步骤
+
+### 1.创建 chat-uikit 项目
 
 ```bash
-# Install a CLI tool.
+# 安装 CLI 工具。
 npm install create-react-app
-# Create an my-app project.
+# 构建一个 my-app 的项目。
 npx create-react-app my-app
 cd my-app
 ```
 
 ```
-The project directory.
-
+项目目录：
 ├── package.json
-├── public # The static directory of Webpack.
-│ ├── favicon.ico
-│ ├── index.html # The default single-page app.
-│ └── manifest.json
+├── public                  # Webpack 的静态目录。
+│   ├── favicon.ico
+│   ├── index.html          # 默认的单页面应用。
+│   └── manifest.json
 ├── src
-│ ├── App.css # The CSS of the app's root component.
-│ ├── App.js # The app component code.
-│ ├── App.test.js
-│ ├── index.css # The style of the startup file.
-│ ├── index.js # The startup file.
-│ ├── logo.svg
-│ └── serviceWorker.js
+│   ├── App.css             # App 根组件的 CSS。
+│   ├── App.js              # App 组件代码。
+│   ├── App.test.js
+│   ├── index.css           # 启动文件样式。
+│   ├── index.js            # 启动文件。
+│   ├── logo.svg
+│   └── serviceWorker.js
 └── yarn.lock
 ```
 
-### 2. Integrate the Web Chat UIKit
+### 2.集成 easemob-chat-uikit
 
-#### Install the Web Chat UIKit
+#### 安装 easemob-chat-uikit
 
-- To install the Web Chat UIKit with npm, run the following command:
-
-```bash
-npm install chatuim2 --save
-```
-
-- To Install Agora chat UIKit for Web with Yarn, run the following command:
+- 通过 npm 安装，运行以下命令：
 
 ```bash
-yarn add chatuim2
+npm install easemob-chat-uikit --save
 ```
 
-#### Build the application using the agora-chat-uikit component
+- 通过 yarn 安装，运行以下命令：
 
-Import agora-chat-uikit into your code.
+```bash
+yarn add easemob-chat-uikit
+```
+
+#### 使用 easemob-chat-uikit 组件构建应用
+
+将 easemob-chat-uikit 库导入你的代码中：
 
 ```javascript
 // App.js
-import React, { Component, useEffect } from "react";
-import {
-  Provider,
-  Chat,
-  ConversationList,
-  useClient,
-  rootStore,
-} from "chatuim2";
-import "chatuim2/style.css";
+import React, { Component, useEffect } from 'react';
+import { Provider, Chat, ConversationList, useClient, rootStore } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
 
-const appKey = "you app key"; // your appKey
-const user = ""; // your user ID
-const agoraToken = ""; // agora chat token
-
-const conversation = {
-  chatType: "singleChat", // 'singleChat' || 'groupChat'
-  conversationId: "agora", // target user id or group id
-  name: "Agora", // target user nickname or group name
-  lastMessage: {},
-};
 const ChatApp = () => {
   const client = useClient();
   useEffect(() => {
     client &&
       client
         .open({
-          user,
-          agoraToken,
+          user: '',
+          token: '',
         })
-        .then((res) => {
-          console.log("get token success", res);
+        .then(res => {
+          console.log('get token success', res);
           // create a conversation
-          rootStore.conversationStore.addConversation(conversation);
+          rootStore.conversationStore.addConversation({
+            chatType: '', // 'singleChat' || 'groupChat'
+            conversationId: '', // target user id or group id
+            name: '', // target user nickname or group name
+          });
         });
   }, [client]);
 
@@ -186,7 +401,7 @@ class App extends Component {
     return (
       <Provider
         initConfig={{
-          appKey,
+          appKey: 'you app key',
         }}
       >
         <ChatApp />
@@ -198,277 +413,45 @@ class App extends Component {
 export default App;
 ```
 
-#### Run the project and send your first message
+#### 运行项目并发送你的第一条消息
 
 ```bash
 npm run start
 ```
 
-Now, you can see your app in the browser.
+在浏览器可看到你的应用。
 
-<div align=center style="background: #ddd; padding-top: 8px"> <img src="./docs/image/chat.png" width = "480" height = "350" /></div>
+<div align=center style="background: #ddd; padding-top: 8px"> <img src="./chat.png" width = "480" height = "350" /></div>
 
-In the default App Key situation, for the convenience of quick experience, we support several types of message distribution by default. After clicking to select a member, enter your first message and send it.
+在默认 App Key 情况下，为方便快速体验，我们默认支持几种类型的消息下发。点击选中一个成员后，输入你的第一条消息并发送。
 
-**Note**
+**注意** 使用自定义 App Key 时，由于没有联系人，需先添加好友
 
-If a custom App Key is used, no contact is available by default and you need to first [add contacts](https://docs.agora.io/en/agora-chat/client-api/contacts) or [join a group](https://docs.agora.io/en/agora-chat/client-api/chat-group/manage-chat-groups).
+## 如何自定义
 
-Agora provides an open source AgoraChat UIKit web project on GitHub, where you can clone and run the project or reference the logic to create a project that integrates agora-chat-uikit.
+### 修改组件样式
 
-- [How to get agora chat token](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/blob/UIKit-1.2/docs/en/agora_chat_uikit_web.md)
-- [URL for Agora Chat UIKit Web source code ](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/tree/UIKit-1.2)
-- [URL for Agora chat application using agora-chat-uikit](https://github.com/AgoraIO-Usecase/AgoraChat-web/tree/dev-1.2)
-
-## Component
-
-`agora-chat-uikit` Currently provided components:
-
-- Container components: `Provider`， `Chat`，`ConversationList`;
-- Module components: `BaseMessage`，`AudioMessage`，`FileMessage`， `VideoMessage`，`ImageMessage`，`TextMessage`，`Header`，`Empty`，`MessageList`， `ConversationItem`，`MessageEditor`，`MessageStatus`;
-- Pure UI components: `Avatar`，`Badge`，`Button`，`Checkbox`，`Icon`，`Modal`，`Tooltip`;
-
-Container components introduction:
-
-<table>
-    <tr>
-        <td>Component</td>
-        <td>Description</td>
-        <td>Props</td>
-		<td>Props Description</td>
-    </tr> 
-   <tr>
-      <td rowspan="4" style=font-weight:bold>Provider</td>
-      <td rowspan="4"  style=font-size:10px>The Provider does not render any UI but only provides global context for components. It automatically listens to SDK events, transmits data downward, and drives component rendering</td>
-      <td style=font-size:10px>
-      initConfig: {
-        appkey: string
-      }
-      </td>
-	  <td style=font-size:10px>You can configure appKey</td>
-	   <tr>
-	   <td style=font-size:10px>
-	   </pre>
-       local
-		<pre>
-      </td>
-	   <td style=font-size:10px>To configure the localized copy, see the parameters of the i18next init method</td>
-	   </tr>
-     <tr>
-     <td style=font-size:10px>features</td>
-     <td style=font-size:10px>Configure the features you need globally. If the required features are also configured in the component, the configuration in the component shall prevail</td>
-     </tr>
-     <tr>
-     <td style=font-size:10px>onError</td>
-     <td style=font-size:10px>Callback when an error occurs when calling sdk</td>
-     </tr>
-   </tr>
-   <tr>
-      <td rowspan="8" style=font-weight:bold>ConversationList</td>
-      <td rowspan="8"  style=font-size:10px>Conversation list component</td>
-      <td style=font-size:10px>
-      className
-	  </td>
-	  <td style=font-size:10px>
-	  Component class name
-	  </td>
-	  <tr>
-		<td style=font-size:10px>prefix</td>
-		<td style=font-size:10px>css class name prefix</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>headerProps</td>
-		<td style=font-size:10px>Props for the Header component</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>itemProps</td>
-		<td style=font-size:10px>Props for the ConversationItem component</td>
-	  </tr>
-	   <tr>
-		<td style=font-size:10px>renderHeader?: () => React.ReactNode</td>
-		<td style=font-size:10px>Custom rendering header, which receives a function that returns a react node</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>renderSearch?: () => React.ReactNode</td>
-		<td style=font-size:10px>Custom rendering search component, which receives a function that returns a react node</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>onItemClick?: (data: ConversationData[0]) => void</td>
-		<td style=font-size:10px>Click on the conversation event to return the data of the current session</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean</td>
-		<td style=font-size:10px>Search input change event. If the function returns false, it will prevent the default search behavior. Users can search according to their own conditions</td>
-	  </tr>
-   </tr>
-   <tr>
-      <td rowspan="10" style=font-weight:bold>Chat</td>
-      <td rowspan="10" style=font-size:10px>Chat component</td>
-      <td style=font-size:10px>
-	  className: string
-	  </td>
-	  <td style=font-size:10px>
-	  Component CSS class name
-	  </td>
-	  <tr>
-	    <td style=font-size:10px>prefix: string</td>
-		<td style=font-size:10px>CSS class name prefix</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>headerProps: HeaderProps</td>
-		<td style=font-size:10px>props for Header</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>messageListProps: MsgListProps</td>
-		<td style=font-size:10px>Props for the MessageList component</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>messageEditorProps: MessageEditorProps</td>
-		<td style=font-size:10px>Props for the MessageEditor component</td>
-	  </tr>
-    <tr>
-	    <td style=font-size:10px>rtcConfig: ChatProps['rtcConfig']</td>
-		<td style=font-size:10px>Parameters required when using audio and video calls</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>renderHeader: (cvs: CurrentCvs) => React.ReactNode</td>
-		<td style=font-size:10px>Custom render Header component that takes a function that returns a react node， CurrentCvs is the current conversation</td>
-	  </tr>
-	   <tr>
-	    <td style=font-size:10px>renderMessageList?: () => ReactNode; </td>
-		<td style=font-size:10px>Custom render message list component</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>renderMessageEditor?: () => ReactNode; </td>
-		<td style=font-size:10px>Custom render message sender component</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>renderEmpty?: () => ReactNode; </td>
-		<td style=font-size:10px>Custom render empty pages without a conversation</td>
-	  </tr>
-   </tr>
-</table>
-
-## store
-
-UIKit provides a rootStore that contains all the data. rootStore contains:
-
-- initConfig: UIKit initializes data
-- client: Chat SDK instance
-- conversationStore: indicates the data related to the conversation list
-- messageStore: indicates message-related data
-- addressStore: indicates the address book data
-
-<table>
-    <tr>
-        <td>Store</td>
-        <td>Attribute/Method</td>
-        <td>Description</td>
-    </tr> 
-    <tr>
-      <td rowspan="10" >conversationStore</td>
-    </<tr>
-    <tr>
-        <td>currentCvs</td>
-        <td style=font-size:10px>Current conversation</td>
-    </tr> 
-    <tr>
-        <td>conversationList</td>
-        <td style=font-size:10px>All conversations</td>
-    </tr> 
-    <tr>
-        <td>searchList</td>
-        <td style=font-size:10px>The searched conversations</td>
-    </tr> 
-   <tr>
-        <td style=color:blue>setCurrentCvs</td>
-        <td style=font-size:10px>Set the current conversation</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>setConversation</td>
-        <td style=font-size:10px>Set all conversations</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>deleteConversation</td>
-        <td style=font-size:10px>Delete a conversation</td>
-    </tr> 
-   <tr>
-        <td style=color:blue>addConversation</td>
-        <td style=font-size:10px>Add a conversation</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>topConversation</td>
-        <td style=font-size:10px>Top a conversation</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>modifyConversation</td>
-        <td style=font-size:10px>Modifying a conversation</td>
-    </tr>
-     <tr>
-      <td rowspan="10" >messageStore</td>
-    </tr>
-   <tr>
-        <td>message</td>
-        <td style=font-size:10px>All conversation messages, including singleChat, groupChat, byId</td style=font-size:10px>
-    </tr>
-   <tr>
-        <td style=color:blue>currentCvsMsgs</td>
-        <td style=font-size:10px>Set messages for the current conversation</td>
-    </tr>
-    <tr>
-        <td style=color:blue>sendMessage</td>
-        <td style=font-size:10px>Send a message</td>
-    </tr>
-    <tr>
-        <td style=color:blue>receiveMessage</td>
-        <td style=font-size:10px>Receive a message</td>
-    </tr>
-    <tr>
-        <td style=color:blue>modifyMessage</td>
-        <td style=font-size:10px>Edit a message</td>
-    </tr>
-    <tr>
-        <td style=color:blue>sendChannelAck</td>
-        <td style=font-size:10px>Reply with a channel ack to clear unread data from the conversation</td>
-    </tr>
-   <tr>
-        <td style=color:blue>updateMessageStatus</td>
-        <td style=font-size:10px>Update message status</td>
-    </tr>
-     <tr>
-        <td style=color:blue>clearMessage</td>
-        <td style=font-size:10px>Clear a conversation's messages</td>
-    </tr>
-    
-</table>
-
-## How to customize
-
-Example how to customize the [Chat](https://github.com/AgoraIO-Usecase/AgoraChat-UIKit-web/blob/UIKit-1.2/docs/en/chat.md) component
-
-### Modify Component Style
-
-You can modify the style by passing className, style, and prefix through the component props
+可以通过组件 props 传递 className, style, prefix 修改样式
 
 ```javascript
-import { Chat, Button } from "chatuim2";
+import { Chat, Button } from 'easemob-chat-uikit';
 
 const ChatApp = () => {
   return (
     <div>
       <Chat className="customClass" prefix="custom" />
-      <Button style={{ width: "100px" }}>Button</Button>
+      <Button style={{ width: '100px' }}>Button</Button>
     </div>
   );
 };
 ```
 
-### Using custom components
+### 使用自定义组件
 
-Custom components can be rendered through the renderX method of container components
+可以通过容器组件的 renderX 方法来渲染自定义组件
 
 ```javascript
-import {Chat, Header} from 'chatuim2'
+import {Chat, Header} from 'easemob-chat-uikit'
 
 const ChatApp = () => {
   const CustomHeader = <Header back content="Custom Header">
@@ -481,9 +464,9 @@ const ChatApp = () => {
 
 ```
 
-### Modify Theme
+### 修改主题
 
-The UIKit style is developed using the scss framework and defines a series of global style variables, including but not limited to global styles (main color, background color, rounded corners, borders, font size).
+UIKit 样式使用 scss 框架开发，定义了一系列全局样式变量，包括但不限于全局样式（主色、背景色、圆角、边框、字体大小）。
 
 ```scss
 // need to use hsla
@@ -522,11 +505,9 @@ $font-size-sm: 12px;
 $text-color: fade($black, 85%);
 ```
 
-All variables can be viewed here ''
+使用 webpack 进行变量覆盖：
 
-1. Use webpack for variable coverage:
-
-```javascript
+```json
 module.exports = {
   module: {
     rules: [
@@ -538,7 +519,7 @@ module.exports = {
           {
             loader: "sass-loader",
             options: {
-              additionalData: `@import "@/styles/index.scss";`,
+              additionalData: `@import "@/styles/index.scss";`
             },
           },
         ],
@@ -548,39 +529,20 @@ module.exports = {
 };
 ```
 
-2. Customize in create-react-app
+如果这些不能满足定制化要求，还可以检查元素来覆盖 UIKit 的样式。
 
-creating a scss file within variables to override style.scss. Need to ensure the order of importing files
+## 社区贡献者
 
-```scss
-@import "agora-chat-uikit/style.scss"; // agora-chat-uikit theme
-@import "your-theme.scss"; // your theme
-@import "agora-chat-uikit/components.scss"; // components style
-```
+如果你认为可将一些功能添加到 UIKit 中让更多用户受益，请随时 Fork 存储库并添加拉取请求。如果你在使用上有任何问题，也请在存储库上提交。感谢你的贡献！
 
-If these cannot meet the customization requirements, you can also find the elements to cover the style of UIKit.
+## 参考文档
 
-## Community Contribution
+[其他相关文档](https://github.com/easemob/Easemob-UIKit-web/tree/main/docs/zh)
 
-If you want to add extra functions to agora-chat-uikit to share with others, you can fork our repository on GitHub and create a pull request. For any questions, please also submit it on the repository. Thank you for your contribution!
+## 相关资源
 
-## Feedback
+[集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html)
 
-If you have any problems or suggestions regarding the sample projects, feel free to file an issue.
+## 代码许可
 
-## Reference
-
-- [Agora Chat SDK Product Overview](https://docs.agora.io/en/agora-chat/overview/product-overview)
-- [Agora Chat SDK API Reference](https://api-ref.agora.io/en/chat-sdk/web/1.x/index.html)
-
-## Related resources
-
-- Check our [FAQ](https://docs.agora.io/en/faq) to see if your issue has been recorded.
-- Dive into [Agora SDK Samples](https://github.com/AgoraIO) to see more tutorials
-- Take a look at [Agora Use Case](https://github.com/AgoraIO-usecase) for more complicated real use case
-- Repositories managed by developer communities can be found at [Agora Community](https://github.com/AgoraIO-Community)
-- If you encounter problems during integration, feel free to ask questions in [Stack Overflow](https://stackoverflow.com/questions/tagged/agora.io)
-
-## License
-
-The sample projects are under the MIT license.
+示例项目遵守 MIT 许可证。
