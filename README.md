@@ -6,7 +6,7 @@ easemob-chat-uikit 是基于环信 Chat SDK 的一款 UI 组件库，提供通�
 
 ## 技术原理
 
-UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI 组件包含容器组件 container 复合组件 module, 以及纯 UI 组件 components, 这些不同级别的组件全部对外暴露，用户可以引用任意组件构建自己的应用。UIkit 使用 mobx 管理全局数据，用户可以引用 rootStore 来获得全部数据和 action 方法，可以用 action 方法来操作数据。 UIKit 内部集成了 chat SDK，通过 chat SDK 和服务器交互。<div align=center> <img src="./uikit.png" width = "400" height = "450" /></div>
+UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI 组件包含容器组件 container 复合组件 module, 以及纯 UI 组件 components, 这些不同级别的组件全部对外暴露，用户可以引用任意组件构建自己的应用。UIkit 使用 mobx 管理全局数据，用户可以引用 rootStore 来获得全部数据和 action 方法，可以用 action 方法来操作数据。 UIKit 内部集成了 chat SDK，通过 chat SDK 和服务器交互。<div align=center> <img src="https://github.com/easemob/Easemob-UIKit-web/blob/main/docs/image/uikit.png" width = "400" height = "450" /></div>
 
 ## 功能
 
@@ -54,15 +54,15 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
       <td style=font-size:10px>单、群聊消息展示，包括头像、昵称、消息内容、时间、发送状态、已读状态，消息包括：文本、表情、图片、视频、文件、语音</td>
    </tr>
    <tr>
-      <td>撤回消息（开发中）</td>
+      <td>撤回消息</td>
       <td style=font-size:10px>已发出的消息默认 2 分钟内可撤回</td>
    </tr>
    <tr>
-      <td>reaction（开发中）</td>
+      <td>reaction</td>
       <td style=font-size:10px>对消息回复自定义表情</td>
    </tr>
    <tr>
-      <td>名片（开发中）</td>
+      <td>名片</td>
       <td style=font-size:10px>点击头像显示好友名片，可以发送好友的个人名片信息</td>
    </tr>
    <tr>
@@ -421,7 +421,7 @@ npm run start
 
 在浏览器可看到你的应用。
 
-<div align=center style="background: #ddd; padding-top: 8px"> <img src="./chat.png" width = "480" height = "350" /></div>
+<div align=center style="background: #ddd; padding-top: 8px"> <img src="https://github.com/easemob/Easemob-UIKit-web/blob/main/docs/image/chat.png" width = "480" height = "350" /></div>
 
 在默认 App Key 情况下，为方便快速体验，我们默认支持几种类型的消息下发。点击选中一个成员后，输入你的第一条消息并发送。
 
@@ -541,7 +541,7 @@ module.exports = {
 
 ## 相关资源
 
-[集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html)
+[集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html);
 
 ## 代码许可
 
