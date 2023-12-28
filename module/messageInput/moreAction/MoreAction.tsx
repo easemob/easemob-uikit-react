@@ -150,6 +150,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
+              <Icon type="IMG" width={18} height={18}></Icon>
               {t('image')}
             </li>
           );
@@ -163,6 +164,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
+              <Icon type="FOLDER" width={18} height={18}></Icon>
               {t('file')}
             </li>
           );
@@ -176,6 +178,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
+              <Icon type="PERSON_SINGLE_FILL" width={18} height={18}></Icon>
               {t('userCard')}
             </li>
           );
@@ -189,6 +192,7 @@ let MoreAction = (props: MoreActionProps) => {
               }}
               key={item.content || index}
             >
+              <Icon type="TRIANGLE_IN_RECTANGLE" width={18} height={18}></Icon>
               {t('videoBtn')}
             </li>
           );

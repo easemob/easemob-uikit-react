@@ -79,6 +79,8 @@ import { ReactComponent as PERSON_MINUS } from '../svgs/icons/person_minus.svg';
 import { ReactComponent as TriangleInRectangleFill } from '../svgs/icons/triangle_in_rectangle_fill.svg';
 import { ReactComponent as SpeakerNVerticalBar } from '../svgs/icons/spkeaker_n_vertical_bar.svg';
 import { ReactComponent as RoundArrowThick } from '../svgs/icons/round_arrow_thick.svg';
+import { ReactComponent as TriangleInRectangle } from '../svgs/icons/triangle_in_rectangle.svg';
+import { ReactComponent as Folder } from '../svgs/icons/folder.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -313,6 +315,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ROUND_ARROW_THICK':
       return <RoundArrowThick></RoundArrowThick>;
+      break;
+    case 'TRIANGLE_IN_RECTANGLE':
+      return <TriangleInRectangle></TriangleInRectangle>;
+      break;
+    case 'FOLDER':
+      return <Folder></Folder>;
       break;
     default:
       return '';

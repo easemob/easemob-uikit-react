@@ -408,13 +408,13 @@ const Chat: FC<ChatProps> = props => {
         content: 'IMAGE',
       },
       {
+        content: 'VIDEO',
+      },
+      {
         content: 'FILE',
       },
       {
         content: 'CARD',
-      },
-      {
-        content: 'VIDEO',
       },
     ],
   };
