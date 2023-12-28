@@ -18,6 +18,7 @@ import Modal from '../../component/modal';
 import { useTranslation } from 'react-i18next';
 import { eventHandler } from '../../eventHandler';
 import { ChatSDK } from '../SDK';
+import { i } from 'vitest/dist/index-2f5b6168';
 export interface ChatroomMemberProps {
   prefix?: string;
   className?: string;
@@ -208,6 +209,18 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
                   return memberListProps?.renderItem?.(item);
                 }
               : item => {
+                  let actionConfig = allMoreAction;
+                  if (muteDataToRender?.includes(item.userId)) {
+                    actionConfig = {
+                      visible: owner == rootStore.client.user,
+                      actions: [
+                        {
+                          content: 'remove',
+                          onClick: removeMember,
+                        },
+                      ],
+                    };
+                  }
                   return (
                     <UserItem
                       key={item.userId}
@@ -218,7 +231,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
                         description: owner == item.userId ? (t('owner') as string) : '',
                       }}
                       moreAction={
-                        owner == item.userId ? { visible: false, actions: [] } : allMoreAction
+                        owner == item.userId ? { visible: false, actions: [] } : actionConfig
                       }
                       {...memberListProps?.UserItemProps}
                     />

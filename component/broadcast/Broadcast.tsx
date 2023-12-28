@@ -3,6 +3,7 @@ import Marquee from 'react-fast-marquee';
 import { ConfigContext } from '../config/index';
 import classNames from 'classnames';
 import './style/style.scss';
+import Icon from '../icon';
 export interface BroadcastProps {
   prefix?: string;
   className?: string;
@@ -41,10 +42,14 @@ const Broadcast = (props: BroadcastProps) => {
   const prefixCls = getPrefixCls('broadcast', prefix);
 
   const classString = classNames(prefixCls, className);
-
+  const preIcon = prefixIcon ? (
+    prefixIcon
+  ) : (
+    <Icon type="SPEAKER_N_VERTICAL_BAR" color="#F9FAFA" width={20} height={20} />
+  );
   return (
     <div className={classString} style={{ ...style }}>
-      {prefixIcon}
+      {preIcon}
       <Marquee
         loop={loop}
         delay={delay}
@@ -53,12 +58,10 @@ const Broadcast = (props: BroadcastProps) => {
         play={play}
         pauseOnHover={pauseOnHover}
         onFinish={() => {
-          console.log('完成');
           onFinish?.();
         }}
         autoFill={false}
         onCycleComplete={() => {
-          console.log('完成');
           onCycleComplete?.();
         }}
       >

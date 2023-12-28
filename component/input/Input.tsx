@@ -42,7 +42,7 @@ const Input: FC<InputProps> = props => {
     prefix,
     onClear,
     placeholder,
-    shape = 'ground',
+    shape,
     close,
     suffixIcon,
     style = {},
@@ -55,13 +55,14 @@ const Input: FC<InputProps> = props => {
   const [isClear, setIsClear] = useState(false);
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
+  const componentsShape = shape || theme?.componentsShape || 'ground';
   const classes = classNames(
     prefixCls,
     {
       [`${prefixCls}-${size}`]: size,
       [`${prefixCls}-required`]: required,
       [`${prefixCls}-disabled`]: props.disabled,
-      [`${prefixCls}-${shape}`]: shape,
+      [`${prefixCls}-${componentsShape}`]: componentsShape,
       [`${prefixCls}-error`]: required && !inputValue,
       [`${prefixCls}-suffixIcon`]: suffixIcon,
       [`${prefixCls}-${themeMode}`]: !!themeMode,

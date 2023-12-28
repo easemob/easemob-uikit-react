@@ -30,6 +30,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
+  const componentsShape = theme?.componentsShape || 'ground';
   const { t } = useTranslation();
   const { messageStore, client } = rootStore;
   const {
@@ -195,7 +196,12 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const liveNode = (
     <div className={`${prefixCls}-content`} style={{ ...liveContentStyle }}>
       <div className={`${prefixCls}-content-left`}>
-        <div className={`${prefixCls}-iconBox`} title={t(`cancel`) as string}>
+        <div
+          className={classNames(`${prefixCls}-iconBox`, {
+            [`${prefixCls}-iconBox-ground`]: componentsShape == 'ground',
+          })}
+          title={t(`cancel`) as string}
+        >
           <Icon
             type="DELETE"
             width={24}
@@ -210,7 +216,13 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       </div>
       <div className={`${prefixCls}-content-right`}>
         <span>{t('recording')}...</span>
-        <div onClick={sendAudio} className={`${prefixCls}-send`} title={t(`send`) as string}>
+        <div
+          onClick={sendAudio}
+          className={classNames(`${prefixCls}-send`, {
+            [`${prefixCls}-send-ground`]: componentsShape == 'ground',
+          })}
+          title={t(`send`) as string}
+        >
           <Icon type="AIR_PLANE" width={24} height={24} color="#fff"></Icon>
         </div>
       </div>

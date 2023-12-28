@@ -67,7 +67,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const { rootStore, theme } = context;
 
   const themeMode = theme?.mode || 'light';
-
+  const componentsShape = theme?.componentsShape || 'ground';
   const { client, messageStore, conversationStore, addressStore } = rootStore;
   let { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);
@@ -268,7 +268,9 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       <div
         placeholder={placeholder || (t('say something') as string)}
         ref={divRef}
-        className={`${prefixCls}-input`}
+        className={classNames(`${prefixCls}-input`, {
+          [`${prefixCls}-input-square`]: componentsShape == 'square',
+        })}
         contentEditable="true"
         onInput={handleInputChange}
         onKeyUp={handleKeyUp}

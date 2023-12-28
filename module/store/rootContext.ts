@@ -81,6 +81,7 @@ export interface ContextProps {
     mode?: 'dark' | 'light';
     avatarShape?: 'circle' | 'square';
     bubbleShape?: 'ground' | 'square';
+    componentsShape?: 'ground' | 'square';
   };
 }
 

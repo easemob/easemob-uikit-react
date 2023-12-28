@@ -9,6 +9,8 @@ import { Gift } from './Gift';
 import { RootContext } from '../../store/rootContext';
 import { CurrentConversation } from '../../store/ConversationStore';
 import giftConfig from './giftConfig';
+import { ConfigContext } from '../../../component/config/index';
+import classNames from 'classnames';
 export interface GiftKeyboardProps {
   prefix?: string;
   className?: string;
@@ -35,6 +37,8 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     onSendMessage,
     onBeforeSendMessage,
     giftConfig: customGiftConfig,
+    prefix,
+    className,
   } = props;
   const { t } = useTranslation();
   const context = useContext(RootContext);
@@ -42,14 +46,25 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   const { messageStore, conversationStore } = rootStore;
   const currentSvc = conversationStore.currentCvs;
   let currentConversation = conversation || currentSvc;
+
+  const { getPrefixCls } = React.useContext(ConfigContext);
+  const prefixCls = getPrefixCls('giftKeyboard', prefix);
+  const classString = classNames(
+    prefixCls,
+    // {
+    //   [`${prefixCls}-${themeMode}`]: !!themeMode,
+    // },
+    className,
+  );
+
   const iconNode = icon ? (
     icon
   ) : (
-    <span className="icon-container" title={t('gift') as string}>
+    <span className={classString} title={t('gift') as string}>
       <Icon
         type="GIFT"
-        width={20}
-        height={20}
+        width={24}
+        height={24}
         // onClick={handleClickIcon}
         // onClick={() => setOpen(true)}
       ></Icon>

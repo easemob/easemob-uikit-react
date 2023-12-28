@@ -293,32 +293,40 @@ const Chatroom = (props: ChatroomProps) => {
             ></Header>
           )}
           <p></p>
-          {typeof renderBroadcast == 'function'
-            ? renderBroadcast()
-            : broadcast.length > 0 && (
-                <Broadcast
-                  loop={0}
-                  delay={1}
-                  play={true}
-                  onCycleComplete={handleBroadcastFinish}
-                  {...broadcastProps}
-                >
-                  <div>{(broadcast[0] as TextMessageType).msg || ''}</div>
-                </Broadcast>
-              )}
 
-          {renderMessageList ? (
-            renderMessageList()
-          ) : (
-            <MessageList
-              renderMessage={renderChatroomMessage}
-              conversation={{
-                chatType: 'chatRoom',
-                conversationId: chatroomId,
-              }}
-              {...messageListProps}
-            ></MessageList>
-          )}
+          <div style={{ position: 'relative', flex: '1' }}>
+            {typeof renderBroadcast == 'function'
+              ? renderBroadcast()
+              : broadcast.length > 0 && (
+                  <Broadcast
+                    loop={0}
+                    delay={1}
+                    play={true}
+                    onCycleComplete={handleBroadcastFinish}
+                    style={{
+                      position: 'absolute',
+                      width: 'calc(100% - 24px)',
+                      zIndex: 9,
+                      margin: '12px',
+                    }}
+                    {...broadcastProps}
+                  >
+                    <div>{(broadcast[0] as TextMessageType)?.msg || ''}</div>
+                  </Broadcast>
+                )}
+            {renderMessageList ? (
+              renderMessageList()
+            ) : (
+              <MessageList
+                renderMessage={renderChatroomMessage}
+                conversation={{
+                  chatType: 'chatRoom',
+                  conversationId: chatroomId,
+                }}
+                {...messageListProps}
+              ></MessageList>
+            )}
+          </div>
 
           {renderMessageInput ? (
             renderMessageInput()

@@ -60,6 +60,7 @@ const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
   const { rootStore, theme, features } = context;
   const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
+  const componentsShape = theme?.componentsShape || 'ground';
   const { t } = useTranslation();
   const classString = classNames(
     prefixCls,
@@ -236,7 +237,7 @@ const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
         style={{ ...style, display: memberVisible.open ? 'none' : 'flex' }}
       >
         <div className={`${prefixCls}-header`}>
-          <Avatar src={avatarUrl} size={100}>
+          <Avatar src={avatarUrl} size={100} shape={componentsShape}>
             {infoData?.name}
           </Avatar>
           <div>

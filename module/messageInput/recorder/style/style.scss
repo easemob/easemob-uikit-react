@@ -25,6 +25,9 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
                 justify-content: center;
                 background: $gray-95;
                 border-radius: 4px;
+                &-ground{
+                    border-radius: 18px;
+                }
             }
 
             .#{$recorder-prefix-cls}-time{
@@ -64,7 +67,7 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
                 color: $gray-6;
                 margin-right: $margin-md;
             }
-            &>div{
+            .#{$recorder-prefix-cls}-send{
                 width: 36px;
                 height: 36px;
                 border-radius: 4px;
@@ -72,6 +75,9 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
                 justify-content: center;
                 align-items: center;
                 display: flex;
+                &-ground{
+                    border-radius: 18px;
+                }
             }
         }
     }
@@ -84,6 +90,9 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        &-ground{
+            border-radius: 18px;
+        }
     }
 }
 

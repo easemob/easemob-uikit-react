@@ -17,8 +17,7 @@ $header-prefix-cls: #{$cui-prefix}-header;
         &-box{
             display: flex;
             flex-direction: column;
-            margin-left: 12px;
-            margin-left: $margin-sm;
+            // margin-left: 12px;
         }
         &-text{
             white-space: nowrap;

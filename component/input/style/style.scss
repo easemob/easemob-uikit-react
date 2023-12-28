@@ -24,6 +24,9 @@ $input-prefix-cls: #{$cui-prefix}-input;
         &::placeholder{
             color: #919BA1;
         }
+        &-square{
+            border-radius: 4px;
+        }
     }
     &-disabled{
         &>input{

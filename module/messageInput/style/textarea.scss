@@ -1,48 +1,48 @@
-$textarea-prefix-cls: #{$cui-prefix}-textarea;
+// $textarea-prefix-cls: #{$cui-prefix}-textarea;
 
-$lineHeight: 24px;
+// $lineHeight: 24px;
 
-.#{$textarea-prefix-cls} {
-    flex: 1;
-    display: flex;
-    position: relative;
+// .#{$textarea-prefix-cls} {
+//     flex: 1;
+//     display: flex;
+//     position: relative;
 
-    &-input {
-        flex: 1;
-        font-size: $font-size-lg;
-        text-align: left;
-        line-height: $lineHeight;
-        color: $font-color;
-        max-height: $lineHeight * 4;
-        overflow: auto;
-        padding: $padding-xss + 2px $padding-sm;
-        background-color: $gray-95;
-        border-radius: 18px;
-        outline: 0 none;
-        min-height: 24px;
-        word-break: break-all;
-    }
+//     &-input {
+//         flex: 1;
+//         font-size: $font-size-lg;
+//         text-align: left;
+//         line-height: $lineHeight;
+//         color: $font-color;
+//         max-height: $lineHeight * 4;
+//         overflow: auto;
+//         padding: $padding-xss + 2px $padding-sm;
+//         background-color: $gray-95;
+//         border-radius: 18px;
+//         outline: 0 none;
+//         min-height: 24px;
+//         word-break: break-all;
+//     }
 
-    ;
+//     ;
 
-    &-input:empty::before {
-        content: attr(placeholder);
-        color: #919BA1;
-    }
+//     &-input:empty::before {
+//         content: attr(placeholder);
+//         color: #919BA1;
+//     }
 
-    &-sendBtn {
-        position: absolute;
-        right: 12px;
-        bottom: 7px;
-        cursor: pointer;
-        line-height: 100%;
-    }
+//     &-sendBtn {
+//         position: absolute;
+//         right: 12px;
+//         bottom: 7px;
+//         cursor: pointer;
+//         line-height: 100%;
+//     }
 
 
-    &-hasBtn {
-        .#{$textarea-prefix-cls}-input {
-            padding-right: $padding-sm * 2;
-        }
-    }
+//     &-hasBtn {
+//         .#{$textarea-prefix-cls}-input {
+//             padding-right: $padding-sm * 2;
+//         }
+//     }
 
-}
+// }

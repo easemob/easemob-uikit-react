@@ -102,6 +102,7 @@ const MessageInput = (props: MessageInputProps) => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
+  const componentsShape = theme?.componentsShape || 'ground';
   const { t } = useTranslation();
   const insertCustomHtml = (t: string, e: keyof typeof emoji.map) => {
     if (!textareaRef.current) return;
@@ -325,7 +326,12 @@ const MessageInput = (props: MessageInputProps) => {
         </>
       )}
       {showSendBtn && (
-        <div className={`${prefixCls}-sendBtn`} title={t('send') as string}>
+        <div
+          className={classNames(`${prefixCls}-sendBtn`, {
+            [`${prefixCls}-sendBtn-ground`]: componentsShape == 'ground',
+          })}
+          title={t('send') as string}
+        >
           <Icon
             type="AIR_PLANE"
             width={24}

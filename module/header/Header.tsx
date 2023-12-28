@@ -129,6 +129,7 @@ const Header: FC<HeaderProps> = props => {
               onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
                 onAvatarClick?.(e);
               }}
+              style={{ marginRight: 12 }}
             >
               {content}
             </Avatar>
@@ -165,7 +166,12 @@ const Header: FC<HeaderProps> = props => {
           )}
           {close && (
             <Button type="text" shape="circle" onClick={clickClose}>
-              <Icon type="CLOSE" color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}></Icon>
+              <Icon
+                type="CLOSE"
+                color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                width={24}
+                height={24}
+              ></Icon>
             </Button>
           )}
         </div>

@@ -22,7 +22,7 @@ export default function Search(props: SearchProps) {
     onChange,
     prefix: customizePrefixCls,
     className,
-    shape = 'ground',
+    shape,
     style = {},
     placeholder,
     ...others
@@ -31,11 +31,12 @@ export default function Search(props: SearchProps) {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
+  const componentsShape = shape || theme?.componentsShape || 'ground';
   const prefixCls = getPrefixCls('search', customizePrefixCls);
   const classString = classNames(
     prefixCls,
     {
-      [`${prefixCls}-${shape}`]: shape,
+      [`${prefixCls}-${componentsShape}`]: componentsShape,
       [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,

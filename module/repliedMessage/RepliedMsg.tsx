@@ -7,7 +7,7 @@ import { ChatSDK } from '../SDK';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
-import { getCvsIdFromMessage } from '../utils';
+import { getCvsIdFromMessage, getMsgSenderNickname } from '../utils';
 import download from '../utils/download';
 import { ImagePreview } from '../imageMessage';
 import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
@@ -279,7 +279,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     }, 1500);
   };
   const myUserId = rootStore.client.user;
-  const from = message.from === myUserId ? t('you') : message.from;
+  const from = message.from === myUserId ? t('you') : getMsgSenderNickname(message);
   const to =
     msgQuote?.msgSender === myUserId
       ? t('yourself')

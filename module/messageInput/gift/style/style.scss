@@ -1,6 +1,6 @@
 @import '~/common/style/index.scss';
 $gift-prefix-cls: #{$cui-prefix}-gift;
-
+$gift-keyboard-prefix-cls: #{$cui-prefix}-giftKeyboard;
 .#{$gift-prefix-cls}{
     width: 80px;
     height: 98px;
@@ -77,4 +77,12 @@ $gift-prefix-cls: #{$cui-prefix}-gift;
     display: flex;
     flex-flow: wrap;
     gap: 8px 4px;
+}
+
+.#{$gift-keyboard-prefix-cls}{
+    width: 36px;
+    height: 36px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }

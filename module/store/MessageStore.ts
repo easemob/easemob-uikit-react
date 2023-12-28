@@ -184,7 +184,7 @@ class MessageStore {
         // @ts-ignore
         msgID: this.repliedMessage.mid || this.repliedMessage.id,
         msgPreview: msgPreview,
-        msgSender: this.repliedMessage.from || this.rootStore?.client?.user,
+        msgSender: getMsgSenderNickname(this.repliedMessage) || this.rootStore?.client?.user,
         msgType: this.repliedMessage.type,
       };
       message.ext = ext;

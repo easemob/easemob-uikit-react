@@ -82,6 +82,7 @@ export interface ProviderProps {
     mode?: 'light' | 'dark';
     avatarShape?: 'circle' | 'square';
     bubbleShape?: 'ground' | 'square';
+    componentsShape?: 'ground' | 'square';
   };
 }
 const Provider: React.FC<ProviderProps> = props => {

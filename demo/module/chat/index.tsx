@@ -363,6 +363,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         mode: 'light',
         bubbleShape: 'square',
         avatarShape: 'square',
+        componentsShape: 'square',
       }}
       local={{
         fallbackLng: 'en',

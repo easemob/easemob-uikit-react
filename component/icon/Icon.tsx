@@ -77,6 +77,8 @@ import { ReactComponent as ArrowsRound } from '../svgs/icons/arrow_round.svg';
 import { ReactComponent as PERSON_ADD } from '../svgs/icons/person_add.svg';
 import { ReactComponent as PERSON_MINUS } from '../svgs/icons/person_minus.svg';
 import { ReactComponent as TriangleInRectangleFill } from '../svgs/icons/triangle_in_rectangle_fill.svg';
+import { ReactComponent as SpeakerNVerticalBar } from '../svgs/icons/spkeaker_n_vertical_bar.svg';
+import { ReactComponent as RoundArrowThick } from '../svgs/icons/round_arrow_thick.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -305,6 +307,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'TRIANGLE_IN_RECTANGLE_FILL':
       return <TriangleInRectangleFill></TriangleInRectangleFill>;
+      break;
+    case 'SPEAKER_N_VERTICAL_BAR':
+      return <SpeakerNVerticalBar></SpeakerNVerticalBar>;
+      break;
+    case 'ROUND_ARROW_THICK':
+      return <RoundArrowThick></RoundArrowThick>;
       break;
     default:
       return '';

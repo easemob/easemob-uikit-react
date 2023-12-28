@@ -4,5 +4,6 @@ $broadcast-prefix-cls: #{$cui-prefix}-broadcast;
     display: flex;
     background-color: $blue-5;
     color: $gray-98;
-    padding: 0 8px;
+    padding: 0 8 0 28px;
+    border-radius: 12px;
 }
