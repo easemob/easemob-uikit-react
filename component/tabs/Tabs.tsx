@@ -49,7 +49,6 @@ function Tabs(props: TabsProps) {
 
   const activeTabIndex = props.tabs.findIndex(tab => tab.key === activeTabKey);
   const activeTab = props.tabs[activeTabIndex];
-  console.log('activeTab', activeTab, activeTabIndex, activeTabKey);
 
   return (
     <div className={classString} style={{ ...style }}>

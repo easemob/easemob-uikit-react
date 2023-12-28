@@ -8,7 +8,6 @@ const useChatroomMember = (chatroomId: string) => {
   const { client } = rootStore;
   let next = true;
   const getConversationList = () => {
-    console.log('获取成员');
     client
       .listChatRoomMembers({
         chatRoomId: chatroomId,
@@ -32,7 +31,6 @@ const useChatroomMember = (chatroomId: string) => {
         });
         rootStore.addressStore.setChatroomMemberIds(chatroomId, members);
         if (getInfoMembers.length > 0) {
-          console.log('去获取个人信息', getInfoMembers);
           getUsersInfo({ userIdList: getInfoMembers, withPresence: false });
         }
       })

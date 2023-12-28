@@ -118,7 +118,6 @@ let UserItem: FC<UserItemProps> = props => {
   }
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('handleCheckboxChange', e.target.checked);
     onCheckboxChange?.(e.target.checked, data);
   };
   return (

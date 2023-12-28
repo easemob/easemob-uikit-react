@@ -2,7 +2,7 @@
 
 ## 简介
 
-easemob-chat-uikit 是基于环信 Chat SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件， 容器组件允许用户使用 renderX 方法来进行自定义。agora-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
+easemob-chat-uikit 是基于环信 Chat SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件， 容器组件允许用户使用 renderX 方法来进行自定义。easemob-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
 
 ## 技术原理
 
@@ -35,11 +35,11 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
       <td style=font-size:10px>将会话从会话列表中删除</td>
    </tr>
    <tr>
-      <td>免打扰（开发中）</td>
+      <td>免打扰</td>
       <td style=font-size:10px>开启消息免打扰或关闭消息免打扰</td>
    </tr>
    <tr>
-      <td>置顶（开发中）</td>
+      <td>置顶</td>
       <td style=font-size:10px>将会话固定在列表顶部</td>
    </tr>
     <tr>
@@ -542,6 +542,10 @@ module.exports = {
 ## 相关资源
 
 [集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html);
+
+[chatroom demo 源码地址](https://github.com/easemob/ChatroomDemo/tree/dev/WEB/ChatroomDemo)；
+
+[chatroom demo](https://livestream-hsb.oss-cn-beijing.aliyuncs.com/index.html)
 
 ## 代码许可
 
