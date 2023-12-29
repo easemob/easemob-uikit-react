@@ -28,7 +28,7 @@ import Modal from '../../component/modal';
 import { useGroupMembersAttributes, useGroupMembers } from '../hooks/useAddress';
 import GroupMember, { GroupMemberProps } from '../groupMember';
 import { useTranslation } from 'react-i18next';
-export interface GroupSettingProps {
+export interface GroupDetailProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
@@ -42,7 +42,7 @@ export interface GroupSettingProps {
   onDestroyGroup?: () => void;
 }
 
-const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
+const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const {
     conversation,
     style,
@@ -526,4 +526,4 @@ const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
   );
 };
 
-export default observer(GroupSetting);
+export default observer(GroupDetail);

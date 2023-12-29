@@ -46,7 +46,7 @@ import {
 
 import UserSelect, { UserSelectProps } from './userSelect';
 
-import GroupSetting, { GroupSettingProps } from './groupSetting';
+import GroupDetail, { GroupDetailProps } from './groupDetail';
 import GroupMember, { GroupMemberProps } from './groupMember';
 import UserCardMessage, { UserCardMessageProps } from './userCardMessage';
 import rootStore, {
@@ -144,7 +144,7 @@ export type {
   UserProfileProps,
   ContactListProps,
   ContactDetailProps,
-  GroupSettingProps,
+  GroupDetailProps,
   GroupMemberProps,
   UserCardMessageProps,
   UserSelectProps,
@@ -192,7 +192,7 @@ export {
   ChatroomMessage,
   ContactItem,
   ContactDetail,
-  GroupSetting,
+  GroupDetail,
   GroupMember,
   UserCardMessage,
   UserSelect,

@@ -4,7 +4,7 @@ import TextMessage from '../../../module/textMessage';
 import List from '../../../component/list';
 import Header from '../../../module/header';
 import { ContactItem, ContactList, ContactDetail } from '../../../module/contactList';
-import ContactInfo from '../../../module/groupSetting';
+import GroupDetail from '../../../module/groupDetail';
 import { Search } from '../../../component/input/Search';
 import Chat from '../../../module/chat';
 import Icon from '../../../component/icon';
@@ -278,9 +278,9 @@ const ChatApp: FC<any> = () => {
               ></Chat>
               {groupSettingVisible && (
                 <div style={{ width: '350px', borderLeft: '1px solid green' }}>
-                  <ContactInfo
+                  <GroupDetail
                     conversation={{ chatType: 'groupChat', conversationId: cvsItem.conversationId }}
-                  ></ContactInfo>
+                  ></GroupDetail>
                 </div>
               )}
             </>
