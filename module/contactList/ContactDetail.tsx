@@ -58,16 +58,6 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   } else {
     contactData = addressStore.groups.find((item: any) => item.groupId === data.id);
   }
-  //   useEffect(() => {
-  //     console.log('-----contactData', contactData);
-  //     if (contactData?.silent !== undefined || !data.id) return;
-  //     addressStore.getSilentModeForConversations([
-  //       {
-  //         conversationId: data.id,
-  //         chatType: data.type === 'contact' ? 'singleChat' : 'groupChat',
-  //       },
-  //     ]);
-  //   }, [data.id]);
 
   const handleCopy = () => {
     var textArea = document.createElement('textarea');
@@ -93,7 +83,6 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
       result,
     );
   };
-  console.log('avatarUrl', avatarUrl);
 
   const handleClickMessage = () => {
     const result = onMessageBtnClick?.();
@@ -122,9 +111,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   const addContact = () => {
     addressStore.acceptContactInvite(data.id);
   };
-  console.log('>>>>>', requestData, data);
   const isContact = addressStore.contacts.findIndex((item: any) => item.userId === data.id) >= 0;
-  console.log('isContact', isContact);
 
   return (
     <div className={classString} style={{ ...style }}>

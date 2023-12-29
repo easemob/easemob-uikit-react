@@ -18,7 +18,7 @@ import { checkCharacter } from '../utils/index';
 import UserSelect, { UserSelectInfo } from '../userSelect';
 import Button from '../../component/button';
 import { useTranslation } from 'react-i18next';
-export interface GroupMemberProps extends UserItemProps {
+export interface GroupMemberProps {
   style?: React.CSSProperties;
   className?: string;
   prefix?: string;
@@ -38,6 +38,7 @@ export interface GroupMemberProps extends UserItemProps {
   ) => void;
   enableMultipleSelection?: boolean;
   checkedUsers?: UserInfoData[];
+  moreAction?: UserItemProps['moreAction'];
 }
 
 const GroupMember: FC<GroupMemberProps> = props => {

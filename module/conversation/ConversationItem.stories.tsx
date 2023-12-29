@@ -23,6 +23,8 @@ Primary.args = {
     name: 'Henry',
     unreadCount: 3,
     lastMessage: {
+      id: '1',
+      to: 'user2',
       type: 'txt',
       msg: 'hello',
       chatType: 'singleChat',

@@ -8,6 +8,7 @@ import { RootStore } from './index';
 import { AT_ALL } from '../messageInput/suggestList/SuggestList';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
+import { BaseMessageType } from '../baseMessage/BaseMessage';
 import {
   getGroupMemberIndexByUserId,
   getGroupItemFromGroupsById,
@@ -69,7 +70,7 @@ class MessageStore {
     this.selectedMessage = {
       singleChat: {},
       groupChat: {},
-      chatRoom: {},
+      // chatRoom: {},
     };
     this.currentCVS = {} as CurrentConversation;
     this.repliedMessage = null;
@@ -184,13 +185,16 @@ class MessageStore {
         // @ts-ignore
         msgID: this.repliedMessage.mid || this.repliedMessage.id,
         msgPreview: msgPreview,
-        msgSender: getMsgSenderNickname(this.repliedMessage) || this.rootStore?.client?.user,
+        msgSender:
+          getMsgSenderNickname(this.repliedMessage as BaseMessageType) ||
+          this.rootStore?.client?.user,
         msgType: this.repliedMessage.type,
       };
       message.ext = ext;
     }
     if (message.isChatThread) {
       const { currentThread } = this.rootStore.threadStore;
+      // @ts-ignore
       message.chatThread = {
         parentId: currentThread.info?.parentId || currentThread.originalMessage.to,
       };
@@ -270,7 +274,7 @@ class MessageStore {
           }
         }
         // message.status = 'sent';
-        const msg = this.message.byId[message.id];
+        const msg = this.message.byId[message.id] || {};
         // @ts-ignore
         msg.status = 'sent';
         // @ts-ignore
@@ -291,7 +295,8 @@ class MessageStore {
         if ((message as ChatSDK.ImgMsgBody).url) {
           (msg as ChatSDK.ImgMsgBody).url = (message as ChatSDK.ImgMsgBody).url;
           if (msg && (msg as ChatSDK.ImgMsgBody).file) {
-            msg.file.url = (message as ChatSDK.ImgMsgBody).url;
+            // @ts-ignore
+            msg.file.url = (message as ChatSDK.ImgMsgBody).url || '';
           }
         }
         this.message.byId[data.serverMsgId] = this.message.byId[message.id];
@@ -331,14 +336,13 @@ class MessageStore {
         eventHandler.dispatchSuccess('sendMessage');
       })
       .catch((error: ChatSDK.ErrorEvent) => {
-        console.warn('send fail', error);
         this.updateMessageStatus(message.id, 'failed');
         eventHandler.dispatchError('sendMessage', error);
         // throw error;
       });
   }
 
-  receiveMessage(message: ChatSDK.MessageBody) {
+  receiveMessage(message: BaseMessageType) {
     const curCvs = this.rootStore.conversationStore.currentCvs;
     //@ts-ignore
     if (
@@ -475,7 +479,7 @@ class MessageStore {
         // ack message
         return; // console.error('not found message:', msgId);
       }
-      let conversationId = getCvsIdFromMessage(msg);
+      let conversationId = getCvsIdFromMessage(msg as BaseMessageType);
       // @ts-ignore
       this.message.byId[msgId].status = status;
       // @ts-ignore
@@ -553,7 +557,7 @@ class MessageStore {
     return this.rootStore.client
       .removeHistoryMessages({
         targetId: cvs.conversationId,
-        chatType: cvs.chatType,
+        chatType: cvs.chatType as 'singleChat' | 'groupChat',
         messageIds: msgIds,
       })
       .then(() => {
@@ -664,9 +668,11 @@ class MessageStore {
               reaction: emoji,
               userList: [this.rootStore.client.user],
             };
-            if (Array.isArray(message.reactions)) {
+            if (Array.isArray((message as BaseMessageType).reactions)) {
+              // @ts-ignore
               messages[messageIndex].reactions.push(newAction);
             } else {
+              // @ts-ignore
               messages[messageIndex].reactions = [newAction];
             }
           }
@@ -701,7 +707,11 @@ class MessageStore {
           if (reaction) {
             reaction.count -= 1;
             if (reaction.count <= 0) {
-              message.reactions?.splice(message.reactions?.indexOf(reaction), 1);
+              (message as BaseMessageType).reactions?.splice(
+                // @ts-ignore
+                message.reactions?.indexOf(reaction),
+                1,
+              );
             }
             const index = reaction.userList?.indexOf(this.rootStore.client.user);
             if (index > -1) {
@@ -726,7 +736,10 @@ class MessageStore {
     if (messageIndex > -1) {
       const message = messages[messageIndex];
       // has reaction list
-      if (!message.reactions || message.reactions?.length === 0) {
+      if (
+        !(message as BaseMessageType).reactions ||
+        (message as BaseMessageType).reactions?.length === 0
+      ) {
         reactions.forEach((item: ReactionData) => {
           if (item.op) {
             item.isAddedBySelf = !!item?.op?.find(
@@ -734,7 +747,7 @@ class MessageStore {
             );
           }
         });
-        message.reactions = reactions;
+        (message as BaseMessageType).reactions = reactions;
       } else {
         filterActs.forEach(item => {
           let reaction = getReactionByEmoji(message, item.reaction);
@@ -751,11 +764,13 @@ class MessageStore {
                 }
               }
             });
-            message.reactions = [...message.reactions];
+            // @ts-ignore
+            (message as BaseMessageType).reactions = [...message.reactions];
           } else {
             item.isAddedBySelf = !!item?.op?.find(
               op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
             );
+            // @ts-ignore
             message.reactions.push(item);
           }
         });
@@ -778,6 +793,7 @@ class MessageStore {
         if (!reactionData) return;
         if (messageIndex > -1) {
           const message = messages[messageIndex];
+          // @ts-ignore
           message.reactions.userList = reactionData.userList;
         }
         eventHandler.dispatchSuccess('getReactionDetail');
@@ -873,7 +889,8 @@ class MessageStore {
       selectedMessage: (ChatSDK.MessageBody | RecallMessage)[];
     },
   ) {
-    this.selectedMessage[cvs.chatType][cvs.conversationId] = selectedData;
+    this.selectedMessage[cvs.chatType as 'singleChat' | 'groupChat'][cvs.conversationId] =
+      selectedData;
   }
 
   setTyping(cvs: CurrentConversation, typing: boolean) {

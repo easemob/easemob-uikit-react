@@ -1,6 +1,7 @@
 import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
 import { ChatSDK } from '../SDK';
 import { eventHandler } from '../../eventHandler';
+import { BaseMessageType } from '../baseMessage/BaseMessage';
 export interface ThreadData {
   [key: string]: {
     [key: string]: {
@@ -121,9 +122,9 @@ class ThreadStore {
         threadInfo.lastMessage ? (newThread.lastMessage = threadInfo.lastMessage) : null;
 
         this.threadList[parentId]?.splice(
-          this.threadList[parentId]?.indexOf(foundThread),
+          this.threadList[parentId]?.indexOf(foundThread as unknown as ChatSDK.ChatThreadDetail),
           1,
-          newThread,
+          newThread as unknown as ChatSDK.ChatThreadDetail,
         );
         break;
 
@@ -141,7 +142,10 @@ class ThreadStore {
           // const warnText = operation === 'userRemove' ? t('You have been removed from the thread') : t('The thread has been disbanded')
           this.setThreadVisible(false);
 
-          this.threadList[parentId]?.splice(this.threadList[parentId]?.indexOf(foundThread), 1);
+          this.threadList[parentId]?.splice(
+            this.threadList[parentId]?.indexOf(foundThread as unknown as ChatSDK.ChatThreadDetail),
+            1,
+          );
         }
 
         break;
@@ -280,13 +284,13 @@ class ThreadStore {
         pageSize: 20,
         cursor,
       })
-      .then((res: any) => {
-        const threads = res.entities;
+      .then((res: ChatSDK.AsyncResult<ChatSDK.ChatThreadDetail[]>) => {
+        const threads = res.entities || [];
         let list = this.threadList[parentId] || [];
         if (!cursor) {
           list = [];
         }
-        const chatThreadIds = threads.map((item: { id: any }) => {
+        const chatThreadIds = threads?.map((item: { id: any }) => {
           return item.id;
         });
         eventHandler.dispatchSuccess('getChatThreads');
@@ -294,10 +298,11 @@ class ThreadStore {
           .getChatThreadLastMessage({
             chatThreadIds: chatThreadIds,
           })
-          .then(data => {
-            data.entities.forEach(item => {
-              let idx = threads.findIndex(thread => item.chatThreadId === thread.id);
-              item.lastMessage.chatType = 'groupChat';
+          .then((data: ChatSDK.AsyncResult<ChatSDK.ChatThreadLastMessage[]>) => {
+            data.entities?.forEach(item => {
+              let idx = threads?.findIndex(thread => item.chatThreadId === thread.id);
+              (item.lastMessage as BaseMessageType).chatType = 'groupChat';
+              // @ts-ignore
               threads[idx].lastMessage = item.lastMessage;
             });
 

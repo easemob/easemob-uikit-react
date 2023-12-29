@@ -210,7 +210,7 @@ let ContactList: FC<ContactListProps> = props => {
         ).length;
         return (
           <ContactGroup
-            title={t('newRequests')}
+            title={t('newRequests') as string}
             key={menuItem}
             itemCount={addressStore.requests.length}
             unreadCount={unreadCount}
@@ -246,7 +246,7 @@ let ContactList: FC<ContactListProps> = props => {
 
       return (
         <ContactGroup
-          title={t(menuItem)}
+          title={t(menuItem) as string}
           key={menuItem}
           unreadCount={
             menuItem == 'contacts' ? addressStore.contacts.length : addressStore.groups.length
@@ -342,7 +342,6 @@ let ContactList: FC<ContactListProps> = props => {
   }, [addressStore.searchList, itemActiveKey, checkedList?.length]);
 
   const getNameAndType = (id: string) => {
-    console.log('###', itemActiveKey);
     let name;
     let type: 'contact' | 'group' = 'contact';
 

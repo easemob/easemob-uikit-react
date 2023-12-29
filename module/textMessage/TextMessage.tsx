@@ -35,7 +35,7 @@ export interface TextMessageProps extends BaseMessageProps {
   style?: React.CSSProperties;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
-  onTranslateTextMessage?: (textMessage: TextMessageType) => boolean;
+  onTranslateTextMessage?: (textMessage: ChatSDK.TextMsgBody) => boolean;
   targetLanguage?: string;
   showTranslation?: boolean; // 是否展示翻译后的消息
   onlyContent?: boolean;
@@ -340,7 +340,9 @@ const TextMessage = (props: TextMessageProps) => {
   const handleSelectMessage = () => {
     let conversationId = getCvsIdFromMessage(textMessage);
     const selectable =
-      rootStore.messageStore.selectedMessage[textMessage.chatType][conversationId]?.selectable;
+      rootStore.messageStore.selectedMessage[textMessage.chatType as 'singleChat' | 'groupChat'][
+        conversationId
+      ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
@@ -360,11 +362,15 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const select =
-    rootStore.messageStore.selectedMessage[textMessage.chatType][conversationId]?.selectable;
+    rootStore.messageStore.selectedMessage[textMessage.chatType as 'singleChat' | 'groupChat'][
+      conversationId
+    ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[textMessage.chatType][conversationId]?.selectedMessage;
+      rootStore.messageStore.selectedMessage[textMessage.chatType as 'singleChat' | 'groupChat'][
+        conversationId
+      ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
@@ -399,7 +405,7 @@ const TextMessage = (props: TextMessageProps) => {
     setModifyMessageVisible(false);
     const currentCVS = rootStore.conversationStore.currentCvs;
     let msg = convertToMessage(textareaRef?.current?.divRef?.current?.innerHTML || '').trim();
-    const { isChatThread, to, chatThread } = textMessage;
+    const { isChatThread, to, chatThread } = textMessage as ChatSDK.TextMsgBody;
     const isThread = !!(isChatThread || chatThread);
     const message = chatSDK.message.create({
       to: isThread ? to : currentCVS.conversationId,
@@ -566,7 +572,7 @@ const TextMessage = (props: TextMessageProps) => {
                 className={modifyPrefix}
                 ref={textareaRef}
                 enableEnterSend={false}
-                enabledMenton={false}
+                enabledMention={false}
               />
             </Modal>
           }

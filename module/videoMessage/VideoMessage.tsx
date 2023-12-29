@@ -14,7 +14,7 @@ import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 export interface VideoMessageProps extends BaseMessageProps {
-  videoMessage: ChatSDK.VideoMsgBody; // 从SDK收到的视频消息
+  videoMessage: ChatSDK.VideoMsgBody & { bySelf: boolean }; // 从SDK收到的视频消息
   prefix?: string;
   style?: React.CSSProperties;
   nickName?: string;
@@ -22,7 +22,7 @@ export interface VideoMessageProps extends BaseMessageProps {
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   type?: 'primary' | 'secondly';
   className?: string;
-  videoProps: React.VideoHTMLAttributes<HTMLVideoElement>;
+  videoProps?: React.VideoHTMLAttributes<HTMLVideoElement>;
 }
 const VideoMessage = (props: VideoMessageProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,7 +40,6 @@ const VideoMessage = (props: VideoMessageProps) => {
   } = props;
 
   let { bySelf, from, reactions } = videoMessage;
-  console.log('videoMessage --->', videoMessage);
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-video', prefix);
@@ -59,7 +58,6 @@ const VideoMessage = (props: VideoMessageProps) => {
   );
 
   if (typeof bySelf == 'undefined') {
-    // console.log('bySelf 是 undefined', rootStore.client.context.userId, from, rootStore);
     bySelf = from == rootStore.client.context.userId;
   }
 

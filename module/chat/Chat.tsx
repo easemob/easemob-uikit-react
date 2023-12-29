@@ -28,6 +28,7 @@ import { ChatSDK } from 'module/SDK';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
 import CallKit from 'chat-callkit';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
+import { BaseMessageType } from '../baseMessage/BaseMessage';
 export interface ChatProps {
   prefix?: string;
   className?: string;
@@ -134,7 +135,7 @@ const Chat: FC<ChatProps> = props => {
   }, [rootStore.conversationStore.currentCvs]);
 
   const repliedMsg = rootStore.messageStore.repliedMessage;
-  const replyCvsId = getCvsIdFromMessage(repliedMsg || {});
+  const replyCvsId = getCvsIdFromMessage((repliedMsg as BaseMessageType) || {});
   const showReply = repliedMsg && replyCvsId === CVS.conversationId;
 
   // --------- thread -----------
@@ -149,22 +150,22 @@ const Chat: FC<ChatProps> = props => {
       setCursor(cursor);
     });
   };
-  const [cursor, setCursor] = useState<string | undefined>();
+  const [cursor, setCursor] = useState<string | undefined | null>();
   // containerRef?.current?.scrollHeight
   const threadScrollRef = useRef(null);
   const pagingGetThreadList = () => {
-    const height = threadScrollRef?.current?.scrollHeight;
     if (cursor === null) return;
-    rootStore.threadStore.getGroupChatThreads(CVS.conversationId, cursor)?.then((res: string) => {
+    rootStore.threadStore.getGroupChatThreads(CVS.conversationId, cursor)?.then(res => {
       setCursor(res);
       setTimeout(() => {
-        threadScrollRef?.current.scrollTo(threadList.length * 56);
+        // @ts-ignore
+        threadScrollRef?.current?.scrollTo?.(threadList.length * 56);
       }, 100);
     });
   };
 
   const threadList = rootStore.threadStore.threadList[CVS.conversationId] || [];
-  const openThread = item => {
+  const openThread = (item: { id: string }) => {
     // close thread list modal
     rootStore.threadStore.joinChatThread(item.id || '');
     setModalOpen(false);
@@ -182,8 +183,10 @@ const Chat: FC<ChatProps> = props => {
   const threadListContent = () => {
     const renderItem = (item: ChatSDK.ChatThreadOverview, index: number) => {
       let lastMsg = '';
+      // @ts-ignore
       switch (item.lastMessage?.type) {
         case 'txt':
+          // @ts-ignore
           lastMsg = item.lastMessage?.msg;
           break;
         case 'img':
@@ -205,6 +208,7 @@ const Chat: FC<ChatProps> = props => {
           lastMsg = `/${t('combine')}/`;
           break;
         default:
+          // @ts-ignore
           console.warn('unexpected message type:', item.lastMessage?.type);
           break;
       }
@@ -217,16 +221,19 @@ const Chat: FC<ChatProps> = props => {
           }}
         >
           <span className={`${prefixCls}-thread-item-name`}> {item.name}</span>
-          {item.lastMessage?.type && (
+          {(item.lastMessage as any)?.type && (
             <div className={`${prefixCls}-thread-item-msgBox`}>
               <Avatar size={12} src={appUsersInfo?.[item.lastMessage?.from]?.avatarurl}>
                 {appUsersInfo?.[item.lastMessage?.from]?.nickname || item.lastMessage?.from}
               </Avatar>
               <div className={`${prefixCls}-thread-item-msgBox-name`}>
-                {getMsgSenderNickname(item.lastMessage, item.parentId)}
+                {getMsgSenderNickname(
+                  item.lastMessage as unknown as BaseMessageType,
+                  item.parentId,
+                )}
               </div>
               <div>{lastMsg}</div>
-              <div>{getConversationTime(item.lastMessage?.time)}</div>
+              <div>{getConversationTime((item.lastMessage as any)?.time)}</div>
             </div>
           )}
         </div>
@@ -240,6 +247,7 @@ const Chat: FC<ChatProps> = props => {
         loadMoreItems={pagingGetThreadList}
         scrollDirection="down"
         paddingHeight={50}
+        // @ts-ignore
         data={renderThreadList}
         renderItem={renderItem}
       ></ThreadScrollList>
@@ -270,7 +278,7 @@ const Chat: FC<ChatProps> = props => {
           rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
           rootStore.client.removeHistoryMessages({
             targetId: CVS.conversationId,
-            chatType: CVS.chatType,
+            chatType: CVS.chatType as 'singleChat' | 'groupChat',
             beforeTimeStamp: Date.now(),
           });
         },
@@ -282,7 +290,7 @@ const Chat: FC<ChatProps> = props => {
 
           rootStore.client.deleteConversation({
             channel: CVS.conversationId,
-            chatType: CVS.chatType,
+            chatType: CVS.chatType as 'singleChat' | 'groupChat',
             deleteRoam: true,
           });
         },
@@ -454,12 +462,11 @@ const Chat: FC<ChatProps> = props => {
   const [currentCall, setCurrentCall] = useState<any>({});
   const showInvite = async (conf: any) => {
     // rtcConfig?.onAddPerson?.(conf);
-    console.log('添加人', conf);
     const members = await rtcConfig?.onAddPerson?.(conf);
     const rtcMembers = members?.map(item => {
+      // @ts-ignore
       return item.id;
     });
-    console.log('添加人2', members, rtcMembers);
     let options = {
       callType: currentCall.callType,
       chatType: 'groupChat',
@@ -649,6 +656,7 @@ const Chat: FC<ChatProps> = props => {
       ) : (
         <>
           {renderHeader ? (
+            // @ts-ignore
             renderHeader(rootStore.conversationStore.currentCvs)
           ) : (
             <Header

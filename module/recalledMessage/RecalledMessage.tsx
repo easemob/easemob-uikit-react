@@ -5,12 +5,12 @@ import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import { useTranslation } from 'react-i18next';
 import './style/style.scss';
-
+import { BaseMessageType } from '../baseMessage/BaseMessage';
 export interface RecalledMessageProps extends TextMessageProps {
   prefixCls?: string;
   className?: string;
   style?: React.CSSProperties;
-  message: ChatSDK.MessageBody;
+  message: BaseMessageType;
   onlyContent?: boolean;
 }
 

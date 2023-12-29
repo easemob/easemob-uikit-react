@@ -40,6 +40,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
     }
 
     if (currentChatMsgs.length > 0) {
+      //@ts-ignore
       useCursor = currentChatMsgs[0].mid || currentChatMsgs[0].id;
     }
 
@@ -50,7 +51,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
           targetId: cvs.conversationId,
           cursor: useCursor,
           pageSize: pageSize,
-          chatType: cvs.chatType,
+          chatType: cvs.chatType as 'singleChat' | 'groupChat',
           searchDirection: 'up',
         })
         .then(res => {

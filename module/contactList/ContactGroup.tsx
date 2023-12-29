@@ -49,7 +49,6 @@ const ContactGroup: FC<ContactGroupProps> = props => {
 
   useEffect(() => {
     if (childrenVisible) {
-      console.log('冲洗甲酸');
       setHeight(`auto`);
     }
   }, [itemCount]);

@@ -28,7 +28,7 @@ function rgbToHsla(rgb: number[]) {
     l = (max + min) / 2;
 
   // 计算饱和度值
-  var s = 0;
+  var s: any = 0;
   var d = 0;
   if (max !== min) {
     d = max - min;
@@ -36,7 +36,7 @@ function rgbToHsla(rgb: number[]) {
   }
 
   // 计算色相值
-  var h = 0;
+  var h: any = 0;
   if (max !== min) {
     switch (max) {
       case r:

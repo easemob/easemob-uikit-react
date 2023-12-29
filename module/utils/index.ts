@@ -49,7 +49,7 @@ export function parseChannel(channelId: string): {
   };
 }
 
-export function getCvsIdFromMessage(message: ChatSDK.MessageBody | RecallMessage) {
+export function getCvsIdFromMessage(message: BaseMessageType | RecallMessage) {
   let conversationId = '';
   if (message.chatType == 'groupChat' || message.chatType == 'chatRoom') {
     conversationId = message.to;

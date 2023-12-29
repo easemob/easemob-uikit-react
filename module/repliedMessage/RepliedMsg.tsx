@@ -15,6 +15,7 @@ import AudioMessage, { AudioMessageProps } from '../audioMessage';
 import RecalledMessage from '../recalledMessage';
 import UserCardMessage from '../userCardMessage';
 import { RootContext } from '../store/rootContext';
+import { BaseMessageType } from '../baseMessage/BaseMessage';
 const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
 export interface RepliedMsgProps {
   prefixCls?: string;
@@ -22,7 +23,7 @@ export interface RepliedMsgProps {
   style?: React.CSSProperties;
   shape?: 'ground' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
-  message: ChatSDK.MessageBody;
+  message: BaseMessageType;
 }
 
 const RepliedMsg = (props: RepliedMsgProps) => {
@@ -84,7 +85,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       setMsgQuote(msgQuote);
 
       // const messages = rootStore.messageStore.currentCvsMsgs;
-      const findMsgs = messages.filter((msg: ChatSDK.MessageBody) => {
+      const findMsgs = messages.filter(msg => {
         // @ts-ignore
         return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;
       }) as ChatSDK.MessageBody[];
@@ -279,7 +280,8 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     }, 1500);
   };
   const myUserId = rootStore.client.user;
-  const from = message.from === myUserId ? t('you') : getMsgSenderNickname(message);
+  const from =
+    message.from === myUserId ? t('you') : getMsgSenderNickname(message as BaseMessageType);
   const to =
     msgQuote?.msgSender === myUserId
       ? t('yourself')

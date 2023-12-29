@@ -193,6 +193,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   let conversationId = getCvsIdFromMessage(audioMessage);
   const handleSelectMessage = () => {
     const selectable =
+      // @ts-ignore
       rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]?.selectable;
     if (selectable) return; // has shown checkbox
 
@@ -213,10 +214,12 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const select =
+    // @ts-ignore
     rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
+      // @ts-ignore
       rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]
         ?.selectedMessage;
 
@@ -224,7 +227,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     if (checked) {
       changedList.push(audioMessage);
     } else {
-      changedList = checkedMessages.filter(item => {
+      changedList = checkedMessages.filter((item: { id: string }) => {
         // @ts-ignore
         return !(item.id == audioMessage.id || item.mid == audioMessage.id);
       });

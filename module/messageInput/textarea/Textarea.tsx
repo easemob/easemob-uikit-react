@@ -32,7 +32,7 @@ export interface TextareaProps {
   enabledMention?: boolean;
   enabledTyping?: boolean;
   isChatThread?: boolean;
-  onSendMessage?: (message: ChatSDK.TextMessage) => void;
+  onSendMessage?: (message: ChatSDK.TextMsgBody) => void;
   conversation?: CurrentConversation;
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
   onChange?: (value: string) => void;
@@ -153,7 +153,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     }
   };
 
-  const _sendMessage = (message: ChatSDK.MessageBody) => {
+  const _sendMessage = (message: ChatSDK.TextMsgBody) => {
     messageStore.sendMessage(message).then(() => {
       onSendMessage && onSendMessage(message);
     });
@@ -190,7 +190,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       ext: {
         em_at_list: isAtAll ? AT_ALL : atUserIds,
       },
-    });
+    }) as ChatSDK.TextMsgBody;
     if (onBeforeSendMessage) {
       onBeforeSendMessage(message).then(cvs => {
         if (cvs) {
@@ -207,7 +207,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
   // Send Button
   const btnNode = hasSendButton ? (
-    <div className={`${prefixCls}-sendBtn`} title={t('send')}>
+    <div className={`${prefixCls}-sendBtn`} title={t('send') as string}>
       <Icon
         type="AIR_PLANE"
         width={20}

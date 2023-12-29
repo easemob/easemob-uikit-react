@@ -153,14 +153,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     name: user.nickname,
   }));
 
-  const createGroup = () => {
-    console.log('createGroup');
-    //addressStore.createGroup(selectedUsers.map(user => user.userId));
-    // onUserSelect(group);
-    // setModalOpen(false);
-  };
   // 如果传了users 则左面的panel使用users的数据渲染， 没传的话展示ContactList
-  console.log('%%%%%%%', checkedUsers);
   const defaultCheckedUsers = checkedUsers?.map(user => ({
     type: 'contact' as 'contact',
     id: user.userId,
@@ -244,7 +237,6 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   style={{ marginRight: '24px', width: '68px' }}
                   type="primary"
                   onClick={e => {
-                    createGroup();
                     onOk?.(e);
                   }}
                   disabled={selectedUsers.length === 0}

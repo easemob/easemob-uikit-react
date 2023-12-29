@@ -69,7 +69,10 @@ const ThreadModal = (props: ThreadModalProps) => {
     className,
   );
 
-  const [position, setPosition] = useState({});
+  const [position, setPosition] = useState({
+    top: 0,
+    left: 0,
+  });
   // 用来更新组件的位置
   const popupRef = useRef(null);
   useEffect(() => {

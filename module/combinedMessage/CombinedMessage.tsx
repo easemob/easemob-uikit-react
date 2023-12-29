@@ -18,11 +18,23 @@ import { observer } from 'mobx-react-lite';
 import Loading from '../../component/loading';
 import { useTranslation } from 'react-i18next';
 import { RootContext } from '../store/rootContext';
+import { BaseMessageType } from '../baseMessage/BaseMessage';
+import type {
+  AudioMessageType,
+  ImageMessageType,
+  TextMessageType,
+  FileMessageType,
+  CustomMessageType,
+} from '../types/messageType';
 export interface CombinedMessageProps extends BaseMessageProps {
   prefix?: string;
   className?: string;
   // @ts-ignore
-  combinedMessage: ChatSDK.CombineMsgBody;
+  combinedMessage: ChatSDK.CombineMsgBody & {
+    bySelf?: boolean;
+    messages?: (BaseMessageType & { bySelf: boolean })[];
+    messageList?: (BaseMessageType & { bySelf?: boolean })[];
+  };
   style?: React.CSSProperties;
   nickName?: string;
   type?: 'primary' | 'secondly';
@@ -110,7 +122,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   const handleShowReactionUserList = (emojiString: string) => {
     let conversationId = getCvsIdFromMessage(combinedMessage);
     reactions?.forEach(
-      (item: { reaction: string; count: number; userList: string[]; isAddedBySelf: boolean }) => {
+      (item: { reaction: string; count: number; userList: string[]; isAddedBySelf?: boolean }) => {
         if (item.reaction === emojiString) {
           if (item.count > 3 && item.userList.length <= 3) {
             rootStore.messageStore.getReactionUserList(
@@ -165,7 +177,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     <Loading size={48} visible={true} />,
   );
 
-  const createDetailContent = (data: ChatSDK.MessageType[]) => {
+  const createDetailContent = (data: (BaseMessageType & { bySelf: boolean })[]) => {
     let node = data.map(msg => {
       let content;
       msg.bySelf = false;
@@ -178,7 +190,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               reaction={false}
               key={msg.id}
               bubbleType="none"
-              textMessage={msg}
+              textMessage={msg as TextMessageType}
               direction="ltr"
               thread={false}
               renderUserProfile={renderUserProfile}
@@ -189,7 +201,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           content = (
             <ImageMessage
               select={false}
-              imageMessage={msg}
+              imageMessage={msg as ImageMessageType}
               direction="ltr"
               key={msg.id}
               reaction={false}
@@ -204,7 +216,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
             <FileMessage
               select={false}
               key={msg.id}
-              fileMessage={msg}
+              fileMessage={msg as FileMessageType}
               direction="ltr"
               type="secondly"
               reaction={false}
@@ -219,7 +231,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
             <AudioMessage
               select={false}
               key={msg.id}
-              audioMessage={msg}
+              audioMessage={msg as AudioMessageType}
               type="secondly"
               reaction={false}
               customAction={{ visible: false }}
@@ -250,7 +262,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               <UserCardMessage
                 select={false}
                 key={msg.id}
-                customMessage={msg}
+                customMessage={msg as CustomMessageType}
                 direction="ltr"
                 type="secondly"
                 reaction={false}
@@ -265,12 +277,12 @@ const CombinedMessage = (props: CombinedMessageProps) => {
                 select={false}
                 key={msg.id}
                 bubbleType="none"
-                textMessage={msg}
+                textMessage={msg as unknown as TextMessageType}
                 direction="ltr"
                 thread={false}
                 renderUserProfile={renderUserProfile}
               >
-                {t('customMessage')}
+                {t('customMessage') as string}
               </TextMessage>
             );
           }
@@ -280,7 +292,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
             <CombinedMessage
               select={false}
               key={msg.id}
-              combinedMessage={msg}
+              combinedMessage={msg as CombinedMessageProps['combinedMessage']}
               direction="ltr"
               type="secondly"
               reaction={false}
@@ -309,10 +321,10 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     }
     rootStore.client
       .downloadAndParseCombineMessage({
-        url: combinedMessage.url,
-        secret: combinedMessage.secret,
+        url: combinedMessage.url || '',
+        secret: combinedMessage.secret || '',
       })
-      .then((data: ChatSDK.MessageType[]) => {
+      .then((data: any) => {
         combinedMessage.messages = data;
         createDetailContent(data);
       })

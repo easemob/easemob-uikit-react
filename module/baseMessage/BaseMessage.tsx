@@ -219,13 +219,12 @@ let BaseMessage = (props: BaseMessageProps) => {
     onClickThreadTitle?.();
   };
   const threadNode = () => {
-    let { name, messageCount, lastMessage = {} } = chatThreadOverview!;
-
-    const { from, type, time } = lastMessage || {};
+    let { name, messageCount, lastMessage = {} } = chatThreadOverview || {};
+    const { from, type, time } = lastMessage as any;
     let msgContent = '';
     switch (type) {
       case 'txt':
-        msgContent = lastMessage.msg;
+        msgContent = (lastMessage as any).msg;
         break;
       case 'img':
         msgContent = '[图片]';
@@ -263,7 +262,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             <span>{name}</span>
           </div>
           <div>
-            <span>{messageCount > 100 ? '100 +' : messageCount}</span>
+            <span>{messageCount ?? 0 > 100 ? '100 +' : messageCount}</span>
             <Icon
               width={16}
               height={16}
@@ -479,7 +478,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
               onClick={() => {
-                item.onClick?.(message);
+                item.onClick?.(message as BaseMessageType);
               }}
             >
               {item.icon && item.icon}
@@ -552,7 +551,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           <div className={`${prefixCls}-box`}>
             {showRepliedMsg ? (
               <RepliedMsg
-                message={repliedMessage}
+                message={repliedMessage as BaseMessageType}
                 shape={bubbleShape}
                 direction={direction}
               ></RepliedMsg>
@@ -583,6 +582,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   )}
                   {reaction && status != 'failed' && (
                     <EmojiKeyBoard
+                      // @ts-ignore
                       reactionConfig={reactionConfig}
                       onSelected={handleClickEmoji}
                       selectedList={selectedList}

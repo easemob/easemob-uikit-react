@@ -23,6 +23,7 @@ const useChatroomMember = (chatroomId: string) => {
         }
         const members =
           res.data?.map(item => {
+            // @ts-ignore
             return item.member || item.owner;
           }) || [];
         const appUserInfo = rootStore.addressStore.appUsersInfo;

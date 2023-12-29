@@ -40,7 +40,12 @@ Primary.args = {
         to: 'zd2',
         url: 'http://a41-cn.easemob.com/41117440/383391/chatfiles/4b24f130-47e1-11ee-80af-fd4b8c914321?em-redirect=true&share-secret=SyTxOkfhEe6hCBG7YnsUau8y8s0rEj4_Y-mO5YhT8K1WjzqL',
         secret: 'SyTxOkfhEe6hCBG7YnsUau8y8s0rEj4_Y-mO5YhT8K1WjzqL',
-        file: {},
+        file: {
+          filename: 'audio-message.wav',
+          filetype: '',
+          url: '',
+          data: new File([], 'audio-message.wav'),
+        },
         filename: 'audio-message.wav',
         length: 2,
         file_length: 65580,
@@ -102,6 +107,7 @@ Primary.args = {
       },
     ],
     bySelf: true,
+    // @ts-ignore
     mid: '1190206342359419660',
     status: 'received',
     url: 'http://a41-cn.easemob.com/41117440/383391/chatfiles/797cedd0-52db-11ee-ae18-afa6d37eb8f8?em-redirect=true&share-secret=eX0U4FLbEe6m6Lsrhtl9i9BZ3XW5qTmB_rQZsili0q_RnvMo',

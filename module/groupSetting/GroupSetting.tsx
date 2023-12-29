@@ -478,7 +478,6 @@ const GroupSetting: FC<GroupSettingProps> = (props: GroupSettingProps) => {
             userInfo: UserInfoData & { type: 'add' | 'delete' },
             selectedUsers: UserInfoData[],
           ) => {
-            console.log('======', userInfo, selectedUsers);
             if (userInfo.type == 'add') {
               setSelectedOwner(userInfo);
             } else {

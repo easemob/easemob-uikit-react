@@ -203,8 +203,9 @@ const MessageInput = (props: MessageInputProps) => {
 
   useEffect(() => {
     if (
-      rootStore.messageStore.selectedMessage[currentCvs.chatType]?.[currentCvs.conversationId]
-        ?.selectable
+      rootStore.messageStore.selectedMessage[currentCvs.chatType as 'singleChat' | 'groupChat']?.[
+        currentCvs.conversationId
+      ]?.selectable
     ) {
       setIsShowSelect(true);
       setTextareaShow(false);
@@ -220,8 +221,9 @@ const MessageInput = (props: MessageInputProps) => {
       }
     }
   }, [
-    rootStore.messageStore.selectedMessage[currentCvs.chatType]?.[currentCvs.conversationId]
-      ?.selectable,
+    rootStore.messageStore.selectedMessage[currentCvs.chatType as 'singleChat' | 'groupChat']?.[
+      currentCvs.conversationId
+    ]?.selectable,
   ]);
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-editor', prefix);
@@ -292,6 +294,7 @@ const MessageInput = (props: MessageInputProps) => {
               return (
                 <Emoji
                   key={item.name}
+                  // @ts-ignore
                   onSelected={handleSelectEmoji}
                   onClick={handleClickEmojiIcon}
                 ></Emoji>
@@ -338,6 +341,7 @@ const MessageInput = (props: MessageInputProps) => {
             height={24}
             color={'#F9FAFA'}
             onClick={() => {
+              // @ts-ignore
               textareaRef.current?.sendMessage();
             }}
           ></Icon>

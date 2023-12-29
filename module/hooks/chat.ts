@@ -5,6 +5,7 @@ import { useClient } from './useClient';
 import { getStore } from '../store';
 import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
 import { useGroupMembersAttributes } from '../hooks/useAddress';
+import { BaseMessageType } from '../baseMessage/BaseMessage';
 import ts from 'typescript';
 const useEventHandler = () => {
   const rootStore = getStore();
@@ -31,7 +32,7 @@ const useEventHandler = () => {
         messageStore.receiveMessage(message);
       },
       onCmdMessage: message => {
-        const conversationId = getCvsIdFromMessage(message as unknown as ChatSDK.MessageBody);
+        const conversationId = getCvsIdFromMessage(message as BaseMessageType);
 
         const cvs = {
           chatType: message.chatType,
@@ -106,7 +107,7 @@ const useEventHandler = () => {
       },
 
       onReactionChange: data => {
-        const conversationId = getCvsIdFromMessage(data as unknown as ChatSDK.MessageBody);
+        const conversationId = getCvsIdFromMessage(data as unknown as BaseMessageType);
 
         const cvs = {
           chatType: data.chatType,
@@ -224,7 +225,7 @@ const useEventHandler = () => {
         conversationStore.setOnlineStatus(changeList);
       },
       // @ts-ignore
-      onCombineMessage: (message: ChatSDK.MessageBody) => {
+      onCombineMessage: (message: BaseMessageType) => {
         messageStore.receiveMessage(message);
       },
 
