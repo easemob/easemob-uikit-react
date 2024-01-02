@@ -294,7 +294,7 @@ const Chatroom = (props: ChatroomProps) => {
           )}
           <p></p>
 
-          <div style={{ position: 'relative', flex: '1' }}>
+          <div style={{ position: 'relative', flex: '1', overflow: 'hidden', display: 'flex' }}>
             {typeof renderBroadcast == 'function'
               ? renderBroadcast()
               : broadcast.length > 0 && (
