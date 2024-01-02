@@ -64,7 +64,7 @@ $chatroom-prefix-cls: #{$cui-prefix}-message-chatroom;
 }
 
 .#{$chatroom-prefix-cls}-text-box{
-    
+    cursor: default;
     padding-right: 30px;
     display: block;
     text-align: left;
