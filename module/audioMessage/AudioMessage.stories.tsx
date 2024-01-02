@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-
+import Provider from '../store/Provider';
 import AudioMessage from './index';
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
@@ -14,7 +14,15 @@ export default {
 } as ComponentMeta<typeof AudioMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof AudioMessage> = args => <AudioMessage {...args} />;
+const Template: ComponentStory<typeof AudioMessage> = args => (
+  <Provider
+    initConfig={{
+      appKey: 'a#b',
+    }}
+  >
+    <AudioMessage {...args} />
+  </Provider>
+);
 
 export const Primary = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
@@ -33,7 +41,7 @@ Primary.args = {
       url: 'hppt://example',
       filename: 'string',
       filetype: 'audio',
-      data: {} as Blob,
+      data: {} as unknown as File,
       length: 3,
       duration: 3,
     },

@@ -1,9 +1,10 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-
+import rootStore from '../store';
 import TextMessage from './index';
 import Icon, { IconProps } from '../../component/icon';
 import { FileObj } from '../types/messageType';
+import Provider from '../store/Provider';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
   title: 'Module/TextMessage',
@@ -13,7 +14,15 @@ export default {
 } as ComponentMeta<typeof TextMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof TextMessage> = args => <TextMessage {...args} />;
+const Template: ComponentStory<typeof TextMessage> = args => (
+  <Provider
+    initConfig={{
+      appKey: 'a#b',
+    }}
+  >
+    <TextMessage {...args} />
+  </Provider>
+);
 
 export const Primary = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
@@ -28,6 +37,11 @@ Primary.args = {
     from: 'myUserId',
     time: Date.now(),
     status: 'sent',
+    modifiedInfo: {
+      operatorId: '',
+      operationCount: 0,
+      operationTime: 0,
+    },
   },
 };
 
@@ -52,5 +66,12 @@ TextMessageWithReply.args = {
     },
     time: 1694523470608,
     onlineState: 3,
+    status: 'sent',
+    modifiedInfo: {
+      operatorId: '',
+      operationCount: 0,
+      operationTime: 0,
+    },
+    bySelf: false,
   },
 };
