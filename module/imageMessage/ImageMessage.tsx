@@ -37,7 +37,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     ...others
   } = props;
   let type = props.type;
-  let { bySelf, from, reactions } = message;
+  let { bySelf, from, reactions, status } = message;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-img', prefix);
   const context = useContext(RootContext);
@@ -322,6 +322,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         onClickThreadTitle={handleClickThreadTitle}
         bubbleStyle={{ background: 'transparent', padding: 0 }}
         shape={shape}
+        status={status}
         {...others}
       >
         <div className={classString} style={style}>

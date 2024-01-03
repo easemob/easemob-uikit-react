@@ -39,7 +39,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
     onUserIdCopied,
     ...others
   } = props;
-  let { bySelf, from, reactions } = message;
+  let { bySelf, from, reactions, status } = message;
 
   const { conversationStore, addressStore } = rootStore;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -301,6 +301,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
         chatThreadOverview={message.chatThreadOverview}
         onClickThreadTitle={handleClickThreadTitle}
         bubbleStyle={{ padding: '0' }}
+        status={status}
         {...others}
       >
         <div

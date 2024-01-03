@@ -25,6 +25,7 @@ import type {
   TextMessageType,
   FileMessageType,
   CustomMessageType,
+  VideoMessageType,
 } from '../types/messageType';
 export interface CombinedMessageProps extends BaseMessageProps {
   prefix?: string;
@@ -246,7 +247,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
             <VideoMessage
               select={false}
               key={msg.id}
-              videoMessage={msg}
+              videoMessage={msg as VideoMessageType & ChatSDK.VideoMsgBody}
               direction="ltr"
               type="secondly"
               reaction={false}
@@ -327,6 +328,18 @@ const CombinedMessage = (props: CombinedMessageProps) => {
       .then((data: any) => {
         combinedMessage.messages = data;
         createDetailContent(data);
+
+        // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+        if (
+          combinedMessage.chatType == 'singleChat' &&
+          combinedMessage.from != rootStore.client.context.userId &&
+          // @ts-ignore
+          combinedMessage.status != 'read' &&
+          !combinedMessage.isChatThread &&
+          combinedMessage.to == rootStore.client.context.userId
+        ) {
+          rootStore.messageStore.sendReadAck(combinedMessage.id, combinedMessage.from || '');
+        }
       })
       .catch(() => {
         setDetailContent(<div>download message failed</div>);

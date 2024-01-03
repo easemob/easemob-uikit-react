@@ -925,6 +925,20 @@ class MessageStore {
     this.message.broadcast.shift();
   }
 
+  sendReadAck(messageId: string, to: string) {
+    if (!messageId || !to) {
+      return console.error(`Invalid parameter, messageId: ${messageId}, to: ${to}`);
+    }
+
+    const readMsg = chatSDK.message.create({
+      type: 'read',
+      chatType: 'singleChat',
+      to: to,
+      id: messageId,
+    });
+    this.rootStore.client.send(readMsg);
+  }
+
   clear() {
     this.message = {
       singleChat: {},

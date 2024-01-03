@@ -38,7 +38,7 @@ const FileMessage = (props: FileMessageProps) => {
     ...baseMsgProps
   } = props;
 
-  const { filename, file_length, from, reactions } = fileMessage;
+  const { filename, file_length, from, reactions, status } = fileMessage;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
   let { bySelf } = fileMessage;
@@ -64,6 +64,18 @@ const FileMessage = (props: FileMessageProps) => {
       })
       .then(blob => {
         download(blob, filename);
+
+        // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+        if (
+          fileMessage.chatType == 'singleChat' &&
+          fileMessage.from != rootStore.client.context.userId &&
+          // @ts-ignore
+          fileMessage.status != 'read' &&
+          !fileMessage.isChatThread &&
+          fileMessage.to == rootStore.client.context.userId
+        ) {
+          rootStore.messageStore.sendReadAck(fileMessage.id, fileMessage.from || '');
+        }
       })
       .catch(err => {
         return false;
@@ -269,6 +281,7 @@ const FileMessage = (props: FileMessageProps) => {
       thread={_thread}
       chatThreadOverview={fileMessage.chatThreadOverview}
       onClickThreadTitle={handleClickThreadTitle}
+      status={status}
       {...baseMsgProps}
     >
       <div className={classString} style={style}>

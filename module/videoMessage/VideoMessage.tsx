@@ -14,11 +14,10 @@ import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 export interface VideoMessageProps extends BaseMessageProps {
-  videoMessage: ChatSDK.VideoMsgBody & { bySelf: boolean }; // 从SDK收到的视频消息
+  videoMessage: ChatSDK.VideoMsgBody & VideoMessageType; // 从SDK收到的视频消息
   prefix?: string;
   style?: React.CSSProperties;
   nickName?: string;
-  status?: 'received' | 'read' | 'sent' | 'sending';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   type?: 'primary' | 'secondly';
   className?: string;
@@ -39,7 +38,7 @@ const VideoMessage = (props: VideoMessageProps) => {
     ...baseMsgProps
   } = props;
 
-  let { bySelf, from, reactions } = videoMessage;
+  let { bySelf, from, reactions, status } = videoMessage;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-video', prefix);
@@ -234,6 +233,21 @@ const VideoMessage = (props: VideoMessageProps) => {
 
     rootStore.threadStore.getChatThreadDetail(videoMessage?.chatThreadOverview?.id || '');
   };
+
+  const handlePlayVideo = () => {
+    // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+    if (
+      videoMessage.chatType == 'singleChat' &&
+      videoMessage.from != rootStore.client.context.userId &&
+      // @ts-ignore
+      videoMessage.status != 'read' &&
+      !videoMessage.isChatThread &&
+      videoMessage.to == rootStore.client.context.userId
+    ) {
+      console.log('onPlay', videoMessage);
+      rootStore.messageStore.sendReadAck(videoMessage.id, videoMessage.from || '');
+    }
+  };
   return (
     <BaseMessage
       id={videoMessage.id}
@@ -261,6 +275,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       thread={_thread}
       chatThreadOverview={videoMessage.chatThreadOverview}
       onClickThreadTitle={handleClickThreadTitle}
+      status={status}
       // bubbleStyle={{ padding: '0' }}
       {...baseMsgProps}
     >
@@ -272,6 +287,7 @@ const VideoMessage = (props: VideoMessageProps) => {
           controls
           crossOrigin="anonymous"
           preload="metadata"
+          onPlay={handlePlayVideo}
           src={videoMessage.url || videoMessage.file.url}
           {...videoProps}
         ></video>

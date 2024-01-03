@@ -15,6 +15,7 @@ $img-msg-prefix-cls: #{$cui-prefix}-message-img;
         max-height: 300px;
         object-fit: contain;
         border-radius: 16px;
+        width: -webkit-fill-available;
     }
 
     &-square{

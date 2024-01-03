@@ -73,10 +73,16 @@ const useEventHandler = () => {
           setTimeout(() => {
             rootStore.messageStore.message?.[chatType]?.[from]
               ?.filter(message => {
-                //@ts-ignore
-                return message.status === 'received';
+                return (
+                  //@ts-ignore
+                  message.status === 'received' &&
+                  message.type != 'audio' &&
+                  message.type != 'video' &&
+                  message.type != 'file' &&
+                  message.type != 'combine'
+                );
               })
-              .map(receivedMessage => {
+              .forEach(receivedMessage => {
                 // @ts-ignore
                 receivedMessage.status = 'read';
               });

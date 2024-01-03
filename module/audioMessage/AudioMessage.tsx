@@ -85,11 +85,17 @@ const AudioMessage = (props: AudioMessageProps) => {
       .catch(err => {
         // console.error('err', err);
       });
-    // const time = audioMessage!.body!.length * 1000;
-    // const time = file.duration * 1000;
-    // setTimeout(() => {
-    // 	setPlayStatus(false);
-    // }, time + 200);
+
+    // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+    if (
+      audioMessage.chatType == 'singleChat' &&
+      audioMessage.from != rootStore.client.context.userId &&
+      audioMessage.status != 'read' &&
+      !audioMessage.isChatThread &&
+      audioMessage.to == rootStore.client.context.userId
+    ) {
+      rootStore.messageStore.sendReadAck(audioMessage.id, audioMessage.from);
+    }
   };
   const handlePlayEnd = () => {
     setPlayStatus(false);
