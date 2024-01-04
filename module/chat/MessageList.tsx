@@ -169,8 +169,15 @@ let MessageList: FC<MsgListProps> = props => {
           videoProps={{
             onCanPlay: () => {
               if (messageStore.unreadMessageCount <= 0) {
-                // listRef.current.scrollTo(listRef.current.scrollHeight);
-                // scrollToBottom();
+                //@ts-ignore
+                if (
+                  //@ts-ignore
+                  listRef.current.scrollHeight - listRef.current.scrollTop - 10 <
+                  //@ts-ignore
+                  msgContainerRef.current?.clientHeight
+                ) {
+                  scrollToBottom();
+                }
               }
             },
           }}

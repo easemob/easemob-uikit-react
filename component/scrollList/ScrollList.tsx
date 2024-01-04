@@ -51,6 +51,8 @@ let ScrollList = function <T>() {
       const containerRef = useRef<HTMLDivElement>(null);
       useImperativeHandle(ref, () => ({
         scrollTo: innerScrollTo,
+        scrollHeight: containerRef?.current?.scrollHeight || 0,
+        scrollTop: scrollTop,
       }));
 
       const innerScrollTo = (position: 'top' | 'bottom' | number) => {
@@ -67,7 +69,8 @@ let ScrollList = function <T>() {
             position || 0;
         }
       };
-
+      const [scrollTop, setScrollTop] = useState(0);
+      const [scrollBottom, setScrollBottom] = useState(0);
       useEffect(() => {
         const scrollEvent = (event: Event) => {
           onScroll?.(event);
@@ -78,13 +81,17 @@ let ScrollList = function <T>() {
           let scrollTop = (event.target as HTMLElement).scrollTop;
           //列表内容实际高度
           let offsetHeight = (event.target as HTMLElement).offsetHeight;
+          setScrollTop(scrollTop);
           // 滚动到顶加载更多
           if (scrollDirection === 'up' && scrollTop < 100) {
+            let offsetBottom = scrollHeight - (scrollTop + offsetHeight);
+            setScrollBottom(offsetBottom);
             run();
           }
           // scroll to bottom load data
           if (scrollDirection === 'down') {
             let offsetBottom = scrollHeight - (scrollTop + offsetHeight);
+            setScrollBottom(offsetBottom);
             if (offsetBottom < 50) {
               run();
             }
@@ -97,6 +104,16 @@ let ScrollList = function <T>() {
           containerRef.current?.removeEventListener('scroll', scrollEvent);
         };
       }, [hasMore, loading]);
+
+      // 监听当前滚动位置， 记录滚动位置， 当data数据变多时，设置滚动条位置为原来的位置
+      useEffect(() => {
+        if (containerRef.current) {
+          let scrollHeight = containerRef.current.scrollHeight;
+          //列表内容实际高度
+          let offsetHeight = containerRef.current.offsetHeight;
+          containerRef.current.scrollTop = scrollHeight - scrollBottom - offsetHeight;
+        }
+      }, [data.length]);
 
       return (
         <div className={classString} style={style} ref={containerRef}>
