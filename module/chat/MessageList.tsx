@@ -203,6 +203,7 @@ let MessageList: FC<MsgListProps> = props => {
     ) {
       return (
         <UserCardMessage
+          renderUserProfile={renderUserProfile}
           style={data.style}
           key={messageData[data.index].id}
           thread={isThread}

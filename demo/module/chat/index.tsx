@@ -256,11 +256,13 @@ const ChatApp: FC<any> = () => {
           {tab == 'chat' && (
             <>
               <Chat
-                messageListProps={{
-                  renderUserProfile: () => {
-                    return null;
-                  },
-                }}
+                messageListProps={
+                  {
+                    // renderUserProfile: a => {
+                    //   return null;
+                    // },
+                  }
+                }
                 messageEditorProps={{
                   enabledTyping: true,
                 }}

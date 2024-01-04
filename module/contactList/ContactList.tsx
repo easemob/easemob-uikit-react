@@ -5,7 +5,6 @@ import { ContactItem } from './ContactItem';
 import List from '../../component/list';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import { useParentName } from '../hooks/dom';
 import { useSize } from 'ahooks';
 import { Search } from '../../component/input/Search';
 import Header from '../header';
@@ -17,8 +16,6 @@ import UserItem, { UserInfoData } from '../../component/userItem';
 import { pinyin } from 'pinyin-pro';
 import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
-import ContactDetail from './ContactDetail';
-import { ContactRequest } from 'module/store/AddressStore';
 import { useTranslation } from 'react-i18next';
 // pinyin('汉语拼音', { toneType: 'none' }); // "han yu pin yin"
 export interface ContactListProps {
@@ -35,7 +32,7 @@ export interface ContactListProps {
   checkedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
   defaultCheckedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
 }
-// TODO 监听加好友 加群组 更新数据
+
 function getBrands(members: any) {
   if (members.length === 0) return [];
   const innerMembers = members.concat();
