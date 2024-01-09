@@ -231,7 +231,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         {t('sent')}
         <div>{t(giftData.giftName)}</div>
         <img src={giftData.giftIcon} alt="" className={`${prefixCls}-gift-img`} />
-        <div className={`${prefixCls}-gift-number`}>x1</div>
+        <div className={`${prefixCls}-gift-number`}>x{giftData.giftCount || 1}</div>
       </div>
     );
   };
