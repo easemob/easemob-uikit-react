@@ -10,7 +10,12 @@ export interface RootConsumerProps {
 
 export interface ContextProps {
   rootStore: RootStore;
-  initConfig: { appKey: string; token?: string; userId?: string };
+  initConfig: {
+    appKey: string;
+    token?: string;
+    userId?: string;
+    translationTargetLanguage?: string;
+  };
   client: ChatSDK.Connection;
   features?: {
     chat?: {

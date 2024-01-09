@@ -16,10 +16,11 @@ export interface ProviderProps {
     userId?: string;
     token?: string;
     password?: string;
+    translationTargetLanguage?: string;
   };
   local?: {
     fallbackLng?: string;
-    lng: 'zh' | 'en';
+    lng?: string;
     resources?: {
       [key: string]: {
         translation: {

@@ -143,7 +143,7 @@ const TextMessage = (props: TextMessageProps) => {
     renderUserProfile,
     thread,
     onTranslateTextMessage,
-    targetLanguage = 'en',
+    targetLanguage,
     showTranslation = true,
     onlyContent = false,
     ...others
@@ -158,6 +158,10 @@ const TextMessage = (props: TextMessageProps) => {
   let { bySelf, time, from, msg, reactions } = textMessage;
   const classString = classNames(prefixCls, className);
   const textareaRef = useRef<ForwardRefProps>(null);
+  const context = React.useContext(RootContext);
+  const { initConfig } = context;
+  const { translationTargetLanguage } = initConfig;
+  const targetLng = targetLanguage || translationTargetLanguage || 'en';
   const [modifyMessageVisible, setModifyMessageVisible] = useState<boolean>(false);
 
   let urlTxtClass = '';
@@ -326,7 +330,7 @@ const TextMessage = (props: TextMessageProps) => {
         },
         // @ts-ignore
         textMessage.mid || textMessage.id,
-        targetLanguage,
+        targetLng,
       )
       ?.then(() => {
         setTransStatus('translated');
