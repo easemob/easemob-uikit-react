@@ -76,6 +76,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     giftIcon: string;
     giftName: string;
     giftPrice: string;
+    giftCount: number;
   }) => {
     console.log('conversation', conversation);
     if (!currentConversation) {
@@ -108,6 +109,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     giftIcon: string;
     giftName: string;
     giftPrice: string;
+    giftCount: number;
   }) => {
     sendGiftMessage(giftData);
   };
@@ -132,7 +134,11 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
               visible: true,
               text: t('send'),
               onClick: () => {
-                handleSend(item);
+                const giftData = {
+                  ...item,
+                  giftCount: 1,
+                };
+                handleSend(giftData);
               },
             }}
             selected={selectedIndex == item.giftId}
