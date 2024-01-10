@@ -232,7 +232,26 @@ const ChatApp: FC<any> = () => {
         {tab == 'contact' && (
           <ContactList
             // className="conversation"
+            menu={[
+              'contacts',
+              'groups',
+              'requests',
+              {
+                title: 'block list',
+                data: [
+                  {
+                    remark: '张4',
+                    userId: 'zd1',
+                  },
+                  {
+                    groupname: '群1',
+                    groupid: '12',
+                  },
+                ],
+              },
+            ]}
             onItemClick={data => {
+              console.log('data', data);
               setContactData(data);
             }}
           ></ContactList>

@@ -24,7 +24,15 @@ export interface ContactListProps {
   prefix?: string;
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean;
   onItemClick?: (info: { id: string; type: 'contact' | 'group' | 'request'; name: string }) => void;
-  menu: ('contacts' | 'groups' | 'requests')[];
+  menu: (
+    | 'contacts'
+    | 'groups'
+    | 'requests'
+    | {
+        title: string;
+        data: ({ remark?: string; userId: string } | { groupname: string; groupid: string })[];
+      }
+  )[];
   hasMenu?: boolean; // 是否显示分类的menu, 默认值true, 只有menu中只有一个条目时才能设置false
   checkable?: boolean; // 是否显示checkbox
   onCheckboxChange?: (checked: boolean, data: UserInfoData) => void;
@@ -156,13 +164,16 @@ let ContactList: FC<ContactListProps> = props => {
   };
   // 渲染联系人列表
   useEffect(() => {
-    let renderData: { contacts: any; groups: any; newRequests: any } = {} as any;
+    let renderData: { contacts: any; groups: any; newRequests: any } & Record<string, any> =
+      {} as any;
 
     menu.forEach(item => {
       if (item == 'requests') {
         renderData.newRequests = [];
-      } else {
+      } else if (item == 'contacts' || item == 'groups') {
         renderData[item] = undefined;
+      } else {
+        renderData[item.title] = item.data;
       }
     });
     menu.forEach(item => {
@@ -172,6 +183,8 @@ let ContactList: FC<ContactListProps> = props => {
         renderData.groups = getBrands(addressStore.groups);
       } else if (item == 'requests') {
         renderData.newRequests = addressStore.requests;
+      } else {
+        renderData[item.title] = getBrands(item.data);
       }
     });
     let menuNode = Object.keys(renderData).map((menuItem, index2) => {
