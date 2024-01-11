@@ -15,6 +15,7 @@ export interface ContextProps {
     token?: string;
     userId?: string;
     translationTargetLanguage?: string;
+    useUserInfo?: boolean;
   };
   client: ChatSDK.Connection;
   features?: {

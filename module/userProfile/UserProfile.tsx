@@ -10,6 +10,7 @@ import Button from '../../component/button';
 import Icon from '../../component/icon';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
+import { RootContext } from '../store/rootContext';
 export interface UserProfileProps {
   prefix?: string;
   className?: string;
@@ -26,8 +27,11 @@ const UserProfile = (props: UserProfileProps) => {
   const { avatarurl, nickname, isOnline } = addressStore.appUsersInfo?.[userId] || {};
   const { t } = useTranslation();
   const { conversationStore } = rootStore;
+  const context = React.useContext(RootContext);
+  const { initConfig } = context;
+  const { useUserInfo } = initConfig;
   useEffect(() => {
-    if (!addressStore.appUsersInfo?.[userId]) {
+    if (!addressStore.appUsersInfo?.[userId] && useUserInfo) {
       getUsersInfo({
         userIdList: [userId],
       });

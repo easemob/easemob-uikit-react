@@ -138,7 +138,8 @@ let ContactList: FC<ContactListProps> = props => {
   const [addressNode, setAddressNode] = useState<JSX.Element[]>([]);
   const { t } = useTranslation();
   const context = useContext(RootContext);
-  const { rootStore, theme, features } = context;
+  const { rootStore, theme, features, initConfig } = context;
+  const { useUserInfo: useUserInfoConfig } = initConfig;
   const themeMode = theme?.mode || 'light';
   const { addressStore } = rootStore;
   const classString = classNames(
@@ -151,7 +152,10 @@ let ContactList: FC<ContactListProps> = props => {
 
   // 获取联系人列表
   useContacts();
-  useUserInfo('contacts');
+  if (useUserInfoConfig) {
+    useUserInfo('contacts');
+  }
+
   const { getJoinedGroupList } = useGroups();
   getJoinedGroupList();
 

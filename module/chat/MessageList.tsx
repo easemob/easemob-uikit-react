@@ -67,7 +67,9 @@ let MessageList: FC<MsgListProps> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
   const classString = classNames(prefixCls, className);
-
+  const context = useContext(RootContext);
+  const { initConfig } = context;
+  const { useUserInfo } = initConfig;
   const msgContainerRef = useRef<HTMLDivElement>(null);
 
   const currentCVS = conversation ? conversation : messageStore.currentCVS || {};
@@ -234,7 +236,10 @@ let MessageList: FC<MsgListProps> = props => {
       (listRef?.current as any)?.scrollTo('bottom');
       if (currentCVS && currentCVS.chatType === 'groupChat') {
         if (!currentCVS.conversationId) return;
-        const { getGroupMemberList } = useGroupMembers(currentCVS.conversationId);
+        const { getGroupMemberList } = useGroupMembers(
+          currentCVS.conversationId,
+          useUserInfo ?? true,
+        );
         const { getGroupAdmins } = useGroupAdmins(currentCVS.conversationId);
         getGroupAdmins();
         getGroupMemberList?.();

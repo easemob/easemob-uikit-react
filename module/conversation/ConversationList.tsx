@@ -64,7 +64,8 @@ let Conversations: FC<ConversationListProps> = props => {
   const [renderData, setRenderData] = useState<ConversationData>([]);
   const [initRenderData, setInitRenderData] = useState<ConversationData>([]);
   const context = useContext(RootContext);
-  const { rootStore, features, theme } = context;
+  const { rootStore, features, theme, initConfig } = context;
+  const { useUserInfo: useUserInfoConfig } = initConfig;
   const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
@@ -80,7 +81,9 @@ let Conversations: FC<ConversationListProps> = props => {
   const globalConfig = features?.conversationList || {};
 
   const withPresence = presence || globalConfig?.item?.presence != false;
-  useUserInfo('conversation', withPresence);
+  if (useUserInfoConfig) {
+    useUserInfo('conversation', withPresence);
+  }
 
   const groupData = rootStore.addressStore.groups;
   // 获取加入群组，把群组名放在 conversationList
@@ -180,9 +183,11 @@ let Conversations: FC<ConversationListProps> = props => {
         }
       });
       getJoinedGroupList();
-      getUsersInfo({
-        userIdList: [rootStore.client.user],
-      });
+      if (useUserInfoConfig) {
+        getUsersInfo({
+          userIdList: [rootStore.client.user],
+        });
+      }
     }
   }, [rootStore.loginState]);
 

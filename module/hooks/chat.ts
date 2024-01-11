@@ -11,6 +11,9 @@ const useEventHandler = () => {
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
   const client = rootStore.client;
+  const context = useContext(RootContext);
+  const { initConfig } = context;
+  const { useUserInfo } = initConfig;
   useEffect(() => {
     client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
@@ -254,7 +257,9 @@ const useEventHandler = () => {
           type: 'subscribe',
           requestStatus: 'pending',
         });
-        addressStore.getUserInfo(message.from);
+        if (useUserInfo) {
+          addressStore.getUserInfo(message.from);
+        }
       },
       onContactDeleted: message => {
         console.log('onContactDeleted', message);

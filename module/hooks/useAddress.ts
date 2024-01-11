@@ -4,7 +4,7 @@ import { getStore } from '../store/index';
 import { getGroupItemFromGroupsById } from '../../module/utils';
 import { getUsersInfo } from '../utils';
 import { ChatSDK } from 'module/SDK';
-
+import { eventHandler } from '../../eventHandler';
 const useContacts = () => {
   const rootStore = useContext(RootContext).rootStore;
 
@@ -29,9 +29,11 @@ const useContacts = () => {
           }));
           setContacts(contacts || []);
           addressStore.setContacts(contacts);
+          eventHandler.dispatchSuccess('getAllContacts');
         })
         .catch(err => {
           console.warn('get contacts failed', err);
+          eventHandler.dispatchError('getAllContacts', err);
         });
   }, [rootStore.loginState]);
   return contacts;
@@ -78,6 +80,10 @@ const useGroups = () => {
         } else {
           addressStore.setHasGroupsNext(false);
         }
+        eventHandler.dispatchSuccess('getJoinedGroups');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('getJoinedGroups', error);
       });
   };
 
@@ -86,7 +92,7 @@ const useGroups = () => {
   };
 };
 
-const useGroupMembers = (groupId: string) => {
+const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
   if (!groupId) return {};
   const pageSize = 20;
   let pageNum = 1;
@@ -112,6 +118,13 @@ const useGroupMembers = (groupId: string) => {
           }) || [];
 
         userIds.length && useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
+        if (withUserInfo == true) {
+          getUsersInfo({
+            userIdList: userIds,
+            withPresence: false,
+          });
+        }
+
         if ((res.data?.length || 0) === pageSize) {
           pageNum++;
           getGroupMemberList();

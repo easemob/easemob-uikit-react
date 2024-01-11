@@ -121,6 +121,18 @@ const ChatApp: FC<any> = () => {
   };
 
   useEffect(() => {
+    console.log('*******', rootStore.addressStore.contacts);
+    rootStore.addressStore.setAppUserInfo({
+      ...rootStore.addressStore.appUsersInfo,
+      lxm: {
+        userId: 'lxm',
+        nickname: '自定义名称',
+        avatarurl: 'https://cdn4.iconfinder.com/data/icons/small-n-flat/24/cat-512.png',
+      },
+    });
+  }, [rootStore.addressStore.contacts.length]);
+
+  useEffect(() => {
     console.log('变化了 showThreadPanel');
   }, [thread.showThreadPanel]);
 
@@ -375,6 +387,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: 'easemob#easeim',
         userId: 'zd2',
         password: '1',
+        useUserInfo: true,
         // token:
         //   '007eJxTYFBRW8PxsjzKTEt3t/q21aylFwrC37GaPK73k382686EjO8KDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJh06XpTYEMjIY6nO0MjKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAHZsmnQ==',
         // appKey: 'easemob#easeim',

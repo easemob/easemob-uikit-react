@@ -48,8 +48,8 @@ const useAddressContext = () => {
     };
   }, []);
 
-  const getGroupMembers = (groupId: string) => {
-    const { getGroupMemberList } = useGroupMembers(groupId);
+  const getGroupMembers = (groupId: string, withUserInfo: boolean) => {
+    const { getGroupMemberList } = useGroupMembers(groupId, withUserInfo);
     return getGroupMemberList?.();
   };
   return {

@@ -57,7 +57,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('groupSetting', prefix);
   const context = useContext(RootContext);
-  const { rootStore, theme, features } = context;
+  const { rootStore, theme, features, initConfig } = context;
   const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
   const componentsShape = theme?.componentsShape || 'ground';
@@ -73,8 +73,8 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const memberBoxClass = classNames(`${prefixCls}-member-box`, {
     [`${prefixCls}-${themeMode}`]: !!themeMode,
   });
-
-  const { getGroupMemberList } = useGroupMembers(conversation.conversationId);
+  const { useUserInfo } = initConfig;
+  const { getGroupMemberList } = useGroupMembers(conversation.conversationId, useUserInfo ?? true);
   if (conversation.conversationId) {
     getGroupMemberList?.();
   }

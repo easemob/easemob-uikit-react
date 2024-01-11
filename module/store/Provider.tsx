@@ -17,6 +17,7 @@ export interface ProviderProps {
     token?: string;
     password?: string;
     translationTargetLanguage?: string;
+    useUserInfo?: boolean;
   };
   local?: {
     fallbackLng?: string;
