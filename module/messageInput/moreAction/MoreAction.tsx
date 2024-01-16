@@ -287,7 +287,11 @@ let MoreAction = (props: MoreActionProps) => {
     } else {
       messageStore.sendMessage(fileMessage);
     }
-    fileEl!.current!.value = '';
+    if (type === 'file') {
+      fileEl!.current!.value = '';
+    } else {
+      videoEl!.current!.value = '';
+    }
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
