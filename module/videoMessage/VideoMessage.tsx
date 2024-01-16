@@ -288,6 +288,7 @@ const VideoMessage = (props: VideoMessageProps) => {
           crossOrigin="anonymous"
           preload="metadata"
           onPlay={handlePlayVideo}
+          poster={videoMessage.thumb}
           src={videoMessage.url || videoMessage.file.url}
           {...videoProps}
         ></video>
