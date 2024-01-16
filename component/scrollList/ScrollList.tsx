@@ -107,7 +107,7 @@ let ScrollList = function <T>() {
 
       // 监听当前滚动位置， 记录滚动位置， 当data数据变多时，设置滚动条位置为原来的位置
       useEffect(() => {
-        if (containerRef.current) {
+        if (containerRef.current && scrollDirection == 'up') {
           let scrollHeight = containerRef.current.scrollHeight;
           //列表内容实际高度
           let offsetHeight = containerRef.current.offsetHeight;
