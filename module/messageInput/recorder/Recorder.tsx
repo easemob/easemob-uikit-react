@@ -150,8 +150,8 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         filename: 'audio-message.wav',
         filetype: 'audio',
         data: blob,
-        length: duration,
-        duration: duration,
+        length: duration < 1 ? 1 : duration,
+        duration: duration < 1 ? 1 : duration,
       };
       MediaStream.getTracks()[0].stop();
 
@@ -161,7 +161,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         chatType: currentCVS.chatType,
         file: uri,
         filename: '',
-        length: duration,
+        length: duration < 1 ? 1 : duration,
         isChatThread,
       });
 

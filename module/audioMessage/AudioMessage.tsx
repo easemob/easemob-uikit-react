@@ -101,7 +101,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     setPlayStatus(false);
   };
 
-  const duration = length || file.duration;
+  const duration = Number.isInteger(length) ? length : file.duration || 0;
   const style = {
     width: `calc(208px * ${duration / 15} + 40px)`,
     maxWidth: '50vw',
