@@ -289,7 +289,7 @@ const VideoMessage = (props: VideoMessageProps) => {
           preload="metadata"
           onPlay={handlePlayVideo}
           poster={videoMessage.thumb}
-          src={videoMessage.url || videoMessage.file.url}
+          src={videoMessage.url}
           {...videoProps}
         ></video>
       </div>
