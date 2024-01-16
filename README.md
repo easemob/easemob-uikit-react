@@ -401,7 +401,7 @@ class App extends Component {
     return (
       <Provider
         initConfig={{
-          appKey: 'you app key',
+          appKey: 'your app key',
         }}
       >
         <ChatApp />

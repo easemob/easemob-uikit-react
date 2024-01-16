@@ -1,13 +1,13 @@
 # UIKitProvider
 
-`agora-chat-uikit` 提供 `UIKitProvider` 组件来管理数据。 `UIKitProvider` 不渲染任何 UI, 只用来为其他组件提供全局的 context，它自动监听 SDK 事件, 在组件树中向下传递数据来驱动组件更新，UIKit 中其他组件必须用 `UIKitProvider` 包裹。
+`easemob-chat-uikit` 提供 `UIKitProvider` 组件来管理数据。 `UIKitProvider` 不渲染任何 UI, 只用来为其他组件提供全局的 context，它自动监听 SDK 事件, 在组件树中向下传递数据来驱动组件更新，UIKit 中其他组件必须用 `UIKitProvider` 包裹。
 
 ## 使用示例
 
 ```jsx
 import React from 'react';
-import { UIKitProvider } from 'agora-chat-uikit';
-import 'agora-chat-uikit/style.css';
+import { UIKitProvider } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
 import ChatApp from './ChatApp'
 ReactDOM.createRoot(document.getElementById('root') as Element).render(
   <div>
@@ -22,8 +22,8 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
         resources: {
           en: {
             translation: {
-              'module.conversationTitle': 'Conversation List',
-              'module.deleteCvs': 'Delete Conversation',
+              'conversationTitle': 'Conversation List',
+              'deleteCvs': 'Delete Conversation',
               // ...
             },
           },
@@ -82,9 +82,9 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
 
 <table>
     <tr>
-        <td>Props</td>
-        <td>Type</td>
-        <td>Description</td>
+        <td>参数</td>
+        <td>类型</td>
+        <td>描述</td>
     </tr>
     <tr>
       <td style=font-size:10px>
@@ -121,15 +121,6 @@ ReactDOM.createRoot(document.getElementById('root') as Element).render(
        ProviderProps['reactionConfig']
         </td>
 	   <td style=font-size:10px>全局配置消息表情回复功能的表情，如果在消息组件中也设置了这个参数，会以消息组件中设置的为准。</td>
-	   </tr>
-       <tr>
-	   <td style=font-size:10px>
-       onError
-        </td>
-        <td style=font-size:10px>
-       ProviderProps['onError']
-        </td>
-	   <td style=font-size:10px>SDK 的 onError 事件。</td>
 	   </tr>
        
 </table>

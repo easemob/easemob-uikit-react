@@ -1,17 +1,17 @@
 # ConversationList
 
-`ConversationList` 组件用来展示当前用户的所有会话 (包含一对一单聊和群聊, 但是不包括聊天室)，并且提供搜索和删除会话功能。 对于单聊, 会话展示出的名称是对方的昵称，如果对方没有设置昵称则展示对方的 user ID，会话头像是对方的头像，如果没有设置则使用默认头像。 对于群聊会话名称是当前群组的名称，头像是默认头像。
+`ConversationList` 组件用来展示当前用户的所有会话 (包含一对一单聊和群聊, 但是不包括聊天室)，并且提供搜索，删除，置顶，免打扰功能。 对于单聊, 会话展示出的名称是对方的昵称，如果对方没有设置昵称则展示对方的 user ID，会话头像是对方的头像，如果没有设置则使用默认头像。 对于群聊会话名称是当前群组的名称，头像是默认头像。
 
 ## 使用示例
 
 ```jsx
-import React, { useEffect, useState } from "react";
-import { ConversationList } from "agora-chat-uikit";
-import "agora-chat-uikit/style.css";
+import React, { useEffect, useState } from 'react';
+import { ConversationList } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
 
 const Conversation = () => {
   return (
-    <div style={{ width: "30%", height: "100%" }}>
+    <div style={{ width: '30%', height: '100%' }}>
       <ConversationList />
     </div>
   );
@@ -29,14 +29,14 @@ const Conversation = () => {
 给组件添加 `className` 来定义样式
 
 ```jsx
-import React from "react";
-import { ConversationList } from "agora-chat-uikit";
-import "agora-chat-uikit/style.css";
-import "./index.css";
+import React from 'react';
+import { ConversationList } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
+import './index.css';
 
 const Conversation = () => {
   return (
-    <div style={{ width: "30%", height: "100%" }}>
+    <div style={{ width: '30%', height: '100%' }}>
       <ConversationList className="conversation" />
     </div>
   );
@@ -47,7 +47,7 @@ Define the conversation UI style in index.css:
 
 ```css
 .conversation {
-  background-color: "#03A9F4";
+  background-color: '#03A9F4';
   height: 100%;
   width: 100%;
 }
@@ -58,13 +58,13 @@ Define the conversation UI style in index.css:
 2. 自定义 `ConversationList` 组件的 header 元素。
 
 ```jsx
-import React from "react";
-import { ConversationList, Header, Avatar } from "agora-chat-uikit";
-import "agora-chat-uikit/style.css";
+import React from 'react';
+import { ConversationList, Header, Avatar } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
 
 const Conversation = () => {
   return (
-    <div style={{ width: "30%", height: "100%" }}>
+    <div style={{ width: '30%', height: '100%' }}>
       <ConversationList
         renderHeader={() => (
           <Header
@@ -74,9 +74,9 @@ const Conversation = () => {
               visible: true,
               actions: [
                 {
-                  content: "my info",
+                  content: 'my info',
                   onClick: () => {
-                    console.log("my info");
+                    console.log('my info');
                   },
                 },
               ],
@@ -97,29 +97,29 @@ const Conversation = () => {
 - 使用 `ConversationItem` 组件的 props 来自定义组件。
 
 ```jsx
-import React from "react";
-import { ConversationList, ConversationItem, Avatar } from "agora-chat-uikit";
-import "agora-chat-uikit/style.css";
-import "./index.css";
+import React from 'react';
+import { ConversationList, ConversationItem, Avatar } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
+import './index.css';
 
 const Conversation = () => {
   // Maps the user ID of the peer user in the one-to-one chat to the nickname of the peer user.
   const idToName = {
-    userId1: "name1",
-    zd2: "Henry 2",
+    userId1: 'name1',
+    zd2: 'Henry 2',
   };
   return (
-    <div style={{ width: "30%", height: "100%" }}>
+    <div style={{ width: '30%', height: '100%' }}>
       <ConversationList
         className="conversation"
-        renderItem={(cvs) => {
+        renderItem={cvs => {
           return (
             <ConversationItem
               avatar={
                 <Avatar
                   size="normal"
                   shape="square"
-                  style={{ background: "yellow", color: "black" }}
+                  style={{ background: 'yellow', color: 'black' }}
                 >
                   {idToName[cvs.conversationId] || cvs.conversationId}
                 </Avatar>
@@ -146,21 +146,16 @@ const Conversation = () => {
 - 使用 `addConversation` 方法添加一个会话。
 
 ```jsx
-import React from "react";
-import {
-  ConversationList,
-  ConversationItem,
-  rootStore,
-  Button,
-} from "agora-chat-uikit";
-import "agora-chat-uikit/style.css";
+import React from 'react';
+import { ConversationList, ConversationItem, rootStore, Button } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
 
 const Conversation = () => {
   // Pins a conversation.
   const topConversation = () => {
     rootStore.conversationStore.topConversation({
-      chatType: "singleChat", // For group chats, the value is `groupChat`.
-      conversationId: "userID", // Enter a conversation ID obtained from your conversation list.
+      chatType: 'singleChat', // For group chats, the value is `groupChat`.
+      conversationId: 'userID', // Enter a conversation ID obtained from your conversation list.
       lastMessage: {},
     });
   };
@@ -168,16 +163,16 @@ const Conversation = () => {
   // Creates a new conversation.
   const createConversation = () => {
     rootStore.conversationStore.addConversation({
-      chatType: "singleChat",
-      conversationId: "conversationId",
+      chatType: 'singleChat',
+      conversationId: 'conversationId',
       lastMessage: {},
       unreadCount: 3,
     });
   };
   return (
-    <div style={{ width: "30%", height: "100%" }}>
+    <div style={{ width: '30%', height: '100%' }}>
       <ConversationList
-        renderItem={(cvs) => {
+        renderItem={cvs => {
           return (
             <ConversationItem
               moreAction={{
@@ -185,10 +180,10 @@ const Conversation = () => {
                 actions: [
                   {
                     // UIKit provides the conversation deletion event by default.
-                    content: "DELETE",
+                    content: 'DELETE',
                   },
                   {
-                    content: "Top Conversation",
+                    content: 'Top Conversation',
                     onClick: topConversation,
                   },
                 ],
@@ -242,9 +237,9 @@ $cvs-item-time-margin-bottom: 9px;
 
 <table>
     <tr>
-        <td>Props</td>
-        <td>Type</td>
-        <td>Description</td>
+        <td>参数</td>
+        <td>类型</td>
+        <td>描述</td>
     </tr>
     <tr>
      <td style=font-size:10px>
@@ -254,42 +249,42 @@ $cvs-item-time-margin-bottom: 9px;
     String
 	  </td>
 	  <td style=font-size:10px>
-	  Component class name.
+	  组件的类名
 	  </td>
 	  <tr>
 		<td style=font-size:10px>prefix</td>
         <td style=font-size:10px>String</td>
-		<td style=font-size:10px>The prefix of the CSS class name.</td>
+		<td style=font-size:10px>CSS 类名的前缀</td>
 	  </tr>
 	  <tr>
 		<td style=font-size:10px>headerProps</td>
         <td style=font-size:10px>HeaderProps</td>
-		<td style=font-size:10px>Props for the Header component.</td>
+		<td style=font-size:10px>Header 组件的参数</td>
 	  </tr>
 	  <tr>
 		<td style=font-size:10px>itemProps</td>
         <td style=font-size:10px>ConversationItemProps</td>
-		<td style=font-size:10px>Props for the ConversationItem component.</td>
+		<td style=font-size:10px>ConversationItem 组件的参数</td>
 	  </tr>
 	   <tr>
 		<td style=font-size:10px>renderHeader</td>
         <td style=font-size:10px>() => React.ReactNode</td>
-		<td style=font-size:10px>Renders the custom header.</td> 
+		<td style=font-size:10px>自定义渲染 Header 组件的方法</td> 
 	  </tr>
 	  <tr>
 		<td style=font-size:10px>renderSearch</td>
         <td style=font-size:10px>() => React.ReactNode</td>
-		<td style=font-size:10px>Renders the custom search component.</td> 
+		<td style=font-size:10px>自定义渲染 Search 组件的方法</td> 
 	  </tr>
 	  <tr>
 		<td style=font-size:10px>onItemClick</td>
         <td style=font-size:10px>(data: ConversationData[0]) => void</td>
-		<td style=font-size:10px>Event of click on the conversation list item.</td> 
+		<td style=font-size:10px>点击会话列表中每个会话的回调事件</td> 
 	  </tr>
 	  <tr>
 		<td style=font-size:10px>onSearch</td>
         <td style=font-size:10px>(e: React.ChangeEvent<HTMLInputElement>) => boolean</td>
-		<td style=font-size:10px>Search input change event. If the function returns `false`, the default search behavior is prevented and users can search according to their own conditions.</td>
+		<td style=font-size:10px> 搜索输入框的 change 事件，当函数返回 false 时，会组织默认的搜索行为，你可以使用自己的搜索条件来搜索</td>
 	  </tr>
    </tr>
 </table>
