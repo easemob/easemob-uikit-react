@@ -24,7 +24,7 @@ export interface ContactListProps {
   prefix?: string;
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean;
   onItemClick?: (info: { id: string; type: 'contact' | 'group' | 'request'; name: string }) => void;
-  menu: (
+  menu?: (
     | 'contacts'
     | 'groups'
     | 'requests'

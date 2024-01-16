@@ -49,7 +49,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
   const themeMode = theme?.mode || 'light';
   const myUserId = rootStore.client.user;
   const { appUsersInfo } = rootStore.addressStore;
-  const path = emoji.map[reaction as keyof typeof emoji.map];
+  const path = emoji.oldMap[reaction as keyof typeof emoji.oldMap];
 
   const classString = classNames(
     prefixCls,

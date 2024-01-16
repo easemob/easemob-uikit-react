@@ -13,7 +13,7 @@ import Button from '../../component/button';
 import Avatar from '../../component/avatar';
 import Icon from '../../component/icon';
 import { MessageList } from '../../module/chat/MessageList';
-import MessageEditor from '../../module/messageEditor';
+import MessageEditor from '../../module/messageInput';
 import TextMessage from '../../module/textMessage';
 import './index.css';
 import AgoraChat from 'agora-chat';
@@ -107,7 +107,7 @@ const ChatApp = () => {
       <div style={{ width: '65%', borderLeft: '1px solid transparent' }}>
         <Chat
           renderMessageList={() => <MessageList renderMessage={renderMessage} />}
-          renderMessageEditor={() => <MessageEditor actions={actions} />}
+          renderMessageInput={() => <MessageEditor actions={actions} />}
         ></Chat>
       </div>
       <Button onClick={setCurrentCvs}>setCurrentCvs</Button>

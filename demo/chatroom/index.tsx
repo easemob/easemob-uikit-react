@@ -8,7 +8,7 @@ import { useClient } from '../../module/hooks/useClient';
 import Button from '../../component/button';
 import ChatroomMessage from '../../module/chatroomMessage';
 // import { Gift, GiftKeyboard } from '../../module/messageEditor/gift';
-import MessageEditor from '../../module/messageEditor';
+import MessageEditor from '../../module/messageInput';
 import Chatroom from '../../module/chatroom';
 import ChatroomMember from '../../module/chatroomMember';
 import { MessageList } from '../../module/chat/MessageList';
@@ -95,7 +95,7 @@ const ChatApp = observer(() => {
             //     renderMessage={renderMessage}
             //   />
             // )}
-            messageEditorProps={{
+            messageInputProps={{
               giftKeyboardProps: {
                 giftConfig: {
                   gifts: [
