@@ -27,7 +27,7 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
     }
 
     &-content {
-        position: relative;
+        // position: relative;
         background-color: $modal-content-bg;
         background-clip: padding-box;
         border: 0;

@@ -132,6 +132,8 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       },
       // @ts-ignore
       message.mid || message.id,
+      false,
+      true,
     );
   };
   const muteMember = () => {

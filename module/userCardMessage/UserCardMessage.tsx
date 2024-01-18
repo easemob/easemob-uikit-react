@@ -142,6 +142,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
       // @ts-ignore
       message.mid || message.id,
       message.isChatThread,
+      true,
     );
   };
 

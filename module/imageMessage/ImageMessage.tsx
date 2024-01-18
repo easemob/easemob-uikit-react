@@ -199,6 +199,7 @@ let ImageMessage = (props: ImageMessageProps) => {
       // @ts-ignore
       message.mid || message.id,
       message.isChatThread,
+      true,
     );
   };
 

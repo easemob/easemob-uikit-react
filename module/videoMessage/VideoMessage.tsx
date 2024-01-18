@@ -143,6 +143,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       // @ts-ignore
       videoMessage.mid || videoMessage.id,
       videoMessage.isChatThread,
+      true,
     );
   };
   let conversationId = getCvsIdFromMessage(videoMessage);

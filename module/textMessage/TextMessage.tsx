@@ -306,6 +306,7 @@ const TextMessage = (props: TextMessageProps) => {
       // @ts-ignore
       textMessage.mid || textMessage.id,
       textMessage.isChatThread,
+      true,
     );
   };
 

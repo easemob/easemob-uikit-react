@@ -578,7 +578,12 @@ class MessageStore {
       });
   }
 
-  recallMessage(cvs: CurrentConversation, messageId: string, isChatThread: boolean = false) {
+  recallMessage(
+    cvs: CurrentConversation,
+    messageId: string,
+    isChatThread: boolean = false,
+    recallMySelfMsg: boolean = false,
+  ) {
     if (!cvs || !messageId) {
       throw new Error('recallMessage params error');
     }
@@ -600,7 +605,7 @@ class MessageStore {
     const messages = getMessages(conversation);
     if (!messages) return;
     const msgIndex = getMessageIndex(messages, messageId);
-    if (messages[msgIndex].from !== this.rootStore.client.user) {
+    if (!recallMySelfMsg) {
       if (msgIndex > -1) {
         messages[msgIndex].type = 'recall';
         //@ts-ignore
@@ -616,6 +621,7 @@ class MessageStore {
       this.rootStore.conversationStore.modifyConversation(conversation);
       return;
     }
+
     // mySelf recall the message
     return this.rootStore.client
       .recallMessage({
