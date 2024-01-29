@@ -26,7 +26,9 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
             .#{$text-msg-prefix-cls}-translation-text {
                 color: $special-3;
             }
-
+            .#{$text-msg-prefix-cls}-translation-line {
+                border-top: 1px solid $blue-8;
+            }
             .#{$text-msg-prefix-cls}-translation-action {
                 &>div>svg {
                     fill: $blue-9;

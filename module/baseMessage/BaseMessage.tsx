@@ -395,7 +395,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                 onClick={deleteMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="DELETE" width={16} height={16} color="#5270AD"></Icon>
+                <Icon type="DELETE" width={16} height={16}></Icon>
                 {t('delete')}
               </li>
             );
@@ -406,7 +406,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                 onClick={replyMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="ARROW_TURN_LEFT" width={16} height={16} color="#5270AD"></Icon>
+                <Icon type="ARROW_TURN_LEFT" width={16} height={16}></Icon>
                 {t('reply')}
               </li>
             );
@@ -418,7 +418,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   onClick={recallMessage}
                   className={themeMode == 'dark' ? 'cui-li-dark' : ''}
                 >
-                  <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
+                  <Icon type="ARROW_BACK" width={16} height={16}></Icon>
                   {t('unsend')}
                 </li>
               )
@@ -431,7 +431,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   onClick={translateMessage}
                   className={themeMode == 'dark' ? 'cui-li-dark' : ''}
                 >
-                  <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
+                  <Icon type="TRANSLATION" width={16} height={16}></Icon>
                   {t('translate')}
                 </li>
               )
@@ -445,7 +445,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   onClick={modifyMessage}
                   className={themeMode == 'dark' ? 'cui-li-dark' : ''}
                 >
-                  <Icon type="MODIFY_MESSAGE" width={16} height={16} color="#5270AD"></Icon>
+                  <Icon type="MODIFY_MESSAGE" width={16} height={16}></Icon>
                   {t('modify')}
                 </li>
               )
@@ -457,7 +457,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                 onClick={selectMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="SELECT" width={16} height={16} color="#5270AD"></Icon>
+                <Icon type="SELECT" width={16} height={16}></Icon>
                 {t('select')}
               </li>
             );
@@ -468,7 +468,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                 onClick={resendMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="LOOP" width={16} height={16} color="#5270AD"></Icon>
+                <Icon type="LOOP" width={16} height={16}></Icon>
                 {t('resend')}
               </li>
             );

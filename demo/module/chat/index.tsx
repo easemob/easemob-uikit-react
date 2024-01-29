@@ -249,7 +249,7 @@ const ChatApp: FC<any> = () => {
               'groups',
               'requests',
               {
-                title: 'block list',
+                title: 'Block list',
                 data: [
                   {
                     remark: '张4',
@@ -393,7 +393,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         // appKey: 'easemob#easeim',
       }}
       theme={{
-        primaryColor: '#33ffaa',
+        // primaryColor: '#33ffaa',
         mode: 'light',
         bubbleShape: 'square',
         avatarShape: 'square',
@@ -431,7 +431,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
           message: {
             status: true,
             reaction: true,
-            thread: false,
+            thread: true,
             recall: true,
             translate: true,
             edit: true,
