@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
@@ -46,6 +46,18 @@ const SelectedControls = (props: SelectedControlsProps) => {
     rootStore.messageStore.selectedMessage[currentCVS.chatType][currentCVS.conversationId]
       ?.selectedMessage || [];
 
+  const handleKeyDown = (event: { keyCode: number }) => {
+    if (event.keyCode === 27) {
+      // 27 是Esc键的键盘码
+      close();
+    }
+  };
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown, false);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, false);
+    };
+  }, []);
   const close = () => {
     rootStore.messageStore.setSelectedMessage(currentCVS, {
       selectable: false,
@@ -61,13 +73,13 @@ const SelectedControls = (props: SelectedControlsProps) => {
     if (selectedMessages.length == 0) {
       return;
     }
-    selectedMessages = selectedMessages.sort((a, b) => {
+    selectedMessages = selectedMessages.sort((a: { time: number }, b: { time: number }) => {
       // @ts-ignore
       return a.time - b.time;
     });
     const summaryMsgs = selectedMessages.slice(0, 3);
     let summary = '';
-    summaryMsgs.forEach(msg => {
+    summaryMsgs.forEach((msg: { type: any; from: string | number; msg: string }) => {
       switch (msg.type) {
         case 'txt':
           summary =
