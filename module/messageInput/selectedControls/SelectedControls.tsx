@@ -195,7 +195,12 @@ const SelectedControls = (props: SelectedControlsProps) => {
                 }
               }}
             >
-              <Icon type="DELETE" width={24} height={24}></Icon>
+              <Icon
+                className={`${prefixCls}-content-delete`}
+                type="DELETE"
+                width={24}
+                height={24}
+              ></Icon>
             </div>
             <div
               title={t('forward') as string}

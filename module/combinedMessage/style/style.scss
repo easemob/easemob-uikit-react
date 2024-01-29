@@ -15,6 +15,7 @@ $combine-msg-prefix-cls: #{$cui-prefix}-message-combine;
         gap: 4px;
         overflow: hidden;
         word-break: keep-all;
+        margin-bottom: 8px;
         &>p{
             margin: 0;
             flex: 1;
@@ -28,6 +29,8 @@ $combine-msg-prefix-cls: #{$cui-prefix}-message-combine;
         border-top: 1px solid $blue-8;
     }
     &-content{
+        font-family: Roboto;
+        margin-top: 8px;
         text-align: left;
         max-height: 80px;
         overflow: hidden;

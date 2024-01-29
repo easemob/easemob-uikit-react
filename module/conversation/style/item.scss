@@ -74,6 +74,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         font-weight: $cvs-item-message-font-weight;
         color: $font-color;
         white-space: nowrap;
+        height: 20px;
     }
 
     &-time{
