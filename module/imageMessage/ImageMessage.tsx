@@ -12,6 +12,8 @@ import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
 import { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
+import defaultImg from '../assets/img_xmark.png';
+import { use } from 'i18next';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -104,15 +106,20 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
   let renderImgUrl = bySelf ? message.url || message?.file?.url : (message.thumb as string);
 
-  const img = useRef(
-    <img
-      // width={75}
-      // height={75}
-      src={renderImgUrl}
-      alt={message.file?.filename}
-      onClick={() => handleClickImg(message.url || renderImgUrl)}
-    />,
-  );
+  const [imgUrl, setImgUrl] = useState(renderImgUrl);
+  // const img = useRef(
+  //   <img
+  //     // width={75}
+  //     // height={75}
+  //     onError={e => {
+  //       img.current.src = 'https://img.yzcdn.cn/vant/cat.jpeg';
+  //       setImgUrl('https://img.yzcdn.cn/vant/cat.jpeg');
+  //     }}
+  //     src={imgUrl}
+  //     alt={message.file?.filename}
+  //     onClick={() => handleClickImg(message.url || renderImgUrl)}
+  //   />,
+  // );
   if (typeof bySelf == 'undefined') {
     bySelf = message.from === rootStore.client.context.userId;
   }
@@ -296,6 +303,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   }
 
   // const classSting = classNames('message-image-content', className);
+  const imgRef = useRef<HTMLImageElement>(null);
   return (
     <div>
       <BaseMessage
@@ -327,7 +335,24 @@ let ImageMessage = (props: ImageMessageProps) => {
         {...others}
       >
         <div className={classString} style={style}>
-          {img.current}
+          {/* {img.current} */}
+          <img
+            ref={imgRef}
+            // width={75}
+            // height={75}
+            onError={function () {
+              //@ts-ignore
+              setImgUrl(defaultImg);
+              if (imgRef.current) {
+                imgRef.current.style.padding = '22px 34px';
+                imgRef.current.style.border = '1px solid #e5e5e5';
+                imgRef.current.style.backgroundColor = '#E3E6E8';
+              }
+            }}
+            src={imgUrl}
+            alt={message.file?.filename}
+            onClick={() => handleClickImg(message.url || renderImgUrl)}
+          />
         </div>
       </BaseMessage>
       {previewVisible && (
