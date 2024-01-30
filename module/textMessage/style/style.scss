@@ -68,7 +68,7 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
         &-action {
             display: flex;
             align-items: center;
-
+            justify-content: flex-end;
             // gap: 4px;
             &>div>svg {
                 fill: $gray-5;

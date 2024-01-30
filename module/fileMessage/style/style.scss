@@ -7,7 +7,9 @@ $file-prefix-cls: #{$cui-prefix}-message-file;
     max-width: 100%;
     display: flex;
     justify-content: space-between;
+    flex-direction: row-reverse;
     &-secondly{
+        flex-direction: row;
         .#{$file-prefix-cls}-info{
             span:nth-child(1){
                 color: $font-color;
