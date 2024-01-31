@@ -33,7 +33,7 @@ export interface GroupDetailProps {
   className?: string;
   style?: React.CSSProperties;
   conversation: {
-    chatType: 'singleChat' | 'groupChat';
+    chatType: 'groupChat';
     conversationId: string;
   };
   onUserIdCopied?: (id: string) => void;
