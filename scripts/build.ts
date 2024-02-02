@@ -129,7 +129,6 @@ function getFiles(OriginFilePath, CopyFilePath) {
         const index = dataArray.indexOf("@import '~/common/style/index.scss';");
         console.log('index', index);
         if (index >= 0) {
-          console.log('就是你了');
           dataArray.splice(index, 1);
         }
         const newFileData = dataArray.join('\n');
