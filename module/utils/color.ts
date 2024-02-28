@@ -104,4 +104,11 @@ function setGlobalColors(colors: string[]) {
   document.documentElement.style.setProperty('--cui-primary-color10', colors[11]);
 }
 
-export { hexToHsla, generateColors };
+const isHueValue = (value: number) => {
+  return typeof value === 'number' && value >= 0 && value <= 360;
+};
+
+const isHexColor = (value: string) => {
+  return typeof value === 'string' && /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value);
+};
+export { hexToHsla, generateColors, isHueValue, isHexColor };

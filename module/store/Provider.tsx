@@ -8,7 +8,7 @@ import { useEventHandler } from '../hooks/chat';
 import { initReactI18next } from 'react-i18next';
 import i18n from 'i18next';
 import { resource } from '../../local/resource';
-import { hexToHsla, generateColors } from '../utils/color';
+import { hexToHsla, generateColors, isHueValue, isHexColor } from '../utils/color';
 import { eventHandler } from '../../eventHandler';
 export interface ProviderProps {
   initConfig: {
@@ -80,7 +80,7 @@ export interface ProviderProps {
     };
   };
   theme?: {
-    primaryColor?: string;
+    primaryColor?: string | number;
     mode?: 'light' | 'dark';
     avatarShape?: 'circle' | 'square';
     bubbleShape?: 'ground' | 'square';
@@ -144,14 +144,14 @@ const Provider: React.FC<ProviderProps> = props => {
     }
   }, [initConfig.userId, initConfig.token]);
 
-  if (theme?.primaryColor) {
-    // rootStore.setTheme(theme);
-    const color = hexToHsla(theme.primaryColor);
+  // rootStore.setTheme(theme);
+  if (isHexColor(theme?.primaryColor as string)) {
+    const color = hexToHsla(theme?.primaryColor as string);
     if (color) {
       generateColors(color);
-    } else {
-      generateColors('hsla(203, 100%, 60%, 1)');
     }
+  } else if (isHueValue(theme?.primaryColor as number)) {
+    generateColors(`hsla(${theme?.primaryColor}, 100%, 60%, 1)`);
   } else {
     generateColors('hsla(203, 100%, 60%, 1)');
   }

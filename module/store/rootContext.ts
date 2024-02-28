@@ -83,7 +83,7 @@ export interface ContextProps {
     };
   };
   theme?: {
-    primaryColor?: string;
+    primaryColor?: string | number;
     mode?: 'dark' | 'light';
     avatarShape?: 'circle' | 'square';
     bubbleShape?: 'ground' | 'square';
