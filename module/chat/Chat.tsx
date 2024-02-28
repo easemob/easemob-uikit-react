@@ -346,6 +346,10 @@ const Chat: FC<ChatProps> = props => {
           content: 'SELECT',
           onClick: () => {},
         },
+        {
+          content: 'FORWARD',
+          onClick: () => {},
+        },
       ],
     },
   };

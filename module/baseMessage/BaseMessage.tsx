@@ -72,6 +72,7 @@ export interface BaseMessageProps {
   onModifyMessage?: () => void;
   onSelectMessage?: () => void; // message select action handler
   onResendMessage?: () => void;
+  onForwardMessage?: (message: BaseMessageType) => void;
   onMessageCheckChange?: (checked: boolean) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
@@ -148,6 +149,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onModifyMessage,
     onSelectMessage,
     onResendMessage,
+    onForwardMessage,
     onMessageCheckChange,
     renderUserProfile,
     onCreateThread,
@@ -220,7 +222,8 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
   const threadNode = () => {
     let { name, messageCount, lastMessage = {} } = chatThreadOverview || {};
-    const { from, type, time } = lastMessage as any;
+
+    const { from, type, time } = lastMessage || ({} as any);
     let msgContent = '';
     switch (type) {
       case 'txt':
@@ -257,7 +260,8 @@ let BaseMessage = (props: BaseMessageProps) => {
               width={20}
               height={20}
               type="THREAD"
-              className={`${prefixCls}-thread-name-icon`}
+              color="#464E53"
+              // className={`${prefixCls}-thread-name-icon`}
             ></Icon>
             <span>{name}</span>
           </div>
@@ -331,6 +335,10 @@ let BaseMessage = (props: BaseMessageProps) => {
           content: 'SELECT',
           onClick: () => {},
         },
+        {
+          content: 'FORWARD',
+          onClick: () => {},
+        },
       ],
     };
   }
@@ -383,6 +391,12 @@ let BaseMessage = (props: BaseMessageProps) => {
   const resendMessage = () => {
     onResendMessage && onResendMessage();
   };
+
+  const forwardMessage = () => {
+    console.log('forwardMessage', message);
+    onForwardMessage && onForwardMessage(message as BaseMessageType);
+  };
+
   let menuNode: ReactNode | undefined;
   if (moreAction?.visible) {
     menuNode = (
@@ -470,6 +484,17 @@ let BaseMessage = (props: BaseMessageProps) => {
               >
                 <Icon type="LOOP" width={16} height={16}></Icon>
                 {t('resend')}
+              </li>
+            );
+          } else if (item.content === 'FORWARD') {
+            return (
+              <li
+                key={index}
+                onClick={forwardMessage}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
+                <Icon type="ARROW_TURN_RIGHT" width={16} height={16}></Icon>
+                {t('forward')}
               </li>
             );
           }

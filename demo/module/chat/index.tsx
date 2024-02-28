@@ -393,7 +393,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         // appKey: 'easemob#easeim',
       }}
       theme={{
-        // primaryColor: '#33ffaa',
+        primaryColor: 50, //'#33ffaa',
         mode: 'light',
         bubbleShape: 'square',
         avatarShape: 'square',
