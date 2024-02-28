@@ -33,14 +33,14 @@ export interface ThreadProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
-  shape?: 'ground' | 'square'; // 气泡形状
-  direction?: 'ltr' | 'rtl';
-  message: ChatSDK.MessageBody;
+  // shape?: 'ground' | 'square'; // 气泡形状
+  // direction?: 'ltr' | 'rtl';
+  // message: ChatSDK.MessageBody;
   messageListProps?: MsgListProps;
   createThread?: boolean;
-  groupID: string;
-  threadID?: string;
-  originalMsg: ChatSDK.MessageBody;
+  // groupID: string;
+  // threadID?: string;
+  // originalMsg: ChatSDK.MessageBody;
   messageInputProps?: MessageInputProps;
 }
 
@@ -544,7 +544,15 @@ const Thread = (props: ThreadProps) => {
     <div className={classString} style={{ ...style }}>
       <div ref={headerRef}>
         <Header
-          avatar={<Icon type="THREAD"></Icon>}
+          avatar={
+            <Icon
+              type="THREAD"
+              color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+              width={24}
+              height={24}
+              style={{ marginRight: '12px' }}
+            ></Icon>
+          }
           content={threadStore.currentThread.info?.name || t('aThread')}
           close
           onClickClose={handleClickClose}

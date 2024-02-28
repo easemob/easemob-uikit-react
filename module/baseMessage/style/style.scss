@@ -156,6 +156,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     &-content {
         // flex: 1;
         display: flex;
+        flex-direction: column;
         max-width: calc(100% - 120px);
         // margin: $msg-base-content-margin;
         padding: $msg-base-content-padding;
@@ -305,7 +306,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
 
             }
 
-            &-icon{
+            &-icon svg{
                 fill: $gray-98;
             }
         }
@@ -345,7 +346,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 border-top: 1px solid $special-8;
             }
             &-name{
-                &-icon{
+                &-icon svg{
                     fill: $special-5;
                 }
             }

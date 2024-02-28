@@ -117,7 +117,12 @@ const Header: FC<HeaderProps> = props => {
                 onClickBack?.();
               }}
             >
-              <Icon type="ARROW_LEFT" width={24} height={24}></Icon>
+              <Icon
+                type="ARROW_LEFT"
+                color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                width={24}
+                height={24}
+              ></Icon>
             </Button>
           ) : null}
           {avatar ? (
@@ -159,7 +164,12 @@ const Header: FC<HeaderProps> = props => {
             >
               {
                 <Button type="text" shape="circle">
-                  <Icon type="ELLIPSIS" color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}></Icon>
+                  <Icon
+                    type="ELLIPSIS"
+                    color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                    width={24}
+                    height={24}
+                  ></Icon>
                 </Button>
               }
             </Tooltip>
