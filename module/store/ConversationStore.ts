@@ -256,7 +256,8 @@ class ConversationStore {
     this.rootStore.client
       .getServerPinnedConversations({ pageSize: 50 })
       .then((res: ChatSDK.AsyncResult<ChatSDK.ServerConversations>) => {
-        const conversations = (res.data?.conversations || []) as unknown as Conversation[];
+        const conversations = (res.data?.conversations ||
+          []) as unknown as ChatSDK.ServerConversations['conversations'];
 
         const mergedList = [...this.conversationList];
         conversations.forEach(item => {
@@ -264,7 +265,18 @@ class ConversationStore {
             cvs => cvs.conversationId === item.conversationId,
           );
           if (idx === -1) {
-            mergedList.push(item);
+            const newCvs = {
+              ...item,
+              chatType: item.conversationType,
+              unreadCount: 0,
+            };
+            // @ts-ignore
+            delete newCvs.conversationType;
+            // @ts-ignore
+            delete newCvs.unReadCount;
+            // @ts-ignore
+            delete newCvs.pinnedTime;
+            mergedList.push(newCvs as Conversation);
           } else {
             this.conversationList[idx].isPinned = true;
           }
