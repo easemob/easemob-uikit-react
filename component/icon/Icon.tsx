@@ -82,7 +82,7 @@ import { ReactComponent as SpeakerNVerticalBar } from '../svgs/icons/spkeaker_n_
 import { ReactComponent as RoundArrowThick } from '../svgs/icons/round_arrow_thick.svg';
 import { ReactComponent as TriangleInRectangle } from '../svgs/icons/triangle_in_rectangle.svg';
 import { ReactComponent as Folder } from '../svgs/icons/folder.svg';
-
+import { ReactComponent as Globe } from '../svgs/icons/globe_asia-australia.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -325,6 +325,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'FOLDER':
       return <Folder></Folder>;
+      break;
+    case 'GLOBE':
+      return <Globe></Globe>;
       break;
     default:
       return '';
