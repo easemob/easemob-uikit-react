@@ -32,6 +32,8 @@ export interface UserSelectProps extends ModalProps {
   selectedPanelFooter?: React.ReactNode;
   users?: UserSelectInfo[];
   checkedUsers?: UserSelectInfo[];
+  disableUserIds?: string[];
+  disabled?: boolean;
 }
 
 export interface UserSelectInfo {
@@ -57,6 +59,8 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     onOk,
     users,
     checkedUsers,
+    disabled,
+    disableUserIds,
     ...others
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -182,7 +186,11 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   data={item}
                   onCheckboxChange={handleSelect}
                   checkable
-                  disabled={checkedUsers?.some(item2 => item2.userId == item.userId)}
+                  disabled={
+                    checkedUsers?.some(item2 => item2.userId == item.userId) ||
+                    disabled ||
+                    disableUserIds?.includes(item.userId)
+                  }
                   checked={
                     (checkedList && checkedList.map(item => item.id).includes(item.userId)) ||
                     checkedUsers?.some(item2 => item2.userId == item.userId)
