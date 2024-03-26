@@ -30,10 +30,21 @@ export interface ContactDetailProps {
       };
   onUserIdCopied?: (id: string) => void;
   onMessageBtnClick?: () => void | boolean;
+  onAudioCall?: () => void | boolean;
+  onVideoCall?: () => void | boolean;
 }
 
 export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetailProps) => {
-  const { style, className, prefix, data, onUserIdCopied, onMessageBtnClick } = props;
+  const {
+    style,
+    className,
+    prefix,
+    data,
+    onUserIdCopied,
+    onMessageBtnClick,
+    onAudioCall,
+    onVideoCall,
+  } = props;
 
   const { type, id, name } = data;
   const { t } = useTranslation();
@@ -51,12 +62,13 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     className,
   );
   const { addressStore, conversationStore } = rootStore;
-  const avatarUrl = addressStore.appUsersInfo[id]?.avatarurl;
+  let avatarUrl = addressStore.appUsersInfo[id]?.avatarurl;
   let contactData: any;
   if (data.type === 'contact') {
     contactData = addressStore.contacts.find((item: any) => item.userId === data.id);
   } else {
     contactData = addressStore.groups.find((item: any) => item.groupId === data.id);
+    avatarUrl = contactData?.avatarUrl;
   }
 
   const handleCopy = () => {
@@ -84,28 +96,38 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     );
   };
 
-  const handleClickMessage = () => {
-    const result = onMessageBtnClick?.();
-    if (result == false) return;
-    conversationStore.addConversation({
-      chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
-      conversationId: data.id,
-      name: data.name,
-      lastMessage: {
-        time: Date.now(),
-        type: 'txt',
-        msg: '',
-        id: '',
+  const handleClickBtn = (type: 'message' | 'audio' | 'video') => {
+    return () => {
+      let result;
+      if (type === 'message') {
+        result = onMessageBtnClick?.();
+      } else if (type === 'audio') {
+        result = onAudioCall?.();
+      } else if (type === 'video') {
+        result = onVideoCall?.();
+      }
+      // const result = onMessageBtnClick?.();
+      if (result == false) return;
+      conversationStore.addConversation({
         chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
-        to: data.id,
-      },
-      unreadCount: 0,
-    });
-    conversationStore.setCurrentCvs({
-      chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
-      conversationId: data.id,
-      name: data.name,
-    });
+        conversationId: data.id,
+        name: data.name,
+        lastMessage: {
+          time: Date.now(),
+          type: 'txt',
+          msg: '',
+          id: '',
+          chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
+          to: data.id,
+        },
+        unreadCount: 0,
+      });
+      conversationStore.setCurrentCvs({
+        chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
+        conversationId: data.id,
+        name: data.name,
+      });
+    };
   };
 
   const addContact = () => {
@@ -153,19 +175,39 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
               </div> */}
 
               {type === 'request' && requestData?.requestStatus !== 'accepted' && !isContact ? (
-                <Button type="primary" className={`${prefixCls}-content-btn`} onClick={addContact}>
+                <Button type="text" className={`${prefixCls}-content-btn`} onClick={addContact}>
                   <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
                   {t('addContact')}
                 </Button>
               ) : (
-                <Button
-                  type="primary"
-                  className={`${prefixCls}-content-btn`}
-                  onClick={handleClickMessage}
-                >
-                  <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
-                  {t('message')}
-                </Button>
+                <div className={`${prefixCls}-content-btn-container`}>
+                  <Button
+                    type="text"
+                    className={`${prefixCls}-content-btn`}
+                    onClick={handleClickBtn('message')}
+                  >
+                    <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
+                    {t('message')}
+                  </Button>
+                  |
+                  <Button
+                    type="text"
+                    className={`${prefixCls}-content-btn`}
+                    onClick={handleClickBtn('audio')}
+                  >
+                    <Icon type="PHONE_PICK" width={24} height={24}></Icon>
+                    {t('audioCall')}
+                  </Button>
+                  |
+                  <Button
+                    type="text"
+                    className={`${prefixCls}-content-btn`}
+                    onClick={handleClickBtn('video')}
+                  >
+                    <Icon type="VIDEO_CAMERA" width={24} height={24}></Icon>
+                    {t('videoCall')}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
