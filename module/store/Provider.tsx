@@ -18,6 +18,11 @@ export interface ProviderProps {
     password?: string;
     translationTargetLanguage?: string;
     useUserInfo?: boolean;
+    msyncUrl?: string;
+    restUrl?: string;
+    isHttpDNS?: boolean;
+    useReplacedMessageContents?: boolean;
+    deviceId?: string;
   };
   local?: {
     fallbackLng?: string;
@@ -89,11 +94,23 @@ export interface ProviderProps {
 }
 const Provider: React.FC<ProviderProps> = props => {
   const { initConfig, local, features, reactionConfig, theme } = props;
-  const { appKey } = initConfig;
+  const {
+    appKey,
+    msyncUrl,
+    restUrl,
+    isHttpDNS = true,
+    useReplacedMessageContents,
+    deviceId,
+  } = initConfig;
   const client = useMemo(() => {
     return new chatSDK.connection({
       appKey: appKey,
       delivery: true,
+      url: msyncUrl,
+      apiUrl: restUrl,
+      isHttpDNS,
+      deviceId,
+      useReplacedMessageContents,
     });
   }, [appKey]);
 
