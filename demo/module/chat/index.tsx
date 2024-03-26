@@ -207,9 +207,11 @@ const ChatApp: FC<any> = () => {
               <Header
                 moreAction={{
                   visible: true,
+                  icon: <Icon type="PLUS_IN_CIRCLE"></Icon>,
                   actions: [
                     {
                       content: 'Create Group',
+                      icon: <Icon type="PLUS_IN_CIRCLE"></Icon>,
                       onClick: () => {
                         console.log('create group');
                         setUserSelectVisible(true);
@@ -394,7 +396,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       theme={{
         primaryColor: 50, //'#33ffaa',
-        mode: 'light',
+        mode: 'dark',
         bubbleShape: 'square',
         avatarShape: 'square',
         componentsShape: 'square',
