@@ -49,6 +49,9 @@ $header-prefix-cls: #{$cui-prefix}-header;
             line-height: 36px;
             border-radius: 8px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         li:hover{
             background: #F1F2F3;

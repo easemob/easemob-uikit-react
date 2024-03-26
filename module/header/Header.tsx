@@ -21,7 +21,7 @@ export interface HeaderProps {
   close?: boolean; // 是否显示右侧关闭按钮
   suffixIcon?: ReactNode; // 右侧自定义 icon
   renderContent?: () => React.ReactElement; // 自定义渲染中间内容部分；
-  onIconClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void; // 右侧更多按钮的点击事件
+  onClickEllipsis?: () => void; // 右侧更多按钮的点击事件
   // 右侧更多按钮配置
   moreAction?: {
     visible?: boolean;
@@ -33,7 +33,7 @@ export interface HeaderProps {
       onClick?: () => void;
     }>;
   };
-  onAvatarClick?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  onClickAvatar?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   onClickClose?: () => void;
   onClickBack?: () => void;
 }
@@ -48,9 +48,9 @@ const Header: FC<HeaderProps> = props => {
     back = false,
     onClickBack,
     renderContent,
-    onIconClick,
+    onClickEllipsis,
     moreAction,
-    onAvatarClick,
+    onClickAvatar,
     close,
     onClickClose,
     suffixIcon,
@@ -95,6 +95,7 @@ const Header: FC<HeaderProps> = props => {
                 item.onClick?.();
               }}
             >
+              {item.icon}
               {item.content}
             </li>
           );
@@ -132,7 +133,7 @@ const Header: FC<HeaderProps> = props => {
               shape={avatarShape}
               src={avatarSrc}
               onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-                onAvatarClick?.(e);
+                onClickAvatar?.(e);
               }}
               style={{ marginRight: 12 }}
             >
@@ -145,35 +146,56 @@ const Header: FC<HeaderProps> = props => {
           </div>
         </div>
 
-        <div
-          onClick={e => {
-            onIconClick?.(e);
-          }}
-          className={`${prefixCls}-iconBox`}
-        >
+        <div className={`${prefixCls}-iconBox`}>
           {suffixIcon}
-          {moreAction?.visible && (
-            <Tooltip
-              title={menuNode}
-              trigger="click"
-              placement="bottom"
-              open={menuOpen}
-              onOpenChange={c => {
-                setMenuOpen(c);
-              }}
-            >
-              {
-                <Button type="text" shape="circle">
-                  <Icon
-                    type="ELLIPSIS"
-                    color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
-                    width={24}
-                    height={24}
-                  ></Icon>
-                </Button>
-              }
-            </Tooltip>
-          )}
+          {moreAction?.visible &&
+            (moreAction.actions.length > 0 ? (
+              <Tooltip
+                title={menuNode}
+                trigger="click"
+                placement="bottom"
+                open={menuOpen}
+                onOpenChange={c => {
+                  setMenuOpen(c);
+                }}
+              >
+                {
+                  <Button
+                    type="text"
+                    shape="circle"
+                    onClick={() => {
+                      onClickEllipsis?.();
+                    }}
+                  >
+                    {moreAction.icon ? (
+                      moreAction.icon
+                    ) : (
+                      <Icon
+                        type="ELLIPSIS"
+                        color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                        width={24}
+                        height={24}
+                      ></Icon>
+                    )}
+                  </Button>
+                }
+              </Tooltip>
+            ) : (
+              <Button
+                type="text"
+                shape="circle"
+                onClick={() => {
+                  onClickEllipsis?.();
+                }}
+              >
+                <Icon
+                  type="ELLIPSIS"
+                  color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                  width={24}
+                  height={24}
+                ></Icon>
+              </Button>
+            ))}
           {close && (
             <Button type="text" shape="circle" onClick={clickClose}>
               <Icon
