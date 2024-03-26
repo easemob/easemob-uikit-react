@@ -23,6 +23,7 @@ interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
   actions?: {
+    visible?: boolean;
     icon?: ReactNode;
     content?: string;
     onClick?: (message: BaseMessageType) => void;
@@ -67,12 +68,13 @@ export interface BaseMessageProps {
   onAddReactionEmoji?: (emojiString: string) => void;
   onDeleteReactionEmoji?: (emojiString: string) => void;
   onShowReactionUserList?: (emojiString: string) => void;
-  onRecallMessage?: () => void;
+  onRecallMessage?: (message: BaseMessageType) => void;
   onTranslateMessage?: () => void;
   onModifyMessage?: () => void;
   onSelectMessage?: () => void; // message select action handler
   onResendMessage?: () => void;
   onForwardMessage?: (message: BaseMessageType) => void;
+  onReportMessage?: (message: BaseMessageType) => void;
   onMessageCheckChange?: (checked: boolean) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
@@ -150,6 +152,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onSelectMessage,
     onResendMessage,
     onForwardMessage,
+    onReportMessage,
     onMessageCheckChange,
     renderUserProfile,
     onCreateThread,
@@ -161,6 +164,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     reactionConfig,
     formatDateTime,
   } = props;
+  console.log('reaction >>>', reaction);
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const context = useContext(RootContext);
@@ -221,7 +225,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onClickThreadTitle?.();
   };
   const threadNode = () => {
-    let { name, messageCount, lastMessage = {} } = chatThreadOverview || {};
+    let { name, messageCount = 0, lastMessage = {} } = chatThreadOverview || {};
 
     const { from, type, time } = lastMessage || ({} as any);
     let msgContent = '';
@@ -266,7 +270,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             <span>{name}</span>
           </div>
           <div>
-            <span>{messageCount ?? 0 > 100 ? '100 +' : messageCount}</span>
+            <span>{messageCount > 100 ? '100 +' : messageCount}</span>
             <Icon
               width={16}
               height={16}
@@ -339,6 +343,10 @@ let BaseMessage = (props: BaseMessageProps) => {
           content: 'FORWARD',
           onClick: () => {},
         },
+        {
+          content: 'REPORT',
+          onClick: () => {},
+        },
       ],
     };
   }
@@ -374,7 +382,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onDeleteMessage && onDeleteMessage();
   };
   const recallMessage = () => {
-    onRecallMessage && onRecallMessage();
+    onRecallMessage && onRecallMessage(message as BaseMessageType);
   };
   const translateMessage = () => {
     onTranslateMessage && onTranslateMessage();
@@ -397,34 +405,44 @@ let BaseMessage = (props: BaseMessageProps) => {
     onForwardMessage && onForwardMessage(message as BaseMessageType);
   };
 
+  const reportMessage = () => {
+    console.log('reportMessage', message);
+    onReportMessage && onReportMessage(message as BaseMessageType);
+  };
+
   let menuNode: ReactNode | undefined;
   if (moreAction?.visible) {
     menuNode = (
       <ul className={morePrefixCls}>
         {moreAction?.actions?.map((item, index) => {
-          if (item.content === 'DELETE') {
+          if (item.content === 'DELETE' && item.visible !== false) {
             return (
               <li
                 key={index}
                 onClick={deleteMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="DELETE" width={16} height={16}></Icon>
+                {item.icon ? item.icon : <Icon type="DELETE" width={16} height={16}></Icon>}
                 {t('delete')}
               </li>
             );
-          } else if (item.content === 'REPLY') {
+          } else if (item.content === 'REPLY' && item.visible !== false) {
             return (
               <li
                 key={index}
                 onClick={replyMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="ARROW_TURN_LEFT" width={16} height={16}></Icon>
+                {item.icon ? (
+                  item.icon
+                ) : (
+                  <Icon type="ARROW_TURN_LEFT" width={16} height={16}></Icon>
+                )}
+
                 {t('reply')}
               </li>
             );
-          } else if (item.content === 'UNSEND') {
+          } else if (item.content === 'UNSEND' && item.visible !== false) {
             return (
               isCurrentUser && (
                 <li
@@ -432,12 +450,13 @@ let BaseMessage = (props: BaseMessageProps) => {
                   onClick={recallMessage}
                   className={themeMode == 'dark' ? 'cui-li-dark' : ''}
                 >
-                  <Icon type="ARROW_BACK" width={16} height={16}></Icon>
+                  {item.icon ? item.icon : <Icon type="ARROW_BACK" width={16} height={16}></Icon>}
+
                   {t('unsend')}
                 </li>
               )
             );
-          } else if (item.content === 'TRANSLATE') {
+          } else if (item.content === 'TRANSLATE' && item.visible !== false) {
             return (
               message?.type === 'txt' && (
                 <li
@@ -445,12 +464,12 @@ let BaseMessage = (props: BaseMessageProps) => {
                   onClick={translateMessage}
                   className={themeMode == 'dark' ? 'cui-li-dark' : ''}
                 >
-                  <Icon type="TRANSLATION" width={16} height={16}></Icon>
+                  {item.icon ? item.icon : <Icon type="TRANSLATION" width={16} height={16}></Icon>}
                   {t('translate')}
                 </li>
               )
             );
-          } else if (item.content === 'Modify') {
+          } else if (item.content === 'Modify' && item.visible !== false) {
             return (
               (isCurrentUser || isOwner || isAdmin) &&
               message?.type === 'txt' && (
@@ -459,60 +478,90 @@ let BaseMessage = (props: BaseMessageProps) => {
                   onClick={modifyMessage}
                   className={themeMode == 'dark' ? 'cui-li-dark' : ''}
                 >
-                  <Icon type="MODIFY_MESSAGE" width={16} height={16}></Icon>
+                  {item.icon ? (
+                    item.icon
+                  ) : (
+                    <Icon type="MODIFY_MESSAGE" width={16} height={16}></Icon>
+                  )}
                   {t('modify')}
                 </li>
               )
             );
-          } else if (item.content === 'SELECT') {
+          } else if (item.content === 'SELECT' && item.visible !== false) {
             return (
               <li
                 key={index}
                 onClick={selectMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="SELECT" width={16} height={16}></Icon>
+                {item.icon ? item.icon : <Icon type="SELECT" width={16} height={16}></Icon>}
                 {t('select')}
               </li>
             );
-          } else if (item.content === 'RESEND') {
+          } else if (item.content === 'RESEND' && item.visible !== false) {
             return (
               <li
                 key={index}
                 onClick={resendMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="LOOP" width={16} height={16}></Icon>
+                {item.icon ? item.icon : <Icon type="LOOP" width={16} height={16}></Icon>}
                 {t('resend')}
               </li>
             );
-          } else if (item.content === 'FORWARD') {
+          } else if (item.content === 'FORWARD' && item.visible !== false) {
             return (
               <li
                 key={index}
                 onClick={forwardMessage}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type="ARROW_TURN_RIGHT" width={16} height={16}></Icon>
+                {item.icon ? (
+                  item.icon
+                ) : (
+                  <Icon type="ARROW_TURN_RIGHT" width={16} height={16}></Icon>
+                )}
                 {t('forward')}
               </li>
             );
+          } else if (item.content === 'REPORT' && item.visible !== false) {
+            return (
+              <li
+                key={index}
+                onClick={reportMessage}
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+              >
+                {item.icon ? item.icon : <Icon type="ENVELOPE" width={16} height={16}></Icon>}
+                {t('report')}
+              </li>
+            );
           }
-          return (
-            <li
-              className={themeMode == 'dark' ? 'cui-li-dark' : ''}
-              key={index}
-              onClick={() => {
-                item.onClick?.(message as BaseMessageType);
-              }}
-            >
-              {item.icon && item.icon}
-              {item.content}
-            </li>
-          );
+
+          if (item.visible !== false) {
+            return (
+              <li
+                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+                key={index}
+                onClick={() => {
+                  item.onClick?.(message as BaseMessageType);
+                }}
+              >
+                {item.icon && item.icon}
+                {item.content}
+              </li>
+            );
+          } else {
+            return null;
+          }
         })}
       </ul>
     );
+  }
+
+  // 音视频邀请消息去掉更多操作
+  let isRtcInviteMessage = false;
+  if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
+    isRtcInviteMessage = true;
   }
 
   const handleClickEmoji = (emoji: string) => {
@@ -591,7 +640,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             <div className={`${prefixCls}-body`}>
               {contentNode}
 
-              {hoverStatus && !select ? (
+              {hoverStatus && !select && !isRtcInviteMessage ? (
                 <>
                   {moreAction.visible && (
                     <Tooltip title={menuNode} trigger="click" placement="bottom">
@@ -624,7 +673,8 @@ let BaseMessage = (props: BaseMessageProps) => {
                   )}
                 </>
               ) : (
-                messageStatus && <MessageStatus status={status} type="icon"></MessageStatus>
+                messageStatus &&
+                !isRtcInviteMessage && <MessageStatus status={status} type="icon"></MessageStatus>
               )}
             </div>
           </div>
