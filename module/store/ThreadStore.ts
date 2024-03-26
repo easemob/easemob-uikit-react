@@ -120,13 +120,14 @@ class ThreadStore {
         if (!foundThread) return;
         let newThread = {
           ...foundThread,
+          ...threadInfo,
           name: threadInfo.name,
         };
-        if (threadInfo.lastMessage) {
-          newThread.lastMessage = threadInfo.lastMessage;
-        } else {
-          newThread.lastMessage = foundThread.lastMessage;
-        }
+        // if (threadInfo.lastMessage) {
+        //   newThread.lastMessage = threadInfo.lastMessage;
+        // } else {
+        //   newThread.lastMessage = foundThread.lastMessage;
+        // }
 
         this.threadList[parentId]?.splice(
           this.threadList[parentId]?.indexOf(foundThread as unknown as ChatSDK.ChatThreadDetail),
