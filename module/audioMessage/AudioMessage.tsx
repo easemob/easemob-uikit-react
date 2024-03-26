@@ -103,8 +103,8 @@ const AudioMessage = (props: AudioMessageProps) => {
 
   const duration = Number.isInteger(length) ? length : file.duration || 0;
   const style = {
-    width: `calc(208px * ${duration / 15} + 40px)`,
-    maxWidth: '50vw',
+    width: `calc(${duration}% + 40px)`,
+    maxWidth: `calc(100% - 128px)`,
   };
   let { bySelf } = audioMessage;
   if (typeof bySelf == 'undefined') {
@@ -322,9 +322,10 @@ const AudioMessage = (props: AudioMessageProps) => {
           thread={_thread}
           chatThreadOverview={audioMessage.chatThreadOverview}
           onClickThreadTitle={handleClickThreadTitle}
+          bubbleStyle={style}
           {...others}
         >
-          <div className={classString} onClick={playAudio} style={{ ...customStyle, ...style }}>
+          <div className={classString} onClick={playAudio} style={{ ...customStyle }}>
             <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
             <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
             <audio
