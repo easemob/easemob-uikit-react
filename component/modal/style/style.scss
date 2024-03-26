@@ -108,6 +108,9 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
           margin-bottom: 0;
           margin-left: 8px;
         }
+        .#{$cui-prefix}-button{
+          padding: 8px 20px;
+        }
     }
     &-open {
         overflow: hidden;
