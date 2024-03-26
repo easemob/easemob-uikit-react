@@ -62,6 +62,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         gap: 2px;
         padding-right: 20px;
         text-overflow: ellipsis;
+        cursor: default;
         &-silent{
             position: absolute;
             right: 0;
@@ -75,6 +76,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         color: $font-color;
         white-space: nowrap;
         height: 20px;
+        cursor: default;
     }
 
     &-time{
@@ -103,13 +105,22 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         .#{$conversation-prefix-cls}-message{
             color: $gray-8;
         }
+        
     }
     &-dark.#{$conversation-prefix-cls}-sticky{
         background-color: $blue-2;
     }
     
     &-dark:hover{
-        background: $blue-2;
+        background: $gray-3;
+    }
+
+    &-dark.#{$conversation-prefix-cls}-selected{
+        background-color: $blue-2 !important;
+        .#{$conversation-prefix-cls}-nickname{
+            color: $blue-6;
+        }
+    
     }
 }
 

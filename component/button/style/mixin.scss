@@ -120,15 +120,17 @@
     @include button-variant-other($btn-ghost-bg, unset, $btn-ghost-bg);
     text-align: center;
     padding: 6px;
+    box-shadow: none!important;
+    border: none;
     &:hover,
     &:focus{
         background: $gray-95;
-        border: 1px solid transparent;
+        // border: 1px solid transparent;
     };
     &:active {
         text-decoration: none;
         background: $gray-9;
-        border: 1px solid transparent;
+        // border: 1px solid transparent;
     }
 }
 

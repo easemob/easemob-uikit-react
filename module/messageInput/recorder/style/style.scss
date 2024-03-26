@@ -11,8 +11,9 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
     &-content{
         display: flex;
         flex: 1;
-        background-color: $component-background;
+        // background-color: $component-background;
         justify-content: space-between;
+        background-color: transparent;
         &-left{
             display: flex;
             align-items: center;
