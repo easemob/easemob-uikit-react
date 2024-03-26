@@ -257,7 +257,10 @@ const VideoMessage = (props: VideoMessageProps) => {
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
       // shape="ground"
-      bubbleStyle={{ background: 'transparent', padding: 0 }}
+      bubbleStyle={{
+        padding: 0,
+        background: videoMessage.chatThreadOverview ? undefined : 'transparent',
+      }}
       time={videoMessage.time}
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
