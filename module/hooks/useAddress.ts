@@ -145,20 +145,46 @@ const useGroupMembersAttributes = (
   attributesKeys?: string[],
 ) => {
   const { client, addressStore } = getStore();
+
   const getMemberAttributes = () => {
-    client
-      .getGroupMembersAttributes({
-        groupId,
-        userIds,
-        keys: attributesKeys,
-      })
-      .then(res => {
-        if (res.data) {
-          Object.keys(res.data).forEach(key => {
-            res?.data && addressStore.setGroupMemberAttributes(groupId, key, res.data[key]);
-          });
-        }
-      });
+    let groupUserIds = [];
+    if (userIds.length > 10) {
+      // 如果用户数量大于10，分组，每组10个userId去调用getMemberAttributes
+      for (let i = 0; i < userIds.length; i += 10) {
+        groupUserIds.push(userIds.slice(i, i + 10));
+      }
+    } else {
+      groupUserIds = [userIds];
+    }
+
+    groupUserIds.forEach(item => {
+      client
+        .getGroupMembersAttributes({
+          groupId,
+          userIds: item,
+          keys: attributesKeys,
+        })
+        .then(res => {
+          if (res.data) {
+            Object.keys(res.data).forEach(key => {
+              res?.data && addressStore.setGroupMemberAttributes(groupId, key, res.data[key]);
+            });
+          }
+        });
+    });
+    // client
+    //   .getGroupMembersAttributes({
+    //     groupId,
+    //     userIds,
+    //     keys: attributesKeys,
+    //   })
+    //   .then(res => {
+    //     if (res.data) {
+    //       Object.keys(res.data).forEach(key => {
+    //         res?.data && addressStore.setGroupMemberAttributes(groupId, key, res.data[key]);
+    //       });
+    //     }
+    //   });
   };
 
   return {
