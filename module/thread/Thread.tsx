@@ -15,6 +15,8 @@ import TextMessage from '../textMessage';
 import ImageMessage from '../imageMessage';
 import FileMessage from '../fileMessage';
 import AudioMessage from '../audioMessage';
+import VideoMessage from '../videoMessage';
+import UserCardMessage from '../userCardMessage';
 import CombinedMessage from '../combinedMessage';
 import { MessageList, MsgListProps } from '../chat/MessageList';
 import Input from '../../component/input';
@@ -133,6 +135,37 @@ const Thread = (props: ThreadProps) => {
             customAction={{ visible: false }}
           />
         );
+        break;
+      case 'video':
+        content = (
+          <VideoMessage
+            key={msg.id}
+            videoMessage={msg}
+            renderUserProfile={() => null}
+            thread={false}
+            type="secondly"
+            reaction={false}
+            direction="ltr"
+            customAction={{ visible: false }}
+          ></VideoMessage>
+        );
+        break;
+      case 'custom':
+        if (msg.customEvent == 'userCard') {
+          content = (
+            <UserCardMessage
+              renderUserProfile={() => null}
+              key={msg.id}
+              thread={false}
+              customMessage={msg}
+              type="secondly"
+              reaction={false}
+              direction="ltr"
+              customAction={{ visible: false }}
+              bubbleStyle={{ maxWidth: 'calc(100% - 48px)' }}
+            ></UserCardMessage>
+          );
+        }
         break;
       default:
         content = null;
@@ -540,6 +573,37 @@ const Thread = (props: ThreadProps) => {
     });
     setRenderMembers(filterMembers);
   };
+
+  // config message
+  let messageProps: MsgListProps['messageProps'] = {
+    customAction: {
+      visible: true,
+      icon: null,
+      actions: [
+        {
+          content: 'REPLY',
+          onClick: () => {},
+        },
+
+        {
+          content: 'TRANSLATE',
+          onClick: () => {},
+        },
+        {
+          content: 'Modify',
+          onClick: () => {},
+        },
+        {
+          content: 'SELECT',
+          onClick: () => {},
+        },
+        {
+          content: 'FORWARD',
+          onClick: () => {},
+        },
+      ],
+    },
+  };
   return (
     <div className={classString} style={{ ...style }}>
       <div ref={headerRef}>
@@ -560,7 +624,11 @@ const Thread = (props: ThreadProps) => {
         />
       </div>
       {threadStore.currentThread.creating ? renderCreateForm() : renderOriginalMsg()}
-      <MessageList {...messageListProps} isThread={true} conversation={conversation}></MessageList>
+      <MessageList
+        {...{ ...messageProps, ...messageListProps }}
+        isThread={true}
+        conversation={conversation}
+      ></MessageList>
       {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
       <MessageInput
         disabled={threadStore.currentThread.creating && editorDisable}
