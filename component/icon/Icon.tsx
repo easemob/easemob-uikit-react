@@ -11,7 +11,7 @@ import { ReactComponent as Close } from '../svgs/close.svg';
 import { ReactComponent as File } from '../svgs/file.svg';
 import { ReactComponent as User } from '../svgs/user.svg';
 import { ReactComponent as Play } from '../svgs/play.svg';
-import { ReactComponent as Ellipsis } from '../svgs/ellipsis.svg';
+import { ReactComponent as Ellipsis } from '../svgs/icons/ellipsis_vertical.svg';
 import { ReactComponent as Loading } from '../svgs/icons/loading_2.svg';
 
 import { ReactComponent as Doc } from '../svgs/icons/doc.svg';
@@ -83,6 +83,16 @@ import { ReactComponent as RoundArrowThick } from '../svgs/icons/round_arrow_thi
 import { ReactComponent as TriangleInRectangle } from '../svgs/icons/triangle_in_rectangle.svg';
 import { ReactComponent as Folder } from '../svgs/icons/folder.svg';
 import { ReactComponent as Globe } from '../svgs/icons/globe_asia-australia.svg';
+import { ReactComponent as CandleInCircleFill } from '../svgs/icons/candle_in_circle_fill.svg';
+import { ReactComponent as ExclamationMarkInCircleFill } from '../svgs/icons/exclamation_mark_in_circle_fill.svg';
+import { ReactComponent as CheckInCircleFill } from '../svgs/icons/check_in_circle_fill.svg';
+import { ReactComponent as Hamburger } from '../svgs/icons/hamburger.svg';
+import { ReactComponent as PERSON_MINUS_FILL } from '../svgs/icons/person_minus_fill.svg';
+import { ReactComponent as Gear } from '../svgs/icons/gear.svg';
+import { ReactComponent as PhonePick } from '../svgs/icons/phone_pick.svg';
+import { ReactComponent as VideoCamera } from '../svgs/icons/video_camera.svg';
+import { ReactComponent as PlusInCircle } from '../svgs/icons/plus_in_circle.svg';
+import { ReactComponent as PlusInCircleFill } from '../svgs/icons/plus_in_circle_fill.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -319,6 +329,7 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ROUND_ARROW_THICK':
       return <RoundArrowThick></RoundArrowThick>;
+      //
       break;
     case 'TRIANGLE_IN_RECTANGLE':
       return <TriangleInRectangle></TriangleInRectangle>;
@@ -328,6 +339,36 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'GLOBE':
       return <Globe></Globe>;
+      break;
+    case 'CANDLE_IN_CIRCLE_FILL':
+      return <CandleInCircleFill></CandleInCircleFill>;
+      break;
+    case 'EXCLAMATION_MARK_IN_CIRCLE_FILL':
+      return <ExclamationMarkInCircleFill></ExclamationMarkInCircleFill>;
+      break;
+    case 'CHECK_IN_CIRCLE_FILL':
+      return <CheckInCircleFill></CheckInCircleFill>;
+      break;
+    case 'HAMBURGER':
+      return <Hamburger></Hamburger>;
+      break;
+    case 'PERSON_MINUS_FILL':
+      return <PERSON_MINUS_FILL></PERSON_MINUS_FILL>;
+      break;
+    case 'GEAR':
+      return <Gear></Gear>;
+      break;
+    case 'PHONE_PICK':
+      return <PhonePick></PhonePick>;
+      break;
+    case 'VIDEO_CAMERA':
+      return <VideoCamera></VideoCamera>;
+      break;
+    case 'PLUS_IN_CIRCLE':
+      return <PlusInCircle></PlusInCircle>;
+      break;
+    case 'PLUS_IN_CIRCLE_FILL':
+      return <PlusInCircleFill></PlusInCircleFill>;
       break;
     default:
       return '';
