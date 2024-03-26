@@ -49,6 +49,7 @@ function getBrands(members: any) {
       ? item.remark || rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
       : item.groupname;
     item.userId && (item.nickname = item.name);
+    item.avatarUrl = item.avatarUrl; //群组有avatarUrl
     if (checkCharacter(item.name.substring(0, 1)) == 'en') {
       item.initial = item.name.substring(0, 1).toUpperCase();
     } else if (checkCharacter(item.name.substring(0, 1)) == 'zh') {
@@ -76,6 +77,9 @@ function getBrands(members: any) {
     var newBrands = {
       brandId: innerMembers[i].userId || innerMembers[i].groupid,
       name: innerMembers[i].name,
+      avatarUrl:
+        innerMembers[i].avatarUrl ||
+        rootStore.addressStore.appUsersInfo[innerMembers[i].userId]?.avatarurl,
     };
 
     if (innerMembers[i].initial === '#') {

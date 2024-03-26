@@ -89,7 +89,8 @@ const ContactItem: FC<ContactItemProps> = props => {
               data={{
                 userId: item.brandId,
                 nickname: item.name,
-                avatarUrl: addressStore.appUsersInfo[item.brandId]?.avatarurl || '',
+                avatarUrl:
+                  item.avatarUrl || addressStore.appUsersInfo[item.brandId]?.avatarurl || '',
               }}
               selected={selectedId == item.brandId}
               checkable={checkable}
