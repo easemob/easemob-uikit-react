@@ -170,7 +170,7 @@ const ThreadModal = (props: ThreadModalProps) => {
         content={renderHeaderContent()}
         suffixIcon={
           <Button type="text" shape="circle" onClick={handleClickSearch}>
-            <Icon type="SEARCH"></Icon>
+            <Icon type="SEARCH" width={24} height={24}></Icon>
           </Button>
         }
       ></Header>
