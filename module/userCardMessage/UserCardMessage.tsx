@@ -301,7 +301,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
         thread={_thread}
         chatThreadOverview={message.chatThreadOverview}
         onClickThreadTitle={handleClickThreadTitle}
-        bubbleStyle={{ padding: '0' }}
+        // bubbleStyle={{ padding: '0' }}
         status={status}
         {...others}
       >

@@ -3,8 +3,9 @@ $card-prefix-cls: #{$cui-prefix}-message-card;
 .#{$card-prefix-cls}{
     max-width: 100%;
     width: 244px;
-    height: 90px;
-    padding: 12px 12px 0 12px;
+    height: 72px;
+    // padding: 12px 12px 0 12px;
+    // padding: -4px -4px -8px -4px;
     box-sizing: border-box;
     cursor: default;
     &-info{
