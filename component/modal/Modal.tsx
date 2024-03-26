@@ -119,10 +119,20 @@ const Modal: React.FC<ModalProps> = props => {
   const { t } = useTranslation();
   const defaultFooter = (
     <>
-      <Button type={okType} onClick={handleOk} {...props.okButtonProps}>
+      <Button
+        className={`${prefixCls}-button`}
+        type={okType}
+        onClick={handleOk}
+        {...props.okButtonProps}
+      >
         {okText ?? t('confirmBtn')}
       </Button>
-      <Button onClick={handleCancel} type={cancelType} {...props.cancelButtonProps}>
+      <Button
+        className={`${prefixCls}-button`}
+        onClick={handleCancel}
+        type={cancelType}
+        {...props.cancelButtonProps}
+      >
         {cancelText || t('cancelBtn')}
       </Button>
     </>
