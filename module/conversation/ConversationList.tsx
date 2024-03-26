@@ -121,6 +121,7 @@ let Conversations: FC<ConversationListProps> = props => {
           groupData.forEach(group => {
             if (item.conversationId == group.groupid) {
               renderItem.name = renderItem.name || group.groupname;
+              renderItem.avatarUrl = group.avatarUrl;
             }
           });
         } else if (item.chatType == 'singleChat') {
@@ -144,7 +145,7 @@ let Conversations: FC<ConversationListProps> = props => {
       // @ts-ignore
       setInitRenderData(renderData);
     }
-  }, [cvsStore.conversationList, cvsStore.searchList, groupData.length, appUsersInfo]);
+  }, [cvsStore.conversationList, cvsStore.searchList, groupData.length, appUsersInfo, contacts]);
 
   useEffect(() => {
     cvsStore.conversationList?.forEach(cvs => {
@@ -232,7 +233,7 @@ let Conversations: FC<ConversationListProps> = props => {
           {...headerProps}
           back={headerProps.back || false}
           content={headerProps.content || t('conversationTitle')}
-          icon={headerProps.icon || <Icon type="PLUS_CIRCLE" height={24} width={24} />}
+          icon={headerProps.icon || <Icon type="PLUS_IN_CIRCLE" height={24} width={24} />}
         ></Header>
       )}
 
