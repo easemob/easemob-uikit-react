@@ -103,7 +103,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const isOwner = owner == rootStore.client.user;
   const groupMembers = groupData?.members;
   const myInfo = groupMembers?.filter(item => item.userId === rootStore.client.user)[0];
-  var avatarUrl = '';
+  var avatarUrl = groupData?.avatarUrl;
   const handleCopy = () => {
     var textArea = document.createElement('textarea');
     textArea.value = conversation.conversationId;
@@ -271,8 +271,8 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
               </div>
             </div>
           </div>
-
-          <div className={`${prefixCls}-content-item`}>
+          {/** 先不提供这个功能 */}
+          {/* <div className={`${prefixCls}-content-item`}>
             <Icon type="PERSON_SINGLE_LINE_FILL" width={24} height={24}></Icon>
             <div
               className={`${prefixCls}-content-item-box`}
@@ -286,7 +286,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
                 <Icon type="SLASH_IN_BOX" width={24} height={24}></Icon>
               </div>
             </div>
-          </div>
+          </div> */}
 
           <div className={`${prefixCls}-content-item`}>
             <Icon type="BELL" width={24} height={24}></Icon>
