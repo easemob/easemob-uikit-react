@@ -5,6 +5,7 @@ import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '..
 import { getUsersInfo, checkCharacter } from '../utils';
 import { pinyin } from 'pinyin-pro';
 import { eventHandler } from '../../eventHandler';
+import { rootStore } from 'chatuim2';
 
 export type MemberRole = 'member' | 'owner' | 'admin';
 
@@ -35,6 +36,7 @@ export interface GroupItem extends ChatSDK.BaseGroupInfo {
   silent?: boolean;
   initial?: string;
   name?: string;
+  avatarUrl?: string;
 }
 
 export type AppUserInfo = Partial<Record<ChatSDK.ConfigurableKey, any>> & {
@@ -81,6 +83,7 @@ class AddressStore {
       setHasGroupsNext: action,
       setContacts: action,
       deleteContactFromContactList: action,
+      deleteContact: action,
       setGroups: action,
       setGroupMembers: action,
       setGroupMemberAttributes: action,
@@ -108,6 +111,8 @@ class AddressStore {
       addContactToContactList: action,
       removeGroupFromContactList: action,
       clear: action,
+      setContactRemark: action,
+      updateGroupAvatar: action,
     });
   }
 
@@ -118,7 +123,43 @@ class AddressStore {
   setContacts(contacts: any) {
     this.contacts = contacts;
   }
-
+  setContactRemark(userId: string, remark: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .setContactRemark({
+        userId,
+        remark,
+      })
+      .then(() => {
+        runInAction(() => {
+          this.contacts = this.contacts.map(item => {
+            if (item.userId === userId) {
+              item.remark = remark;
+            }
+            return item;
+          });
+          if (rootStore.conversationStore.currentCvs.conversationId === userId) {
+            rootStore.conversationStore.currentCvs.name = remark;
+          }
+        });
+        eventHandler.dispatchSuccess('setContactRemark');
+      })
+      .catch((error: any) => {
+        eventHandler.dispatchError('setContactRemark', error);
+      });
+  }
+  deleteContact(userId: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .deleteContact(userId)
+      .then(() => {
+        this.deleteContactFromContactList(userId);
+        eventHandler.dispatchSuccess('deleteContact');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('deleteContact', error);
+      });
+  }
   deleteContactFromContactList(userId: string) {
     this.contacts = this.contacts.filter(item => item.userId !== userId);
   }
@@ -156,6 +197,14 @@ class AddressStore {
       ({ groupid }) => !currentGroupsId.find(id => id === groupid),
     );
     this.groups = [...this.groups, ...filteredGroups];
+  }
+
+  updateGroupAvatar(groupId: string, avatar: string) {
+    let idx = getGroupItemIndexFromGroupsById(groupId);
+    if (idx > -1) {
+      this.groups[idx].avatarUrl = avatar;
+      this.groups = [...this.groups];
+    }
   }
 
   updateGroupName(groupId: string, groupName: string) {
