@@ -136,5 +136,7 @@
     "privateChat": "Private Chat",
     "Selected group members": "Selected group members",
     "share": "Share",
-    "gift": "Gift"
+    "gift": "Gift",
+    "videoCall": "Video Call",
+    "audioCall": "Voice Call"
 }
