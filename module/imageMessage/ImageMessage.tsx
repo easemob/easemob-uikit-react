@@ -329,7 +329,10 @@ let ImageMessage = (props: ImageMessageProps) => {
         thread={_thread}
         chatThreadOverview={message.chatThreadOverview}
         onClickThreadTitle={handleClickThreadTitle}
-        bubbleStyle={{ background: 'transparent', padding: 0 }}
+        bubbleStyle={{
+          padding: 0,
+          background: message.chatThreadOverview ? undefined : 'transparent',
+        }}
         shape={shape}
         status={status}
         {...others}
