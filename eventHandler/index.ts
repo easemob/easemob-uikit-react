@@ -41,7 +41,9 @@ export type EventName =
   | 'getChatThreadLastMessage'
   | 'getAllContacts'
   | 'getJoinedGroups'
-  | 'open';
+  | 'open'
+  | 'setContactRemark'
+  | 'deleteContact';
 
 export type EventHandlerData = {
   [key in EventName]?: {

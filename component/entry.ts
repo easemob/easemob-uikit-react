@@ -12,7 +12,7 @@ import List, { ListProps } from './list';
 import Modal, { ModalProps } from './modal';
 import Popover, { PopoverProps } from './popover';
 import Switch, { SwitchProps } from './switch';
-import Tooltip from 'rc-tooltip';
+import Tooltip, { TooltipProps } from './tooltip';
 import ScrollList, { ScrollListProps } from './scrollList';
 import Broadcast, { BroadcastProps } from './broadcast';
 import Collapse, { CollapseProps } from './collapse';
@@ -37,6 +37,7 @@ export type {
   BroadcastProps,
   CollapseProps,
   UserItemProps,
+  TooltipProps,
 };
 
 export {

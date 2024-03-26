@@ -21,7 +21,7 @@ import { ChatroomInfo } from '../store/AddressStore';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
 
-let reportType: Record<string, string> = {
+export let reportType: Record<string, string> = {
   tag1: 'Unwelcome commercial content',
   tag2: 'Pornographic or explicit content',
   tag3: 'Child abuse',
