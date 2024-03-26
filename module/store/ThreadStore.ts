@@ -75,7 +75,7 @@ class ThreadStore {
     // @ts-ignore
     const orgMsgId = originalMessage?.mid || originalMessage?.id;
 
-    let foundThread: ChatSDK.ThreadChangeInfo = {} as ChatSDK.ThreadChangeInfo;
+    let foundThread: ChatSDK.ThreadChangeInfo = {} as any as ChatSDK.ThreadChangeInfo;
 
     if (operation != 'create') {
       this.threadList[parentId]?.forEach(item => {
@@ -113,13 +113,20 @@ class ThreadStore {
           });
         }
         chatThreadOverview = threadInfo;
-
+        chatThreadOverview.lastMessage = threadInfo.lastMessage
+          ? threadInfo.lastMessage
+          : //@ts-ignore
+            this.currentThread.originalMessage?.chatThreadOverview?.lastMessage;
         if (!foundThread) return;
         let newThread = {
           ...foundThread,
           name: threadInfo.name,
         };
-        threadInfo.lastMessage ? (newThread.lastMessage = threadInfo.lastMessage) : null;
+        if (threadInfo.lastMessage) {
+          newThread.lastMessage = threadInfo.lastMessage;
+        } else {
+          newThread.lastMessage = foundThread.lastMessage;
+        }
 
         this.threadList[parentId]?.splice(
           this.threadList[parentId]?.indexOf(foundThread as unknown as ChatSDK.ChatThreadDetail),
@@ -155,7 +162,7 @@ class ThreadStore {
 
     // add chatThreadOverview into original message, or update chatThreadOverview
 
-    const message = this.rootStore.messageStore.message['groupChat'][parentId as string];
+    const message = this.rootStore.messageStore.message['groupChat'][parentId as string] || [];
 
     message.forEach((item: any) => {
       if (item.mid === messageId || item.id === messageId) {
@@ -187,13 +194,13 @@ class ThreadStore {
       .getChatThreadDetail({ chatThreadId: threadId })
       .then((res: any) => {
         // 找到原消息
-        const message = this.rootStore.messageStore.message['groupChat'][res.data.parentId];
+        const message = this.rootStore.messageStore.message['groupChat'][res.data.parentId] || [];
         const originalMessage = message.find(
           (item: any) => item.mid === res.data.messageId || item.id === res.data.messageId,
         );
         this.setCurrentThread({
           ...this.currentThread,
-          originalMessage: originalMessage,
+          originalMessage: originalMessage || {},
           info: {
             // ...currentThreadInfo,
             // // @ts-ignore
