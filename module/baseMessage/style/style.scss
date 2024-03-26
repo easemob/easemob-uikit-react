@@ -291,6 +291,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 overflow: hidden;
                 white-space: nowrap;
                 text-overflow: ellipsis;
+                
             }
             // 当前元素下第二个div（child(2)）里面的span字号是12px
            
@@ -323,13 +324,18 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
             }
             &>span:nth-child(3){
                 // flex: none;
-                    /* flex: 1; */
+                flex: 1;
                 overflow: hidden;
                 /* flex-wrap: nowrap; */
                 /* display: flex; */
                 height: 16px;
-                text-overflow: ellipsis;
-                white-space: nowrap;
+                // 会把容器撑开
+                // text-overflow: ellipsis;
+                // white-space: nowrap;
+
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                -webkit-box-orient: vertical;
             }
         }
         
