@@ -286,11 +286,11 @@ const AudioMessage = (props: AudioMessageProps) => {
   return (
     <>
       {onlyContent ? (
-        <div className={classString} onClick={playAudio} style={{ ...customStyle, ...style }}>
+        <div className={classString} onClick={playAudio} style={{ ...customStyle, width: '100%' }}>
           <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
           <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
           <audio
-            src={url || typeof file.url == 'string' ? file.url : sourceUrl}
+            src={typeof file.url == 'string' ? file.url : sourceUrl}
             ref={audioRef}
             onEnded={handlePlayEnd}
             onError={handlePlayEnd}
