@@ -172,7 +172,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
           <AudioMessage
             type={'secondly'}
             className="cui-message-base-reply"
-            style={{ flexDirection: 'row' }}
+            // style={{ flexDirection: 'row' }}
             onlyContent={true}
             audioMessage={msg as AudioMessageProps['audioMessage']}
           ></AudioMessage>
@@ -310,7 +310,14 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         <span>{to}</span>
       </div>
       <div className={`${prefixCls}-box`}>
-        <div className={`${prefixCls}-content`}>{renderMsgContent()}</div>
+        <div
+          className={`${prefixCls}-content`}
+          style={{
+            width: repliedMsg?.type == 'audio' ? `calc(${repliedMsg.length || 0}% + 48px)` : 'auto',
+          }}
+        >
+          {renderMsgContent()}
+        </div>
         {hoverStatus && (
           <Icon
             className={`${prefixCls}-arrow`}
