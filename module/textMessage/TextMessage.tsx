@@ -1,4 +1,4 @@
-import React, { ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useContext, useEffect, useRef, useState, memo } from 'react';
 import classNames from 'classnames';
 import Avatar from '../../component/avatar';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
@@ -588,4 +588,4 @@ const TextMessage = (props: TextMessageProps) => {
   );
 };
 
-export default observer(TextMessage);
+export default memo(observer(TextMessage));

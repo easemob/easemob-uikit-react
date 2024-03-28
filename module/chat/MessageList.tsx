@@ -48,7 +48,6 @@ export interface MsgListProps {
 }
 
 const MessageScrollList = ScrollList<ChatSDK.MessageBody | RecallMessage>();
-
 let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
   const { messageStore } = rootStore;
@@ -71,13 +70,17 @@ let MessageList: FC<MsgListProps> = props => {
   const { initConfig } = context;
   const { useUserInfo } = initConfig;
   const msgContainerRef = useRef<HTMLDivElement>(null);
+  const memoProps = React.useMemo(() => {
+    return {
+      messageProps,
+    };
+  }, []);
 
   const currentCVS = conversation ? conversation : messageStore.currentCVS || {};
 
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
   let messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
-
   const renderMsg = (data: { index: number; style: React.CSSProperties }) => {
     if (renderMessage) {
       const element = renderMessage(messageData[data.index]);
@@ -133,16 +136,16 @@ let MessageList: FC<MsgListProps> = props => {
       return (
         <TextMessage
           key={messageData[data.index].id}
-          style={data.style}
+          // style={data.style}
           //@ts-ignore
           status={messageData[data.index].status}
           //@ts-ignore
           textMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
           thread={isThread}
-          {...messageProps}
+          {...memoProps.messageProps}
         >
-          {(messageData[data.index] as ChatSDK.TextMsgBody).msg}
+          {/* {(messageData[data.index] as ChatSDK.TextMsgBody).msg} */}
         </TextMessage>
       );
     } else if (messageData[data.index].type == 'combine') {
