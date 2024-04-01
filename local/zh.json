@@ -138,5 +138,10 @@
     "share": "分享",
     "gift": "礼物",
     "videoCall": "视频通话",
-    "audioCall": "语音通话"
+    "audioCall": "语音通话",
+    "requestToAddContact": "请求添加好友",
+    "Start a video call": "邀请您进行视频通话",
+    "Start a audio call": "邀请您语音通话",
+    "Start a video meeting": "邀请您进行多人视频通话",
+    "Start a audio meeting": "邀请您进行多人语音通话"
 }

@@ -138,5 +138,10 @@
     "share": "Share",
     "gift": "Gift",
     "videoCall": "Video Call",
-    "audioCall": "Voice Call"
+    "audioCall": "Voice Call",
+    "requestToAddContact": "Request to add contacts",
+    "Start a video call": "Inviting you to make a video call",
+    "Start a audio call": "Inviting you to make a voice call",
+    "Start a video meeting": "Inviting you to have a multiplayer video call",
+    "Start a audio meeting": "Inviting you to have a multiplayer voice call"
 }
