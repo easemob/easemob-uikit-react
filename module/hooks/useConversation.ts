@@ -51,4 +51,7 @@ const useConversations = () => {
   return { getConversationList, hasConversationNext };
 };
 
-export { useConversations };
+const clearPageNum = () => {
+  pageNum = 1;
+};
+export { useConversations, clearPageNum };

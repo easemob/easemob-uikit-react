@@ -43,4 +43,7 @@ const useChatroomMember = (chatroomId: string) => {
   return { getConversationList, next };
 };
 
-export { useChatroomMember };
+const clearPageNum = () => {
+  pageNum = 1;
+};
+export { useChatroomMember, clearPageNum };
