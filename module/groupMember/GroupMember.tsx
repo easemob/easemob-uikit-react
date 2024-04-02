@@ -18,6 +18,7 @@ import { checkCharacter } from '../utils/index';
 import UserSelect, { UserSelectInfo } from '../userSelect';
 import Button from '../../component/button';
 import { useTranslation } from 'react-i18next';
+import Avatar from 'component/avatar';
 export interface GroupMemberProps {
   style?: React.CSSProperties;
   className?: string;
@@ -127,12 +128,11 @@ const GroupMember: FC<GroupMemberProps> = props => {
     });
   };
   const deleteGroupMember = () => {
-    console.log('groupMembers', groupMembers, groupData);
     const users = groupMembers.map((item: any) => {
       return {
         userId: item.userId,
         nickname: addressStore.appUsersInfo?.[item.userId]?.nickname,
-        avatar: addressStore.appUsersInfo?.[item.userId]?.avatarurl,
+        avatarUrl: addressStore.appUsersInfo?.[item.userId]?.avatarurl,
       };
     });
     setAddMemberData({
@@ -146,7 +146,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
   };
 
   const [addMemberData, setAddMemberData] = useState({
-    title: '添加群成员',
+    title: t('addGroupMembers'),
     users: [],
     type: 'add',
     open: false,
