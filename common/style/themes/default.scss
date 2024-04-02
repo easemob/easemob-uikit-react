@@ -154,7 +154,7 @@ $disabled-color-dark: rgba(255, 255, 255, 0.75);
 $btn-shadow: 0 2px 0 rgba(0, 0, 0, 0.015);
 
 $btn-text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.12);
-$btn-font-weight: 40;
+$btn-font-weight: 500;
 $btn-border-width: $border-width-base;
 $btn-border-style: $border-style-base;
 $btn-border-radius-base: $border-radius-base;
@@ -168,7 +168,7 @@ $btn-default-bg: $component-background;
 $btn-default-border: $border-color-base;
 
 $btn-primary-shadow: 0 2px 0 rgba(0, 0, 0, 0.045);
-$btn-primary-color: #fff;
+$btn-primary-color: $gray-98;
 $btn-primary-bg: $blue-5;
 
 $btn-height-lg: $height-lg;

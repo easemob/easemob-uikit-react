@@ -117,7 +117,7 @@ const Provider: React.FC<ProviderProps> = props => {
   rootStore.setClient(client);
   rootStore.setInitConfig(initConfig);
   // console.log('Provider is run...');
-  useEventHandler();
+  useEventHandler(initConfig);
   let localConfig: any = {
     fallbackLng: 'en',
     lng: 'en',

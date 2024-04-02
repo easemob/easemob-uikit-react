@@ -11,6 +11,9 @@ import ConversationStore, {
 import AddressStore, { MemberRole, MemberItem, GroupItem, AppUserInfo } from './AddressStore';
 import ThreadStore, { ThreadData, CurrentThread } from './ThreadStore';
 import { ChatSDK } from 'module/SDK';
+import { clearPageNum } from '../hooks/useConversation';
+import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
+
 interface InitConfig {
   appKey: string;
 }
@@ -56,6 +59,8 @@ class RootStore {
     this.addressStore.clear();
     this.conversationStore.clear();
     this.threadStore.clear();
+    clearPageNum();
+    chatroomClearPageNum();
   }
 }
 let store: RootStore;

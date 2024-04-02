@@ -242,7 +242,9 @@ class AddressStore {
               : 'member',
           };
         });
-      this.groups[idx].members = [...(this.groups[idx].members || []), ...filteredMembers];
+      runInAction(() => {
+        this.groups[idx].members = [...(this.groups[idx].members || []), ...filteredMembers];
+      });
     }
   }
 
@@ -307,6 +309,9 @@ class AddressStore {
     if (!userInfo) {
       return getUsersInfo({ userIdList: [userId], withPresence: false }).then(() => {
         userInfo = this.appUsersInfo?.[userId];
+        runInAction(() => {
+          this.appUsersInfo[userId] = userInfo;
+        });
         return userInfo;
       });
     }
@@ -584,6 +589,12 @@ class AddressStore {
               if (item.info) {
                 item.info.description = description;
                 item.info.name = groupName;
+              }
+              if (rootStore.conversationStore.currentCvs.conversationId === groupId) {
+                rootStore.conversationStore.currentCvs.name = groupName;
+              }
+              if (rootStore.messageStore.currentCVS.conversationId === groupId) {
+                rootStore.messageStore.currentCVS.name = groupName;
               }
             });
           }

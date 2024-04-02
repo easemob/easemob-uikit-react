@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
+import { makeAutoObservable, observable, action, makeObservable, runInAction } from 'mobx';
 import { ChatType } from '../types/messageType';
 import { ChatSDK } from '../SDK';
 import { sortByPinned } from '../utils';
@@ -70,6 +70,7 @@ class ConversationStore {
       clearRemindTypeForConversation: action,
       getSilentModeForConversations: action,
       setOnlineStatus: action,
+      setHasConversationNext: action,
       clear: action,
     });
   }
@@ -223,7 +224,10 @@ class ConversationStore {
             cvs.name = res?.data?.[0]?.name;
           }
         });
-        this.conversationList = [...this.conversationList];
+
+        runInAction(() => {
+          this.conversationList = [...this.conversationList];
+        });
         eventHandler.dispatchSuccess('getGroupInfo');
       })
       .catch((error: ChatSDK.ErrorEvent) => {
@@ -244,7 +248,11 @@ class ConversationStore {
             cvs.isPinned = isPinned;
           }
         });
-        this.conversationList = [...this.conversationList.sort(sortByPinned)];
+
+        runInAction(() => {
+          this.conversationList = [...this.conversationList.sort(sortByPinned)];
+        });
+
         eventHandler.dispatchSuccess('pinConversation');
       })
       .catch((error: ChatSDK.ErrorEvent) => {
@@ -281,7 +289,10 @@ class ConversationStore {
             this.conversationList[idx].isPinned = true;
           }
         });
-        this.conversationList = [...mergedList.sort(sortByPinned)];
+
+        runInAction(() => {
+          this.conversationList = [...mergedList.sort(sortByPinned)];
+        });
 
         eventHandler.dispatchSuccess('getServerPinnedConversations');
       })
