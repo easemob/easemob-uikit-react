@@ -62,9 +62,12 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     className,
   );
   const { addressStore, conversationStore } = rootStore;
-  let avatarUrl = addressStore.appUsersInfo[id]?.avatarurl;
+  const userInfo = addressStore.appUsersInfo[id];
+  let avatarUrl = userInfo?.avatarurl;
   let contactData: any;
-  if (data.type === 'contact') {
+
+  console.log('联系人详情', data);
+  if (data.type === 'contact' || data.type === 'request') {
     contactData = addressStore.contacts.find((item: any) => item.userId === data.id);
   } else {
     contactData = addressStore.groups.find((item: any) => item.groupId === data.id);
@@ -111,7 +114,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
       conversationStore.addConversation({
         chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
         conversationId: data.id,
-        name: data.name,
+        name: userInfo?.nickname || data.name || id,
         lastMessage: {
           time: Date.now(),
           type: 'txt',
@@ -125,7 +128,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
       conversationStore.setCurrentCvs({
         chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
         conversationId: data.id,
-        name: data.name,
+        name: userInfo?.nickname || data.name || id,
       });
     };
   };
@@ -142,10 +145,12 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
           <div className={`${prefixCls}-content`}>
             <div className={`${prefixCls}-content-header`}>
               <Avatar src={avatarUrl} size={100} shape={theme?.avatarShape}>
-                {name}
+                {userInfo?.nickname || name || id}
               </Avatar>
               <div>
-                <div className={`${prefixCls}-content-header-name`}>{name}</div>
+                <div className={`${prefixCls}-content-header-name`}>
+                  {userInfo?.nickname || name || id}
+                </div>
 
                 <div className={`${prefixCls}-content-header-id`}>
                   <div>{data.type == 'group' ? t('group') : t('user')} ID:</div>

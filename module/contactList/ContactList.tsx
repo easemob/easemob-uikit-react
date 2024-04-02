@@ -242,7 +242,12 @@ let ContactList: FC<ContactListProps> = props => {
                 return (
                   <UserItem
                     key={item.from}
-                    data={{ nickname: name, userId: item.from, description: '请求添加好友' }}
+                    data={{
+                      avatarUrl: addressStore.appUsersInfo[item.from]?.avatarurl,
+                      nickname: name,
+                      userId: item.from,
+                      description: t('requestToAddContact') as string,
+                    }}
                     onClick={e => {
                       setItemActiveKey(item.from);
                       addressStore.readContactInvite(item.from);
@@ -357,7 +362,7 @@ let ContactList: FC<ContactListProps> = props => {
     );
 
     setSearchNode(searchList);
-  }, [addressStore.searchList, itemActiveKey, checkedList?.length]);
+  }, [addressStore.searchList, itemActiveKey, checkedList?.length, addressStore.appUsersInfo]);
 
   const getNameAndType = (id: string) => {
     let name;
