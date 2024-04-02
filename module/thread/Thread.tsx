@@ -325,6 +325,14 @@ const Thread = (props: ThreadProps) => {
         }
       });
     }
+
+    // clear replied message
+    rootStore.messageStore.setRepliedMessage(null);
+    // clear selected message
+    rootStore.messageStore.setSelectedMessage(conversation, {
+      selectable: false,
+      selectedMessage: [],
+    });
   }, [currentThread?.info?.id]);
 
   // close panel
@@ -334,6 +342,13 @@ const Thread = (props: ThreadProps) => {
     //   visible: false,
     //   creating: false,
     // });
+    // clear replied message
+    rootStore.messageStore.setRepliedMessage(null);
+    // clear selected message
+    rootStore.messageStore.setSelectedMessage(conversation, {
+      selectable: false,
+      selectedMessage: [],
+    });
     rootStore.threadStore.setThreadVisible(false);
   };
 
@@ -544,11 +559,16 @@ const Thread = (props: ThreadProps) => {
     const showMoreAction = role != 'member';
     const myId = rootStore.client.user;
     const membersDom = members.map(member => {
+      let name = rootStore.addressStore.appUsersInfo?.[member]?.nickname;
+      const avatarUrl = rootStore.addressStore.appUsersInfo?.[member]?.avatarurl;
+      // if (item.attributes?.nickName) {
+      //   name = item.attributes?.nickName;
+      // }
       return (
         <div className={`${prefixCls}-members-item`} key={member}>
           <div className={`${prefixCls}-members-item-name`}>
-            <Avatar>{member}</Avatar>
-            <div>{member}</div>
+            <Avatar src={avatarUrl}>{name}</Avatar>
+            <div>{name || member}</div>
           </div>
           {showMoreAction && myId != member && (
             <Tooltip title={menuNode(member)} trigger="click" placement="bottom">
