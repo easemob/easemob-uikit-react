@@ -1,4 +1,13 @@
-import React, { FC, useEffect, useRef, useState, useContext, ReactNode } from 'react';
+import React, {
+  FC,
+  useEffect,
+  useRef,
+  useState,
+  useContext,
+  ReactNode,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { useSize } from 'ahooks';
@@ -29,6 +38,24 @@ import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '
 import CallKit from 'chat-callkit';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
+import { reportType } from '../chatroom/Chatroom';
+import { eventHandler } from '../../eventHandler';
+import Modal from '../../component/modal';
+import Checkbox from '../../component/checkbox';
+export interface RtcRoomInfo {
+  callId: string;
+  calleeDevId?: string;
+  calleeIMName: string;
+  callerDevId?: string;
+  callerIMName: string;
+  channel: string;
+  confrName: string;
+  groupId: string;
+  groupName: string;
+  token?: string;
+  type: number;
+  joinedMembers: { agoraUid: number; imUserId: string }[];
+}
 export interface ChatProps {
   prefix?: string;
   className?: string;
@@ -55,7 +82,7 @@ export interface ChatProps {
       channel: string;
       conversation: CurrentConversation;
     }) => Promise<[{ name: string; id: string; avatarurl?: string }]>;
-    onAddPerson?: (data: { channel: string }) => Promise<[{ member: string } | { owner: string }]>;
+    onAddPerson?: (data: RtcRoomInfo) => Promise<[{ id: string }]>;
     getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>;
     onStateChange?: (data: { type: string; confr: any }) => void;
     getRTCToken?: (data: {
@@ -65,17 +92,20 @@ export interface ChatProps {
       agoraUid: string | number; // rtc user ID
       accessToken: string;
     }>;
+    groupAvatar?: string;
+    onRing?: (data: { channel: string }) => void;
   };
 }
 const getChatAvatarUrl = (cvs: CurrentConversation) => {
   if (cvs.chatType === 'singleChat') {
     return getStore().addressStore.appUsersInfo[cvs.conversationId]?.avatarurl;
-  } else {
-    return '';
+  } else if (cvs.chatType === 'groupChat') {
+    const ground = getStore().addressStore.groups.find(item => item.groupid === cvs.conversationId);
+    return ground?.avatarUrl;
   }
 };
 
-const Chat: FC<ChatProps> = props => {
+const Chat = forwardRef((props: ChatProps, ref) => {
   const {
     prefix: customizePrefixCls,
     className,
@@ -178,6 +208,7 @@ const Chat: FC<ChatProps> = props => {
 
   useEffect(() => {
     setRenderThreadList(threadList);
+    console.log('threadList >>', threadList);
   }, [threadList.length, CVS.conversationId]);
   // render thread list
   const threadListContent = () => {
@@ -316,6 +347,12 @@ const Chat: FC<ChatProps> = props => {
     }
   }
 
+  const handleReport = (message: any) => {
+    console.log('举报', message);
+    setReportOpen(true);
+    setReportMessageId(message.mid || message.id);
+  };
+
   // config message
   let messageProps: MsgListProps['messageProps'] = {
     customAction: {
@@ -350,8 +387,13 @@ const Chat: FC<ChatProps> = props => {
           content: 'FORWARD',
           onClick: () => {},
         },
+        {
+          content: 'REPORT',
+          onClick: () => {},
+        },
       ],
     },
+    onReportMessage: handleReport,
   };
 
   if (globalConfig?.message) {
@@ -476,7 +518,7 @@ const Chat: FC<ChatProps> = props => {
       chatType: 'groupChat',
       to: rtcMembers,
       // agoraUid: agoraUid,
-      message: `Start a ${currentCall.callType == 2 ? 'video' : 'audio'} call`,
+      message: t(`Start a ${currentCall.callType == 2 ? 'video' : 'audio'} meeting`),
       groupId: conf.groupId,
       groupName: conf.groupName,
       accessToken: currentCall.accessToken,
@@ -517,16 +559,66 @@ const Chat: FC<ChatProps> = props => {
           console.error(e);
         }
         break;
+      case 'accept':
+        // let idMap =
+        //   (await rtcConfig?.getIdMap?.({
+        //     userId: rootStore.client.user,
+        //     channel: info.callInfo.channel,
+        //   })) || {};
+
+        // let membersId = Object.values(idMap);
+        // let userInfo = {};
+        // membersId.forEach(item => {
+        //   // @ts-ignore
+        //   userInfo[item] = {
+        //     nickname: rootStore.addressStore.appUsersInfo[item]?.nickname,
+        //     avatarUrl: rootStore.addressStore.appUsersInfo[item]?.avatarurl,
+        //   };
+        // });
+        // if (idMap && Object.keys(idMap).length > 0) {
+        //   console.log('有人加入时设置', idMap, userInfo);
+        //   CallKit.setUserIdMap(idMap);
+        //   CallKit.setUserInfo(userInfo);
+        // }
+        break;
       default:
         break;
     }
   };
-  const handleInvite = async (data: { channel: string; type: number }) => {
+  const handleInvite = async (data: { channel: string; type: number; callerIMName: string }) => {
     if (!getRTCToken) return console.error('need getRTCToken method to get token');
+    console.log('handleInvite', data);
+    rtcConfig?.onRing?.(data);
     const { agoraUid, accessToken } = await getRTCToken({
       channel: data.channel,
       chatUserId: rootStore.client.user,
     });
+    // --- 单人音视频被邀请方接听页面显示对方信息 --
+    let idMap =
+      (await rtcConfig?.getIdMap?.({
+        userId: rootStore.client.user,
+        channel: data.channel,
+      })) || {};
+
+    let membersId = Object.values(idMap);
+    let userInfo: Record<string, any> = {};
+    membersId.forEach(item => {
+      // @ts-ignore
+      userInfo[item] = {
+        nickname: rootStore.addressStore.appUsersInfo[item]?.nickname,
+        avatarUrl: rootStore.addressStore.appUsersInfo[item]?.avatarurl,
+      };
+    });
+    userInfo[data.callerIMName] = {
+      nickname: rootStore.addressStore.appUsersInfo[data.callerIMName]?.nickname,
+      avatarUrl: rootStore.addressStore.appUsersInfo[data.callerIMName]?.avatarurl,
+    };
+    if (idMap && Object.keys(idMap).length > 0) {
+      console.log('有人加入时设置', idMap, userInfo);
+      CallKit.setUserIdMap(idMap);
+      CallKit.setUserInfo(userInfo);
+    }
+
     setCurrentCall({
       ...data,
       accessToken,
@@ -543,7 +635,7 @@ const Chat: FC<ChatProps> = props => {
       chatUserId: rootStore.client.user,
     });
     if (CVS.chatType === 'groupChat') {
-      const members = await rtcConfig?.onInvite?.({ channel, conversation: CVS });
+      const members = await rtcConfig?.onInvite?.({ channel, conversation: CVS, type });
       const rtcMembers = members?.map(item => {
         return item.id;
       });
@@ -551,8 +643,8 @@ const Chat: FC<ChatProps> = props => {
         callType: type == 'video' ? 2 : 3,
         chatType: 'groupChat',
         to: rtcMembers,
-        // agoraUid: agoraUid,
-        message: `Start a ${type} call`,
+        agoraUid: agoraUid,
+        message: t(`Start a ${type} meeting`),
         groupId: CVS.conversationId,
         groupName: CVS.name || '',
         accessToken,
@@ -581,6 +673,7 @@ const Chat: FC<ChatProps> = props => {
         nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
         avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
       };
+      console.log('setUserInfo', userInfo);
       CallKit.setUserInfo(userInfo);
 
       return;
@@ -591,7 +684,7 @@ const Chat: FC<ChatProps> = props => {
       chatType: 'singleChat',
       to: CVS.conversationId,
       agoraUid,
-      message: `Start a ${type} call`,
+      message: t(`Start a ${type} call`),
       accessToken,
       channel,
     };
@@ -627,13 +720,21 @@ const Chat: FC<ChatProps> = props => {
     });
   };
 
+  useImperativeHandle(ref, () => ({
+    startVideoCall: () => {
+      startVideoCall('video');
+    },
+    startAudioCall: () => {
+      startVideoCall('audio');
+    },
+  }));
   useEffect(() => {
     if (!rtcConfig || !rtcConfig.appId) {
       return;
     }
-    // let appId = '15cb0d28b87b425ea613fc46f7c9f974';
+    console.log('初始化callkit', rtcConfig);
     CallKit.init(rtcConfig.appId, rtcConfig?.agoraUid, rootStore.client);
-  }, []);
+  }, [rtcConfig?.appId, rtcConfig?.agoraUid]);
 
   // config rtc call
   let showAudioCall = true;
@@ -648,6 +749,31 @@ const Chat: FC<ChatProps> = props => {
     showVideoCall = false;
     showAudioCall = false;
   }
+
+  // --- report ---
+  const [reportMessageId, setReportMessageId] = useState('');
+  const [reportOpen, setReportOpen] = useState(false);
+  const [checkedType, setCheckedType] = useState('');
+  const handleCheckChange = (type: string) => {
+    setCheckedType(type);
+  };
+
+  const handleReportMessage = () => {
+    rootStore.client
+      .reportMessage({
+        reportType: checkedType,
+        reportReason: reportType[checkedType],
+        messageId: reportMessageId,
+      })
+      .then(() => {
+        eventHandler.dispatchSuccess('reportMessage');
+        setReportOpen(false);
+        setCheckedType('');
+      })
+      .catch(err => {
+        eventHandler.dispatchError('reportMessage', err);
+      });
+  };
 
   return (
     <div className={classString} style={{ ...style }}>
@@ -669,17 +795,17 @@ const Chat: FC<ChatProps> = props => {
                 <div ref={headerRef}>
                   {CVS.chatType == 'groupChat' && showHeaderThreadListBtn && (
                     <Button onClick={showTheadList} type="text" shape="circle">
-                      <Icon type="THREAD"></Icon>
-                    </Button>
-                  )}
-                  {showVideoCall && (
-                    <Button onClick={() => startVideoCall('video')} type="text" shape="circle">
-                      <Icon type="CAMERA_ARROW"></Icon>
+                      <Icon type="THREAD" width={24} height={24}></Icon>
                     </Button>
                   )}
                   {showAudioCall && (
                     <Button onClick={() => startVideoCall('audio')} type="text" shape="circle">
-                      <Icon type="MIC"></Icon>
+                      <Icon type="PHONE_PICK" width={24} height={24}></Icon>
+                    </Button>
+                  )}
+                  {showVideoCall && (
+                    <Button onClick={() => startVideoCall('video')} type="text" shape="circle">
+                      <Icon type="VIDEO_CAMERA" width={24} height={24}></Icon>
                     </Button>
                   )}
                 </div>
@@ -695,7 +821,10 @@ const Chat: FC<ChatProps> = props => {
           {renderMessageList ? (
             renderMessageList()
           ) : (
-            <MessageList messageProps={messageProps} {...messageListProps}></MessageList>
+            <MessageList
+              {...messageListProps}
+              messageProps={{ ...messageProps, ...messageListProps?.messageProps }}
+            ></MessageList>
           )}
           {messageInputProps?.enabledTyping && (
             <Typing
@@ -737,10 +866,40 @@ const Chat: FC<ChatProps> = props => {
         onStateChange={handleCallStateChange}
         onInvite={handleInvite}
         contactAvatar={rootStore.addressStore.appUsersInfo[currentCall.targetId]?.avatarurl}
-        groupAvatar={<Avatar className="cui-callkit-groupAvatar">{CVS.name}</Avatar>}
+        groupAvatar={
+          <Avatar className="cui-callkit-groupAvatar" src={rtcConfig?.groupAvatar}>
+            {CVS.name}
+          </Avatar>
+        }
       ></CallKit>
+      <Modal
+        open={reportOpen}
+        title={t('report')}
+        okText={t('report')}
+        cancelText={t('cancel')}
+        onOk={handleReportMessage}
+        onCancel={() => {
+          setReportOpen(false);
+        }}
+      >
+        <div>
+          {Object.keys(reportType).map((item, index) => {
+            return (
+              <div className="report-item" key={index}>
+                <div>{t(reportType[item] as string)}</div>
+                <Checkbox
+                  checked={checkedType === item}
+                  onChange={() => {
+                    handleCheckChange(item);
+                  }}
+                ></Checkbox>
+              </div>
+            );
+          })}
+        </div>
+      </Modal>
     </div>
   );
-};
+});
 
 export default observer(Chat);

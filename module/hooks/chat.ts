@@ -7,12 +7,11 @@ import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
 import { useGroupMembersAttributes } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import ts from 'typescript';
-const useEventHandler = () => {
+import { ProviderProps } from '../store/Provider';
+const useEventHandler = (initConfig: ProviderProps['initConfig']) => {
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
   const client = rootStore.client;
-  const context = useContext(RootContext);
-  const { initConfig } = context;
   const { useUserInfo } = initConfig;
   useEffect(() => {
     client?.addEventHandler?.('UIKitMessage', {
