@@ -93,6 +93,9 @@ import { ReactComponent as PhonePick } from '../svgs/icons/phone_pick.svg';
 import { ReactComponent as VideoCamera } from '../svgs/icons/video_camera.svg';
 import { ReactComponent as PlusInCircle } from '../svgs/icons/plus_in_circle.svg';
 import { ReactComponent as PlusInCircleFill } from '../svgs/icons/plus_in_circle_fill.svg';
+import { ReactComponent as Check } from '../svgs/icons/check.svg';
+import { ReactComponent as Check2 } from '../svgs/icons/check_2.svg';
+import { ReactComponent as CandleInCircle } from '../svgs/icons/candle_in_circle.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -369,6 +372,15 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'PLUS_IN_CIRCLE_FILL':
       return <PlusInCircleFill></PlusInCircleFill>;
+      break;
+    case 'CHECK':
+      return <Check></Check>;
+      break;
+    case 'CHECK2':
+      return <Check2></Check2>;
+      break;
+    case 'CANDLE_IN_CIRCLE':
+      return <CandleInCircle></CandleInCircle>;
       break;
     default:
       return '';

@@ -2,7 +2,9 @@
 $status-prefix-cls: #{$cui-prefix}-message-status;
 
 .#{$status-prefix-cls} {
-    padding: 3px;
+    padding: 0 3px;
+    display: block;
+    height: 20px;
     &-icon{
         img{
             width: 20px;

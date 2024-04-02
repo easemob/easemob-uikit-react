@@ -237,6 +237,10 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         color: $msg-nickname-font-color;
     }
 
+    &-time-and-status-box{
+        display: flex;
+        align-items: center;
+    }
     &-time {
         display: inline-block;
         // width: $msg-time-width;

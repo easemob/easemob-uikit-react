@@ -631,10 +631,9 @@ let BaseMessage = (props: BaseMessageProps) => {
               ></RepliedMsg>
             ) : (
               <div className={`${prefixCls}-info`}>
-                <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
-                <span className={`${prefixCls}-time`}>
-                  {formatDateTime?.(time as number) || getConversationTime(time as number)}
-                </span>
+                {message?.chatType !== 'singleChat' && !isCurrentUser && (
+                  <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
+                )}
               </div>
             )}
             <div className={`${prefixCls}-body`}>
@@ -673,8 +672,14 @@ let BaseMessage = (props: BaseMessageProps) => {
                   )}
                 </>
               ) : (
-                messageStatus &&
-                !isRtcInviteMessage && <MessageStatus status={status} type="icon"></MessageStatus>
+                <div className={`${prefixCls}-time-and-status-box`}>
+                  {messageStatus && !isRtcInviteMessage && (
+                    <MessageStatus status={status} type="icon"></MessageStatus>
+                  )}
+                  <span className={`${prefixCls}-time`}>
+                    {formatDateTime?.(time as number) || getConversationTime(time as number)}
+                  </span>
+                </div>
               )}
             </div>
           </div>

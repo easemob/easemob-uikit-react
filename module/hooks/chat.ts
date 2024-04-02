@@ -86,7 +86,7 @@ const useEventHandler = (initConfig: ProviderProps['initConfig']) => {
               })
               .forEach(receivedMessage => {
                 // @ts-ignore
-                receivedMessage.status = 'read';
+                messageStore.updateMessageStatus(receivedMessage.mid || receivedMessage.id, 'read');
               });
           }, 10);
         }
