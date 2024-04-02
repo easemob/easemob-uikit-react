@@ -262,14 +262,18 @@ class MessageStore {
         if (chatType == 'chatRoom') {
           // @ts-ignore
           if (!this.message[chatType][to]) {
-            // @ts-ignore
-            this.message[chatType][to] = [this.message.byId[message.id]];
+            runInAction(() => {
+              // @ts-ignore
+              this.message[chatType][to] = [this.message.byId[message.id]];
+            });
           } else {
             // 处理重发的消息，重发的消息不push
             // @ts-ignore
             if (this.message.byId[message.id].status !== 'failed') {
-              // @ts-ignore
-              this.message[chatType][to].push(this.message.byId[message.id]);
+              runInAction(() => {
+                // @ts-ignore
+                this.message[chatType][to].push(this.message.byId[message.id]);
+              });
             }
           }
         }
@@ -299,17 +303,19 @@ class MessageStore {
             msg.file.url = (message as ChatSDK.ImgMsgBody).url || '';
           }
         }
-        this.message.byId[data.serverMsgId] = this.message.byId[message.id];
-        // @ts-ignore
-        this.message.byId[message.id].status = 'sent';
-        // @ts-ignore
-        this.message.byId[message.id].mid = data.serverMsgId;
-        // @ts-ignore
-        const i = this.message[chatType][to].indexOf(this.message.byId[message.id]);
-        // @ts-ignore
-        this.message[chatType][to].splice(i, 1, msg);
-        // this.message[chatType][to][i] = msg;
 
+        runInAction(() => {
+          this.message.byId[data.serverMsgId] = this.message.byId[message.id];
+          // @ts-ignore
+          this.message.byId[message.id].status = 'sent';
+          // @ts-ignore
+          this.message.byId[message.id].mid = data.serverMsgId;
+          // @ts-ignore
+          const i = this.message[chatType][to].indexOf(this.message.byId[message.id]);
+          // @ts-ignore
+          this.message[chatType][to].splice(i, 1, msg);
+          // this.message[chatType][to][i] = msg;
+        });
         // 更新会话last message
         let cvs: Conversation = this.rootStore.conversationStore.getConversation(
           // @ts-ignore
@@ -405,6 +411,20 @@ class MessageStore {
       return;
     }
 
+    if (message.ext && message.ext.ease_chat_uikit_user_info) {
+      const appUsersInfo = this.rootStore.addressStore.appUsersInfo;
+      message.from &&
+        appUsersInfo[message.from] == undefined &&
+        this.rootStore.addressStore.setAppUserInfo({
+          ...appUsersInfo,
+          [message.from]: {
+            nickname: message.ext.ease_chat_uikit_user_info.nickname,
+            userId: message.from,
+            avatarurl: message.ext.ease_chat_uikit_user_info.avatarURL,
+          },
+        });
+    }
+
     const isCurrentCvs =
       // @ts-ignore
       this.currentCVS.chatType == message.chatType &&
@@ -474,20 +494,22 @@ class MessageStore {
 
   updateMessageStatus(msgId: string, status: string) {
     setTimeout(() => {
-      let msg = this.message.byId[msgId];
-      if (!msg) {
-        // ack message
-        return; // console.error('not found message:', msgId);
-      }
-      let conversationId = getCvsIdFromMessage(msg as BaseMessageType);
-      // @ts-ignore
-      this.message.byId[msgId].status = status;
-      // @ts-ignore
-      const i = this.message[msg.chatType][conversationId]?.indexOf(this.message.byId[msg.id]); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
-      if (typeof i === 'undefined' || i == -1) return;
-      // @ts-ignore
-      this.message[msg.chatType][conversationId].splice(i, 1, msg);
-      // this.message[chatType][to][i] = msg;
+      runInAction(() => {
+        let msg = this.message.byId[msgId];
+        if (!msg) {
+          // ack message
+          return; // console.error('not found message:', msgId);
+        }
+        let conversationId = getCvsIdFromMessage(msg as BaseMessageType);
+        // @ts-ignore
+        this.message.byId[msgId].status = status;
+        // @ts-ignore
+        const i = this.message[msg.chatType][conversationId]?.indexOf(this.message.byId[msg.id]); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
+        if (typeof i === 'undefined' || i == -1) return;
+        // @ts-ignore
+        this.message[msg.chatType][conversationId].splice(i, 1, msg);
+        // this.message[chatType][to][i] = msg;
+      });
     }, 10);
   }
 
