@@ -7,7 +7,10 @@ $btn-prefix-cls: #{$cui-prefix}-button;
     @include btn-default();
 
     &-primary {
-        @include btn-primary()
+        @include btn-primary();
+        &.#{$btn-prefix-cls}-dark{
+            @include btn-primary-dark();
+        }
     }
 
     &-ghost {

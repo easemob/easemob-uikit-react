@@ -160,7 +160,7 @@
             &:hover,
             &:focus,
             &:active {
-                @include button-color($gray-2, $gray-1, $gray-3);
+                @include button-color($gray-4, $gray-2, $gray-2);
                 text-shadow: none;
                 box-shadow: none;
             }
@@ -227,5 +227,18 @@
 
 @mixin btn-dark() {
     @include button-variant-primary($gray-95, $gray-1, $gray-4, $primary-color-active, dark);
+}
+
+@mixin btn-primary-dark(){
+    @include button-variant-primary($gray-95, $blue-6,$blue-6, $blue-7, dark);
+    &:hover,
+    &:focus {
+            @include button-color($gray-95, $blue-7, $blue-7)
+    }
+
+    &:active {
+        @include button-color($gray-98, $blue-5, $blue-5)
+    }
+    
 }
 @import '~/common/style/index.scss';
