@@ -632,6 +632,9 @@ class MessageStore {
         messages[msgIndex].type = 'recall';
         //@ts-ignore
         messages[msgIndex].ext = {};
+        runInAction(() => {
+          this.message[cvs.chatType][cvs.conversationId] = messages;
+        });
       }
       if (!conversation) return;
       //@ts-ignore
@@ -656,10 +659,14 @@ class MessageStore {
         const messages = getMessages(cvs);
         const msgIndex = getMessageIndex(messages, messageId);
         if (msgIndex > -1) {
-          messages[msgIndex].type = 'recall';
-          //@ts-ignore
-          messages[msgIndex].ext = {};
-
+          runInAction(() => {
+            let msg = { ...messages[msgIndex] };
+            msg.type = 'recall';
+            //@ts-ignore
+            msg.ext = {};
+            messages[msgIndex] = msg;
+            this.message[cvs.chatType][cvs.conversationId] = messages;
+          });
           if (!conversation) return;
           // @ts-ignore
           conversation.lastMessage = messages[msgIndex];
