@@ -133,6 +133,7 @@ const Emoji = (props: EmojiProps) => {
       trigger={trigger}
       arrowPointAtCenter={false}
       arrow={false}
+      placement="bottomRight"
       // open={isOpen}
     >
       {iconNode}

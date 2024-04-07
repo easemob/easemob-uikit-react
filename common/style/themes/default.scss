@@ -272,7 +272,7 @@ $tooltip-bg: #fff;
 // Tooltip arrow width
 $tooltip-arrow-width: 8px * 1.414; // sqrt(2)
 // Tooltip distance with trigger
-$tooltip-distance: $tooltip-arrow-width - 1px + 4px;
+$tooltip-distance: 4px;
 // Tooltip arrow color
 $tooltip-arrow-color: $tooltip-bg;
 $tooltip-border-radius: $border-radius-base;

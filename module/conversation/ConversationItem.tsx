@@ -304,7 +304,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
           {formatDateTime?.(data.lastMessage?.time) || getConversationTime(data.lastMessage?.time)}
         </span>
         {showMore ? (
-          <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
+          <Tooltip title={menuNode} trigger="click" placement="bottomRight">
             {moreAction.icon || (
               <Icon
                 type="ELLIPSIS"

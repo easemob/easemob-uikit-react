@@ -17,7 +17,7 @@ $contact-prefix-cls: #{$cui-prefix}-contactList;
     background-color: $gray-95;
     &-content{
         flex: 1;
-        overflow-y: auto;
+        overflow-y: overlay;
         overflow-x: hidden;
         position: relative;
         scrollbar-color: $gray-8 transparent;

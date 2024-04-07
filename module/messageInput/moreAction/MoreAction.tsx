@@ -306,6 +306,7 @@ let MoreAction = (props: MoreActionProps) => {
         onOpenChange={c => {
           setMenuOpen(c);
         }}
+        placement="bottomRight"
       >
         {iconNode}
       </Tooltip>

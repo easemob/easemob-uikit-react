@@ -5,7 +5,7 @@ import './style/style.scss';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import Button from '../../component/button';
-import { Tooltip } from '../../component/tooltip/Tooltip';
+import { Tooltip, TooltipProps } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 export interface HeaderProps {
   className?: string;
@@ -32,6 +32,7 @@ export interface HeaderProps {
       content: ReactNode;
       onClick?: () => void;
     }>;
+    tooltipProps: TooltipProps;
   };
   onClickAvatar?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   onClickClose?: () => void;
@@ -158,6 +159,7 @@ const Header: FC<HeaderProps> = props => {
                 onOpenChange={c => {
                   setMenuOpen(c);
                 }}
+                {...moreAction?.tooltipProps}
               >
                 {
                   <Button
