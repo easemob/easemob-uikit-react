@@ -388,7 +388,8 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         font-style: normal;
         font-weight: 500;
         line-height: 20px;
-
+        min-width: 188px;
+        text-align: left;
         >div{
             margin-right: 8px;
         }
