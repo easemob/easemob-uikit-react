@@ -393,7 +393,7 @@ let ContactList: FC<ContactListProps> = props => {
   return (
     <div className={classString} style={{ ...style }}>
       {header ? header : <Header avatar={<></>} content={t('contacts')}></Header>}
-      <Search onChange={handleSearch}></Search>
+      <Search style={{ margin: '0 4px' }} onChange={handleSearch}></Search>
       <div className={`${prefixCls}-content`}>{isSearch ? searchNode : addressNode}</div>
     </div>
   );
