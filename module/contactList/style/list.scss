@@ -11,7 +11,7 @@ $contact-prefix-cls: #{$cui-prefix}-contactList;
     overflow-y: hidden;
     display: flex;
     flex-direction: column;
-    padding: 8px;
+    padding: 0 8px;
     gap: 8px;
     box-sizing: border-box;
     background-color: $gray-95;
@@ -20,9 +20,14 @@ $contact-prefix-cls: #{$cui-prefix}-contactList;
         overflow-y: auto;
         overflow-x: hidden;
         position: relative;
+        scrollbar-color: $gray-8 transparent;
     }
 
     &-dark{
         background-color: $gray-1;
+
+        .#{$contact-prefix-cls}-content{
+            scrollbar-color: $gray-4 transparent;
+        }
     }
 }

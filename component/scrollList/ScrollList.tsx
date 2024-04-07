@@ -4,6 +4,7 @@ import { ConfigContext } from '../config/index';
 import { observer } from 'mobx-react-lite';
 import { useDebounceFn } from 'ahooks';
 import './style/style.scss';
+import { RootContext } from '../../module/store/rootContext';
 export interface ScrollListProps<T> {
   className?: string;
   style?: React.CSSProperties;
@@ -47,8 +48,15 @@ let ScrollList = function ScrollListInner<T>() {
         );
         const { getPrefixCls } = React.useContext(ConfigContext);
         const prefixCls = getPrefixCls('scrollList', prefix);
-
-        const classString = classNames(prefixCls, className);
+        const { theme } = React.useContext(RootContext);
+        const themeMode = theme?.mode;
+        const classString = classNames(
+          prefixCls,
+          {
+            [`${prefixCls}-${themeMode}`]: !!themeMode,
+          },
+          className,
+        );
         const containerRef = useRef<HTMLDivElement>(null);
         useImperativeHandle(ref, () => ({
           scrollTo: innerScrollTo,
