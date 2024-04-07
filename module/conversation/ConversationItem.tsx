@@ -301,7 +301,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       </div>
       <div className={`${prefixCls}-info`}>
         <span className={`${prefixCls}-time`}>
-          {formatDateTime?.(data.lastMessage.time) || getConversationTime(data.lastMessage.time)}
+          {formatDateTime?.(data.lastMessage?.time) || getConversationTime(data.lastMessage?.time)}
         </span>
         {showMore ? (
           <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
