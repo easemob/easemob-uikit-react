@@ -127,7 +127,7 @@ let ContactList: FC<ContactListProps> = props => {
     className,
     onSearch,
     onItemClick,
-    menu = ['contacts', 'groups', 'requests'],
+    menu = ['requests', 'groups', 'contacts'],
     style,
     hasMenu = false,
     checkable = false,

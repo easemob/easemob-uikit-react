@@ -245,7 +245,7 @@ const ChatApp: FC<any> = () => {
 
         {tab == 'contact' && (
           <ContactList
-            // className="conversation"
+            className="conversation"
             menu={[
               'contacts',
               'groups',

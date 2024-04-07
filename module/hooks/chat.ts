@@ -8,11 +8,15 @@ import { useGroupMembersAttributes } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import ts from 'typescript';
 import { ProviderProps } from '../store/Provider';
+
 const useEventHandler = (initConfig: ProviderProps['initConfig']) => {
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
   const client = rootStore.client;
   const { useUserInfo } = initConfig;
+
+  const context = useContext(RootContext);
+  const { features } = context;
   useEffect(() => {
     client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
@@ -199,6 +203,7 @@ const useEventHandler = (initConfig: ProviderProps['initConfig']) => {
         }
       },
       onPresenceStatusChange: message => {
+        if (features?.conversationList?.item?.presence == false) return;
         const { addressStore } = rootStore;
         message.length > 0 &&
           message.forEach(presenceInfo => {

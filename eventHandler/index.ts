@@ -43,6 +43,7 @@ export type EventName =
   | 'getJoinedGroups'
   | 'open'
   | 'setContactRemark'
+  | 'addContact'
   | 'deleteContact';
 
 export type EventHandlerData = {

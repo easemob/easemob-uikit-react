@@ -468,20 +468,23 @@ class AddressStore {
       .then((res: any) => {
         const userSetting = res.data.user;
         const groupSetting = res.data.group;
-        this.contacts.forEach(item => {
-          if (userSetting[item.userId] && userSetting[item.userId]?.type == 'NONE') {
-            item.silent = true;
-          } else if (userSetting[item.userId]) {
-            item.silent = false;
-          }
+        runInAction(() => {
+          this.contacts.forEach(item => {
+            if (userSetting[item.userId] && userSetting[item.userId]?.type == 'NONE') {
+              item.silent = true;
+            } else if (userSetting[item.userId]) {
+              item.silent = false;
+            }
+          });
+          this.groups.forEach(item => {
+            if (groupSetting[item.groupid] && groupSetting[item.groupid]?.type == 'AT') {
+              item.silent = true;
+            } else if (groupSetting[item.groupid]) {
+              item.silent = false;
+            }
+          });
         });
-        this.groups.forEach(item => {
-          if (groupSetting[item.groupid] && groupSetting[item.groupid]?.type == 'AT') {
-            item.silent = true;
-          } else if (groupSetting[item.groupid]) {
-            item.silent = false;
-          }
-        });
+
         eventHandler.dispatchSuccess('getSilentModeForConversations');
       })
       .catch(error => {
@@ -555,16 +558,19 @@ class AddressStore {
         groupId: groupId,
       })
       .then(res => {
-        const found = this.groups.filter(item => item.groupid === groupId);
-        if (found.length === 0) {
-          this.groups.push({
-            info: res.data?.[0],
-            groupid: groupId,
-            groupname: res.data?.[0].name || '',
-          });
-        } else {
-          found[0].info = res.data?.[0];
-        }
+        runInAction(() => {
+          const found = this.groups.filter(item => item.groupid === groupId);
+          if (found.length === 0) {
+            this.groups.push({
+              info: res.data?.[0],
+              groupid: groupId,
+              groupname: res.data?.[0].name || '',
+            });
+          } else {
+            found[0].info = res.data?.[0];
+          }
+        });
+
         eventHandler.dispatchSuccess('getGroupInfo');
       })
       .catch(error => {
@@ -659,7 +665,14 @@ class AddressStore {
 
   addContact(userId: string) {
     const rootStore = getStore();
-    rootStore.client.addContact(userId, '');
+    rootStore.client
+      .addContact(userId, '')
+      .then(() => {
+        eventHandler.dispatchSuccess('addContact');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('addContact', error);
+      });
   }
 
   addContactRequest(request: ContactRequest) {
@@ -720,32 +733,33 @@ class AddressStore {
         },
       })
       .then((res: ChatSDK.AsyncResult<ChatSDK.CreateGroupResult>) => {
-        const groupMembers = members.map(item => {
-          return {
-            userId: item,
-            role: 'member' as 'member' | 'owner' | 'admin',
-          };
-        });
-        groupMembers.push({
-          userId: rootStore.client.user,
-          role: 'owner',
-        });
-        let initial = '#';
-        if (checkCharacter(groupName.substring(0, 1)) == 'en') {
-          initial = groupName.substring(0, 1).toUpperCase();
-        } else if (checkCharacter(groupName.substring(0, 1)) == 'zh') {
-          initial = pinyin(groupName.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
-        }
+        runInAction(() => {
+          const groupMembers = members.map(item => {
+            return {
+              userId: item,
+              role: 'member' as 'member' | 'owner' | 'admin',
+            };
+          });
+          groupMembers.push({
+            userId: rootStore.client.user,
+            role: 'owner',
+          });
+          let initial = '#';
+          if (checkCharacter(groupName.substring(0, 1)) == 'en') {
+            initial = groupName.substring(0, 1).toUpperCase();
+          } else if (checkCharacter(groupName.substring(0, 1)) == 'zh') {
+            initial = pinyin(groupName.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
+          }
 
-        this.groups.push({
-          disabled: false,
-          groupid: res.data?.groupid || '',
-          initial: initial,
-          name: groupName,
-          groupname: groupName,
-          members: groupMembers,
+          this.groups.push({
+            disabled: false,
+            groupid: res.data?.groupid || '',
+            initial: initial,
+            name: groupName,
+            groupname: groupName,
+            members: groupMembers,
+          });
         });
-
         rootStore.conversationStore.addConversation({
           chatType: 'groupChat',
           conversationId: res.data?.groupid || '',
