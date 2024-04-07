@@ -213,6 +213,7 @@ let BaseMessage = (props: BaseMessageProps) => {
       [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
       [`${prefixCls}-arrow`]: !!bubbleArrow,
       [`${prefixCls}-reply`]: showRepliedMsg && bubbleShape === 'ground',
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
