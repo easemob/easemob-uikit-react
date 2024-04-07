@@ -7,10 +7,9 @@ $number-prefix-cls: #{$cui-prefix}-scroll-number;
     position: relative;
     display: inline-block;
     line-height: 1;
-
     &-count {
         z-index: $zindex-badge;
-        min-width: $badge-height;
+        // min-width: $badge-height;
         height: $badge-height;
         padding: 0 6px;
         color: $badge-text-color;
@@ -110,7 +109,12 @@ $number-prefix-cls: #{$cui-prefix}-scroll-number;
       }
 
 }
-
+.#{$number-prefix-cls}{
+  &-only{
+    width: 8px;
+    display: inline-block;
+  }
+}
 @keyframes cuiZoomBadgeIn {
     0% {
       transform: scale(0) translate(50%, -50%);
