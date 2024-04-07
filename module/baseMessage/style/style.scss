@@ -367,6 +367,35 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
             }
         }
     }
+    // dark mode primary style
+    &-dark.#{$status-prefix-cls}-secondly {
+            .#{$status-prefix-cls}-content {
+                background: $blue-2;
+                color: $msg-bubble-font-color-primary;
+
+                &::after {
+                    border-left: $msg-bubble-arrow-border-size solid $blue-2 !important;
+                }
+    
+                &::before {
+                    border-right: $msg-bubble-arrow-border-size solid $blue-2 !important;
+                }
+        }
+    }
+    &-dark.#{$status-prefix-cls}-primary {
+        .#{$status-prefix-cls}-content {
+            background: $blue-6;
+            color: $msg-bubble-font-color-secondly;
+
+            &::after {
+                border-left: $msg-bubble-arrow-border-size solid $blue-6 !important;
+            }
+
+            &::before {
+                border-right: $msg-bubble-arrow-border-size solid $blue-6 !important;
+            }
+    }
+}
 }
 
 .#{$moreAction-prefix-cls} {
