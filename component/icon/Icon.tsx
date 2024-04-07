@@ -76,6 +76,7 @@ import { ReactComponent as Eraser } from '../svgs/icons/eraser.svg';
 import { ReactComponent as ArrowSquareRightFill } from '../svgs/icons/arrow_right_square_fill.svg';
 import { ReactComponent as ArrowsRound } from '../svgs/icons/arrow_round.svg';
 import { ReactComponent as PERSON_ADD } from '../svgs/icons/person_add.svg';
+import { ReactComponent as PERSON_ADD_FILL } from '../svgs/icons/person_add_fill.svg';
 import { ReactComponent as PERSON_MINUS } from '../svgs/icons/person_minus.svg';
 import { ReactComponent as TriangleInRectangleFill } from '../svgs/icons/triangle_in_rectangle_fill.svg';
 import { ReactComponent as SpeakerNVerticalBar } from '../svgs/icons/spkeaker_n_vertical_bar.svg';
@@ -381,6 +382,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'CANDLE_IN_CIRCLE':
       return <CandleInCircle></CandleInCircle>;
+      break;
+    case 'PERSON_ADD_FILL':
+      return <PERSON_ADD_FILL></PERSON_ADD_FILL>;
       break;
     default:
       return '';
