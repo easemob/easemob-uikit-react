@@ -69,7 +69,11 @@ const ContactGroup: FC<ContactGroupProps> = props => {
         <div className={`${prefixCls}-title`} onClick={() => handleClickTitle(title)}>
           <div> {title}</div>
           <div>
-            {unreadCount ?? 0 > 0 ? <span className={countClass}>{unreadCount}</span> : null}
+            {unreadCount ?? 0 > 0 ? (
+              <span className={countClass}>{unreadCount}</span>
+            ) : (
+              <span></span>
+            )}
 
             <div className={`${prefixCls}-icon`} style={{ transform: `rotate(${iconType}deg)` }}>
               <Icon type="ARROW_RIGHT"></Icon>
