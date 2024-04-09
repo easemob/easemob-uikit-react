@@ -304,6 +304,13 @@ const GroupMember: FC<GroupMemberProps> = props => {
                       ),
                       actions: [
                         {
+                          icon: (
+                            <Icon
+                              type={item.isInContact ? 'BUBBLE_FILL' : 'PERSON_ADD_FILL'}
+                              width={18}
+                              height={18}
+                            ></Icon>
+                          ),
                           content: item.isInContact ? t('privateChat') : t('addGroupMembers'),
                           onClick: () => {
                             item.isInContact ? privateChat(item.userId) : addContact(item.userId);
