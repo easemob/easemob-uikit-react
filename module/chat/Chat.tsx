@@ -95,6 +95,10 @@ export interface ChatProps {
     groupAvatar?: string;
     onRing?: (data: { channel: string }) => void;
   };
+  onOpenThread?: (data: { id: string }) => void;
+  onOpenThreadList?: () => void;
+  onVideoCall?: (data: { channel: string }) => void;
+  onAudioCall?: (data: { channel: string }) => void;
 }
 const getChatAvatarUrl = (cvs: CurrentConversation) => {
   if (cvs.chatType === 'singleChat') {
@@ -119,6 +123,10 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     rtcConfig,
     style = {},
     threadModalStyle = {},
+    onOpenThread,
+    onOpenThreadList,
+    onAudioCall,
+    onVideoCall,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -174,6 +182,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   const [modalOpen, setModalOpen] = useState<boolean>(false);
   const headerRef = useRef(null);
   const showTheadList = () => {
+    onOpenThreadList?.();
     if (modalOpen) return;
     setModalOpen(true);
     rootStore.threadStore.getGroupChatThreads(CVS.conversationId)?.then(cursor => {
@@ -201,6 +210,9 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     setModalOpen(false);
     rootStore.threadStore.setThreadVisible(true);
     rootStore.threadStore.getChatThreadDetail(item.id);
+    if (onOpenThread) {
+      onOpenThread(item);
+    }
   };
   const ThreadScrollList = ScrollList<ChatSDK.ChatThreadOverview>();
 
@@ -634,6 +646,16 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       channel: channel,
       chatUserId: rootStore.client.user,
     });
+
+    if (type == 'video') {
+      onVideoCall?.({
+        channel,
+      });
+    } else {
+      onAudioCall?.({
+        channel,
+      });
+    }
     if (CVS.chatType === 'groupChat') {
       const members = await rtcConfig?.onInvite?.({ channel, conversation: CVS, type });
       const rtcMembers = members?.map(item => {
@@ -823,6 +845,11 @@ const Chat = forwardRef((props: ChatProps, ref) => {
           ) : (
             <MessageList
               {...messageListProps}
+              onOpenThreadPanel={id => {
+                onOpenThread?.({
+                  id: id,
+                });
+              }}
               messageProps={{ ...messageProps, ...messageListProps?.messageProps }}
             ></MessageList>
           )}

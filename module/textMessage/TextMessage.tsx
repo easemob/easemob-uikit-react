@@ -39,6 +39,7 @@ export interface TextMessageProps extends BaseMessageProps {
   targetLanguage?: string;
   showTranslation?: boolean; // 是否展示翻译后的消息
   onlyContent?: boolean;
+  onOpenThreadPanel?: (threadId: string) => void;
 }
 
 export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = true) => {
@@ -147,6 +148,7 @@ const TextMessage = (props: TextMessageProps) => {
     targetLanguage,
     showTranslation = true,
     onlyContent = false,
+    onOpenThreadPanel,
     ...others
   } = props;
   if (!textMessage.chatType) return null;
@@ -465,6 +467,7 @@ const TextMessage = (props: TextMessageProps) => {
     rootStore.threadStore.setThreadVisible(true);
 
     rootStore.threadStore.getChatThreadDetail(textMessage?.chatThreadOverview?.id || '');
+    onOpenThreadPanel?.(textMessage.chatThreadOverview?.id || '');
   };
 
   return (

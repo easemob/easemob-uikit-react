@@ -45,6 +45,7 @@ export interface MsgListProps {
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
   messageProps?: BaseMessageProps;
+  onOpenThreadPanel?: (threadId: string) => void;
 }
 
 const MessageScrollList = ScrollList<ChatSDK.MessageBody | RecallMessage>();
@@ -143,6 +144,7 @@ let MessageList: FC<MsgListProps> = props => {
           textMessage={messageData[data.index]}
           renderUserProfile={renderUserProfile}
           thread={isThread}
+          onOpenThreadPanel={props.onOpenThreadPanel || (() => {})}
           {...memoProps.messageProps}
         >
           {/* {(messageData[data.index] as ChatSDK.TextMsgBody).msg} */}
