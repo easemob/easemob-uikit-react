@@ -15,6 +15,7 @@ export interface EmojiKeyBoardProps {
   onDelete?: (emoji: string) => void;
   selectedList?: string[];
   reactionConfig?: EmojiProps['emojiConfig'];
+  placement?: EmojiProps['placement'];
 }
 
 const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
@@ -24,6 +25,7 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
     onDelete,
     prefixCls: customizePrefixCls,
     reactionConfig,
+    placement,
   } = props;
   const context = useContext(RootContext);
   const { reactionConfig: globalRatConfig } = context;
@@ -45,6 +47,7 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
       onSelected={handleSelectedEmoji}
       onDelete={handleDeleteEmoji}
       icon={<Icon type="FACE_PLUS" width={20} height={20} className={classString} />}
+      placement={placement}
     ></Emoji>
   );
 };

@@ -1,5 +1,5 @@
 import React, { ReactNode, useState } from 'react';
-import { Tooltip } from '../../../component/tooltip/Tooltip';
+import { Tooltip, TooltipProps } from '../../../component/tooltip/Tooltip';
 import Button, { ButtonProps } from '../../../component/button';
 import { emoji as defaultEmojiConfig } from './emojiConfig';
 import Icon from '../../../component/icon';
@@ -28,6 +28,7 @@ export interface EmojiProps {
   selectedList?: string[];
   onDelete?: (emojiString: string) => void;
   emojiConfig?: EmojiConfig;
+  placement?: TooltipProps['placement'];
 }
 
 const Emoji = (props: EmojiProps) => {
@@ -43,6 +44,7 @@ const Emoji = (props: EmojiProps) => {
     className,
     prefix,
     emojiContainerStyle = {},
+    placement = 'bottom',
   } = props;
   const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
@@ -133,7 +135,7 @@ const Emoji = (props: EmojiProps) => {
       trigger={trigger}
       arrowPointAtCenter={false}
       arrow={false}
-      placement="bottomRight"
+      placement={placement}
       // open={isOpen}
     >
       {iconNode}
