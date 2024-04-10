@@ -32,7 +32,7 @@ export interface HeaderProps {
       content: ReactNode;
       onClick?: () => void;
     }>;
-    tooltipProps: TooltipProps;
+    tooltipProps?: TooltipProps;
   };
   onClickAvatar?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   onClickClose?: () => void;

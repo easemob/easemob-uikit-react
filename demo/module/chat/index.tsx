@@ -365,6 +365,7 @@ const ChatApp: FC<any> = () => {
           setSelectedUsers(users);
         }}
         open={userSelectVisible}
+        okText="创建"
       ></UserSelect>
     </>
   );
@@ -395,7 +396,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         // appKey: 'easemob#easeim',
       }}
       theme={{
-        primaryColor: 50, //'#33ffaa',
+        // primaryColor: 50, //'#33ffaa',
         mode: 'dark',
         bubbleShape: 'square',
         avatarShape: 'square',

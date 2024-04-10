@@ -438,7 +438,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
           }}
           onOk={leaveGroup}
         >
-          <div>{`${t('want')}${
+          <div>{`${t('want')} ${
             isOwner ? t('disbandGroup').toLocaleLowerCase() : t('leaveGroup').toLocaleLowerCase()
           } “${infoData?.name}” ${t('and delete all chat history')}?`}</div>
         </Modal>
@@ -459,7 +459,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
                     setTransferModalVisible(true);
                   }}
                 >
-                  {t('choose')}
+                  {t('done')}
                 </div>
               ),
             }) ||

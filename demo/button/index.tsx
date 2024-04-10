@@ -58,6 +58,9 @@ const TestButton = () => {
               <Button type="primary" className="button" shape="circle">
                 C
               </Button>
+              <Button type="text" className="button">
+                text
+              </Button>
             </div>
             <div className="black">
               <Button size={'large'} type="default" className="button">

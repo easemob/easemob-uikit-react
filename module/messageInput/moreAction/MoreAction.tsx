@@ -343,7 +343,7 @@ let MoreAction = (props: MoreActionProps) => {
       {
         <div style={{ position: 'absolute' }}>
           <UserSelect
-            title={`${t('share')} ${t('contact')}`}
+            title={`${t('share')} ${t('contacts')}`}
             selectedPanelHeader={<></>}
             onCancel={() => {
               setCardModalVisible(false);
