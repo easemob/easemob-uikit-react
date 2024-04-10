@@ -319,6 +319,15 @@ const GroupMember: FC<GroupMemberProps> = props => {
                       ],
                     })
               }
+              onClick={data => {
+                // 如果 disabled 为true 则不触发点击事件
+                if (checkedUsers?.some(item2 => item2.userId == item.userId)) return;
+                handleSelect(!selectedUsersOut.map(item2 => item2.userId).includes(item.userId), {
+                  userId: item.userId,
+                  nickname: name,
+                  avatarUrl: avatarUrl,
+                });
+              }}
             ></UserItem>
           );
         })}

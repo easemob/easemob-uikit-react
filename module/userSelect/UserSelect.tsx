@@ -27,13 +27,14 @@ export interface UserSelectProps extends ModalProps {
     user: UserSelectInfo & { type: 'add' | 'delete' },
     userArr: UserSelectInfo[],
   ) => void;
-  enableMultipleSelection?: boolean;
+  enableMultipleSelection?: boolean; // 参数控制是不是可以多选,false 为单选
   selectedPanelHeader?: React.ReactNode;
   selectedPanelFooter?: React.ReactNode;
   users?: UserSelectInfo[];
   checkedUsers?: UserSelectInfo[];
   disableUserIds?: string[];
   disabled?: boolean;
+  searchPlaceholder?: string;
 }
 
 export interface UserSelectInfo {
@@ -61,6 +62,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     checkedUsers,
     disabled,
     disableUserIds,
+    searchPlaceholder,
     ...others
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -195,12 +197,45 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                     (checkedList && checkedList.map(item => item.id).includes(item.userId)) ||
                     checkedUsers?.some(item2 => item2.userId == item.userId)
                   }
+                  onClick={data => {
+                    // 如果 disabled 为true 则不触发点击事件
+                    if (
+                      checkedUsers?.some(item2 => item2.userId == item.userId) ||
+                      disabled ||
+                      disableUserIds?.includes(item.userId)
+                    ) {
+                      return;
+                    }
+                    handleSelect(!checkedList.map(item => item.id).includes(item.userId), item);
+                  }}
                 ></UserItem>
               );
             })
           ) : (
+            //  左侧待选择的人，直接使用联系人列表
             <ContactList
+              searchPlaceholder={searchPlaceholder}
+              searchInputStyle={themeMode == 'dark' ? { backgroundColor: '#464E53' } : {}}
+              style={themeMode == 'dark' ? { backgroundColor: '#2F3437' } : {}}
               onCheckboxChange={handleSelect}
+              onItemClick={data => {
+                const disabled = defaultCheckedUsers?.find(item => item.id === data.id);
+                if (disabled) return;
+                const found = checkedList.find(item => item.id === data.id);
+                if (found) {
+                  handleSelect(false, {
+                    userId: data.id,
+                    nickname: data.name,
+                    avatarUrl: addressStore.appUsersInfo[data.id]?.avatarurl,
+                  });
+                } else {
+                  handleSelect(true, {
+                    userId: data.id,
+                    nickname: data.name,
+                    avatarUrl: addressStore.appUsersInfo[data.id]?.avatarurl,
+                  });
+                }
+              }}
               checkable
               menu={['contacts']}
               hasMenu={false}
@@ -218,7 +253,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
               selectedUsers.length
             }）`}</div>
           )}
-
+          {/** 右侧已经选出来的人 */}
           <div className={`${prefixCls}-body`}>
             {selectedUsers.map(user => {
               return (
@@ -229,6 +264,9 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   checked
                   closeable
                   onClose={handleItemClose}
+                  onClick={data => {
+                    handleItemClose(user);
+                  }}
                 ></UserItem>
               );
             })}
@@ -249,7 +287,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   }}
                   disabled={selectedUsers.length === 0}
                 >
-                  {t('confirmBtn')}
+                  {others?.okText || t('confirmBtn')}
                 </Button>
                 <Button
                   style={{ width: '68px' }}
@@ -258,7 +296,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                     onCancel?.(e);
                   }}
                 >
-                  {t('cancelBtn')}
+                  {others.cancelText || t('cancelBtn')}
                 </Button>
               </div>
             </div>
