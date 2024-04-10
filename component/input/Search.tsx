@@ -14,6 +14,7 @@ export interface SearchProps {
   icon?: ReactNode;
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   style?: React.CSSProperties;
+  inputStyle?: React.CSSProperties;
   shape?: 'ground' | 'square';
   placeholder?: string;
 }
@@ -25,6 +26,7 @@ export default function Search(props: SearchProps) {
     shape,
     style = {},
     placeholder,
+    inputStyle,
     ...others
   } = props;
   const { t } = useTranslation();
@@ -53,6 +55,7 @@ export default function Search(props: SearchProps) {
         placeholder={placeholder || (t('search') as string)}
         onChange={handleChange}
         className={`${prefixCls}-input`}
+        style={{ ...inputStyle }}
         {...others}
       />
     </div>
