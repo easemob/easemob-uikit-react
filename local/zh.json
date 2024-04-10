@@ -1,7 +1,7 @@
 {
     "hello": "欢迎使用",
     "conversationTitle": "会话列表",
-    "deleteCvs": "删除会话",
+    "deleteCvs": "删除",
     "clearMsgs": "清空消息",
     "image": "图片",
     "audio": "语音消息",
@@ -90,7 +90,7 @@
     "sticky": "置顶",
     "unSticky": "取消置顶",
     "muteNotification": "免打扰",
-    "unmuteNotification": "取消勿扰",
+    "unmuteNotification": "取消免打扰",
     "Heart": "爱心",
     "Rose": "玫瑰",
     "Super Cube": "超级环",
@@ -143,5 +143,6 @@
     "Start a video call": "邀请你进入视频通话",
     "Start a audio call": "邀请你进入语音通话",
     "Start a video meeting": "邀请你进入多人视频通话",
-    "Start a audio meeting": "邀请你进入多人语音通话"
+    "Start a audio meeting": "邀请你进入多人语音通话",
+    "done": "完成"
 }
