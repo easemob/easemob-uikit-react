@@ -297,6 +297,7 @@ const MessageInput = (props: MessageInputProps) => {
                   // @ts-ignore
                   onSelected={handleSelectEmoji}
                   onClick={handleClickEmojiIcon}
+                  placement="bottomRight"
                 ></Emoji>
               );
             } else if (item.name === 'MORE' && item.visible) {
