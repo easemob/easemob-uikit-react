@@ -245,7 +245,6 @@ const VideoMessage = (props: VideoMessageProps) => {
       !videoMessage.isChatThread &&
       videoMessage.to == rootStore.client.context.userId
     ) {
-      console.log('onPlay', videoMessage);
       rootStore.messageStore.sendReadAck(videoMessage.id, videoMessage.from || '');
     }
   };

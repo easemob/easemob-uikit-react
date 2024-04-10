@@ -220,7 +220,6 @@ const Chat = forwardRef((props: ChatProps, ref) => {
 
   useEffect(() => {
     setRenderThreadList(threadList);
-    console.log('threadList >>', threadList);
   }, [threadList.length, CVS.conversationId]);
   // render thread list
   const threadListContent = () => {
@@ -360,7 +359,6 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   }
 
   const handleReport = (message: any) => {
-    console.log('举报', message);
     setReportOpen(true);
     setReportMessageId(message.mid || message.id);
   };
@@ -599,7 +597,6 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   };
   const handleInvite = async (data: { channel: string; type: number; callerIMName: string }) => {
     if (!getRTCToken) return console.error('need getRTCToken method to get token');
-    console.log('handleInvite', data);
     rtcConfig?.onRing?.(data);
     const { agoraUid, accessToken } = await getRTCToken({
       channel: data.channel,
@@ -626,7 +623,6 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       avatarUrl: rootStore.addressStore.appUsersInfo[data.callerIMName]?.avatarurl,
     };
     if (idMap && Object.keys(idMap).length > 0) {
-      console.log('有人加入时设置', idMap, userInfo);
       CallKit.setUserIdMap(idMap);
       CallKit.setUserInfo(userInfo);
     }
@@ -695,7 +691,6 @@ const Chat = forwardRef((props: ChatProps, ref) => {
         nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
         avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
       };
-      console.log('setUserInfo', userInfo);
       CallKit.setUserInfo(userInfo);
 
       return;
@@ -754,7 +749,6 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     if (!rtcConfig || !rtcConfig.appId) {
       return;
     }
-    console.log('初始化callkit', rtcConfig);
     CallKit.init(rtcConfig.appId, rtcConfig?.agoraUid, rootStore.client);
   }, [rtcConfig?.appId, rtcConfig?.agoraUid]);
 

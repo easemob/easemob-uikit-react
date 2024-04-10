@@ -127,7 +127,6 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   }, [myInfo?.attributes?.nickName]);
 
   const handleNicknameInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value);
     if (e.target.value.length > 20) return;
     setNicknameInGroup(e.target.value);
   };

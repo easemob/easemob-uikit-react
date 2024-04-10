@@ -164,7 +164,6 @@ let BaseMessage = (props: BaseMessageProps) => {
     reactionConfig,
     formatDateTime,
   } = props;
-  console.log('reaction >>>', reaction);
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const context = useContext(RootContext);
@@ -402,12 +401,10 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
 
   const forwardMessage = () => {
-    console.log('forwardMessage', message);
     onForwardMessage && onForwardMessage(message as BaseMessageType);
   };
 
   const reportMessage = () => {
-    console.log('reportMessage', message);
     onReportMessage && onReportMessage(message as BaseMessageType);
   };
 

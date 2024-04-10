@@ -80,7 +80,6 @@ const GroupMember: FC<GroupMemberProps> = props => {
   const groupData = rootStore.addressStore.groups.find(item => item.groupid == groupId);
 
   const privateChat = (userId: string) => {
-    console.log('privateChat', userId);
     const result = onPrivateChat?.(userId);
     if (result == false) return;
     let name = addressStore.appUsersInfo?.[userId]?.nickname;
@@ -107,14 +106,12 @@ const GroupMember: FC<GroupMemberProps> = props => {
   };
 
   const addContact = (userId: string) => {
-    console.log('addContact', userId);
     const result = onAddContact?.(userId);
     if (result == false) return;
     rootStore.addressStore.addContact(userId);
   };
 
   const addGroupMember = () => {
-    console.log('addGroupMember');
     if (addMemberData.type == 'add') {
       const userIds = selectedUsers.map(item => item.userId);
       rootStore.addressStore.inviteToGroup(groupId, userIds);
@@ -372,7 +369,6 @@ const GroupMember: FC<GroupMemberProps> = props => {
         enableMultipleSelection={true}
         open={addMemberData.open}
         onUserSelect={(user, users) => {
-          console.log('onUserSelect', user, users);
           setSelectedUsers(users);
         }}
         users={addMemberData.users}
