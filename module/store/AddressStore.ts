@@ -165,6 +165,11 @@ class AddressStore {
   }
 
   addContactToContactList(userId: string) {
+    // 先判断这个人是不是已经在联系人列表
+    let found = this.contacts.find(item => item.userId === userId);
+    if (found) {
+      return;
+    }
     this.getUserInfo(userId).then(userInfo => {
       const name = userInfo.nickname || userId;
       let initial = '#';
