@@ -39,6 +39,9 @@ export interface ContactListProps {
   header?: React.ReactNode;
   checkedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
   defaultCheckedList?: { id: string; type: 'contact' | 'group'; name?: string }[];
+  searchStyle?: React.CSSProperties;
+  searchInputStyle?: React.CSSProperties;
+  searchPlaceholder?: string;
 }
 
 function getBrands(members: any) {
@@ -135,6 +138,9 @@ let ContactList: FC<ContactListProps> = props => {
     header,
     checkedList,
     defaultCheckedList,
+    searchStyle,
+    searchInputStyle,
+    searchPlaceholder,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contactList', customizePrefixCls);
@@ -223,9 +229,8 @@ let ContactList: FC<ContactListProps> = props => {
       });
 
       if (menuItem == 'newRequests') {
-        const unreadCount = addressStore.requests.filter(
-          item => item.requestStatus == 'pending',
-        ).length;
+        const unreadCount =
+          addressStore.requests.filter(item => item.requestStatus == 'pending').length || 0;
         return (
           <ContactGroup
             title={t('newRequests') as string}
@@ -393,7 +398,12 @@ let ContactList: FC<ContactListProps> = props => {
   return (
     <div className={classString} style={{ ...style }}>
       {header ? header : <Header avatar={<></>} content={t('contacts')}></Header>}
-      <Search style={{ margin: '0 4px' }} onChange={handleSearch}></Search>
+      <Search
+        placeholder={searchPlaceholder}
+        style={{ margin: '0 4px', width: 'auto', ...searchStyle }}
+        onChange={handleSearch}
+        inputStyle={{ ...searchInputStyle }}
+      ></Search>
       <div className={`${prefixCls}-content`}>{isSearch ? searchNode : addressNode}</div>
     </div>
   );
