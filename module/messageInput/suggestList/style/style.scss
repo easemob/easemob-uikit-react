@@ -26,6 +26,9 @@ $suggestList-prefix-cls: #{$cui-prefix}-suggest;
     .#{$suggestList-prefix-cls}-item:hover{
       background-color: $gray-2;
     }
+    .#{$suggestList-prefix-cls}-list{
+      scrollbar-color: $gray-4 transparent;
+    }
   }
 }
 
@@ -34,6 +37,8 @@ $suggestList-prefix-cls: #{$cui-prefix}-suggest;
   max-height: 202px;
   overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-color: $gray-8 transparent;
+    
 }
 
 .#{$suggestList-prefix-cls}-item {

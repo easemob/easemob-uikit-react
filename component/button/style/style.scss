@@ -5,7 +5,11 @@ $btn-prefix-cls: #{$cui-prefix}-button;
 .#{$btn-prefix-cls} {
     @include btn();
     @include btn-default();
-
+    &-default{
+            &.#{$btn-prefix-cls}-dark{
+                @include btn-dark();
+            }
+        }
     &-primary {
         @include btn-primary();
         &.#{$btn-prefix-cls}-dark{
@@ -19,6 +23,9 @@ $btn-prefix-cls: #{$cui-prefix}-button;
 
     &-text {
         @include btn-text();
+        &.#{$btn-prefix-cls}-dark{
+            @include btn-text-dark();
+        }
     }
 
     &-round {
@@ -29,7 +36,7 @@ $btn-prefix-cls: #{$cui-prefix}-button;
         @include btn-circle($btn-prefix-cls);
     }
 
-    &-dark{
-        @include btn-dark();
-    }
+    // &-dark{
+    //     @include btn-dark();
+    // }
 }

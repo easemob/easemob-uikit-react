@@ -89,7 +89,7 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     &-sticky{
         background-color: $gray-9;
         border-radius: 0;
-        margin: 4px 0;
+        margin: 0;
         padding: 12px 20px;
 
         .#{$conversation-prefix-cls}-info{

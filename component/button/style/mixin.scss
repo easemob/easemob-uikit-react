@@ -241,4 +241,18 @@
     }
     
 }
+
+@mixin btn-text-dark(){
+    @include button-variant-other($blue-6, unset, $btn-ghost-bg);
+    &:hover,
+    &:focus{
+        background: $blue-1;
+        // border: 1px solid transparent;
+    };
+    &:active {
+        text-decoration: none;
+        background: $blue-2;
+        // border: 1px solid transparent;
+    }
+}
 @import '~/common/style/index.scss';

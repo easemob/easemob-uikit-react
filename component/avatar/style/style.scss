@@ -55,7 +55,7 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
     line-height: $line-height-base;
     list-style: none;
     font-feature-settings: 'tnum';
-    cursor: pointer;
+    // cursor: pointer;
     user-select: none;
 
     display: inline-block;

@@ -19,6 +19,10 @@ $userSelect-prefix-cls: #{$cui-prefix}-user-select;
     &-container{
         display: flex;
         flex-direction: column;
+
+        &-left{
+            padding: 8px;
+        }
     }
 
     &-header{
@@ -46,7 +50,7 @@ $userSelect-prefix-cls: #{$cui-prefix}-user-select;
     &-dark{
         background-color: $gray-1;
         &>div:first-child{
-            background-color: $gray-3;
+            background-color: $gray-2;
         }
         
     }

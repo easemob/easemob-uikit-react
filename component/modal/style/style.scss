@@ -7,14 +7,17 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
 .#{$dialog-prefix-cls} {
     @include modal-mask();
     position: relative;
-    top: 100px;
+    // top: 100px;
     width: auto;
     max-width: calc(100vw - 32px);
     margin: 0 auto;
-    padding-bottom: 24px;
+    // padding-bottom: 24px;
 
     &-wrap {
         z-index: $zindex-modal;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
     
     &-title {

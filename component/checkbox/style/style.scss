@@ -10,7 +10,7 @@ $checkbox-prefix-cls: #{$cui-prefix}-checkbox;
 
 .#{$checkbox-prefix-cls} {
   position: relative;
-  top: 0.1em;
+  // top: 0.1em;
 
   &+span {
     padding-right: 8px;
