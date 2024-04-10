@@ -9,14 +9,13 @@ import { BaseMessageType } from '../baseMessage/BaseMessage';
 import ts from 'typescript';
 import { ProviderProps } from '../store/Provider';
 
-const useEventHandler = (initConfig: ProviderProps['initConfig']) => {
+const useEventHandler = (props: ProviderProps) => {
+  const { initConfig, features } = props;
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
   const client = rootStore.client;
   const { useUserInfo } = initConfig;
 
-  const context = useContext(RootContext);
-  const { features } = context;
   useEffect(() => {
     client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
