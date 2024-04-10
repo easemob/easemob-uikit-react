@@ -643,7 +643,11 @@ let BaseMessage = (props: BaseMessageProps) => {
               {hoverStatus && !select && !isRtcInviteMessage ? (
                 <>
                   {moreAction.visible && (
-                    <Tooltip title={menuNode} trigger="click" placement="bottom">
+                    <Tooltip
+                      title={menuNode}
+                      trigger="click"
+                      placement={isCurrentUser ? 'bottomRight' : 'bottomLeft'}
+                    >
                       {moreAction.icon || (
                         <Icon
                           // color="#919BA1"
@@ -661,6 +665,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                       onSelected={handleClickEmoji}
                       selectedList={selectedList}
                       onDelete={handleDeleteReactionEmoji}
+                      placement={isCurrentUser ? 'bottomRight' : 'bottomLeft'}
                     ></EmojiKeyBoard>
                   )}
                   {thread && !chatThreadOverview && status != 'failed' && (

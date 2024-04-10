@@ -39,6 +39,7 @@ export interface UserItemProps {
     visible?: boolean;
     icon?: ReactNode;
     actions: Array<{
+      icon?: ReactNode;
       content: ReactNode;
       onClick?: (data: UserInfoData) => void;
     }>;
@@ -109,6 +110,7 @@ let UserItem: FC<UserItemProps> = props => {
                 item.onClick?.(data);
               }}
             >
+              {item.icon ? item.icon : null}
               {typeof item.content == 'string' ? t(item.content) : item.content}
             </li>
           );
@@ -142,7 +144,7 @@ let UserItem: FC<UserItemProps> = props => {
       </div>
       <div className={`${prefixCls}-info`}>
         {showMore && (
-          <Tooltip title={menuNode} trigger="click" placement="bottom" arrow>
+          <Tooltip title={menuNode} trigger="click" placement="bottomRight">
             {moreAction?.icon || (
               <Icon
                 type="ELLIPSIS"
@@ -166,7 +168,9 @@ let UserItem: FC<UserItemProps> = props => {
       {closeable && (
         <div>
           <Icon
-            type="CLOSE"
+            width={24}
+            height={24}
+            type="CLOSE_CIRCLE"
             onClick={() => {
               onClose?.(data);
             }}
