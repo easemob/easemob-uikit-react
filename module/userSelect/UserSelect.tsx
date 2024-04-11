@@ -197,7 +197,8 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                     (checkedList && checkedList.map(item => item.id).includes(item.userId)) ||
                     checkedUsers?.some(item2 => item2.userId == item.userId)
                   }
-                  onClick={data => {
+                  onClick={e => {
+                    e.preventDefault();
                     // 如果 disabled 为true 则不触发点击事件
                     if (
                       checkedUsers?.some(item2 => item2.userId == item.userId) ||

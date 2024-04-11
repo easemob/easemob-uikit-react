@@ -210,6 +210,7 @@ let ContactList: FC<ContactListProps> = props => {
             data={contactItem}
             contactId={contactItem.region}
             onClick={(e, contactId) => {
+              e.preventDefault();
               const info = getNameAndType(contactId);
               onItemClick?.({
                 id: contactId,
