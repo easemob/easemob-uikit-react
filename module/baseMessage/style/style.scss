@@ -142,7 +142,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         display: flex;
         align-items: flex-end;
         gap: 8px;
-        margin: 0 8px;
+        margin: 0 12px;
 
         &-action {
             fill: $gray-6;
@@ -220,6 +220,9 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     &-square {
         .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-square-border-radius;
+        }
+        .#{$status-prefix-cls}-body{
+            margin: 0 17px;
         }
     }
 

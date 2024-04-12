@@ -25,6 +25,7 @@ $header-prefix-cls: #{$cui-prefix}-header;
             text-overflow: ellipsis;
             flex: 1;
             text-align: left;
+            @include Title(large)
         }
         &-sub{
             text-align: left;

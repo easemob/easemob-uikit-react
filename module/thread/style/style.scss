@@ -83,5 +83,14 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
                 color: $gray-98
             }
         }
+
+        .#{$thread-prefix-cls}-original{
+            &-start{
+                color: $gray-6;
+                &>span{
+                    color: $gray-98;
+                }
+            }
+        }
     }
 }

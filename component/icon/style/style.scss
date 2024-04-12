@@ -5,13 +5,17 @@
   height: 1em;
   line-height: 1em;
   display: inline-block;
-  fill: $gray-6;
+  fill: $gray-3;
   svg {
     width: 100%;
     height: 100%;
   }
 }
 
+.#{$cui-prefix}-icon-dark {
+  fill: $gray-8;
+}
+
 .#{$cui-prefix}-primary-icon {
-  fill: $blue-6;
+  fill: $gray-3;
 }
