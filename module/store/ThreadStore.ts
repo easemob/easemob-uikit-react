@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, action, makeObservable } from 'mobx';
+import { makeAutoObservable, observable, action, makeObservable, runInAction } from 'mobx';
 import { ChatSDK } from '../SDK';
 import { eventHandler } from '../../eventHandler';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
@@ -224,29 +224,30 @@ class ThreadStore {
       })
       .then((res: { data: { affiliations: string[] } }) => {
         const members = res.data.affiliations;
+        runInAction(() => {
+          if (!this.threadList[parentId]) {
+            this.threadList[parentId] = [
+              {
+                id: threadId,
+                parentId: parentId,
+                members,
+                name: '',
+                owner: '',
+                created: 0,
+                messageId: '',
+              },
+            ];
+          }
+          this.threadList[parentId]?.forEach(item => {
+            if (item.id === threadId) {
+              item.members = members;
+            }
+          });
 
-        if (!this.threadList[parentId]) {
-          this.threadList[parentId] = [
-            {
-              id: threadId,
-              parentId: parentId,
-              members,
-              name: '',
-              owner: '',
-              created: 0,
-              messageId: '',
-            },
-          ];
-        }
-        this.threadList[parentId]?.forEach(item => {
-          if (item.id === threadId) {
-            item.members = members;
+          if (this.currentThread.info?.id === threadId) {
+            this.currentThread.info.members = members;
           }
         });
-
-        if (this.currentThread.info?.id === threadId) {
-          this.currentThread.info.members = members;
-        }
         return members;
       });
   }
@@ -314,7 +315,9 @@ class ThreadStore {
               threads[idx].lastMessage = item.lastMessage;
             });
 
-            this.threadList[parentId] = [...list, ...threads];
+            runInAction(() => {
+              this.threadList[parentId] = [...list, ...threads];
+            });
 
             if (threads.length < 20) {
               return null;

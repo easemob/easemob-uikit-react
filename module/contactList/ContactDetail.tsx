@@ -66,7 +66,6 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   let avatarUrl = userInfo?.avatarurl;
   let contactData: any;
 
-  console.log('联系人详情', data);
   if (data.type === 'contact' || data.type === 'request') {
     contactData = addressStore.contacts.find((item: any) => item.userId === data.id);
   } else {
