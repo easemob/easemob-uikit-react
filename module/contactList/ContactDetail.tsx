@@ -70,7 +70,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   if (data.type === 'contact' || data.type === 'request') {
     contactData = addressStore.contacts.find((item: any) => item.userId === data.id);
   } else {
-    contactData = addressStore.groups.find((item: any) => item.groupId === data.id);
+    contactData = addressStore.groups.find((item: any) => item.groupid === data.id);
     avatarUrl = contactData?.avatarUrl;
   }
 
