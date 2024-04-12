@@ -137,6 +137,7 @@ const Header: FC<HeaderProps> = props => {
                 onClickAvatar?.(e);
               }}
               style={{ marginRight: 12 }}
+              size={40}
             >
               {content}
             </Avatar>

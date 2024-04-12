@@ -264,8 +264,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               width={20}
               height={20}
               type="THREAD"
-              color="#464E53"
-              // className={`${prefixCls}-thread-name-icon`}
+              className={`${prefixCls}-thread-name-icon`}
             ></Icon>
             <span>{name}</span>
           </div>
@@ -651,6 +650,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                           type="ELLIPSIS"
                           className={`${prefixCls}-body-action`}
                           height={20}
+                          width={20}
                         ></Icon>
                       )}
                     </Tooltip>
@@ -671,6 +671,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                       onClick={handleClickThreadIcon}
                       className={`${prefixCls}-body-action`}
                       height={20}
+                      width={20}
                     ></Icon>
                   )}
                 </>

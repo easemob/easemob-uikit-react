@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useContext } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import sent from '../assets/sent@3x.png';
@@ -8,6 +8,8 @@ import received from '../assets/received@3x.png';
 import sending from '../assets/sending@3x.png';
 import './style/style.scss';
 import Icon from '../../component/icon';
+import { RootContext } from '../store/rootContext';
+
 export interface MessageStatusProps {
   status: 'received' | 'read' | 'unread' | 'sent' | 'failed' | 'sending' | 'default';
   type?: 'icon' | 'text';
@@ -17,7 +19,9 @@ export interface MessageStatusProps {
 
 const MessageStatus = (props: MessageStatusProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
-
+  const context = useContext(RootContext);
+  const { theme } = context;
+  const themeMode = theme?.mode || 'light';
   let statusNode: ReactNode;
   const { status = 'default', type = 'icon', prefixCls: customizePrefixCls, className } = props;
   const prefixCls = getPrefixCls('message-status', customizePrefixCls);
@@ -45,7 +49,12 @@ const MessageStatus = (props: MessageStatusProps) => {
     case 'read':
       statusNode =
         type == 'icon' ? (
-          <Icon type="CHECK2" width={20} height={20} color="#00FF95"></Icon>
+          <Icon
+            type="CHECK2"
+            width={20}
+            height={20}
+            color={themeMode == 'light' ? '#00CC77' : '#00FF95'}
+          ></Icon>
         ) : (
           '已读'
         );

@@ -1,6 +1,7 @@
 import React, { useEffect, ReactElement, ReactNode } from 'react';
 import { ConfigContext } from '../config/index';
 import { cloneElement } from '../_utils/reactNode';
+import { RootContext } from '../../module/store/rootContext';
 import classNames from 'classnames';
 import './style/style.scss';
 import { ICON_TYPES } from './const';
@@ -405,6 +406,8 @@ const Icon = ({
 }: IconProps): ReactElement => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('icon');
+  const { theme } = React.useContext(RootContext);
+  const themeMode = theme?.mode;
   const iconStyle = {
     width: typeof width === 'string' ? width : `${width}px`,
     minWidth: typeof width === 'string' ? width : `${width}px`,
@@ -424,7 +427,13 @@ const Icon = ({
   };
   return (
     <div
-      className={classNames(prefixCls, className)}
+      className={classNames(
+        prefixCls,
+        {
+          [`${prefixCls}-${themeMode}`]: !!themeMode,
+        },
+        className,
+      )}
       onClick={handleClick}
       style={{
         ...iconStyle,
