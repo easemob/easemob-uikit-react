@@ -690,27 +690,29 @@ class MessageStore {
         const messages = getMessages(cvs);
         const messageIndex = getMessageIndex(messages, messageId);
         if (messageIndex > -1) {
-          const message = messages[messageIndex];
-          const reaction = getReactionByEmoji(message, emoji);
-          if (reaction) {
-            reaction.count += 1;
-            reaction.isAddedBySelf = true;
-            reaction.userList.unshift(this.rootStore.client.user);
-          } else {
-            const newAction = {
-              count: 1,
-              isAddedBySelf: true,
-              reaction: emoji,
-              userList: [this.rootStore.client.user],
-            };
-            if (Array.isArray((message as BaseMessageType).reactions)) {
-              // @ts-ignore
-              messages[messageIndex].reactions.push(newAction);
+          runInAction(() => {
+            const message = messages[messageIndex];
+            const reaction = getReactionByEmoji(message, emoji);
+            if (reaction) {
+              reaction.count += 1;
+              reaction.isAddedBySelf = true;
+              reaction.userList.unshift(this.rootStore.client.user);
             } else {
-              // @ts-ignore
-              messages[messageIndex].reactions = [newAction];
+              const newAction = {
+                count: 1,
+                isAddedBySelf: true,
+                reaction: emoji,
+                userList: [this.rootStore.client.user],
+              };
+              if (Array.isArray((message as BaseMessageType).reactions)) {
+                // @ts-ignore
+                messages[messageIndex].reactions.push(newAction);
+              } else {
+                // @ts-ignore
+                messages[messageIndex].reactions = [newAction];
+              }
             }
-          }
+          });
         }
         // const filterMsgs = messages.filter(msg => {
         //   // @ts-ignore
