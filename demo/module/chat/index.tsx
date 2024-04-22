@@ -438,6 +438,8 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
             recall: true,
             translate: true,
             edit: true,
+            report: false,
+            forward: false,
           },
           messageInput: {
             mention: true,
@@ -446,6 +448,8 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
             emoji: true,
             moreAction: true,
             picture: true,
+            video: true,
+            contactCard: false,
           },
         },
       }}
