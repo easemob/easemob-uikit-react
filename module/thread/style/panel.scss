@@ -1,7 +1,7 @@
 $thread-prefix-cls: #{$cui-prefix}-thread-panel;
 .#{$thread-prefix-cls}{
     top: 10px;
-    right: 20px;
+    left: 50%;
     width: 540px;
     z-index: 1060;
     position: fixed;
@@ -12,7 +12,11 @@ $thread-prefix-cls: #{$cui-prefix}-thread-panel;
     border-radius: 16px;
     background-color: $gray-98;
     overflow: hidden;
-
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: top 0.3s, left 0.3s, opacity 0.3s;
+    transform-origin: 50% 50% 0;
     &-header{
         &-title{
             font-size: 18px;
