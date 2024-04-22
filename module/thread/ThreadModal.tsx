@@ -70,11 +70,11 @@ const ThreadModal = (props: ThreadModalProps) => {
   );
 
   const [position, setPosition] = useState({
-    top: 0,
-    left: 0,
+    top: '50%',
+    left: '50%',
   });
   // 用来更新组件的位置
-  const popupRef = useRef(null);
+  const popupRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const calculatePosition = () => {
       if (!popupRef.current) return;
@@ -104,6 +104,9 @@ const ThreadModal = (props: ThreadModalProps) => {
     if (anchorEl) {
       calculatePosition();
     }
+    // if (popupRef && popupRef.current) {
+    //   popupRef.current.style.visibility = open ? 'visible' : 'hidden';
+    // }
 
     // // 检查 anchorEl 是否存在
     // if (anchorEl) {
@@ -160,6 +163,7 @@ const ThreadModal = (props: ThreadModalProps) => {
         top: position.top,
         left: position.left,
         display: open ? 'block' : 'none',
+        opacity: open ? 1 : 0,
       }}
     >
       <Header
