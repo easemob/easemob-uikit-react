@@ -57,6 +57,8 @@ export interface ProviderProps {
         translate?: boolean;
         edit?: boolean;
         select?: boolean;
+        forward?: boolean;
+        report?: boolean;
       };
       messageInput?: {
         mention?: boolean;
@@ -66,6 +68,8 @@ export interface ProviderProps {
         moreAction?: boolean;
         file?: boolean;
         picture?: boolean;
+        video?: boolean;
+        contactCard?: boolean;
       };
     };
     conversationList?: {

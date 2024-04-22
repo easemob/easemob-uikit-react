@@ -39,6 +39,8 @@ export interface ContextProps {
         translate?: boolean;
         edit?: boolean;
         select?: boolean;
+        forward?: boolean;
+        report?: boolean;
       };
       messageInput?: {
         mention?: boolean;
@@ -48,6 +50,8 @@ export interface ContextProps {
         moreAction?: boolean;
         file?: boolean;
         picture?: boolean;
+        video?: boolean;
+        contactCard?: boolean;
       };
     };
     conversationList?: {

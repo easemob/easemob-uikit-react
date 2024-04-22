@@ -441,6 +441,12 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       if (globalConfig?.message?.select == false && item.content == 'SELECT') {
         return false;
       }
+      if (globalConfig?.message?.forward == false && item.content == 'FORWARD') {
+        return false;
+      }
+      if (globalConfig?.message?.report == false && item.content == 'REPORT') {
+        return false;
+      }
       return true;
     });
   }
@@ -508,6 +514,12 @@ const Chat = forwardRef((props: ChatProps, ref) => {
         return false;
       }
       if (item.content == 'FILE' && globalConfig?.messageInput?.file == false) {
+        return false;
+      }
+      if (item.content == 'VIDEO' && globalConfig?.messageInput?.video == false) {
+        return false;
+      }
+      if (item.content == 'CARD' && globalConfig?.messageInput?.contactCard == false) {
         return false;
       }
       return true;
