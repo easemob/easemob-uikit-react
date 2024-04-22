@@ -9,7 +9,7 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
     align-items: flex-start;
     gap: 2px;
     flex-shrink: 0;
-    padding: 0 $padding-xs;
+    padding: 0 12px;
     margin-bottom: 2px;
     &-nick{
         height: $msg-nickname-height;
