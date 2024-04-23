@@ -12,7 +12,7 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
     word-break: break-word;
     display: inline-block;
     width: 100%;
-
+    white-space: pre-wrap;
     // translation
     &-translation {
         text-align: left;
