@@ -12,17 +12,20 @@ export const convertToMessage = (e: string) => {
       n[i].parentNode!.insertBefore(s, n[i]);
       n[i].parentNode!.removeChild(n[i]);
     }
-    for (; o--; )
+    for (; o--; ) {
       // @ts-ignore
       t.push(a[o].innerHTML), a[o].parentNode.removeChild(a[o]);
+    }
+
     var c = (t = t.reverse()).length ? '\n' + t.join('\n') : t.join('\n');
-    return (r.innerText + c)
-      .replace(/###h###/g, '&#92;')
+
+    return (r.innerHTML + c)
+      .replace(/###h###/g, '\\')
       .replace(/<br>/g, '\n')
-      .replace(/&amp;/g, '&');
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
   })();
-  new RegExp('(^[\\s\\n\\t\\xa0\\u3000]+)|([\\u3000\\xa0\\n\\s\\t]+$)', 'g');
+  // new RegExp('(^[\\s\\n\\t\\xa0\\u3000]+)|([\\u3000\\xa0\\n\\s\\t]+$)', 'g');
   return t.replace(/&nbsp;/g, ' ').trim();
 };
-
-
