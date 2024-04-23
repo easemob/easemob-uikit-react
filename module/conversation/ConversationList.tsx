@@ -36,6 +36,7 @@ export interface ConversationListProps {
   headerProps?: HeaderProps;
   itemProps?: ConversationItemProps;
   presence?: boolean; // 是否显示在线状态
+  showSearchList?: boolean; // 是否显示搜索列表, 当使用renderHeader时，可以用这个参数来控制是否显示搜索列表
 }
 
 const ConversationScrollList = ScrollList<Conversation>();
@@ -53,6 +54,7 @@ let Conversations: FC<ConversationListProps> = props => {
     itemProps = {},
     style = {},
     presence,
+    showSearchList,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationList', customizePrefixCls);
@@ -111,7 +113,7 @@ let Conversations: FC<ConversationListProps> = props => {
   }, [cvsStore.currentCvs]);
 
   useEffect(() => {
-    if (isSearch) {
+    if (isSearch || showSearchList) {
       // @ts-ignore
       setRenderData(cvsStore.searchList);
     } else {
@@ -163,7 +165,10 @@ let Conversations: FC<ConversationListProps> = props => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     const returnValue = onSearch?.(e);
-    if (returnValue === false) return;
+    if (returnValue === false) {
+      setIsSearch(value.length > 0 ? true : false);
+      return;
+    }
     const searchList = initRenderData.filter(cvs => {
       if (cvs.conversationId.includes(value) || cvs.name?.includes(value)) {
         return true;

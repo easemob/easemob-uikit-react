@@ -203,6 +203,16 @@ const ChatApp: FC<any> = () => {
         {tab == 'chat' && (
           <ConversationList
             presence={true}
+            showSearchList={false}
+            onSearch={value => {
+              rootStore.conversationStore.setSearchList([
+                {
+                  conversationId: 'zd1',
+                  chatType: 'singleChat',
+                },
+              ]);
+              return false;
+            }}
             renderHeader={() => (
               <Header
                 moreAction={{
