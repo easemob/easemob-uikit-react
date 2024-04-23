@@ -70,6 +70,7 @@ export interface ChatProps {
   renderMessageList?: () => ReactNode; // 自定义渲染 MessageList
   renderMessageInput?: () => ReactNode; // 自定义渲染 MessageInput
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
+  renderRepliedMessage?: (repliedMessage: ChatSDK.MessageBody | null) => ReactNode; // 自定义渲染Input上面的被回复的消息
   // Header 的 props
   headerProps?: HeaderProps;
   messageListProps?: MsgListProps;
@@ -81,6 +82,7 @@ export interface ChatProps {
     onInvite?: (data: {
       channel: string;
       conversation: CurrentConversation;
+      type: 'audio' | 'video';
     }) => Promise<[{ name: string; id: string; avatarurl?: string }]>;
     onAddPerson?: (data: RtcRoomInfo) => Promise<[{ id: string }]>;
     getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>;
@@ -127,6 +129,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     onOpenThreadList,
     onAudioCall,
     onVideoCall,
+    renderRepliedMessage,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -868,7 +871,12 @@ const Chat = forwardRef((props: ChatProps, ref) => {
             ></Typing>
           )}
 
-          {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
+          {showReply &&
+            (renderRepliedMessage ? (
+              renderRepliedMessage(rootStore.messageStore.repliedMessage)
+            ) : (
+              <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>
+            ))}
 
           {renderMessageInput ? (
             renderMessageInput()

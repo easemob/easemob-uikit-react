@@ -320,6 +320,9 @@ const ChatApp: FC<any> = () => {
                   getRTCToken: getRTCToken,
                   getIdMap: () => {},
                 }}
+                renderRepliedMessage={message => {
+                  return <div>replied message {message.from}</div>;
+                }}
               ></Chat>
               {groupSettingVisible && (
                 <div style={{ width: '350px', borderLeft: '1px solid green' }}>
