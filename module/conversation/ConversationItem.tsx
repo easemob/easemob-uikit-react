@@ -254,7 +254,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       break;
   }
   if (data.chatType == 'groupChat') {
-    let msgFrom = data.lastMessage.from || '';
+    let msgFrom = data.lastMessage?.from || '';
     let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}: ` : '';
     const groupItem = getGroupItemFromGroupsById(data.conversationId);
     if (groupItem) {

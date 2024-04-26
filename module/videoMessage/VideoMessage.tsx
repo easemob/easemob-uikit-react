@@ -13,11 +13,13 @@ import { ChatSDK } from '../SDK';
 import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface VideoMessageProps extends BaseMessageProps {
   videoMessage: ChatSDK.VideoMsgBody & VideoMessageType; // 从SDK收到的视频消息
   prefix?: string;
   style?: React.CSSProperties;
   nickName?: string;
+  bubbleClass?: string;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   type?: 'primary' | 'secondly';
   className?: string;
@@ -35,11 +37,17 @@ const VideoMessage = (props: VideoMessageProps) => {
     className,
     prefix,
     videoProps,
+    bubbleClass,
     ...baseMsgProps
   } = props;
 
   let { bySelf, from, reactions, status } = videoMessage;
-
+  const { pinMessage } = usePinnedMessage({
+    conversation: {
+      conversationId: getCvsIdFromMessage(videoMessage),
+      conversationType: videoMessage.chatType as any,
+    },
+  });
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-video', prefix);
   const context = useContext(RootContext);
@@ -75,6 +83,11 @@ const VideoMessage = (props: VideoMessageProps) => {
       // @ts-ignore
       videoMessage.mid || videoMessage.id,
     );
+  };
+
+  const handlePinMessage = () => {
+    //@ts-ignore
+    pinMessage(videoMessage.mid || videoMessage.id);
   };
 
   const handleClickEmoji = (emojiString: string) => {
@@ -251,6 +264,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   return (
     <BaseMessage
       id={videoMessage.id}
+      className={bubbleClass}
       message={videoMessage}
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
@@ -264,6 +278,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
+      onPinMessage={handlePinMessage}
       reactionData={reactions}
       onAddReactionEmoji={handleClickEmoji}
       onDeleteReactionEmoji={handleDeleteEmoji}

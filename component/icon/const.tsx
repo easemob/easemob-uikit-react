@@ -98,6 +98,9 @@ enum ICON_TYPES {
   CHECK = 'CHECK',
   CHECK2 = 'CHECK2',
   CANDLE_IN_CIRCLE = 'CANDLE_IN_CIRCLE',
+  PIN = 'PIN',
+  UNPIN = 'UNPIN',
+  ARROW_TO = 'ARROW_TO',
 }
 // chevron_down
 export { ICON_TYPES };

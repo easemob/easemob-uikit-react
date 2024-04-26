@@ -4,18 +4,39 @@ import { ConfigContext } from '../../component/config/index';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
 import { getConversationTime, getMsgSenderNickname } from '../utils';
 import './style/style.scss';
-import type { RecallMessage } from '../store/MessageStore';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
+
+export interface NoticeMessageBodyProps {
+  message?: string;
+  time: number;
+  type?: 'notice' | 'recall';
+  noticeType: 'recall' | 'pin' | 'unpin';
+  ext?: Record<string, any>;
+}
+
+export class NoticeMessageBody {
+  id: string;
+  message?: string;
+  time: number;
+  type: 'notice' | 'recall';
+  ext?: Record<string, any>;
+  noticeType: 'recall' | 'pin' | 'unpin';
+  constructor(props: NoticeMessageBodyProps) {
+    const { message, time, noticeType, ext, type = 'notice' } = props;
+    this.id = Date.now().toString();
+    this.time = time;
+    this.type = type;
+    this.message = message;
+    this.noticeType = noticeType;
+    this.ext = ext || {};
+  }
+}
+
 export interface NoticeMessageProps {
   prefix?: string;
   className?: string;
-  noticeMessage:
-    | {
-        message: string;
-        time: number;
-      }
-    | RecallMessage;
+  noticeMessage: NoticeMessageBody;
   style?: React.CSSProperties;
 }
 
@@ -27,16 +48,34 @@ const NoticeMessage = (props: NoticeMessageProps) => {
   const { noticeMessage, style = {} } = props;
   let { message, time } = noticeMessage;
   const classString = classNames(prefixCls, className);
-
-  if ((noticeMessage as RecallMessage).type == 'recall') {
-    const myUserId = rootStore.client.user;
-    if (myUserId == (noticeMessage as RecallMessage).from) {
-      message = t('you') + ' ' + t('unsentAMessage');
-    } else {
-      message =
-        getMsgSenderNickname(noticeMessage as any as BaseMessageType) + ' ' + t('unsentAMessage');
-    }
+  switch (noticeMessage.noticeType) {
+    case 'recall':
+      const myUserId = rootStore.client.user;
+      if (myUserId == noticeMessage.ext?.from) {
+        message = t('you') + ' ' + t('unsentAMessage');
+      } else {
+        message =
+          getMsgSenderNickname(noticeMessage.ext as BaseMessageType) + ' ' + t('unsentAMessage');
+      }
+      break;
+    case 'pin':
+      message = `${getMsgSenderNickname({
+        from: noticeMessage.ext?.operatorId,
+        chatType: noticeMessage.ext?.conversationType,
+        to: noticeMessage.ext?.conversationId,
+      } as BaseMessageType)} ${t('pinned a message')}`;
+      break;
+    case 'unpin':
+      message = `${getMsgSenderNickname({
+        from: noticeMessage.ext?.operatorId,
+        chatType: noticeMessage.ext?.conversationType,
+        to: noticeMessage.ext?.conversationId,
+      } as BaseMessageType)} ${t('removed a pin message')}`;
+      break;
+    default:
+      break;
   }
+
   return (
     <div className={classString} style={{ ...style }}>
       <span>{message}</span>
