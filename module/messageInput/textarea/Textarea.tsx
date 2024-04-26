@@ -141,7 +141,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const [isTyping, setIsTyping] = useState(false);
   const handleInputChange: React.FormEventHandler<HTMLDivElement> = e => {
     const value = (e.target as HTMLDivElement).innerHTML;
-    const str = convertToMessage(value).trim();
+    const str = convertToMessage(value, false).trim();
     setTextValue(str);
     onChange?.(str);
     if (usedCvs.chatType == 'singleChat' && !isTyping && enabledTyping) {
@@ -149,7 +149,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       messageStore.sendTypingCmd(usedCvs);
       setTimeout(() => {
         setIsTyping(false);
-      }, 10000);
+      }, 5000);
     }
   };
 
@@ -161,6 +161,18 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
 
     setTextValue('');
     onChange?.('');
+
+    if (usedCvs.chatType == 'singleChat' && usedCvs.conversationId.includes('chatbot_')) {
+      const visibleOut = rootStore.messageStore.typing[usedCvs.conversationId];
+      if (visibleOut) {
+        messageStore.setTyping(usedCvs, false);
+        setTimeout(() => {
+          messageStore.setTyping(usedCvs, true);
+        }, 200);
+      } else {
+        messageStore.setTyping(usedCvs, true);
+      }
+    }
   };
 
   const sendMessage = () => {
