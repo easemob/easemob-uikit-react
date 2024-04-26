@@ -13,7 +13,7 @@ import { ChatSDK } from '../SDK';
 import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard } from '../reaction';
 import { ReactionMessage, ReactionData, ReactionMessageProps } from '../reaction';
-import { getStore } from '../store';
+import rootStore, { getStore } from '../store';
 import Checkbox from '../../component/checkbox';
 import UserProfile from '../userProfile';
 import { observer } from 'mobx-react-lite';
@@ -47,6 +47,8 @@ export interface BaseMessageProps {
   status?: MessageStatusProps['status'];
   avatar?: ReactNode;
   avatarShape?: 'circle' | 'square';
+  showAvatar?: boolean;
+  showMessageInfo?: boolean;
   direction?: 'ltr' | 'rtl'; // 左侧布局/右侧布局
   prefix?: string;
   shape?: 'ground' | 'square'; // 气泡形状
@@ -75,6 +77,7 @@ export interface BaseMessageProps {
   onResendMessage?: () => void;
   onForwardMessage?: (message: BaseMessageType) => void;
   onReportMessage?: (message: BaseMessageType) => void;
+  onPinMessage?: () => void;
   onMessageCheckChange?: (checked: boolean) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
@@ -124,6 +127,8 @@ let BaseMessage = (props: BaseMessageProps) => {
     message,
     avatar,
     avatarShape = 'circle',
+    showAvatar = true,
+    showMessageInfo = true,
     direction = 'ltr',
     status = 'default',
     prefix: customizePrefixCls,
@@ -153,6 +158,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onResendMessage,
     onForwardMessage,
     onReportMessage,
+    onPinMessage,
     onMessageCheckChange,
     renderUserProfile,
     onCreateThread,
@@ -300,13 +306,14 @@ let BaseMessage = (props: BaseMessageProps) => {
   ) : (
     cloneElement(props.children, oriProps => ({
       style: {
-        margin: '0 8px 0 12px',
+        width: '100%',
         ...oriProps.style,
       },
     }))
   );
 
   let moreAction: CustomAction = { visible: false };
+
   if (customAction) {
     moreAction = customAction;
   } else {
@@ -344,6 +351,10 @@ let BaseMessage = (props: BaseMessageProps) => {
         },
         {
           content: 'REPORT',
+          onClick: () => {},
+        },
+        {
+          content: 'PIN',
           onClick: () => {},
         },
       ],
@@ -405,6 +416,10 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   const reportMessage = () => {
     onReportMessage && onReportMessage(message as BaseMessageType);
+  };
+
+  const pinMessage = () => {
+    onPinMessage && onPinMessage();
   };
 
   let menuNode: ReactNode | undefined;
@@ -532,6 +547,20 @@ let BaseMessage = (props: BaseMessageProps) => {
                 {t('report')}
               </li>
             );
+          } else if (item.content === 'PIN') {
+            return (
+              message?.chatType !== 'singleChat' &&
+              !message?.chatThread && (
+                <li
+                  key={index}
+                  onClick={pinMessage}
+                  className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+                >
+                  <Icon type="PIN" width={16} height={16}></Icon>
+                  {t('Pin')}
+                </li>
+              )
+            );
           }
 
           if (item.visible !== false) {
@@ -607,25 +636,19 @@ let BaseMessage = (props: BaseMessageProps) => {
             setHoverStatus(false);
           }}
         >
-          {renderUserProfile && !CustomProfile ? (
-            <>{avatarToShow}</>
-          ) : (
-            <Tooltip
-              title={CustomProfile || <UserProfile userId={message?.from || ''} />}
-              trigger="click"
-              placement="topLeft"
-            >
-              {avatarToShow}
-            </Tooltip>
-          )}
-
-          <div className={`${prefixCls}-box`}>
-            {showRepliedMsg ? (
-              <RepliedMsg
-                message={repliedMessage as BaseMessageType}
-                shape={bubbleShape}
-                direction={direction}
-              ></RepliedMsg>
+          <>
+            {showAvatar ? (
+              renderUserProfile && !CustomProfile ? (
+                <>{avatarToShow}</>
+              ) : (
+                <Tooltip
+                  title={CustomProfile || <UserProfile userId={message?.from || ''} />}
+                  trigger="click"
+                  placement="topLeft"
+                >
+                  {avatarToShow}
+                </Tooltip>
+              )
             ) : (
               <div className={`${prefixCls}-info`}>
                 {message?.chatType !== 'singleChat' && !isCurrentUser && (
@@ -633,6 +656,29 @@ let BaseMessage = (props: BaseMessageProps) => {
                 )}
               </div>
             )}
+          </>
+
+          <div className={`${prefixCls}-box`}>
+            <>
+              {showMessageInfo ? (
+                showRepliedMsg ? (
+                  <RepliedMsg
+                    message={repliedMessage as BaseMessageType}
+                    shape={bubbleShape}
+                    direction={direction}
+                  ></RepliedMsg>
+                ) : (
+                  <div className={`${prefixCls}-info`}>
+                    {message?.chatType !== 'singleChat' && !isCurrentUser && (
+                      <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
+                    )}
+                  </div>
+                )
+              ) : (
+                <></>
+              )}
+            </>
+
             <div className={`${prefixCls}-body`}>
               {contentNode}
 
@@ -675,7 +721,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                     ></Icon>
                   )}
                 </>
-              ) : (
+              ) : showMessageInfo ? (
                 <div className={`${prefixCls}-time-and-status-box`}>
                   {messageStatus && !isRtcInviteMessage && (
                     <MessageStatus status={status} type="icon"></MessageStatus>
@@ -684,6 +730,8 @@ let BaseMessage = (props: BaseMessageProps) => {
                     {formatDateTime?.(time as number) || getConversationTime(time as number)}
                   </span>
                 </div>
+              ) : (
+                <></>
               )}
             </div>
           </div>

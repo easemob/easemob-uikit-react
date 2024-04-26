@@ -25,7 +25,6 @@ import { RootContext } from '../store/rootContext';
 import { ChatSDK } from '../SDK';
 import { cloneElement } from '../../component/_utils/reactNode';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
-import type { RecallMessage } from '../store/MessageStore';
 import RecalledMessage from '../recalledMessage';
 import CombinedMessage from '../combinedMessage';
 import { renderUserProfileProps } from '../baseMessage';
@@ -36,19 +35,21 @@ import { useTranslation } from 'react-i18next';
 import Icon from '../../component/icon';
 import UserCardMessage from '../userCardMessage';
 import { CustomMessageType } from 'module/types/messageType';
+import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
 export interface MsgListProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
   isThread?: boolean;
-  renderMessage?: (message: ChatSDK.MessageBody | RecallMessage) => ReactNode;
+  renderMessage?: (message: ChatSDK.MessageBody | NoticeMessageBody) => ReactNode;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
   messageProps?: BaseMessageProps;
   onOpenThreadPanel?: (threadId: string) => void;
 }
 
-const MessageScrollList = ScrollList<ChatSDK.MessageBody | RecallMessage>();
+const MessageScrollList = ScrollList<ChatSDK.MessageBody | NoticeMessageBody>();
+
 let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
   const { messageStore } = rootStore;
@@ -129,9 +130,12 @@ let MessageList: FC<MsgListProps> = props => {
           {...messageProps}
         ></FileMessage>
       );
-    } else if (messageData[data.index].type == 'recall') {
+    } else if (
+      messageData[data.index].type == 'notice' ||
+      messageData[data.index].type == 'recall'
+    ) {
       return (
-        <NoticeMessage noticeMessage={messageData[data.index] as RecallMessage}></NoticeMessage>
+        <NoticeMessage noticeMessage={messageData[data.index] as NoticeMessageBody}></NoticeMessage>
       );
     } else if (messageData[data.index].type == 'txt') {
       return (
@@ -225,12 +229,13 @@ let MessageList: FC<MsgListProps> = props => {
   // 每次发消息滚动到最新的一条
   const listRef = React.useRef<List>(null);
   useEffect(() => {
-    if (
-      messageStore.holding &&
-      lastMessage?.from != '' &&
-      lastMessage?.from != rootStore.client.user
-    )
+    if (lastMessage?.type === 'notice' || lastMessage?.type === 'recall') {
       return;
+    }
+    const from = (lastMessage as ChatSDK.MessageBody)?.from;
+    if (messageStore.holding && from != '' && from != rootStore.client.user) {
+      return;
+    }
     setTimeout(() => {
       (listRef?.current as any)?.scrollTo('bottom');
     }, 10);

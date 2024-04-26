@@ -27,6 +27,7 @@ export interface ContextProps {
         deleteConversation?: boolean;
         audioCall?: boolean;
         videoCall?: boolean;
+        pinMessage?: boolean;
       };
       message?: {
         status?: boolean;
@@ -41,6 +42,7 @@ export interface ContextProps {
         select?: boolean;
         forward?: boolean;
         report?: boolean;
+        pin?: boolean;
       };
       messageInput?: {
         mention?: boolean;

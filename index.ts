@@ -44,6 +44,8 @@ import {
   GroupMember,
   UserCardMessage,
   UserSelect,
+  usePinnedMessage,
+  PinnedMessage,
 } from './module/index';
 const UIKitProvider = Provider;
 import {
@@ -92,6 +94,7 @@ export {
   MessageEditor,
   Header,
   Empty,
+  PinnedMessage,
   RecalledMessage,
   rootStore,
   RootContext,
@@ -107,6 +110,7 @@ export {
   useChatContext,
   useAddressContext,
   useThreadContext,
+  usePinnedMessage,
   Avatar,
   Button,
   Input,
@@ -189,7 +193,6 @@ export type {
   RootStore,
   InitConfig,
   MessageStore,
-  RecallMessage,
   Message,
   SelectedMessage,
   Typing,
@@ -216,6 +219,7 @@ export type {
   GroupMemberProps,
   UserCardMessageProps,
   UserSelectProps,
+  PinnedMessageProps,
 } from './module/index';
 
 export type { EventHandlerData, EventName };

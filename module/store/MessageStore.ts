@@ -9,23 +9,18 @@ import { AT_ALL } from '../messageInput/suggestList/SuggestList';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
+import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
 import {
   getGroupMemberIndexByUserId,
   getGroupItemFromGroupsById,
   getGroupMemberNickName,
   getMsgSenderNickname,
 } from '../utils/index';
-
-export interface RecallMessage {
-  type: 'recall';
-  [key: string]: any;
-}
-
 export interface Message {
-  singleChat: { [key: string]: (ChatSDK.MessageBody | RecallMessage)[] };
-  groupChat: { [key: string]: (ChatSDK.MessageBody | RecallMessage)[] };
-  chatRoom: { [key: string]: (ChatSDK.MessageBody | RecallMessage)[] };
-  byId: { [key: string]: ChatSDK.MessageBody | RecallMessage };
+  singleChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
+  groupChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
+  chatRoom: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
+  byId: { [key: string]: ChatSDK.MessageBody | NoticeMessageBody };
   broadcast: ChatSDK.MessageBody[];
 }
 
@@ -33,13 +28,13 @@ export interface SelectedMessage {
   singleChat: {
     [key: string]: {
       selectable: boolean;
-      selectedMessage: (ChatSDK.MessageBody | RecallMessage)[];
+      selectedMessage: (ChatSDK.MessageBody | NoticeMessageBody)[];
     };
   };
   groupChat: {
     [key: string]: {
       selectable: boolean;
-      selectedMessage: (ChatSDK.MessageBody | RecallMessage)[];
+      selectedMessage: (ChatSDK.MessageBody | NoticeMessageBody)[];
     };
   };
 }
@@ -479,7 +474,7 @@ class MessageStore {
     }
   }
 
-  modifyMessage(id: string, message: ChatSDK.MessageBody | RecallMessage) {
+  modifyMessage(id: string, message: ChatSDK.MessageBody | NoticeMessageBody) {
     this.message.byId[id] = message;
   }
 
@@ -629,12 +624,14 @@ class MessageStore {
     const msgIndex = getMessageIndex(messages, messageId);
     if (!recallMySelfMsg) {
       if (msgIndex > -1) {
-        messages[msgIndex].type = 'recall';
-        //@ts-ignore
-        messages[msgIndex].ext = {};
-        runInAction(() => {
-          this.message[cvs.chatType][cvs.conversationId] = messages;
+        const time = Date.now();
+        const noticeMessage = new NoticeMessageBody({
+          time,
+          type: 'recall',
+          noticeType: 'recall',
+          ext: { ...messages[msgIndex] },
         });
+        messages[msgIndex] = noticeMessage;
       }
       if (!conversation) return;
       //@ts-ignore
@@ -642,7 +639,14 @@ class MessageStore {
       if (conversation.unreadCount > 0) {
         conversation.unreadCount -= 1;
       }
-
+      // remove pinned message when recall message
+      if (conversation.chatType !== 'singleChat') {
+        this.rootStore.pinnedMessagesStore.deletePinnedMessage(
+          conversation.chatType,
+          conversation.conversationId,
+          messageId,
+        );
+      }
       this.rootStore.conversationStore.modifyConversation(conversation);
       return;
     }
@@ -659,18 +663,26 @@ class MessageStore {
         const messages = getMessages(cvs);
         const msgIndex = getMessageIndex(messages, messageId);
         if (msgIndex > -1) {
-          runInAction(() => {
-            let msg = { ...messages[msgIndex] };
-            msg.type = 'recall';
-            //@ts-ignore
-            msg.ext = {};
-            messages[msgIndex] = msg;
-            this.message[cvs.chatType][cvs.conversationId] = messages;
+          const time = Date.now();
+          const noticeMessage = new NoticeMessageBody({
+            time,
+            type: 'recall',
+            noticeType: 'recall',
+            ext: { ...messages[msgIndex] },
           });
+          messages[msgIndex] = noticeMessage;
           if (!conversation) return;
           // @ts-ignore
           conversation.lastMessage = messages[msgIndex];
           this.rootStore.conversationStore.modifyConversation(conversation);
+          // remove pinned message when recall message
+          if (conversation.chatType !== 'singleChat') {
+            this.rootStore.pinnedMessagesStore.deletePinnedMessage(
+              conversation.chatType,
+              conversation.conversationId,
+              messageId,
+            );
+          }
           eventHandler.dispatchSuccess('recallMessage');
         }
       })
@@ -876,7 +888,11 @@ class MessageStore {
     });
   }
 
-  modifyLocalMessage(messageId: string, msg: ChatSDK.TextMsgBody, isReceivedModify?: boolean) {
+  modifyLocalMessage(
+    messageId: string,
+    msg: ChatSDK.ModifiedEventMessage,
+    isReceivedModify?: boolean,
+  ) {
     if (msg.chatType !== 'chatRoom') {
       let cvsId = '';
       if (isReceivedModify) {
@@ -884,17 +900,27 @@ class MessageStore {
       } else {
         cvsId = msg.to;
       }
+      if (msg.chatType !== 'singleChat') {
+        this.rootStore.pinnedMessagesStore.modifyPinnedMessage(msg.chatType, cvsId, msg);
+      }
       const msgIndex = this.message[msg.chatType][cvsId].findIndex(
         //@ts-ignore
         msgItem => msgItem.id === messageId || msgItem.mid === messageId,
       );
       if (msgIndex > -1) {
         let msgItem = this.message[msg.chatType][cvsId][msgIndex];
-        if (msgItem.type === 'txt') {
+        if (msg.type === 'txt' && msgItem.type === 'txt') {
           msgItem.msg = msg.msg;
           msgItem.modifiedInfo = msg.modifiedInfo;
           // delete translations when message was edited
           msgItem.translations = undefined;
+        }
+        if (msg.type === 'custom' && msgItem.type === 'custom') {
+          msgItem.customEvent = msg.customEvent;
+          msgItem.modifiedInfo = msg.modifiedInfo;
+          msgItem.customExts = msg.customExts;
+          msgItem.ext = msg.ext;
+          console.log(msgItem, 'msgItem');
         }
       }
     }
@@ -923,7 +949,7 @@ class MessageStore {
     cvs: CurrentConversation,
     selectedData: {
       selectable: boolean;
-      selectedMessage: (ChatSDK.MessageBody | RecallMessage)[];
+      selectedMessage: (ChatSDK.MessageBody | NoticeMessageBody)[];
     },
   ) {
     this.selectedMessage[cvs.chatType as 'singleChat' | 'groupChat'][cvs.conversationId] =

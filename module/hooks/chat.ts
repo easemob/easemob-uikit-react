@@ -129,6 +129,44 @@ const useEventHandler = (props: ProviderProps) => {
       onModifiedMessage: message => {
         getStore().messageStore.modifyLocalMessage(message.id, message, true);
       },
+      onMessagePinEvent: message => {
+        const { messageId, conversationType, conversationId, operation, time, operatorId } =
+          message;
+        switch (operation) {
+          case 'pin':
+            getStore().pinnedMessagesStore.updatePinnedMessage(
+              conversationType,
+              conversationId,
+              messageId,
+              time,
+              operatorId,
+            );
+            getStore().pinnedMessagesStore.pushPinNoticeMessage({
+              conversationId,
+              conversationType,
+              operatorId,
+              noticeType: 'pin',
+              time,
+            });
+            break;
+          case 'unpin':
+            getStore().pinnedMessagesStore.deletePinnedMessage(
+              conversationType,
+              conversationId,
+              messageId,
+            );
+            getStore().pinnedMessagesStore.pushPinNoticeMessage({
+              conversationId,
+              conversationType,
+              operatorId,
+              noticeType: 'unpin',
+              time,
+            });
+            break;
+          default:
+            break;
+        }
+      },
       onGroupEvent: message => {
         const { operation, id } = message;
         const { addressStore, client } = rootStore;

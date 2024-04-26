@@ -18,6 +18,7 @@ $dialog-prefix-cls: #{$cui-prefix}-modal;
         display: flex;
         justify-content: center;
         align-items: center;
+        text-align: left;
     }
     
     &-title {

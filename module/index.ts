@@ -7,6 +7,7 @@ import TextMessage, { TextMessageProps } from './textMessage';
 import VideoMessage, { VideoMessageProps } from './videoMessage';
 import MessageStatus, { MessageStatusProps } from './messageStatus';
 import CombinedMessage, { CombinedMessageProps } from './combinedMessage';
+import PinnedMessage, { PinnedMessageProps } from './pinnedMessage';
 import {
   RepliedMsg,
   UnsentRepliedMsg,
@@ -53,7 +54,6 @@ import rootStore, {
   RootStore,
   InitConfig,
   MessageStore,
-  RecallMessage,
   Message,
   SelectedMessage,
   Typing,
@@ -75,6 +75,7 @@ import { RootContext, RootProvider, RootConsumer, ContextProps } from './store/r
 import Provider, { ProviderProps } from './store/Provider';
 import { useClient } from './hooks/useClient';
 import { useConversations } from './hooks/useConversation';
+import { usePinnedMessage } from './hooks/usePinnedMessage';
 import { useHistoryMessages } from './hooks/useHistoryMsg';
 import { useConversationContext } from './hooks/useConversationContext';
 import { useChatroomContext } from './hooks/useChatroomContext';
@@ -101,6 +102,7 @@ export type {
   VideoMessageProps,
   MessageStatusProps,
   CombinedMessageProps,
+  PinnedMessageProps,
   RepliedMsgProps,
   UnsentRepliedMsgProps,
   ChatProps,
@@ -121,7 +123,6 @@ export type {
   RootStore,
   InitConfig,
   MessageStore,
-  RecallMessage,
   Message,
   SelectedMessage,
   Typing,
@@ -159,6 +160,7 @@ export {
   TextMessage,
   VideoMessage,
   CombinedMessage,
+  PinnedMessage,
   RepliedMsg,
   UnsentRepliedMsg,
   MessageStatus,
@@ -180,6 +182,7 @@ export {
   UserProfile,
   useClient,
   useConversations,
+  usePinnedMessage,
   useHistoryMessages,
   useSDK,
   useConversationContext,

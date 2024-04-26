@@ -1,0 +1,95 @@
+@import '~/common/style/index.scss';
+$pinned-msg-prefix-cls: #{$cui-prefix}-pinned-messages;
+$status-prefix-cls: #{$cui-prefix}-message-base;
+
+.#{$pinned-msg-prefix-cls} {
+  width: 100%;
+  height: 100%;
+  display: block;
+  overflow: hidden;
+  box-sizing: border-box;
+  background-color: $chat-bg;
+}
+
+.#{$pinned-msg-prefix-cls}-header {
+  font-size: 18px;
+  border-bottom: 1px solid $gray-9;
+}
+
+.#{$pinned-msg-prefix-cls}-wrap {
+  height: calc(100% - 70px);
+  padding: 12px;
+  overflow-y: scroll;
+}
+
+.#{$pinned-msg-prefix-cls}-message-bubble {
+  padding: 8px 0 12px 0;
+  color: $gray-1;
+
+  .#{$status-prefix-cls}-body {
+    margin: 0;
+  }
+}
+
+.#{$pinned-msg-prefix-cls}-item-wrap {
+  margin-bottom: 12px;
+  border-bottom: 1px solid $gray-9;
+}
+
+.#{$pinned-msg-prefix-cls}-info-wrap {
+  display: flex;
+  justify-content: space-between;
+}
+
+.#{$pinned-msg-prefix-cls}-info {
+  font-size: 12px;
+  color: $msg-nickname-font-color;
+}
+
+.#{$pinned-msg-prefix-cls}-time {
+  font-size: 12px;
+  color: $gray-7;
+}
+
+.#{$pinned-msg-prefix-cls}-opt-wrap {
+  position: relative;
+
+  &:hover {
+    .#{$pinned-msg-prefix-cls}-opt {
+      display: block;
+    }
+  }
+}
+
+.#{$pinned-msg-prefix-cls}-opt {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 5px;
+}
+
+
+.#{$pinned-msg-prefix-cls}-opt-icon {
+  font-size: 20px;
+  fill: $gray-5;
+}
+
+.#{$pinned-msg-prefix-cls}-opt-icon:hover {
+  cursor: pointer;
+  fill: $blue-5;
+}
+
+.#{$pinned-msg-prefix-cls}-empty {
+  display: block;
+  height: 100%;
+  margin: 0 auto;
+  font-size: 140px;
+}
+
+.#{$pinned-msg-prefix-cls}-dark {
+  background-color: $gray-1;
+
+  .#{$pinned-msg-prefix-cls}-message-bubble {
+    color: $gray-98
+  }
+}

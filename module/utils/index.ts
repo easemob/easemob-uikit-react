@@ -1,13 +1,12 @@
 import { ChatType } from '../types/messageType';
 import { ChatSDK } from '../SDK';
 import rootStore, { getStore } from '../store/index';
-import type { RecallMessage } from '../store/MessageStore';
 import { GroupItem, MemberItem } from '../store/AddressStore';
 import { emoji } from '../messageInput/emoji/emojiConfig';
 import { AppUserInfo } from '../store/AddressStore';
 import { CurrentConversation } from '../store/ConversationStore';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
-import { f } from 'vitest/dist/index-2f5b6168';
+import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
 
 export function getConversationTime(time: number) {
   if (!time) return '';
@@ -49,16 +48,19 @@ export function parseChannel(channelId: string): {
   };
 }
 
-export function getCvsIdFromMessage(message: BaseMessageType | RecallMessage) {
+export function getCvsIdFromMessage(message: BaseMessageType | NoticeMessageBody) {
   let conversationId = '';
-  if (message.chatType == 'groupChat' || message.chatType == 'chatRoom') {
-    conversationId = message.to;
-  } else if (message.from == rootStore.client.user) {
-    // self message
-    conversationId = message.to;
-  } else {
-    // target message
-    conversationId = message.from || '';
+  if (message?.type !== 'notice' && message?.type !== 'recall') {
+    message = message as BaseMessageType;
+    if (message.chatType == 'groupChat' || message.chatType == 'chatRoom') {
+      conversationId = message.to;
+    } else if (message.from == rootStore.client.user) {
+      // self message
+      conversationId = message.to;
+    } else {
+      // target message
+      conversationId = message.from || '';
+    }
   }
   return conversationId;
 }
@@ -211,7 +213,7 @@ export function getMessages(cvs: CurrentConversation) {
 }
 
 export function getMessageIndex(
-  messages: (ChatSDK.MessageBody | RecallMessage)[],
+  messages: (ChatSDK.MessageBody | NoticeMessageBody)[],
   messageId: string,
 ) {
   if (!messages) return -1;
@@ -219,7 +221,10 @@ export function getMessageIndex(
   return messages.findIndex(msg => msg.id === messageId || msg.mid === messageId);
 }
 
-export function getReactionByEmoji(message: ChatSDK.MessageBody | RecallMessage, emoji: string) {
+export function getReactionByEmoji(
+  message: ChatSDK.MessageBody | NoticeMessageBody,
+  emoji: string,
+) {
   // @ts-ignore
   return message.reactions?.find(reaction => reaction.reaction === emoji);
 }

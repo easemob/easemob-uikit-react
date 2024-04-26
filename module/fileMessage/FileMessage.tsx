@@ -12,12 +12,14 @@ import { getCvsIdFromMessage } from '../utils';
 import { observer } from 'mobx-react-lite';
 import { ChatSDK } from '../SDK';
 import { RootContext } from '../store/rootContext';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface FileMessageProps extends BaseMessageProps {
   fileMessage: FileMessageType; // 从SDK收到的文件消息
   iconType?: IconProps['type'];
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
+  bubbleClass?: string;
   nickName?: string;
   type?: 'primary' | 'secondly';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
@@ -26,6 +28,7 @@ export interface FileMessageProps extends BaseMessageProps {
 const FileMessage = (props: FileMessageProps) => {
   let {
     iconType = 'DOC',
+    bubbleClass,
     fileMessage,
     shape,
     prefix: customizePrefixCls,
@@ -42,6 +45,13 @@ const FileMessage = (props: FileMessageProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
   let { bySelf } = fileMessage;
+  let conversationId = getCvsIdFromMessage(fileMessage);
+  const { pinMessage } = usePinnedMessage({
+    conversation: {
+      conversationId: conversationId,
+      conversationType: fileMessage.chatType as any,
+    },
+  });
   if (typeof bySelf == 'undefined') {
     bySelf = fileMessage.from === rootStore.client.context.userId;
   }
@@ -96,6 +106,11 @@ const FileMessage = (props: FileMessageProps) => {
       // @ts-ignore
       fileMessage.mid || fileMessage.id,
     );
+  };
+
+  const handlePinMessage = () => {
+    //@ts-ignore
+    pinMessage(fileMessage.mid || fileMessage.id);
   };
 
   const handleClickEmoji = (emojiString: string) => {
@@ -168,7 +183,6 @@ const FileMessage = (props: FileMessageProps) => {
     );
   };
 
-  let conversationId = getCvsIdFromMessage(fileMessage);
   const handleSelectMessage = () => {
     const selectable =
       rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
@@ -260,6 +274,7 @@ const FileMessage = (props: FileMessageProps) => {
   return (
     <BaseMessage
       id={fileMessage.id}
+      className={bubbleClass}
       message={fileMessage}
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
@@ -268,6 +283,7 @@ const FileMessage = (props: FileMessageProps) => {
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
+      onPinMessage={handlePinMessage}
       reactionData={reactions}
       onAddReactionEmoji={handleClickEmoji}
       onDeleteReactionEmoji={handleDeleteEmoji}
