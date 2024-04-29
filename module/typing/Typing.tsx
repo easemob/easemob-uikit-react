@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import classNames from 'classnames';
 import './style/style.scss';
 import { ConfigContext } from '../../component/config/index';
@@ -23,12 +23,12 @@ const Typing = (props: TypingProps) => {
   const classString = classNames(prefixCls, className);
   const visibleOut = rootStore.messageStore.typing[conversation.conversationId];
   const [visible, setVisible] = useState(false);
-  let timer: string | number | NodeJS.Timeout | undefined;
+  let timer = useRef<string | number | NodeJS.Timeout | undefined>();
   const show = () => {
     setVisible(true);
     onShow?.();
-    timer && clearTimeout(timer);
-    timer = setTimeout(() => {
+    timer.current && clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
       hide();
     }, 5000);
   };
@@ -36,6 +36,7 @@ const Typing = (props: TypingProps) => {
   const hide = () => {
     setVisible(false);
     onHide?.();
+    timer.current && clearTimeout(timer.current);
   };
 
   useEffect(() => {
@@ -45,10 +46,13 @@ const Typing = (props: TypingProps) => {
       hide();
     }
   }, [visibleOut]);
-
+  const avatarUrl = rootStore.addressStore.appUsersInfo[conversation.conversationId]?.avatarurl;
+  const nickName = rootStore.addressStore.appUsersInfo[conversation.conversationId]?.nickname;
   return (
     <div className={classString} style={{ ...style, display: visible ? 'flex' : 'none' }}>
-      <Avatar size={16} style={{ fontSize: '.8em' }}></Avatar>
+      <Avatar size={16} src={avatarUrl} style={{ fontSize: '12px' }}>
+        {nickName || conversation.conversationId}
+      </Avatar>
       <div className="loading">
         <div className="loading-dot"></div>
         <div className="loading-dot"></div>

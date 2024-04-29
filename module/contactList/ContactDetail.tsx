@@ -193,24 +193,28 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                     <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
                     {t('message')}
                   </Button>
-                  |
-                  <Button
-                    type="text"
-                    className={`${prefixCls}-content-btn`}
-                    onClick={handleClickBtn('audio')}
-                  >
-                    <Icon type="PHONE_PICK" width={24} height={24}></Icon>
-                    {t('audioCall')}
-                  </Button>
-                  |
-                  <Button
-                    type="text"
-                    className={`${prefixCls}-content-btn`}
-                    onClick={handleClickBtn('video')}
-                  >
-                    <Icon type="VIDEO_CAMERA" width={24} height={24}></Icon>
-                    {t('videoCall')}
-                  </Button>
+                  {data.id.includes('chatbot_') ? null : (
+                    <>
+                      |
+                      <Button
+                        type="text"
+                        className={`${prefixCls}-content-btn`}
+                        onClick={handleClickBtn('audio')}
+                      >
+                        <Icon type="PHONE_PICK" width={24} height={24}></Icon>
+                        {t('audioCall')}
+                      </Button>
+                      |
+                      <Button
+                        type="text"
+                        className={`${prefixCls}-content-btn`}
+                        onClick={handleClickBtn('video')}
+                      >
+                        <Icon type="VIDEO_CAMERA" width={24} height={24}></Icon>
+                        {t('videoCall')}
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
             </div>

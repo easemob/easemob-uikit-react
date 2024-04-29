@@ -306,7 +306,7 @@ const ChatApp: FC<any> = () => {
                     // },
                   }
                 }
-                messageEditorProps={{
+                messageInputProps={{
                   enabledTyping: true,
                 }}
                 headerProps={{
@@ -410,7 +410,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       theme={{
         // primaryColor: 50, //'#33ffaa',
-        mode: 'dark',
+        mode: 'light',
         bubbleShape: 'square',
         avatarShape: 'square',
         componentsShape: 'square',
