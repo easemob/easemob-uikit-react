@@ -42,6 +42,7 @@ const useContacts = () => {
 const useUserInfo = (userList: 'conversation' | 'contacts', withPresence?: boolean) => {
   const rootStore = useContext(RootContext).rootStore;
   useEffect(() => {
+    if (!rootStore.loginState) return;
     let keys = Object.keys(rootStore.addressStore.appUsersInfo);
     let cvsUserIds = rootStore.conversationStore.conversationList
       .filter(item => item.chatType === 'singleChat' && !keys.includes(item.conversationId))
@@ -56,7 +57,11 @@ const useUserInfo = (userList: 'conversation' | 'contacts', withPresence?: boole
       userIdList: userList == 'conversation' ? cvsUserIds : contactsUserIds,
       withPresence,
     });
-  }, [rootStore.conversationStore.conversationList.length, rootStore.addressStore.contacts.length]);
+  }, [
+    rootStore.conversationStore.conversationList.length,
+    rootStore.addressStore.contacts.length,
+    rootStore.loginState,
+  ]);
 };
 
 const useGroups = () => {
