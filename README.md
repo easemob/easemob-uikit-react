@@ -1,14 +1,23 @@
 # Easemob Chat UIKit Web 使用指南
 
-## 简介
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/easemob/Easemob-UIKit-web) ![GitHub last commit](https://img.shields.io/github/last-commit/easemob/Easemob-UIKit-web) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/easemob/Easemob-UIKit-web) ![GitHub License](https://img.shields.io/github/license/easemob/Easemob-UIKit-web) ![GitHub Tag](https://img.shields.io/github/v/tag/easemob/Easemob-UIKit-web) ![NPM Version](https://img.shields.io/npm/v/easemob-chat-uikit)
+
+## 📌 目录
+
+- [简介](#简介)
+- [技术原理](#技术原理)
+- [功能](#功能)
+- [组件](#组件)
+
+## 📖 简介
 
 easemob-chat-uikit 是基于环信 Chat SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件， 容器组件允许用户使用 renderX 方法来进行自定义。easemob-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
 
-## 技术原理
+## ⚙️ 技术原理
 
 UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI 组件包含容器组件 container 复合组件 module, 以及纯 UI 组件 components, 这些不同级别的组件全部对外暴露，用户可以引用任意组件构建自己的应用。UIkit 使用 mobx 管理全局数据，用户可以引用 rootStore 来获得全部数据和 action 方法，可以用 action 方法来操作数据。 UIKit 内部集成了 chat SDK，通过 chat SDK 和服务器交互。<div align=center> <img src="https://github.com/easemob/Easemob-UIKit-web/blob/main/docs/image/uikit.png" width = "400" height = "450" /></div>
 
-## 功能
+## ✨ 功能
 
 `easemob-chat-uikit` 库提供以下功能：
 
@@ -73,7 +82,7 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
 
 </table>
 
-## 组件
+## 🧩 组件
 
 `easemob-chat-uikit` 目前提供的组件：
 
@@ -190,7 +199,7 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
    </tr>
 </table>
 
-## store
+## 🛖 store
 
 UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
 
@@ -283,7 +292,7 @@ UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
     
 </table>
 
-## 前提条件
+## 👉 前提条件
 
 开启 Easemob Chat 服务前，请确保已经具备以下要素：
 
@@ -291,7 +300,7 @@ UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
 - React DOM 16.8.0 或以上版本；
 - Easemob Chat 项目和 App Key。
 
-## 支持的浏览器
+## 🖥 支持的浏览器
 
 | 浏览器    | 支持的版本 |
 | --------- | ---------- |
@@ -301,14 +310,14 @@ UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
 | Chrome    | 54 或以上  |
 | Safari    | 11 或以上  |
 
-## UIKit 中用到的服务
+## 👉 UIKit 中用到的服务
 
 - 会话列表
 - 漫游消息
 - 单向删除漫游消息
 - 用户属性
 
-## 使用步骤
+## 🔨 使用步骤
 
 ### 1.创建 chat-uikit 项目
 
@@ -427,7 +436,7 @@ npm run start
 
 **注意** 使用自定义 App Key 时，由于没有联系人，需先添加好友
 
-## 如何自定义
+## 🌈 如何自定义
 
 ### 修改组件样式
 
@@ -531,15 +540,15 @@ module.exports = {
 
 如果这些不能满足定制化要求，还可以检查元素来覆盖 UIKit 的样式。
 
-## 社区贡献者
+## 👥 社区贡献者
 
 如果你认为可将一些功能添加到 UIKit 中让更多用户受益，请随时 Fork 存储库并添加拉取请求。如果你在使用上有任何问题，也请在存储库上提交。感谢你的贡献！
 
-## 参考文档
+## 🔗 参考文档
 
 [其他相关文档](https://github.com/easemob/Easemob-UIKit-web/tree/main/docs/zh)
 
-## 相关资源
+## 🔗 相关资源
 
 [集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html);
 
@@ -547,6 +556,6 @@ module.exports = {
 
 [chatroom demo](https://livestream-hsb.oss-cn-beijing.aliyuncs.com/index.html)
 
-## 代码许可
+## 📄 代码许可
 
 示例项目遵守 MIT 许可证。
