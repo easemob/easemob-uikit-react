@@ -49,7 +49,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
     prefix,
     onItemClick,
     checkable,
-    groupMembers,
+    groupMembers = [],
     onPrivateChat,
     onAddContact,
     onClickBack,
@@ -78,7 +78,13 @@ const GroupMember: FC<GroupMemberProps> = props => {
   );
 
   const groupData = rootStore.addressStore.groups.find(item => item.groupid == groupId);
-
+  const chatbotIds = groupMembers.filter((item: any) => {
+    if (item.userId.indexOf('chatbot_') > -1) {
+      return {
+        userId: item.userId,
+      };
+    }
+  });
   const privateChat = (userId: string) => {
     const result = onPrivateChat?.(userId);
     if (result == false) return;
@@ -379,6 +385,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                 {
                   userId: rootStore.client.user,
                 },
+                ...chatbotIds,
               ]
         }
       />

@@ -19,6 +19,7 @@ import Modal, { ModalProps } from '../../component/modal';
 import { ContactList } from '../contactList';
 import { use } from 'i18next';
 import { useTranslation } from 'react-i18next';
+import { set } from 'mobx';
 export interface UserSelectProps extends ModalProps {
   prefix?: string;
   className?: string;
@@ -35,6 +36,7 @@ export interface UserSelectProps extends ModalProps {
   disableUserIds?: string[];
   disabled?: boolean;
   searchPlaceholder?: string;
+  onOk?: (selectedUsers: UserInfoData[]) => void;
 }
 
 export interface UserSelectInfo {
@@ -81,9 +83,27 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   );
   const [modalOpen, setModalOpen] = useState(open);
   const [selectedUsers, setSelectedUsers] = useState<UserInfoData[]>([]);
+  // 创建群默认选中机器人
+  const chatbotIds = rootStore.addressStore.contacts.filter(item => {
+    if (item.userId.indexOf('chatbot_') > -1) return true;
+  });
+
   useEffect(() => {
     if (!open) {
       setSelectedUsers([]);
+    } else {
+      if (!users) {
+        setSelectedUsers(chatbotIds);
+        if (chatbotIds.length > 0) {
+          onUserSelect?.(
+            {
+              ...chatbotIds[0],
+              type: 'add',
+            },
+            chatbotIds,
+          );
+        }
+      }
     }
   }, [open]);
   const handleSelect = (checked: boolean, userInfo: UserInfoData) => {
@@ -138,6 +158,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     }
   };
   const handleItemClose = (userInfo: UserInfoData) => {
+    if (userInfo.userId.indexOf('chatbot_') > -1) return;
     setSelectedUsers(value => {
       const userArr = value.filter(user => {
         return user.userId !== userInfo.userId;
@@ -164,6 +185,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     type: 'contact' as 'contact',
     id: user.userId,
   }));
+
   return (
     <Modal
       open={open}
@@ -220,6 +242,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
               style={themeMode == 'dark' ? { backgroundColor: '#2F3437' } : {}}
               onCheckboxChange={handleSelect}
               onItemClick={data => {
+                if (data.id.indexOf('chatbot_') > -1) return;
                 const disabled = defaultCheckedUsers?.find(item => item.id === data.id);
                 if (disabled) return;
                 const found = checkedList.find(item => item.id === data.id);
@@ -263,7 +286,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   data={user}
                   // onCheckboxChange={handleSelect}
                   checked
-                  closeable
+                  closeable={user.userId.indexOf('chatbot_') === -1}
                   onClose={handleItemClose}
                   onClick={data => {
                     handleItemClose(user);
@@ -284,7 +307,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   style={{ marginRight: '24px', width: '68px' }}
                   type="primary"
                   onClick={e => {
-                    onOk?.(e);
+                    onOk?.(selectedUsers);
                   }}
                   disabled={selectedUsers.length === 0}
                 >

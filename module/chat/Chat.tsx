@@ -786,12 +786,20 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   if (globalConfig?.header?.videoCall == false) {
     showVideoCall = false;
   }
+
+  // not display rtc when rtcConfig is not set
   if (!rtcConfig) {
     showVideoCall = false;
     showAudioCall = false;
   }
   if (globalConfig?.header?.pinMessage === false) {
     showPinMessage = false;
+  }
+
+  // chatbot not display rtc
+  if (CVS.conversationId?.indexOf('chatbot_') > -1) {
+    showVideoCall = false;
+    showAudioCall = false;
   }
 
   // --- report ---

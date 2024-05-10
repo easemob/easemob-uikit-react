@@ -17,6 +17,7 @@ import { pinyin } from 'pinyin-pro';
 import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
 import { useTranslation } from 'react-i18next';
+import { r } from 'vitest/dist/index-2f5b6168';
 // pinyin('汉语拼音', { toneType: 'none' }); // "han yu pin yin"
 export interface ContactListProps {
   style?: React.CSSProperties;
@@ -167,7 +168,11 @@ let ContactList: FC<ContactListProps> = props => {
   }
 
   const { getJoinedGroupList } = useGroups();
-  getJoinedGroupList();
+
+  useEffect(() => {
+    if (!rootStore.loginState) return;
+    getJoinedGroupList();
+  }, [rootStore.loginState]);
 
   const [itemActiveKey, setItemActiveKey] = useState('');
 

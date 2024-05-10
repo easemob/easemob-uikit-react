@@ -483,6 +483,27 @@ const TextMessage = (props: TextMessageProps) => {
     onOpenThreadPanel?.(textMessage.chatThreadOverview?.id || '');
   };
 
+  useEffect(() => {
+    if ((textMessage as any).printed != false) {
+      return;
+    }
+    const msgArr = renderTxt(msg, true);
+    const message = (msgArr.length > 1 ? msgArr : msgArr[0] || '') as string[] | string;
+    let currentIndex = 0;
+    const typingInterval = setInterval(() => {
+      setText(prevMessage => prevMessage + message?.[currentIndex]);
+      currentIndex++;
+      if (currentIndex >= message.length - 1) {
+        clearInterval(typingInterval);
+        // @ts-ignore
+        textMessage.printed = true;
+      }
+    }, 50);
+
+    return () => {
+      clearInterval(typingInterval);
+    };
+  }, [msg]);
   return (
     <>
       {onlyContent ? (
@@ -551,7 +572,7 @@ const TextMessage = (props: TextMessageProps) => {
           >
             <div>
               <span className={classString} style={{ ...style }}>
-                {renderTxt(msg, true)}
+                {(textMessage as any).printed == false ? text : renderTxt(msg, true)}
               </span>
               {!!(urlData?.title || urlData?.description) && (
                 <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>

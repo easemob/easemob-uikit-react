@@ -182,6 +182,11 @@ class AddressStore {
       }
 
       runInAction(() => {
+        let found = this.contacts.find(item => item.userId === userId);
+        if (found) {
+          return;
+        }
+
         this.contacts.push({
           userId,
           nickname: userInfo.nickname,

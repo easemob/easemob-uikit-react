@@ -12,7 +12,8 @@ import AC from 'agora-chat';
 import { RootProvider } from '../../../module/store/rootContext';
 import rootStore from '../../../module/store/index';
 import { ConversationList, ConversationItem } from '../../../module/conversation';
-import Provider from '../../../module/store/Provider';
+// import Provider from '../../../module/store/Provider';
+import { Provider, UIKitProvider } from '../../../index';
 import { useClient } from '../../../module/hooks/useClient';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import Button from '../../../component/button';
@@ -266,12 +267,15 @@ const ChatApp: FC<any> = () => {
               console.log('cvsItem', item);
               setCvsItem(item);
             }}
-            // itemProps={{
-            //   moreAction: {
-            //     visible: true,
-            //     actions: [{ content: 'DELETE' }],
-            //   },
-            // }}
+            itemProps={{
+              moreAction: {
+                visible: true,
+                actions: [{ content: 'DELETE' }],
+              },
+              formatDateTime: (time: number) => {
+                return new Date(time).toLocaleString();
+              },
+            }}
             className="conversation"
             // renderItem={csv => (
             //   <ConversationItem
@@ -330,14 +334,17 @@ const ChatApp: FC<any> = () => {
           {tab == 'chat' && (
             <>
               <Chat
-                messageListProps={
-                  {
-                    // renderUserProfile: a => {
-                    //   return null;
-                    // },
-                  }
-                }
-                messageEditorProps={{
+                messageListProps={{
+                  // renderUserProfile: a => {
+                  //   return null;
+                  // },
+                  messageProps: {
+                    formatDateTime: (time: number) => {
+                      return new Date(time).toLocaleString();
+                    },
+                  },
+                }}
+                messageInputProps={{
                   enabledTyping: true,
                 }}
                 headerProps={{
@@ -453,7 +460,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       }}
       theme={{
         // primaryColor: 50, //'#33ffaa',
-        mode: 'dark',
+        mode: 'light',
         bubbleShape: 'square',
         avatarShape: 'square',
         componentsShape: 'square',
