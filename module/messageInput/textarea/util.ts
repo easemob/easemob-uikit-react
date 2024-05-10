@@ -1,4 +1,4 @@
-export const convertToMessage = (e: string) => {
+export const convertToMessage = (e: string, plainText: boolean | undefined = true) => {
   var t = (function () {
     var t = [],
       r = document.createElement('div');
@@ -18,7 +18,16 @@ export const convertToMessage = (e: string) => {
     }
 
     var c = (t = t.reverse()).length ? '\n' + t.join('\n') : t.join('\n');
-
+    if (plainText) {
+      return (r.innerText + c)
+        .replace(/###h###/g, '&#92;')
+        .replace(/<br>/g, '\n')
+        .replace(/&amp;/g, '&');
+    }
+    if (r.innerHTML.indexOf('</span>')) {
+      r.innerHTML = r.innerHTML.replace(/<span.*?>/g, '');
+      r.innerHTML = r.innerHTML.replace(/<\/span>/g, '');
+    }
     return (r.innerHTML + c)
       .replace(/###h###/g, '\\')
       .replace(/<br>/g, '\n')

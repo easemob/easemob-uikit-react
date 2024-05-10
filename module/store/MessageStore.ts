@@ -354,6 +354,11 @@ class MessageStore {
     ) {
       this.sendChannelAck(curCvs);
     }
+    const isChatbot = message.from?.includes?.('chatbot_');
+    if (isChatbot) {
+      //@ts-ignore
+      message.printed = false;
+    }
     this.message.byId[message.id] = message;
     if (message.from !== this.rootStore.client.user) {
       // @ts-ignore

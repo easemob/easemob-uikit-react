@@ -34,7 +34,7 @@ export interface ConversationListProps {
   renderSearch?: () => React.ReactNode; // 自定义渲染 search
   renderItem?: (cvs: Conversation, index: number) => React.ReactNode; // 自定义渲染 item
   headerProps?: HeaderProps;
-  itemProps?: ConversationItemProps;
+  itemProps?: Partial<ConversationItemProps>; //Omit<ConversationItemProps, 'data'>;
   presence?: boolean; // 是否显示在线状态
   showSearchList?: boolean; // 是否显示搜索列表, 当使用renderHeader时，可以用这个参数来控制是否显示搜索列表
 }

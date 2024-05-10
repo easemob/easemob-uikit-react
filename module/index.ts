@@ -150,7 +150,7 @@ export type {
   UserCardMessageProps,
   UserSelectProps,
 };
-
+const UIKitProvider = Provider;
 export {
   AudioMessage,
   BaseMessage,
@@ -178,6 +178,7 @@ export {
   RootProvider,
   RootConsumer,
   Provider,
+  UIKitProvider,
   Thread,
   UserProfile,
   useClient,
