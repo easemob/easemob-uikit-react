@@ -1,4 +1,4 @@
-# Easemob UIKit for Web
+# Easemob UIKit for React
 
 ![Static Badge](https://img.shields.io/badge/platform-React-green) ![Static Badge](https://img.shields.io/badge/language-typescript-green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/easemob/Easemob-UIKit-web) ![GitHub last commit](https://img.shields.io/github/last-commit/easemob/Easemob-UIKit-web) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/easemob/Easemob-UIKit-web) ![GitHub License](https://img.shields.io/github/license/easemob/Easemob-UIKit-web) ![GitHub Tag](https://img.shields.io/github/v/tag/easemob/Easemob-UIKit-web) ![NPM Version](https://img.shields.io/npm/v/easemob-chat-uikit)
 
@@ -312,19 +312,19 @@ $text-color: fade($black, 85%);
 
 使用 webpack 进行变量覆盖：
 
-```json
+```javascript
 module.exports = {
   module: {
     rules: [
       {
         test: /\.s[ac]ss$/i,
         use: [
-          "style-loader",
-          "css-loader",
+          'style-loader',
+          'css-loader',
           {
-            loader: "sass-loader",
+            loader: 'sass-loader',
             options: {
-              additionalData: `@import "@/styles/index.scss";`
+              additionalData: `@import "@/styles/index.scss";`,
             },
           },
         ],
