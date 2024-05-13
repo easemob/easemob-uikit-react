@@ -1,17 +1,27 @@
-# Easemob Chat UIKit Web 使用指南
+# Easemob UIKit for Web
 
-![GitHub commit activity](https://img.shields.io/github/commit-activity/y/easemob/Easemob-UIKit-web) ![GitHub last commit](https://img.shields.io/github/last-commit/easemob/Easemob-UIKit-web) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/easemob/Easemob-UIKit-web) ![GitHub License](https://img.shields.io/github/license/easemob/Easemob-UIKit-web) ![GitHub Tag](https://img.shields.io/github/v/tag/easemob/Easemob-UIKit-web) ![NPM Version](https://img.shields.io/npm/v/easemob-chat-uikit)
+![Static Badge](https://img.shields.io/badge/platform-React-green) ![Static Badge](https://img.shields.io/badge/language-typescript-green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/easemob/Easemob-UIKit-web) ![GitHub last commit](https://img.shields.io/github/last-commit/easemob/Easemob-UIKit-web) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/easemob/Easemob-UIKit-web) ![GitHub License](https://img.shields.io/github/license/easemob/Easemob-UIKit-web) ![GitHub Tag](https://img.shields.io/github/v/tag/easemob/Easemob-UIKit-web) ![NPM Version](https://img.shields.io/npm/v/easemob-chat-uikit)
+
+本文将介绍环信新单群聊 UIKit。新单群聊 UIKit 致力于为开发者提供高效集成、即插即用、高自由度定制化的 UI 组件库，助力构建功能全面、设计美观的 IM 应用，轻松满足即时通信绝大多数场景。请下载示例进行体验。
 
 ## 📌 目录
 
-- [简介](#简介)
-- [技术原理](#技术原理)
-- [功能](#功能)
-- [组件](#组件)
+- [简介](#📖-简介)
+- [技术原理](#⚙️-技术原理)
+- [功能](#✨-功能)
+- [组件](#🧩-组件)
+- [运行示例 App](#🖥-运行示例-app)
+- [快速开始](#🔨-快速开始)
+- [进阶指南](#🌈-进阶指南)
+- [项目结构](#🏠-项目结构)
+- [参考文档](#🔗-参考文档)
+- [相关资源](#📁-相关资源)
 
 ## 📖 简介
 
-easemob-chat-uikit 是基于环信 Chat SDK 的一款 UI 组件库，提供通用的 UI 组件，和包含聊天业务逻辑的 module 组件，以及可以完整使用的容器组件， 容器组件允许用户使用 renderX 方法来进行自定义。easemob-chat-uikit 提供 provider 来管理数据，provider 自动监听 SDK 事件，来更新数据，并驱动 UI 更新。开发者可根据实际业务需求利用该库快速搭建自定义 IM 应用。
+Easemob UIKit for WEB 是集开发工具包与用户界面于一体的开发利器，全面的即插即用的 UI 组件将助力您轻松快速地将标准聊天功能集成到新旧客户端应用中。从会话列表到消息体等核心功能，从整体主题到颜色字体等细节样式，组件均可完全定制，打造契合您品牌标识的独特应用内聊天体验。
+
+特别注意：UIKit 支持单聊、群聊、客服、问诊、AI 陪聊等绝大多数聊天场景。
 
 ## ⚙️ 技术原理
 
@@ -21,278 +31,39 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
 
 `easemob-chat-uikit` 库提供以下功能：
 
+- 聊天界面，支持各种类型消息，和对消息的操作，音视频通话；
+- 会话列表，支持搜索、删除、指定、免打扰；
+- 通讯录，按首字母排序；
+- 群组管理，支持修改群信息，添加删除群成员；
 - 自动布局，适配容器的宽高；
-- 实现收发消息、消息上屏、消息未读数、清空消息、消息类型包括：（文本、图片、文件、表情、音频、视频消息）；
-- 搜索，删除会话；
 - 定制化 UI。
 
-<table>
-    <tr>
-        <td>模块</td>
-        <td>功能</td>
-        <td>说明</td>
-    </tr>
-   <tr>
-      <td rowspan="5" style=font-weight:bold>会话列表</td>
-   </tr>
-   <tr>
-      <td>会话列表</td>
-      <td style=font-size:10px>会话列表显示头像、昵称、最新消息内容、未读消息提醒和时间</td>
-   </tr>
-   <tr>
-      <td>删除会话</td>
-      <td style=font-size:10px>将会话从会话列表中删除</td>
-   </tr>
-   <tr>
-      <td>免打扰</td>
-      <td style=font-size:10px>开启消息免打扰或关闭消息免打扰</td>
-   </tr>
-   <tr>
-      <td>置顶</td>
-      <td style=font-size:10px>将会话固定在列表顶部</td>
-   </tr>
-    <tr>
-      <td rowspan="6" style=font-weight:bold>聊天</td>
-   </tr>
-   <tr>
-      <td>消息发送器</td>
-      <td style=font-size:10px>支持发送文本 表情 图片 文件 语音</td>
-   </tr>
-   <tr>
-      <td>消息展示</td>
-      <td style=font-size:10px>单、群聊消息展示，包括头像、昵称、消息内容、时间、发送状态、已读状态，消息包括：文本、表情、图片、视频、文件、语音</td>
-   </tr>
-   <tr>
-      <td>撤回消息</td>
-      <td style=font-size:10px>已发出的消息默认 2 分钟内可撤回</td>
-   </tr>
-   <tr>
-      <td>reaction</td>
-      <td style=font-size:10px>对消息回复自定义表情</td>
-   </tr>
-   <tr>
-      <td>名片</td>
-      <td style=font-size:10px>点击头像显示好友名片，可以发送好友的个人名片信息</td>
-   </tr>
-   <tr>
-   <td colspan="3">
-     更多功能开发中 ...
-	 </td>
-   </tr>
-
-</table>
+- 支持的消息类型： 文本、表情、语音、图片、视频、文件、名片、合并消息。
+- 消息支持的操作：回复、删除、撤回、翻译、编辑、多选、转发、举报、固定。
 
 ## 🧩 组件
 
-`easemob-chat-uikit` 目前提供的组件：
+`easemob-chat-uikit` 目前提供容器组件、模块组件、纯 UI 组件三个级别的组件，组件详情可以查看[故事书](https://storybook.easemob.com/)
 
-- 容器组件：`Provider`， `Chat`，`ConversationList`；
-- module 组件：`BaseMessage`，`AudioMessage`，`FileMessage`， `VideoMessage`，`ImageMessage`，`TextMessage`，`Header`，`Empty`，`MessageList`， `ConversationItem`，`MessageInput`，`MessageStatus`；
-- 纯 UI 组件：`Avatar`，`Badge`，`Button`，`Checkbox`，`Icon`，`Modal`，`Tooltip`
+## 🖥 运行示例 App
 
-容器组件介绍
+1. 安装依赖
 
-<table>
-    <tr>
-        <td>组件</td>
-        <td>描述</td>
-        <td>参数</td>
-		<td>参数描述</td>
-    </tr> 
-   <tr>
-      <td rowspan="2" style=font-weight:bold>Provider</td>
-      <td rowspan="2"  style=font-size:10px>Provider 不渲染任何UI, 只为组件提供全局上下文，自动监听SDK事件，向下传递数据，驱动组件渲染</td>
-      <td style=font-size:10px>
-      initConfig: {
-        appkey: string
-      }
-      </td>
-	  <td style=font-size:10px>可以配置 appKey</td>
-	   <tr>
-	   <td style=font-size:10px>
-	   </pre>
-       local
-		<pre>
-      </td>
-	   <td style=font-size:10px>配置本地化文案，具体参见 i18next init方法的参数</td>
-	   </tr>
-   </tr>
-   <tr>
-      <td rowspan="8" style=font-weight:bold>ConversationList</td>
-      <td rowspan="8"  style=font-size:10px>会话列表组件</td>
-      <td style=font-size:10px>
-      className
-	  </td>
-	  <td style=font-size:10px>
-	  组件类名
-	  </td>
-	  <tr>
-		<td style=font-size:10px>prefix</td>
-		<td style=font-size:10px>css 类名前缀</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>headerProps</td>
-		<td style=font-size:10px>Header组件的props</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>itemProps</td>
-		<td style=font-size:10px>ConversationItem组件的props</td>
-	  </tr>
-	   <tr>
-		<td style=font-size:10px>renderHeader?: () => React.ReactNode</td>
-		<td style=font-size:10px>自定义渲染 header, 该参数接收一个函数，这个函数返回一个react 节点</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>renderSearch?: () => React.ReactNode</td>
-		<td style=font-size:10px>自定义渲染搜索组件, 该参数接收一个函数，这个函数返回一个react 节点</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>onItemClick?: (data: ConversationData[0]) => void</td>
-		<td style=font-size:10px>点击会话事件，返回当前会话的数据</td>
-	  </tr>
-	  <tr>
-		<td style=font-size:10px>onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean</td>
-		<td style=font-size:10px>搜索框change事件，如果函数返回false会阻止默认搜索行为，用户可自行按条件搜索</td>
-	  </tr>
-   </tr>
-   <tr>
-      <td rowspan="9" style=font-weight:bold>Chat</td>
-      <td rowspan="9" style=font-size:10px>聊天组件</td>
-      <td style=font-size:10px>
-	  className: string
-	  </td>
-	  <td style=font-size:10px>
-	  组件 css 类名
-	  </td>
-	  <tr>
-	    <td style=font-size:10px>prefix: string</td>
-		<td style=font-size:10px>css 类名前缀</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>headerProps: HeaderProps</td>
-		<td style=font-size:10px>Header组件的props</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>messageListProps: MsgListProps</td>
-		<td style=font-size:10px>MessageList组件的props</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>messageInputProps: MessageInputProps</td>
-		<td style=font-size:10px>messageInput组件的props</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>renderHeader: (cvs: CurrentCvs) => React.ReactNode</td>
-		<td style=font-size:10px>自定义渲染Header组件, 该参数接收一个函数，这个函数返回一个react 节点, CurrentCvs 为当前会话</td>
-	  </tr>
-	   <tr>
-	    <td style=font-size:10px>renderMessageList?: () => ReactNode; </td>
-		<td style=font-size:10px>自定义渲染消息列表组件</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>renderMessageInput?: () => ReactNode; </td>
-		<td style=font-size:10px>自定义渲染消息发送器组件</td>
-	  </tr>
-	  <tr>
-	    <td style=font-size:10px>renderEmpty?: () => ReactNode; </td>
-		<td style=font-size:10px>自定义渲染没有会话时的空页面</td>
-	  </tr>
-   </tr>
-</table>
+```bash
+npm install
+```
 
-## 🛖 store
+2. 运行项目
 
-UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
+```bash
+npm run dev
+```
 
-- initConfig：UIKit 初始化数据
-- client：Chat SDK 实例
-- conversationStore: 会话列表相关数据
-- messageStore： 消息相关数据
-- addressStore：通讯录相关数据
+3. 选择 demo 目录下的示例 demo 打开，如：http://localhost:5173/demo/module/chat/index.html
 
-<table>
-    <tr>
-        <td>store</td>
-        <td>属性/方法</td>
-        <td>说明</td>
-    </tr> 
-    <tr>
-      <td rowspan="10" >conversationStore</td>
-    </<tr>
-    <tr>
-        <td>currentCvs</td>
-        <td style=font-size:10px>当前的会话</td>
-    </tr> 
-    <tr>
-        <td>conversationList</td>
-        <td style=font-size:10px>全部会话</td>
-    </tr> 
-    <tr>
-        <td>searchList</td>
-        <td style=font-size:10px>搜索出来的会话</td>
-    </tr> 
-   <tr>
-        <td style=color:blue>setCurrentCvs</td>
-        <td style=font-size:10px>设置当前的会话</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>setConversation</td>
-        <td style=font-size:10px>设置全部的会话</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>deleteConversation</td>
-        <td style=font-size:10px>删除会话</td>
-    </tr> 
-   <tr>
-        <td style=color:blue>addConversation</td>
-        <td style=font-size:10px>添加一个会话</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>topConversation</td>
-        <td style=font-size:10px>置顶一个会话</td>
-    </tr> 
-    <tr>
-        <td style=color:blue>modifyConversation</td>
-        <td style=font-size:10px>修改一个会话</td>
-    </tr>
-     <tr>
-      <td rowspan="10" >messageStore</td>
-    </tr>
-   <tr>
-        <td>message</td>
-        <td style=font-size:10px>全部会话的消息，里面包含singleChat, groupChat, byId</td style=font-size:10px>
-    </tr>
-   <tr>
-        <td style=color:blue>currentCvsMsgs</td>
-        <td style=font-size:10px>设置当前会话的消息</td>
-    </tr>
-    <tr>
-        <td style=color:blue>sendMessage</td>
-        <td style=font-size:10px>发送一条消息</td>
-    </tr>
-    <tr>
-        <td style=color:blue>receiveMessage</td>
-        <td style=font-size:10px>接收一条消息</td>
-    </tr>
-    <tr>
-        <td style=color:blue>modifyMessage</td>
-        <td style=font-size:10px>编辑一条消息</td>
-    </tr>
-    <tr>
-        <td style=color:blue>sendChannelAck</td>
-        <td style=font-size:10px>回复一条channel ack, 清空会话中的未读数</td>
-    </tr>
-   <tr>
-        <td style=color:blue>updateMessageStatus</td>
-        <td style=font-size:10px>更新消息状态</td>
-    </tr>
-     <tr>
-        <td style=color:blue>clearMessage</td>
-        <td style=font-size:10px>清空一个会话的消息</td>
-    </tr>
-    
-</table>
+## 🔨 快速开始
 
-## 👉 前提条件
+### 前提条件
 
 开启 Easemob Chat 服务前，请确保已经具备以下要素：
 
@@ -300,7 +71,7 @@ UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
 - React DOM 16.8.0 或以上版本；
 - Easemob Chat 项目和 App Key。
 
-## 🖥 支持的浏览器
+### 支持的浏览器
 
 | 浏览器    | 支持的版本 |
 | --------- | ---------- |
@@ -310,16 +81,16 @@ UIKit 提供了一个包含全部数据的 rootStore, rootStore 包含:
 | Chrome    | 54 或以上  |
 | Safari    | 11 或以上  |
 
-## 👉 UIKit 中用到的服务
+### UIKit 中用到的服务
 
 - 会话列表
 - 漫游消息
 - 单向删除漫游消息
 - 用户属性
 
-## 🔨 使用步骤
+### 使用步骤
 
-### 1.创建 chat-uikit 项目
+#### 1.创建 chat-uikit 项目
 
 ```bash
 # 安装 CLI 工具。
@@ -347,9 +118,9 @@ cd my-app
 └── yarn.lock
 ```
 
-### 2.集成 easemob-chat-uikit
+#### 2.集成 easemob-chat-uikit
 
-#### 安装 easemob-chat-uikit
+##### 安装 easemob-chat-uikit
 
 - 通过 npm 安装，运行以下命令：
 
@@ -363,7 +134,7 @@ npm install easemob-chat-uikit --save
 yarn add easemob-chat-uikit
 ```
 
-#### 使用 easemob-chat-uikit 组件构建应用
+##### 使用 easemob-chat-uikit 组件构建应用
 
 将 easemob-chat-uikit 库导入你的代码中：
 
@@ -422,7 +193,7 @@ class App extends Component {
 export default App;
 ```
 
-#### 运行项目并发送你的第一条消息
+##### 运行项目并发送你的第一条消息
 
 ```bash
 npm run start
@@ -436,7 +207,7 @@ npm run start
 
 **注意** 使用自定义 App Key 时，由于没有联系人，需先添加好友
 
-## 🌈 如何自定义
+## 🌈 进阶指南
 
 ### 修改组件样式
 
@@ -475,7 +246,32 @@ const ChatApp = () => {
 
 ### 修改主题
 
-UIKit 样式使用 scss 框架开发，定义了一系列全局样式变量，包括但不限于全局样式（主色、背景色、圆角、边框、字体大小）。
+1. UIKit 提供了一些全局主题配置项：
+
+```typescript
+theme: {
+    primaryColor?: string | number; // 16进制颜色值，或者Hue值
+    mode?: 'light' | 'dark'; // 明暗主题
+    avatarShape?: 'circle' | 'square'; // 头像圆形还是方形
+    bubbleShape?: 'ground' | 'square'; // 消息气泡大圆角还是小圆角
+    componentsShape?: 'ground' | 'square'; // 搜索，输入框，按钮组件 大圆角还是小圆角
+};
+```
+
+使用示例
+
+```jsx
+<UIKitProvider
+  theme={{
+    primaryColor: 203,
+    mode: 'light',
+  }}
+>
+  {/** ... */}
+</UIKitProvider>
+```
+
+2. UIKit 样式使用 scss 框架开发，定义了一系列全局样式变量，包括但不限于全局样式（主色、背景色、圆角、边框、字体大小）。
 
 ```scss
 // need to use hsla
@@ -540,6 +336,26 @@ module.exports = {
 
 如果这些不能满足定制化要求，还可以检查元素来覆盖 UIKit 的样式。
 
+## 🏠 项目结构
+
+```
+easemob-uikit-web
+├── build // 打包后的产物
+├── common // 公共样式
+├── component // 纯UI组件
+├── demo // 示例demo
+├── docs // 文档
+├── eventHandler // 时间监听器
+├── local // 国际化文案
+└── module // 容器和模块组件
+   ├── baseMessage // 消息基础组件，其他类型的消息组件都是在这个组件上宽展
+   ├── chat // Chat 组件，包含整个聊天页面
+   ├── contactList // 联系人组件
+   ├── conversation // 会话列表组件
+   ├── store // 全局状态
+   └── utils // 工具方法
+```
+
 ## 👥 社区贡献者
 
 如果你认为可将一些功能添加到 UIKit 中让更多用户受益，请随时 Fork 存储库并添加拉取请求。如果你在使用上有任何问题，也请在存储库上提交。感谢你的贡献！
@@ -548,9 +364,11 @@ module.exports = {
 
 [其他相关文档](https://github.com/easemob/Easemob-UIKit-web/tree/main/docs/zh)
 
-## 🔗 相关资源
+## 📁 相关资源
 
 [集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html);
+
+[chat demo 源码地址](https://github.com/easemob/webim/tree/dev_4.0?tab=readme-ov-file)
 
 [chatroom demo 源码地址](https://github.com/easemob/ChatroomDemo/tree/dev/WEB/ChatroomDemo)；
 
