@@ -57,6 +57,7 @@
     "handlebars": "^4.7.7",
     "happy-dom": "^7.6.7",
     "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
     "prettier": "^2.7.1",
     "react-styleguidist": "^13.0.0",
     "storybook-addon-sass-postcss": "^0.1.3",
