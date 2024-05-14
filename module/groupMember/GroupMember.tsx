@@ -129,6 +129,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
       ...addMemberData,
       open: false,
     });
+    setSelectedUsers([]);
   };
   const deleteGroupMember = () => {
     const users = groupMembers.map((item: any) => {
@@ -344,6 +345,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
             ...addMemberData,
             open: false,
           });
+          setSelectedUsers([]);
         }}
         selectedPanelFooter={
           <div>
@@ -365,6 +367,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                   ...addMemberData,
                   open: false,
                 });
+                setSelectedUsers([]);
               }}
             >
               {t('cancelBtn')}
