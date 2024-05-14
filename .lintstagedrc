@@ -1,9 +1,9 @@
 {
-    "module/**/*.{ts,tex}": [
+    "module/**/*.{ts,tsx}": [
         "prettier --write",
         "eslint"
     ],
-    "component/**/*.{ts,tex}": [
+    "component/**/*.{ts,tsx}": [
         "prettier --write",
         "eslint"
     ]
