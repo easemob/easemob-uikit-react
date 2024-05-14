@@ -1,0 +1,10 @@
+{
+    "module/**/*.{ts,tex}": [
+        "prettier --write",
+        "eslint"
+    ],
+    "component/**/*.{ts,tex}": [
+        "prettier --write",
+        "eslint"
+    ]
+}
