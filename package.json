@@ -18,7 +18,8 @@
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "coverage": "vitest run --coverage",
-    "fix-memory-limit": "cross-env LIMIT=4096 increase-memory-limit"
+    "fix-memory-limit": "cross-env LIMIT=4096 increase-memory-limit",
+    "prepare": "husky"
   },
   "formats": [
     "es",
@@ -32,6 +33,8 @@
     "@babel/core": "^7.20.2",
     "@babel/preset-env": "^7.20.2",
     "@babel/preset-react": "^7.18.6",
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
     "@storybook/addon-actions": "^6.5.13",
     "@storybook/addon-essentials": "^6.5.13",
     "@storybook/addon-interactions": "^6.5.13",
@@ -53,6 +56,7 @@
     "esno": "^0.16.3",
     "handlebars": "^4.7.7",
     "happy-dom": "^7.6.7",
+    "husky": "^9.0.11",
     "prettier": "^2.7.1",
     "react-styleguidist": "^13.0.0",
     "storybook-addon-sass-postcss": "^0.1.3",
