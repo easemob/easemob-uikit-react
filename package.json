@@ -19,7 +19,8 @@
     "build-storybook": "build-storybook",
     "coverage": "vitest run --coverage",
     "fix-memory-limit": "cross-env LIMIT=4096 increase-memory-limit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "pre-commit": "lint-staged"
   },
   "formats": [
     "es",
