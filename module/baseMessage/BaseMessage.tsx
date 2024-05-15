@@ -636,7 +636,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             <div className={`${prefixCls}-body`}>
               {contentNode}
 
-              {hoverStatus && !select && !isRtcInviteMessage ? (
+              {hoverStatus && moreAction.visible && !select && !isRtcInviteMessage ? (
                 <>
                   {moreAction.visible && (
                     <Tooltip
