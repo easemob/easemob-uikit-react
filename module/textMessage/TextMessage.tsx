@@ -83,7 +83,13 @@ export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = tr
     rnTxt.forEach((text, index) => {
       if (urlRegex.test(text!.toString())) {
         let replacedText = reactStringReplace(text?.toString() || '', urlRegex, (match, i) => (
-          <a key={match + i} target="_blank" href={match} className="message-text-url-link">
+          <a
+            key={match + i}
+            target="_blank"
+            rel="noopener noreferrer"
+            href={match}
+            className="message-text-url-link"
+          >
             {match}
           </a>
         ));
@@ -469,28 +475,30 @@ const TextMessage = (props: TextMessageProps) => {
     rootStore.threadStore.getChatThreadDetail(textMessage?.chatThreadOverview?.id || '');
     onOpenThreadPanel?.(textMessage.chatThreadOverview?.id || '');
   };
-
+  const [currentIndex, setCurrentIndex] = useState(0);
   useEffect(() => {
     if ((textMessage as any).printed != false) {
       return;
     }
     const msgArr = renderTxt(msg, true);
     const message = (msgArr.length > 1 ? msgArr : msgArr[0] || '') as string[] | string;
-    let currentIndex = 0;
+    if (currentIndex >= message.length - 1) {
+      return;
+    }
     const typingInterval = setInterval(() => {
       setText(prevMessage => prevMessage + message?.[currentIndex]);
-      currentIndex++;
+      setCurrentIndex(prevIndex => prevIndex + 1);
       if (currentIndex >= message.length - 1) {
         clearInterval(typingInterval);
         // @ts-ignore
         textMessage.printed = true;
       }
-    }, 50);
+    }, 30);
 
     return () => {
       clearInterval(typingInterval);
     };
-  }, [msg]);
+  }, [msg, currentIndex]);
   return (
     <>
       {onlyContent ? (
