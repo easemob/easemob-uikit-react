@@ -45,6 +45,7 @@ export interface ProviderProps {
         deleteConversation?: boolean;
         audioCall?: boolean;
         videoCall?: boolean;
+        pinMessage?: boolean;
       };
       message?: {
         status?: boolean;
@@ -59,6 +60,7 @@ export interface ProviderProps {
         select?: boolean;
         forward?: boolean;
         report?: boolean;
+        pin?: boolean;
       };
       messageInput?: {
         mention?: boolean;

@@ -40,8 +40,13 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
     }
 
     if (currentChatMsgs.length > 0) {
-      //@ts-ignore
-      useCursor = currentChatMsgs[0].mid || currentChatMsgs[0].id;
+      const message = currentChatMsgs.find(msg => {
+        return msg.type !== 'notice' && msg.type !== 'recall';
+      });
+      if (message) {
+        //@ts-ignore
+        useCursor = message.mid || message.id;
+      }
     }
 
     setLoading(true);

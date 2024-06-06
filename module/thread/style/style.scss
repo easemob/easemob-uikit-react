@@ -2,14 +2,15 @@
 @import './panel.scss';
 $thread-prefix-cls: #{$cui-prefix}-thread;
 
-.#{$thread-prefix-cls} { 
+.#{$thread-prefix-cls} {
     display: flex;
     flex-direction: column;
     height: 100%;
-    &-original{
+
+    &-original {
         padding: 0 24px;
 
-        &-start{
+        &-start {
             font-size: 14px;
             font-style: normal;
             color: $gray-3;
@@ -18,45 +19,52 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
             display: flex;
             white-space: nowrap;
             gap: 4px;
-            &>span{
+
+            &>span {
                 color: $gray-1;
                 font-weight: 500;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-            };
+            }
+
+            ;
         }
 
-        &-line{
+        &-line {
             width: 100%;
             display: inline-block;
             border-bottom: 1px solid $gray-9;
         }
 
     }
-    
-    &-create{
+
+    &-create {
         display: flex;
         flex-direction: column;
         padding: 4px 16px;
         gap: 8px;
-        &-title{
+
+        &-title {
             font-size: 12px;
             line-height: 16px;
             color: $gray-6;
         }
-        &-content{
+
+        &-content {
             margin-bottom: 24px;
         }
     }
-    &-members-box{
+
+    &-members-box {
         width: 100%;
         max-height: 716px;
         min-height: 416px;
         padding: 8px 14px 0;
         box-sizing: border-box;
     }
-    &-members-item{
+
+    &-members-item {
         display: flex;
         // width: 336px;
         height: 64px;
@@ -64,20 +72,20 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
         align-items: center;
         justify-content: space-between;
 
-        &-name{
+        &-name {
             display: flex;
             align-items: center;
             gap: 12px;
             font-weight: 500;
         }
-        
+
     }
 
-    &-dark{
+    &-dark {
         background-color: $gray-1;
 
-        .#{$thread-prefix-cls}-create{
-            &-content input{
+        .#{$thread-prefix-cls}-create {
+            &-content input {
                 background-color: $gray-2;
                 border: none;
                 color: $gray-98
