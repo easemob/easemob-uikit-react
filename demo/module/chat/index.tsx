@@ -433,8 +433,107 @@ const ChatApp: FC<any> = () => {
 
 const App = ChatApp;
 
-const { appKey, userId, password } = getQueryParams();
-console.log('query-params', appKey, userId, password);
+const ChatWrap = () => {
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [lng, setLng] = useState<'zh' | 'en'>('en');
+  const { userId, appKey, password } = getQueryParams();
+  return (
+    <>
+      <div>
+        <button
+          onClick={() => {
+            setTheme(theme === 'light' ? 'dark' : 'light');
+          }}
+        >
+          Switch Theme: {theme}
+        </button>
+        <button
+          onClick={() => {
+            setLng(lng === 'zh' ? 'en' : 'zh');
+          }}
+        >
+          Switch Language: {lng}
+        </button>
+      </div>
+
+      <Provider
+        initConfig={{
+          appKey: appKey || 'easemob#easeim',
+          userId: userId || 'sttest',
+          password: password || '123',
+          useUserInfo: true,
+
+          // token:
+          //   '007eJxTYFBRW8PxsjzKTEt3t/q21aylFwrC37GaPK73k382686EjO8KDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJh06XpTYEMjIY6nO0MjKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAHZsmnQ==',
+          // appKey: 'easemob#easeim',
+        }}
+        theme={{
+          // primaryColor: 50, //'#33ffaa',
+          mode: theme,
+          bubbleShape: 'square',
+          avatarShape: 'square',
+          componentsShape: 'square',
+        }}
+        local={{
+          fallbackLng: 'en',
+          lng: lng,
+          // resources: {
+          //   en: {
+          //     translation: {
+          //       'module.conversationTitle': 'Conversation List 22',
+          //       'module.deleteCvs': 'Delete Conversation 22',
+          //     },
+          //   },
+          // },
+        }}
+        features={{
+          conversationList: {
+            search: true,
+            item: {
+              moreAction: true,
+              deleteConversation: true,
+              presence: false,
+            },
+          },
+          chat: {
+            header: {
+              threadList: false,
+              moreAction: true,
+              clearMessage: true,
+              deleteConversation: true,
+              audioCall: true,
+              pinMessage: true,
+            },
+            message: {
+              status: true,
+              reaction: true,
+              thread: true,
+              recall: true,
+              translate: true,
+              edit: true,
+              report: false,
+              forward: false,
+              pin: true,
+            },
+            messageInput: {
+              mention: true,
+              typing: true,
+              record: true,
+              emoji: true,
+              moreAction: true,
+              picture: true,
+              video: true,
+              contactCard: false,
+            },
+          },
+        }}
+      >
+        <App></App>
+      </Provider>
+    </>
+  );
+};
+
 ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   <div
     className="container"
@@ -447,79 +546,6 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       top: '3%',
     }}
   >
-    <Provider
-      initConfig={{
-        appKey: appKey || 'easemob#easeim',
-        userId: userId || 'sttest',
-        password: password || '123',
-        useUserInfo: true,
-
-        // token:
-        //   '007eJxTYFBRW8PxsjzKTEt3t/q21aylFwrC37GaPK73k382686EjO8KDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJh06XpTYEMjIY6nO0MjKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAHZsmnQ==',
-        // appKey: 'easemob#easeim',
-      }}
-      theme={{
-        // primaryColor: 50, //'#33ffaa',
-        mode: 'light',
-        bubbleShape: 'square',
-        avatarShape: 'square',
-        componentsShape: 'square',
-      }}
-      local={{
-        fallbackLng: 'en',
-        lng: 'en',
-        // resources: {
-        //   en: {
-        //     translation: {
-        //       'module.conversationTitle': 'Conversation List 22',
-        //       'module.deleteCvs': 'Delete Conversation 22',
-        //     },
-        //   },
-        // },
-      }}
-      features={{
-        conversationList: {
-          search: true,
-          item: {
-            moreAction: true,
-            deleteConversation: true,
-            presence: false,
-          },
-        },
-        chat: {
-          header: {
-            threadList: false,
-            moreAction: true,
-            clearMessage: true,
-            deleteConversation: true,
-            audioCall: true,
-            pinMessage: true,
-          },
-          message: {
-            status: true,
-            reaction: true,
-            thread: true,
-            recall: true,
-            translate: true,
-            edit: true,
-            report: false,
-            forward: false,
-            pin: true,
-          },
-          messageInput: {
-            mention: true,
-            typing: true,
-            record: true,
-            emoji: true,
-            moreAction: true,
-            picture: true,
-            video: true,
-            contactCard: false,
-          },
-        },
-      }}
-    >
-      <App></App>
-    </Provider>
+    <ChatWrap />
   </div>,
 );

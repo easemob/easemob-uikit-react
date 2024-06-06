@@ -136,8 +136,13 @@ const Provider: React.FC<ProviderProps> = props => {
       resources: local.resources || resource,
     };
   }
-  i18n.use(initReactI18next).init(localConfig);
-  // i18n.changeLanguage('zh');
+  useMemo(() => {
+    i18n.use(initReactI18next).init(localConfig);
+  }, []);
+
+  useEffect(() => {
+    i18n.changeLanguage(local?.lng);
+  }, [local?.lng]);
 
   useEffect(() => {
     if (initConfig.userId && initConfig.token) {
