@@ -650,11 +650,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                 </Tooltip>
               )
             ) : (
-              <div className={`${prefixCls}-info`}>
-                {message?.chatType !== 'singleChat' && !isCurrentUser && (
-                  <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
-                )}
-              </div>
+             <></>
             )}
           </>
 
