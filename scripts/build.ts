@@ -18,12 +18,11 @@ async function buildComponent() {
   const viteConfig = config as any;
   const baseOutDir = viteConfig.build.outDir;
 
-  // 复制 Package.json 文件
-  //   generateDTS(path.resolve(viteConfig.build.outDir, `ChatUI.esm.js`));
-  //   const packageJson = require('../package.json');
-  packageJson.main = 'chat-ui.umd.js';
-  packageJson.module = 'chat-ui.esm.js';
-  packageJson.types = 'chat-ui.d.ts';
+  // generateDTS(path.resolve(__dirname, `index.ts`));
+
+  packageJson.main = 'ChatUI.umd.js';
+  packageJson.module = 'ChatUI.esm.js';
+  packageJson.types = 'ChatUI.d.ts';
   fs.outputFile(path.resolve(baseOutDir, `package.json`), JSON.stringify(packageJson, null, 2));
 
   const baseComponentsDir = fs.readdirSync(srcDir).filter(name => {
@@ -127,7 +126,6 @@ function getFiles(OriginFilePath, CopyFilePath) {
         const dataArray = fileData.split('\n');
         // console.log('dataArray', dataArray);
         const index = dataArray.indexOf("@import '~/common/style/index.scss';");
-        console.log('index', index);
         if (index >= 0) {
           dataArray.splice(index, 1);
         }

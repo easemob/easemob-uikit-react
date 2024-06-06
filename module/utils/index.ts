@@ -253,6 +253,9 @@ export function sortByPinned(a: any, b: any) {
   } else if (!a.isPinned && b.isPinned) {
     return 1; // b排在a前面
   } else if ((!a.isPinned && !b.isPinned) || (a.isPinned && b.isPinned)) {
+    if (!a.lastMessage?.time) {
+      return 0;
+    }
     return a.lastMessage.time > b.lastMessage.time ? -1 : 1; // 保持原有顺序
   } else {
     return 0; // 保持原有顺序
@@ -260,9 +263,9 @@ export function sortByPinned(a: any, b: any) {
 }
 
 export function checkCharacter(character: string) {
-  var pattern = /[\u4E00-\u9FA5]/; // 中文字符的unicode范围
-  var isChinese = pattern.test(character);
-  var isLetter = /^[a-zA-Z]$/.test(character);
+  const pattern = /[\u4E00-\u9FA5]/; // 中文字符的unicode范围
+  const isChinese = pattern.test(character);
+  const isLetter = /^[a-zA-Z]$/.test(character);
 
   if (isChinese) {
     return 'zh';

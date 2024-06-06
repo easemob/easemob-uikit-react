@@ -1,4 +1,4 @@
-// import typescript from '@rollup/plugin-typescript';
+import typescript from '@rollup/plugin-typescript';
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import path from 'path';
@@ -11,29 +11,28 @@ const resolvePath = (str: string) => path.resolve(__dirname, str);
 // import { UserConfig } from "vitest";
 
 // const rollupOptions = {
-// 	external: ['rect', 'react-dom'],
-// 	output: {
-// 		globals: {
-// 			react: 'React',
-// 			'react-dom': 'react-dom',
-// 		},
-// 	},
-// 	acornInjectPlugins: [jsx()],
-// 	plugins: [
-// 		typescript({
-// 			compilerOptions: {
-// 				jsx: 'preserve',
-// 				// outDir: "./dist/types",
-// 				declaration: true,
-// 				declarationDir: './dist',
-// 				// declarationDir: "dist",
-// 			},
-// 			// target: "es2015", // 这里指定编译到的版本，
-// 			// include: ["src/"],
-// 			exclude: ['node_modules', 'dist'],
-// 			// allowSyntheticDefaultImports: true,
-// 		}),
-// 	],
+//   external: ['rect', 'react-dom'],
+//   output: {
+//     globals: {
+//       react: 'React',
+//       'react-dom': 'react-dom',
+//     },
+//   },
+//   acornInjectPlugins: [jsx()],
+//   plugins: [
+//     typescript({
+//       compilerOptions: {
+//         jsx: 'preserve',
+//         outDir: './build/types',
+//         declaration: true,
+//         declarationDir: './build',
+//       },
+//       target: 'es2015', // 这里指定编译到的版本，
+//       include: ['component/', 'module/'],
+//       // exclude: ['node_modules', 'dist'],
+//       // allowSyntheticDefaultImports: true,
+//     }),
+//   ],
 // };
 export default defineConfig({
   plugins: [
@@ -50,16 +49,7 @@ export default defineConfig({
   ],
   build: {
     // rollupOptions,
-    minify: false,
-    // lib: {
-    // 	entry: './src/entry.ts',
-    // 	name: 'ChatUI',
-    // 	fileName: 'ChatUI',
-    // 	// 导出模块格式
-    // 	formats: ['esm', 'umd', 'iife'],
-    // },
-    // outDir: './dist',
-
+    minify: true,
     lib: {
       entry: './index.ts',
       name: 'ChatUI',
