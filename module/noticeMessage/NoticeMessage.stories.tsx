@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-
+import { NoticeMessageBody } from './NoticeMessage';
 import NoticeMessage from './index';
 
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
@@ -19,8 +19,8 @@ const Template: ComponentStory<typeof NoticeMessage> = args => <NoticeMessage {.
 export const Primary = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
 Primary.args = {
-  noticeMessage: {
-    message: 'You recalled a message',
+  noticeMessage: new NoticeMessageBody({
     time: Date.now(),
-  },
+    noticeType: 'recall',
+  }),
 };

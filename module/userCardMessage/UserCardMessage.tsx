@@ -15,6 +15,7 @@ import { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import Button from '../../component/button';
 import { useTranslation } from 'react-i18next';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface UserCardMessageProps extends BaseMessageProps {
   customMessage: CustomMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -22,6 +23,7 @@ export interface UserCardMessageProps extends BaseMessageProps {
   className?: string;
   type?: 'primary' | 'secondly';
   onClick?: (url: string) => void;
+  bubbleClass?: string;
   nickName?: string;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onUserIdCopied?: (userId: string) => void;
@@ -35,6 +37,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
     prefix,
     className,
     style,
+    bubbleClass,
     thread,
     onUserIdCopied,
     ...others
@@ -47,6 +50,12 @@ const UserCardMessage = (props: UserCardMessageProps) => {
   const { t } = useTranslation();
   const userInfo = message.customExts;
   const { nickname, uid: userId, avatar } = userInfo;
+  const { pinMessage } = usePinnedMessage({
+    conversation: {
+      conversationId: getCvsIdFromMessage(message),
+      conversationType: message.chatType as any,
+    },
+  });
 
   if (typeof bySelf == 'undefined') {
     bySelf = from === rootStore.client.context.userId;
@@ -78,6 +87,10 @@ const UserCardMessage = (props: UserCardMessageProps) => {
       // @ts-ignore
       message.mid || message.id,
     );
+  };
+  const handlePinMessage = () => {
+    //@ts-ignore
+    pinMessage(message.mid || message.id);
   };
   const handleClickEmoji = (emojiString: string) => {
     let conversationId = getCvsIdFromMessage(message);
@@ -281,12 +294,14 @@ const UserCardMessage = (props: UserCardMessageProps) => {
       <BaseMessage
         time={message.time}
         id={message.id}
+        className={bubbleClass}
         message={message}
         bubbleType={type}
         direction={bySelf ? 'rtl' : 'ltr'}
         nickName={nickName}
         onReplyMessage={handleReplyMsg}
         onDeleteMessage={handleDeleteMsg}
+        onPinMessage={handlePinMessage}
         reactionData={reactions}
         onAddReactionEmoji={handleClickEmoji}
         onDeleteReactionEmoji={handleDeleteEmoji}

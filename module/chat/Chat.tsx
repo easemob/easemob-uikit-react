@@ -42,6 +42,7 @@ import { reportType } from '../chatroom/Chatroom';
 import { eventHandler } from '../../eventHandler';
 import Modal from '../../component/modal';
 import Checkbox from '../../component/checkbox';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface RtcRoomInfo {
   callId: string;
   calleeDevId?: string;
@@ -134,6 +135,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('chat', customizePrefixCls);
+  const { show } = usePinnedMessage();
 
   const [isEmpty, setIsEmpty] = useState(true);
 
@@ -404,6 +406,10 @@ const Chat = forwardRef((props: ChatProps, ref) => {
           content: 'REPORT',
           onClick: () => {},
         },
+        {
+          content: 'PIN',
+          onClick: () => {},
+        },
       ],
     },
     onReportMessage: handleReport,
@@ -448,6 +454,9 @@ const Chat = forwardRef((props: ChatProps, ref) => {
         return false;
       }
       if (globalConfig?.message?.report == false && item.content == 'REPORT') {
+        return false;
+      }
+      if (globalConfig?.message?.pin == false && item.content == 'PIN') {
         return false;
       }
       return true;
@@ -770,6 +779,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   // config rtc call
   let showAudioCall = true;
   let showVideoCall = true;
+  let showPinMessage = true;
   if (globalConfig?.header?.audioCall == false) {
     showAudioCall = false;
   }
@@ -781,6 +791,9 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   if (!rtcConfig) {
     showVideoCall = false;
     showAudioCall = false;
+  }
+  if (globalConfig?.header?.pinMessage === false) {
+    showPinMessage = false;
   }
 
   // chatbot not display rtc
@@ -832,6 +845,11 @@ const Chat = forwardRef((props: ChatProps, ref) => {
               avatarSrc={getChatAvatarUrl(CVS)}
               suffixIcon={
                 <div ref={headerRef}>
+                  {CVS.chatType !== 'singleChat' && showPinMessage && (
+                    <Button onClick={show} type="text" shape="circle">
+                      <Icon width={24} height={24} type="PIN"></Icon>
+                    </Button>
+                  )}
                   {CVS.chatType == 'groupChat' && showHeaderThreadListBtn && (
                     <Button onClick={showTheadList} type="text" shape="circle">
                       <Icon type="THREAD" width={24} height={24}></Icon>

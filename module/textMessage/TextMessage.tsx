@@ -22,6 +22,7 @@ import Textarea from '../messageInput/textarea';
 import { ForwardRefProps } from '../messageInput/textarea/Textarea';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface TextMessageProps extends BaseMessageProps {
   textMessage: TextMessageType;
   // color?: string; // 字体颜色
@@ -40,6 +41,7 @@ export interface TextMessageProps extends BaseMessageProps {
   showTranslation?: boolean; // 是否展示翻译后的消息
   onlyContent?: boolean;
   onOpenThreadPanel?: (threadId: string) => void;
+  showEditedTag?: boolean;
 }
 
 export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = true) => {
@@ -155,6 +157,7 @@ const TextMessage = (props: TextMessageProps) => {
     showTranslation = true,
     onlyContent = false,
     onOpenThreadPanel,
+    showEditedTag = true,
     ...others
   } = props;
   if (!textMessage.chatType) return null;
@@ -172,6 +175,12 @@ const TextMessage = (props: TextMessageProps) => {
   const { translationTargetLanguage } = initConfig;
   const targetLng = targetLanguage || translationTargetLanguage || 'en';
   const [modifyMessageVisible, setModifyMessageVisible] = useState<boolean>(false);
+  const { pinMessage } = usePinnedMessage({
+    conversation: {
+      conversationId: conversationId,
+      conversationType: textMessage.chatType as any,
+    },
+  });
   const [text, setText] = useState<string>('');
   let urlTxtClass = '';
   if (urlData?.images?.length > 0) {
@@ -242,6 +251,11 @@ const TextMessage = (props: TextMessageProps) => {
       // @ts-ignore
       textMessage.mid || textMessage.id,
     );
+  };
+
+  const handlePinMessage = () => {
+    //@ts-ignore
+    pinMessage(textMessage.mid || textMessage.id);
   };
 
   let repliedMsg: undefined | ChatSDK.MessageBody;
@@ -507,7 +521,8 @@ const TextMessage = (props: TextMessageProps) => {
           {!!(urlData?.title || urlData?.description) && (
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
-          {textMessage?.modifiedInfo ? (
+
+          {showEditedTag && textMessage?.modifiedInfo ? (
             <div className={`${classString}-edit-tag`}>{t('edited')}</div>
           ) : (
             ''
@@ -544,6 +559,7 @@ const TextMessage = (props: TextMessageProps) => {
             className={bubbleClassName}
             onReplyMessage={handleReplyMsg}
             onDeleteMessage={handleDeleteMsg}
+            onPinMessage={handlePinMessage}
             repliedMessage={repliedMsg}
             reactionData={reactions}
             onAddReactionEmoji={handleClickEmoji}
@@ -570,7 +586,7 @@ const TextMessage = (props: TextMessageProps) => {
               {!!(urlData?.title || urlData?.description) && (
                 <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
               )}
-              {textMessage?.modifiedInfo ? (
+              {showEditedTag && textMessage?.modifiedInfo ? (
                 <div className={`${classString}-edit-tag`}>{t('edited')}</div>
               ) : (
                 ''

@@ -13,12 +13,13 @@ import { observer } from 'mobx-react-lite';
 import { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import defaultImg from '../assets/img_xmark.png';
-import { use } from 'i18next';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
   style?: React.CSSProperties;
   className?: string;
+  bubbleClass?: string;
   type?: 'primary' | 'secondly';
   onClickImage?: (url: string) => void;
   nickName?: string;
@@ -36,6 +37,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     className,
     shape,
     prefix,
+    bubbleClass,
     ...others
   } = props;
   let type = props.type;
@@ -43,7 +45,14 @@ let ImageMessage = (props: ImageMessageProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-img', prefix);
   const context = useContext(RootContext);
+  let conversationId = getCvsIdFromMessage(message);
   const { theme } = context;
+  const { pinMessage } = usePinnedMessage({
+    conversation: {
+      conversationId: conversationId,
+      conversationType: message.chatType as any,
+    },
+  });
   let bubbleShape = shape;
   if (theme?.bubbleShape) {
     bubbleShape = theme?.bubbleShape;
@@ -140,6 +149,11 @@ let ImageMessage = (props: ImageMessageProps) => {
     );
   };
 
+  const handlePinMessage = () => {
+    //@ts-ignore
+    pinMessage(message.mid || message.id);
+  };
+
   const handleClickEmoji = (emojiString: string) => {
     let conversationId = getCvsIdFromMessage(message);
 
@@ -210,7 +224,6 @@ let ImageMessage = (props: ImageMessageProps) => {
     );
   };
 
-  let conversationId = getCvsIdFromMessage(message);
   const handleSelectMessage = () => {
     const selectable =
       rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
@@ -308,6 +321,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     <div>
       <BaseMessage
         id={message.id}
+        className={bubbleClass}
         message={message}
         time={message.time}
         bubbleType={type}
@@ -322,6 +336,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         onRecallMessage={handleRecallMessage}
         onSelectMessage={handleSelectMessage}
         onResendMessage={handleResendMessage}
+        onPinMessage={handlePinMessage}
         select={select}
         onMessageCheckChange={handleMsgCheckChange}
         renderUserProfile={renderUserProfile}

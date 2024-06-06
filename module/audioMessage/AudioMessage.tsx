@@ -10,6 +10,7 @@ import rootStore from '../store/index';
 import { observer } from 'mobx-react-lite';
 import { getCvsIdFromMessage } from '../utils';
 import { chatSDK, ChatSDK } from '../SDK';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 import { RootContext } from '../store/rootContext';
 
 export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> {
@@ -18,6 +19,7 @@ export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> 
   style?: React.CSSProperties;
   className?: string;
   nickName?: string;
+  bubbleClass?: string;
   type?: 'primary' | 'secondly';
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onlyContent?: boolean;
@@ -35,6 +37,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     nickName,
     thread,
     onlyContent = false,
+    bubbleClass,
     ...others
   } = props;
 
@@ -52,6 +55,12 @@ const AudioMessage = (props: AudioMessageProps) => {
   // const duration = body.length
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-audio', customizePrefixCls);
+  const { pinMessage } = usePinnedMessage({
+    conversation: {
+      conversationId: getCvsIdFromMessage(audioMessage),
+      conversationType: audioMessage.chatType as any,
+    },
+  });
   const classString = classNames(
     prefixCls,
     {
@@ -125,6 +134,11 @@ const AudioMessage = (props: AudioMessageProps) => {
       // @ts-ignore
       audioMessage.mid || audioMessage.id,
     );
+  };
+
+  const handlePinMessage = () => {
+    //@ts-ignore
+    pinMessage(audioMessage.mid || audioMessage.id);
   };
 
   const handleClickEmoji = (emojiString: string) => {
@@ -300,6 +314,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       ) : (
         <BaseMessage
           id={audioMessage.id}
+          className={bubbleClass}
           direction={bySelf ? 'rtl' : 'ltr'}
           message={audioMessage}
           time={messageTime}
@@ -308,6 +323,7 @@ const AudioMessage = (props: AudioMessageProps) => {
           bubbleType={bubbleType}
           onReplyMessage={handleReplyMsg}
           onDeleteMessage={handleDeleteMsg}
+          onPinMessage={handlePinMessage}
           reactionData={reactions}
           onAddReactionEmoji={handleClickEmoji}
           onDeleteReactionEmoji={handleDeleteEmoji}

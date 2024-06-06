@@ -4,6 +4,7 @@ $audio-prefix-cls: #{$cui-prefix}-message-audio;
 $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
 $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
+
 .#{$status-prefix-cls} {
     width: 100%;
     font-size: $msg-base-font-size;
@@ -34,13 +35,14 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         }
     }
 
-    
+
 
     &-right {
         flex-direction: row-reverse;
 
         .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-border-radius-right;
+
             &::after {
                 border: $msg-bubble-arrow-border-size solid transparent;
                 border-left: $msg-bubble-arrow-border-size solid $msg-bubble-color-primary;
@@ -79,6 +81,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     &-left {
         .#{$status-prefix-cls}-content {
             border-radius: $msg-bubble-border-radius-left;
+
             &::before {
                 border: $msg-bubble-arrow-border-size solid transparent;
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly;
@@ -88,6 +91,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 bottom: $msg-bubble-arrow-bottom;
             }
         }
+
         .#{$text-msg-prefix-cls}-edit-tag {
             color: $special-5;
         }
@@ -146,6 +150,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
 
         &-action {
             fill: $gray-6;
+
             &:hover {
                 fill: $blue-5;
                 cursor: pointer;
@@ -157,7 +162,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         // flex: 1;
         display: flex;
         flex-direction: column;
-        max-width: calc(100% - 120px);
+        max-width: 100%;
         // margin: $msg-base-content-margin;
         padding: $msg-base-content-padding;
         gap: 10px;
@@ -178,6 +183,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-primary;
             }
         }
+
         .#{$status-prefix-cls}-info {
             margin-right: $msg-info-margin-left;
         }
@@ -196,6 +202,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 border-right: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly !important;
             }
         }
+
         .#{$status-prefix-cls}-info {
             margin-left: $msg-info-margin-left;
         }
@@ -255,35 +262,40 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         color: $msg-time-font-color;
     }
 
-    &-thread{
+    &-thread {
         display: flex;
         direction: ltr;
         flex-direction: column;
         gap: 4px;
-        &>div{
+
+        &>div {
             display: flex;
             align-items: center;
             max-width: 100%;
             overflow: hidden;
-            &>div{
+
+            &>div {
                 display: flex;
                 align-items: center;
                 color: $gray-98;
             }
         }
-        &-line{
+
+        &-line {
             border-top: 1px solid $blue-8;
             width: 100%;
             margin-bottom: 4px;
         }
-        &-name{
+
+        &-name {
             justify-content: space-between;
             // 只有一行， 超出显示省略号
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
             cursor: pointer;
-            &>div{
+
+            &>div {
                 display: flex;
                 align-items: center;
                 gap: 4px;
@@ -291,7 +303,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
             }
 
             // 第一个div里面的span字号是14px
-            &>div>span{
+            &>div>span {
                 font-size: 14px;
                 line-height: 20px;
                 font-weight: 500;
@@ -300,36 +312,41 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 text-overflow: ellipsis;
                 
             }
+
             // 当前元素下第二个div（child(2)）里面的span字号是12px
-           
-            &>div:nth-child(2)>span{
+
+            &>div:nth-child(2)>span {
                 font-size: 12px;
                 line-height: 16px;
                 margin-left: 4px;
             }
 
             // 这个元素固定在最右面
-            &>div:nth-child(2){
+            &>div:nth-child(2) {
                 flex: none;
 
             }
 
-            &-icon svg{
+            &-icon svg {
                 fill: $gray-98;
             }
         }
-        &-message{
+
+        &-message {
             gap: 4px;
             margin-bottom: 4px;
-            &>span{
+
+            &>span {
                 font-size: 12px;
                 line-height: 16px;
-                color: $blue-9; 
+                color: $blue-9;
             }
-            &>span:nth-child(1){
+
+            &>span:nth-child(1) {
                 font-weight: 500;
             }
-            &>span:nth-child(3){
+
+            &>span:nth-child(3) {
                 // flex: none;
                 flex: 1;
                 overflow: hidden;
@@ -345,27 +362,30 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 -webkit-box-orient: vertical;
             }
         }
-        
+
     }
 
-    &-secondly{
-        .#{$status-prefix-cls}-thread{
-            &>div{
-                &>div{
+    &-secondly {
+        .#{$status-prefix-cls}-thread {
+            &>div {
+                &>div {
                     color: $special-5;
                 }
             }
-            &-line{
+
+            &-line {
                 border-top: 1px solid $special-8;
             }
-            &-name{
-                &-icon svg{
+
+            &-name {
+                &-icon svg {
                     fill: $special-5;
                 }
             }
-            &-message{
-                &>span{
-                    color: $gray-5; 
+
+            &-message {
+                &>span {
+                    color: $gray-5;
                 }
             }
         }
@@ -405,17 +425,17 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     padding: 0;
     margin: 0;
     display: grid;
-    li{
+
+    li {
+        display: inline-block;
         list-style: none;
         height: 36px;
         border-radius: 8px;
         padding: 0 $padding-xs;
-        // line-height: 36px;
         cursor: pointer;
         display: flex;
         justify-content: left;
         align-items: center;
-
         font-size: 14px;
         font-style: normal;
         font-weight: 500;
@@ -426,11 +446,13 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
             margin-right: 8px;
         }
     }
-    li:hover{
+
+    li:hover {
         /* color_neutral/95 */
         background-color: $gray-95;
     }
-    .cui-li-dark:hover{
+
+    .cui-li-dark:hover {
         background: $gray-2;
     }
 }

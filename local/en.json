@@ -144,5 +144,14 @@
     "Start a audio call": "You are invited to a voice call",
     "Start a video meeting": "You are invited to a multi-party video call",
     "Start a audio meeting": "You are invited to a multi-party voice call",
-    "done": "Done"
+    "done": "Done",
+    "Pinned Messages": "Pinned Messages",
+    "Pin": "Pin",
+    "Remove pin message": "Remove pin message",
+    "Confirm to remove pin message": "Confirm to remove pin message?",
+    "Jump to pinned message": "Jump to pinned message",
+    "pinned a message": "pinned a message",
+    "removed a pin message": "removed a pin message",
+    "'s message": "'s message",
+    "pinned": "pinned"
 }

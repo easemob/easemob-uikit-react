@@ -98,6 +98,9 @@ import { ReactComponent as PlusInCircleFill } from '../svgs/icons/plus_in_circle
 import { ReactComponent as Check } from '../svgs/icons/check.svg';
 import { ReactComponent as Check2 } from '../svgs/icons/check_2.svg';
 import { ReactComponent as CandleInCircle } from '../svgs/icons/candle_in_circle.svg';
+import { ReactComponent as Pin } from '../svgs/icons/pinned.svg';
+import { ReactComponent as Unpin } from '../svgs/icons/unpin.svg';
+import { ReactComponent as ArrowTo } from '../svgs/icons/arrowto.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -387,6 +390,14 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'PERSON_ADD_FILL':
       return <PERSON_ADD_FILL></PERSON_ADD_FILL>;
       break;
+    case 'PIN':
+      return <Pin></Pin>;
+      break;
+    case 'UNPIN':
+      return <Unpin></Unpin>;
+      break;
+    case 'ARROW_TO':
+      return <ArrowTo></ArrowTo>;
     default:
       return '';
       break;
