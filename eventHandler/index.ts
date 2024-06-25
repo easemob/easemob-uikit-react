@@ -48,7 +48,11 @@ export type EventName =
   | 'getPinnedMessages'
   | 'pinMessage'
   | 'unpinMessage'
-  | 'jumpToPinnedMessage';
+  | 'jumpToPinnedMessage'
+  | 'addUsersToBlocklist'
+  | 'removeUserFromBlocklist'
+  | 'publishPresence'
+  | 'getBlockList';
 
 export type EventHandlerData = {
   [key in EventName]?: {
