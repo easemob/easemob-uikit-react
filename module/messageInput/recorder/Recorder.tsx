@@ -8,6 +8,7 @@ import HZRecorder from './recorderFun';
 import { RootContext } from '../../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
+import Button from '../../../component/button';
 export interface RecorderProps {
   prefix?: string;
   className?: string;
@@ -144,7 +145,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     if (recorder) {
       (recorder as any).stop();
       // 获取语音二进制文件
-      let blob = (recorder as any).getBlob();
+      const blob = (recorder as any).getBlob();
       const uri = {
         url: chatSDK.utils.parseDownloadResponse.call(client, blob),
         filename: 'audio-message.wav',
@@ -183,7 +184,9 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
 
   const initNode = (
     <div className={`${prefixCls}-iconBox`} style={{ ...iconStyle }} title={t('record') as string}>
-      <Icon type="CIRCLE_WAVE" width={24} height={24} onClick={() => handleClick('start')}></Icon>
+      <Button type="text" shape="circle">
+        <Icon type="CIRCLE_WAVE" width={24} height={24} onClick={() => handleClick('start')}></Icon>
+      </Button>
     </div>
   );
 

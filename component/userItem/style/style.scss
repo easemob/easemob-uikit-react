@@ -80,6 +80,10 @@ $user-prefix-cls: #{$cui-prefix}-userItem;
     }
 }
 
+.#{$user-prefix-cls}-square{
+    // border-radius: 0;
+}
+
 .#{$user-prefix-cls}-dark{
     &:hover{
         background: $gray-2;
