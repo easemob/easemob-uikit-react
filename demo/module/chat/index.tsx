@@ -98,13 +98,13 @@ const ChatApp: FC<any> = () => {
   };
   // console.log('rootStore', rootStore.conversationStore.currentCvs);
 
-  let {
+  const {
     topConversation: topConversationInner,
     currentConversation,
     conversationList,
     setCurrentConversation,
   } = useConversationContext();
-  let { messages } = useChatContext();
+  const { messages } = useChatContext();
   console.log(11111, messages);
   const topConversation = () => {
     setCurrentConversation({
@@ -124,7 +124,7 @@ const ChatApp: FC<any> = () => {
 
   const thread = rootStore.threadStore;
 
-  let TxtMsg = msg => (
+  const TxtMsg = msg => (
     <TextMessage
       bubbleType="secondly"
       bubbleStyle={{ background: 'hsl(135.79deg 88.79% 36.46%)' }}
@@ -145,7 +145,7 @@ const ChatApp: FC<any> = () => {
     ></TextMessage>
   );
 
-  let MsgList = <MessageList renderMessage={msg => TxtMsg(msg)}></MessageList>;
+  const MsgList = <MessageList renderMessage={msg => TxtMsg(msg)}></MessageList>;
 
   const [tab, setTab] = useState('chat');
   const changeTab = (tab: string) => {
@@ -462,12 +462,12 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         // primaryColor: 50, //'#33ffaa',
         mode: 'light',
         bubbleShape: 'square',
-        avatarShape: 'square',
+        avatarShape: 'circle',
         componentsShape: 'square',
       }}
       local={{
         fallbackLng: 'en',
-        lng: 'en',
+        lng: 'zh',
         // resources: {
         //   en: {
         //     translation: {
@@ -483,12 +483,12 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
           item: {
             moreAction: true,
             deleteConversation: true,
-            presence: false,
+            presence: true,
           },
         },
         chat: {
           header: {
-            threadList: false,
+            threadList: true,
             moreAction: true,
             clearMessage: true,
             deleteConversation: true,

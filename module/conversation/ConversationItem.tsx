@@ -99,7 +99,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   );
 
   const AtTag = (props: { type?: AT_TYPE }) => {
-    let { type = 'NONE' } = props;
+    const { type = 'NONE' } = props;
     if (type === 'NONE') return <></>;
     return (
       <div className={`${prefixCls}-at-tag`}>{type === 'ALL' ? t('atAllTag') : t('atTag')}</div>
@@ -254,7 +254,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       break;
   }
   if (data.chatType == 'groupChat') {
-    let msgFrom = data.lastMessage?.from || '';
+    const msgFrom = data.lastMessage?.from || '';
     let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}: ` : '';
     const groupItem = getGroupItemFromGroupsById(data.conversationId);
     if (groupItem) {
@@ -264,7 +264,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       if (ease_chat_uikit_user_info && ease_chat_uikit_user_info.nickname) {
         from = `${ease_chat_uikit_user_info.nickname}: `;
       } else if (memberIdx > -1) {
-        let memberItem = groupItem?.members?.[memberIdx]!;
+        const memberItem = groupItem?.members?.[memberIdx] || ({} as any);
         from = `${getGroupMemberNickName(memberItem)}: `;
       }
     }
@@ -282,7 +282,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       {avatar ? (
         avatar
       ) : (
-        <Avatar src={data.avatarUrl} isOnline={data.isOnline} size={avatarSize} shape={avatarShape}>
+        // 在会话列表不显示在线状态 isOnline={data.isOnline}
+        <Avatar src={data.avatarUrl} size={avatarSize} shape={avatarShape}>
           {data.name || data.conversationId}
         </Avatar>
       )}

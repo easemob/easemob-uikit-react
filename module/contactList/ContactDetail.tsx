@@ -51,7 +51,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('contact-detail', prefix);
   const context = React.useContext(RootContext);
-  const { rootStore, theme, features } = context;
+  const { rootStore, theme, features, presenceMap } = context;
   const requestData = rootStore.addressStore.requests.find((item: any) => item.from === id);
   const themeMode = theme?.mode || 'light';
   const classString = classNames(
@@ -74,7 +74,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   }
 
   const handleCopy = () => {
-    var textArea = document.createElement('textarea');
+    const textArea = document.createElement('textarea');
     textArea.value = id;
     // 添加到 DOM 元素中，方便调用 select 方法
     document.body.appendChild(textArea);
@@ -143,7 +143,20 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
         <>
           <div className={`${prefixCls}-content`}>
             <div className={`${prefixCls}-content-header`}>
-              <Avatar src={avatarUrl} size={100} shape={theme?.avatarShape}>
+              <Avatar
+                src={avatarUrl}
+                size={100}
+                shape={theme?.avatarShape}
+                presence={{
+                  visible: data.type !== 'group' && features?.conversationList?.item?.presence,
+                  icon:
+                    presenceMap?.[
+                      rootStore.addressStore.appUsersInfo[id]?.isOnline
+                        ? rootStore.addressStore.appUsersInfo[id]?.presenceExt ?? 'Online'
+                        : 'Offline'
+                    ] || presenceMap?.Custom,
+                }}
+              >
                 {userInfo?.nickname || name || id}
               </Avatar>
               <div>

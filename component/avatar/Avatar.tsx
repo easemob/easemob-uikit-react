@@ -7,6 +7,7 @@ import { composeRef } from '../_utils/ref';
 import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
 import { RootContext } from '../../module/store/rootContext';
+import { Tooltip } from '../tooltip/Tooltip';
 export interface AvatarProps {
   size?: 'large' | 'small' | 'default' | number;
   shape?: 'circle' | 'square';
@@ -21,6 +22,11 @@ export interface AvatarProps {
   draggable?: boolean;
   crossOrigin?: '' | 'anonymous' | 'use-credentials';
   srcSet?: string;
+  presence?: {
+    visible: boolean;
+    text?: string;
+    icon?: HTMLImageElement | string;
+  };
   onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
   /* callback when img load error */
   /* return false to prevent Avatar show default fallback behavior, then you can do fallback by your self */
@@ -63,6 +69,7 @@ export const InternalAvatar = (props: any, ref: any) => {
     crossOrigin,
     srcSet,
     isOnline,
+    presence,
     ...others
   } = props;
 
@@ -131,7 +138,44 @@ export const InternalAvatar = (props: any, ref: any) => {
       </span>
     );
   }
+  // status 定义三种尺寸 large >= 100, 100 > default  > 40, small <= 40, 对应 status 28, 16, 12
+  let presenceSize: 'large' | 'default' | 'small' = 'default';
+  if (typeof customSize === 'number') {
+    if (customSize >= 100) {
+      presenceSize = 'large';
+    } else if (customSize <= 40) {
+      presenceSize = 'small';
+    } else {
+      presenceSize = 'default';
+    }
+  } else if (customSize === 'large') {
+    presenceSize = 'large';
+  } else if (customSize === 'small') {
+    presenceSize = 'small';
+  }
 
+  const PresenceSize = {
+    large: 28,
+    default: 16,
+    small: 12,
+  };
+
+  const presenceStyle: React.CSSProperties =
+    shape === 'circle'
+      ? {
+          width: PresenceSize[presenceSize],
+          height: PresenceSize[presenceSize],
+          padding: presenceSize === 'large' ? 4 : 2,
+          right: `calc(14.65% - ${PresenceSize[presenceSize] / 2}px)`,
+          bottom: `calc(14.65% - ${PresenceSize[presenceSize] / 2}px)`,
+        }
+      : {
+          width: PresenceSize[presenceSize],
+          height: PresenceSize[presenceSize],
+          padding: presenceSize === 'large' ? 4 : 2,
+          right: presenceSize === 'large' ? -4 : -2,
+          bottom: presenceSize === 'large' ? -4 : -2,
+        };
   return (
     <div
       className={classString}
@@ -144,6 +188,24 @@ export const InternalAvatar = (props: any, ref: any) => {
         <div className={`${presenceCls}-wrap`}>
           <div className={presenceCls}></div>
         </div>
+      )}
+      {presence?.visible && (
+        <Tooltip
+          title={
+            presence.text ? (
+              <div className={`${prefixCls}-presence-text`}>{presence.text}</div>
+            ) : null
+          }
+          placement="bottom"
+        >
+          <div className={`${prefixCls}-presence-wrap`} style={presenceStyle}>
+            {React.isValidElement(presence.icon) ? (
+              presence.icon
+            ) : (
+              <img alt={presence.text} src={presence.icon} />
+            )}
+          </div>
+        </Tooltip>
       )}
     </div>
   );

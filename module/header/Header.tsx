@@ -13,6 +13,11 @@ export interface HeaderProps {
   prefix?: string;
   content?: ReactNode;
   avatar?: ReactNode; // 头像
+  presence?: {
+    visible: boolean;
+    text?: string;
+    icon?: HTMLImageElement | string;
+  }; // 是否显示在线状态
   subtitle?: ReactNode; // 副标题
   icon?: ReactNode; // 右侧更多按钮 icon
   back?: boolean; // 是否显示左侧返回按钮
@@ -58,6 +63,7 @@ const Header: FC<HeaderProps> = props => {
     style = {},
     className,
     subtitle,
+    presence,
   } = props;
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
@@ -136,8 +142,9 @@ const Header: FC<HeaderProps> = props => {
               onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
                 onClickAvatar?.(e);
               }}
-              style={{ marginRight: 12 }}
               size={40}
+              style={{ marginRight: 12 }}
+              presence={presence}
             >
               {content}
             </Avatar>

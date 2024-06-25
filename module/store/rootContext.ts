@@ -95,6 +95,9 @@ export interface ContextProps {
     bubbleShape?: 'ground' | 'square';
     componentsShape?: 'ground' | 'square';
   };
+  presenceMap?: {
+    [key: string]: string | HTMLImageElement;
+  };
 }
 
 export const RootContext = React.createContext<ContextProps>({
@@ -103,6 +106,7 @@ export const RootContext = React.createContext<ContextProps>({
   client: {} as ChatSDK.Connection,
   reactionConfig: { map: {} },
   theme: {},
+  presenceMap: {},
 });
 
 export const RootConsumer = RootContext.Consumer;

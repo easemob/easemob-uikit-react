@@ -153,5 +153,12 @@
     "pinned a message": "pinned a message",
     "removed a pin message": "removed a pin message",
     "'s message": "'s message",
-    "pinned": "pinned"
+    "pinned": "pinned",
+    "blocklist": "Blocklist",
+    "Online": "Online",
+    "Offline": "Offline",
+    "Busy": "Busy",
+    "Away": "Away",
+    "Do Not Disturb": "Do Not Disturb",
+    "Custom": "Custom"
 }

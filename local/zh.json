@@ -153,5 +153,12 @@
     "pinned a message": "固定了一条消息",
     "removed a pin message": "取消了一条固定消息",
     "'s message": "的消息",
-    "pinned": "固定了"
+    "pinned": "固定了",
+    "blocklist": "黑名单",
+    "Online": "在线",
+    "Offline": "离线",
+    "Busy": "忙碌",
+    "Away": "离开",
+    "Do Not Disturb": "请勿打扰",
+    "Custom": "自定义状态"
 }
