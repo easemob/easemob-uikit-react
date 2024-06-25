@@ -118,11 +118,7 @@ class ThreadStore {
           : //@ts-ignore
             this.currentThread.originalMessage?.chatThreadOverview?.lastMessage;
         if (!foundThread) return;
-        let newThread = {
-          ...foundThread,
-          ...threadInfo,
-          name: threadInfo.name,
-        };
+
         // if (threadInfo.lastMessage) {
         //   newThread.lastMessage = threadInfo.lastMessage;
         // } else {
@@ -132,7 +128,11 @@ class ThreadStore {
         this.threadList[parentId]?.splice(
           this.threadList[parentId]?.indexOf(foundThread as unknown as ChatSDK.ChatThreadDetail),
           1,
-          newThread as unknown as ChatSDK.ChatThreadDetail,
+          {
+            ...foundThread,
+            ...threadInfo,
+            name: threadInfo.name,
+          } as unknown as ChatSDK.ChatThreadDetail,
         );
         break;
 
@@ -213,7 +213,7 @@ class ThreadStore {
     // }
   }
 
-  getThreadMembers(parentId: string, threadId: string): Promise<string[]> {
+  getThreadMembers(parentId: string, threadId: string, cursor?: string): Promise<string[]> {
     if (!parentId || !threadId) {
       throw new Error('no parentId or threadId');
     }
@@ -221,6 +221,7 @@ class ThreadStore {
       .getChatThreadMembers({
         chatThreadId: threadId,
         pageSize: 50,
+        cursor,
       })
       .then((res: { data: { affiliations: string[] } }) => {
         const members = res.data.affiliations;
@@ -309,7 +310,7 @@ class ThreadStore {
           })
           .then((data: ChatSDK.AsyncResult<ChatSDK.ChatThreadLastMessage[]>) => {
             data.entities?.forEach(item => {
-              let idx = threads?.findIndex(thread => item.chatThreadId === thread.id);
+              const idx = threads?.findIndex(thread => item.chatThreadId === thread.id);
               (item.lastMessage as BaseMessageType).chatType = 'groupChat';
               // @ts-ignore
               threads[idx].lastMessage = item.lastMessage;

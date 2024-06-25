@@ -1,22 +1,25 @@
+@import '~/common/style/index.scss';
 $thread-prefix-cls: #{$cui-prefix}-thread-panel;
 .#{$thread-prefix-cls}{
-    top: 10px;
-    left: 50%;
-    width: 540px;
-    z-index: 1060;
-    position: fixed;
+    // top: 10px;
+    // left: 50%;
+    // width: 540px;
+    // z-index: 1060;
+    // position: fixed;
+    height: 100%;
     background: $white;
     box-shadow: 0px 24px 36px 0px rgba(70, 78, 83, 0.15), 8px 0px 24px 0px rgba(23, 26, 28, 0.08);
     max-height: 770px;
     min-height: 416px;
-    border-radius: 16px;
+    border-radius: 4px;
     background-color: $gray-98;
     overflow: hidden;
-    top: 0;
-    left: 0;
-    opacity: 0;
-    transition: top 0.3s, left 0.3s, opacity 0.3s;
-    transform-origin: 50% 50% 0;
+    // padding: 8px 14px 0;
+    // top: 0;
+    // left: 0;
+    // opacity: 0;
+    // transition: top 0.3s, left 0.3s, opacity 0.3s;
+    // transform-origin: 50% 50% 0;
     &-header{
         &-title{
             font-size: 18px;
@@ -47,6 +50,68 @@ $thread-prefix-cls: #{$cui-prefix}-thread-panel;
                     background-color: $gray-2;
                     color: $gray-98;
                 }
+            }
+        }
+        .#{$thread-prefix-cls}-item{
+            background-color: $gray-2;
+            &:hover{
+                background-color: $gray-3;
+            }
+        }
+    }
+
+    &-members-item {
+        display: flex;
+        // width: 336px;
+        height: 64px;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+        &-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+        }
+
+    }
+
+    &-threads-box{
+        height: 346px;
+    }
+    &-item{
+        height: 56px;
+        cursor: pointer;
+        background-color: $gray-98;
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-sizing: border-box;
+        gap: 4px;
+        margin: 4px 8px;
+        &:hover{
+            background-color: $white;
+        }
+        &-name{
+            font-size: 14px;
+            font-weight: 500;
+            line-height: 20px; 
+            text-align: left;
+        }
+        &-msgBox{
+            display: flex;
+            font-size: 12px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 16px;
+            color: $gray-5;
+            gap: 4px;
+            overflow: hidden;
+            &-name{
+                font-weight: 500;
             }
         }
     }

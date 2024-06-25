@@ -6,7 +6,7 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
     display: flex;
     flex-direction: column;
     height: 100%;
-
+    position: relative;
     &-original {
         padding: 0 24px;
 
@@ -60,8 +60,10 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
         width: 100%;
         max-height: 716px;
         min-height: 416px;
-        padding: 8px 14px 0;
         box-sizing: border-box;
+        position: absolute;
+        top: 0;
+        height: calc(100% - 164px);
     }
 
     &-members-item {
@@ -80,6 +82,7 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
         }
 
     }
+    
 
     &-dark {
         background-color: $gray-1;

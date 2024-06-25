@@ -10,12 +10,10 @@ import React, {
 } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
-import { useSize } from 'ahooks';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
-import Badge from '../../component/badge';
 import Button from '../../component/button';
 import { Search } from '../../component/input/Search';
 import Header, { HeaderProps } from '../header';
@@ -24,14 +22,13 @@ import List from '../../component/list';
 import { MessageList, MsgListProps } from './MessageList';
 import { getStore } from '../store';
 import { RootContext } from '../store/rootContext';
-import { useEventHandler } from '../hooks/chat';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import Empty from '../empty';
 import { UnsentRepliedMsg } from '../repliedMessage';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from 'module/store/ConversationStore';
 import Typing from '../typing';
-import { ThreadModal } from '../thread';
+import { ThreadListExpandableIcon } from '../thread';
 import ScrollList from '../../component/scrollList';
 import { ChatSDK } from 'module/SDK';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
@@ -140,7 +137,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   const [isEmpty, setIsEmpty] = useState(true);
 
   const context = useContext(RootContext);
-  const { rootStore, features, theme } = context;
+  const { rootStore, features, theme, presenceMap } = context;
   const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
@@ -173,145 +170,12 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     });
 
     // close thread
-    setModalOpen(false);
     rootStore.threadStore.setThreadVisible(false);
   }, [rootStore.conversationStore.currentCvs]);
 
   const repliedMsg = rootStore.messageStore.repliedMessage;
   const replyCvsId = getCvsIdFromMessage((repliedMsg as BaseMessageType) || {});
   const showReply = repliedMsg && replyCvsId === CVS.conversationId;
-
-  // --------- thread -----------
-
-  // thread modal title name
-  const [modalOpen, setModalOpen] = useState<boolean>(false);
-  const headerRef = useRef(null);
-  const showTheadList = () => {
-    onOpenThreadList?.();
-    if (modalOpen) return;
-    setModalOpen(true);
-    rootStore.threadStore.getGroupChatThreads(CVS.conversationId)?.then(cursor => {
-      setCursor(cursor);
-    });
-  };
-  const [cursor, setCursor] = useState<string | undefined | null>();
-  // containerRef?.current?.scrollHeight
-  const threadScrollRef = useRef(null);
-  const pagingGetThreadList = () => {
-    if (cursor === null) return;
-    rootStore.threadStore.getGroupChatThreads(CVS.conversationId, cursor)?.then(res => {
-      setCursor(res);
-      setTimeout(() => {
-        // @ts-ignore
-        threadScrollRef?.current?.scrollTo?.(threadList.length * 56);
-      }, 100);
-    });
-  };
-
-  const threadList = rootStore.threadStore.threadList[CVS.conversationId] || [];
-  const openThread = (item: { id: string }) => {
-    // close thread list modal
-    rootStore.threadStore.joinChatThread(item.id || '');
-    setModalOpen(false);
-    rootStore.threadStore.setThreadVisible(true);
-    rootStore.threadStore.getChatThreadDetail(item.id);
-    if (onOpenThread) {
-      onOpenThread(item);
-    }
-  };
-  const ThreadScrollList = ScrollList<ChatSDK.ChatThreadOverview>();
-
-  const [renderThreadList, setRenderThreadList] = useState(threadList);
-
-  useEffect(() => {
-    setRenderThreadList(threadList);
-  }, [threadList.length, CVS.conversationId]);
-  // render thread list
-  const threadListContent = () => {
-    const renderItem = (item: ChatSDK.ChatThreadOverview, index: number) => {
-      let lastMsg = '';
-      // @ts-ignore
-      switch (item.lastMessage?.type) {
-        case 'txt':
-          // @ts-ignore
-          lastMsg = item.lastMessage?.msg;
-          break;
-        case 'img':
-          lastMsg = `/${t('image')}/`;
-          break;
-        case 'audio':
-          lastMsg = `/${t('audio')}/`;
-          break;
-        case 'file':
-          lastMsg = `/${t('file')}/`;
-          break;
-        case 'video':
-          lastMsg = `/${t('video')}/`;
-          break;
-        case 'custom':
-          lastMsg = `/${t('custom')}/`;
-          break;
-        case 'combine':
-          lastMsg = `/${t('combine')}/`;
-          break;
-        default:
-          // @ts-ignore
-          console.warn('unexpected message type:', item.lastMessage?.type);
-          break;
-      }
-      return (
-        <div
-          className={`${prefixCls}-thread-item`}
-          key={index}
-          onClick={() => {
-            openThread(item);
-          }}
-        >
-          <span className={`${prefixCls}-thread-item-name`}> {item.name}</span>
-          {(item.lastMessage as any)?.type && (
-            <div className={`${prefixCls}-thread-item-msgBox`}>
-              <Avatar size={12} src={appUsersInfo?.[item.lastMessage?.from]?.avatarurl}>
-                {appUsersInfo?.[item.lastMessage?.from]?.nickname || item.lastMessage?.from}
-              </Avatar>
-              <div className={`${prefixCls}-thread-item-msgBox-name`}>
-                {getMsgSenderNickname(
-                  item.lastMessage as unknown as BaseMessageType,
-                  item.parentId,
-                )}
-              </div>
-              <div>{lastMsg}</div>
-              <div>{getConversationTime((item.lastMessage as any)?.time)}</div>
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    const dom = (
-      <ThreadScrollList
-        ref={threadScrollRef}
-        loading={false}
-        loadMoreItems={pagingGetThreadList}
-        scrollDirection="down"
-        paddingHeight={50}
-        // @ts-ignore
-        data={renderThreadList}
-        renderItem={renderItem}
-      ></ThreadScrollList>
-    );
-    return dom;
-  };
-
-  // thread thread
-  const handleSearchThread = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-
-    const filterList = threadList.filter(item => {
-      return item.name.includes(value);
-    });
-    setRenderThreadList(filterList);
-  };
-  // ------------------- thread end -------
 
   //------ global config ------
   // config header
@@ -369,7 +233,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   };
 
   // config message
-  let messageProps: MsgListProps['messageProps'] = {
+  const messageProps: MsgListProps['messageProps'] = {
     customAction: {
       visible: true,
       icon: null,
@@ -464,7 +328,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
   }
 
   // config messageInput
-  let messageInputConfig: MessageInputProps = {
+  const messageInputConfig: MessageInputProps = {
     enabledTyping: true,
     enabledMention: true,
     actions: [
@@ -547,7 +411,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       // @ts-ignore
       return item.id;
     });
-    let options = {
+    const options = {
       callType: currentCall.callType,
       chatType: 'groupChat',
       to: rtcMembers,
@@ -570,14 +434,14 @@ const Chat = forwardRef((props: ChatProps, ref) => {
         // getIdMap
         if (!info.confr) return;
         try {
-          let idMap =
+          const idMap =
             (await rtcConfig?.getIdMap?.({
               userId: rootStore.client.user,
               channel: info.confr.channel,
             })) || {};
 
-          let membersId = Object.values(idMap);
-          let userInfo = {};
+          const membersId = Object.values(idMap);
+          const userInfo = {};
           membersId.forEach(item => {
             // @ts-ignore
             userInfo[item] = {
@@ -627,14 +491,14 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       chatUserId: rootStore.client.user,
     });
     // --- 单人音视频被邀请方接听页面显示对方信息 --
-    let idMap =
+    const idMap =
       (await rtcConfig?.getIdMap?.({
         userId: rootStore.client.user,
         channel: data.channel,
       })) || {};
 
-    let membersId = Object.values(idMap);
-    let userInfo: Record<string, any> = {};
+    const membersId = Object.values(idMap);
+    const userInfo: Record<string, any> = {};
     membersId.forEach(item => {
       // @ts-ignore
       userInfo[item] = {
@@ -681,7 +545,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       const rtcMembers = members?.map(item => {
         return item.id;
       });
-      let options = {
+      const options = {
         callType: type == 'video' ? 2 : 3,
         chatType: 'groupChat',
         to: rtcMembers,
@@ -718,9 +582,8 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       CallKit.setUserInfo(userInfo);
 
       return;
-    } else {
     }
-    let options = {
+    const options = {
       callType: type == 'video' ? 1 : 0,
       chatType: 'singleChat',
       to: CVS.conversationId,
@@ -741,7 +604,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     CallKit.startCall(options);
     // }
     try {
-      let idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
+      const idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
       CallKit.setUserIdMap(idMap);
     } catch (e) {
       console.error(e);
@@ -843,17 +706,37 @@ const Chat = forwardRef((props: ChatProps, ref) => {
           ) : (
             <Header
               avatarSrc={getChatAvatarUrl(CVS)}
+              presence={{
+                visible:
+                  !!features?.conversationList?.item?.presence &&
+                  CVS.chatType === 'singleChat' &&
+                  typeof presenceMap !== 'undefined',
+                icon:
+                  presenceMap?.[
+                    rootStore.addressStore.appUsersInfo[CVS.conversationId]?.isOnline
+                      ? rootStore.addressStore.appUsersInfo[CVS.conversationId]?.presenceExt ??
+                        'Online'
+                      : 'Offline'
+                  ] || presenceMap?.Custom,
+              }}
+              subtitle={
+                !!features?.conversationList?.item?.presence &&
+                CVS.chatType === 'singleChat' &&
+                typeof presenceMap !== 'undefined' &&
+                (rootStore.addressStore.appUsersInfo[CVS.conversationId]?.isOnline
+                  ? t(rootStore.addressStore.appUsersInfo[CVS.conversationId]?.presenceExt ?? '') ??
+                    t('Online')
+                  : t('Offline'))
+              }
               suffixIcon={
-                <div ref={headerRef}>
+                <div>
                   {CVS.chatType !== 'singleChat' && showPinMessage && (
                     <Button onClick={show} type="text" shape="circle">
                       <Icon width={24} height={24} type="PIN"></Icon>
                     </Button>
                   )}
                   {CVS.chatType == 'groupChat' && showHeaderThreadListBtn && (
-                    <Button onClick={showTheadList} type="text" shape="circle">
-                      <Icon type="THREAD" width={24} height={24}></Icon>
-                    </Button>
+                    <ThreadListExpandableIcon style={{ width: '540px' }}></ThreadListExpandableIcon>
                   )}
                   {showAudioCall && (
                     <Button onClick={() => startVideoCall('audio')} type="text" shape="circle">
@@ -909,23 +792,9 @@ const Chat = forwardRef((props: ChatProps, ref) => {
           ) : (
             <MessageInput {...messageInputConfig} {...messageInputProps}></MessageInput>
           )}
-          {modalOpen && (
-            <ThreadModal
-              headerContent={`${t('thread')} ${t('list')}`}
-              open={modalOpen}
-              anchorEl={headerRef.current}
-              onClose={() => {
-                setModalOpen(false);
-              }}
-              onSearch={handleSearchThread}
-              onClear={() => {
-                setRenderThreadList(threadList || []);
-              }}
-              style={{ width: '360px', ...threadModalStyle }}
-            >
-              <div className={`${prefixCls}-threads-box`}>{threadListContent()}</div>
-            </ThreadModal>
-          )}
+          {/* {modalOpen && (
+           
+          )} */}
         </>
       )}
       <CallKit
@@ -968,5 +837,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     </div>
   );
 });
+
+Chat.displayName = 'Chat';
 
 export default observer(Chat);
