@@ -47,7 +47,7 @@ export interface UserItemProps {
 }
 
 let UserItem: FC<UserItemProps> = props => {
-  let {
+  const {
     prefix: customizePrefixCls,
     className,
     nickname,
@@ -71,6 +71,7 @@ let UserItem: FC<UserItemProps> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { theme } = useContext(RootContext);
   const themeMode = theme?.mode;
+  const componentsShape = theme?.componentsShape || 'ground';
   const prefixCls = getPrefixCls('userItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
 
@@ -79,6 +80,7 @@ let UserItem: FC<UserItemProps> = props => {
     {
       [`${prefixCls}-${themeMode}`]: !!themeMode,
       [`${prefixCls}-selected`]: selected,
+      [`${prefixCls}-${componentsShape}`]: componentsShape,
     },
     className,
   );
