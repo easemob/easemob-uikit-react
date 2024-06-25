@@ -101,6 +101,8 @@ import { ReactComponent as CandleInCircle } from '../svgs/icons/candle_in_circle
 import { ReactComponent as Pin } from '../svgs/icons/pinned.svg';
 import { ReactComponent as Unpin } from '../svgs/icons/unpin.svg';
 import { ReactComponent as ArrowTo } from '../svgs/icons/arrowto.svg';
+import { ReactComponent as Lock } from '../svgs/icons/lock.svg';
+import { ReactComponent as CircleNDot } from '../svgs/icons/circle_n_dot.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -398,6 +400,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'ARROW_TO':
       return <ArrowTo></ArrowTo>;
+    case 'LOCK':
+      return <Lock></Lock>;
+      break;
+    case 'CIRCLE_N_DOT':
+      return <CircleNDot></CircleNDot>;
+      break;
     default:
       return '';
       break;

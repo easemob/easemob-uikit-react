@@ -101,6 +101,8 @@ enum ICON_TYPES {
   PIN = 'PIN',
   UNPIN = 'UNPIN',
   ARROW_TO = 'ARROW_TO',
+  LOCK = 'LOCK',
+  CIRCLE_N_DOT = 'CIRCLE_N_DOT',
 }
 // chevron_down
 export { ICON_TYPES };
