@@ -3,6 +3,15 @@
 $text-msg-prefix-cls: #{$cui-prefix}-message-text;
 $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
+
+.#{$cui-prefix}-message-text-url-container{
+    width: 230px;
+    word-break: break-all;
+
+    .#{$text-msg-prefix-cls} {
+        word-break: break-all;
+    }
+}
 .#{$text-msg-prefix-cls} {
     font-size: $font-size-lg;
     line-height: 24px;
@@ -94,28 +103,31 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
 
 .message-text-url {
-    &::after {
-        content: '';
-        height: 8px;
-        width: 300px;
-        background-color: $gray-95;
-        display: block;
-        position: relative;
-        bottom: -8px;
-    }
+    // &::after {
+    //     content: '';
+    //     height: 16px;
+    //     width: 262px;
+    //     // background-color: $gray-95;
+    //     display: block;
+    //     position: relative;
+    //     bottom: -9px;
+    //     // border-radius: 0 0 4px 16px;
+    // }
 
-    background-color: $gray-95;
+    // background-color: $gray-95;
     position: relative;
-    width: 300px;
-    left: $padding-sm;
+    width: 262px;
+    left: -16px;
+    text-align: center;
 
     &-link {
         color: inherit;
     }
 
     &-img {
-        width: 300px;
-        height: 154px;
+        width: 262px;
+        // height: 154px;
+        // max-width: 262px;
         position: relative;
         // left: -$padding-sm;
         // float: left;
@@ -189,4 +201,28 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
 .#{$text-modify-prefix-cls} {
     height: 120px;
+}
+
+.cui-message-base-square {
+    .message-text-url {
+        &::after {
+            border-radius: 0 0 4px 4px;
+        }
+    }
+}
+
+.cui-message-base-ground .cui-message-base-right{
+    .message-text-url {
+        &::after {
+            border-radius: 0 0 4px 16px;
+        }
+    }
+}
+
+.cui-message-base-ground .cui-message-base-left{
+    .message-text-url {
+        &::after {
+            border-radius: 0 0 16px 4px;
+        }
+    }
 }

@@ -49,7 +49,7 @@ export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = tr
   if (txt === undefined || txt === null) {
     return [];
   }
-  let rnTxt: React.ReactNode[] = [];
+  const rnTxt: React.ReactNode[] = [];
   let match;
 
   const regex =
@@ -84,7 +84,7 @@ export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = tr
   if (parseUrl) {
     rnTxt.forEach((text, index) => {
       if (urlRegex.test(text!.toString())) {
-        let replacedText = reactStringReplace(text?.toString() || '', urlRegex, (match, i) => (
+        const replacedText = reactStringReplace(text?.toString() || '', urlRegex, (match, i) => (
           <a
             key={match + i}
             target="_blank"
@@ -166,7 +166,7 @@ const TextMessage = (props: TextMessageProps) => {
   const { t } = useTranslation();
   const [urlData, setUrlData] = useState<any>(null);
   const [isFetching, setFetching] = useState(false);
-  let conversationId = getCvsIdFromMessage(textMessage);
+  const conversationId = getCvsIdFromMessage(textMessage);
   let { bySelf, time, from, msg, reactions } = textMessage;
   const classString = classNames(prefixCls, className);
   const textareaRef = useRef<ForwardRefProps>(null);
@@ -241,7 +241,7 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
-    let conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore.deleteMessage(
       {
         chatType: textMessage.chatType,
@@ -263,7 +263,7 @@ const TextMessage = (props: TextMessageProps) => {
   }
 
   const handleClickEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore.addReaction(
       {
         chatType: textMessage.chatType,
@@ -276,7 +276,7 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore.deleteReaction(
       {
         chatType: textMessage.chatType,
@@ -289,7 +289,7 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(textMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
@@ -318,7 +318,7 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    let conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore.recallMessage(
       {
         chatType: textMessage.chatType,
@@ -344,7 +344,7 @@ const TextMessage = (props: TextMessageProps) => {
       return;
     }
     setTransStatus('translating');
-    let conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(textMessage);
     rootStore.messageStore
       .translateMessage(
         {
@@ -365,7 +365,7 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   const handleSelectMessage = () => {
-    let conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(textMessage);
     const selectable =
       rootStore.messageStore.selectedMessage[textMessage.chatType as 'singleChat' | 'groupChat'][
         conversationId
@@ -431,7 +431,7 @@ const TextMessage = (props: TextMessageProps) => {
   const confirmModifyMessage = () => {
     setModifyMessageVisible(false);
     const currentCVS = rootStore.conversationStore.currentCvs;
-    let msg = convertToMessage(textareaRef?.current?.divRef?.current?.innerHTML || '').trim();
+    const msg = convertToMessage(textareaRef?.current?.divRef?.current?.innerHTML || '').trim();
     const { isChatThread, to, chatThread } = textMessage as ChatSDK.TextMsgBody;
     const isThread = !!(isChatThread || chatThread);
     const message = chatSDK.message.create({
@@ -468,7 +468,7 @@ const TextMessage = (props: TextMessageProps) => {
   };
 
   // @ts-ignore
-  let _thread =
+  const _thread =
     // @ts-ignore
     textMessage.chatType == 'groupChat' &&
     thread &&
@@ -515,9 +515,9 @@ const TextMessage = (props: TextMessageProps) => {
   return (
     <>
       {onlyContent ? (
-        <div>
+        <div className={urlData?.title || urlData?.description ? `${prefixCls}-url-container` : ''}>
           <span className={classString}>{renderTxt(msg, true)}</span>
-          {!!(urlData?.title || urlData?.description) && (
+          {(urlData?.title || urlData?.description) && (
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
 
@@ -578,11 +578,13 @@ const TextMessage = (props: TextMessageProps) => {
             onClickThreadTitle={handleClickThreadTitle}
             {...others}
           >
-            <div>
+            <div
+              className={urlData?.title || urlData?.description ? `${prefixCls}-url-container` : ''}
+            >
               <span className={classString} style={{ ...style }}>
                 {(textMessage as any).printed == false ? text : renderTxt(msg, true)}
               </span>
-              {!!(urlData?.title || urlData?.description) && (
+              {(urlData?.title || urlData?.description) && (
                 <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
               )}
               {showEditedTag && textMessage?.modifiedInfo ? (
