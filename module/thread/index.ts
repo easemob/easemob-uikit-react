@@ -1,6 +1,11 @@
 import Thread from './Thread';
-import ThreadModal from './ThreadModal';
+import ThreadListExpandableIcon from './ThreadListExpandableIcon';
+import ThreadMemberList from './ThreadMemberList';
+import ThreadList from './ThreadList';
 export type { ThreadProps } from './Thread';
 
-export { ThreadModal };
+export type { ThreadListExpandableIconProps } from './ThreadListExpandableIcon';
+export type { ThreadMemberListProps } from './ThreadMemberList';
+export type { ThreadListProps } from './ThreadList';
+export { ThreadListExpandableIcon, ThreadList, ThreadMemberList };
 export default Thread;
