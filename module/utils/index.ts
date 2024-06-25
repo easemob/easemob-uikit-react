@@ -101,10 +101,10 @@ export const renderHtml = (txt: string): string => {
 
 export function getUsersInfo(props: { userIdList: string[]; withPresence?: boolean }) {
   const { userIdList, withPresence = true } = props;
-  let { client, addressStore, conversationStore } = getStore();
+  const { client, addressStore, conversationStore } = getStore();
   if (!client.context) return Promise.reject('client is not initialized');
   const findIndex = userIdList.indexOf(client.user);
-  let subList = [...userIdList];
+  const subList = [...userIdList];
   const result = {};
   if (findIndex > -1) {
     subList.splice(findIndex, 1);
@@ -231,16 +231,16 @@ export function getReactionByEmoji(
 
 export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) => {
   let { chatType, from = '', to, chatThread } = msg;
-  let id = parentId || chatThread?.parentId;
+  const id = parentId || chatThread?.parentId;
   if (id) {
     to = id;
   }
   const { appUsersInfo } = getStore().addressStore;
   if (chatType === 'groupChat') {
-    let group = getGroupItemFromGroupsById(to);
-    let memberIndex = (group && getGroupMemberIndexByUserId(group, from)) ?? -1;
+    const group = getGroupItemFromGroupsById(to);
+    const memberIndex = (group && getGroupMemberIndexByUserId(group, from)) ?? -1;
     if (memberIndex > -1) {
-      let memberItem = group?.members?.[memberIndex];
+      const memberItem = group?.members?.[memberIndex];
       if (memberItem) {
         return getGroupMemberNickName(memberItem) || appUsersInfo?.[from]?.nickname || from;
       }

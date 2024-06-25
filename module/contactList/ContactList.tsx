@@ -53,7 +53,8 @@ function getBrands(members: any) {
       ? item.remark || rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
       : item.groupname;
     item.userId && (item.nickname = item.name);
-    item.avatarUrl = item.avatarUrl; //群组有avatarUrl
+    console.log('--->', item);
+    // item.avatarUrl = item.avatarUrl; //群组有avatarUrl
     if (checkCharacter(item.name.substring(0, 1)) == 'en') {
       item.initial = item.name.substring(0, 1).toUpperCase();
     } else if (checkCharacter(item.name.substring(0, 1)) == 'zh') {
@@ -65,7 +66,7 @@ function getBrands(members: any) {
 
   innerMembers.sort((a: any, b: any) => a.initial.charCodeAt(0) - b.initial.charCodeAt(0));
   let someTitle = null;
-  let someArr: Array<{
+  const someArr: Array<{
     id: number;
     region: string;
     brands: Array<{
@@ -77,8 +78,8 @@ function getBrands(members: any) {
   let lastObj;
   let newObj;
 
-  for (var i = 0; i < innerMembers.length; i++) {
-    var newBrands = {
+  for (let i = 0; i < innerMembers.length; i++) {
+    const newBrands = {
       brandId: innerMembers[i].userId || innerMembers[i].groupid,
       name: innerMembers[i].name,
       avatarUrl:
@@ -164,7 +165,8 @@ let ContactList: FC<ContactListProps> = props => {
   // 获取联系人列表
   useContacts();
   if (useUserInfoConfig) {
-    useUserInfo('contacts');
+    const withPresence = features?.conversationList?.item?.presence != false;
+    useUserInfo('contacts', withPresence);
   }
 
   const { getJoinedGroupList } = useGroups();
@@ -183,7 +185,7 @@ let ContactList: FC<ContactListProps> = props => {
   };
   // 渲染联系人列表
   useEffect(() => {
-    let renderData: { contacts: any; groups: any; newRequests: any } & Record<string, any> =
+    const renderData: { contacts: any; groups: any; newRequests: any } & Record<string, any> =
       {} as any;
 
     menu.forEach(item => {
@@ -206,8 +208,8 @@ let ContactList: FC<ContactListProps> = props => {
         renderData[item.title] = getBrands(item.data);
       }
     });
-    let menuNode = Object.keys(renderData).map((menuItem, index2) => {
-      let contacts = renderData[menuItem as 'contacts' | 'groups']?.map((contactItem: any) => {
+    const menuNode = Object.keys(renderData).map((menuItem, index2) => {
+      const contacts = renderData[menuItem as 'contacts' | 'groups']?.map((contactItem: any) => {
         return (
           <ContactItem
             checkedUserList={checkedList && checkedList.map(item => item.id)}

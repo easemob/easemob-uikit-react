@@ -85,6 +85,7 @@ import { useThreadContext } from './hooks/useThreadContext';
 import { useSDK } from './hooks/useSDK';
 import Thread, { ThreadProps } from './thread';
 import UserProfile, { UserProfileProps } from './userProfile';
+import { Blocklist, BlocklistProps } from './blocklist';
 
 import Chatroom from './chatroom';
 import { ChatroomProps } from './chatroom/Chatroom';
@@ -143,6 +144,7 @@ export type {
   ContextProps,
   ThreadProps,
   UserProfileProps,
+  BlocklistProps,
   ContactListProps,
   ContactDetailProps,
   GroupDetailProps,
@@ -181,6 +183,7 @@ export {
   UIKitProvider,
   Thread,
   UserProfile,
+  Blocklist,
   useClient,
   useConversations,
   usePinnedMessage,

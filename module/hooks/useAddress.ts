@@ -39,7 +39,10 @@ const useContacts = () => {
   return contacts;
 };
 
-const useUserInfo = (userList: 'conversation' | 'contacts', withPresence?: boolean) => {
+const useUserInfo = (
+  userList: 'conversation' | 'contacts' | 'blocklist',
+  withPresence?: boolean,
+) => {
   const rootStore = useContext(RootContext).rootStore;
   useEffect(() => {
     if (!rootStore.loginState) return;
@@ -52,7 +55,15 @@ const useUserInfo = (userList: 'conversation' | 'contacts', withPresence?: boole
         return !keys.includes(item.userId);
       })
       .map(item => item.userId);
+    let blockListUserIds = rootStore.addressStore.blockList.filter(item => !keys.includes(item));
 
+    if (userList === 'blocklist') {
+      getUsersInfo({
+        userIdList: blockListUserIds,
+        withPresence: false,
+      });
+      return;
+    }
     getUsersInfo({
       userIdList: userList == 'conversation' ? cvsUserIds : contactsUserIds,
       withPresence,
@@ -60,6 +71,7 @@ const useUserInfo = (userList: 'conversation' | 'contacts', withPresence?: boole
   }, [
     rootStore.conversationStore.conversationList.length,
     rootStore.addressStore.contacts.length,
+    rootStore.addressStore.blockList.length,
     rootStore.loginState,
   ]);
 };
@@ -124,6 +136,9 @@ const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
 
         userIds.length && useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
         if (withUserInfo == true) {
+          // appUsersInfo 里面有的用户信息不再去获取
+          let keys = Object.keys(addressStore.appUsersInfo);
+          userIds = userIds.filter(item => !keys.includes(item));
           getUsersInfo({
             userIdList: userIds,
             withPresence: false,
