@@ -5,7 +5,7 @@ import './style/style.scss';
 export interface SwitchProps {
   className?: string;
   style?: React.CSSProperties;
-  checked: boolean;
+  checked?: boolean;
   disabled?: boolean;
   onChange?(e: ChangeEvent<HTMLInputElement>): void;
 }
@@ -32,7 +32,10 @@ const Switch = ({
   function onInputChange(e: ChangeEvent<HTMLInputElement>) {
     if (disabled) return;
     const value = e.currentTarget.checked;
-    setIsChecked(value);
+    // 如果传了checked，就不需要内部维护状态
+    if (checked === undefined) {
+      setIsChecked(value);
+    }
     if (!onChange) {
       return;
     }
