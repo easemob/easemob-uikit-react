@@ -120,13 +120,15 @@ const Emoji = (props: EmojiProps) => {
     icon
   ) : (
     <span className={`${prefixCls}-iconBox`} style={{ ...style }} title={t('emoji') as string}>
-      <Icon
-        type="FACE"
-        width={24}
-        height={24}
-        onClick={handleClickIcon}
-        // onClick={() => setOpen(true)}
-      ></Icon>
+      <Button type="text" shape="circle">
+        <Icon
+          type="FACE"
+          width={24}
+          height={24}
+          onClick={handleClickIcon}
+          // onClick={() => setOpen(true)}
+        ></Icon>
+      </Button>
     </span>
   );
   return (

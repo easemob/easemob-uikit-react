@@ -54,12 +54,14 @@ let MoreAction = (props: MoreActionProps) => {
     icon
   ) : (
     <span className={`${prefixCls}-iconBox`} style={{ ...style }} title={t('more') as string}>
-      <Icon
-        type="PLUS_CIRCLE"
-        width={24}
-        height={24}
-        // onClick={handleClickIcon}
-      ></Icon>
+      <Button type="text" shape="circle">
+        <Icon
+          type="PLUS_CIRCLE"
+          width={24}
+          height={24}
+          // onClick={handleClickIcon}
+        ></Icon>
+      </Button>
     </span>
   );
 
@@ -93,7 +95,7 @@ let MoreAction = (props: MoreActionProps) => {
     };
 
     const option = {
-      type: 'custom' as 'custom',
+      type: 'custom' as const,
       customEvent,
       customExts,
       to: currentCVS.conversationId,
@@ -214,7 +216,7 @@ let MoreAction = (props: MoreActionProps) => {
   );
   const currentCVS = conversation ? conversation : messageStore.currentCVS;
   const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = e => {
-    let file = chatSDK.utils.getFileUrl(e.target);
+    const file = chatSDK.utils.getFileUrl(e.target);
     if (!file.filename) {
       return false;
     }
@@ -230,7 +232,7 @@ let MoreAction = (props: MoreActionProps) => {
       file: file,
       isChatThread,
       onFileUploadComplete: data => {
-        let sendMsg = messageStore.message.byId[imageMessage.id];
+        const sendMsg = messageStore.message.byId[imageMessage.id];
         (sendMsg as any).thumb = data.thumb;
         (sendMsg as any).url = data.url;
         messageStore.modifyMessage(imageMessage.id, sendMsg);
@@ -254,7 +256,7 @@ let MoreAction = (props: MoreActionProps) => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'file' | 'video') => {
-    let file = chatSDK.utils.getFileUrl(e.target);
+    const file = chatSDK.utils.getFileUrl(e.target);
     if (!file.filename) {
       return false;
     }

@@ -19,7 +19,9 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
 .#{$pinned-msg-prefix-cls}-wrap {
   height: calc(100% - 70px);
   padding: 12px;
-  overflow-y: scroll;
+  overflow-y: overlay;
+  overflow-anchor: none;
+  scrollbar-color: $gray-8 transparent;
 }
 
 .#{$pinned-msg-prefix-cls}-message-bubble {
@@ -88,7 +90,15 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
 
 .#{$pinned-msg-prefix-cls}-dark {
   background-color: $gray-1;
-
+  .#{$pinned-msg-prefix-cls}-wrap{
+    scrollbar-color: $gray-4 transparent;
+  }
+  .#{$pinned-msg-prefix-cls}-item-wrap{
+    border-bottom: 1px solid $gray-2;
+  }
+  .#{$pinned-msg-prefix-cls}-header{
+    border-bottom: 1px solid $gray-2;
+  }
   .#{$pinned-msg-prefix-cls}-message-bubble {
     color: $gray-98
   }
