@@ -1,0 +1,19 @@
+@import '~/common/style/index.scss';
+$blocklist-prefix-cls: #{$cui-prefix}-blocklist;
+.#{$blocklist-prefix-cls}{
+    background-color: $chat-bg;;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    &-dark{
+        background-color: $gray-1;
+        color: $gray-98;
+    }
+}
+.#{$blocklist-prefix-cls}-main{
+    flex: 1;
+    overflow-y: overlay;
+    overflow-anchor: none;
+    scrollbar-color: $gray-8 transparent;
+}

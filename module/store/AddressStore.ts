@@ -5,7 +5,6 @@ import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '..
 import { getUsersInfo, checkCharacter } from '../utils';
 import { pinyin } from 'pinyin-pro';
 import { eventHandler } from '../../eventHandler';
-import { rootStore } from 'chatuim2';
 
 export type MemberRole = 'member' | 'owner' | 'admin';
 
@@ -62,6 +61,7 @@ class AddressStore {
   thread: {
     [key: string]: ChatSDK.ThreadChangeInfo[];
   };
+  blockList: string[];
   constructor() {
     this.appUsersInfo = {};
     this.contacts = [];
@@ -71,6 +71,7 @@ class AddressStore {
     this.searchList = [];
     this.thread = {};
     this.requests = [];
+    this.blockList = [];
     makeObservable(this, {
       appUsersInfo: observable,
       contacts: observable,
@@ -80,6 +81,7 @@ class AddressStore {
       hasGroupsNext: observable,
       thread: observable,
       requests: observable,
+      blockList: observable,
       setHasGroupsNext: action,
       setContacts: action,
       deleteContactFromContactList: action,
@@ -113,6 +115,9 @@ class AddressStore {
       clear: action,
       setContactRemark: action,
       updateGroupAvatar: action,
+      getBlockList: action,
+      addUsersToBlocklist: action,
+      removeUserFromBlocklist: action,
     });
   }
 
@@ -852,6 +857,87 @@ class AddressStore {
   removeGroupFromContactList(groupId: string) {
     this.groups = this.groups.filter(item => item.groupid !== groupId);
   }
+
+  getBlockList() {
+    console.log('Blocklist2 is run...');
+    const rootStore = getStore();
+    rootStore.client
+      .getBlocklist()
+      .then(res => {
+        console.log('getBlockList', res);
+        runInAction(() => {
+          if (res.data) {
+            this.blockList = res.data;
+            console.log('设置blockList', this.blockList);
+          }
+        });
+        eventHandler.dispatchSuccess('getBlockList');
+      })
+      .catch(error => {
+        console.log('Blocklist3 is run...', error);
+        eventHandler.dispatchError('getBlockList', error);
+      });
+  }
+
+  addUsersToBlocklist(userIdList: string[]) {
+    const rootStore = getStore();
+    rootStore.client
+      .addUsersToBlocklist({
+        name: userIdList,
+      })
+      .then(res => {
+        console.log('addUsersToBlocklist', res);
+
+        runInAction(() => {
+          this.blockList = [...this.blockList, ...userIdList];
+        });
+
+        eventHandler.dispatchSuccess('addUsersToBlocklist');
+      })
+      .catch(error => {
+        console.log('addUsersToBlocklist', error);
+        eventHandler.dispatchError('addUsersToBlocklist', error);
+      });
+  }
+
+  removeUserFromBlocklist(userIdList: string[]) {
+    const rootStore = getStore();
+    rootStore.client
+      .removeUserFromBlocklist({
+        name: userIdList,
+      })
+      .then(res => {
+        console.log('removeUserFromBlackList', res);
+        runInAction(() => {
+          this.blockList = this.blockList.filter(item => !userIdList.includes(item));
+        });
+        eventHandler.dispatchSuccess('removeUserFromBlocklist');
+      })
+      .catch(error => {
+        console.log('removeUserFromBlackList', error);
+        eventHandler.dispatchError('removeUserFromBlocklist', error);
+      });
+  }
+
+  publishPresence(description: string) {
+    const rootStore = getStore();
+    rootStore.client
+      .publishPresence({
+        description,
+      })
+      .then(res => {
+        runInAction(() => {
+          this.appUsersInfo[rootStore.client.user] = {
+            ...this.appUsersInfo[rootStore.client.user],
+            presenceExt: description,
+          };
+        });
+        eventHandler.dispatchSuccess('publishPresence');
+      })
+      .catch(error => {
+        eventHandler.dispatchError('publishPresence', error);
+      });
+  }
   clear() {
     this.appUsersInfo = {};
     this.contacts = [];
@@ -860,6 +946,7 @@ class AddressStore {
     this.hasGroupsNext = true;
     this.searchList = [];
     this.thread = {};
+    this.blockList = [];
   }
 }
 
