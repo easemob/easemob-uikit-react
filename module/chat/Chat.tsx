@@ -295,7 +295,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       };
     }
 
-    messageProps.customAction!.actions = messageProps.customAction!.actions!.filter(item => {
+    messageProps.customAction!.actions = messageProps.customAction!.actions?.filter?.(item => {
       if (globalConfig?.message?.reply == false && item.content == 'REPLY') {
         return false;
       }
