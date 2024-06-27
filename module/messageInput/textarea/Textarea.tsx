@@ -43,7 +43,7 @@ export interface ForwardRefProps {
   divRef: React.RefObject<HTMLDivElement>;
 }
 
-let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
+const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const {
     placeholder,
     hasSendButton,
@@ -69,7 +69,7 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const themeMode = theme?.mode || 'light';
   const componentsShape = theme?.componentsShape || 'ground';
   const { client, messageStore, conversationStore, addressStore } = rootStore;
-  let { currentCVS } = messageStore;
+  const { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);
   const [queryString, setQueryString] = useState('');
   const [showAtDialog, setShowDialog] = useState(false);
@@ -185,8 +185,8 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       return;
     }
     let isAtAll = false;
-    let atNodeList = divRef.current?.querySelectorAll('.at-button') || [];
-    let atUserIds = Array.from(atNodeList).map(item => {
+    const atNodeList = divRef.current?.querySelectorAll('.at-button') || [];
+    const atUserIds = Array.from(atNodeList).map(item => {
       if (item instanceof HTMLElement) {
         return item?.dataset.user;
       }
@@ -305,5 +305,5 @@ let Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     </div>
   );
 });
-
+Textarea.displayName = 'Textarea';
 export { Textarea };

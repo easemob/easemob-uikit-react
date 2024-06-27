@@ -2,7 +2,7 @@ import { MemberItem } from '../../store/AddressStore';
 import { getGroupMemberNickName } from '../../utils';
 import { MENTION_TAG } from './const';
 
-const MentionRegx = new RegExp(`${MENTION_TAG}([^${MENTION_TAG}\s]*)$`); //
+const MentionRegx = new RegExp(`${MENTION_TAG}([^${MENTION_TAG}\\s]*)$`); //
 
 // get cursor
 const getCursorIndex = () => {
@@ -13,12 +13,13 @@ const getCursorIndex = () => {
 // get range node
 const getRangeNode = () => {
   const selection = window.getSelection();
-  return selection?.focusNode;
+  const node = selection?.focusNode;
+  return node;
 };
 
 const getRangeRect = () => {
-  const selection = window.getSelection();
-  const range = selection?.getRangeAt(0)!;
+  const selection = window.getSelection() as Selection;
+  const range = selection?.getRangeAt?.(0);
   const rect = range.getClientRects()[0];
   const LINE_HEIGHT = 0;
   return {
@@ -81,12 +82,14 @@ const replaceAtUser = (user: MemberItem) => {
     const endIndex = getCursorIndex();
     const preSlice = replaceString(content.slice(0, endIndex), '');
     const restSlice = content.slice(endIndex);
-    const parentNode = node?.parentNode!;
+    const parentNode = node?.parentNode as any as Element;
     const nextNode = node?.nextSibling;
     const previousTextNode = new Text(preSlice);
     const nextTextNode = new Text('\u200b' + restSlice);
+
     const atButton = createAtButton(user);
     parentNode.removeChild(node);
+
     if (nextNode) {
       parentNode.insertBefore(previousTextNode, nextNode);
       parentNode.insertBefore(atButton, nextNode);
@@ -98,13 +101,30 @@ const replaceAtUser = (user: MemberItem) => {
       parentNode.append(' ');
       parentNode.appendChild(nextTextNode);
     }
-    const range = new Range();
-    range.setStart(nextTextNode, 0);
-    range.setEnd(nextTextNode, 0);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
+    setTimeout(() => {
+      const range = new Range();
+      range.setStart(nextTextNode, 0);
+      range.setEnd(nextTextNode, 0);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }, 10);
   }
+};
+
+const isSafariVersionGreaterThan17 = () => {
+  const userAgent = navigator.userAgent;
+  const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent);
+
+  if (isSafari) {
+    const versionMatch = userAgent.match(/Version\/(\d+(\.\d+)?)/);
+    if (versionMatch && versionMatch[1]) {
+      const version = parseFloat(versionMatch[1]);
+      return version > 17;
+    }
+  }
+
+  return false;
 };
 
 export {
@@ -116,4 +136,5 @@ export {
   createAtButton,
   replaceString,
   replaceAtUser,
+  isSafariVersionGreaterThan17,
 };

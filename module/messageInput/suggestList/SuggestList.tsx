@@ -11,6 +11,7 @@ import { observer } from 'mobx-react-lite';
 import Icon from '../../../component/icon';
 import { RootContext } from '../../store/rootContext';
 export const AT_ALL = 'ALL';
+import { isSafariVersionGreaterThan17 } from './utils';
 
 const searchUser = (memberList: MemberItem[], queryString?: string) => {
   return queryString
@@ -54,7 +55,7 @@ const SuggestList: FC<SuggestListProps> = props => {
   const visibleRef = useRef<boolean>();
   visibleRef.current = props.visible;
   const { style = {} } = props;
-  let currentCVS = getStore().messageStore.currentCVS;
+  const currentCVS = getStore().messageStore.currentCVS;
   const client = getStore().client;
   const memberList = getGroupItemFromGroupsById(currentCVS.conversationId)?.members || [];
 
@@ -63,7 +64,7 @@ const SuggestList: FC<SuggestListProps> = props => {
     setIndex(Number(e.target.dataset.idx));
   };
 
-  const onClick = () => {
+  const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (indexRef.current !== undefined && usersRef.current?.[indexRef.current]) {
       props.onPickUser(usersRef.current?.[indexRef.current]);
       setIndex(-1);
@@ -148,13 +149,15 @@ const SuggestList: FC<SuggestListProps> = props => {
             {filteredUsers.map((user, i) => {
               return (
                 <div
+                  style={{ userSelect: 'none' }}
                   key={user.userId}
                   data-idx={i}
                   className={i === index ? `active ${prefixCls}-item` : `${prefixCls}-item`}
                   onMouseEnter={onMouseEnter}
-                  onClick={onClick}
+                  onMouseDown={isSafariVersionGreaterThan17() ? onClick : () => {}}
+                  onClick={isSafariVersionGreaterThan17() ? () => {} : onClick}
                 >
-                  <div className="avatar">
+                  <div className="avatar" style={{ userSelect: 'none' }}>
                     <Avatar src={getAppUserInfo(user.userId).avatarurl} size="small">
                       {user.role === null && user.userId === AT_ALL ? (
                         <Icon
