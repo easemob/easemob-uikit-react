@@ -27,6 +27,7 @@ import type {
   CustomMessageType,
   VideoMessageType,
 } from '../types/messageType';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface CombinedMessageProps extends BaseMessageProps {
   prefix?: string;
   className?: string;
@@ -48,7 +49,7 @@ export interface CombinedMessageProps extends BaseMessageProps {
 }
 
 const CombinedMessage = (props: CombinedMessageProps) => {
-  let {
+  const {
     combinedMessage,
     style,
     nickName,
@@ -63,7 +64,13 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   } = props;
   //   combinedMessage = comMsg;
   let { bySelf, time, from, reactions, title, summary } = combinedMessage;
-
+  const conversationId = getCvsIdFromMessage(combinedMessage);
+  const { pinMessage } = usePinnedMessage({
+    conversation: {
+      conversationId: conversationId,
+      conversationType: combinedMessage.chatType as any,
+    },
+  });
   if (typeof bySelf == 'undefined') {
     bySelf = from == rootStore.client.context.userId;
   }
@@ -78,7 +85,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
-    let conversationId = getCvsIdFromMessage(combinedMessage);
+    const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.deleteMessage(
       {
         chatType: combinedMessage.chatType,
@@ -95,7 +102,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   }
 
   const handleClickEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(combinedMessage);
+    const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.addReaction(
       {
         chatType: combinedMessage.chatType,
@@ -108,7 +115,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(combinedMessage);
+    const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.deleteReaction(
       {
         chatType: combinedMessage.chatType,
@@ -121,7 +128,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(combinedMessage);
+    const conversationId = getCvsIdFromMessage(combinedMessage);
     reactions?.forEach(
       (item: { reaction: string; count: number; userList: string[]; isAddedBySelf?: boolean }) => {
         if (item.reaction === emojiString) {
@@ -152,7 +159,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    let conversationId = getCvsIdFromMessage(combinedMessage);
+    const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.recallMessage(
       {
         chatType: combinedMessage.chatType,
@@ -180,7 +187,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   );
 
   const createDetailContent = (data: (BaseMessageType & { bySelf: boolean })[]) => {
-    let node = data.map(msg => {
+    const node = data.map(msg => {
       let content;
       msg.bySelf = false;
       switch (msg?.type) {
@@ -348,7 +355,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
   const [modalOpen, setModalOpen] = useState(false);
 
-  let conversationId = getCvsIdFromMessage(combinedMessage);
   const handleSelectMessage = () => {
     const selectable =
       // @ts-ignore
@@ -404,7 +410,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
 
   // @ts-ignore
-  let _thread =
+  const _thread =
     // @ts-ignore
     combinedMessage.chatType == 'groupChat' &&
     thread &&
@@ -434,6 +440,11 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     rootStore.threadStore.setThreadVisible(true);
 
     rootStore.threadStore.getChatThreadDetail(combinedMessage?.chatThreadOverview?.id || '');
+  };
+
+  const handlePinMessage = () => {
+    //@ts-ignore
+    pinMessage(combinedMessage.mid || combinedMessage.id);
   };
 
   return (
@@ -466,6 +477,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           thread={_thread}
           chatThreadOverview={combinedMessage.chatThreadOverview}
           onClickThreadTitle={handleClickThreadTitle}
+          onPinMessage={handlePinMessage}
           {...others}
         >
           <div className={classString} style={style}>
