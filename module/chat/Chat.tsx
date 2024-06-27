@@ -239,19 +239,15 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       icon: null,
       actions: [
         {
+          content: 'FORWARD',
+          onClick: () => {},
+        },
+        {
           content: 'REPLY',
           onClick: () => {},
         },
         {
-          content: 'DELETE',
-          onClick: () => {},
-        },
-        {
           content: 'UNSEND',
-          onClick: () => {},
-        },
-        {
-          content: 'TRANSLATE',
           onClick: () => {},
         },
         {
@@ -263,15 +259,21 @@ const Chat = forwardRef((props: ChatProps, ref) => {
           onClick: () => {},
         },
         {
-          content: 'FORWARD',
+          content: 'PIN',
           onClick: () => {},
         },
+        {
+          content: 'TRANSLATE',
+          onClick: () => {},
+        },
+
         {
           content: 'REPORT',
           onClick: () => {},
         },
+
         {
-          content: 'PIN',
+          content: 'DELETE',
           onClick: () => {},
         },
       ],
