@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ReactNode, useContext, useState } from 'react';
+import React, { ChangeEvent, ReactNode, useContext, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
@@ -231,7 +231,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onClickThreadTitle?.();
   };
   const threadNode = () => {
-    let { name, messageCount = 0, lastMessage = {} } = chatThreadOverview || {};
+    const { name, messageCount = 0, lastMessage = {} } = chatThreadOverview || {};
 
     const { from, type, time } = lastMessage || ({} as any);
     let msgContent = '';
@@ -314,6 +314,11 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   let moreAction: CustomAction = { visible: false };
 
+  useEffect(() => {
+    if (!hoverStatus) {
+      setMessageActionsOpen(false);
+    }
+  }, [hoverStatus]);
   if (customAction) {
     moreAction = customAction;
   } else {
@@ -419,6 +424,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
 
   const pinMessage = () => {
+    setMessageActionsOpen(false);
     onPinMessage && onPinMessage();
   };
 
@@ -621,6 +627,8 @@ let BaseMessage = (props: BaseMessageProps) => {
   const handleClickThreadIcon = () => {
     onCreateThread?.();
   };
+
+  const [messageActionsOpen, setMessageActionsOpen] = useState(false);
   return (
     <div>
       <div className="thread-container">
@@ -650,7 +658,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                 </Tooltip>
               )
             ) : (
-             <></>
+              <></>
             )}
           </>
 
@@ -682,6 +690,10 @@ let BaseMessage = (props: BaseMessageProps) => {
                 <>
                   {moreAction.visible && (
                     <Tooltip
+                      open={messageActionsOpen}
+                      onOpenChange={value => {
+                        setMessageActionsOpen(value);
+                      }}
                       title={menuNode}
                       trigger="click"
                       placement={isCurrentUser ? 'bottomRight' : 'bottomLeft'}
