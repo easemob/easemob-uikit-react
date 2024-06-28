@@ -103,6 +103,7 @@ enum ICON_TYPES {
   ARROW_TO = 'ARROW_TO',
   LOCK = 'LOCK',
   CIRCLE_N_DOT = 'CIRCLE_N_DOT',
+  PERSON_SLASH_FILL = 'PERSON_SLASH_FILL',
 }
 // chevron_down
 export { ICON_TYPES };
