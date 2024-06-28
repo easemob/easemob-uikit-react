@@ -103,6 +103,7 @@ import { ReactComponent as Unpin } from '../svgs/icons/unpin.svg';
 import { ReactComponent as ArrowTo } from '../svgs/icons/arrowto.svg';
 import { ReactComponent as Lock } from '../svgs/icons/lock.svg';
 import { ReactComponent as CircleNDot } from '../svgs/icons/circle_n_dot.svg';
+import { ReactComponent as PersonSlashFill } from '../svgs/icons/person_slash_fill.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -405,6 +406,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'CIRCLE_N_DOT':
       return <CircleNDot></CircleNDot>;
+      break;
+    case 'PERSON_SLASH_FILL':
+      return <PersonSlashFill></PersonSlashFill>;
       break;
     default:
       return '';

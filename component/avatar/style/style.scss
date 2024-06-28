@@ -121,6 +121,7 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
     }
    
     &-dark{
+        background: $blue-6;
         .#{$avatar-prefix-cls}-presence-wrap{
             background-color: $gray-1;
         }
