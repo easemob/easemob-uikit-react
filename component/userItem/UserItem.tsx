@@ -159,7 +159,11 @@ let UserItem: FC<UserItemProps> = props => {
         )}
       </div>
       {checkable && (
-        <div>
+        <div
+          onClick={e => {
+            e.stopPropagation();
+          }}
+        >
           <Checkbox
             disabled={disabled}
             checked={checked}
