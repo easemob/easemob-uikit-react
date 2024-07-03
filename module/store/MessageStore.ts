@@ -151,7 +151,7 @@ class MessageStore {
       message.type != 'delivery' &&
       message.type != 'channel'
     ) {
-      let ext = message.ext || {};
+      const ext = message.ext || {};
       let msgPreview = '';
       switch (this.repliedMessage.type) {
         case 'txt':
@@ -214,7 +214,7 @@ class MessageStore {
           const memberIdx =
             getGroupMemberIndexByUserId(groupItem, this.rootStore.client.user) ?? -1;
           if (memberIdx > -1) {
-            let memberItem = groupItem?.members?.[memberIdx]!;
+            const memberItem = groupItem?.members?.[memberIdx] || { userId: '', role: 'member' };
             myInfo.nickname = getGroupMemberNickName(memberItem);
           }
         }
@@ -306,7 +306,14 @@ class MessageStore {
           // @ts-ignore
           this.message.byId[message.id].mid = data.serverMsgId;
           // @ts-ignore
-          const i = this.message[chatType][to].indexOf(this.message.byId[message.id]);
+          // const i = this.message[chatType][to].indexOf(this.message.byId[message.id]);
+          // console.log('i--->', i, message);
+          // @ts-ignore
+          const i = this.message[chatType][to]?.findIndex(item => {
+            if (item.id === data.serverMsgId || message.id === item.id) {
+              return true;
+            }
+          });
           // @ts-ignore
           this.message[chatType][to].splice(i, 1, msg);
           // this.message[chatType][to][i] = msg;
@@ -466,7 +473,7 @@ class MessageStore {
     this.rootStore.conversationStore.topConversation({ ...cvs });
     // show at tag
     if (!isCurrentCvs && message.type === 'txt') {
-      let mentionList = message?.ext?.em_at_list;
+      const mentionList = message?.ext?.em_at_list;
       if (mentionList && message.from !== this.rootStore.client.user) {
         if (mentionList === AT_ALL || mentionList.includes(this.rootStore.client.user)) {
           this.rootStore.conversationStore.setAtType(
@@ -495,12 +502,12 @@ class MessageStore {
   updateMessageStatus(msgId: string, status: string) {
     setTimeout(() => {
       runInAction(() => {
-        let msg = this.message.byId[msgId];
+        const msg = this.message.byId[msgId];
         if (!msg) {
           // ack message
           return; // console.error('not found message:', msgId);
         }
-        let conversationId = getCvsIdFromMessage(msg as BaseMessageType);
+        const conversationId = getCvsIdFromMessage(msg as BaseMessageType);
         // @ts-ignore
         this.message.byId[msgId].status = status;
         // @ts-ignore
@@ -551,7 +558,7 @@ class MessageStore {
       msgIds = [messageId];
     }
 
-    let localMsgIds: string[] = [];
+    const localMsgIds: string[] = [];
     msgIds = msgIds.filter(id => {
       if (id.length < 13) {
         localMsgIds.push(id);
@@ -585,7 +592,7 @@ class MessageStore {
       .then(() => {
         // console.log('删服务器');
         _deleteMessage(msgIds);
-        let conversation: Conversation = this.rootStore.conversationStore.getConversation(
+        const conversation: Conversation = this.rootStore.conversationStore.getConversation(
           // @ts-ignore
           cvs.chatType,
           cvs.conversationId,
@@ -804,7 +811,7 @@ class MessageStore {
         (message as BaseMessageType).reactions = reactions;
       } else {
         filterActs.forEach(item => {
-          let reaction = getReactionByEmoji(message, item.reaction);
+          const reaction = getReactionByEmoji(message, item.reaction);
           if (reaction) {
             reaction.count = item.count;
             reaction.userList = item.userList;
@@ -865,7 +872,7 @@ class MessageStore {
     const messageIndex = getMessageIndex(messages, messageId);
     return new Promise((res, rej) => {
       if (messageIndex > -1) {
-        let currentMsg = messages[messageIndex];
+        const currentMsg = messages[messageIndex];
         if (currentMsg.type !== 'txt') {
           rej(false);
           return console.warn('message type is not txt');
@@ -913,7 +920,7 @@ class MessageStore {
         msgItem => msgItem.id === messageId || msgItem.mid === messageId,
       );
       if (msgIndex > -1) {
-        let msgItem = this.message[msg.chatType][cvsId][msgIndex];
+        const msgItem = this.message[msg.chatType][cvsId][msgIndex];
         if (msg.type === 'txt' && msgItem.type === 'txt') {
           msgItem.msg = msg.msg;
           msgItem.modifiedInfo = msg.modifiedInfo;
@@ -925,7 +932,6 @@ class MessageStore {
           msgItem.modifiedInfo = msg.modifiedInfo;
           msgItem.customExts = msg.customExts;
           msgItem.ext = msg.ext;
-          console.log(msgItem, 'msgItem');
         }
       }
     }
@@ -971,7 +977,7 @@ class MessageStore {
     const option = {
       chatType: cvs.chatType,
       to: cvs.conversationId,
-      type: 'cmd' as 'cmd',
+      type: 'cmd' as const,
       isChatThread: false,
       action: 'TypingBegin',
     };

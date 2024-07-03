@@ -8,7 +8,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
   const rootStore = useContext(RootContext).rootStore;
 
   const { client, messageStore, conversationStore } = rootStore;
-  let [historyMsgs, setHistoryMsgs] = useState<any>([]);
+  const [historyMsgs, setHistoryMsgs] = useState<any>([]);
 
   const [cursor, setCursor] = useState<number | string>(-1);
   const [isLoading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
 
     const userId = rootStore.client?.context?.userId;
     if (!userId) return;
-    let msg = historyMsgs[0] || {};
+    const msg = historyMsgs[0] || {};
     const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
     let useCursor = cursor;
     if (cvs.conversationId != cvsId) {
@@ -74,6 +74,14 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
             });
             if (hasMsg) return;
             setHistoryMsgs(msgs);
+
+            // 去重，防止接口慢，新发的消息也拉回来，导致重复
+            msgs = msgs.filter((msg: any) => {
+              return !currentChatMsgs?.find?.(item => {
+                //@ts-ignore
+                return item.id === msg.id || item.mid === msg.id;
+              });
+            });
             messageStore.addHistoryMsgs(cvs, msgs);
           }
           setLoading(false);
@@ -86,7 +94,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
 
   const loadMore = () => {
     let nextCursor = historyMsgs[0]?.mid || historyMsgs[0]?.id || -1;
-    let msg = historyMsgs[0] || {};
+    const msg = historyMsgs[0] || {};
     const userId = rootStore.client.context.userId;
     const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
     if (cvs.conversationId != cvsId) {
