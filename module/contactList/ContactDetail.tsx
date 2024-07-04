@@ -148,7 +148,10 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                 size={100}
                 shape={theme?.avatarShape}
                 presence={{
-                  visible: data.type !== 'group' && features?.conversationList?.item?.presence,
+                  visible:
+                    data.type !== 'group' &&
+                    features?.conversationList?.item?.presence &&
+                    data.type !== 'request',
                   icon:
                     presenceMap?.[
                       rootStore.addressStore.appUsersInfo[id]?.isOnline

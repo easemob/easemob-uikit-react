@@ -167,15 +167,17 @@ class AddressStore {
   }
   deleteContactFromContactList(userId: string) {
     this.contacts = this.contacts.filter(item => item.userId !== userId);
+    delete this.appUsersInfo[userId];
   }
 
-  addContactToContactList(userId: string) {
+  addContactToContactList(userId: string, widthPresence = false) {
     // 先判断这个人是不是已经在联系人列表
-    let found = this.contacts.find(item => item.userId === userId);
+    const found = this.contacts.find(item => item.userId === userId);
     if (found) {
       return;
     }
-    this.getUserInfo(userId).then(userInfo => {
+
+    this.getUserInfo(userId, widthPresence, true).then(userInfo => {
       const name = userInfo.nickname || userId;
       let initial = '#';
       if (checkCharacter(name.substring(0, 1)) == 'en') {
@@ -187,7 +189,7 @@ class AddressStore {
       }
 
       runInAction(() => {
-        let found = this.contacts.find(item => item.userId === userId);
+        const found = this.contacts.find(item => item.userId === userId);
         if (found) {
           return;
         }
@@ -207,15 +209,15 @@ class AddressStore {
   }
 
   setGroups(groups: GroupItem[]) {
-    let currentGroupsId = this.groups.map(item => item.groupid);
-    let filteredGroups = groups.filter(
+    const currentGroupsId = this.groups.map(item => item.groupid);
+    const filteredGroups = groups.filter(
       ({ groupid }) => !currentGroupsId.find(id => id === groupid),
     );
     this.groups = [...this.groups, ...filteredGroups];
   }
 
   updateGroupAvatar(groupId: string, avatar: string) {
-    let idx = getGroupItemIndexFromGroupsById(groupId);
+    const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       this.groups[idx].avatarUrl = avatar;
       this.groups = [...this.groups];
@@ -223,7 +225,7 @@ class AddressStore {
   }
 
   updateGroupName(groupId: string, groupName: string) {
-    let idx = getGroupItemIndexFromGroupsById(groupId);
+    const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       this.groups[idx].groupname = groupName;
       this.groups = [...this.groups];
@@ -235,10 +237,10 @@ class AddressStore {
   }
 
   setGroupMembers(groupId: string, membersList: ChatSDK.GroupMember[]) {
-    let idx = getGroupItemIndexFromGroupsById(groupId);
+    const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
-      let currentMembers = this.groups[idx]?.members?.map(item => item.userId);
-      let filteredMembers = membersList
+      const currentMembers = this.groups[idx]?.members?.map(item => item.userId);
+      const filteredMembers = membersList
         .filter(
           //@ts-ignore
           item => !currentMembers?.find(id => id === (item.owner || item.member)),
@@ -264,7 +266,7 @@ class AddressStore {
   }
 
   removeGroupMember(groupId: string, userId: string) {
-    let idx = getGroupItemIndexFromGroupsById(groupId);
+    const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       if (this.groups[idx].members) {
         this.groups[idx].members = this.groups[idx].members?.filter(item => item.userId !== userId);
@@ -273,7 +275,7 @@ class AddressStore {
   }
 
   setGroupItemHasMembersNext(groupId: string, hasNext: boolean) {
-    let idx = getGroupItemIndexFromGroupsById(groupId);
+    const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       this.groups[idx].hasMembersNext = hasNext;
     }
@@ -304,25 +306,26 @@ class AddressStore {
     // @ts-ignore
     attributes: ChatSDK.MemberAttributes,
   ) {
-    let groupIdx = getGroupItemIndexFromGroupsById(groupId);
-    let idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) ?? -1;
+    const groupIdx = getGroupItemIndexFromGroupsById(groupId);
+    const idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) ?? -1;
     if (idx > -1) {
-      let memberList = this.groups[groupIdx].members || [];
+      const memberList = this.groups[groupIdx].members || [];
       memberList[idx].attributes = attributes;
     }
   }
 
   setGroupAdmins = (groupId: string, admins: string[]) => {
-    let idx = getGroupItemIndexFromGroupsById(groupId);
+    const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       this.groups[idx].admins = [...admins];
     }
   };
 
-  getUserInfo = (userId: string) => {
+  getUserInfo = (userId: string, withPresence: boolean = false, force = false) => {
+    console.log('是否有信息', this.appUsersInfo?.[userId], withPresence);
     let userInfo = this.appUsersInfo?.[userId];
-    if (!userInfo) {
-      return getUsersInfo({ userIdList: [userId], withPresence: false }).then(() => {
+    if (!userInfo || force) {
+      return getUsersInfo({ userIdList: [userId], withPresence }).then(() => {
         userInfo = this.appUsersInfo?.[userId];
         runInAction(() => {
           this.appUsersInfo[userId] = userInfo;
@@ -347,14 +350,14 @@ class AddressStore {
   }
 
   setChatroomAdmins = (chatroomId: string, admins: string[]) => {
-    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
       this.chatroom[idx].admins = [...admins];
     }
   };
 
   addUserToMuteList = (chatroomId: string, userId: string) => {
-    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
       const muteList = this.chatroom[idx].muteList || [];
       this.chatroom[idx].muteList = [...muteList, userId];
@@ -362,7 +365,7 @@ class AddressStore {
   };
 
   setChatroomMuteList = (chatroomId: string, muteList: string[]) => {
-    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
       this.chatroom[idx].muteList = [...muteList];
     }
@@ -371,7 +374,7 @@ class AddressStore {
   muteChatRoomMember = (chatroomId: string, userId: string, muteDuration?: number) => {
     if (!chatroomId || !userId) throw 'chatroomId or userId is empty';
     const rootStore = getStore();
-    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
       const muteList = this.chatroom[idx].muteList || [];
       if (muteList.includes(userId)) return Promise.resolve();
@@ -423,7 +426,7 @@ class AddressStore {
       });
   };
   removeUserFromMuteList = (chatroomId: string, userId: string) => {
-    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
       const muteList = this.chatroom[idx].muteList || [];
       this.chatroom[idx].muteList = muteList.filter(item => item !== userId);
@@ -431,7 +434,7 @@ class AddressStore {
   };
 
   setChatroomMemberIds = (chatroomId: string, membersId: string[]) => {
-    let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+    const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
       this.chatroom[idx].membersId = [
         ...new Set([...(this.chatroom[idx].membersId || []), ...membersId]),
@@ -447,7 +450,7 @@ class AddressStore {
         username: userId,
       })
       .then(() => {
-        let idx = this.chatroom.findIndex(item => item.id === chatroomId);
+        const idx = this.chatroom.findIndex(item => item.id === chatroomId);
         if (idx > -1) {
           this.chatroom[idx].membersId = this.chatroom[idx].membersId?.filter(
             item => item !== userId,
@@ -665,6 +668,7 @@ class AddressStore {
       .then(() => {
         runInAction(() => {
           this.groups = this.groups.filter(item => item.groupid !== groupId);
+          rootStore.messageStore.message.groupChat[groupId] = [];
         });
 
         rootStore.conversationStore.deleteConversation({
@@ -691,7 +695,7 @@ class AddressStore {
   }
 
   addContactRequest(request: ContactRequest) {
-    let foundIndex = this.requests.findIndex(
+    const foundIndex = this.requests.findIndex(
       item => item.from === request.from && item.to === request.to,
     );
     if (foundIndex >= 0) {

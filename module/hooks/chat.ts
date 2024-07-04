@@ -8,6 +8,7 @@ import { useGroupMembersAttributes } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import ts from 'typescript';
 import { ProviderProps } from '../store/Provider';
+import { runInAction } from 'mobx';
 
 const useEventHandler = (props: ProviderProps) => {
   const { initConfig, features } = props;
@@ -174,8 +175,7 @@ const useEventHandler = (props: ProviderProps) => {
         switch (operation) {
           case 'memberAttributesUpdate':
             // @ts-ignore
-            const { userId, attributes } = message;
-            addressStore.setGroupMemberAttributes(id, userId, attributes);
+            addressStore.setGroupMemberAttributes(id, message.userId, message.attributes);
             break;
           case 'setAdmin':
             if (groupItem) {
@@ -184,7 +184,7 @@ const useEventHandler = (props: ProviderProps) => {
             break;
           case 'removeAdmin':
             if (groupItem) {
-              let admins = [...(groupItem?.admins || [])];
+              const admins = [...(groupItem?.admins || [])];
               admins.splice(admins.indexOf(client.user), 1);
               addressStore.setGroupAdmins(id, [...admins]);
             }
@@ -237,6 +237,8 @@ const useEventHandler = (props: ProviderProps) => {
               addressStore.removeGroupFromContactList(gid);
             }
             break;
+          default:
+            break;
         }
       },
       onPresenceStatusChange: message => {
@@ -253,13 +255,16 @@ const useEventHandler = (props: ProviderProps) => {
                   isOnline = true;
                 }
               });
-              appUserInfo[presenceInfo.userId].isOnline = isOnline;
-              appUserInfo[presenceInfo.userId].presenceExt = presenceInfo.ext;
-              addressStore.setAppUserInfo({ ...appUserInfo });
+
+              runInAction(() => {
+                appUserInfo[presenceInfo.userId].isOnline = isOnline;
+                appUserInfo[presenceInfo.userId].presenceExt = presenceInfo.ext;
+                addressStore.setAppUserInfo({ ...appUserInfo });
+              });
             }
           });
         const changeList = message.map(item => {
-          let status: Record<string, string> = {};
+          const status: Record<string, string> = {};
           item.statusDetails.forEach(s => {
             status[s.device] = String(s.status);
           });
@@ -312,12 +317,14 @@ const useEventHandler = (props: ProviderProps) => {
         console.log('onContactAdded', message);
 
         const { addressStore } = rootStore;
-        addressStore.addContactToContactList(message.from);
+        const presence = features?.conversationList?.item?.presence ?? false;
+        addressStore.addContactToContactList(message.from, presence);
         // addressStore.addContact(message.from);
       },
       onContactAgreed: message => {
         const { addressStore } = rootStore;
-        addressStore.addContactToContactList(message.from);
+        const presence = features?.conversationList?.item?.presence ?? false;
+        addressStore.addContactToContactList(message.from, presence);
       },
     });
 
