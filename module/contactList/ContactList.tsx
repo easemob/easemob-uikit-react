@@ -53,7 +53,6 @@ function getBrands(members: any) {
       ? item.remark || rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
       : item.groupname;
     item.userId && (item.nickname = item.name);
-    console.log('--->', item);
     // item.avatarUrl = item.avatarUrl; //群组有avatarUrl
     if (checkCharacter(item.name.substring(0, 1)) == 'en') {
       item.initial = item.name.substring(0, 1).toUpperCase();

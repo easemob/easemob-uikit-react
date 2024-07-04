@@ -88,7 +88,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
   const privateChat = (userId: string) => {
     const result = onPrivateChat?.(userId);
     if (result == false) return;
-    let name = addressStore.appUsersInfo?.[userId]?.nickname;
+    const name = addressStore.appUsersInfo?.[userId]?.nickname;
     conversationStore.addConversation({
       chatType: 'singleChat',
       conversationId: userId,
@@ -214,7 +214,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
   // 给groupMember 加上 isInContact属性
   const renderData =
     groupMembers?.map((item: any) => {
-      let renderItem = { ...item };
+      const renderItem = { ...item };
       renderItem.isInContact = addressStore.contacts.some((contact: any) => {
         return contact.userId === item.userId;
       });
