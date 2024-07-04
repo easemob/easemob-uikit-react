@@ -73,7 +73,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
-    let conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(videoMessage);
 
     rootStore.messageStore.deleteMessage(
       {
@@ -91,7 +91,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(videoMessage);
 
     rootStore.messageStore.addReaction(
       {
@@ -105,7 +105,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(videoMessage);
     rootStore.messageStore.deleteReaction(
       {
         chatType: videoMessage.chatType,
@@ -118,7 +118,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(videoMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
@@ -147,7 +147,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    let conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(videoMessage);
     rootStore.messageStore.recallMessage(
       {
         chatType: videoMessage.chatType,
@@ -159,7 +159,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       true,
     );
   };
-  let conversationId = getCvsIdFromMessage(videoMessage);
+  const conversationId = getCvsIdFromMessage(videoMessage);
   const handleSelectMessage = () => {
     const selectable =
       rootStore.messageStore.selectedMessage[videoMessage.chatType as 'singleChat' | 'groupChat'][
@@ -216,7 +216,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   // @ts-ignore
-  let _thread =
+  const _thread =
     // @ts-ignore
     videoMessage.chatType == 'groupChat' &&
     thread &&
@@ -307,7 +307,11 @@ const VideoMessage = (props: VideoMessageProps) => {
           preload="metadata"
           onPlay={handlePlayVideo}
           poster={videoMessage.thumb}
-          src={videoMessage.url}
+          src={`${videoMessage.url}${
+            videoMessage?.url?.includes('?')
+              ? '&origin-file=true'
+              : '?em-redirect=true&origin-file=true'
+          }`}
           {...videoProps}
         ></video>
       </div>
