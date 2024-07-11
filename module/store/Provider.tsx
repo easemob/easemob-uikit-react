@@ -154,7 +154,7 @@ const Provider: React.FC<ProviderProps> = props => {
     if (initConfig.userId && initConfig.token) {
       client
         .open({
-          user: initConfig.userId,
+          user: initConfig.userId.toLowerCase(),
           agoraToken: initConfig.token,
         })
         .then(() => {
