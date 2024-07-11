@@ -33,6 +33,7 @@ export interface ConversationItemProps {
   badgeColor?: string; // 未读数气泡颜色
   isActive?: boolean; // 是否被选中
   data: ConversationData[0];
+  renderMessageContent?: (msg: BaseMessageType) => ReactNode | undefined;
   // 右侧更多按钮配置
   moreAction?: {
     visible?: boolean;
@@ -72,6 +73,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       ],
     },
     formatDateTime,
+    renderMessageContent,
     ...others
   } = props;
 
@@ -213,7 +215,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     );
   }
 
-  let lastMsg: ReactNode[] | ReactNode = '';
+  let lastMsg: ReactNode | ReactNode[] = '';
+
   switch (data.lastMessage?.type) {
     case 'txt':
       if (data.lastMessage?.msg == 'the combine message') {
@@ -253,6 +256,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       console.warn('unexpected message type:', data.lastMessage?.type);
       break;
   }
+  lastMsg = renderMessageContent?.(data.lastMessage as BaseMessageType) ?? lastMsg;
   if (data.chatType == 'groupChat') {
     const msgFrom = data.lastMessage?.from || '';
     let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}: ` : '';
@@ -268,7 +272,11 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         from = `${getGroupMemberNickName(memberItem)}: `;
       }
     }
-    lastMsg = [from, ...Array.from(lastMsg)];
+    if (Array.isArray(lastMsg)) {
+      lastMsg = [from, ...Array.from(lastMsg)];
+    } else {
+      lastMsg = [from, lastMsg];
+    }
   }
 
   return (
