@@ -18,6 +18,7 @@ export interface ReactionData {
 export interface ReactionMessageProps {
   prefixCls?: string;
   className?: string;
+  style?: React.CSSProperties;
   reactionData: ReactionData[];
   direction?: 'ltr' | 'rtl';
   icon?: ReactNode;
@@ -44,6 +45,7 @@ const ReactionMessage = (props: ReactionMessageProps) => {
     onDelete,
     prefixCls: customizePrefixCls,
     className,
+    style,
     direction = 'ltr',
     onShowUserList,
     reactionConfig,
@@ -86,6 +88,7 @@ const ReactionMessage = (props: ReactionMessageProps) => {
   return (
     <div
       className={classString}
+      style={{ ...style }}
       onMouseOver={() => {
         setHoverStatus(true);
       }}

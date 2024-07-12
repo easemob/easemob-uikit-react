@@ -753,6 +753,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           onClick={handleClickEmoji}
           onDelete={handleDeleteReactionEmoji}
           onShowUserList={handleShowReactionUserList}
+          style={{ padding: bubbleArrow ? '0 90px' : '0 86px' }}
         />
       )}
     </div>
