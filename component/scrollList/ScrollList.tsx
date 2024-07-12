@@ -20,7 +20,7 @@ export interface ScrollListProps<T> {
   onScroll?: (e: Event) => void;
 }
 
-let ScrollList = function ScrollListInner<T>() {
+const ScrollList = function ScrollListInner<T>() {
   return memo(
     observer(
       forwardRef<any, ScrollListProps<T>>(function InternalScrollList(props, ref) {
@@ -85,21 +85,21 @@ let ScrollList = function ScrollListInner<T>() {
             onScroll?.(event);
             if (!hasMore || loading) return;
             //可视区高度
-            let scrollHeight = (event.target as HTMLElement)?.scrollHeight;
+            const scrollHeight = (event.target as HTMLElement)?.scrollHeight;
             //滚动高度
-            let scrollTop = (event.target as HTMLElement).scrollTop;
+            const scrollTop = (event.target as HTMLElement).scrollTop;
             //列表内容实际高度
-            let offsetHeight = (event.target as HTMLElement).offsetHeight;
+            const offsetHeight = (event.target as HTMLElement).offsetHeight;
             setScrollTop(scrollTop);
             // 滚动到顶加载更多
             if (scrollDirection === 'up' && scrollTop < 100) {
-              let offsetBottom = scrollHeight - (scrollTop + offsetHeight);
+              const offsetBottom = scrollHeight - (scrollTop + offsetHeight);
               setScrollBottom(offsetBottom);
               run();
             }
             // scroll to bottom load data
             if (scrollDirection === 'down') {
-              let offsetBottom = scrollHeight - (scrollTop + offsetHeight);
+              const offsetBottom = scrollHeight - (scrollTop + offsetHeight);
               setScrollBottom(offsetBottom);
               if (offsetBottom < 50) {
                 run();
@@ -117,15 +117,17 @@ let ScrollList = function ScrollListInner<T>() {
         // 监听当前滚动位置， 记录滚动位置， 当data数据变多时，设置滚动条位置为原来的位置
         useEffect(() => {
           if (containerRef.current && scrollDirection == 'up' && scrollTop < 100) {
-            let scrollHeight = containerRef.current.scrollHeight;
+            const scrollHeight = containerRef.current.scrollHeight;
             //列表内容实际高度
-            let offsetHeight = containerRef.current.offsetHeight;
+            const offsetHeight = containerRef.current.offsetHeight;
             containerRef.current.scrollTop = scrollHeight - scrollBottom - offsetHeight;
           }
         }, [data.length]);
         return (
           <div className={classString} style={style} ref={containerRef}>
-            <RenderItem data={data} renderItem={renderItem}></RenderItem>
+            <div style={{ overflowAnchor: 'none' }}>
+              <RenderItem data={data} renderItem={renderItem}></RenderItem>
+            </div>
           </div>
         );
       }),
@@ -145,5 +147,5 @@ const RenderItem = memo(
     );
   },
 );
-
+RenderItem.displayName = 'RenderItem';
 export { ScrollList };

@@ -24,9 +24,10 @@ export interface ImageMessageProps extends BaseMessageProps {
   onClickImage?: (url: string) => void;
   nickName?: string;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
+  imgProps?: React.ImgHTMLAttributes<HTMLImageElement>;
 }
 
-let ImageMessage = (props: ImageMessageProps) => {
+const ImageMessage = (props: ImageMessageProps) => {
   const {
     imageMessage: message,
     style,
@@ -38,6 +39,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     shape,
     prefix,
     bubbleClass,
+    imgProps,
     ...others
   } = props;
   let type = props.type;
@@ -45,7 +47,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-img', prefix);
   const context = useContext(RootContext);
-  let conversationId = getCvsIdFromMessage(message);
+  const conversationId = getCvsIdFromMessage(message);
   const { theme } = context;
   const { pinMessage } = usePinnedMessage({
     conversation: {
@@ -72,25 +74,25 @@ let ImageMessage = (props: ImageMessageProps) => {
   const [previewVisible, setPreviewVisible] = useState(false);
 
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
-    var img = new Image();
+    const img = new Image();
     img.src = path;
     img.setAttribute('crossOrigin', 'Anonymous');
     img.onload = function () {
-      var that: HTMLImageElement = this as any as HTMLImageElement;
+      const that: HTMLImageElement = this as any as HTMLImageElement;
       // 默认按比例压缩
-      var w = that.width,
+      const w = that.width,
         h = that.height,
         scale = w / h;
       // w = obj.width || w;
       // h = obj.height || w / scale;
-      var quality = 1; // 默认图片质量为0.7
+      let quality = 1; // 默认图片质量为0.7
       //生成canvas
-      var canvas = document.createElement('canvas');
-      var ctx = canvas.getContext('2d');
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
       // 创建属性节点
-      var anw = document.createAttribute('width');
+      const anw = document.createAttribute('width');
       anw.nodeValue = w.toString();
-      var anh = document.createAttribute('height');
+      const anh = document.createAttribute('height');
       anh.nodeValue = h.toString();
       canvas.setAttributeNode(anw);
       canvas.setAttributeNode(anh);
@@ -100,7 +102,7 @@ let ImageMessage = (props: ImageMessageProps) => {
         quality = obj.quality;
       }
       // quality值越小，所绘制出的图像越模糊
-      var base64 = canvas.toDataURL('image/jpeg', quality);
+      const base64 = canvas.toDataURL('image/jpeg', quality);
       setPreviewImageUrl(base64);
       // setBigImgUrl(base64);
       // setLoadingFlag(false);
@@ -113,7 +115,7 @@ let ImageMessage = (props: ImageMessageProps) => {
     canvasDataURL(url, { quality: 1 });
     onClickImage?.(url);
   };
-  let renderImgUrl = bySelf ? message.url || message?.file?.url : (message.thumb as string);
+  const renderImgUrl = bySelf ? message.url || message?.file?.url : (message.thumb as string);
 
   const [imgUrl, setImgUrl] = useState(renderImgUrl);
   // const img = useRef(
@@ -138,7 +140,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
-    let conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(message);
     rootStore.messageStore.deleteMessage(
       {
         chatType: message.chatType,
@@ -155,7 +157,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(message);
 
     rootStore.messageStore.addReaction(
       {
@@ -169,7 +171,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(message);
     rootStore.messageStore.deleteReaction(
       {
         chatType: message.chatType,
@@ -182,7 +184,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(message);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
@@ -211,7 +213,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    let conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(message);
     rootStore.messageStore.recallMessage(
       {
         chatType: message.chatType,
@@ -280,7 +282,7 @@ let ImageMessage = (props: ImageMessageProps) => {
   };
 
   // @ts-ignore
-  let _thread =
+  const _thread =
     // @ts-ignore
     message.chatType == 'groupChat' &&
     thread &&
@@ -370,6 +372,7 @@ let ImageMessage = (props: ImageMessageProps) => {
             src={imgUrl}
             alt={message.file?.filename}
             onClick={() => handleClickImg(message.url || renderImgUrl)}
+            {...imgProps}
           />
         </div>
       </BaseMessage>
