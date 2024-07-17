@@ -16,6 +16,7 @@ export interface ContextProps {
     userId?: string;
     translationTargetLanguage?: string;
     useUserInfo?: boolean;
+    maxMessages?: number;
   };
   client: ChatSDK.Connection;
   features?: {
