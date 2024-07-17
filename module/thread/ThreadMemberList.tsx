@@ -99,7 +99,7 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
       )
       .then((data: any) => {
         setCursor(data?.cursor || '');
-        setModalName(`${t('thread')}${t('members')}(${data.length})`);
+        setModalName(`${t('threadMembers')}(${data.length})`);
         setTimeout(() => {
           // @ts-ignore
           threadScrollRef?.current?.scrollTo?.(threadStore.currentThread.info?.members * 64);
@@ -200,7 +200,7 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
       )
       .then((data: any) => {
         setCursor(data?.cursor || '');
-        setModalName(`${t('thread')}${t('members')}(${data.length})`);
+        setModalName(`${t('threadMembers')}(${data.length})`);
       });
   }, []);
 
