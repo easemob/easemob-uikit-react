@@ -261,7 +261,7 @@ export function sortByPinned(a: any, b: any) {
     if (!a.lastMessage?.time) {
       return 0;
     }
-    return a.lastMessage.time > b.lastMessage.time ? -1 : 1; // 保持原有顺序
+    return a.lastMessage?.time > b.lastMessage?.time ? -1 : 1; // 保持原有顺序
   } else {
     return 0; // 保持原有顺序
   }

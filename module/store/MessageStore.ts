@@ -16,6 +16,9 @@ import {
   getGroupMemberNickName,
   getMsgSenderNickname,
 } from '../utils/index';
+
+import { resetCache } from '../hooks/useHistoryMsg';
+
 export interface Message {
   singleChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
   groupChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
@@ -385,7 +388,15 @@ class MessageStore {
       // @ts-ignore
       this.message[message.chatType][conversationId] = [message];
     } else {
-      // @ts-ignore
+      const MAX_LENGTH = this.rootStore.initConfig.maxMessages || 200;
+      if (this.message[message.chatType][conversationId].length > MAX_LENGTH) {
+        this.message[message.chatType][conversationId].splice(
+          0,
+          this.message[message.chatType][conversationId].length - MAX_LENGTH,
+        );
+        // this.message[message.chatType][conversationId].shift();
+        resetCache(message.chatType, conversationId);
+      }
       this.message[message.chatType][conversationId].push(message);
     }
     // 是当前会话的消息，并且是holding状态， unreadMessageCount +1

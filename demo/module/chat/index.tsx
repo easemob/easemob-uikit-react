@@ -453,7 +453,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         userId: userId || 'sttest',
         password: password || '123',
         useUserInfo: true,
-
+        maxMessages: 100
         // token:
         //   '007eJxTYFBRW8PxsjzKTEt3t/q21aylFwrC37GaPK73k382686EjO8KDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJh06XpTYEMjIY6nO0MjKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAHZsmnQ==',
         // appKey: 'easemob#easeim',

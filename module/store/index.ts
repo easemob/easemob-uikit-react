@@ -14,7 +14,7 @@ import PinnedMessagesStore from './PinnedMessagesStore';
 import { ChatSDK } from 'module/SDK';
 import { clearPageNum } from '../hooks/useConversation';
 import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
-
+import { ProviderProps } from '../store/Provider';
 interface InitConfig {
   appKey: string;
 }
@@ -26,7 +26,7 @@ class RootStore {
   pinnedMessagesStore;
   client: ChatSDK.Connection;
   loginState = false;
-  initConfig = { appKey: '' };
+  initConfig: ProviderProps['initConfig'] = { appKey: '' };
   constructor() {
     this.client = {} as ChatSDK.Connection;
     this.messageStore = new MessageStore(this);
