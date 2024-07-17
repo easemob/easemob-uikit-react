@@ -374,9 +374,9 @@ const Thread = (props: ThreadProps) => {
   const handleDisbandThread = () => {
     setModalData({
       open: true,
-      title: t('disbandThread'),
-      content: t('are you sure you want to disband this thread'),
-      okText: t('disband'),
+      title: t('destroyThread'),
+      content: t('are you sure you want to destroy this thread'),
+      okText: t('destroy'),
       cancelText: t('cancel'),
       onOk: () => {
         rootStore.client
@@ -476,27 +476,27 @@ const Thread = (props: ThreadProps) => {
     visible: true,
     actions: [
       {
-        content: `${t('thread')}${t('members')}`,
+        content: `${t('threadMembers')}`,
         onClick: () => {
           handleGetThreadMembers();
         },
       },
       {
         visible: role != 'member',
-        content: `${t('modify')}${t('thread')}`,
+        content: `${t('modifyThread')}`,
         onClick: () => {
           handleEditThreadName();
         },
       },
       {
-        content: `${t('leave')}${t('thread')}`,
+        content: `${t('leaveThread')}`,
         onClick: () => {
           handleLeaveThread();
         },
       },
       {
         visible: role == 'admin' || role == 'owner',
-        content: `${t('disband')}${t('thread')}`,
+        content: `${t('destroyThread')}`,
         onClick: () => {
           handleDisbandThread();
         },

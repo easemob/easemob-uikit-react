@@ -78,7 +78,7 @@ const ThreadList = (props: ThreadListProps) => {
           ></Input>
         ) : (
           <div className={`${prefixCls}-header-title`}>
-            {headerContent || `${i18next.t('thread')}${i18next.t('list')}`}
+            {headerContent || i18next.t('threadList')}
           </div>
         )}
       </div>
