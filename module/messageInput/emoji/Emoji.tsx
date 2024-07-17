@@ -101,7 +101,7 @@ const Emoji = (props: EmojiProps) => {
     e.preventDefault();
     const selectedEmoji =
       (e.target as HTMLImageElement).alt || ((e.target as any).children[0] as HTMLImageElement).alt;
-    // setOpen(false);
+    setOpen(false);
     if (selectedList && selectedList.length > 0 && selectedList.includes(selectedEmoji)) {
       return onDelete && onDelete(selectedEmoji);
     }
@@ -110,6 +110,7 @@ const Emoji = (props: EmojiProps) => {
 
   const handleClickIcon = (e: React.MouseEvent<Element, MouseEvent>) => {
     onClick && onClick(e);
+    setOpen(true);
   };
   const titleNode = (
     <div className={classString} onClick={handleEmojiClick}>
@@ -117,7 +118,12 @@ const Emoji = (props: EmojiProps) => {
     </div>
   );
   const iconNode = icon ? (
-    icon
+    <div
+      onClick={handleClickIcon}
+      style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+    >
+      {icon}
+    </div>
   ) : (
     <span className={`${prefixCls}-iconBox`} style={{ ...style }} title={t('emoji') as string}>
       <Button type="text" shape="circle">
@@ -138,7 +144,7 @@ const Emoji = (props: EmojiProps) => {
       arrowPointAtCenter={false}
       arrow={false}
       placement={placement}
-      // open={isOpen}
+      open={isOpen}
     >
       {iconNode}
     </Tooltip>
