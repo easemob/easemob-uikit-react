@@ -712,7 +712,8 @@ const Chat = forwardRef((props: ChatProps, ref) => {
                 visible:
                   !!features?.conversationList?.item?.presence &&
                   CVS.chatType === 'singleChat' &&
-                  typeof presenceMap !== 'undefined',
+                  typeof presenceMap !== 'undefined' &&
+                  !CVS.conversationId.includes('chatbot'),
                 icon:
                   presenceMap?.[
                     rootStore.addressStore.appUsersInfo[CVS.conversationId]?.isOnline
@@ -725,6 +726,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
                 !!features?.conversationList?.item?.presence &&
                 CVS.chatType === 'singleChat' &&
                 typeof presenceMap !== 'undefined' &&
+                !CVS.conversationId.includes('chatbot') &&
                 (rootStore.addressStore.appUsersInfo[CVS.conversationId]?.isOnline
                   ? t(rootStore.addressStore.appUsersInfo[CVS.conversationId]?.presenceExt ?? '') ??
                     t('Online')
