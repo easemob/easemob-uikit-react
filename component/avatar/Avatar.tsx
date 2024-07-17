@@ -89,7 +89,7 @@ export const InternalAvatar = (props: any, ref: any) => {
     sizeCls,
     {
       [`${prefixCls}-${shape}`]: !!shape,
-      // [`${prefixCls}-image`]: hasImageElement || (src && isImgExist),
+      [`${prefixCls}-hasImage`]: typeof src === 'string' && isImgExist && src !== '',
       [`${prefixCls}-icon`]: !!icon,
       [`${prefixCls}-${themeMode}`]: !!themeMode,
     },

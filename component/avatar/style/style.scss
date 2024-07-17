@@ -63,6 +63,9 @@ $presence-tag-cls: #{$cui-prefix}-presence-tag;
     white-space: break-spaces;
     justify-content: center;
     border-radius: 50%;
+    &-hasImage{
+        background: transparent;
+    }
     &-image {
         background: transparent;
         width: 100%;
