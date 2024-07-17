@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ReactNode, useContext, useEffect, useState } from 'react';
+import React, { ChangeEvent, ReactNode, useContext, useEffect, useState, useRef } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
@@ -19,6 +19,7 @@ import UserProfile from '../userProfile';
 import { observer } from 'mobx-react-lite';
 import { EmojiConfig } from '../messageInput/emoji/Emoji';
 import { RootContext } from '../store/rootContext';
+import { use } from 'i18next';
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -83,6 +84,7 @@ export interface BaseMessageProps {
   onCreateThread?: () => void;
   thread?: boolean; // whether show thread
   chatThreadOverview?: ChatSDK.ChatThreadOverview;
+  showNicknamesForAllMessages?: boolean; //是否所有的消息都展示昵称，默认false, 自己发的消息不展示昵称，单聊消息不展示昵称，群聊其他人的消息展示昵称
   onClickThreadTitle?: () => void;
   reactionConfig?: ReactionMessageProps['reactionConfig'];
   formatDateTime?: (time: number) => string;
@@ -165,6 +167,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     select = false,
     thread = true,
     messageStatus = true,
+    showNicknamesForAllMessages = false,
     chatThreadOverview,
     onClickThreadTitle,
     reactionConfig,
@@ -629,14 +632,23 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
 
   const [messageActionsOpen, setMessageActionsOpen] = useState(false);
+  const checkboxRef = useRef(null);
   return (
     <div>
       <div className="thread-container">
         {select && (
-          <Checkbox shape={shape} className="checkbox" onChange={handleCheckboxChange}></Checkbox>
+          <Checkbox
+            ref={checkboxRef}
+            shape={shape}
+            className="checkbox"
+            onChange={handleCheckboxChange}
+          ></Checkbox>
         )}
         <div
           id={id}
+          onClick={() => {
+            checkboxRef.current?.click?.();
+          }}
           className={classString}
           style={{ ...style }}
           onMouseOver={() => setHoverStatus(true)}
@@ -673,7 +685,8 @@ let BaseMessage = (props: BaseMessageProps) => {
                   ></RepliedMsg>
                 ) : (
                   <div className={`${prefixCls}-info`}>
-                    {message?.chatType !== 'singleChat' && !isCurrentUser && (
+                    {((message?.chatType !== 'singleChat' && !isCurrentUser) ||
+                      showNicknamesForAllMessages) && (
                       <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
                     )}
                   </div>

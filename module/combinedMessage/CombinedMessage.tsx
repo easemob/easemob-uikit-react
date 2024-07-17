@@ -203,6 +203,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               direction="ltr"
               thread={false}
               renderUserProfile={renderUserProfile}
+              showNicknamesForAllMessages={true}
             />
           );
           break;
@@ -217,6 +218,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               customAction={{ visible: false }}
               thread={false}
               renderUserProfile={renderUserProfile}
+              showNicknamesForAllMessages={true}
             />
           );
           break;
@@ -232,6 +234,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               customAction={{ visible: false }}
               thread={false}
               renderUserProfile={renderUserProfile}
+              showNicknamesForAllMessages={true}
             />
           );
           break;
@@ -247,6 +250,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               direction="ltr"
               thread={false}
               renderUserProfile={renderUserProfile}
+              showNicknamesForAllMessages={true}
             />
           );
           break;
@@ -262,6 +266,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               customAction={{ visible: false }}
               thread={false}
               renderUserProfile={renderUserProfile}
+              showNicknamesForAllMessages={true}
             />
           );
           break;
@@ -278,6 +283,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
                 customAction={{ visible: false }}
                 thread={false}
                 renderUserProfile={renderUserProfile}
+                showNicknamesForAllMessages={true}
               />
             );
           } else {
@@ -290,6 +296,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
                 direction="ltr"
                 thread={false}
                 renderUserProfile={renderUserProfile}
+                showNicknamesForAllMessages={true}
               >
                 {t('customMessage') as string}
               </TextMessage>
@@ -308,6 +315,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               customAction={{ visible: false }}
               thread={false}
               renderUserProfile={renderUserProfile}
+              showNicknamesForAllMessages={true}
             />
           );
           break;
