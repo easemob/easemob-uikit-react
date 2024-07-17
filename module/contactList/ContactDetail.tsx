@@ -151,7 +151,8 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                   visible:
                     data.type !== 'group' &&
                     features?.conversationList?.item?.presence &&
-                    data.type !== 'request',
+                    data.type !== 'request' &&
+                    !id.includes('chatbot'),
                   icon:
                     presenceMap?.[
                       rootStore.addressStore.appUsersInfo[id]?.isOnline
