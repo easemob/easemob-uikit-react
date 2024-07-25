@@ -46,21 +46,21 @@ export interface MessageInputProps {
 }
 
 function converToMessage(e: string) {
-  var t = (function () {
-    var t: Array<ReactNode> = [],
+  const t = (function () {
+    let t: Array<ReactNode> = [],
       r = document.createElement('div');
     r.innerHTML = e.replace(/\\/g, '###h###');
-    for (
-      var n = r.querySelectorAll('img'), a = r.querySelectorAll('div'), i = n.length, o = a.length;
-      i--;
-
-    ) {
-      var s = document.createTextNode(n[i].getAttribute('data-key') as string);
+    const n = r.querySelectorAll('img');
+    const a = r.querySelectorAll('div');
+    let i = n.length;
+    let o = a.length;
+    for (; i--; ) {
+      const s = document.createTextNode(n[i].getAttribute('data-key') as string);
       n[i].parentNode?.insertBefore(s, n[i]);
       n[i].parentNode?.removeChild(n[i]);
     }
     for (; o--; ) t.push(a[o].innerHTML), a[o].parentNode?.removeChild(a[o]);
-    var c = (t = t.reverse()).length ? '\n' + t.join('\n') : t.join('\n');
+    const c = (t = t.reverse()).length ? '\n' + t.join('\n') : t.join('\n');
     return (r.innerText + c)
       .replace(/###h###/g, '&#92;')
       .replace(/<br>/g, '\n')
@@ -107,14 +107,15 @@ const MessageInput = (props: MessageInputProps) => {
   const insertCustomHtml = (t: string, e: keyof typeof emoji.map) => {
     if (!textareaRef.current) return;
     // @ts-ignore
-    var i = textareaRef.current.divRef.current as any;
+    const i = textareaRef.current.divRef.current as any;
     const offset = i.innerText.length;
+    let n: any, a: any;
     if ('getSelection' in window) {
-      var s = window.getSelection();
+      const s = window.getSelection();
       if (s && 1 === s.rangeCount) {
         i.focus();
-        var n = s.getRangeAt(0),
-          a = new Image();
+        n = s.getRangeAt(0);
+        a = new Image();
         (a.src = t),
           a.setAttribute('data-key', e),
           a.setAttribute('width', '16px'),
@@ -147,11 +148,11 @@ const MessageInput = (props: MessageInputProps) => {
   const handleClickEmojiIcon = () => {
     if (!textareaRef.current) return;
     // @ts-ignore
-    var el = textareaRef.current.divRef.current as any;
-    var range = document.createRange();
+    const el = textareaRef.current.divRef.current as any;
+    const range = document.createRange();
     range.selectNodeContents(el);
     range.collapse(false);
-    var sel = window.getSelection();
+    const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
   };

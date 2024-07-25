@@ -41,7 +41,7 @@ export interface ThreadProps {
   // direction?: 'ltr' | 'rtl';
   // message: ChatSDK.MessageBody;
   messageListProps?: MsgListProps;
-  createThread?: boolean;
+  // createThread?: boolean;
   // groupID: string;
   // threadID?: string;
   // originalMsg: ChatSDK.MessageBody;

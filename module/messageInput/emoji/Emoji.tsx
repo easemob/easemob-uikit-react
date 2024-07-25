@@ -29,6 +29,7 @@ export interface EmojiProps {
   onDelete?: (emojiString: string) => void;
   emojiConfig?: EmojiConfig;
   placement?: TooltipProps['placement'];
+  closeAfterClick?: boolean;
 }
 
 const Emoji = (props: EmojiProps) => {
@@ -45,6 +46,7 @@ const Emoji = (props: EmojiProps) => {
     prefix,
     emojiContainerStyle = {},
     placement = 'bottom',
+    closeAfterClick = true,
   } = props;
   const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
@@ -137,18 +139,35 @@ const Emoji = (props: EmojiProps) => {
       </Button>
     </span>
   );
-  return (
-    <Tooltip
-      title={titleNode}
-      trigger={trigger}
-      arrowPointAtCenter={false}
-      arrow={false}
-      placement={placement}
-      open={isOpen}
-    >
-      {iconNode}
-    </Tooltip>
-  );
-};
 
+  if (closeAfterClick == false) {
+    return (
+      <Tooltip
+        title={titleNode}
+        trigger={trigger}
+        arrowPointAtCenter={false}
+        arrow={false}
+        placement={placement}
+      >
+        {iconNode}
+      </Tooltip>
+    );
+  } else {
+    return (
+      <Tooltip
+        title={titleNode}
+        trigger={trigger}
+        arrowPointAtCenter={false}
+        arrow={false}
+        placement={placement}
+        onOpenChange={() => {
+          setOpen(!isOpen);
+        }}
+        open={isOpen}
+      >
+        {iconNode}
+      </Tooltip>
+    );
+  }
+};
 export { Emoji };

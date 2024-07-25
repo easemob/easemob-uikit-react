@@ -10,7 +10,10 @@ type CompoundedComponent = ForwardRefExoticComponent<AvatarProps> & {
 };
 
 const Avatar = InternalAvatar as any as CompoundedComponent;
+
 Avatar.Group = Group;
+
+Avatar.displayName = 'Avatar';
 export default Avatar as any;
 
 export type { AvatarProps };

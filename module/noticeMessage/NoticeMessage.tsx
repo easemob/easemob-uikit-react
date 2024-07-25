@@ -48,9 +48,9 @@ const NoticeMessage = (props: NoticeMessageProps) => {
   const { noticeMessage, style = {} } = props;
   let { message, time } = noticeMessage;
   const classString = classNames(prefixCls, className);
+  const myUserId = rootStore.client.user;
   switch (noticeMessage.noticeType) {
     case 'recall':
-      const myUserId = rootStore.client.user;
       if (myUserId == noticeMessage.ext?.from) {
         message = t('you') + ' ' + t('unsentAMessage');
       } else {

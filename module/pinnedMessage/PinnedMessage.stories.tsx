@@ -6,7 +6,7 @@ import Provider from '../store/Provider';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
-  title: 'Container/PinnedMessage',
+  title: 'Module/PinnedMessage',
   component: PinnedMessage,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
@@ -49,11 +49,11 @@ rootStore.pinnedMessagesStore.messages = {
 };
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 const Template: ComponentStory<typeof PinnedMessage> = args => {
-  const { visible, show, hide } = usePinnedMessage({
-    conversation: {
-      conversationId: '20292712912182',
-      conversationType: 'groupChat',
-    },
+  rootStore.conversationStore.setCurrentCvs({
+    chatType: 'groupChat',
+    conversationId: '20292712912182',
+    name: 'groupChat',
+    unreadCount: 0,
   });
   return (
     <div style={{ height: '500px' }}>
@@ -62,13 +62,34 @@ const Template: ComponentStory<typeof PinnedMessage> = args => {
           appKey: 'a#b',
         }}
       >
-        <div onClick={show}>show</div>
-        <div onClick={hide}>hide</div>
-        {visible && <PinnedMessage {...args} />}
+        <PinnedMessage {...args} />
       </Provider>
     </div>
   );
 };
 
-export const Primary = Template.bind({});
-Primary.args = {};
+const DarkTemplate: ComponentStory<typeof PinnedMessage> = args => {
+  rootStore.conversationStore.setCurrentCvs({
+    chatType: 'groupChat',
+    conversationId: '20292712912182',
+    name: 'groupChat',
+    unreadCount: 0,
+  });
+  return (
+    <div style={{ height: '500px' }}>
+      <Provider
+        initConfig={{
+          appKey: 'a#b',
+        }}
+        theme={{
+          mode: 'dark',
+        }}
+      >
+        <PinnedMessage {...args} />
+      </Provider>
+    </div>
+  );
+};
+
+export const Default = Template.bind({});
+export const Dark = DarkTemplate.bind({});

@@ -25,6 +25,7 @@ const Template: ComponentStory<typeof UserCardMessage> = args => (
 );
 
 export const Primary = Template.bind({});
+export const Secondly = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
 Primary.args = {
   customMessage: {
@@ -39,7 +40,28 @@ Primary.args = {
     customEvent: 'userCard',
     customExts: {
       uid: 'zd2',
-      nickname: '赵云',
+      nickname: 'Tom',
+      avatar: 'https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/sample_avatar/sample_avatar_1.png',
+    },
+  },
+};
+
+Secondly.args = {
+  type: 'secondly',
+  direction: 'ltr',
+  customMessage: {
+    type: 'custom',
+    id: '1234567890',
+    to: 'userId',
+    chatType: 'singleChat',
+    bySelf: false,
+    from: 'myUserId',
+    time: Date.now(),
+    status: 'sent',
+    customEvent: 'userCard',
+    customExts: {
+      uid: 'zd2',
+      nickname: 'Tom',
       avatar: 'https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/sample_avatar/sample_avatar_1.png',
     },
   },

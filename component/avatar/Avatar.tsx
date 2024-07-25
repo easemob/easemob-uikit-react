@@ -213,4 +213,6 @@ export const InternalAvatar = (props: any, ref: any) => {
 
 const Avatar = React.forwardRef<HTMLSpanElement, AvatarProps>(InternalAvatar);
 
+Avatar.displayName = 'Avatar';
+
 export default Avatar;

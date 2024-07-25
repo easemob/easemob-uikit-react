@@ -58,7 +58,6 @@ export interface ChatProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
-  threadModalStyle?: React.CSSProperties;
   renderHeader?: (cvs: {
     chatType: 'singleChat' | 'groupChat';
     conversationId: string;
@@ -122,7 +121,6 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     messageInputProps,
     rtcConfig,
     style = {},
-    threadModalStyle = {},
     onOpenThread,
     onOpenThreadList,
     onAudioCall,

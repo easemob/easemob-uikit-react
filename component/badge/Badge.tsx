@@ -16,7 +16,7 @@ export interface BadgeProps {
   showZero?: boolean;
   style?: React.CSSProperties;
   className?: string;
-  text?: React.ReactNode;
+  // text?: React.ReactNode;
   size?: 'default' | 'small';
   offset?: [number | string, number | string];
   title?: string;
@@ -26,14 +26,14 @@ export interface BadgeProps {
   color?: string;
 }
 
-export const Badge = ({
+export const Badge: React.FC<BadgeProps> = ({
   count,
   overflowCount = 99,
   dot = false,
   showZero = false,
   style,
   className,
-  text,
+  // text,
   size = 'default',
   offset,
   title,
@@ -115,8 +115,8 @@ export const Badge = ({
     (typeof livingCount === 'string' || typeof livingCount === 'number' ? livingCount : undefined);
 
   // >>> Status Text
-  const statusTextNode =
-    isHidden || !text ? null : <span className={`${prefixCls}-status-text`}>{text}</span>;
+  // const statusTextNode =
+  //   isHidden || !text ? null : <span className={`${prefixCls}-status-text`}>{text}</span>;
   // >>> Display Component
   const displayNode =
     !livingCount || typeof livingCount !== 'object'

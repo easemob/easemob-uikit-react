@@ -272,8 +272,8 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
     [`${prefixCls}-${color}`]: color,
   });
 
-  let formattedOverlayInnerStyle = overlayInnerStyle;
-  let arrowContentStyle: React.CSSProperties = {};
+  const formattedOverlayInnerStyle = overlayInnerStyle;
+  const arrowContentStyle: React.CSSProperties = {};
 
   return (
     <RcTooltip
@@ -308,5 +308,5 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
     </RcTooltip>
   );
 });
-
+Tooltip.displayName = 'Tooltip';
 export { Tooltip };

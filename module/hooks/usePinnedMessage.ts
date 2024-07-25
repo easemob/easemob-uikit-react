@@ -14,8 +14,8 @@ const usePinnedMessage = (params?: {
   const { client } = rootStore;
   const { conversationId = '', conversationType = 'groupChat' } = params?.conversation || {};
   const { pageSize = 20 } = params || {};
-  const { list = [], cursor = '' } = pinStore.messages[conversationType][conversationId] || {};
-  const { visible } = pinStore;
+  const { list = [], cursor = '' } = pinStore?.messages[conversationType][conversationId] || {};
+  const { visible = false } = pinStore || {};
   const getPinnedMessages = () => {
     client
       .getServerPinnedMessages({

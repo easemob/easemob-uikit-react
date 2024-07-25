@@ -6,15 +6,13 @@ import type { AvatarProps } from './Avatar';
 export default {
   title: 'pure component/Avatar',
   component: Avatar,
-  argTypes: {
-    backgroundColor: { control: 'color' },
-  },
+  argTypes: {},
 } as ComponentMeta<typeof Avatar>;
 
 const Template: ComponentStory<typeof Avatar> = (args: AvatarProps) => <Avatar {...args} />;
 
-export const Avatar1 = Template.bind({});
-Avatar1.args = {
+export const SingleAvatar = Template.bind({});
+SingleAvatar.args = {
   children: 'U',
   size: 'large',
   shape: 'square',
@@ -40,8 +38,8 @@ const GroupTemplate: ComponentStory<typeof Avatar.Group> = (args: AvatarProps) =
   </Avatar.Group>
 );
 
-export const Avatar2 = GroupTemplate.bind({});
-Avatar2.args = {
+export const GroupAvatar = GroupTemplate.bind({});
+GroupAvatar.args = {
   size: 'default',
   shape: 'square',
   className: '',

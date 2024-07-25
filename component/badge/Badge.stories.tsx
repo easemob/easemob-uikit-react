@@ -6,26 +6,24 @@ import Badge from './index';
 export default {
   title: 'pure component/Badge',
   component: Badge,
-  argTypes: {
-    backgroundColor: { control: 'color' },
-  },
+  argTypes: {},
 } as ComponentMeta<typeof Badge>;
 
 const Template: ComponentStory<typeof Badge> = args => (
   <Badge {...args}>
-    <Avatar></Avatar>
+    <Avatar>User</Avatar>
   </Badge>
 );
 
-export const Primary = Template.bind({});
-Primary.args = {
+export const Default = Template.bind({});
+Default.args = {
   count: 10,
   overflowCount: 99,
   dot: false,
   showZero: false,
   style: {},
   className: '',
-  text: 'hello',
+  // text: 'hello',
   size: 'default',
   offset: [0, 0],
   title: 'title',

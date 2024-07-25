@@ -14,6 +14,7 @@ import ChatroomMember from '../../module/chatroomMember';
 import { MessageList } from '../../module/chat/MessageList';
 import './index.css';
 import { observer } from 'mobx-react-lite';
+import { set } from 'mobx';
 
 const ChatApp = observer(() => {
   const client = useClient();
@@ -29,6 +30,16 @@ const ChatApp = observer(() => {
 
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
+  const [roomId, setRoomId] = useState('');
+  const joinRoom = () => {
+    client
+      .joinChatRoom({
+        roomId: roomId,
+      })
+      .then(() => {
+        console.log('joinChatRoom success');
+      });
+  };
   const login = () => {
     client
       .open({
@@ -47,6 +58,7 @@ const ChatApp = observer(() => {
         return <div>{message.msg}</div>;
     }
   };
+
   return (
     <>
       <Provider
@@ -81,11 +93,23 @@ const ChatApp = observer(() => {
           <div>
             <button onClick={login}>login</button>
           </div>
+          <div>
+            <label>roomId</label>
+            <input
+              onChange={e => {
+                setRoomId(e.target.value);
+              }}
+            ></input>
+          </div>
+          {/* <div>
+            <button onClick={joinRoom}>join</button>
+          </div> */}
         </div>
 
         <div style={{ width: '350px' }}>
           <Chatroom
-            chatroomId="229358390280194"
+            chatroomId={roomId}
+            // chatroomId="229358390280194"
             // renderMessageList={() => (
             //   <MessageList
             //     conversation={{
@@ -113,7 +137,7 @@ const ChatApp = observer(() => {
           ></Chatroom>
         </div>
         <div style={{ width: '350px' }}>
-          <ChatroomMember chatroomId="229358390280194"></ChatroomMember>
+          <ChatroomMember chatroomId={roomId}></ChatroomMember>
         </div>
       </Provider>
     </>

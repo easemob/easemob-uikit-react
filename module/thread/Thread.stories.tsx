@@ -10,7 +10,27 @@ export default {
   component: Thread,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
-    bubbleType: '',
+    prefix: {
+      control: 'text',
+      description: 'css class name prefix',
+      default: 'cui',
+    },
+    className: {
+      control: 'text',
+      description: 'css class name',
+    },
+    style: {
+      control: 'object',
+      description: 'css style',
+    },
+    messageListProps: {
+      control: 'object',
+      description: 'props for MessageList',
+    },
+    messageInputProps: {
+      control: 'object',
+      description: 'props for MessageInput',
+    },
   },
 } as ComponentMeta<typeof Thread>;
 
@@ -20,6 +40,38 @@ const Template: ComponentStory<typeof Thread> = args => (
     <Provider
       initConfig={{
         appKey: 'a#b',
+      }}
+    >
+      <Thread {...args} />
+    </Provider>
+  </div>
+);
+const DarkTemplate: ComponentStory<typeof Thread> = args => (
+  <div style={{ height: '500px' }}>
+    <Provider
+      initConfig={{
+        appKey: 'a#b',
+      }}
+      theme={{
+        mode: 'dark',
+      }}
+    >
+      <Thread {...args} />
+    </Provider>
+  </div>
+);
+
+const SquareTemplate: ComponentStory<typeof Thread> = args => (
+  <div style={{ height: '500px' }}>
+    <Provider
+      initConfig={{
+        appKey: 'a#b',
+      }}
+      theme={{
+        mode: 'dark',
+        avatarShape: 'square',
+        bubbleShape: 'square',
+        componentsShape: 'square',
       }}
     >
       <Thread {...args} />
@@ -46,27 +98,7 @@ rootStore.threadStore.currentThread.originalMessage = {
   time: 1694447391423,
   onlineState: 3,
 };
-export const Primary = Template.bind({});
+export const Default = Template.bind({});
+export const Dark = DarkTemplate.bind({});
+export const Square = SquareTemplate.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
-Primary.args = {
-  groupID: '225564899213313',
-  originalMsg: {
-    id: '1189201674950937348',
-    type: 'txt',
-    chatType: 'groupChat',
-    msg: 'Start a audio call',
-    to: '182614118957057',
-    from: 'zd3',
-    ext: {
-      action: 'invite',
-      type: 3,
-      msgType: 'rtcCallWithAgora',
-      callId: '429493790825',
-      channelName: '49035279',
-      callerDevId: 'webim_random_1694446193223',
-      ts: 1694447390825,
-    },
-    time: 1694447391423,
-    onlineState: 3,
-  },
-};
