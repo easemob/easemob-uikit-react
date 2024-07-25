@@ -16,6 +16,7 @@ export default {
 const Template: ComponentStory<typeof FileMessage> = args => <FileMessage {...args} />;
 
 export const Primary = Template.bind({});
+export const Secondly = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
 Primary.args = {
   fileMessage: {
@@ -33,6 +34,30 @@ Primary.args = {
     to: 'userId',
     chatType: 'singleChat',
     bySelf: true,
+    from: 'myUserId',
+    time: Date.now(),
+    status: 'sent',
+  },
+};
+
+Secondly.args = {
+  type: 'secondly',
+  direction: 'ltr',
+  fileMessage: {
+    type: 'file',
+    filename: 'test.txt',
+    file_length: 1024,
+    file: {
+      url: 'http:example.com',
+      filename: 'test.txt',
+      filetype: 'txt',
+      data: {} as File,
+    },
+    url: 'http:example.com',
+    id: '1234567890',
+    to: 'userId',
+    chatType: 'singleChat',
+    bySelf: false,
     from: 'myUserId',
     time: Date.now(),
     status: 'sent',

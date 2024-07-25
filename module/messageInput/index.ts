@@ -8,4 +8,5 @@ export type { SelectedControlsProps } from './selectedControls';
 export type { SuggestListProps } from './suggestList';
 export type { TextareaProps } from './textarea';
 
+MessageInput.displayName = 'MessageInput';
 export default MessageInput;

@@ -377,11 +377,10 @@ let MoreAction = (props: MoreActionProps) => {
             enableMultipleSelection={false}
             open={cardModalVisible}
             onUserSelect={(user, users) => {
-              console.log('onUserSelect', user, users);
               setSelectedUsers(users);
             }}
-            onOk={users => {
-              console.log('onOk', users);
+            onConfirm={users => {
+              // console.log('onOk', users);
             }}
           />
         </div>

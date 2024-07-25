@@ -1,17 +1,91 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-
+import UserItem, { UserItemProps, UserInfoData } from '../../component/userItem';
 import ChatroomMember from './index';
 import rootStore from '../store';
 import Provider from '../store/Provider';
-
+import { AppUserInfo } from '../store/index';
+import Header, { HeaderProps } from '../header';
 // More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
 export default {
   title: 'Container/ChatroomMember',
   component: ChatroomMember,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
-    bubbleType: '',
+    prefix: {
+      control: 'text',
+      description: 'css class name prefix',
+      default: 'cui',
+    },
+    className: {
+      control: 'text',
+      description: 'css class name',
+    },
+    style: {
+      control: 'object',
+      description: 'css style',
+    },
+    chatroomId: {
+      control: 'text',
+      description: 'chatroom id',
+    },
+    headerProps: {
+      control: 'object',
+      description: 'props for Header',
+      defaultValue: {
+        avatar: '',
+        onAvatarClick: () => {},
+        moreAction: {},
+        onCloseClick: () => {}, // 点击 Header 中 关闭按钮的回调
+        content: 'test', // Header 中间的内容
+      },
+    },
+    memberListProps: {
+      control: 'object',
+      description: 'props for member list',
+      defaultValue: {
+        search: true,
+        placeholder: 'Search',
+        renderEmpty: () => 'No data',
+        renderItem: (item: AppUserInfo) => {
+          return (
+            <UserItem
+              key={item.userId}
+              data={{
+                userId: item.userId,
+                nickname: item.nickname,
+                avatarUrl: item.avatarurl,
+                description: 'owner' == item.userId ? 'owner' : '',
+              }}
+            />
+          );
+        },
+        UserItemProps: {} as UserItemProps,
+      },
+    },
+    muteListProps: {
+      control: 'object',
+      description: 'props for mute list',
+      defaultValue: {
+        search: true,
+        placeholder: 'Search',
+        renderEmpty: () => 'No data',
+        renderItem: (item: AppUserInfo) => {
+          return (
+            <UserItem
+              key={item.userId}
+              data={{
+                userId: item.userId,
+                nickname: item.nickname,
+                avatarUrl: item.avatarurl,
+                description: 'owner' == item.userId ? 'owner' : '',
+              }}
+            />
+          );
+        },
+        UserItemProps: {} as UserItemProps,
+      },
+    },
   },
 } as ComponentMeta<typeof ChatroomMember>;
 
@@ -40,7 +114,7 @@ rootStore.addressStore.chatroom = [
   },
 ];
 
-const Template: ComponentStory<typeof ChatroomMember> = args => (
+const DefaultTemplate: ComponentStory<typeof ChatroomMember> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -52,6 +126,38 @@ const Template: ComponentStory<typeof ChatroomMember> = args => (
   </div>
 );
 
-export const Primary = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Primary.args = {};
+const DarkTemplate: ComponentStory<typeof ChatroomMember> = args => (
+  <div style={{ height: '500px' }}>
+    <Provider
+      initConfig={{
+        appKey: 'a#b',
+      }}
+      theme={{
+        mode: 'dark',
+      }}
+    >
+      <ChatroomMember {...args} chatroomId="123456" />
+    </Provider>
+  </div>
+);
+
+const SquareTemplate: ComponentStory<typeof ChatroomMember> = args => (
+  <div style={{ height: '500px' }}>
+    <Provider
+      initConfig={{
+        appKey: 'a#b',
+      }}
+      theme={{
+        avatarShape: 'square',
+        bubbleShape: 'square',
+        componentsShape: 'square',
+      }}
+    >
+      <ChatroomMember {...args} chatroomId="123456" />
+    </Provider>
+  </div>
+);
+
+export const Default = DefaultTemplate.bind({});
+export const Dark = DarkTemplate.bind({});
+export const Square = SquareTemplate.bind({});

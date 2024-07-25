@@ -16,10 +16,11 @@ export default {
 const Template: ComponentStory<typeof ImageMessage> = args => <ImageMessage {...args} />;
 
 export const Primary = Template.bind({});
+export const Secondly = Template.bind({});
 // More on args: https://storybook.js.org/docs/react/writing-stories/args
 Primary.args = {
   imageMessage: {
-    type: 'image',
+    type: 'img',
     file_length: 1024,
     file: {
       url: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
@@ -38,12 +39,25 @@ Primary.args = {
   },
 };
 
-{
-  /* <ImagePreview
-  onCancel={() => {
-    setImageInfo({ visible: false, url: '' });
-  }}
-  visible={imageInfo.visible}
-  previewImageUrl={imageInfo.url}
-></ImagePreview>; */
-}
+Secondly.args = {
+  type: 'secondly',
+  direction: 'ltr',
+  imageMessage: {
+    type: 'img',
+    file_length: 1024,
+    file: {
+      url: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+      filename: 'test.txt',
+      filetype: 'txt',
+      data: {} as File,
+    },
+    url: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+    id: '1234567890',
+    to: 'userId',
+    chatType: 'singleChat',
+    bySelf: true,
+    from: 'myUserId',
+    time: Date.now(),
+    status: 'sent',
+  },
+};

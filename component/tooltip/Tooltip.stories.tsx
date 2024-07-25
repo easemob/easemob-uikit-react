@@ -7,12 +7,26 @@ export default {
   component: Tooltip,
 } as ComponentMeta<typeof Tooltip>;
 
-const Template: ComponentStory<typeof Tooltip> = args => <Tooltip {...args} />;
+const Template: ComponentStory<typeof Tooltip> = args => <Tooltip {...args}>hover</Tooltip>;
 
-// export const WithControl = Template.bind({});
+const Template2: ComponentStory<typeof Tooltip> = args => <Tooltip {...args}>click</Tooltip>;
 
-export const Primary = Template.bind({});
-// WithControl.args = {
-// 	checked: true,
-// 	disabled: false,
-// };
+export const Hover = Template.bind({});
+export const Click = Template2.bind({});
+Hover.args = {
+  title: (
+    <ul>
+      <li>item 1</li>
+      <li>item 2</li>
+    </ul>
+  ),
+};
+Click.args = {
+  title: (
+    <ul>
+      <li>item 1</li>
+      <li>item 2</li>
+    </ul>
+  ),
+  trigger: 'click',
+};

@@ -9,10 +9,4 @@ export default {
 
 const Template: ComponentStory<typeof Popover> = args => <Popover {...args} />;
 
-export const WithControl = Template.bind({});
-
-WithControl.args = {
-  children: 'with control',
-};
-
-export const Children = () => <Popover children={'hello, world'} />;
+export const Default = () => <Popover>hello, world</Popover>;

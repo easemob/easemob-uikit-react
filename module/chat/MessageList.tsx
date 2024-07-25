@@ -245,13 +245,17 @@ let MessageList: FC<MsgListProps> = props => {
   // 每次发消息滚动到最新的一条
   const listRef = React.useRef<List>(null);
   useEffect(() => {
-    if (lastMessage?.type === 'notice' || lastMessage?.type === 'recall') {
+    // lastMessage?.type === 'notice' ||
+    if (lastMessage?.type === 'recall') {
       return;
     }
     const from = (lastMessage as ChatSDK.MessageBody)?.from;
-    if (messageStore.holding && from != '' && from != rootStore.client.user) {
-      return;
+    if (lastMessage?.type != 'notice') {
+      if (messageStore.holding && from != '' && from != rootStore.client.user) {
+        return;
+      }
     }
+
     setTimeout(() => {
       (listRef?.current as any)?.scrollTo('bottom');
     }, 10);

@@ -6,18 +6,10 @@ import { ICON_TYPES } from './const';
 export default {
   title: 'pure component/Icon',
   component: Icon,
-  argTypes: {
-    color: { control: 'color' },
-  },
+  argTypes: {},
 } as ComponentMeta<typeof Icon>;
 
 const Template: ComponentStory<typeof Icon> = args => <Icon {...args} />;
-
-export const WithControl = Template.bind({});
-
-WithControl.args = {
-  type: 'SHUT_DOWN',
-};
 
 export const IconList = () => {
   return [

@@ -20,6 +20,33 @@ const Template: ComponentStory<typeof ConversationList> = args => (
   </Provider>
 );
 
+const DarkTemplate: ComponentStory<typeof ConversationList> = args => (
+  <Provider
+    initConfig={{ appKey: 'a#b' }}
+    theme={{
+      mode: 'dark',
+    }}
+  >
+    {' '}
+    <ConversationList {...args} />
+  </Provider>
+);
+
+const SquareTemplate: ComponentStory<typeof ConversationList> = args => (
+  <Provider
+    initConfig={{ appKey: 'a#b' }}
+    theme={{
+      mode: 'light',
+      avatarShape: 'square',
+      bubbleShape: 'square',
+      componentsShape: 'square',
+    }}
+  >
+    {' '}
+    <ConversationList {...args} />
+  </Provider>
+);
+
 rootStore.conversationStore.setConversation([
   {
     chatType: 'singleChat',
@@ -53,6 +80,6 @@ rootStore.conversationStore.setConversation([
   },
 ]);
 
-export const Primary = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Primary.args = {};
+export const Default = Template.bind({});
+export const Dark = DarkTemplate.bind({});
+export const Square = SquareTemplate.bind({});

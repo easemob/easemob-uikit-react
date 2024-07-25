@@ -36,7 +36,7 @@ export interface UserSelectProps extends ModalProps {
   disableUserIds?: string[];
   disabled?: boolean;
   searchPlaceholder?: string;
-  onOk?: (selectedUsers: UserInfoData[]) => void;
+  onConfirm?: (selectedUsers: UserInfoData[]) => void;
 }
 
 export interface UserSelectInfo {
@@ -59,7 +59,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
     selectedPanelHeader,
     selectedPanelFooter,
     onCancel,
-    onOk,
+    onConfirm,
     users,
     checkedUsers,
     disabled,
@@ -84,7 +84,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   const [modalOpen, setModalOpen] = useState(open);
   const [selectedUsers, setSelectedUsers] = useState<UserInfoData[]>([]);
   // 创建群默认选中机器人
-  const chatbotIds = rootStore.addressStore.contacts.filter(item => {
+  const chatbotIds = rootStore.addressStore?.contacts?.filter(item => {
     if (item.userId.indexOf('chatbot_') > -1) return true;
   });
 
@@ -176,13 +176,13 @@ const UserSelect: React.FC<UserSelectProps> = props => {
 
   const checkedList = selectedUsers.map(user => ({
     id: user.userId,
-    type: 'contact' as 'contact',
+    type: 'contact' as const,
     name: user.nickname,
   }));
 
   // 如果传了users 则左面的panel使用users的数据渲染， 没传的话展示ContactList
   const defaultCheckedUsers = checkedUsers?.map(user => ({
-    type: 'contact' as 'contact',
+    type: 'contact' as const,
     id: user.userId,
   }));
 
@@ -307,7 +307,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   style={{ marginRight: '24px', width: '68px' }}
                   type="primary"
                   onClick={e => {
-                    onOk?.(selectedUsers);
+                    onConfirm?.(selectedUsers);
                   }}
                   disabled={selectedUsers.length === 0}
                 >
