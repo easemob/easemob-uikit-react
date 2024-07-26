@@ -70,4 +70,21 @@ $combine-msg-prefix-cls: #{$cui-prefix}-message-combine;
         //     color: $gray-1;
         // }
     }
+
+    &-dark{
+        .#{$combine-msg-prefix-cls}-title{
+            color: $gray-3;
+        }
+        .#{$combine-msg-prefix-cls}-icon{
+            fill: $gray-3;
+        }
+    }
+    &-dark.#{$combine-msg-prefix-cls}-secondly{
+        .#{$combine-msg-prefix-cls}-title{
+            color: $gray-98;
+        }
+        .#{$combine-msg-prefix-cls}-icon{
+            fill: $gray-98;
+        }
+    }
 }
