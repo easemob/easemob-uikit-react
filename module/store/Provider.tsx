@@ -11,12 +11,12 @@ import { resource } from '../../local/resource';
 import { hexToHsla, generateColors, isHueValue, isHexColor } from '../utils/color';
 import { eventHandler } from '../../eventHandler';
 
-import Online from '../assets/presence/Online.png';
-import Offline from '../assets/presence/Offline.png';
-import Away from '../assets/presence/leave.png';
-import Busy from '../assets/presence/Busy.png';
-import DoNotDisturb from '../assets/presence/Do_not_Disturb.png';
-import Custom from '../assets/presence/custom.png';
+import Online from '../assets/presence/Online2.png';
+import Offline from '../assets/presence/Offline2.png';
+import Away from '../assets/presence/leave2.png';
+import Busy from '../assets/presence/Busy2.png';
+import DoNotDisturb from '../assets/presence/Do_not_Disturb2.png';
+import Custom from '../assets/presence/custom2.png';
 
 export interface ProviderProps {
   initConfig: {
