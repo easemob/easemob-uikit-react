@@ -173,11 +173,15 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-combine', customizePrefixCls);
+  const context = useContext(RootContext);
+  const { theme, features } = context;
+  const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
     {
       [`${prefixCls}-secondly`]: type == 'secondly',
       [`${prefixCls}-primary`]: type == 'primary',
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
