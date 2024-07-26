@@ -177,6 +177,15 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 
 }
 
+.message-text-url-info-dark{
+    .message-text-url-title{
+        color: $gray-98;
+    }
+    .message-text-url-desc{
+        color: $gray-98;
+    }
+}
+
 .#{$text-msg-prefix-cls}-edit-tag{
     font-size: 12px;
     text-align: right;    
