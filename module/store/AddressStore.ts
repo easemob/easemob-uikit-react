@@ -322,7 +322,6 @@ class AddressStore {
   };
 
   getUserInfo = (userId: string, withPresence: boolean = false, force = false) => {
-    console.log('是否有信息', this.appUsersInfo?.[userId], withPresence);
     let userInfo = this.appUsersInfo?.[userId];
     if (!userInfo || force) {
       return getUsersInfo({ userIdList: [userId], withPresence }).then(() => {
@@ -806,6 +805,18 @@ class AddressStore {
         users: userIds,
       })
       .then(res => {
+        // 直接将用户加入群组， 然后在群组成员列表添加这个用户
+        this.groups.forEach(item => {
+          if (item.groupid === groupId) {
+            const groupMembers = userIds.map(item => {
+              return {
+                userId: item,
+                role: 'member' as 'member' | 'owner' | 'admin',
+              };
+            });
+            item.members = [...(item.members || []), ...groupMembers];
+          }
+        });
         eventHandler.dispatchSuccess('inviteToGroup');
       })
       .catch(error => {
@@ -820,6 +831,11 @@ class AddressStore {
         users: userIds,
       })
       .then(res => {
+        // 直接移除成员，然后在成员列表删除这个user
+        userIds.forEach(userId => {
+          this.removeGroupMember(groupId, userId);
+        });
+
         eventHandler.dispatchSuccess('removeGroupMembers');
       })
       .catch(error => {

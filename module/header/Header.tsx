@@ -127,7 +127,7 @@ const Header: FC<HeaderProps> = props => {
             >
               <Icon
                 type="ARROW_LEFT"
-                color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                // color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
                 width={24}
                 height={24}
               ></Icon>
