@@ -24,6 +24,11 @@ $groupSetting-prefix-cls: #{$cui-prefix}-groupSetting;
             font-weight: 500;
             line-height: 26px;
             padding: 0 12px;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            text-align: center;
         }
         &-id{
             margin-top: 2px;
@@ -43,6 +48,11 @@ $groupSetting-prefix-cls: #{$cui-prefix}-groupSetting;
             padding: 0 12px;
             max-height: 60px;
             overflow-y: auto;
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            text-align: center;
         }
     }
     &-header>div{
@@ -50,6 +60,8 @@ $groupSetting-prefix-cls: #{$cui-prefix}-groupSetting;
         display: flex;
         align-items: center;
         flex-direction: column;
+        width: 100%;
+        box-sizing: border-box;
     }
 
     &-content{

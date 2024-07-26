@@ -265,7 +265,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
             >
               <span>{t('groupMembers')}</span>
               <div>
-                {infoData?.affiliations_count}
+                {groupMembers?.length ?? infoData?.affiliations_count}
                 <Icon type="ARROW_RIGHT" width={24} height={24}></Icon>
               </div>
             </div>
