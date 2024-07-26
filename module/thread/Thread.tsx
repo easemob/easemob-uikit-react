@@ -337,6 +337,15 @@ const Thread = (props: ThreadProps) => {
     });
   }, [currentThread?.info?.id]);
 
+  useEffect(() => {
+    if (conversation.conversationId) {
+      rootStore.messageStore.setSelectedMessage(conversation, {
+        selectable: false,
+        selectedMessage: [],
+      });
+    }
+  }, [rootStore.conversationStore.currentCvs]);
+
   // close panel
   const handleClickClose = () => {
     // rootStore.threadStore.setCurrentThread({
