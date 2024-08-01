@@ -194,7 +194,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     <div className={`${prefixCls}-content`} style={{ ...liveContentStyle }}>
       <div className={`${prefixCls}-content-left`}>
         <div
-          className={classNames(`${prefixCls}-iconBox`, {
+          className={classNames(`${prefixCls}-iconBox`, `${prefixCls}-iconBox-stop`, {
             [`${prefixCls}-iconBox-ground`]: componentsShape == 'ground',
           })}
           title={t(`cancel`) as string}
