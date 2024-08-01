@@ -993,9 +993,14 @@ class MessageStore {
       action: 'TypingBegin',
     };
     const msg = chatSDK.message.create(option);
-    this.rootStore.client.send(msg).then(() => {
-      // console.log('send cmd success');
-    });
+    this.rootStore.client
+      .send(msg)
+      .then(() => {
+        // console.log('send cmd success');
+      })
+      .catch((err: ChatSDK.ErrorEvent) => {
+        eventHandler.dispatchError('sendMessage', err);
+      });
   }
 
   setHoldingStatus(status: boolean) {
