@@ -235,9 +235,18 @@ export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) =>
   if (id) {
     to = id;
   }
-  const { appUsersInfo } = getStore().addressStore;
+  const { appUsersInfo, contacts } = getStore().addressStore;
   if (chatType === 'groupChat') {
     const group = getGroupItemFromGroupsById(to);
+
+    const contactData = contacts.find((contact: any) => {
+      return contact.userId === from;
+    });
+
+    if (contactData && contactData.remark) {
+      return contactData.remark;
+    }
+
     const memberIndex = (group && getGroupMemberIndexByUserId(group, from)) ?? -1;
     if (memberIndex > -1) {
       const memberItem = group?.members?.[memberIndex];
@@ -246,6 +255,7 @@ export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) =>
       }
       return appUsersInfo?.[from]?.nickname || from;
     }
+
     return appUsersInfo?.[from]?.nickname || from;
   } else {
     return appUsersInfo?.[from]?.nickname || from;
