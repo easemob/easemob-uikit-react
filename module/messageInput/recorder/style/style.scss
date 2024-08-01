@@ -97,6 +97,16 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
     }
 }
 
+.#{$recorder-prefix-cls}-dark{
+    .#{$recorder-prefix-cls}-iconBox-stop{
+        background-color: $gray-2;
+    }
+    .#{$recorder-prefix-cls}-time span{
+        color: $gray-98;
+    }
+}
+
+
 @keyframes fadeInOut {
     0% {
         opacity: 1;

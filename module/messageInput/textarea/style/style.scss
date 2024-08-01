@@ -22,7 +22,7 @@ $lineHeight: 24px;
         outline: 0 none;
         min-height: 24px;
         word-break: break-all;
-
+        white-space: pre-wrap;
         &-square{
             border-radius: 4px;
         }

@@ -45,7 +45,10 @@ const FileMessage = (props: FileMessageProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
   let { bySelf } = fileMessage;
-  let conversationId = getCvsIdFromMessage(fileMessage);
+  const conversationId = getCvsIdFromMessage(fileMessage);
+  const context = useContext(RootContext);
+  const { rootStore, theme } = context;
+  const themeMode = theme?.mode || 'light';
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
@@ -63,6 +66,7 @@ const FileMessage = (props: FileMessageProps) => {
     prefixCls,
     {
       [`${prefixCls}-${type}`]: !!type,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
@@ -96,7 +100,7 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
-    let conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(fileMessage);
 
     rootStore.messageStore.deleteMessage(
       {
@@ -114,7 +118,7 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(fileMessage);
 
     rootStore.messageStore.addReaction(
       {
@@ -128,7 +132,7 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(fileMessage);
     rootStore.messageStore.deleteReaction(
       {
         chatType: fileMessage.chatType,
@@ -141,7 +145,7 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(fileMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
@@ -170,7 +174,7 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    let conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(fileMessage);
     rootStore.messageStore.recallMessage(
       {
         chatType: fileMessage.chatType,
@@ -239,7 +243,7 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   // @ts-ignore
-  let _thread =
+  const _thread =
     // @ts-ignore
     fileMessage.chatType == 'groupChat' &&
     thread &&

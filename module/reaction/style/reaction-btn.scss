@@ -78,10 +78,20 @@ $status-prefix-cls: #{$cui-prefix}-reaction-btn;
 
     &-dark{
         background-color: $gray-2;
+        color: $gray-9;
+        border: 1px solid $gray-2;
         &:hover{
             background: $blue-2;
         }
     }
+    
+    
+}
+
+.#{$status-prefix-cls}-checked.#{$status-prefix-cls}-dark{
+    // background: $blue-95!important;
+    border: 1px solid $blue-5!important;
+    color: $blue-5!important;
 }
 
 .#{$cui-prefix}-reaction-icon{
