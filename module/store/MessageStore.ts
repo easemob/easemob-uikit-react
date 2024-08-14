@@ -408,6 +408,10 @@ class MessageStore {
     if (message.isChatThread || message.chatThread) {
       return;
     }
+
+    if (message.type === 'cmd') {
+      return;
+    }
     // @ts-ignore
     if (message.chatType == 'chatRoom') {
       // @ts-ignore
