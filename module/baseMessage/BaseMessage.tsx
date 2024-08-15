@@ -646,11 +646,11 @@ let BaseMessage = (props: BaseMessageProps) => {
         )}
         <div
           id={id}
-          onClick={() => {
-            checkboxRef.current?.click?.();
-          }}
+          // onClick={e => {
+          //   checkboxRef.current?.click?.();
+          // }}
           className={classString}
-          style={{ ...style }}
+          style={{ ...style, paddingLeft: select ? '38px' : '' }}
           onMouseOver={() => setHoverStatus(true)}
           onMouseLeave={() => {
             setHoverStatus(false);

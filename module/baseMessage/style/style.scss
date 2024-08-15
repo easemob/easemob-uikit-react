@@ -405,7 +405,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                 }
         }
     }
-    &-dark.#{$status-prefix-cls}-left{
+    &-dark.#{$status-prefix-cls}-left.#{$status-prefix-cls}-none{
         div:first-of-type{
             color: $msg-bubble-font-color-primary;
 
@@ -475,9 +475,20 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
 .thread-container {
     display: flex;
     align-items: center;
-
+    position: relative;
+    .cui-checkbox-wrapper{
+        position: absolute;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        /* background: red; */
+        z-index: 999;
+        width: 100%;
+        
+    }
     .checkbox {
         position: relative;
         left: 8px;
+        width: 100%;
     }
 }
