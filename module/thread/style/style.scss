@@ -53,6 +53,9 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
 
         &-content {
             margin-bottom: 24px;
+            &>input{
+                background: #F1F2F3;
+            }
         }
     }
 
