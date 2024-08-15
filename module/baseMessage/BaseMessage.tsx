@@ -558,7 +558,6 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'PIN') {
             return (
-              message?.chatType !== 'singleChat' &&
               !message?.chatThread && (
                 <li
                   key={index}

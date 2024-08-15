@@ -58,7 +58,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: getCvsIdFromMessage(audioMessage),
-      conversationType: audioMessage.chatType as any,
+      conversationType: audioMessage.chatType,
     },
   });
   const classString = classNames(
@@ -71,13 +71,13 @@ const AudioMessage = (props: AudioMessageProps) => {
 
   const [sourceUrl, setUrl] = useState('');
   useEffect(() => {
-    let options = {
+    const options = {
       url: audioMessage.url as string,
       headers: {
         Accept: 'audio/mp3',
       },
       onFileDownloadComplete: function (response: any) {
-        let objectUrl = chatSDK.utils.parseDownloadResponse.call(rootStore.client, response);
+        const objectUrl = chatSDK.utils.parseDownloadResponse.call(rootStore.client, response);
         setUrl(objectUrl);
       },
       onFileDownloadError: function () {},
@@ -125,7 +125,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleDeleteMsg = () => {
-    let conversationId = getCvsIdFromMessage(audioMessage);
+    const conversationId = getCvsIdFromMessage(audioMessage);
     rootStore.messageStore.deleteMessage(
       {
         chatType: audioMessage.chatType,
@@ -142,7 +142,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(audioMessage);
+    const conversationId = getCvsIdFromMessage(audioMessage);
 
     rootStore.messageStore.addReaction(
       {
@@ -156,7 +156,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(audioMessage);
+    const conversationId = getCvsIdFromMessage(audioMessage);
     rootStore.messageStore.deleteReaction(
       {
         chatType: audioMessage.chatType,
@@ -169,7 +169,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    let conversationId = getCvsIdFromMessage(audioMessage);
+    const conversationId = getCvsIdFromMessage(audioMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
@@ -198,7 +198,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    let conversationId = getCvsIdFromMessage(audioMessage);
+    const conversationId = getCvsIdFromMessage(audioMessage);
     rootStore.messageStore.recallMessage(
       {
         chatType: audioMessage.chatType,
@@ -211,7 +211,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     );
   };
 
-  let conversationId = getCvsIdFromMessage(audioMessage);
+  const conversationId = getCvsIdFromMessage(audioMessage);
   const handleSelectMessage = () => {
     const selectable =
       // @ts-ignore
@@ -266,7 +266,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   // @ts-ignore
-  let _thread =
+  const _thread =
     // @ts-ignore
     audioMessage.chatType == 'groupChat' &&
     thread &&

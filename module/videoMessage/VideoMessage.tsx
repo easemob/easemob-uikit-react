@@ -45,7 +45,7 @@ const VideoMessage = (props: VideoMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: getCvsIdFromMessage(videoMessage),
-      conversationType: videoMessage.chatType as any,
+      conversationType: videoMessage.chatType,
     },
   });
   const { getPrefixCls } = React.useContext(ConfigContext);

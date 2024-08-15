@@ -41,7 +41,7 @@ const RenderMessage = (props: {
 }) => {
   const { t } = useTranslation();
   const { message, bubbleClass } = props;
-  let msg = {
+  const msg = {
     ...message,
     id: `pin-${message.id}`,
   };
@@ -220,7 +220,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
   const [unPinMessageId, setUnpinMessageId] = useState<string>('');
   const { list, cursor, getPinnedMessages, hide, unpinMessage } = usePinnedMessage({
     conversation: {
-      conversationType: currentCvs.chatType as Exclude<ChatType, 'singleChat'>,
+      conversationType: currentCvs.chatType,
       conversationId: currentCvs.conversationId,
     },
     pageSize: 50,
@@ -259,10 +259,6 @@ const PinnedMessage = (props: PinnedMessageProps) => {
   };
 
   useEffect(() => {
-    if (currentCvs.chatType === 'singleChat') {
-      hide();
-      return;
-    }
     if (cursor !== null) {
       getPinnedMessages();
     }
@@ -286,7 +282,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
                   <div className={`${prefixCls}-info`}>{`${getMsgSenderNickname({
                     ...item.message,
                     from: item.operatorId,
-                  } as BaseMessageType)} ${t("pinned")} ${getMsgSenderNickname(
+                  } as BaseMessageType)} ${t('pinned')} ${getMsgSenderNickname(
                     item.message as BaseMessageType,
                   )}${t("'s message")}`}</div>
                   <div className={`${prefixCls}-time`}>{getConversationTime(item.pinTime)}</div>

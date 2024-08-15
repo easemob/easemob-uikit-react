@@ -663,13 +663,11 @@ class MessageStore {
         conversation.unreadCount -= 1;
       }
       // remove pinned message when recall message
-      if (conversation.chatType !== 'singleChat') {
-        this.rootStore.pinnedMessagesStore.deletePinnedMessage(
-          conversation.chatType,
-          conversation.conversationId,
-          messageId,
-        );
-      }
+      this.rootStore.pinnedMessagesStore.deletePinnedMessage(
+        conversation.chatType,
+        conversation.conversationId,
+        messageId,
+      );
       this.rootStore.conversationStore.modifyConversation(conversation);
       return;
     }
@@ -699,13 +697,11 @@ class MessageStore {
           conversation.lastMessage = messages[msgIndex];
           this.rootStore.conversationStore.modifyConversation(conversation);
           // remove pinned message when recall message
-          if (conversation.chatType !== 'singleChat') {
-            this.rootStore.pinnedMessagesStore.deletePinnedMessage(
-              conversation.chatType,
-              conversation.conversationId,
-              messageId,
-            );
-          }
+          this.rootStore.pinnedMessagesStore.deletePinnedMessage(
+            conversation.chatType,
+            conversation.conversationId,
+            messageId,
+          );
           eventHandler.dispatchSuccess('recallMessage');
         }
       })
@@ -923,9 +919,7 @@ class MessageStore {
       } else {
         cvsId = msg.to;
       }
-      if (msg.chatType !== 'singleChat') {
-        this.rootStore.pinnedMessagesStore.modifyPinnedMessage(msg.chatType, cvsId, msg);
-      }
+      this.rootStore.pinnedMessagesStore.modifyPinnedMessage(msg.chatType, cvsId, msg);
       const msgIndex = this.message[msg.chatType][cvsId].findIndex(
         //@ts-ignore
         msgItem => msgItem.id === messageId || msgItem.mid === messageId,

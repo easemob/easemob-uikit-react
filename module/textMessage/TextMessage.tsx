@@ -178,7 +178,7 @@ const TextMessage = (props: TextMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: textMessage.chatType as any,
+      conversationType: textMessage.chatType,
     },
   });
   const [text, setText] = useState<string>('');
