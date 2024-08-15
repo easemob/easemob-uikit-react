@@ -8,6 +8,7 @@ import { chatSDK, ChatSDK } from '../../SDK';
 import { useTranslation } from 'react-i18next';
 import Modal from '../../../component/modal';
 import { CurrentConversation } from '../../store/ConversationStore';
+
 export interface SelectedControlsProps {
   prefix?: string;
   style?: React.CSSProperties;
@@ -43,8 +44,9 @@ const SelectedControls = (props: SelectedControlsProps) => {
   );
   const currentCVS = conversation ? conversation : rootStore.messageStore.currentCVS;
   const selectedMessages =
-    rootStore.messageStore.selectedMessage[currentCVS.chatType][currentCVS.conversationId]
-      ?.selectedMessage || [];
+    rootStore.messageStore.selectedMessage[currentCVS.chatType as 'singleChat' | 'groupChat'][
+      currentCVS.conversationId
+    ]?.selectedMessage || [];
 
   const handleKeyDown = (event: { keyCode: number }) => {
     if (event.keyCode === 27) {
@@ -68,17 +70,20 @@ const SelectedControls = (props: SelectedControlsProps) => {
 
   const sendSelectedMsg = () => {
     let selectedMessages =
-      rootStore.messageStore.selectedMessage[currentCVS.chatType][currentCVS.conversationId]
-        .selectedMessage;
+      rootStore.messageStore.selectedMessage[currentCVS.chatType as 'singleChat' | 'groupChat'][
+        currentCVS.conversationId
+      ].selectedMessage;
     if (selectedMessages.length == 0) {
       return;
     }
+    //@ts-ignore
     selectedMessages = selectedMessages.sort((a: { time: number }, b: { time: number }) => {
       // @ts-ignore
       return a.time - b.time;
     });
     const summaryMsgs = selectedMessages.slice(0, 3);
     let summary = '';
+    //@ts-ignore
     summaryMsgs.forEach((msg: { type: any; from: string | number; msg: string }) => {
       switch (msg.type) {
         case 'txt':
@@ -126,7 +131,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
       }
     });
     //发送合并消息
-    let option = {
+    const option = {
       chatType: currentCVS.chatType,
       type: 'combine',
       to: currentCVS.conversationId,
@@ -137,13 +142,13 @@ const SelectedControls = (props: SelectedControlsProps) => {
       messageList: selectedMessages,
 
       onFileUploadComplete: (data: any) => {
-        rootStore.messageStore.message.byId[msg.id].url = data.url;
-        rootStore.messageStore.message.byId[msg.id].secret = data.secret;
+        (rootStore.messageStore.message.byId[msg.id] as ChatSDK.FileMsgBody).url = data.url;
+        (rootStore.messageStore.message.byId[msg.id] as ChatSDK.FileMsgBody).secret = data.secret;
       },
     };
     // @ts-ignore
-    let msg = chatSDK.message.create(option);
-    onSendMessage?.(msg);
+    const msg = chatSDK.message.create(option);
+    onSendMessage?.(msg as ChatSDK.CombineMsgBody);
     return;
   };
 
@@ -181,7 +186,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
         <div className={`${prefixCls}-content`}>
           <div className={`${prefixCls}-content-left`}>
             <div className={`${prefixCls}-iconBox`} onClick={close}>
-              <Icon type="CLOSE_THIN" width={24} height={24} color="#464E53"></Icon>
+              <Icon type="CLOSE_THIN" width={24} height={24}></Icon>
             </div>
           </div>
           <div className={`${prefixCls}-content-right`}>
