@@ -48,13 +48,14 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   if (theme?.bubbleShape && !shape) {
     bubbleShape = theme?.bubbleShape;
   }
-
+  const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
     {
       [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
       [`${prefixCls}-left`]: direction == 'ltr',
       [`${prefixCls}-right`]: direction == 'rtl',
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

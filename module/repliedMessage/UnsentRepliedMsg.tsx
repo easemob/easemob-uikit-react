@@ -55,7 +55,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
           <div className={`${prefixCls}-summary-desc`}>
             <Icon type="WAVE3" color="#75828A" width={16} height={16}></Icon>
             <span>{t('audio')}:</span>
-            {msg.length}"
+            {msg.length}&quot;
           </div>
         );
         break;
