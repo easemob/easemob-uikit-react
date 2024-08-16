@@ -117,20 +117,20 @@ let MoreAction = (props: MoreActionProps) => {
     }
   };
   const sendVideo = () => {
-    console.log('发送视频');
     videoEl.current?.focus();
     videoEl.current?.click();
   };
+
   const defaultActions = [
     {
-      content: 'image',
+      content: 'IMAGE',
       title: t('image'),
       onClick: sendImage,
       icon: null,
     },
-    { content: 'video', title: t('video'), onClick: sendVideo, icon: null },
-    { content: 'file', title: t('file'), onClick: sendFile, icon: null },
-    { content: 'card', title: t('card'), onClick: sendCard, icon: null },
+    { content: 'VIDEO', title: t('video'), onClick: sendVideo, icon: null },
+    { content: 'FILE', title: t('file'), onClick: sendFile, icon: null },
+    { content: 'CARD', title: t('card'), onClick: sendCard, icon: null },
   ];
   let actions = [];
   if (customActions) {
@@ -274,6 +274,11 @@ let MoreAction = (props: MoreActionProps) => {
       file_length: file.data.size,
       url: file.url,
       isChatThread,
+      onFileUploadComplete(data) {
+        if (type === 'video') {
+          (fileMessage as ChatSDK.VideoMsgBody).thumb = data.thumb;
+        }
+      },
     } as ChatSDK.CreateFileMsgParameters;
     const fileMessage = chatSDK.message.create(option);
 
