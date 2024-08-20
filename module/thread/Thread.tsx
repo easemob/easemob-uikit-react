@@ -37,7 +37,7 @@ export interface ThreadProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
-  // shape?: 'ground' | 'square'; // 气泡形状
+  // shape?: 'round' | 'square'; // 气泡形状
   // direction?: 'ltr' | 'rtl';
   // message: ChatSDK.MessageBody;
   messageListProps?: MsgListProps;
@@ -482,7 +482,7 @@ const Thread = (props: ThreadProps) => {
   };
 
   const threadMoreAction = {
-    visible: true,
+    visible: !threadStore.currentThread.creating,
     actions: [
       {
         content: `${t('threadMembers')}`,
