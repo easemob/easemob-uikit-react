@@ -26,3 +26,20 @@ $chat-prefix-cls: #{$cui-prefix}-chat;
     justify-content: center;
     align-items: center;
 }
+
+// report
+.report-title{
+    height: 28px;
+    @include Label(medium, $gray-5);
+    &-dark{
+        color: $gray-6;
+    }
+}
+.report-item{
+    height: 54px;
+    cursor: pointer;
+    @include Title(medium, $gray-1);
+    &-dark{
+        color: $gray-98;
+    }
+}
