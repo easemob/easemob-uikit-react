@@ -28,7 +28,7 @@ import { UnsentRepliedMsg } from '../repliedMessage';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from 'module/store/ConversationStore';
 import Typing from '../typing';
-import { ThreadListExpandableIcon } from '../thread';
+import Thread, { ThreadListExpandableIcon } from '../thread';
 import ScrollList from '../../component/scrollList';
 import { ChatSDK } from 'module/SDK';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
@@ -103,8 +103,8 @@ const getChatAvatarUrl = (cvs: CurrentConversation) => {
   if (cvs.chatType === 'singleChat') {
     return getStore().addressStore.appUsersInfo[cvs.conversationId]?.avatarurl;
   } else if (cvs.chatType === 'groupChat') {
-    const ground = getStore().addressStore.groups.find(item => item.groupid === cvs.conversationId);
-    return ground?.avatarUrl;
+    const group = getStore().addressStore.groups.find(item => item.groupid === cvs.conversationId);
+    return group?.avatarUrl;
   }
 };
 
@@ -815,21 +815,39 @@ const Chat = forwardRef((props: ChatProps, ref) => {
         title={t('report')}
         okText={t('report')}
         cancelText={t('cancel')}
+        okButtonProps={{
+          disabled: checkedType == '',
+        }}
         onOk={handleReportMessage}
         onCancel={() => {
           setReportOpen(false);
         }}
       >
         <div>
+          <div
+            className={classNames('report-title', {
+              'report-title-dark': themeMode == 'dark',
+            })}
+          >
+            {t('Violation')}
+          </div>
           {Object.keys(reportType).map((item, index) => {
             return (
-              <div className="report-item" key={index}>
+              <div
+                className={classNames('report-item', {
+                  'report-item-dark': themeMode == 'dark',
+                })}
+                key={index}
+                onClick={() => {
+                  setCheckedType(item);
+                }}
+              >
                 <div>{t(reportType[item] as string)}</div>
                 <Checkbox
                   checked={checkedType === item}
-                  onChange={() => {
-                    handleCheckChange(item);
-                  }}
+                  // onChange={() => {
+                  //   handleCheckChange(item);
+                  // }}
                 ></Checkbox>
               </div>
             );
