@@ -50,6 +50,7 @@ import { ReactComponent as AddFriend } from '../svgs/icons/person_add_fill.svg';
 import { ReactComponent as PersonDoubleFill } from '../svgs/icons/person_double_fill.svg';
 import { ReactComponent as PersonSingleFill } from '../svgs/icons/person_single_fill.svg';
 import { ReactComponent as Thread } from '../svgs/icons/hashtag_in_bubble.svg';
+import { ReactComponent as ThreadFill } from '../svgs/icons/hashtag_in_bubble_fill.svg';
 import { ReactComponent as Envelope } from '../svgs/icons/envelope.svg';
 import { ReactComponent as MemberGroup } from '../svgs/all.svg';
 import { ReactComponent as Loop } from '../svgs/icons/arrow_round.svg';
@@ -248,6 +249,8 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'THREAD':
       return <Thread></Thread>;
       break;
+    case 'HASHTAG_IN_BUBBLE_FILL':
+      return <ThreadFill></ThreadFill>;
     case 'ENVELOPE':
       return <Envelope></Envelope>;
       break;
