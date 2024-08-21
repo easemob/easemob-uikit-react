@@ -32,6 +32,7 @@ export interface ContactDetailProps {
   onMessageBtnClick?: () => void | boolean;
   onAudioCall?: () => void | boolean;
   onVideoCall?: () => void | boolean;
+  renderEmpty?: () => React.ReactNode;
 }
 
 export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetailProps) => {
@@ -44,6 +45,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     onMessageBtnClick,
     onAudioCall,
     onVideoCall,
+    renderEmpty,
   } = props;
 
   const { type, id, name } = data;
@@ -238,10 +240,12 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
           </div>
         </>
       ) : (
-        <Empty
-          text={t('no contact')}
-          icon={<Icon type="EMPTY" width={120} height={120}></Icon>}
-        ></Empty>
+        renderEmpty?.() || (
+          <Empty
+            text={t('no contact')}
+            icon={<Icon type="EMPTY" width={120} height={120}></Icon>}
+          ></Empty>
+        )
       )}
     </div>
   );
