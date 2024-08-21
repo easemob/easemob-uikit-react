@@ -205,6 +205,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
             users.map(item => {
               return (
                 <UserItem
+                  avatarSize={40}
                   avatarShape={theme?.avatarShape}
                   key={item.userId}
                   data={item}
@@ -282,6 +283,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
             {selectedUsers.map(user => {
               return (
                 <UserItem
+                  avatarSize={40}
                   key={user.userId}
                   data={user}
                   // onCheckboxChange={handleSelect}

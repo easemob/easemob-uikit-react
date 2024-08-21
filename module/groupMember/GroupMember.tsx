@@ -281,6 +281,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
           }
           return (
             <UserItem
+              avatarSize={40}
               avatarShape={theme?.avatarShape}
               key={item.userId}
               data={{ userId: item.userId, nickname: name, avatarUrl: avatarUrl }}

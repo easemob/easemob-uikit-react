@@ -31,7 +31,7 @@ const ContactItem: FC<ContactItemProps> = props => {
     prefix: customizePrefixCls,
     className,
     avatarShape = 'circle',
-    avatarSize = 50,
+    avatarSize = 40,
     onClick,
     isActive = false,
     contactId,
@@ -49,7 +49,7 @@ const ContactItem: FC<ContactItemProps> = props => {
   const context = useContext(RootContext);
   const { rootStore, theme, features } = context;
   const themeMode = theme?.mode || 'light';
-  let aShape = theme?.avatarShape ? theme?.avatarShape : avatarShape;
+  const aShape = theme?.avatarShape ? theme?.avatarShape : avatarShape;
   const classString = classNames(prefixCls, className);
   const { addressStore } = rootStore;
   const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>, contactId: string) => {
@@ -79,6 +79,7 @@ const ContactItem: FC<ContactItemProps> = props => {
             key={item.brandId}
           >
             <UserItem
+              avatarSize={40}
               avatarShape={aShape}
               checked={
                 (checkedUserList && checkedUserList.includes(item.brandId)) ||

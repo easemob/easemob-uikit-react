@@ -133,7 +133,9 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
     return (
       <div className={`${'cui-thread'}-members-item`} key={member}>
         <div className={`${'cui-thread'}-members-item-name`}>
-          <Avatar src={avatarUrl}>{name}</Avatar>
+          <Avatar src={avatarUrl} size={40}>
+            {name}
+          </Avatar>
           <div>{name || member}</div>
         </div>
         {showMoreAction && myId != member && (
