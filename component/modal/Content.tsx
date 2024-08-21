@@ -68,6 +68,7 @@ const Content = React.forwardRef<ContentRef, ContentProps>((props, ref) => {
   } = props;
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
+  const componentsShape = theme?.componentsShape;
   let closer: React.ReactNode;
   if (closable) {
     closer = (
@@ -93,6 +94,8 @@ const Content = React.forwardRef<ContentRef, ContentProps>((props, ref) => {
 
   const contentClassName = classNames(`${prefixCls}-content`, {
     [`${prefixCls}-content-${themeMode}`]: !!themeMode,
+    // 大圆角小圆角
+    [`${prefixCls}-content-${componentsShape}`]: !!componentsShape,
   });
   const content = (
     <div className={contentClassName}>
@@ -185,5 +188,5 @@ const Content = React.forwardRef<ContentRef, ContentProps>((props, ref) => {
     </CSSMotion>
   );
 });
-
+Content.displayName = 'Content';
 export default Content;
