@@ -316,7 +316,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                               height={18}
                             ></Icon>
                           ),
-                          content: item.isInContact ? t('privateChat') : t('addGroupMembers'),
+                          content: item.isInContact ? t('privateChat') : t('addContact'),
                           onClick: () => {
                             item.isInContact ? privateChat(item.userId) : addContact(item.userId);
                           },
