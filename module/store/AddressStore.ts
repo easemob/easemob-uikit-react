@@ -170,41 +170,48 @@ class AddressStore {
     delete this.appUsersInfo[userId];
   }
 
-  addContactToContactList(userId: string, widthPresence = false) {
+  async addContactToContactList(userId: string, widthPresence = false) {
     // 先判断这个人是不是已经在联系人列表
     const found = this.contacts.find(item => item.userId === userId);
     if (found) {
       return;
     }
+    // 如果收到了这个人的消息，消息里有个人信息就不去获取了, 也有一种可能现在没有这个人的信息，但是获取用户属性过程中收到了这个人的消息，但是用户属性还是会覆盖，要处理以哪个为准（有了就不获取，获取后有了就不再重新赋值）
+    let userInfo = this.appUsersInfo[userId];
+    if (!userInfo) {
+      try {
+        userInfo = (await this.getUserInfo(userId, widthPresence, true)) || {};
+      } catch (error) {
+        console.log('addContactToContactList error');
+      }
+    }
 
-    this.getUserInfo(userId, widthPresence, true).then(userInfo => {
-      const name = userInfo.nickname || userId;
-      let initial = '#';
-      if (checkCharacter(name.substring(0, 1)) == 'en') {
-        initial = name.substring(0, 1).toUpperCase();
-      } else if (checkCharacter(name.substring(0, 1)) == 'zh') {
-        initial = pinyin(name.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
-      } else {
-        initial = '#';
+    const name = userInfo.nickname || userId;
+    let initial = '#';
+    if (checkCharacter(name.substring(0, 1)) == 'en') {
+      initial = name.substring(0, 1).toUpperCase();
+    } else if (checkCharacter(name.substring(0, 1)) == 'zh') {
+      initial = pinyin(name.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
+    } else {
+      initial = '#';
+    }
+
+    runInAction(() => {
+      const found = this.contacts.find(item => item.userId === userId);
+      if (found) {
+        return;
       }
 
-      runInAction(() => {
-        const found = this.contacts.find(item => item.userId === userId);
-        if (found) {
-          return;
-        }
-
-        this.contacts.push({
-          userId,
-          nickname: userInfo.nickname,
-          // @ts-ignore
-          name: userInfo.nickname,
-          remark: '',
-          avatar: userInfo.avatarurl,
-          initial: initial,
-        });
-        this.contacts = [...this.contacts];
+      this.contacts.push({
+        userId,
+        nickname: userInfo.nickname,
+        // @ts-ignore
+        name: userInfo.nickname,
+        remark: '',
+        avatar: userInfo.avatarurl,
+        initial: initial,
       });
+      this.contacts = [...this.contacts];
     });
   }
 
@@ -221,6 +228,15 @@ class AddressStore {
     if (idx > -1) {
       this.groups[idx].avatarUrl = avatar;
       this.groups = [...this.groups];
+    }
+    // 更新会话列表里的头像
+    const rootStore = getStore();
+    const conversation = rootStore.conversationStore.conversationList.find(
+      item => item.conversationId === groupId,
+    );
+    if (conversation) {
+      conversation.avatarUrl = avatar;
+      rootStore.conversationStore.modifyConversation(conversation);
     }
   }
 
@@ -724,7 +740,7 @@ class AddressStore {
     });
     this.requests = [...this.requests];
   }
-
+  // TODO: 增加群名称，群头像等参数，传头像的话，创建会话时增加avatarUrl字段
   createGroup(members: string[]) {
     const rootStore = getStore();
     // groupname 是前三个用户的昵称， 其中第一个用户是自己
@@ -778,12 +794,14 @@ class AddressStore {
             members: groupMembers,
           });
         });
+
         rootStore.conversationStore.addConversation({
           chatType: 'groupChat',
           conversationId: res.data?.groupid || '',
           name: groupName,
           lastMessage: {} as any,
           unreadCount: 0,
+          // avatarUrl: group?.avatarUrl,
         });
         rootStore.conversationStore.setCurrentCvs({
           chatType: 'groupChat',
@@ -879,22 +897,18 @@ class AddressStore {
   }
 
   getBlockList() {
-    console.log('Blocklist2 is run...');
     const rootStore = getStore();
     rootStore.client
       .getBlocklist()
       .then(res => {
-        console.log('getBlockList', res);
         runInAction(() => {
           if (res.data) {
             this.blockList = res.data;
-            console.log('设置blockList', this.blockList);
           }
         });
         eventHandler.dispatchSuccess('getBlockList');
       })
       .catch(error => {
-        console.log('Blocklist3 is run...', error);
         eventHandler.dispatchError('getBlockList', error);
       });
   }
@@ -906,8 +920,6 @@ class AddressStore {
         name: userIdList,
       })
       .then(res => {
-        console.log('addUsersToBlocklist', res);
-
         runInAction(() => {
           this.blockList = [...this.blockList, ...userIdList];
         });
@@ -915,7 +927,6 @@ class AddressStore {
         eventHandler.dispatchSuccess('addUsersToBlocklist');
       })
       .catch(error => {
-        console.log('addUsersToBlocklist', error);
         eventHandler.dispatchError('addUsersToBlocklist', error);
       });
   }
@@ -927,14 +938,12 @@ class AddressStore {
         name: userIdList,
       })
       .then(res => {
-        console.log('removeUserFromBlackList', res);
         runInAction(() => {
           this.blockList = this.blockList.filter(item => !userIdList.includes(item));
         });
         eventHandler.dispatchSuccess('removeUserFromBlocklist');
       })
       .catch(error => {
-        console.log('removeUserFromBlackList', error);
         eventHandler.dispatchError('removeUserFromBlocklist', error);
       });
   }
