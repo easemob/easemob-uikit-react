@@ -166,5 +166,6 @@
     "Away": "离开",
     "Do Not Disturb": "请勿打扰",
     "Custom": "自定义状态",
-    "Violation": "举报原因"
+    "Violation": "举报原因",
+    "Confirm to remove pin message ?": "确定移除置顶消息 ?"
 }
