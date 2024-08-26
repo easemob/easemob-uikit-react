@@ -20,7 +20,7 @@ $number-prefix-cls: #{$cui-prefix}-scroll-number;
         text-align: center;
         background: $badge-color;
         border-radius: calc($badge-height / 2);
-        box-shadow: 0 0 0 1px $shadow-color-inverse;
+        // box-shadow: 0 0 0 1px $shadow-color-inverse;
         overflow: hidden;
         a,
         a:hover {
@@ -48,7 +48,7 @@ $number-prefix-cls: #{$cui-prefix}-scroll-number;
         height: $badge-dot-size;
         background: $highlight-color;
         border-radius: 100%;
-        box-shadow: 0 0 0 1px $shadow-color-inverse;
+        // box-shadow: 0 0 0 1px $shadow-color-inverse;
     }
 
     &-dot.#{$number-prefix-cls} {

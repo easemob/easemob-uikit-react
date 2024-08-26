@@ -15,7 +15,6 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 .#{$text-msg-prefix-cls} {
     font-size: $font-size-lg;
     line-height: 24px;
-    font-family: 'Roboto';
     font-style: normal;
     text-align: left;
     word-break: break-word;
@@ -220,7 +219,7 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
     }
 }
 
-.cui-message-base-ground .cui-message-base-right{
+.cui-message-base-round .cui-message-base-right{
     .message-text-url {
         &::after {
             border-radius: 0 0 4px 16px;
@@ -228,7 +227,7 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
     }
 }
 
-.cui-message-base-ground .cui-message-base-left{
+.cui-message-base-round .cui-message-base-left{
     .message-text-url {
         &::after {
             border-radius: 0 0 16px 4px;

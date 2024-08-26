@@ -102,7 +102,7 @@ const MessageInput = (props: MessageInputProps) => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
-  const componentsShape = theme?.componentsShape || 'ground';
+  const componentsShape = theme?.componentsShape || 'round';
   const { t } = useTranslation();
   const insertCustomHtml = (t: string, e: keyof typeof emoji.map) => {
     if (!textareaRef.current) return;
@@ -333,7 +333,7 @@ const MessageInput = (props: MessageInputProps) => {
       {showSendBtn && (
         <div
           className={classNames(`${prefixCls}-sendBtn`, {
-            [`${prefixCls}-sendBtn-ground`]: componentsShape == 'ground',
+            [`${prefixCls}-sendBtn-round`]: componentsShape == 'round',
           })}
           title={t('send') as string}
         >

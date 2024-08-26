@@ -9,7 +9,9 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
     position: relative;
     &-original {
         padding: 0 24px;
-
+        .#{$cui-prefix}-message-base{
+            padding: 8px 0;
+        }
         &-start {
             font-size: 14px;
             font-style: normal;
@@ -27,8 +29,6 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
                 text-overflow: ellipsis;
                 white-space: nowrap;
             }
-
-            ;
         }
 
         &-line {
@@ -44,7 +44,9 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
         flex-direction: column;
         padding: 4px 16px;
         gap: 8px;
-
+        .#{$cui-prefix}-message-base{
+            padding: 8px;
+        }
         &-title {
             font-size: 12px;
             line-height: 16px;
@@ -53,7 +55,7 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
 
         &-content {
             margin-bottom: 24px;
-            &>input{
+            & input{
                 background: $gray-95;
             }
         }
@@ -76,7 +78,7 @@ $thread-prefix-cls: #{$cui-prefix}-thread;
         gap: 12px;
         align-items: center;
         justify-content: space-between;
-
+        padding: 0 12px 0 24px;
         &-name {
             display: flex;
             align-items: center;

@@ -67,7 +67,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   const { rootStore, theme } = context;
 
   const themeMode = theme?.mode || 'light';
-  const componentsShape = theme?.componentsShape || 'ground';
+  const componentsShape = theme?.componentsShape || 'round';
   const { client, messageStore, conversationStore, addressStore } = rootStore;
   const { currentCVS } = messageStore;
   const divRef = useRef<HTMLDivElement>(null);

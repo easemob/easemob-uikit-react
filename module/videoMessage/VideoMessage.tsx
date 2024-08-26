@@ -269,7 +269,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
-      // shape="ground"
+      // shape="round"
       bubbleStyle={{
         padding: 0,
         background: videoMessage.chatThreadOverview ? undefined : 'transparent',
