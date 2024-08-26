@@ -30,7 +30,7 @@ export const Button = ({
   className,
   type = 'default',
   size = 'medium',
-  shape = 'default',
+  shape,
   disabled = false,
   icon,
   children = 'button',
@@ -39,15 +39,15 @@ export const Button = ({
 }: ButtonProps) => {
   const { theme } = useContext(RootContext);
   const themeMode = theme?.mode;
-
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('button');
+  const shapeType = shape || theme?.componentsShape || 'default';
   const classes = classNames(
     prefixCls,
     {
       [`${prefixCls}-${type}`]: type,
       [`${prefixCls}-${size}`]: size,
-      [`${prefixCls}-${shape}`]: shape,
+      [`${prefixCls}-${shapeType}`]: shapeType,
       [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
