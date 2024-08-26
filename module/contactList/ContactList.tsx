@@ -351,6 +351,7 @@ let ContactList: FC<ContactListProps> = props => {
         const data = {
           userId: id,
           nickname: name,
+          avatarUrl: addressStore.appUsersInfo[id]?.avatarurl,
         };
         return (
           <UserItem
