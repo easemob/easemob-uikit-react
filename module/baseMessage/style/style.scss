@@ -192,7 +192,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     &-secondly {
         .#{$status-prefix-cls}-content {
             background: $msg-bubble-color-secondly;
-            color: $msg-bubble-font-color-secondly;
+            color: $gray-1;
 
             &::after {
                 border-left: $msg-bubble-arrow-border-size solid $msg-bubble-color-secondly !important;
@@ -273,11 +273,11 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
             align-items: center;
             max-width: 100%;
             overflow: hidden;
-
+            color: $gray-98;
             &>div {
                 display: flex;
                 align-items: center;
-                color: $gray-98;
+                
             }
         }
 
@@ -368,9 +368,8 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     &-secondly {
         .#{$status-prefix-cls}-thread {
             &>div {
-                &>div {
-                    color: $special-5;
-                }
+                color: $special-5;
+                
             }
 
             &-line {
@@ -404,6 +403,20 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
                     border-right: $msg-bubble-arrow-border-size solid $blue-2 !important;
                 }
         }
+
+        .#{$status-prefix-cls}-thread{
+            &-name{
+                color: $gray-98;
+                svg{
+                    fill: $gray-98;
+                }
+            }
+            &-message{
+                &>span{
+                    color: $gray-7;
+                }
+            }
+        }
     }
     &-dark.#{$status-prefix-cls}-left.#{$status-prefix-cls}-none{
         div:first-of-type{
@@ -422,7 +435,7 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     &-dark.#{$status-prefix-cls}-primary {
         .#{$status-prefix-cls}-content {
             background: $blue-6;
-            color: $msg-bubble-font-color-secondly;
+            color: $gray-1;
 
             &::after {
                 border-left: $msg-bubble-arrow-border-size solid $blue-6 !important;
@@ -431,9 +444,29 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
             &::before {
                 border-right: $msg-bubble-arrow-border-size solid $blue-6 !important;
             }
+        }
+        .#{$status-prefix-cls}-thread{
+            &-name{
+                color: $gray-2;
+                svg{
+                    fill: $gray-2;
+                }
+            }
+            &-message{
+                &>span{
+                    color: $gray-3;
+                }
+            }
+            // &>div{
+            //     &>div{
+            //         color: $gray-2;
+            //         svg{
+            //             fill: $gray-2;
+            //         }
+            //     }
+            // }
+        }
     }
-
-}
 }
 
 .#{$moreAction-prefix-cls} {
