@@ -68,7 +68,7 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
     &-square{
         border-radius: 4px;
     }
-    &-ground{
+    &-round{
         &.#{$reply-msg-prefix-cls}-right{
             .#{$reply-msg-prefix-cls}-content{
                 border-radius: $msg-bubble-border-radius-right;

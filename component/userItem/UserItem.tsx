@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../../module/store/rootContext';
 import Checkbox from '../../component/checkbox';
+
 export interface UserInfoData {
   userId: string;
   nickname?: string;
@@ -71,7 +72,7 @@ let UserItem: FC<UserItemProps> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { theme } = useContext(RootContext);
   const themeMode = theme?.mode;
-  const componentsShape = theme?.componentsShape || 'ground';
+  const componentsShape = theme?.componentsShape || 'round';
   const prefixCls = getPrefixCls('userItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
 

@@ -95,8 +95,8 @@ class ConversationStore {
       return console.error('Invalid parameter: conversations');
     }
 
-    let currentCvsId = this.conversationList.map(item => item.conversationId);
-    let filteredGroups = conversations.filter(
+    const currentCvsId = this.conversationList.map(item => item.conversationId);
+    const filteredGroups = conversations.filter(
       ({ conversationId }) => !currentCvsId.find(id => id === conversationId),
     );
 
@@ -111,7 +111,7 @@ class ConversationStore {
     if (typeof conversation !== 'object') {
       return console.error('Invalid parameter: conversation');
     }
-    let exist = this.conversationList.find(item => {
+    const exist = this.conversationList.find(item => {
       return item.conversationId === conversation.conversationId;
     });
     if (exist) return;
@@ -203,7 +203,7 @@ class ConversationStore {
   }
 
   setAtType(chatType: ChatType, cvsId: string, atType: AT_TYPE) {
-    let idx = this.conversationList.findIndex(item => {
+    const idx = this.conversationList.findIndex(item => {
       return item.chatType === chatType && item.conversationId === cvsId;
     });
     if (idx > -1) {
@@ -235,8 +235,8 @@ class ConversationStore {
       });
   }
 
-  sortConversationList() {
-    this.conversationList = this.conversationList;
+  sortConversationList(sort: (cvsList: Conversation[]) => Conversation[]) {
+    this.conversationList = sort(this.conversationList);
   }
 
   pinConversation(chatType: ChatType, cvsId: string, isPinned: boolean) {

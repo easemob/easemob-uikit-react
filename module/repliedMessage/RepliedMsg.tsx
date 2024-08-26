@@ -21,7 +21,7 @@ export interface RepliedMsgProps {
   prefixCls?: string;
   className?: string;
   style?: React.CSSProperties;
-  shape?: 'ground' | 'square'; // 气泡形状
+  shape?: 'round' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
   message: BaseMessageType;
 }

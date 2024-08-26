@@ -160,7 +160,7 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
                 });
                 conversationStore.setOnlineStatus(res.data?.result as ChatSDK.SubscribePresence[]);
                 const list = addressStore.appUsersInfo;
-                addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
+                addressStore.setAppUserInfo(Object.assign({}, reUserInfo, list));
                 resolve(Object.assign({}, result, reUserInfo));
               })
               .catch(e => {
@@ -168,7 +168,8 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
               });
           } else {
             const list = addressStore.appUsersInfo;
-            addressStore.setAppUserInfo(Object.assign({}, list, reUserInfo));
+            // 如果 appUserInfo 里已经有了 就不更新，（否则使用消息里携带的信息更细的appUserInfo，如果没有设置用户属性，在这里会清掉appUserInfo的信息）
+            addressStore.setAppUserInfo(Object.assign({}, reUserInfo, list));
             resolve(Object.assign({}, result, reUserInfo));
           }
         })

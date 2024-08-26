@@ -16,9 +16,12 @@ import { MessageList } from '../../module/chat/MessageList';
 import MessageEditor from '../../module/messageInput';
 import TextMessage from '../../module/textMessage';
 import './index.css';
-import AgoraChat from 'agora-chat';
+import { useSDK } from 'module';
+// import AgoraChat from 'agora-chat';
+
 const ChatApp = () => {
   const client = useClient();
+  const { ChatSDK } = useSDK();
   useEffect(() => {
     client &&
       client
@@ -78,7 +81,7 @@ const ChatApp = () => {
   // Implement Sending Custom Messages
 
   const sendCustomMessage = () => {
-    const customMsg = AgoraChat.message.create({
+    const customMsg = ChatSDK.message.create({
       type: 'custom',
       to: '13681272808', // Need to be the user ID of the current conversation
       chatType: 'singleChat',

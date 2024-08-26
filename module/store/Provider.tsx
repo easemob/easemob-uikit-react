@@ -103,8 +103,8 @@ export interface ProviderProps {
     primaryColor?: string | number;
     mode?: 'light' | 'dark';
     avatarShape?: 'circle' | 'square';
-    bubbleShape?: 'ground' | 'square';
-    componentsShape?: 'ground' | 'square';
+    bubbleShape?: 'round' | 'square';
+    componentsShape?: 'round' | 'square';
   };
   presenceMap?: {
     [key: string]: string | HTMLImageElement;
