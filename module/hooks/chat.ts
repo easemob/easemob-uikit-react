@@ -326,6 +326,40 @@ const useEventHandler = (props: ProviderProps) => {
         const presence = features?.conversationList?.item?.presence ?? false;
         addressStore.addContactToContactList(message.from, presence);
       },
+      onMultiDeviceEvent: message => {
+        console.log('onMultiDeviceEvent', message);
+        if (message.operation === 'setSilentModeForConversation') {
+          rootStore.conversationStore.setSilentModeForConversationSync(
+            {
+              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
+              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+            },
+            true,
+          );
+          rootStore.addressStore.setSilentModeForConversationSync(
+            {
+              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
+              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+            },
+            true,
+          );
+        } else if (message.operation === 'removeSilentModeForConversation') {
+          rootStore.conversationStore.setSilentModeForConversationSync(
+            {
+              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
+              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+            },
+            false,
+          );
+          rootStore.addressStore.setSilentModeForConversationSync(
+            {
+              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
+              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+            },
+            false,
+          );
+        }
+      },
     });
 
     return () => {
