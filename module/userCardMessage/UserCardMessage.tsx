@@ -284,6 +284,8 @@ const UserCardMessage = (props: UserCardMessageProps) => {
       conversationId: userId,
       name: nickname,
     });
+
+    setModalVisible(false);
   };
 
   const isContact = addressStore.contacts.some(item => item.userId === userId);
