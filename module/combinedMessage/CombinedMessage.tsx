@@ -68,7 +68,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: combinedMessage.chatType as any,
+      conversationType: combinedMessage.chatType,
     },
   });
   if (typeof bySelf == 'undefined') {

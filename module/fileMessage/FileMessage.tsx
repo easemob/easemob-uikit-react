@@ -52,7 +52,7 @@ const FileMessage = (props: FileMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: fileMessage.chatType as any,
+      conversationType: fileMessage.chatType,
     },
   });
   if (typeof bySelf == 'undefined') {

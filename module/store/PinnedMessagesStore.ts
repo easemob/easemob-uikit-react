@@ -42,11 +42,7 @@ class PinnedMessagesStore {
     });
   }
 
-  unshiftPinnedMessage(
-    conversationType: Exclude<ChatType, 'singleChat'>,
-    conversationId: string,
-    message: PinnedMessage,
-  ) {
+  unshiftPinnedMessage(conversationType: ChatType, conversationId: string, message: PinnedMessage) {
     const pinnedMessages = this.messages[conversationType][conversationId] || {
       list: [],
       cursor: '',
@@ -57,11 +53,7 @@ class PinnedMessagesStore {
       cursor: pinnedMessages.cursor,
     };
   }
-  pushPinnedMessage(
-    conversationType: Exclude<ChatType, 'singleChat'>,
-    conversationId: string,
-    message: PinnedMessage,
-  ) {
+  pushPinnedMessage(conversationType: ChatType, conversationId: string, message: PinnedMessage) {
     const pinnedMessages = this.messages[conversationType][conversationId] || {
       list: [],
       cursor: '',
@@ -72,17 +64,13 @@ class PinnedMessagesStore {
       cursor: pinnedMessages.cursor,
     };
   }
-  clearPinnedMessages(conversationType: Exclude<ChatType, 'singleChat'>, conversationId: string) {
+  clearPinnedMessages(conversationType: ChatType, conversationId: string) {
     this.messages[conversationType][conversationId] = {
       list: [],
       cursor: '',
     };
   }
-  deletePinnedMessage(
-    conversationType: Exclude<ChatType, 'singleChat'>,
-    conversationId: string,
-    messageId: string,
-  ) {
+  deletePinnedMessage(conversationType: ChatType, conversationId: string, messageId: string) {
     const pinnedMessages = this.messages[conversationType][conversationId] || {
       list: [],
       cursor: '',
@@ -97,7 +85,7 @@ class PinnedMessagesStore {
     }
   }
   setPinnedMessageCursor(
-    conversationType: Exclude<ChatType, 'singleChat'>,
+    conversationType: ChatType,
     conversationId: string,
     cursor: string | null,
   ) {
@@ -111,7 +99,7 @@ class PinnedMessagesStore {
     };
   }
   updatePinnedMessage(
-    conversationType: Exclude<ChatType, 'singleChat'>,
+    conversationType: ChatType,
     conversationId: string,
     messageId: string,
     pinnedTime: number,
@@ -138,7 +126,7 @@ class PinnedMessagesStore {
     }
   }
   modifyPinnedMessage(
-    conversationType: Exclude<ChatType, 'singleChat'>,
+    conversationType: ChatType,
     conversationId: string,
     message: ChatSDK.ModifiedEventMessage,
   ) {
@@ -159,7 +147,7 @@ class PinnedMessagesStore {
     this.visible = visible;
   }
   pushPinNoticeMessage(params: {
-    conversationType: Exclude<ChatType, 'singleChat'>;
+    conversationType: ChatType;
     conversationId: string;
     noticeType: 'pin' | 'unpin';
     operatorId: string;
