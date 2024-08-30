@@ -87,6 +87,17 @@ npm run dev
 - 漫游消息
 - 单向删除漫游消息
 - 用户属性
+- 翻译
+- 举报
+- 黑名单
+- 用户在线状态
+- 消息置顶
+- 会话置顶
+- 消息撤回
+- 消息表情回复
+- 子区
+
+如果用到这些功能，请确保相关服务是开通的。
 
 ### 使用步骤
 
@@ -368,11 +379,9 @@ easemob-uikit-web
 
 [集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html);
 
-[chat demo 源码地址](https://github.com/easemob/webim/tree/dev_4.0?tab=readme-ov-file)
+[chat demo 线上地址](https://webim-h5.easemob.com/) [chat demo 源码地址](https://github.com/easemob/webim/tree/dev_4.0?tab=readme-ov-file)
 
-[chatroom demo 源码地址](https://github.com/easemob/ChatroomDemo/tree/dev/WEB/ChatroomDemo)；
-
-[chatroom demo](https://livestream-hsb.oss-cn-beijing.aliyuncs.com/index.html)
+[chatroom demo 线上地址](https://webim-live.easemob.com/) [chatroom demo 源码地址](https://github.com/easemob/ChatroomDemo/tree/dev/WEB/ChatroomDemo)；
 
 ## 📄 代码许可
 

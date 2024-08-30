@@ -40,6 +40,7 @@ $switch-prefix-cls: #{$cui-prefix}-tabs;
         }
         &-li-disabled{
             color: $gray-8;
+            cursor: not-allowed!important;
             &:hover{
                 color: $gray-8!important;
             }
@@ -47,7 +48,6 @@ $switch-prefix-cls: #{$cui-prefix}-tabs;
                 color: $gray-8!important;
                 box-shadow: none!important;
             }
-            cursor: not-allowed!important;
         }
     }
     &-content{

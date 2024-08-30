@@ -17,7 +17,6 @@ import MessageEditor from '../../module/messageInput';
 import TextMessage from '../../module/textMessage';
 import './index.css';
 import { useSDK } from 'module';
-// import AgoraChat from 'agora-chat';
 
 const ChatApp = () => {
   const client = useClient();
