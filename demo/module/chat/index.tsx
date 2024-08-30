@@ -1,3 +1,4 @@
+// 开发用demo
 import React, { useEffect, useState, FC } from 'react';
 import ReactDOM from 'react-dom/client';
 import TextMessage from '../../../module/textMessage';
@@ -15,7 +16,6 @@ import { ConversationList, ConversationItem } from '../../../module/conversation
 // import Provider from '../../../module/store/Provider';
 import { Provider, UIKitProvider } from '../../../index';
 import { useClient } from '../../../module/hooks/useClient';
-import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import Button from '../../../component/button';
 import Avatar from '../../../component/avatar';
 import { MessageList } from '../../../module/chat/MessageList';
@@ -25,21 +25,10 @@ import './index.css';
 import { observer } from 'mobx-react-lite';
 import axios from 'axios';
 import { useConversationContext, useChatContext } from '../../../module';
-import { hexToHsla, generateColors } from '../../../module/utils/color';
 import UserSelect from '../../../module/userSelect';
 import { usePinnedMessage } from '../../../module/hooks/usePinnedMessage';
-console.log('hexToHsla', hexToHsla('#FF0000'));
-console.log('hexToHsla', hexToHsla('#000000'));
-console.log('hexToHsla', hexToHsla('#ffffff'));
-console.log('hexToHsla 1', generateColors(hexToHsla('#FF0000')));
-// import {
-// 	Chat,
-// 	rootStore,
-// 	ConversationList,
-// 	Provider,
-// 	useClient,
-// } from 'chatuim2';
-// import 'chatuim2/style.css';
+
+// 调试用
 window.rootStore = rootStore;
 
 // get url query params
@@ -73,30 +62,6 @@ const PinnedMessageComp = observer(() => {
 
 const ChatApp: FC<any> = () => {
   const client = useClient();
-  // useEffect(() => {
-  //   client &&
-  //     client
-  //       .open({
-  //         user: 'zd3',
-  //         // pwd: '272808',
-  //         accessToken:
-  //           'YWMtgwTHNZPxQviWaqMIJTHfFyhYwv00w0hrtpGKy_Jc3V2J3LcwYk0R7J9BM4gepb6yAwMAAAGLCXYIsQABTnFcluGlL4BdlKN4Qdf0EQThNgjgWh4vB9JhWxj-X18Ucg==',
-  //       })
-  //       .then(res => {
-  //         console.log('获取token成功', res, rootStore.client);
-  //       });
-  // }, [client]);
-
-  const getUrlPreviewInfo = () => {
-    getLinkPreview(
-      'https://api-ref.agora.io/en/chat-sdk/ios/1.x/interface_agora_chat_client.html#a3e0c211f850af4dfe61c0581f3b7aea7',
-    )
-      .then(data => console.log(123, data))
-      .catch(e => {
-        console.log(22, e);
-      });
-  };
-  // console.log('rootStore', rootStore.conversationStore.currentCvs);
 
   const {
     topConversation: topConversationInner,
@@ -130,7 +95,7 @@ const ChatApp: FC<any> = () => {
       bubbleStyle={{ background: 'hsl(135.79deg 88.79% 36.46%)' }}
       shape="square"
       arrow={false}
-      avatar={<Avatar style={{ background: 'pink' }}>zhangdong</Avatar>}
+      avatar={<Avatar style={{ background: 'pink' }}>zd</Avatar>}
       textMessage={{
         msg: msg.msg || 'hello',
         type: 'txt',
@@ -153,7 +118,6 @@ const ChatApp: FC<any> = () => {
   };
 
   useEffect(() => {
-    console.log('*******', rootStore.addressStore.contacts);
     rootStore.addressStore.setAppUserInfo({
       ...rootStore.addressStore.appUsersInfo,
       lxm: {
@@ -164,9 +128,7 @@ const ChatApp: FC<any> = () => {
     });
   }, [rootStore.addressStore.contacts.length]);
 
-  useEffect(() => {
-    console.log('变化了 showThreadPanel');
-  }, [thread.showThreadPanel]);
+  useEffect(() => {}, [thread.showThreadPanel]);
 
   const getRTCToken = data => {
     const { channel, chatUserId } = data;
@@ -458,9 +420,6 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         password: password || '123',
         useUserInfo: true,
         maxMessages: 100,
-        // token:
-        //   '007eJxTYFBRW8PxsjzKTEt3t/q21aylFwrC37GaPK73k382686EjO8KDGmGKcnm5hZJKSnJZiZmiSkWaUZmBpbmZsmJRikGhqbJh06XpTYEMjIY6nO0MjKwMjACIYivwpBkYGaSmGJmoGtmZJKka2iYmqxrkWpopGuaZGRikWRgapGWZAkAHZsmnQ==',
-        // appKey: 'easemob#easeim',
       }}
       theme={{
         // primaryColor: 50, //'#33ffaa',
@@ -518,7 +477,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
             moreAction: true,
             picture: true,
             video: true,
-            contactCard: false,
+            contactCard: true,
           },
         },
       }}
