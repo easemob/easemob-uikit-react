@@ -1,10 +1,11 @@
 import { useContext } from 'react';
 import { RootContext } from '../store/rootContext';
 import { eventHandler } from '../../eventHandler';
+import { ChatType } from '../../module/types/messageType';
 
 const usePinnedMessage = (params?: {
   conversation?: {
-    conversationType?: 'groupChat' | 'chatRoom';
+    conversationType?: ChatType;
     conversationId?: string;
   };
   pageSize?: number;

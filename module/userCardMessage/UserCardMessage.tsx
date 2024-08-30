@@ -53,7 +53,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: getCvsIdFromMessage(message),
-      conversationType: message.chatType as any,
+      conversationType: message.chatType,
     },
   });
 

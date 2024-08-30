@@ -52,7 +52,7 @@ const ImageMessage = (props: ImageMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: message.chatType as any,
+      conversationType: message.chatType,
     },
   });
   let bubbleShape = shape;

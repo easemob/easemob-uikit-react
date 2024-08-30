@@ -732,7 +732,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
               }
               suffixIcon={
                 <div>
-                  {CVS.chatType !== 'singleChat' && showPinMessage && (
+                  {showPinMessage && (
                     <Button onClick={show} type="text" shape="circle">
                       <Icon width={24} height={24} type="PIN"></Icon>
                     </Button>

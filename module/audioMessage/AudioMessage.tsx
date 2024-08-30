@@ -68,7 +68,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: getCvsIdFromMessage(audioMessage),
-      conversationType: audioMessage.chatType as any,
+      conversationType: audioMessage.chatType,
     },
   });
   const classString = classNames(
