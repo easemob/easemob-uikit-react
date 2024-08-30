@@ -25,7 +25,7 @@ export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onClear?: () => void;
   placeholder?: string;
-  shape?: 'ground' | 'square';
+  shape?: 'round' | 'square';
   close?: boolean;
   disabled?: boolean;
   maxLength?: number;
@@ -61,7 +61,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => {
   const [isClear, setIsClear] = useState(false);
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
-  const componentsShape = shape || theme?.componentsShape || 'ground';
+  const componentsShape = shape || theme?.componentsShape || 'round';
   const classes = classNames(
     prefixCls,
     {

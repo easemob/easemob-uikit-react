@@ -49,7 +49,7 @@ const ThreadListExpandableIcon = (props: ThreadListExpandableIconProps) => {
         icon
       ) : (
         <Button type="text" shape="circle">
-          <Icon type="THREAD" width={24} height={24}></Icon>
+          <Icon type="HASHTAG_IN_BUBBLE_FILL" width={24} height={24}></Icon>
         </Button>
       )}
     </Tooltip>

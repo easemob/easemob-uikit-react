@@ -60,7 +60,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const { rootStore, theme, features, initConfig } = context;
   const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
-  const componentsShape = theme?.componentsShape || 'ground';
+  const componentsShape = theme?.componentsShape || 'round';
   const { t } = useTranslation();
   const classString = classNames(
     prefixCls,

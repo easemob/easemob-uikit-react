@@ -79,7 +79,7 @@ $checkbox-prefix-cls: #{$cui-prefix}-checkbox;
 
 }
 
-.#{$checkbox-prefix-cls}-ground{
+.#{$checkbox-prefix-cls}-round{
   &>.#{$checkbox-prefix-cls}--mark{
     border-radius: 7px;
   }

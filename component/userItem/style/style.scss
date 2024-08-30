@@ -135,7 +135,7 @@ $user-prefix-cls: #{$cui-prefix}-userItem;
     }
 }
 
-.cui-moreAction-dark{
+.cui-moreAction.cui-moreAction-dark{
     li:hover{
         /* color_neutral/95 */
         background-color: $gray-2;

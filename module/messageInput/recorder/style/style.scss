@@ -26,7 +26,7 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
                 justify-content: center;
                 background: $gray-95;
                 border-radius: 4px;
-                &-ground{
+                &-round{
                     border-radius: 18px;
                 }
             }
@@ -76,7 +76,7 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
                 justify-content: center;
                 align-items: center;
                 display: flex;
-                &-ground{
+                &-round{
                     border-radius: 18px;
                 }
             }
@@ -91,7 +91,7 @@ $recorder-prefix-cls: #{$cui-prefix}-recorder;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        &-ground{
+        &-round{
             border-radius: 18px;
         }
     }

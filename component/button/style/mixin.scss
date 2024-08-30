@@ -193,16 +193,16 @@
 }
 
 @mixin btn-round($btnClassName: btn) {
-    @include button-size($btn-circle-size, calc($btn-circle-size / 2), $font-size-base, $btn-circle-size);
+    @include button-size($btn-circle-size, $btn-padding-horizontal-base, $font-size-base, $btn-circle-size);
 
     &.#{$btnClassName}-large {
         @include button-size(
-          $btn-circle-size-lg, calc($btn-circle-size-lg / 2), $btn-font-size-lg, $btn-circle-size-lg
+          $btn-circle-size-lg, $btn-padding-horizontal-lg, $btn-font-size-lg, $btn-circle-size-lg
         );
     }
     &.#{$btnClassName}-small {
         @include button-size(
-          $btn-circle-size-sm, calc($btn-circle-size-sm / 2), $font-size-base, $btn-circle-size-sm
+          $btn-circle-size-sm, $btn-padding-horizontal-sm, $font-size-base, $btn-circle-size-sm
         );
     }
 }

@@ -15,7 +15,7 @@ export interface SearchProps {
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   style?: React.CSSProperties;
   inputStyle?: React.CSSProperties;
-  shape?: 'ground' | 'square';
+  shape?: 'round' | 'square';
   placeholder?: string;
 }
 export default function Search(props: SearchProps) {
@@ -33,7 +33,7 @@ export default function Search(props: SearchProps) {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
-  const componentsShape = shape || theme?.componentsShape || 'ground';
+  const componentsShape = shape || theme?.componentsShape || 'round';
   const prefixCls = getPrefixCls('search', customizePrefixCls);
   const classString = classNames(
     prefixCls,

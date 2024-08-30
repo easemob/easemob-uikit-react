@@ -13,7 +13,7 @@ export interface CheckboxProps {
   disabled?: boolean;
   children?: React.ReactNode;
   onChange?(e: ChangeEvent<HTMLInputElement>): void;
-  shape?: 'square' | 'ground';
+  shape?: 'square' | 'round';
 }
 
 const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
@@ -26,7 +26,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
       children,
       className,
       onChange,
-      shape = 'ground',
+      shape = 'round',
       prefix,
       style = {},
     }: CheckboxProps,
@@ -37,7 +37,7 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const classes = classNames(
       prefixCls,
       {
-        [`${prefixCls}-ground`]: shape == 'ground',
+        [`${prefixCls}-round`]: shape == 'round',
       },
       className,
     );

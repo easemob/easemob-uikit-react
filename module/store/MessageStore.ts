@@ -295,6 +295,9 @@ class MessageStore {
           msg.combineLevel = level + 1;
         }
         if ((message as ChatSDK.ImgMsgBody).url) {
+          if (message.type === 'video') {
+            (msg as ChatSDK.VideoMsgBody).thumb = (message as ChatSDK.VideoMsgBody).thumb;
+          }
           (msg as ChatSDK.ImgMsgBody).url = (message as ChatSDK.ImgMsgBody).url;
           if (msg && (msg as ChatSDK.ImgMsgBody).file) {
             // @ts-ignore
@@ -406,6 +409,10 @@ class MessageStore {
 
     // @ts-ignore
     if (message.isChatThread || message.chatThread) {
+      return;
+    }
+
+    if (message.type === 'cmd') {
       return;
     }
     // @ts-ignore

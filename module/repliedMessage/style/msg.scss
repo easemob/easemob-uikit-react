@@ -68,7 +68,7 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
     &-square{
         border-radius: 4px;
     }
-    &-ground{
+    &-round{
         &.#{$reply-msg-prefix-cls}-right{
             .#{$reply-msg-prefix-cls}-content{
                 border-radius: $msg-bubble-border-radius-right;
@@ -84,10 +84,21 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
         cursor: pointer;
         margin: 0 $margin-xs;
     }
+
+    &-dark{
+        .#{$reply-msg-prefix-cls}-content{
+            background-color: $gray-2;
+            color: $gray-6;
+        }
+    }
 }
 
 .reply-message-twinkle{
 	animation: fadeInOut2 1s 0.5s;
+}
+
+.cui-message-base-dark.reply-message-twinkle{
+    animation: fadeInOut1 1s 0.5s;
 }
 
 @keyframes fadeInOut2 {
@@ -101,6 +112,21 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
     }
 	100% {
         background-color: $chat-bg;
+        opacity: 1;
+    }
+}
+
+@keyframes fadeInOut1 {
+    0% {
+        background-color: $gray-1;
+        opacity: 1;
+    }
+    50% {
+        background-color: $gray-2;
+        opacity: 1;
+    }
+	100% {
+        background-color: $gray-1;
         opacity: 1;
     }
 }

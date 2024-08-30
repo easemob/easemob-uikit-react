@@ -268,12 +268,16 @@ const ChatApp: FC<any> = () => {
               setCvsItem(item);
             }}
             itemProps={{
-              moreAction: {
-                visible: true,
-                actions: [{ content: 'DELETE' }],
-              },
+              // moreAction: {
+              //   visible: true,
+              //   actions: [{ content: 'DELETE' }],
+              // },
               formatDateTime: (time: number) => {
                 return new Date(time).toLocaleString();
+              },
+              renderMessageContent: (msg: any) => {
+                console.log('msg', msg);
+                return null;
               },
             }}
             className="conversation"
@@ -365,9 +369,9 @@ const ChatApp: FC<any> = () => {
                   getRTCToken: getRTCToken,
                   getIdMap: () => {},
                 }}
-                renderRepliedMessage={message => {
-                  return <div>replied message {message.from}</div>;
-                }}
+                // renderRepliedMessage={message => {
+                //   return <div>replied message {message.from}</div>;
+                // }}
               ></Chat>
               {groupSettingVisible && (
                 <div style={{ width: '350px', borderLeft: '1px solid green' }}>
@@ -461,9 +465,9 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
       theme={{
         // primaryColor: 50, //'#33ffaa',
         mode: 'dark',
-        bubbleShape: 'square',
+        bubbleShape: 'round',
         avatarShape: 'circle',
-        componentsShape: 'square',
+        componentsShape: 'round',
       }}
       local={{
         fallbackLng: 'en',
@@ -502,7 +506,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
             recall: true,
             translate: true,
             edit: true,
-            report: false,
+            report: true,
             forward: false,
             pin: true,
           },

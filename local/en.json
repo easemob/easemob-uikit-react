@@ -165,5 +165,7 @@
     "Busy": "Busy",
     "Away": "Away",
     "Do Not Disturb": "Do Not Disturb",
-    "Custom": "Custom"
+    "Custom": "Custom",
+    "Violation": "Violation",
+    "Confirm to remove pin message ?": "Confirm to remove pin message ?"
 }

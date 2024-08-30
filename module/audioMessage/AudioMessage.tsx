@@ -55,6 +55,16 @@ const AudioMessage = (props: AudioMessageProps) => {
   // const duration = body.length
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-audio', customizePrefixCls);
+  const context = React.useContext(RootContext);
+  const { theme } = context;
+  const themeMode = theme?.mode;
+
+  let { bySelf } = audioMessage;
+  if (typeof bySelf == 'undefined') {
+    bySelf = from == rootStore.client.context.userId;
+  }
+  const bubbleType = type ? type : bySelf ? 'primary' : 'secondly';
+
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: getCvsIdFromMessage(audioMessage),
@@ -64,13 +74,15 @@ const AudioMessage = (props: AudioMessageProps) => {
   const classString = classNames(
     prefixCls,
     {
-      [`${prefixCls}-${type}`]: !!type,
+      [`${prefixCls}-${bubbleType}`]: !!bubbleType,
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );
 
   const [sourceUrl, setUrl] = useState('');
   useEffect(() => {
+    if (!audioMessage.url) return;
     const options = {
       url: audioMessage.url as string,
       headers: {
@@ -78,6 +90,7 @@ const AudioMessage = (props: AudioMessageProps) => {
       },
       onFileDownloadComplete: function (response: any) {
         const objectUrl = chatSDK.utils.parseDownloadResponse.call(rootStore.client, response);
+        console.log('下载文件成功', objectUrl);
         setUrl(objectUrl);
       },
       onFileDownloadError: function () {},
@@ -86,14 +99,11 @@ const AudioMessage = (props: AudioMessageProps) => {
   }, [audioMessage.url]);
   const playAudio = () => {
     setPlayStatus(true);
-    (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current
-      .play()
-      .then(res => {
-        // console.log(res);
-      })
-      .catch(err => {
-        // console.error('err', err);
-      });
+    console.log('audioRef', audioRef.current);
+    (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current.play().catch(err => {
+      console.error('err', err);
+      setPlayStatus(false);
+    });
 
     // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
     if (
@@ -115,11 +125,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     width: `calc(${duration}% + 40px)`,
     maxWidth: `calc(100% - 128px)`,
   };
-  let { bySelf } = audioMessage;
-  if (typeof bySelf == 'undefined') {
-    bySelf = from == rootStore.client.context.userId;
-  }
-  const bubbleType = type ? type : bySelf ? 'primary' : 'secondly';
+
   const handleReplyMsg = () => {
     rootStore.messageStore.setRepliedMessage(audioMessage);
   };
@@ -304,7 +310,7 @@ const AudioMessage = (props: AudioMessageProps) => {
           <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
           <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
           <audio
-            src={typeof file.url == 'string' ? file.url : sourceUrl}
+            src={sourceUrl}
             ref={audioRef}
             onEnded={handlePlayEnd}
             onError={handlePlayEnd}
@@ -345,7 +351,8 @@ const AudioMessage = (props: AudioMessageProps) => {
             <AudioPlayer play={isPlaying} reverse={bySelf} size={20}></AudioPlayer>
             <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
             <audio
-              src={typeof file.url == 'string' ? file.url : sourceUrl}
+              // src={typeof file.url == 'string' ? file.url : sourceUrl}
+              src={sourceUrl ?? file.url}
               ref={audioRef}
               onEnded={handlePlayEnd}
               onError={handlePlayEnd}

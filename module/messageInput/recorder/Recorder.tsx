@@ -31,7 +31,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
-  const componentsShape = theme?.componentsShape || 'ground';
+  const componentsShape = theme?.componentsShape || 'round';
   const { t } = useTranslation();
   const { messageStore, client } = rootStore;
   const {
@@ -195,7 +195,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       <div className={`${prefixCls}-content-left`}>
         <div
           className={classNames(`${prefixCls}-iconBox`, `${prefixCls}-iconBox-stop`, {
-            [`${prefixCls}-iconBox-ground`]: componentsShape == 'ground',
+            [`${prefixCls}-iconBox-round`]: componentsShape == 'round',
           })}
           title={t(`cancel`) as string}
         >
@@ -210,7 +210,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
         <div
           onClick={sendAudio}
           className={classNames(`${prefixCls}-send`, {
-            [`${prefixCls}-send-ground`]: componentsShape == 'ground',
+            [`${prefixCls}-send-round`]: componentsShape == 'round',
           })}
           title={t(`send`) as string}
         >

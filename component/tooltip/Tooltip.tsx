@@ -147,6 +147,7 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
   } = React.useContext(ConfigContext);
   const { theme } = React.useContext(RootContext);
   const themeMode = theme?.mode;
+  const componentsShape = theme?.componentsShape;
   const [open, setOpen] = useMergedState(false, {
     value: props.open,
     defaultValue: props.defaultOpen,
@@ -270,6 +271,7 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
 
   const customOverlayClassName = classNames(overlayClassName, {
     [`${prefixCls}-${color}`]: color,
+    [`${prefixCls}-${componentsShape}`]: !!componentsShape,
   });
 
   const formattedOverlayInnerStyle = overlayInnerStyle;

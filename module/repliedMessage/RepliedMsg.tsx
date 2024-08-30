@@ -21,7 +21,7 @@ export interface RepliedMsgProps {
   prefixCls?: string;
   className?: string;
   style?: React.CSSProperties;
-  shape?: 'ground' | 'square'; // 气泡形状
+  shape?: 'round' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
   message: BaseMessageType;
 }
@@ -48,13 +48,14 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   if (theme?.bubbleShape && !shape) {
     bubbleShape = theme?.bubbleShape;
   }
-
+  const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
     {
       [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
       [`${prefixCls}-left`]: direction == 'ltr',
       [`${prefixCls}-right`]: direction == 'rtl',
+      [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
   );

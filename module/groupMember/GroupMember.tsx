@@ -281,6 +281,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
           }
           return (
             <UserItem
+              avatarSize={40}
               avatarShape={theme?.avatarShape}
               key={item.userId}
               data={{ userId: item.userId, nickname: name, avatarUrl: avatarUrl }}
@@ -315,7 +316,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
                               height={18}
                             ></Icon>
                           ),
-                          content: item.isInContact ? t('privateChat') : t('addGroupMembers'),
+                          content: item.isInContact ? t('privateChat') : t('addContact'),
                           onClick: () => {
                             item.isInContact ? privateChat(item.userId) : addContact(item.userId);
                           },

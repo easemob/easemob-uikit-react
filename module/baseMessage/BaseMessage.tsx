@@ -52,7 +52,7 @@ export interface BaseMessageProps {
   showMessageInfo?: boolean;
   direction?: 'ltr' | 'rtl'; // 左侧布局/右侧布局
   prefix?: string;
-  shape?: 'ground' | 'square'; // 气泡形状
+  shape?: 'round' | 'square'; // 气泡形状
   arrow?: boolean; // 气泡是否有箭头
   nickName?: string; // 昵称
   className?: string;
@@ -140,7 +140,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     bubbleStyle,
     time,
     nickName,
-    shape = 'ground',
+    shape = 'round',
     arrow,
     hasRepliedMsg = false,
     onReplyMessage,
@@ -192,7 +192,7 @@ let BaseMessage = (props: BaseMessageProps) => {
       shape = theme?.avatarShape;
     }
     avatarToShow = (
-      <Avatar src={appUsersInfo?.[userId]?.avatarurl} shape={shape}>
+      <Avatar src={appUsersInfo?.[userId]?.avatarurl} shape={shape} size={24}>
         {appUsersInfo?.[userId]?.nickname || userId}
       </Avatar>
     );
@@ -220,7 +220,7 @@ let BaseMessage = (props: BaseMessageProps) => {
       [`${prefixCls}-${bubbleType}`]: !!bubbleType,
       [`${prefixCls}-${bubbleShape}`]: !!bubbleShape,
       [`${prefixCls}-arrow`]: !!bubbleArrow,
-      [`${prefixCls}-reply`]: showRepliedMsg && bubbleShape === 'ground',
+      [`${prefixCls}-reply`]: showRepliedMsg && bubbleShape === 'round',
       [`${prefixCls}-${themeMode}`]: !!themeMode,
     },
     className,
@@ -645,11 +645,11 @@ let BaseMessage = (props: BaseMessageProps) => {
         )}
         <div
           id={id}
-          onClick={() => {
-            checkboxRef.current?.click?.();
-          }}
+          // onClick={e => {
+          //   checkboxRef.current?.click?.();
+          // }}
           className={classString}
-          style={{ ...style }}
+          style={{ ...style, paddingLeft: select ? '38px' : '' }}
           onMouseOver={() => setHoverStatus(true)}
           onMouseLeave={() => {
             setHoverStatus(false);
@@ -765,7 +765,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           onClick={handleClickEmoji}
           onDelete={handleDeleteReactionEmoji}
           onShowUserList={handleShowReactionUserList}
-          style={{ padding: bubbleArrow ? '0 90px' : '0 86px' }}
+          style={{ padding: bubbleArrow ? '0 64px' : '0 60px' }}
         />
       )}
     </div>
