@@ -38,6 +38,7 @@ $reply-msg-prefix-cls: #{$cui-prefix}-reply-message;
         background-color: $gray-95;
         border-radius: $msg-bubble-square-border-radius;
         position: relative;
+        cursor: pointer;
         &:hover {
             background-color: $gray-98;
         }

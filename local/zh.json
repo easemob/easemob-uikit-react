@@ -167,5 +167,6 @@
     "Do Not Disturb": "请勿打扰",
     "Custom": "自定义状态",
     "Violation": "举报原因",
-    "Confirm to remove pin message ?": "确定移除置顶消息 ?"
+    "Confirm to remove pin message ?": "确定移除置顶消息 ?",
+    "Click to view the original message": "点击查看原消息"
 }
