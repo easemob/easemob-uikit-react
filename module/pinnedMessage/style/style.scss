@@ -27,7 +27,7 @@ $status-prefix-cls: #{$cui-prefix}-message-base;
 .#{$pinned-msg-prefix-cls}-message-bubble {
   padding: 8px 0 12px 0;
   color: $gray-1;
-
+  padding-right: 56px;
   .#{$status-prefix-cls}-body {
     margin: 0;
   }
