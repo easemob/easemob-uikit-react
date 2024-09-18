@@ -226,27 +226,27 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       }
       break;
     case 'img':
-      lastMsg = `/${t('image')}/`;
+      lastMsg = `[${t('image')}]`;
       break;
     case 'audio':
-      lastMsg = `/${t('audio')}/`;
+      lastMsg = `[${t('audio')}]`;
       break;
     case 'file':
-      lastMsg = `/${t('file')}/`;
+      lastMsg = `[${t('file')}]`;
       break;
     case 'video':
-      lastMsg = `/${t('video')}/`;
+      lastMsg = `[${t('video')}]`;
       break;
     case 'custom':
       if (data.lastMessage.customEvent == 'userCard') {
-        lastMsg = `/${t('contact')}/`;
+        lastMsg = `[${t('contact')}]`;
       } else {
-        lastMsg = `/${t('custom')}/`;
+        lastMsg = `[${t('custom')}]`;
       }
       break;
     // @ts-ignore
     case 'combine':
-      lastMsg = `/${t('chatHistory')}/`;
+      lastMsg = `[${t('chatHistory')}]`;
       break;
     // @ts-ignore
     case 'recall':
