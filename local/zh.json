@@ -168,5 +168,7 @@
     "Custom": "自定义状态",
     "Violation": "举报原因",
     "Confirm to remove pin message ?": "确定移除置顶消息 ?",
-    "Click to view the original message": "点击查看原消息"
+    "Click to view the original message": "点击查看原消息",
+    "Delete this message": "删除这条消息",
+    "deleteMessage": "删除消息"
 }

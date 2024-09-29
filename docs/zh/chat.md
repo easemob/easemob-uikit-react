@@ -70,20 +70,96 @@ const ChatContainer = () => {
 
 <div align=center> <img src="../image/buble2.png" width = "400" height = "450" /></div>
 
-### 在消息编辑器中添加一个自定义图标
+### 修改消息日期时间格式
+
+通过消息组件的 formatDateTime 方法来设置显示的格式
+
+```jsx
+<Chat
+  messageListProps={{
+    messageProps: {
+      formatDateTime: (time: number) => {
+        // 自定义显示日期和时间
+        return new Date(time).toLocaleString();
+      },
+    },
+  }}
+/>
+```
+
+### 设置显示哪些消息的更多操作
+
+通过设置 messageProps 的 customAction 属性设置显示哪些操作按钮
+
+```jsx
+<Chat
+  messageListProps={{
+    messageProps: {
+      visible: true,
+      icon: null,
+      actions: [
+        {
+          // 展示单条转发
+          content: 'FORWARD',
+        },
+        {
+          // 展示消息引用
+          content: 'REPLY',
+        },
+        {
+          // 展示消息撤回
+          content: 'UNSEND',
+        },
+        {
+          // 展示消息编辑
+          content: 'Modify',
+        },
+        {
+          // 展示消息多选
+          content: 'SELECT',
+        },
+        {
+          // 展示消息固定
+          content: 'PIN',
+        },
+        {
+          // 展示消息翻译
+          content: 'TRANSLATE',
+        },
+        {
+          // 展示消息举报
+          content: 'REPORT',
+        },
+        {
+          // 展示消息删除
+          content: 'DELETE',
+        },
+        {
+          content: '自定义按钮',
+          // 自定义icon
+          icon: <Icon type="STAR"/>
+          onClick: () => {},
+        },
+      ],
+    },
+  }}
+/>
+```
+
+### 在消息输入框中添加一个自定义图标
 
 给消息编辑器添加一个自定义图标来实现指定的功能:
 
-1. 使用 `renderMessageEditor` 方法来自定义渲染消息编辑器。
-2. 使用 `actions` 来自定义 `MessageEditor` 组件。
+1. 使用 `renderMessageInput` 方法来自定义渲染消息编辑器。
+2. 使用 `actions` 来自定义 `MessageInput` 组件。
 
 ```jsx
 import React from 'react';
-import { Chat, Icon, MessageEditor } from 'easemob-chat-uikit';
+import { Chat, Icon, MessageInput } from 'easemob-chat-uikit';
 import 'easemob-chat-uikit/style.css';
 
 const ChatContainer = () => {
-  // Add an icon to the message editor
+  // Add an icon to the message input
   const CustomIcon = {
     visible: true,
     name: 'CUSTOM',
@@ -97,12 +173,12 @@ const ChatContainer = () => {
     ),
   };
 
-  const actions = [...MessageEditor.defaultActions];
+  const actions = [...MessageInput.defaultActions];
   // Insert a custom icon after textarea
   actions.splice(2, 0, CustomIcon);
   return (
     <div style={{ width: '70%', height: '100%' }}>
-      <Chat renderMessageEditor={() => <MessageEditor actions={actions} />} />
+      <Chat renderMessageInput={() => <MessageInput actions={actions} />} />
     </div>
   );
 };
@@ -121,7 +197,7 @@ const ChatContainer = () => {
 
 ```jsx
 import React from 'react';
-import { Chat, MessageList, TextMessage, rootStore, MessageEditor, Icon } from 'easemob-chat-uikit';
+import { Chat, MessageList, TextMessage, rootStore, MessageInput, Icon } from 'easemob-chat-uikit';
 import 'easemob-chat-uikit/style.css';
 
 const ChatContainer = () => {
@@ -153,12 +229,12 @@ const ChatContainer = () => {
       ></Icon>
     ),
   };
-  const actions = [...MessageEditor.defaultActions];
+  const actions = [...MessageInput.defaultActions];
   actions.splice(2, 0, CustomIcon);
 
   // Implement the sending of a custom message
   const sendCustomMessage = () => {
-    const customMsg = AgoraChat.message.create({
+    const customMsg = EasemobChat.message.create({
       type: 'custom',
       to: 'targetId', // The user ID of the peer user for one-to-one chat or the current group ID for group chat.
       chatType: 'singleChat',
@@ -175,7 +251,7 @@ const ChatContainer = () => {
     <div style={{ width: '70%', height: '100%' }}>
       <Chat
         renderMessageList={() => <MessageList renderMessage={renderMessage} />}
-        renderMessageEditor={() => <MessageEditor actions={actions} />}
+        renderMessageInput={() => <MessageInput actions={actions} />}
       />
     </div>
   );
@@ -183,6 +259,57 @@ const ChatContainer = () => {
 ```
 
 <div align=center> <img src="../image/custom-msg.png" width = "400" height = "450" /></div>
+
+### 配置输入框功能
+
+```jsx
+import React from 'react';
+import { Chat, Icon, MessageInput } from 'easemob-chat-uikit';
+import 'easemob-chat-uikit/style.css';
+
+const ChatContainer = () => {
+  return (
+    <div style={{ width: '70%', height: '100%' }}>
+      <Chat
+        renderMessageInput={() => (
+          <MessageInput
+            actions={[
+              {
+                // 发送语音功能
+                name: 'RECORDER',
+                visible: true,
+              },
+              {
+                // 消息输入框
+                name: 'TEXTAREA',
+                visible: true,
+              },
+              {
+                // 表情
+                name: 'EMOJI',
+                visible: true,
+              },
+              {
+                // 更多操作
+                name: 'MORE',
+                visible: true,
+              },
+            ]}
+            enabledTyping={true} // 是否启用正在输入功能
+            showSendButton={true} // 是否展示发送按钮
+            sendButtonIcon={<Icon type="AIR_PLANE" />} // 发送按钮 Icon
+            row={1} // Input 行数
+            placeHolder="请输入内容" // 默认占位符
+            enabledMention={true} // 是否开启@功能
+            onSendMessage={message => {}} //发送消息的回调
+            onBeforeSendMessage={message => {}} // 消息发送前回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
+          />
+        )}
+      />
+    </div>
+  );
+};
+```
 
 ### 修改主题
 
