@@ -365,4 +365,6 @@ const AudioMessage = (props: AudioMessageProps) => {
   );
 };
 
-export default observer(AudioMessage);
+const AudioMessageOut = observer(AudioMessage);
+AudioMessageOut.displayName = 'AudioMessage';
+export default AudioMessageOut;

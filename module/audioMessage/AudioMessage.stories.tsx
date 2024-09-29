@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
 import AudioMessage from './index';
 
@@ -11,10 +11,10 @@ export default {
   argTypes: {
     bubbleType: '',
   },
-} as ComponentMeta<typeof AudioMessage>;
+} as Meta<typeof AudioMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof AudioMessage> = args => (
+const Template: StoryFn<typeof AudioMessage> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -24,7 +24,7 @@ const Template: ComponentStory<typeof AudioMessage> = args => (
   </Provider>
 );
 
-const DarkTemplate: ComponentStory<typeof AudioMessage> = args => (
+const DarkTemplate: StoryFn<typeof AudioMessage> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -37,57 +37,61 @@ const DarkTemplate: ComponentStory<typeof AudioMessage> = args => (
   </Provider>
 );
 
-export const Primary = Template.bind({});
-export const Secondly = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
+export const Primary = {
+  render: Template,
 
-Primary.args = {
-  type: 'primary',
-  audioMessage: {
-    type: 'audio',
-    filename: 'audio.wav',
-    length: 3,
-    file_length: 1024,
-    chatType: 'singleChat',
-    time: Date.now(),
-    status: 'read',
-    bySelf: true,
-    file: {
-      url: 'hppt://example',
-      filename: 'string',
-      filetype: 'audio',
-      data: {} as unknown as File,
+  args: {
+    type: 'primary',
+    audioMessage: {
+      type: 'audio',
+      filename: 'audio.wav',
       length: 3,
-      duration: 3,
+      file_length: 1024,
+      chatType: 'singleChat',
+      time: Date.now(),
+      status: 'read',
+      bySelf: true,
+      file: {
+        url: 'hppt://example',
+        filename: 'string',
+        filetype: 'audio',
+        data: {} as unknown as File,
+        length: 3,
+        duration: 3,
+      },
+      id: '12345678901',
+      to: 'userId',
+      from: 'myId',
     },
-    id: '12345678901',
-    to: 'userId',
-    from: 'myId',
   },
 };
 
-Secondly.args = {
-  type: 'secondly',
-  direction: 'ltr',
-  audioMessage: {
-    type: 'audio',
-    filename: 'audio.wav',
-    length: 3,
-    file_length: 1024,
-    chatType: 'singleChat',
-    time: Date.now(),
-    status: 'read',
-    bySelf: false,
-    file: {
-      url: 'hppt://example',
-      filename: 'string',
-      filetype: 'audio',
-      data: {} as unknown as File,
+export const Secondly = {
+  render: Template,
+
+  args: {
+    type: 'secondly',
+    direction: 'ltr',
+    audioMessage: {
+      type: 'audio',
+      filename: 'audio.wav',
       length: 3,
-      duration: 3,
+      file_length: 1024,
+      chatType: 'singleChat',
+      time: Date.now(),
+      status: 'read',
+      bySelf: false,
+      file: {
+        url: 'hppt://example',
+        filename: 'string',
+        filetype: 'audio',
+        data: {} as unknown as File,
+        length: 3,
+        duration: 3,
+      },
+      id: '12345678901',
+      to: 'userId',
+      from: 'myId',
     },
-    id: '12345678901',
-    to: 'userId',
-    from: 'myId',
   },
 };

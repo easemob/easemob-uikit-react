@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import MessageInput from './index';
 import Provider from '../store/Provider';
@@ -111,16 +111,16 @@ export default {
       description: 'Gift keyboard props',
     },
   },
-} as ComponentMeta<typeof MessageInput>;
+} as Meta<typeof MessageInput>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof MessageInput> = args => (
+const Template: StoryFn<typeof MessageInput> = args => (
   <Provider initConfig={{ appKey: 'z#b' }}>
     <MessageInput {...args} conversation={{ chatType: 'singleChat', conversationId: 'zd2' }} />
   </Provider>
 );
 
-const DarkTemplate: ComponentStory<typeof MessageInput> = args => (
+const DarkTemplate: StoryFn<typeof MessageInput> = args => (
   <Provider initConfig={{ appKey: 'z#b' }} theme={{ mode: 'dark' }}>
     <div style={{ background: '#171a1c' }}>
       <MessageInput {...args} conversation={{ chatType: 'singleChat', conversationId: 'zd2' }} />
@@ -128,7 +128,7 @@ const DarkTemplate: ComponentStory<typeof MessageInput> = args => (
   </Provider>
 );
 
-const SquareTemplate: ComponentStory<typeof MessageInput> = args => (
+const SquareTemplate: StoryFn<typeof MessageInput> = args => (
   <Provider initConfig={{ appKey: 'z#b' }} theme={{ mode: 'light', componentsShape: 'square' }}>
     <div style={{ background: '#171a1c' }}>
       <MessageInput {...args} conversation={{ chatType: 'singleChat', conversationId: 'zd2' }} />
@@ -136,8 +136,15 @@ const SquareTemplate: ComponentStory<typeof MessageInput> = args => (
   </Provider>
 );
 
-export const Default = Template.bind({});
-export const Dark = DarkTemplate.bind({});
-export const Square = SquareTemplate.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Default.args = {};
+export const Default = {
+  render: Template,
+  args: {},
+};
+
+export const Dark = {
+  render: DarkTemplate,
+};
+
+export const Square = {
+  render: SquareTemplate,
+};

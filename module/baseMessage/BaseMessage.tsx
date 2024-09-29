@@ -67,7 +67,7 @@ export interface BaseMessageProps {
   messageStatus?: boolean; // whether show message status
   message?: BaseMessageType;
   onReplyMessage?: () => void;
-  onDeleteMessage?: () => void;
+  onDeleteMessage?: (message: BaseMessageType) => void;
   onAddReactionEmoji?: (emojiString: string) => void;
   onDeleteReactionEmoji?: (emojiString: string) => void;
   onShowReactionUserList?: (emojiString: string) => void;
@@ -397,7 +397,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onReplyMessage && onReplyMessage();
   };
   const deleteMessage = () => {
-    onDeleteMessage && onDeleteMessage();
+    onDeleteMessage && onDeleteMessage(message as BaseMessageType);
   };
   const recallMessage = () => {
     onRecallMessage && onRecallMessage(message as BaseMessageType);

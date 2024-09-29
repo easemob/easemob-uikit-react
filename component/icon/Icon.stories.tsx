@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { Icon } from './Icon';
 import { ICON_TYPES } from './const';
 
@@ -7,9 +7,9 @@ export default {
   title: 'pure component/Icon',
   component: Icon,
   argTypes: {},
-} as ComponentMeta<typeof Icon>;
+} as Meta<typeof Icon>;
 
-const Template: ComponentStory<typeof Icon> = args => <Icon {...args} />;
+const Template: StoryFn<typeof Icon> = args => <Icon {...args} />;
 
 export const IconList = () => {
   return [

@@ -318,4 +318,7 @@ const VideoMessage = (props: VideoMessageProps) => {
     </BaseMessage>
   );
 };
-export default observer(VideoMessage);
+
+const VideoMessageOut = observer(VideoMessage);
+VideoMessageOut.displayName = 'VideoMessage';
+export default VideoMessageOut;

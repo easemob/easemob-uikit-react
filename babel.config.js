@@ -1,8 +1,9 @@
-module.exports = {
+const config = {
     presets: [
         [
             '@babel/env',
             {
+                corejs: 3,
                 modules: false,
                 useBuiltIns: 'usage'
             }
@@ -10,3 +11,5 @@ module.exports = {
         '@babel/react'
     ]
 }
+
+export default config;

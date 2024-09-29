@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import Typing from './index';
 import rootStore from '../store';
@@ -12,10 +12,7 @@ export default {
   argTypes: {
     // backgroundColor: { control: 'color' },
   },
-} as ComponentMeta<typeof Typing>;
-
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof Typing> = args => <Typing {...args} />;
+} as Meta<typeof Typing>;
 
 rootStore.messageStore.setTyping(
   {
@@ -24,12 +21,13 @@ rootStore.messageStore.setTyping(
   },
   true,
 );
-export const Primary = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Primary.args = {
-  conversation: {
-    chatType: 'singleChat',
-    conversationId: 'zd2',
-    name: 'Henry',
+
+export const Primary = {
+  args: {
+    conversation: {
+      chatType: 'singleChat',
+      conversationId: 'zd2',
+      name: 'Henry',
+    },
   },
 };

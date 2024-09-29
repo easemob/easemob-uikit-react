@@ -548,5 +548,6 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     </>
   );
 };
-
-export default observer(CombinedMessage);
+const CombinedMessageOut = observer(CombinedMessage);
+CombinedMessageOut.displayName = 'CombinedMessage';
+export default CombinedMessageOut;

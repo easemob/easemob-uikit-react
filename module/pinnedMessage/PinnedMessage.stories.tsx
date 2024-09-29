@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import PinnedMessage from './index';
 import rootStore from '../store';
 import Provider from '../store/Provider';
@@ -12,7 +12,7 @@ export default {
   argTypes: {
     bubbleType: '',
   },
-} as ComponentMeta<typeof PinnedMessage>;
+} as Meta<typeof PinnedMessage>;
 
 rootStore.pinnedMessagesStore.messages = {
   groupChat: {
@@ -48,7 +48,7 @@ rootStore.pinnedMessagesStore.messages = {
   chatRoom: {},
 };
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof PinnedMessage> = args => {
+const Template: StoryFn<typeof PinnedMessage> = args => {
   rootStore.conversationStore.setCurrentCvs({
     chatType: 'groupChat',
     conversationId: '20292712912182',
@@ -68,7 +68,7 @@ const Template: ComponentStory<typeof PinnedMessage> = args => {
   );
 };
 
-const DarkTemplate: ComponentStory<typeof PinnedMessage> = args => {
+const DarkTemplate: StoryFn<typeof PinnedMessage> = args => {
   rootStore.conversationStore.setCurrentCvs({
     chatType: 'groupChat',
     conversationId: '20292712912182',
@@ -91,5 +91,9 @@ const DarkTemplate: ComponentStory<typeof PinnedMessage> = args => {
   );
 };
 
-export const Default = Template.bind({});
-export const Dark = DarkTemplate.bind({});
+export const Default = {
+  render: Template,
+};
+export const Dark = {
+  render: DarkTemplate,
+};

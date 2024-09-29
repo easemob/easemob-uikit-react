@@ -387,5 +387,6 @@ const UserCardMessage = (props: UserCardMessageProps) => {
     </div>
   );
 };
-
-export default observer(UserCardMessage);
+const UserCardMessageOut = observer(UserCardMessage);
+UserCardMessageOut.displayName = 'UserCardMessage';
+export default UserCardMessageOut;

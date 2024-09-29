@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import MessageStatus from './index';
 
@@ -9,30 +9,34 @@ export default {
   component: MessageStatus,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
-} as ComponentMeta<typeof MessageStatus>;
+} as Meta<typeof MessageStatus>;
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof MessageStatus> = args => <MessageStatus {...args} />;
+export const sending = {
+  args: {
+    status: 'sending',
+  },
+};
 
-export const sending = Template.bind({});
-export const sent = Template.bind({});
-export const received = Template.bind({});
-export const read = Template.bind({});
-export const failed = Template.bind({});
+export const sent = {
+  args: {
+    status: 'sent',
+  },
+};
 
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-sending.args = {
-  status: 'sending',
+export const received = {
+  args: {
+    status: 'received',
+  },
 };
-sent.args = {
-  status: 'sent',
+
+export const read = {
+  args: {
+    status: 'read',
+  },
 };
-received.args = {
-  status: 'received',
-};
-read.args = {
-  status: 'read',
-};
-failed.args = {
-  status: 'failed',
+
+export const failed = {
+  args: {
+    status: 'failed',
+  },
 };

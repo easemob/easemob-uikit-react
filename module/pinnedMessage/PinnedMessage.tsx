@@ -340,4 +340,6 @@ const PinnedMessage = (props: PinnedMessageProps) => {
   );
 };
 
-export default observer(PinnedMessage);
+const PinnedMessageOut = observer(PinnedMessage);
+PinnedMessageOut.displayName = 'PinnedMessage';
+export default PinnedMessageOut;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
 import { ContactList } from './index';
 import rootStore from '../store';
@@ -10,7 +10,7 @@ export default {
   component: ContactList,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
-} as ComponentMeta<typeof ContactList>;
+} as Meta<typeof ContactList>;
 
 rootStore.addressStore.setContacts([
   {
@@ -50,14 +50,14 @@ rootStore.addressStore.setAppUserInfo({
 });
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof ContactList> = args => (
+const Template: StoryFn<typeof ContactList> = args => (
   <Provider initConfig={{ appKey: 'a#b' }}>
     {' '}
     <ContactList {...args} />
   </Provider>
 );
 
-const DarkTemplate: ComponentStory<typeof ContactList> = args => (
+const DarkTemplate: StoryFn<typeof ContactList> = args => (
   <Provider
     initConfig={{ appKey: 'a#b' }}
     theme={{
@@ -69,7 +69,7 @@ const DarkTemplate: ComponentStory<typeof ContactList> = args => (
   </Provider>
 );
 
-const SquareTemplate: ComponentStory<typeof ContactList> = args => (
+const SquareTemplate: StoryFn<typeof ContactList> = args => (
   <Provider
     initConfig={{ appKey: 'a#b' }}
     theme={{
@@ -84,7 +84,12 @@ const SquareTemplate: ComponentStory<typeof ContactList> = args => (
   </Provider>
 );
 
-export const Default = Template.bind({});
-export const Dark = DarkTemplate.bind({});
-export const Square = SquareTemplate.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
+export const Default = {
+  render: Template,
+};
+export const Dark = {
+  render: DarkTemplate,
+};
+export const Square = {
+  render: SquareTemplate,
+};

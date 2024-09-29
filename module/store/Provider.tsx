@@ -217,4 +217,6 @@ const Provider: React.FC<ProviderProps> = props => {
   );
 };
 
-export default memo(Provider);
+const P = memo(Provider);
+P.displayName = 'Provider';
+export default P;

@@ -283,4 +283,6 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   );
 };
 
-export default observer(ChatroomMessage);
+const ChatroomMessageOut = observer(ChatroomMessage);
+ChatroomMessageOut.displayName = 'ChatroomMessage';
+export default ChatroomMessageOut;

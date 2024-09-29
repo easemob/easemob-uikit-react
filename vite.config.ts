@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 import path from 'path';
 import svgr from 'vite-plugin-svgr';
+import react from '@vitejs/plugin-react';
 // const path = require("path");
 // const jsx = require("acorn-jsx");
 import jsx from 'acorn-jsx';
@@ -36,16 +37,12 @@ const resolvePath = (str: string) => path.resolve(__dirname, str);
 // };
 export default defineConfig({
   plugins: [
-    svgr({
-      svgrOptions: {
-        icon: true,
-      },
-    }),
     dts({
       outputDir: './build/types',
       insertTypesEntry: true, // 插入TS 入口
       copyDtsFiles: true, // 是否将源码里的 .d.ts 文件复制到 outputDir
     }),
+    svgr(),
   ],
   build: {
     // rollupOptions,

@@ -638,4 +638,6 @@ const TextMessage = (props: TextMessageProps) => {
   );
 };
 
-export default memo(observer(TextMessage));
+const TextMessageOut = memo(observer(TextMessage));
+TextMessageOut.displayName = 'TextMessage';
+export default TextMessageOut;

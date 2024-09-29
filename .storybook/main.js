@@ -1,44 +1,28 @@
-const svgr = require('vite-plugin-svgr');
-const path = require('path');
-// const __dirname = path.resolve();
-
-module.exports = {
+export default {
 	stories: [
 		'../component/**/*.stories.mdx',
 		'../component/**/*.stories.@(js|jsx|ts|tsx)',
 		'../module/**/*.stories.mdx',
 		'../module/**/*.stories.@(js|jsx|ts|tsx)',
 	],
-	addons: [
-		'@storybook/addon-links',
-		'@storybook/addon-essentials',
-		'@storybook/addon-interactions',
-	],
-	framework: '@storybook/react',
+	addons: ['@storybook/addon-links', '@storybook/addon-essentials'],
 	core: {
-		builder: '@storybook/builder-vite',
+		builder: '@storybook/builder-vite', // 👈 The builder enabled here.
 	},
+	framework: '@storybook/react-vite',
 	async viteFinal(config) {
-		config.plugins = [
-			...config.plugins,
-			svgr({
-				svgrOptions: {
-					icon: true,
-				},
-			}),
-		];
+		// Merge custom configuration into the default config
+		const { mergeConfig } = await import('vite');
 
-		return {
-			...config,
-			define: {
-				...config.define,
+		return mergeConfig(config, {
+			// Add dependencies to pre-optimization
+			optimizeDeps: {
+				include: ['storybook-dark-mode'],
 			},
-			resolve: {
-				// 配置路径别名
-				alias: {
-					'~': path.resolve(__dirname, '../'),
-				},
-			},
-		};
+		});
+	},
+	typescript: {
+		check: false, // 禁用 Storybook 的类型检查，使用自己项目的类型检查
+		reactDocgen: 'react-docgen-typescript',
 	},
 };

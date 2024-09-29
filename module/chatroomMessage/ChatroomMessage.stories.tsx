@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import ChatroomMessage from './index';
 import Icon, { IconProps } from '../../component/icon';
@@ -10,55 +10,52 @@ export default {
   component: ChatroomMessage,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
-} as ComponentMeta<typeof ChatroomMessage>;
+} as Meta<typeof ChatroomMessage>;
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof ChatroomMessage> = args => <ChatroomMessage {...args} />;
-
-export const textMessage = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-textMessage.args = {
-  message: {
-    type: 'txt',
-    msg: 'hello',
-    id: '1234567890',
-    to: 'chatroomId',
-    chatType: 'chatRoom',
-    // bySelf: true,
-    from: 'myUserId',
-    time: Date.now(),
-    // status: 'sent',
+export const textMessage = {
+  args: {
+    message: {
+      type: 'txt',
+      msg: 'hello',
+      id: '1234567890',
+      to: 'chatroomId',
+      chatType: 'chatRoom',
+      // bySelf: true,
+      from: 'myUserId',
+      time: Date.now(),
+      // status: 'sent',
+    },
   },
 };
 
-export const giftMessage = Template.bind({});
-
-giftMessage.args = {
-  message: {
-    id: '1231026004235920980',
-    type: 'custom',
-    chatType: 'chatRoom',
-    from: 'pev4pyzbwnutbp7a',
-    to: '230164666580997',
-    customEvent: 'CHATROOMUIKITGIFT',
-    params: {},
-    customExts: {
-      chatroom_uikit_gift:
-        '{"giftId":"2665752a-e273-427c-ac5a-4b2a9c82b255","giftIcon":"https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift1.png","giftName":"Heart","giftPrice":"1"}',
-    },
-    ext: {
-      chatroom_uikit_userInfo: {
-        userId: 'pev4pyzbwnutbp7a',
-        nickname: '阿朱',
-        avatarURL:
-          'https://a1.easemob.com/easemob/chatroom-uikit/chatfiles/a27bd9a0-79f8-11ee-8f83-551faec94303',
-        gender: 1,
+export const giftMessage = {
+  args: {
+    message: {
+      id: '1231026004235920980',
+      type: 'custom',
+      chatType: 'chatRoom',
+      from: 'pev4pyzbwnutbp7a',
+      to: '230164666580997',
+      customEvent: 'CHATROOMUIKITGIFT',
+      params: {},
+      customExts: {
+        chatroom_uikit_gift:
+          '{"giftId":"2665752a-e273-427c-ac5a-4b2a9c82b255","giftIcon":"https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift1.png","giftName":"Heart","giftPrice":"1"}',
       },
+      ext: {
+        chatroom_uikit_userInfo: {
+          userId: 'pev4pyzbwnutbp7a',
+          nickname: '阿朱',
+          avatarURL:
+            'https://a1.easemob.com/easemob/chatroom-uikit/chatfiles/a27bd9a0-79f8-11ee-8f83-551faec94303',
+          gender: 1,
+        },
+      },
+      time: 1704185376943,
+      onlineState: 1,
+      priority: 'normal',
+      broadcast: false,
+      // bySelf: false,
     },
-    time: 1704185376943,
-    onlineState: 1,
-    priority: 'normal',
-    broadcast: false,
-    // bySelf: false,
   },
 };
