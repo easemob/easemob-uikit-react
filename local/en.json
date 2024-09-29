@@ -168,5 +168,7 @@
     "Custom": "Custom",
     "Violation": "Violation",
     "Confirm to remove pin message ?": "Confirm to remove pin message ?",
-    "Click to view the original message": "Click to view the original message"
+    "Click to view the original message": "Click to view the original message",
+    "Delete this message": "Delete this message",
+    "deleteMessage": "Delete Message"
 }

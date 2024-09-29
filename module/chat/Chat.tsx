@@ -230,6 +230,15 @@ const Chat = forwardRef((props: ChatProps, ref) => {
     setReportMessageId(message.mid || message.id);
   };
 
+  // delete message
+  const [deleteMessageModalOpen, setDeleteMessageModalOpen] = useState(false);
+
+  const [deleteMessage, setDeleteMessage] = useState<BaseMessageType | null>(null);
+  const handleDeleteMessage = (message: BaseMessageType) => {
+    setDeleteMessage(message);
+    setDeleteMessageModalOpen(true);
+  };
+
   // config message
   const messageProps: MsgListProps['messageProps'] = {
     customAction: {
@@ -277,6 +286,7 @@ const Chat = forwardRef((props: ChatProps, ref) => {
       ],
     },
     onReportMessage: handleReport,
+    onDeleteMessage: handleDeleteMessage,
   };
 
   if (globalConfig?.message) {
@@ -853,6 +863,31 @@ const Chat = forwardRef((props: ChatProps, ref) => {
             );
           })}
         </div>
+      </Modal>
+      <Modal
+        open={deleteMessageModalOpen}
+        title={t('deleteMessage')}
+        onCancel={() => {
+          setDeleteMessageModalOpen(false);
+          setDeleteMessage(null);
+        }}
+        onOk={() => {
+          if (!deleteMessage) return;
+          const conversationId = getCvsIdFromMessage(deleteMessage);
+
+          rootStore.messageStore.deleteMessage(
+            {
+              chatType: deleteMessage.chatType,
+              conversationId: conversationId,
+            },
+            // @ts-ignore
+            deleteMessage.mid || deleteMessage.id,
+          );
+          setDeleteMessageModalOpen(false);
+          setDeleteMessage(null);
+        }}
+      >
+        <div>{`${t('Delete this message')}?`}</div>
       </Modal>
     </div>
   );
