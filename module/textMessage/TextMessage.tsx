@@ -71,7 +71,7 @@ export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = tr
           width={20}
           height={20}
           style={{
-            verticalAlign: 'middle',
+            verticalAlign: 'text-top',
           }}
         />,
       );

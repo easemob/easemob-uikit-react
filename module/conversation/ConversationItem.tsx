@@ -40,7 +40,7 @@ export interface ConversationItemProps {
     icon?: ReactNode;
     actions: Array<{
       content: ReactNode;
-      onClick?: () => void;
+      onClick?: (cvs: ConversationData[0]) => void | Promise<boolean>;
     }>;
   };
   formatDateTime?: (time: number) => string;
@@ -120,9 +120,16 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     setShowMore(false);
   };
 
-  const deleteCvs: MouseEventHandler<HTMLLIElement> = e => {
+  const deleteCvs: MouseEventHandler<HTMLLIElement> = async e => {
     e.stopPropagation();
-
+    // 如果moreAction里传了onClick则用onClick，否则执行下面的逻辑
+    const deleteAction = moreAction.actions.find(item => item.content === 'DELETE');
+    if (deleteAction && deleteAction.onClick) {
+      const value = await deleteAction.onClick(data);
+      if (!value) {
+        return;
+      }
+    }
     cvsStore.deleteConversation(data);
 
     rootStore.client
@@ -204,7 +211,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
               className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
               onClick={() => {
-                item.onClick?.();
+                item.onClick?.(data);
               }}
             >
               {item.content}

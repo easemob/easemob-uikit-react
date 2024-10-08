@@ -74,25 +74,25 @@ export interface ChatProps {
   messageInputProps?: MessageInputProps;
 
   rtcConfig?: {
-    appId: string;
-    agoraUid: string | number;
+    appId: string; // 声网 appId
+    agoraUid: string | number; // rtc 用户 ID
     onInvite?: (data: {
       channel: string;
       conversation: CurrentConversation;
       type: 'audio' | 'video';
-    }) => Promise<[{ name: string; id: string; avatarurl?: string }]>;
-    onAddPerson?: (data: RtcRoomInfo) => Promise<[{ id: string }]>;
-    getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>;
-    onStateChange?: (data: { type: string; confr: any }) => void;
+    }) => Promise<[{ name: string; id: string; avatarurl?: string }]>; // 邀请人加入音视频通话, 需要返回一个promise 包含被邀请人信息， id 为环信用户 ID，name 为用户昵称
+    onAddPerson?: (data: RtcRoomInfo) => Promise<[{ id: string }]>; // 群聊音视频过程中邀请其他人加入音视频通话, 需要返回一个promise 包含被邀请人信息， id 为环信用户 ID
+    getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>; // 获取 rtc 用户 ID 和环信用户 ID 的映射 返回 {[rtcUserId]: chatUserId}
+    onStateChange?: (data: { type: string; confr: any }) => void; // 音视频通话状态变化
     getRTCToken?: (data: {
       channel: number | string;
       chatUserId: string; // chat user ID
     }) => Promise<{
       agoraUid: string | number; // rtc user ID
       accessToken: string;
-    }>;
-    groupAvatar?: string;
-    onRing?: (data: { channel: string }) => void;
+    }>; // 获取 rtc token， 返回声网用户 ID 和 token
+    groupAvatar?: string; // 群聊音视频通话时的头像
+    onRing?: (data: { channel: string }) => void; // 被呼叫时的回调 可以播放铃声
   };
   onOpenThread?: (data: { id: string }) => void;
   onOpenThreadList?: () => void;

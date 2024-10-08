@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import ScrollList from '../../component/scrollList';
 import { getUsersInfo } from '../utils/index';
 import { AT_TYPE, Conversation } from '../store/ConversationStore';
+import Modal from '../../component/modal';
 
 export type ConversationData = Array<Conversation>;
 
@@ -41,7 +42,7 @@ export interface ConversationListProps {
 
 const ConversationScrollList = ScrollList<Conversation>();
 
-let Conversations: FC<ConversationListProps> = props => {
+const Conversations: FC<ConversationListProps> = props => {
   const {
     prefix: customizePrefixCls,
     className,
@@ -118,7 +119,7 @@ let Conversations: FC<ConversationListProps> = props => {
       setRenderData(cvsStore.searchList);
     } else {
       const renderData = cvsStore.conversationList.map(item => {
-        let renderItem = { ...item };
+        const renderItem = { ...item };
         if (item.chatType == 'groupChat') {
           groupData.forEach(group => {
             if (item.conversationId == group.groupid) {
@@ -152,7 +153,7 @@ let Conversations: FC<ConversationListProps> = props => {
   useEffect(() => {
     cvsStore.conversationList?.forEach(cvs => {
       if (!cvs.name && cvs.chatType == 'groupChat' && rootStore.addressStore.groups.length > 0) {
-        let result = rootStore.addressStore.groups.find(item => {
+        const result = rootStore.addressStore.groups.find(item => {
           return item.groupid === cvs.conversationId;
         });
         if (!result) {
@@ -181,6 +182,13 @@ let Conversations: FC<ConversationListProps> = props => {
     cvsStore.setSearchList(searchList);
   };
 
+  const [deleteCvsModalOpen, setDeleteCvsModalOpen] = useState(false);
+  // 保存resolve, reject，用于modal的确定和取消
+  const [deleteCvsPromise, setDeleteCvsPromise] = useState<{
+    resolve: (value: boolean) => void;
+    reject: () => void;
+  }>();
+
   useEffect(() => {
     if (rootStore.loginState) {
       getConversationList().then(() => {
@@ -206,6 +214,16 @@ let Conversations: FC<ConversationListProps> = props => {
     if (globalConfig?.item?.deleteConversation != false) {
       itemMoreAction.actions.push({
         content: 'DELETE',
+        onClick: data => {
+          setDeleteCvsModalOpen(true);
+          const p: Promise<boolean> = new Promise((res, rej) => {
+            setDeleteCvsPromise({
+              resolve: res,
+              reject: rej,
+            });
+          });
+          return p;
+        },
       });
     }
     if (globalConfig?.item?.pinConversation != false) {
@@ -271,6 +289,22 @@ let Conversations: FC<ConversationListProps> = props => {
           );
         }}
       ></ConversationScrollList>
+
+      <Modal
+        open={deleteCvsModalOpen}
+        title={t('deleteConversation')}
+        onCancel={() => {
+          deleteCvsPromise?.resolve?.(false);
+          setDeleteCvsModalOpen(false);
+        }}
+        onOk={() => {
+          deleteCvsPromise?.resolve?.(true);
+          setDeleteCvsPromise(undefined);
+          setDeleteCvsModalOpen(false);
+        }}
+      >
+        <div>{`${t('Delete this conversation')}?`}</div>
+      </Modal>
     </div>
   );
 };

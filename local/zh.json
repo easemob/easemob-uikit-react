@@ -121,7 +121,7 @@
     "user": "用户",
     "message": "发消息",
     "addContact": "添加联系人",
-    "contact": "联系人",
+    "contact": "个人名片",
     "editGroupDetail": "修改群组信息",
     "group": "群组",
     "name": "名称",
@@ -170,5 +170,7 @@
     "Confirm to remove pin message ?": "确定移除置顶消息 ?",
     "Click to view the original message": "点击查看原消息",
     "Delete this message": "删除这条消息",
-    "deleteMessage": "删除消息"
+    "deleteMessage": "删除消息",
+    "Delete this conversation": "确认删除会话",
+    "deleteConversation": "删除会话"
 }

@@ -121,7 +121,7 @@
     "user": "User",
     "message": "Send Messages",
     "addContact": "Add Contact",
-    "contact": "Contact",
+    "contact": "Contact Card",
     "editGroupDetail": "Edit Group Details",
     "group": "Group",
     "name": "Name",
@@ -170,5 +170,7 @@
     "Confirm to remove pin message ?": "Confirm to remove pin message ?",
     "Click to view the original message": "Click to view the original message",
     "Delete this message": "Delete this message",
-    "deleteMessage": "Delete Message"
+    "deleteMessage": "Delete Message",
+    "Delete this conversation": "Delete this conversation",
+    "deleteConversation": "Delete Conversation"
 }
