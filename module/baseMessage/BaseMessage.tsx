@@ -492,7 +492,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'Modify' && item.visible !== false) {
             return (
-              (isCurrentUser || isOwner || isAdmin) &&
+              isCurrentUser &&
               message?.type === 'txt' && (
                 <li
                   key={index}
