@@ -30,6 +30,7 @@ export interface EmojiProps {
   emojiConfig?: EmojiConfig;
   placement?: TooltipProps['placement'];
   closeAfterClick?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const Emoji = (props: EmojiProps) => {
@@ -47,6 +48,7 @@ const Emoji = (props: EmojiProps) => {
     emojiContainerStyle = {},
     placement = 'bottom',
     closeAfterClick = true,
+    onOpenChange,
   } = props;
   const { t } = useTranslation();
   const [isOpen, setOpen] = useState(false);
@@ -72,7 +74,7 @@ const Emoji = (props: EmojiProps) => {
         }
       }
       return (
-        <Button key={k} type={btnType} style={{ border: 'none' }}>
+        <Button key={k} type={btnType} style={{ border: 'none' }} ripple={false}>
           <div className="cui-emoji-box" style={{ ...emojiContainerStyle }}>
             {emojiConfig ? (
               typeof v == 'string' ? (
@@ -108,17 +110,22 @@ const Emoji = (props: EmojiProps) => {
       return onDelete && onDelete(selectedEmoji);
     }
     onSelected && onSelected(selectedEmoji);
+    if (closeAfterClick != false) {
+      onOpenChange && onOpenChange(false);
+    }
   };
 
   const handleClickIcon = (e: React.MouseEvent<Element, MouseEvent>) => {
     onClick && onClick(e);
     setOpen(true);
   };
+
   const titleNode = (
     <div className={classString} onClick={handleEmojiClick}>
       {renderEmoji()}
     </div>
   );
+
   const iconNode = icon ? (
     <div
       onClick={handleClickIcon}
@@ -160,8 +167,9 @@ const Emoji = (props: EmojiProps) => {
         arrowPointAtCenter={false}
         arrow={false}
         placement={placement}
-        onOpenChange={() => {
+        onOpenChange={value => {
           setOpen(!isOpen);
+          onOpenChange && onOpenChange(value);
         }}
         open={isOpen}
       >

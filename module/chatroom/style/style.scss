@@ -15,13 +15,24 @@ $chatroom-prefix-cls: #{$cui-prefix}-chatroom;
         margin: 0;
         padding: 0;
     }
+
+    &-header-count{
+        @include Label(medium, $gray-1);
+        margin-left: 2px;
+    }
 }
+
+
 
 .#{$chatroom-prefix-cls}-dark{
     background-color: $gray-1;
     color: $gray-98;
     p{
         background: $gray-2;
+    }
+
+    .#{$chatroom-prefix-cls}-header-count{
+        @include Label(medium, $gray-98);
     }
 }
 

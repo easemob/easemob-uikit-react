@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import UserItem, { UserItemProps, UserInfoData } from '../../component/userItem';
 import ChatroomMember from './index';
 import rootStore from '../store';
@@ -87,7 +87,7 @@ export default {
       },
     },
   },
-} as ComponentMeta<typeof ChatroomMember>;
+} as Meta<typeof ChatroomMember>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 
@@ -114,7 +114,7 @@ rootStore.addressStore.chatroom = [
   },
 ];
 
-const DefaultTemplate: ComponentStory<typeof ChatroomMember> = args => (
+const DefaultTemplate: StoryFn<typeof ChatroomMember> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -126,7 +126,7 @@ const DefaultTemplate: ComponentStory<typeof ChatroomMember> = args => (
   </div>
 );
 
-const DarkTemplate: ComponentStory<typeof ChatroomMember> = args => (
+const DarkTemplate: StoryFn<typeof ChatroomMember> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -141,7 +141,7 @@ const DarkTemplate: ComponentStory<typeof ChatroomMember> = args => (
   </div>
 );
 
-const SquareTemplate: ComponentStory<typeof ChatroomMember> = args => (
+const SquareTemplate: StoryFn<typeof ChatroomMember> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -158,6 +158,12 @@ const SquareTemplate: ComponentStory<typeof ChatroomMember> = args => (
   </div>
 );
 
-export const Default = DefaultTemplate.bind({});
-export const Dark = DarkTemplate.bind({});
-export const Square = SquareTemplate.bind({});
+export const Default = {
+  render: DefaultTemplate,
+};
+export const Dark = {
+  render: DarkTemplate,
+};
+export const Square = {
+  render: SquareTemplate,
+};

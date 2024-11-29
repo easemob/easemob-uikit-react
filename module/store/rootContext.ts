@@ -17,6 +17,8 @@ export interface ContextProps {
     translationTargetLanguage?: string;
     useUserInfo?: boolean;
     maxMessages?: number;
+    isFixedDeviceId?: boolean;
+    useOwnUploadFun?: boolean;
   };
   client: ChatSDK.Connection;
   features?: {
@@ -95,6 +97,7 @@ export interface ContextProps {
     avatarShape?: 'circle' | 'square';
     bubbleShape?: 'round' | 'square';
     componentsShape?: 'round' | 'square';
+    ripple?: boolean;
   };
   presenceMap?: {
     [key: string]: string | HTMLImageElement;

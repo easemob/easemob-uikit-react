@@ -23,7 +23,7 @@ export interface Message {
   singleChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
   groupChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
   chatRoom: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
-  byId: { [key: string]: ChatSDK.MessageBody | NoticeMessageBody };
+  byId: Map<string, ChatSDK.MessageBody | NoticeMessageBody>;
   broadcast: ChatSDK.MessageBody[];
 }
 
@@ -61,7 +61,7 @@ class MessageStore {
       singleChat: {},
       groupChat: {},
       chatRoom: {},
-      byId: {},
+      byId: new Map(),
       broadcast: [],
     };
 
@@ -105,6 +105,7 @@ class MessageStore {
       setHoldingStatus: action,
       setUnreadMessageCount: action,
       shiftBroadcastMessage: action,
+      setKeyValue: action,
     });
 
     autorun(() => {
@@ -119,6 +120,16 @@ class MessageStore {
       return [];
     }
     return this.message[chatType][conversationId] || [];
+  }
+
+  setKeyValue(key: string, value: ChatSDK.MessageBody | NoticeMessageBody) {
+    const MAX_LENGTH = this.rootStore.initConfig.maxMessages || 200;
+    if (this.message.byId.size >= MAX_LENGTH) {
+      // 删除最早添加的键值
+      const firstKey = this.message.byId.keys().next().value;
+      this.message.byId.delete(firstKey);
+    }
+    this.message.byId.set(key, value);
   }
 
   setCurrentCVS(currentCVS: CurrentConversation) {
@@ -143,7 +154,7 @@ class MessageStore {
     message.mid = '';
     message.from = this.rootStore.client?.context?.userId;
     // @ts-ignore
-    if (this.message.byId[message.id]?.status !== 'failed') {
+    if (this.message.byId.get(message.id)?.status !== 'failed') {
       // @ts-ignore
       message.status = 'sending';
     }
@@ -230,24 +241,25 @@ class MessageStore {
         },
       };
     }
-
+    let msgWithById = this.message.byId.get(message.id);
     // @ts-ignore
     if (message.type != 'read' && message.type != 'delivery' && message.type != 'channel') {
-      if (!this.message.byId[message.id]) {
-        this.message.byId[message.id] = message;
+      if (!msgWithById) {
+        this.setKeyValue(message.id, message);
+        msgWithById = message;
       }
     }
     if (chatType !== 'chatRoom') {
       // @ts-ignore
       if (!this.message[chatType][to]) {
         // @ts-ignore
-        this.message[chatType][to] = [this.message.byId[message.id]];
+        this.message[chatType][to] = [msgWithById];
       } else {
         // 处理重发的消息，重发的消息不push
         // @ts-ignore
-        if (this.message.byId[message.id].status !== 'failed') {
+        if (msgWithById.status !== 'failed') {
           // @ts-ignore
-          this.message[chatType][to].push(this.message.byId[message.id]);
+          this.message[chatType][to].push(msgWithById);
         }
       }
     }
@@ -257,26 +269,27 @@ class MessageStore {
     return this.rootStore.client
       .send(message as unknown as ChatSDK.MessageBody)
       .then((data: { serverMsgId: string }) => {
+        const msgWithById = this.message.byId.get(message.id);
         if (chatType == 'chatRoom') {
           // @ts-ignore
           if (!this.message[chatType][to]) {
             runInAction(() => {
               // @ts-ignore
-              this.message[chatType][to] = [this.message.byId[message.id]];
+              this.message[chatType][to] = [msgWithById];
             });
           } else {
             // 处理重发的消息，重发的消息不push
             // @ts-ignore
-            if (this.message.byId[message.id].status !== 'failed') {
+            if (this.message.byId.get(message.id).status !== 'failed') {
               runInAction(() => {
                 // @ts-ignore
-                this.message[chatType][to].push(this.message.byId[message.id]);
+                this.message[chatType][to].push(msgWithById);
               });
             }
           }
         }
         // message.status = 'sent';
-        const msg = this.message.byId[message.id] || {};
+        const msg = msgWithById || {};
         // @ts-ignore
         msg.status = 'sent';
         // @ts-ignore
@@ -306,14 +319,15 @@ class MessageStore {
         }
 
         runInAction(() => {
-          this.message.byId[data.serverMsgId] = this.message.byId[message.id];
+          const msgWithById = this.message.byId.get(message.id) as ChatSDK.MessageBody;
+          this.setKeyValue(data.serverMsgId, msgWithById);
+          const newMsg = this.message.byId.get(message.id) as ChatSDK.MessageBody;
           // @ts-ignore
-          this.message.byId[message.id].status = 'sent';
+          newMsg.status = 'sent';
           // @ts-ignore
-          this.message.byId[message.id].mid = data.serverMsgId;
+          newMsg.mid = data.serverMsgId;
           // @ts-ignore
           // const i = this.message[chatType][to].indexOf(this.message.byId[message.id]);
-          // console.log('i--->', i, message);
           // @ts-ignore
           const i = this.message[chatType][to]?.findIndex(item => {
             if (item.id === data.serverMsgId || message.id === item.id) {
@@ -372,7 +386,7 @@ class MessageStore {
       //@ts-ignore
       message.printed = false;
     }
-    this.message.byId[message.id] = message;
+    this.setKeyValue(message.id, message);
     if (message.from !== this.rootStore.client.user) {
       // @ts-ignore
       message.bySelf = false;
@@ -505,7 +519,7 @@ class MessageStore {
   }
 
   modifyMessage(id: string, message: ChatSDK.MessageBody | NoticeMessageBody) {
-    this.message.byId[id] = message;
+    this.setKeyValue(id, message);
   }
 
   sendChannelAck(cvs: CurrentConversation) {
@@ -520,16 +534,16 @@ class MessageStore {
   updateMessageStatus(msgId: string, status: string) {
     setTimeout(() => {
       runInAction(() => {
-        const msg = this.message.byId[msgId];
+        const msg = this.message.byId.get(msgId);
         if (!msg) {
           // ack message
           return; // console.error('not found message:', msgId);
         }
         const conversationId = getCvsIdFromMessage(msg as BaseMessageType);
         // @ts-ignore
-        this.message.byId[msgId].status = status;
+        msg.status = status;
         // @ts-ignore
-        const i = this.message[msg.chatType][conversationId]?.indexOf(this.message.byId[msg.id]); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
+        const i = this.message[msg.chatType][conversationId]?.indexOf(msg); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
         if (typeof i === 'undefined' || i == -1) return;
         // @ts-ignore
         this.message[msg.chatType][conversationId].splice(i, 1, msg);
@@ -1034,7 +1048,7 @@ class MessageStore {
     this.message = {
       singleChat: {},
       groupChat: {},
-      byId: {},
+      byId: new Map(),
       chatRoom: {},
       broadcast: [],
     };

@@ -36,6 +36,7 @@ export interface TextareaProps {
   conversation?: CurrentConversation;
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
   onChange?: (value: string) => void;
+  onFocus?: () => void;
 }
 
 export interface ForwardRefProps {
@@ -57,6 +58,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     enabledTyping = true,
     style = {},
     onChange,
+    onFocus,
   } = props;
   const { t } = useTranslation();
   const [textValue, setTextValue] = useState('');
@@ -288,6 +290,9 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
         onKeyUp={handleKeyUp}
         onKeyDown={handleKeyDown}
         onPaste={onPaste}
+        onFocus={() => {
+          onFocus?.();
+        }}
       ></div>
       {/* At suggest list */}
       {canAtUser && (

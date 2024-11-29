@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
 import { GroupDetail } from './index';
 
@@ -39,11 +39,11 @@ export default {
       description: 'callback of destroying group',
     },
   },
-} as ComponentMeta<typeof GroupDetail>;
+} as Meta<typeof GroupDetail>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 
-const Template: ComponentStory<typeof GroupDetail> = args => (
+const Template: StoryFn<typeof GroupDetail> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -53,7 +53,7 @@ const Template: ComponentStory<typeof GroupDetail> = args => (
   </Provider>
 );
 
-const DarkTemplate: ComponentStory<typeof GroupDetail> = args => (
+const DarkTemplate: StoryFn<typeof GroupDetail> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -66,19 +66,24 @@ const DarkTemplate: ComponentStory<typeof GroupDetail> = args => (
   </Provider>
 );
 
-export const Default = Template.bind({});
-export const Dark = DarkTemplate.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Default.args = {
-  conversation: {
-    conversationId: '236518002196485',
-    chatType: 'groupChat',
+export const Default = {
+  render: Template,
+
+  args: {
+    conversation: {
+      conversationId: '236518002196485',
+      chatType: 'groupChat',
+    },
   },
 };
 
-Dark.args = {
-  conversation: {
-    conversationId: '236518002196485',
-    chatType: 'groupChat',
+export const Dark = {
+  render: DarkTemplate,
+
+  args: {
+    conversation: {
+      conversationId: '236518002196485',
+      chatType: 'groupChat',
+    },
   },
 };

@@ -184,8 +184,8 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
 
   const initNode = (
     <div className={`${prefixCls}-iconBox`} style={{ ...iconStyle }} title={t('record') as string}>
-      <Button type="text" shape="circle">
-        <Icon type="CIRCLE_WAVE" width={24} height={24} onClick={() => handleClick('start')}></Icon>
+      <Button type="text" shape="circle" onClick={() => handleClick('start')}>
+        <Icon type="CIRCLE_WAVE" width={24} height={24}></Icon>
       </Button>
     </div>
   );
@@ -199,7 +199,9 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
           })}
           title={t(`cancel`) as string}
         >
-          <Icon type="DELETE" width={24} height={24} onClick={() => handleClick('stop')}></Icon>
+          <Button type="text" shape="circle" onClick={() => handleClick('stop')}>
+            <Icon type="DELETE" width={24} height={24}></Icon>
+          </Button>
         </div>
         <div className={`${prefixCls}-time`}>
           <span>{duration + "''"}</span>

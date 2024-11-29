@@ -75,7 +75,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
   const globalConfig = features?.chatroomMember;
   const themeMode = theme?.mode || 'light';
   const { addressStore } = rootStore;
-  const { getConversationList } = useChatroomMember(chatroomId);
+  const { getChatroomMembers } = useChatroomMember(chatroomId);
   useEffect(() => {
     if (!rootStore.loginState || !chatroomId) return;
     const chatroomData = addressStore.chatroom.filter(item => item.id === chatroomId)[0];
@@ -85,14 +85,14 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
         .then(res => {
           // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
           rootStore.addressStore.setChatroom(res.data as ChatSDK.GetChatRoomDetailsResult);
-          getConversationList();
+          getChatroomMembers();
           eventHandler.dispatchSuccess('getChatRoomDetails');
         })
         .catch(err => {
           eventHandler.dispatchError('getChatRoomDetails', err);
         });
     } else {
-      getConversationList();
+      getChatroomMembers();
     }
   }, [rootStore.loginState, chatroomId]);
 
@@ -201,7 +201,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
           data={allDataToRender}
           scrollDirection="down"
           loadMoreItems={() => {
-            getConversationList();
+            getChatroomMembers();
           }}
           renderItem={
             memberListProps?.renderItem

@@ -26,6 +26,7 @@ export interface GiftKeyboardProps {
     message: ChatSDK.MessageBody,
   ) => Promise<{ chatType: 'chatRoom'; conversationId: string } | void>;
   giftConfig?: typeof giftConfig;
+  closeAfterClick?: boolean; // 点击发送之后是否关闭
 }
 
 const GiftKeyboard = (props: GiftKeyboardProps) => {
@@ -39,16 +40,18 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     giftConfig: customGiftConfig,
     prefix,
     className,
+    closeAfterClick,
   } = props;
   const { t } = useTranslation();
   const context = useContext(RootContext);
   const { rootStore } = context;
   const { messageStore, conversationStore } = rootStore;
   const currentSvc = conversationStore.currentCvs;
-  let currentConversation = conversation || currentSvc;
+  const currentConversation = conversation || currentSvc;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('giftKeyboard', prefix);
+  const [isOpen, setOpen] = useState(false);
   const classString = classNames(
     prefixCls,
     // {
@@ -66,7 +69,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
         width={24}
         height={24}
         // onClick={handleClickIcon}
-        // onClick={() => setOpen(true)}
+        onClick={() => setOpen(true)}
       ></Icon>
     </span>
   );
@@ -139,6 +142,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
                   giftCount: 1,
                 };
                 handleSend(giftData);
+                setOpen(false);
               },
             }}
             selected={selectedIndex == item.giftId}
@@ -147,12 +151,28 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
       })}
     </div>
   );
-
-  return (
-    <Tooltip title={titleNode} trigger={trigger} arrowPointAtCenter={false} arrow={false}>
-      {iconNode}
-    </Tooltip>
-  );
+  if (closeAfterClick == false) {
+    return (
+      <Tooltip title={titleNode} trigger={trigger} arrowPointAtCenter={false} arrow={false}>
+        {iconNode}
+      </Tooltip>
+    );
+  } else {
+    return (
+      <Tooltip
+        title={titleNode}
+        trigger={trigger}
+        arrowPointAtCenter={false}
+        arrow={false}
+        onOpenChange={() => {
+          setOpen(!isOpen);
+        }}
+        open={isOpen}
+      >
+        {iconNode}
+      </Tooltip>
+    );
+  }
 };
 
 export { GiftKeyboard };

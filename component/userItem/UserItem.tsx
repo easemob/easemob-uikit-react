@@ -9,7 +9,8 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../../module/store/rootContext';
 import Checkbox from '../../component/checkbox';
-
+import Ripple from '../../component/ripple/Ripple';
+import { set } from 'mobx';
 export interface UserInfoData {
   userId: string;
   nickname?: string;
@@ -35,6 +36,7 @@ export interface UserItemProps {
   checked?: boolean;
   disabled?: boolean;
   onClose?: (data: UserInfoData) => void;
+  ripple?: boolean;
   // 右侧更多按钮配置
   moreAction?: {
     visible?: boolean;
@@ -65,6 +67,7 @@ let UserItem: FC<UserItemProps> = props => {
     closeable,
     onClose,
     disabled,
+    ripple,
     ...others
   } = props;
 
@@ -73,8 +76,10 @@ let UserItem: FC<UserItemProps> = props => {
   const { theme } = useContext(RootContext);
   const themeMode = theme?.mode;
   const componentsShape = theme?.componentsShape || 'round';
+  const themeRipple = theme?.ripple;
   const prefixCls = getPrefixCls('userItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const classString = classNames(
     prefixCls,
@@ -94,7 +99,9 @@ let UserItem: FC<UserItemProps> = props => {
     moreAction?.visible && setShowMore(true);
   };
   const handleMouseLeave = () => {
-    setShowMore(false);
+    if (!isPopoverOpen) {
+      setShowMore(false);
+    }
   };
 
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -111,6 +118,7 @@ let UserItem: FC<UserItemProps> = props => {
               key={index}
               onClick={() => {
                 item.onClick?.(data);
+                setIsPopoverOpen(false);
               }}
             >
               {item.icon ? item.icon : null}
@@ -125,6 +133,7 @@ let UserItem: FC<UserItemProps> = props => {
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onCheckboxChange?.(e.target.checked, data);
   };
+  const rippleProp = ripple === undefined ? themeRipple : ripple;
   return (
     <div
       className={classString}
@@ -147,13 +156,24 @@ let UserItem: FC<UserItemProps> = props => {
       </div>
       <div className={`${prefixCls}-info`}>
         {showMore && (
-          <Tooltip title={menuNode} trigger="click" placement="bottomRight">
+          <Tooltip
+            title={menuNode}
+            trigger="click"
+            placement="bottomRight"
+            open={isPopoverOpen}
+            onOpenChange={open => {
+              setIsPopoverOpen(open);
+              setShowMore(open);
+            }}
+          >
             {moreAction?.icon || (
               <Icon
                 type="ELLIPSIS"
-                color="#33B1FF"
+                color={
+                  themeMode === 'dark' ? 'var(--cui-primary-color6)' : 'var(--cui-primary-color5)'
+                }
                 height={20}
-                style={{ cursor: 'pointer' }}
+                style={{ cursor: 'pointer', zIndex: 10 }}
               ></Icon>
             )}
           </Tooltip>
@@ -184,6 +204,7 @@ let UserItem: FC<UserItemProps> = props => {
           ></Icon>
         </div>
       )}
+      {rippleProp && <Ripple></Ripple>}
     </div>
   );
 };

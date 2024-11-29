@@ -16,7 +16,7 @@ import { MessageList } from '../../module/chat/MessageList';
 import MessageEditor from '../../module/messageInput';
 import TextMessage from '../../module/textMessage';
 import './index.css';
-import { useSDK } from 'module';
+import { useSDK } from '../../module/hooks/useSDK';
 
 const ChatApp = () => {
   const client = useClient();

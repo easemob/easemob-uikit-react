@@ -16,6 +16,8 @@ export interface EmojiKeyBoardProps {
   selectedList?: string[];
   reactionConfig?: EmojiProps['emojiConfig'];
   placement?: EmojiProps['placement'];
+  onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
@@ -26,6 +28,8 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
     prefixCls: customizePrefixCls,
     reactionConfig,
     placement,
+    onClick,
+    onOpenChange,
   } = props;
   const context = useContext(RootContext);
   const { reactionConfig: globalRatConfig } = context;
@@ -48,6 +52,12 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
       onDelete={handleDeleteEmoji}
       icon={<Icon type="FACE_PLUS" width={20} height={20} className={classString} />}
       placement={placement}
+      onClick={e => {
+        onClick?.(e);
+      }}
+      onOpenChange={open => {
+        onOpenChange?.(open);
+      }}
     ></Emoji>
   );
 };

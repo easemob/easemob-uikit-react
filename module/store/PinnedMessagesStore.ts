@@ -75,7 +75,18 @@ class PinnedMessagesStore {
       list: [],
       cursor: '',
     };
-    const idx = pinnedMessages.list.findIndex(msg => msg.message.id === messageId);
+    if (conversationType === 'chatRoom') {
+      // Only one message is allowed to be pinned in the chat room
+      this.messages[conversationType][conversationId] = {
+        list: [],
+        cursor: '',
+      };
+      return;
+    }
+    const idx = pinnedMessages.list.findIndex(
+      // @ts-ignore
+      msg => msg.message.id === messageId || msg.message.mid === messageId,
+    );
     if (idx > -1) {
       pinnedMessages.list.splice(idx, 1);
       this.messages[conversationType][conversationId] = {

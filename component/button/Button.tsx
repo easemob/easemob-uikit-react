@@ -4,6 +4,7 @@ import { tuple } from '../_utils/type';
 import classNames from 'classnames';
 import { ConfigContext } from '../config/index';
 import { RootContext } from '../../module/store/rootContext';
+import Ripple from '../ripple/Ripple';
 
 const buttonShapes = tuple('circle', 'round', 'default');
 export type ButtonShape = typeof buttonShapes[number];
@@ -24,6 +25,8 @@ export interface ButtonProps {
   disabled?: boolean;
   icon?: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLElement>;
+  ripple?: boolean;
+  rippleColor?: string;
 }
 
 export const Button = ({
@@ -36,9 +39,12 @@ export const Button = ({
   children = 'button',
   style = {},
   onClick,
+  ripple,
+  rippleColor,
 }: ButtonProps) => {
   const { theme } = useContext(RootContext);
   const themeMode = theme?.mode;
+  const themeRipple = theme?.ripple;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('button');
   const shapeType = shape || theme?.componentsShape || 'default';
@@ -52,7 +58,10 @@ export const Button = ({
     },
     className,
   );
-  const kids = children || children === 0 ? ' ' : null;
+
+  // 默认使用 themeRipple 参数， 当传入 ripple 参数时，使用传入的参数
+  const rippleProp = ripple === undefined ? themeRipple : ripple;
+
   return (
     <button
       type="button"
@@ -61,6 +70,7 @@ export const Button = ({
       disabled={disabled}
       style={{ ...style }}
     >
+      {rippleProp && <Ripple color={rippleColor} />}
       {children}
     </button>
   );

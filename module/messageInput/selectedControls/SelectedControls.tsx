@@ -142,8 +142,9 @@ const SelectedControls = (props: SelectedControlsProps) => {
       messageList: selectedMessages,
 
       onFileUploadComplete: (data: any) => {
-        (rootStore.messageStore.message.byId[msg.id] as ChatSDK.FileMsgBody).url = data.url;
-        (rootStore.messageStore.message.byId[msg.id] as ChatSDK.FileMsgBody).secret = data.secret;
+        (rootStore.messageStore.message.byId.get(msg.id) as ChatSDK.FileMsgBody).url = data.url;
+        (rootStore.messageStore.message.byId.get(msg.id) as ChatSDK.FileMsgBody).secret =
+          data.secret;
       },
     };
     // @ts-ignore

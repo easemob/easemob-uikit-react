@@ -232,7 +232,7 @@ let MoreAction = (props: MoreActionProps) => {
       file: file,
       isChatThread,
       onFileUploadComplete: data => {
-        const sendMsg = messageStore.message.byId[imageMessage.id];
+        const sendMsg = messageStore.message.byId.get(imageMessage.id) as ChatSDK.MessageBody;
         (sendMsg as any).thumb = data.thumb;
         (sendMsg as any).url = data.url;
         messageStore.modifyMessage(imageMessage.id, sendMsg);

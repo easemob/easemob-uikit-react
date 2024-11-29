@@ -1,0 +1,127 @@
+@import '~/common/style/index.scss';
+$pinned-msg-prefix-cls: #{$cui-prefix}-pinned-text-message;
+
+.#{$pinned-msg-prefix-cls} {
+    box-sizing: border-box;
+    display: flex;
+    overflow: hidden;
+    box-sizing: border-box;
+    background-color: $gray-2;
+    justify-content: space-between;
+    border-radius: 12px;
+    padding: 8px;
+    max-height: 56px;
+    transition: max-height 0.3s ease;
+    &-expand{
+        max-height: 116px;
+
+        .#{$pinned-msg-prefix-cls}-text{
+            overflow-y: auto;
+        }
+    }
+    &-text{
+        flex: 1;
+        word-break: break-all;
+        overflow-y: hidden;
+        @include Body(medium, $gray-98);
+        position: relative;
+
+        &-header{
+            display: flex;
+            gap: 4px;
+            float: left;
+            margin-right: 4px;
+        }
+        &-header+div{
+            text-align: left;
+        }
+
+        &-name{
+            @include Label(medium, $blue-5);
+        }
+    }
+
+    &-ellipsis{
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        background: $gray-2;
+        padding: 0 2px;
+    }
+
+    &-buttons {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        
+        &>div{
+            cursor: pointer;
+        }
+    }
+
+    &-button{
+        transition: transform 0.3s ease; /* 旋转动画 */
+        fill: $gray-98;
+        :hover{
+            fill: $blue-6;
+        }
+    }
+    &-button-expand{
+        transform: rotate(180deg);
+    }
+
+
+}
+
+.#{$pinned-msg-prefix-cls}-dark{
+    background-color: $gray-95;
+    .#{$pinned-msg-prefix-cls}-text{
+        @include Body(medium, $gray-1);
+
+        &-name{
+            @include Label(medium, $blue-8);
+            margin-right: 4px;
+        }
+    }
+    .#{$pinned-msg-prefix-cls}-button{
+        fill: $gray-3;
+    }
+    .#{$pinned-msg-prefix-cls}-ellipsis{
+        background: $gray-95;
+    }
+
+    .#{$pinned-msg-prefix-cls}-text::-webkit-scrollbar{
+        width: 2px; 
+        height: 2px;
+        color: $gray-3;
+    };
+
+    .#{$pinned-msg-prefix-cls}-text::-webkit-scrollbar-track {
+        background-color: $gray-8; /* 轨道背景色 */
+      }
+
+      .#{$pinned-msg-prefix-cls}-text::-webkit-scrollbar-thumb {
+        background-color: $gray-3;    /* 滑块颜色 */
+        border-radius: 10px;       /* 圆角 */
+      }
+}
+.cui-pinned-text-message-text::-webkit-scrollbar{
+    width: 2px; 
+    height: 2px;
+    color: $gray-2;
+};
+
+.cui-pinned-text-message-text::-webkit-scrollbar-track {
+    background-color: $gray-1; /* 轨道背景色 */
+  }
+  
+  .cui-pinned-text-message-text::-webkit-scrollbar-thumb {
+    background-color: $gray-98;    /* 滑块颜色 */
+    border-radius: 10px;       /* 圆角 */
+  }
+  
+  .cui-pinned-text-message-text::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+  }
+
+  

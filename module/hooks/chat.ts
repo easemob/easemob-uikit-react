@@ -149,6 +149,24 @@ const useEventHandler = (props: ProviderProps) => {
               noticeType: 'pin',
               time,
             });
+            // Only one message is allowed to be pinned in the chat room
+            if (conversationType === 'chatRoom') {
+              const pinedMsg = getStore().messageStore.message[conversationType][
+                conversationId
+                //@ts-ignore
+              ].find(item => (item.mid === messageId || item.id === messageId) && item);
+              if (pinedMsg) {
+                getStore().pinnedMessagesStore.clearPinnedMessages(
+                  conversationType,
+                  conversationId,
+                );
+                getStore().pinnedMessagesStore.pushPinnedMessage(conversationType, conversationId, {
+                  operatorId: operatorId,
+                  pinTime: time,
+                  message: pinedMsg as ChatSDK.TextMsgBody,
+                });
+              }
+            }
             break;
           case 'unpin':
             getStore().pinnedMessagesStore.deletePinnedMessage(
@@ -358,6 +376,12 @@ const useEventHandler = (props: ProviderProps) => {
             },
             false,
           );
+        }
+      },
+      onChatroomEvent: message => {
+        if (message.operation === 'memberPresence') {
+          const count = message.memberCount as number;
+          typeof count === 'number' && addressStore.updateChatroomMemberCount(message.id, count);
         }
       },
     });

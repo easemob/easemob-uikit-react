@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import Chat, { ChatProps } from './index';
 import rootStore from '../store';
@@ -74,7 +74,7 @@ export default {
       description: 'render empty',
     },
   },
-} as ComponentMeta<React.FC<ChatProps>>;
+} as Meta<React.FC<ChatProps>>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 
@@ -84,11 +84,14 @@ rootStore.conversationStore.setCurrentCvs({
   name: 'Henry',
 });
 
-const DefaultTemplate: ComponentStory<React.FC<ChatProps>> = args => (
+const DefaultTemplate: StoryFn<React.FC<ChatProps>> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
         appKey: 'a#b',
+      }}
+      theme={{
+        mode: 'light',
       }}
     >
       <Chat {...args} />
@@ -96,7 +99,7 @@ const DefaultTemplate: ComponentStory<React.FC<ChatProps>> = args => (
   </div>
 );
 
-const DarkTemplate: ComponentStory<React.FC<ChatProps>> = args => (
+const DarkTemplate: StoryFn<React.FC<ChatProps>> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -111,7 +114,7 @@ const DarkTemplate: ComponentStory<React.FC<ChatProps>> = args => (
   </div>
 );
 
-const SquareTemplate: ComponentStory<React.FC<ChatProps>> = args => (
+const SquareTemplate: StoryFn<React.FC<ChatProps>> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -129,6 +132,12 @@ const SquareTemplate: ComponentStory<React.FC<ChatProps>> = args => (
   </div>
 );
 
-export const Default = DefaultTemplate.bind({});
-export const Dark = DarkTemplate.bind({});
-export const Square = SquareTemplate.bind({});
+export const Default = {
+  render: DefaultTemplate,
+};
+export const Dark = {
+  render: DarkTemplate,
+};
+export const Square = {
+  render: SquareTemplate,
+};

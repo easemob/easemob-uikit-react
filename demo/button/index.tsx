@@ -12,6 +12,9 @@ import { ConfigContext, ConfigProvider, ConfigConsumer } from '../../component/c
 import Input from '../../component/input';
 
 import Loading from '../../component/loading';
+import { Tooltip } from '../../component/tooltip/Tooltip';
+
+import PinnedTextMessage from '../../module/pinnedTextMessage';
 
 const TestButton = () => {
   return (
@@ -27,15 +30,25 @@ const TestButton = () => {
             </div>
 
             <div className="white">
-              <Button size={'large'} type="default" className="button">
-                default
-              </Button>
-              <Button size={'large'} type="primary" className="button">
-                primary
-              </Button>
-              <Button size={'large'} type="primary" disabled className="button">
-                primary-disabled
-              </Button>
+              <Tooltip title="primary" trigger={'click'} arrow placement="left">
+                <div style={{ width: '300px' }}>
+                  <Button size={'large'} type="default" ripple>
+                    default
+                  </Button>
+                </div>
+              </Tooltip>
+              <Tooltip title="primary" trigger={'hover'} placement="top" arrow>
+                <div>
+                  <Button size={'large'} type="primary" className="button" ripple>
+                    primary
+                  </Button>
+                </div>
+              </Tooltip>
+              <Tooltip title="primary-disabled" trigger={'hover'}>
+                <Button size={'large'} type="primary" disabled className="button">
+                  primary-disabled
+                </Button>
+              </Tooltip>
 
               <Button size={'large'} type="ghost" className="button">
                 ghost

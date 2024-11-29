@@ -38,7 +38,7 @@ const usePinnedMessage = (params?: {
   };
 
   const pinMessage = (messageId: string) => {
-    client
+    return client
       .pinMessage({
         conversationId,
         conversationType,
@@ -62,7 +62,7 @@ const usePinnedMessage = (params?: {
   };
 
   const unpinMessage = (messageId: string) => {
-    client
+    return client
       .unpinMessage({
         conversationId,
         conversationType,

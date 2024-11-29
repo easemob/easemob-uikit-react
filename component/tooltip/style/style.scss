@@ -68,6 +68,8 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
         background-color: $tooltip-bg;
         border-radius: $border-radius-base;
         box-shadow: $box-shadow-base;
+        display: flex;
+        align-items: center;
     }
 
     // Arrows
@@ -83,7 +85,7 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
         // right: 0;
         // bottom: 0;
         // left: 0;
-        // background-color: $tooltip-bg;
+        // background-color: $gray-1;
         // transform: translateY(50%) translateX(-50%) rotate(45deg)!important;
         // z-index: 0;
         background: transparent;
@@ -101,6 +103,7 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
             content: '';
             pointer-events: auto;
             background-color: $tooltip-bg;
+            // background-color: $gray-1;
             @include roundedArrow($tooltip-arrow-width, 5px);
         }
     }
@@ -180,6 +183,17 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
         right: $tooltip-arrow-offset-horizontal;
     }
 
+    // arrow placement right
+    &-placement-right &-arrow{
+        top: 50%;
+        transform: translate(-100%) translateY(-50%);
+        left: 0;
+    }
+    &-placement-right &-arrow-content{
+        box-shadow: 3px 3px 7px #00000012;
+        transform: translate(11px) rotate(135deg);
+    }
+
 }
 
 .#{$tooltip-prefix-cls}-dark{
@@ -187,6 +201,12 @@ $tooltip-arrow-offset-horizontal: 13px; // 16 - 3px
     .#{$tooltip-prefix-cls}-inner {
         background-color: $gray-1;
         border: 1px solid $gray-2
+    }
+
+    .#{$tooltip-prefix-cls}-arrow {
+        &-content {
+            background-color: $gray-1;
+        }
     }
 }
 

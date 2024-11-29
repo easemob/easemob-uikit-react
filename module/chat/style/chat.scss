@@ -8,6 +8,7 @@ $chat-prefix-cls: #{$cui-prefix}-chat;
     flex: 1;
     flex-direction: column;
     background-color: $chat-bg;
+    overflow: hidden;
     &-messageList{
         flex: 1;
     }

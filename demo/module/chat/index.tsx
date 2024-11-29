@@ -225,24 +225,24 @@ const ChatApp: FC<any> = () => {
                 }}
               ></Header>
             )}
-            onItemClick={item => {
-              console.log('cvsItem', item);
-              setCvsItem(item);
-            }}
-            itemProps={{
-              // moreAction: {
-              //   visible: true,
-              //   actions: [{ content: 'DELETE' }],
-              // },
-              formatDateTime: (time: number) => {
-                return new Date(time).toLocaleString();
-              },
-              renderMessageContent: (msg: any) => {
-                console.log('msg', msg);
-                return null;
-              },
-            }}
-            className="conversation"
+            // onItemClick={item => {
+            //   console.log('cvsItem', item);
+            //   setCvsItem(item);
+            // }}
+            // itemProps={{
+            //   moreAction: {
+            //     visible: true,
+            //     actions: [{ content: 'DELETE' }, { content: 'TOP' }],
+            //   },
+            //   formatDateTime: (time: number) => {
+            //     return new Date(time).toLocaleString();
+            //   },
+            //   renderMessageContent: (msg: any) => {
+            //     console.log('msg', msg);
+            //     return null;
+            //   },
+            // }}
+            // className="conversation"
             // renderItem={csv => (
             //   <ConversationItem
             //     onClick={handleClickCvs(csv)}
@@ -318,6 +318,14 @@ const ChatApp: FC<any> = () => {
                     visible: false,
                     actions: [{ content: '' }],
                   },
+                  suffixIcon: [
+                    'THREAD',
+                    'AUDIO',
+                    <Button key="11" type="text" shape="circle">
+                      {' '}
+                      <Icon type="PIN" width={24} height={24}></Icon>
+                    </Button>,
+                  ],
                   // suffixIcon: (
                   //   <div>
                   //     {currentCvs.chatType !== 'singleChat' && (
@@ -422,11 +430,12 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         maxMessages: 100,
       }}
       theme={{
-        // primaryColor: 50, //'#33ffaa',
-        mode: 'dark',
+        primaryColor: 50, //'#33ffaa',
+        mode: 'light',
         bubbleShape: 'round',
         avatarShape: 'circle',
         componentsShape: 'round',
+        ripple: true,
       }}
       local={{
         fallbackLng: 'en',

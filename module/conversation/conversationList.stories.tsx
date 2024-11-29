@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { ConversationList } from './index';
 import rootStore from '../store';
@@ -10,17 +10,17 @@ export default {
   component: ConversationList,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
-} as ComponentMeta<typeof ConversationList>;
+} as Meta<typeof ConversationList>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof ConversationList> = args => (
+const Template: StoryFn<typeof ConversationList> = args => (
   <Provider initConfig={{ appKey: 'a#b' }}>
     {' '}
     <ConversationList {...args} />
   </Provider>
 );
 
-const DarkTemplate: ComponentStory<typeof ConversationList> = args => (
+const DarkTemplate: StoryFn<typeof ConversationList> = args => (
   <Provider
     initConfig={{ appKey: 'a#b' }}
     theme={{
@@ -32,7 +32,7 @@ const DarkTemplate: ComponentStory<typeof ConversationList> = args => (
   </Provider>
 );
 
-const SquareTemplate: ComponentStory<typeof ConversationList> = args => (
+const SquareTemplate: StoryFn<typeof ConversationList> = args => (
   <Provider
     initConfig={{ appKey: 'a#b' }}
     theme={{
@@ -80,6 +80,12 @@ rootStore.conversationStore.setConversation([
   },
 ]);
 
-export const Default = Template.bind({});
-export const Dark = DarkTemplate.bind({});
-export const Square = SquareTemplate.bind({});
+export const Default = {
+  render: Template,
+};
+export const Dark = {
+  render: DarkTemplate,
+};
+export const Square = {
+  render: SquareTemplate,
+};

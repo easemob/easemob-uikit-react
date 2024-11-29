@@ -206,7 +206,7 @@ class ConversationStore {
     const idx = this.conversationList.findIndex(item => {
       return item.chatType === chatType && item.conversationId === cvsId;
     });
-    if (idx > -1) {
+    if (idx > -1 && this.conversationList[idx].atType !== atType) {
       this.conversationList[idx].atType = atType;
     }
   }

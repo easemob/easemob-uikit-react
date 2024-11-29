@@ -1,0 +1,26 @@
+.ripple-container {
+    /* display: inline-block; */
+
+    /* pointer-events: none; */
+    position: absolute;
+    z-index: 0;
+    overflow: hidden;
+    inset: 0px;
+    border-radius: inherit;
+  }
+  
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+    transform: scale(0);
+    animation: ripple-animation 0.6s ease-in-out;
+    pointer-events: none;
+  }
+  
+  @keyframes ripple-animation {
+    to {
+      transform: scale(4); /* 控制水波纹扩展的范围 */
+      opacity: 0;
+    }
+  }

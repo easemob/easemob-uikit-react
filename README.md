@@ -379,13 +379,9 @@ easemob-uikit-web
 
 [集成文档](https://docs-im-beta.easemob.com/document/web/quickstart.html);
 
-[chat demo 线上地址](https://webim-h5.easemob.com/)
+[chat demo 线上地址](https://webim-h5.easemob.com/) [chat demo 源码地址](https://github.com/easemob/webim/tree/dev_4.0?tab=readme-ov-file)
 
-[chat demo 源码地址](https://github.com/easemob/webim/tree/dev_4.0?tab=readme-ov-file)
-
-[chatroom demo 线上地址](https://webim-live.easemob.com/)
-
-[chatroom demo 源码地址](https://github.com/easemob/ChatroomDemo/tree/dev/WEB/ChatroomDemo)；
+[chatroom demo 线上地址](https://webim-live.easemob.com/) [chatroom demo 源码地址](https://github.com/easemob/ChatroomDemo/tree/dev/WEB/ChatroomDemo)；
 
 ## 📄 代码许可
 

@@ -102,4 +102,6 @@ const UserProfile = (props: UserProfileProps) => {
   );
 };
 
-export default observer(UserProfile);
+const UserProfileOut = observer(UserProfile);
+UserProfileOut.displayName = 'UserProfile';
+export default UserProfileOut;

@@ -104,4 +104,7 @@ const Blocklist = (props: BlocklistProps) => {
   );
 };
 
-export default observer(Blocklist);
+const BlocklistOut = observer(Blocklist);
+BlocklistOut.displayName = 'Blocklist';
+
+export default BlocklistOut;

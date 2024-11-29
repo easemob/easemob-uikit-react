@@ -67,7 +67,7 @@ export interface BaseMessageProps {
   messageStatus?: boolean; // whether show message status
   message?: BaseMessageType;
   onReplyMessage?: () => void;
-  onDeleteMessage?: () => void;
+  onDeleteMessage?: (message: BaseMessageType) => void;
   onAddReactionEmoji?: (emojiString: string) => void;
   onDeleteReactionEmoji?: (emojiString: string) => void;
   onShowReactionUserList?: (emojiString: string) => void;
@@ -180,7 +180,6 @@ let BaseMessage = (props: BaseMessageProps) => {
   const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('message-base', customizePrefixCls);
   let avatarToShow: ReactNode = avatar;
-  const [hoverStatus, setHoverStatus] = useState(false);
   const { appUsersInfo, groups } = getStore().addressStore;
   const msgSenderNickname = nickName || (message && getMsgSenderNickname(message));
   const userId = message?.from || '';
@@ -229,6 +228,10 @@ let BaseMessage = (props: BaseMessageProps) => {
   const hasBubble = bubbleType !== 'none';
 
   const CustomProfile = renderUserProfile?.({ userId: message?.from || '' });
+
+  const [isButtonVisible, setIsButtonVisible] = useState(false); // 控制操作按钮的显示
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isReactionVisible, setIsReactionVisible] = useState(false);
 
   const clickThreadTitle = () => {
     onClickThreadTitle?.();
@@ -317,11 +320,6 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   let moreAction: CustomAction = { visible: false };
 
-  useEffect(() => {
-    if (!hoverStatus) {
-      setMessageActionsOpen(false);
-    }
-  }, [hoverStatus]);
   if (customAction) {
     moreAction = customAction;
   } else {
@@ -394,40 +392,49 @@ let BaseMessage = (props: BaseMessageProps) => {
   const isAdmin = message && isGroupAdmin(message);
 
   const replyMessage = () => {
+    setIsPopoverOpen(false);
     onReplyMessage && onReplyMessage();
   };
   const deleteMessage = () => {
-    onDeleteMessage && onDeleteMessage();
+    setIsPopoverOpen(false);
+    onDeleteMessage && onDeleteMessage(message as BaseMessageType);
   };
   const recallMessage = () => {
+    setIsPopoverOpen(false);
     onRecallMessage && onRecallMessage(message as BaseMessageType);
   };
   const translateMessage = () => {
+    setIsPopoverOpen(false);
     onTranslateMessage && onTranslateMessage();
   };
 
   const modifyMessage = () => {
+    setIsPopoverOpen(false);
     onModifyMessage && onModifyMessage();
   };
 
   const selectMessage = () => {
+    setIsPopoverOpen(false);
     onSelectMessage && onSelectMessage();
   };
 
   const resendMessage = () => {
+    setIsPopoverOpen(false);
     onResendMessage && onResendMessage();
   };
 
   const forwardMessage = () => {
+    setIsPopoverOpen(false);
     onForwardMessage && onForwardMessage(message as BaseMessageType);
   };
 
   const reportMessage = () => {
+    setIsPopoverOpen(false);
     onReportMessage && onReportMessage(message as BaseMessageType);
   };
 
   const pinMessage = () => {
-    setMessageActionsOpen(false);
+    setIsPopoverOpen(false);
     onPinMessage && onPinMessage();
   };
 
@@ -492,7 +499,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'Modify' && item.visible !== false) {
             return (
-              (isCurrentUser || isOwner || isAdmin) &&
+              isCurrentUser &&
               message?.type === 'txt' && (
                 <li
                   key={index}
@@ -630,7 +637,6 @@ let BaseMessage = (props: BaseMessageProps) => {
     onCreateThread?.();
   };
 
-  const [messageActionsOpen, setMessageActionsOpen] = useState(false);
   const checkboxRef = useRef(null);
   return (
     <div>
@@ -650,9 +656,15 @@ let BaseMessage = (props: BaseMessageProps) => {
           // }}
           className={classString}
           style={{ ...style, paddingLeft: select ? '38px' : '' }}
-          onMouseOver={() => setHoverStatus(true)}
+          onMouseOver={() => {
+            // setHoverStatus(true)
+            setIsButtonVisible(true);
+          }}
           onMouseLeave={() => {
-            setHoverStatus(false);
+            // setHoverStatus(false);
+            if (!isPopoverOpen && !isReactionVisible) {
+              setIsButtonVisible(false);
+            }
           }}
         >
           <>
@@ -698,13 +710,14 @@ let BaseMessage = (props: BaseMessageProps) => {
             <div className={`${prefixCls}-body`}>
               {contentNode}
 
-              {hoverStatus && moreAction.visible && !select && !isRtcInviteMessage ? (
+              {isButtonVisible && moreAction.visible && !select && !isRtcInviteMessage ? (
                 <>
                   {moreAction.visible && (
                     <Tooltip
-                      open={messageActionsOpen}
+                      open={isPopoverOpen}
                       onOpenChange={value => {
-                        setMessageActionsOpen(value);
+                        setIsPopoverOpen(value);
+                        setIsButtonVisible(value);
                       }}
                       title={menuNode}
                       trigger="click"
@@ -729,6 +742,13 @@ let BaseMessage = (props: BaseMessageProps) => {
                       selectedList={selectedList}
                       onDelete={handleDeleteReactionEmoji}
                       placement={isCurrentUser ? 'bottomRight' : 'bottomLeft'}
+                      onClick={e => {
+                        setIsReactionVisible(true);
+                      }}
+                      onOpenChange={open => {
+                        setIsReactionVisible(open);
+                        setIsButtonVisible(open);
+                      }}
                     ></EmojiKeyBoard>
                   )}
                   {thread && !chatThreadOverview && status != 'failed' && (

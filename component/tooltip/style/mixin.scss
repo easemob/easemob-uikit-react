@@ -33,7 +33,7 @@
       left: -$width;
       width: $width * 3;
       height: $width * 3;
-      background: $tooltip-bg;
+      // background: $tooltip-bg;
       // Hack firefox: https://github.com/ant-design/ant-design/pull/33710#issuecomment-1015287825
       background-repeat: no-repeat;
       background-position: ceil(-$width + 1px) ceil(-$width + 1px);

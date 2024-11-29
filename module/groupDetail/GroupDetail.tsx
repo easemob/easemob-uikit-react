@@ -40,6 +40,8 @@ export interface GroupDetailProps {
   groupMemberProps?: GroupMemberProps;
   onLeaveGroup?: () => void;
   onDestroyGroup?: () => void;
+  // 是否显示群成员列表
+  onGroupMemberVisibleChange?: (visible: boolean) => void;
 }
 
 const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
@@ -52,6 +54,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
     groupMemberProps,
     onLeaveGroup,
     onDestroyGroup,
+    onGroupMemberVisibleChange,
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -228,6 +231,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
       open: false,
       type: 'showMember',
     });
+    onGroupMemberVisibleChange?.(false);
   };
   return (
     <>
@@ -261,6 +265,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
                   open: true,
                   type: 'showMember',
                 });
+                onGroupMemberVisibleChange?.(true);
               }}
             >
               <span>{t('groupMembers')}</span>
@@ -469,6 +474,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
               open: false,
               type: 'showMember',
             });
+            onGroupMemberVisibleChange?.(false);
           }}
           checkable={memberVisible.type == 'transferOwner'}
           groupMembers={groupData?.members}

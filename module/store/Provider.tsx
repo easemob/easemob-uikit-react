@@ -32,6 +32,8 @@ export interface ProviderProps {
     useReplacedMessageContents?: boolean;
     deviceId?: string;
     maxMessages?: number; // 单个会话显示最大消息数，超出后会自动清除，默认200，清除的消息可通过拉取更多消息获取
+    isFixedDeviceId?: boolean;
+    useOwnUploadFun?: boolean;
   };
   local?: {
     fallbackLng?: string;
@@ -105,6 +107,7 @@ export interface ProviderProps {
     avatarShape?: 'circle' | 'square';
     bubbleShape?: 'round' | 'square';
     componentsShape?: 'round' | 'square';
+    ripple?: boolean;
   };
   presenceMap?: {
     [key: string]: string | HTMLImageElement;
@@ -119,6 +122,8 @@ const Provider: React.FC<ProviderProps> = props => {
     isHttpDNS = true,
     useReplacedMessageContents,
     deviceId,
+    isFixedDeviceId = true,
+    useOwnUploadFun = false,
   } = initConfig;
   const client = useMemo(() => {
     return new chatSDK.connection({
@@ -129,6 +134,8 @@ const Provider: React.FC<ProviderProps> = props => {
       isHttpDNS,
       deviceId,
       useReplacedMessageContents,
+      isFixedDeviceId,
+      useOwnUploadFun,
     });
   }, [appKey]);
 
@@ -217,4 +224,6 @@ const Provider: React.FC<ProviderProps> = props => {
   );
 };
 
-export default memo(Provider);
+const P = memo(Provider);
+P.displayName = 'Provider';
+export default P;

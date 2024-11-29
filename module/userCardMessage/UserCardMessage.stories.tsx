@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import rootStore from '../store';
 import UserCardMessage from './index';
 import Icon, { IconProps } from '../../component/icon';
@@ -11,10 +11,10 @@ export default {
   component: UserCardMessage,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
-} as ComponentMeta<typeof UserCardMessage>;
+} as Meta<typeof UserCardMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof UserCardMessage> = args => (
+const Template: StoryFn<typeof UserCardMessage> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -24,45 +24,52 @@ const Template: ComponentStory<typeof UserCardMessage> = args => (
   </Provider>
 );
 
-export const Primary = Template.bind({});
-export const Secondly = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Primary.args = {
-  customMessage: {
-    type: 'custom',
-    id: '1234567890',
-    to: 'userId',
-    chatType: 'singleChat',
-    bySelf: true,
-    from: 'myUserId',
-    time: Date.now(),
-    status: 'sent',
-    customEvent: 'userCard',
-    customExts: {
-      uid: 'zd2',
-      nickname: 'Tom',
-      avatar: 'https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/sample_avatar/sample_avatar_1.png',
+export const Primary = {
+  render: Template,
+
+  args: {
+    customMessage: {
+      type: 'custom',
+      id: '1234567890',
+      to: 'userId',
+      chatType: 'singleChat',
+      bySelf: true,
+      from: 'myUserId',
+      time: Date.now(),
+      status: 'sent',
+      customEvent: 'userCard',
+      customExts: {
+        uid: 'zd2',
+        nickname: 'Tom',
+        avatar:
+          'https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/sample_avatar/sample_avatar_1.png',
+      },
     },
   },
 };
 
-Secondly.args = {
-  type: 'secondly',
-  direction: 'ltr',
-  customMessage: {
-    type: 'custom',
-    id: '1234567890',
-    to: 'userId',
-    chatType: 'singleChat',
-    bySelf: false,
-    from: 'myUserId',
-    time: Date.now(),
-    status: 'sent',
-    customEvent: 'userCard',
-    customExts: {
-      uid: 'zd2',
-      nickname: 'Tom',
-      avatar: 'https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/sample_avatar/sample_avatar_1.png',
+export const Secondly = {
+  render: Template,
+
+  args: {
+    type: 'secondly',
+    direction: 'ltr',
+    customMessage: {
+      type: 'custom',
+      id: '1234567890',
+      to: 'userId',
+      chatType: 'singleChat',
+      bySelf: false,
+      from: 'myUserId',
+      time: Date.now(),
+      status: 'sent',
+      customEvent: 'userCard',
+      customExts: {
+        uid: 'zd2',
+        nickname: 'Tom',
+        avatar:
+          'https://accktvpic.oss-cn-beijing.aliyuncs.com/pic/sample_avatar/sample_avatar_1.png',
+      },
     },
   },
 };

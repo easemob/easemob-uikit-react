@@ -21,6 +21,7 @@ import {
   getMsgSenderNickname,
 } from '../utils/index';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
+import Ripple from '../../component/ripple/Ripple';
 export interface ConversationItemProps {
   className?: string;
   prefix?: string;
@@ -34,13 +35,14 @@ export interface ConversationItemProps {
   isActive?: boolean; // 是否被选中
   data: ConversationData[0];
   renderMessageContent?: (msg: BaseMessageType) => ReactNode | undefined;
+  ripple?: boolean;
   // 右侧更多按钮配置
   moreAction?: {
     visible?: boolean;
     icon?: ReactNode;
     actions: Array<{
       content: ReactNode;
-      onClick?: () => void;
+      onClick?: (cvs: ConversationData[0]) => void | Promise<boolean>;
     }>;
   };
   formatDateTime?: (time: number) => string;
@@ -74,6 +76,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     },
     formatDateTime,
     renderMessageContent,
+    ripple,
     ...others
   } = props;
 
@@ -81,6 +84,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [active, setActive] = useState(isActive);
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
@@ -88,6 +92,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   if (theme?.avatarShape) {
     avatarShape = theme?.avatarShape;
   }
+  const themeRipple = theme?.ripple;
   const cvsStore = rootStore.conversationStore;
 
   const classString = classNames(
@@ -117,12 +122,21 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     moreAction.visible && setShowMore(true);
   };
   const handleMouseLeave = () => {
-    setShowMore(false);
+    if (!isPopoverOpen) {
+      setShowMore(false);
+    }
   };
 
-  const deleteCvs: MouseEventHandler<HTMLLIElement> = e => {
+  const deleteCvs: MouseEventHandler<HTMLLIElement> = async e => {
     e.stopPropagation();
-
+    // 如果moreAction里传了onClick则用onClick，否则执行下面的逻辑
+    const deleteAction = moreAction.actions.find(item => item.content === 'DELETE');
+    if (deleteAction && deleteAction.onClick) {
+      const value = await deleteAction.onClick(data);
+      if (!value) {
+        return;
+      }
+    }
     cvsStore.deleteConversation(data);
 
     rootStore.client
@@ -137,6 +151,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       .catch(err => {
         eventHandler.dispatchError('deleteConversation', err);
       });
+    setIsPopoverOpen(false);
   };
 
   const pinCvs = () => {
@@ -145,6 +160,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       data.conversationId,
       !data.isPinned,
     );
+    setIsPopoverOpen(false);
   };
 
   const setSilent = () => {
@@ -159,6 +175,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         conversationId: data.conversationId,
       });
     }
+    setIsPopoverOpen(false);
   };
 
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -204,7 +221,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
               className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
               onClick={() => {
-                item.onClick?.();
+                item.onClick?.(data);
               }}
             >
               {item.content}
@@ -226,27 +243,27 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       }
       break;
     case 'img':
-      lastMsg = `/${t('image')}/`;
+      lastMsg = `[${t('image')}]`;
       break;
     case 'audio':
-      lastMsg = `/${t('audio')}/`;
+      lastMsg = `[${t('audio')}]`;
       break;
     case 'file':
-      lastMsg = `/${t('file')}/`;
+      lastMsg = `[${t('file')}]`;
       break;
     case 'video':
-      lastMsg = `/${t('video')}/`;
+      lastMsg = `[${t('video')}]`;
       break;
     case 'custom':
       if (data.lastMessage.customEvent == 'userCard') {
-        lastMsg = `/${t('contact')}/`;
+        lastMsg = `[${t('contact')}]`;
       } else {
-        lastMsg = `/${t('custom')}/`;
+        lastMsg = `[${t('custom')}]`;
       }
       break;
     // @ts-ignore
     case 'combine':
-      lastMsg = `/${t('chatHistory')}/`;
+      lastMsg = `[${t('chatHistory')}]`;
       break;
     // @ts-ignore
     case 'recall':
@@ -278,7 +295,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       lastMsg = [from, lastMsg];
     }
   }
-
+  const rippleProp = ripple === undefined ? themeRipple : ripple;
   return (
     <div
       className={classString}
@@ -313,13 +330,25 @@ let ConversationItem: FC<ConversationItemProps> = props => {
           {formatDateTime?.(data.lastMessage?.time) || getConversationTime(data.lastMessage?.time)}
         </span>
         {showMore ? (
-          <Tooltip title={menuNode} trigger="click" placement="bottomRight">
+          <Tooltip
+            title={menuNode}
+            trigger="click"
+            placement="bottomRight"
+            open={isPopoverOpen}
+            onOpenChange={value => {
+              setIsPopoverOpen(value);
+              setShowMore(value);
+            }}
+          >
             {moreAction.icon || (
               <Icon
                 type="ELLIPSIS"
-                color="#33B1FF"
+                color={
+                  themeMode === 'dark' ? 'var(--cui-primary-color6)' : 'var(--cui-primary-color5)'
+                }
                 height={20}
-                style={{ cursor: 'pointer' }}
+                width={20}
+                style={{ cursor: 'pointer', zIndex: 10 }}
               ></Icon>
             )}
           </Tooltip>
@@ -342,6 +371,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
           </div>
         )}
       </div>
+      {rippleProp && <Ripple></Ripple>}
     </div>
   );
 };

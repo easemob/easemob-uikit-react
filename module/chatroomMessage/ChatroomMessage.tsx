@@ -12,6 +12,7 @@ import { Tooltip } from '../../component/tooltip/Tooltip';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { eventHandler } from '../../eventHandler';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface ChatroomMessageProps {
   prefix?: string;
   className?: string;
@@ -41,12 +42,20 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   const classString = classNames(prefixCls, className);
   const { t } = useTranslation();
   const [hoverStatus, setHoverStatus] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const context = useContext(RootContext);
   const { theme } = context;
   const themeMode = theme?.mode;
   let customAction;
   let menuNode: ReactNode | undefined;
   let moreAction: CustomAction = { visible: false };
+  const { pinMessage, unpinMessage, clearPinnedMessages, getPinnedMessages, list } =
+    usePinnedMessage({
+      conversation: {
+        conversationType: 'chatRoom',
+        conversationId: message.to,
+      },
+    });
 
   const [textToShow, setTextToShow] = useState((message as ChatSDK.TextMsgBody).msg);
 
@@ -75,6 +84,10 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     };
   }
   if (owner === rootStore.client.user) {
+    moreAction.actions?.unshift({
+      content: 'PIN',
+      onClick: () => {},
+    });
     message.from != rootStore.client.user &&
       moreAction.actions?.unshift({
         content: 'MUTE',
@@ -123,6 +136,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         // setTransStatus('translationFailed');
         // setBtnText('retry');
       });
+    setIsPopoverOpen(false);
   };
   const recallMessage = () => {
     rootStore.messageStore.recallMessage(
@@ -135,6 +149,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       false,
       true,
     );
+    setIsPopoverOpen(false);
   };
   const muteMember = () => {
     if (isMuted) {
@@ -142,10 +157,47 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       return;
     }
     rootStore.addressStore.muteChatRoomMember(message.to, message.from as string);
+    setIsPopoverOpen(false);
   };
 
   const reportMessage = () => {
     onReport?.(message);
+    setIsPopoverOpen(false);
+  };
+
+  const handlePinMessage = () => {
+    console.log('pin message', message, list);
+
+    // list.forEach(item => {
+    //   console.log('------->listItem', item);
+    //   // @ts-ignore
+    //   unpinMessage(item.message.mid || item.message.id);
+    // });
+    // // @ts-ignore
+    // pinMessage(message.mid || message.id).then(() => {
+    //   rootStore.pinnedMessagesStore.pushPinnedMessage('chatRoom', message.to, {
+    //     operatorId: rootStore.client.user,
+    //     pinTime: Date.now(),
+    //     message,
+    //   });
+    // });
+
+    const promiseList = list.map(item => {
+      // @ts-ignore
+      return unpinMessage(item.message.mid || item.message.id);
+    });
+    Promise.all(promiseList).then(() => {
+      // @ts-ignore
+      pinMessage(message.mid || message.id).then(() => {
+        rootStore.pinnedMessagesStore.pushPinnedMessage('chatRoom', message.to, {
+          operatorId: rootStore.client.user,
+          pinTime: Date.now(),
+          message,
+        });
+      });
+    });
+
+    setIsPopoverOpen(false);
   };
 
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -160,7 +212,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
           if (item.content === 'RECALL') {
             return (
               <li key={index} onClick={recallMessage}>
-                <Icon type="ARROW_BACK" width={16} height={16} color="#5270AD"></Icon>
+                <Icon type="ARROW_BACK" width={16} height={16}></Icon>
                 {t('unsend')}
               </li>
             );
@@ -168,7 +220,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
             return (
               message?.type === 'txt' && (
                 <li key={index} onClick={translateMessage}>
-                  <Icon type="TRANSLATION" width={16} height={16} color="#5270AD"></Icon>
+                  <Icon type="TRANSLATION" width={16} height={16}></Icon>
                   {t('translate')}
                 </li>
               )
@@ -176,12 +228,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
           } else if (item.content === 'MUTE') {
             return (
               <li key={isMuted ? index : -index} onClick={muteMember}>
-                <Icon
-                  type={isMuted ? 'BELL' : 'BELL_SLASH'}
-                  width={16}
-                  height={16}
-                  color="#5270AD"
-                ></Icon>
+                <Icon type={isMuted ? 'BELL' : 'BELL_SLASH'} width={16} height={16}></Icon>
                 {isMuted ? t('unmute') : t('mute')}
               </li>
             );
@@ -191,8 +238,15 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
             }
             return (
               <li key={index} onClick={reportMessage}>
-                <Icon type="ENVELOPE" width={16} height={16} color="#5270AD"></Icon>
+                <Icon type="ENVELOPE" width={16} height={16}></Icon>
                 {t('report')}
+              </li>
+            );
+          } else if (item.content === 'PIN') {
+            return (
+              <li key={index} onClick={handlePinMessage}>
+                <Icon type="PIN" width={16} height={16}></Icon>
+                {t('Pin')}
               </li>
             );
           }
@@ -253,7 +307,9 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       className={classString}
       onMouseOver={() => setHoverStatus(true)}
       onMouseLeave={() => {
-        setHoverStatus(false);
+        if (!isPopoverOpen) {
+          setHoverStatus(false);
+        }
       }}
     >
       <div className={`${prefixCls}-container`}>
@@ -270,10 +326,20 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         {message.type == 'txt' && renderText(textToShow)}
       </div>
       {hoverStatus && message.type == 'txt' && (
-        <Tooltip title={menuNode} trigger="click" placement="bottom" align={{ offset: [5] }}>
+        <Tooltip
+          title={menuNode}
+          trigger="click"
+          placement="bottom"
+          align={{ offset: [5] }}
+          open={isPopoverOpen}
+          onOpenChange={open => {
+            setIsPopoverOpen(open);
+            setHoverStatus(open);
+          }}
+        >
           <Icon
             type="ELLIPSIS"
-            color="#33B1FF"
+            color="var(--cui-primary-color5)"
             className={`${prefixCls}-body-action`}
             height={20}
           ></Icon>
@@ -283,4 +349,6 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   );
 };
 
-export default observer(ChatroomMessage);
+const ChatroomMessageOut = observer(ChatroomMessage);
+ChatroomMessageOut.displayName = 'ChatroomMessage';
+export default ChatroomMessageOut;

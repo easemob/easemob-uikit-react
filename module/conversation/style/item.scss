@@ -77,6 +77,11 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         white-space: nowrap;
         height: 20px;
         cursor: default;
+        // white-space: normal;
+        word-break: break-all;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: calc(100% - 12px);
     }
 
     &-time{

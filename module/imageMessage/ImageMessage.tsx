@@ -115,7 +115,9 @@ const ImageMessage = (props: ImageMessageProps) => {
     canvasDataURL(url, { quality: 1 });
     onClickImage?.(url);
   };
-  const renderImgUrl = bySelf ? message.url || message?.file?.url : (message.thumb as string);
+  const renderImgUrl = bySelf
+    ? message.url || message?.file?.url
+    : (message.thumb as string) || message.url;
 
   const [imgUrl, setImgUrl] = useState(renderImgUrl);
   // const img = useRef(

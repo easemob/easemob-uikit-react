@@ -20,6 +20,8 @@ import Checkbox from '../../component/checkbox';
 import { ChatroomInfo } from '../store/AddressStore';
 import { TextMessageType } from 'chatuim2/types/module/types/messageType';
 import { eventHandler } from '../../eventHandler';
+import PinnedTextMessage from '../pinnedTextMessage';
+import { usePinnedMessage } from '../hooks/usePinnedMessage';
 
 export let reportType: Record<string, string> = {
   tag1: 'Unwelcome commercial content',
@@ -43,6 +45,7 @@ export interface ChatroomProps {
     avatar: ReactNode;
     onAvatarClick?: () => void; // 点击 Header 中 头像的回调
     moreAction?: HeaderProps['moreAction'];
+    onClickMember?: () => void;
   };
   renderMessageList?: () => ReactNode; // 自定义渲染 MessageList
   renderMessageInput?: () => ReactNode; // 自定义渲染 MessageInput
@@ -93,6 +96,14 @@ const Chatroom = (props: ChatroomProps) => {
     className,
   );
 
+  const { pinMessage, unpinMessage, clearPinnedMessages, getPinnedMessages, list } =
+    usePinnedMessage({
+      conversation: {
+        conversationType: 'chatRoom',
+        conversationId: chatroomId,
+      },
+    });
+
   const sendJoinedNoticeMessage = () => {
     const myInfo = rootStore.addressStore.appUsersInfo[rootStore.client.user] || {};
     const chatroom_uikit_userInfo = {
@@ -124,21 +135,6 @@ const Chatroom = (props: ChatroomProps) => {
       return;
     }
     setIsEmpty(false);
-    rootStore.client
-      .getChatRoomDetails({ chatRoomId: chatroomId })
-      .then(res => {
-        // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
-        rootStore.addressStore.setChatroom(res.data as ChatSDK.GetChatRoomDetailsResult);
-        // @ts-ignore
-        const owner = res.data?.[0]?.owner;
-        if (owner == rootStore.client.user) {
-          rootStore.addressStore.getChatroomMuteList(chatroomId);
-        }
-        eventHandler.dispatchSuccess('getChatRoomDetails');
-      })
-      .catch(err => {
-        eventHandler.dispatchError('getChatRoomDetails', err);
-      });
 
     //   rootStore.conversationStore.setCurrentCvs(chatroomId);
     rootStore.client
@@ -163,6 +159,24 @@ const Chatroom = (props: ChatroomProps) => {
         //     console.log('聊天室管理员', res);
         //     rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
         //   })
+        // 加入之后再获取详情， 防止获取到的人数没有包含自己
+        rootStore.client
+          .getChatRoomDetails({ chatRoomId: chatroomId })
+          .then(res => {
+            // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
+            rootStore.addressStore.setChatroom(res.data as ChatSDK.GetChatRoomDetailsResult);
+            // @ts-ignore
+            const owner = res.data?.[0]?.owner;
+            if (owner == rootStore.client.user) {
+              rootStore.addressStore.getChatroomMuteList(chatroomId);
+            }
+            eventHandler.dispatchSuccess('getChatRoomDetails');
+          })
+          .catch(err => {
+            eventHandler.dispatchError('getChatRoomDetails', err);
+          });
+
+        getPinnedMessages();
       })
       .catch((err: ChatSDK.ErrorEvent) => {
         eventHandler.dispatchError('joinChatRoom', err);
@@ -183,7 +197,7 @@ const Chatroom = (props: ChatroomProps) => {
   }, [chatroomId, rootStore.loginState]);
 
   // config messageInput
-  let messageInputConfig: MessageInputProps = {
+  const messageInputConfig: MessageInputProps = {
     actions: [
       {
         name: 'TEXTAREA',
@@ -265,6 +279,20 @@ const Chatroom = (props: ChatroomProps) => {
   const handleBroadcastFinish = () => {
     rootStore.messageStore.shiftBroadcastMessage();
   };
+  const pinnedMessages = rootStore.pinnedMessagesStore.messages.chatRoom[chatroomId]?.list || [];
+
+  const formatNumber = (num: number) => {
+    if (num === undefined || num === null) {
+      return '0';
+    }
+
+    if (num < 1000) {
+      return num.toString();
+    }
+    return (num / 1000).toFixed(1) + 'k';
+  };
+  const memberCount = formatNumber(chatroomData.affiliations_count);
+
   return (
     <div className={classString} style={{ ...style }}>
       {isEmpty ? (
@@ -283,37 +311,65 @@ const Chatroom = (props: ChatroomProps) => {
               content={chatroomData.name || chatroomId}
               subtitle={appUsersInfo[chatroomData.owner]?.nickname || chatroomData.owner}
               suffixIcon={
-                <Icon
-                  type="PERSON_DOUBLE_FILL"
-                  onClick={() => {}}
-                  color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
-                ></Icon>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <Icon
+                    type="PERSON_DOUBLE_FILL"
+                    onClick={headerProps?.onClickMember || (() => {})}
+                    width={24}
+                    height={24}
+                    color={themeMode == 'dark' ? '#C8CDD0' : '#464E53'}
+                  ></Icon>
+                  {Number(memberCount) > 0 && (
+                    <span className={`${prefixCls}-header-count`}>{memberCount}</span>
+                  )}
+                </div>
               }
               {...headerProps}
             ></Header>
           )}
           <p></p>
 
-          <div style={{ position: 'relative', flex: '1', overflow: 'hidden', display: 'flex' }}>
-            {typeof renderBroadcast == 'function'
-              ? renderBroadcast()
-              : broadcast.length > 0 && (
-                  <Broadcast
-                    loop={0}
-                    delay={1}
-                    play={true}
-                    onCycleComplete={handleBroadcastFinish}
-                    style={{
-                      position: 'absolute',
-                      width: 'calc(100% - 24px)',
-                      zIndex: 9,
-                      margin: '12px',
-                    }}
-                    {...broadcastProps}
-                  >
-                    <div>{(broadcast[0] as TextMessageType)?.msg || ''}</div>
-                  </Broadcast>
-                )}
+          <div
+            style={{
+              position: 'relative',
+              flex: '1',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div style={{ position: 'absolute', width: '100%' }}>
+              {pinnedMessages.length > 0 && (
+                <PinnedTextMessage
+                  message={pinnedMessages[0]}
+                  style={{
+                    margin: '12px',
+                    position: 'relative',
+                    zIndex: 9,
+                    width: 'calc(100% - 24px)',
+                  }}
+                ></PinnedTextMessage>
+              )}
+              {typeof renderBroadcast == 'function'
+                ? renderBroadcast()
+                : broadcast.length > 0 && (
+                    <Broadcast
+                      loop={0}
+                      delay={1}
+                      play={true}
+                      onCycleComplete={handleBroadcastFinish}
+                      style={{
+                        position: 'relative',
+                        width: 'calc(100% - 24px)',
+                        zIndex: 9,
+                        margin: '12px',
+                      }}
+                      {...broadcastProps}
+                    >
+                      <div>{(broadcast[0] as TextMessageType)?.msg || ''}</div>
+                    </Broadcast>
+                  )}
+            </div>
             {renderMessageList ? (
               renderMessageList()
             ) : (
@@ -356,13 +412,21 @@ const Chatroom = (props: ChatroomProps) => {
         <div>
           {Object.keys(reportType).map((item, index) => {
             return (
-              <div className="report-item" key={index}>
+              <div
+                className={classNames('report-item', {
+                  'report-item-dark': themeMode == 'dark',
+                })}
+                key={index}
+                onClick={() => {
+                  handleCheckChange(item);
+                }}
+              >
                 <div>{t(reportType[item] as string)}</div>
                 <Checkbox
                   checked={checkedType === item}
-                  onChange={() => {
-                    handleCheckChange(item);
-                  }}
+                  // onChange={() => {
+                  //   handleCheckChange(item);
+                  // }}
                 ></Checkbox>
               </div>
             );

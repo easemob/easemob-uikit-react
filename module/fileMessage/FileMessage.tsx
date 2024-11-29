@@ -211,6 +211,7 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const select =
+    rootStore.messageStore &&
     rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
       conversationId
     ]?.selectable;
@@ -317,5 +318,6 @@ const FileMessage = (props: FileMessageProps) => {
     </BaseMessage>
   );
 };
-
-export default observer(FileMessage);
+const FileMessageOut = observer(FileMessage);
+FileMessageOut.displayName = 'FileMessage';
+export default FileMessageOut;

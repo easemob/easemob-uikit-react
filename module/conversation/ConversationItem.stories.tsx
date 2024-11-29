@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import { ConversationItem } from './index';
 
@@ -9,27 +9,24 @@ export default {
   component: ConversationItem,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {},
-} as ComponentMeta<typeof ConversationItem>;
+} as Meta<typeof ConversationItem>;
 
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof ConversationItem> = args => <ConversationItem {...args} />;
-
-export const Default = Template.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
-Default.args = {
-  data: {
-    chatType: 'singleChat',
-    conversationId: 'user2',
-    name: 'Henry',
-    unreadCount: 3,
-    lastMessage: {
-      id: '1',
-      to: 'user2',
-      type: 'txt',
-      msg: 'hello',
+export const Default = {
+  args: {
+    data: {
       chatType: 'singleChat',
-      from: 'user1',
-      time: Date.now(),
+      conversationId: 'user2',
+      name: 'Henry',
+      unreadCount: 3,
+      lastMessage: {
+        id: '1',
+        to: 'user2',
+        type: 'txt',
+        msg: 'hello',
+        chatType: 'singleChat',
+        from: 'user1',
+        time: Date.now(),
+      },
     },
   },
 };

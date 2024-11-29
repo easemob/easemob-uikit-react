@@ -118,6 +118,7 @@ class AddressStore {
       getBlockList: action,
       addUsersToBlocklist: action,
       removeUserFromBlocklist: action,
+      updateChatroomMemberCount: action,
     });
   }
 
@@ -364,6 +365,13 @@ class AddressStore {
     // this.groups = [...this.groups, ...filteredGroups];
   }
 
+  updateChatroomMemberCount(roomId: string, count: number) {
+    const idx = this.chatroom.findIndex(item => item.id === roomId);
+    if (idx > -1) {
+      this.chatroom[idx].affiliations_count = count;
+    }
+  }
+
   setChatroomAdmins = (chatroomId: string, admins: string[]) => {
     const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
@@ -451,9 +459,11 @@ class AddressStore {
   setChatroomMemberIds = (chatroomId: string, membersId: string[]) => {
     const idx = this.chatroom.findIndex(item => item.id === chatroomId);
     if (idx > -1) {
-      this.chatroom[idx].membersId = [
-        ...new Set([...(this.chatroom[idx].membersId || []), ...membersId]),
-      ];
+      runInAction(() => {
+        this.chatroom[idx].membersId = [
+          ...new Set([...(this.chatroom[idx].membersId || []), ...membersId]),
+        ];
+      });
     }
   };
 

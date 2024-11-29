@@ -1,16 +1,17 @@
 import React from 'react';
-import { ComponentMeta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import { Dropdown } from './Dropdown';
 
 export default {
   title: 'pure component/Dropdown',
   component: Dropdown,
-} as ComponentMeta<typeof Dropdown>;
+} as Meta<typeof Dropdown>;
 
 export const basic = () => (
   <Dropdown
     menu={[
       <button
+        key="1"
         onClick={() => {
           console.log('click Menu1');
         }}
@@ -18,6 +19,7 @@ export const basic = () => (
         Menu 1
       </button>,
       <button
+        key="2"
         onClick={() => {
           console.log('click Menu2');
         }}

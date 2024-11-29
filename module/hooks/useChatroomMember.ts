@@ -1,13 +1,14 @@
 import { useContext } from 'react';
 import { RootContext } from '../store/rootContext';
 import { getUsersInfo } from '../utils';
+import { runInAction } from 'mobx';
 const pageSize = 20;
 let pageNum = 1;
 const useChatroomMember = (chatroomId: string) => {
   const rootStore = useContext(RootContext).rootStore;
   const { client } = rootStore;
   let next = true;
-  const getConversationList = () => {
+  const getChatroomMembers = () => {
     client
       .listChatRoomMembers({
         chatRoomId: chatroomId,
@@ -31,6 +32,8 @@ const useChatroomMember = (chatroomId: string) => {
           return !(user in appUserInfo);
         });
         rootStore.addressStore.setChatroomMemberIds(chatroomId, members);
+        rootStore.addressStore.updateChatroomMemberCount(chatroomId, res.count);
+
         if (getInfoMembers.length > 0) {
           getUsersInfo({ userIdList: getInfoMembers, withPresence: false });
         }
@@ -40,7 +43,7 @@ const useChatroomMember = (chatroomId: string) => {
       });
   };
 
-  return { getConversationList, next };
+  return { getChatroomMembers, next };
 };
 
 const clearPageNum = () => {

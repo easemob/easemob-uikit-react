@@ -239,7 +239,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
   };
 
   const scrollToMsg = (messageId: string) => {
-    const localMsg = rootStore.messageStore.message.byId[messageId];
+    const localMsg = rootStore.messageStore.message.byId.get(messageId);
     if (localMsg) messageId = localMsg.id;
     const anchorElement = document.getElementById(messageId);
     if (!anchorElement) {
@@ -250,7 +250,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
       });
       return;
     }
-    anchorElement?.scrollIntoView({ behavior: 'smooth' });
+    anchorElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     anchorElement?.classList.add('reply-message-twinkle');
     eventHandler.dispatchSuccess('jumpToPinnedMessage');
     setTimeout(() => {
@@ -293,7 +293,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
                     message={item.message as any}
                   />
                   <div className={`${prefixCls}-opt`}>
-                    <span title={t('Jump to pinned message') as string}>
+                    <span title={t('Click to view the original message') as string}>
                       <Icon
                         type="ARROW_TO"
                         className={`${prefixCls}-opt-icon`}
@@ -340,4 +340,6 @@ const PinnedMessage = (props: PinnedMessageProps) => {
   );
 };
 
-export default observer(PinnedMessage);
+const PinnedMessageOut = observer(PinnedMessage);
+PinnedMessageOut.displayName = 'PinnedMessage';
+export default PinnedMessageOut;

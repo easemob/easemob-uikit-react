@@ -276,7 +276,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   };
 
   const scrollToMsg = () => {
-    anchorElement?.scrollIntoView({ behavior: 'smooth' });
+    anchorElement?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
     anchorElement?.classList.add('reply-message-twinkle');
 
     setTimeout(() => {
@@ -319,17 +319,20 @@ const RepliedMsg = (props: RepliedMsgProps) => {
           style={{
             width: repliedMsg?.type == 'audio' ? `calc(${repliedMsg.length || 0}% + 48px)` : 'auto',
           }}
+          onClick={scrollToMsg}
         >
           {renderMsgContent()}
         </div>
         {hoverStatus && (
-          <Icon
-            className={`${prefixCls}-arrow`}
-            type="ARROW_UP_THICK"
-            height={18}
-            width={18}
-            onClick={scrollToMsg}
-          ></Icon>
+          <div title={t('Click to view the original message') as string}>
+            <Icon
+              className={`${prefixCls}-arrow`}
+              type="ARROW_UP_THICK"
+              height={18}
+              width={18}
+              onClick={scrollToMsg}
+            ></Icon>
+          </div>
         )}
       </div>
     </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 
 import Thread from './index';
 import rootStore from '../store';
@@ -32,10 +32,10 @@ export default {
       description: 'props for MessageInput',
     },
   },
-} as ComponentMeta<typeof Thread>;
+} as Meta<typeof Thread>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: ComponentStory<typeof Thread> = args => (
+const Template: StoryFn<typeof Thread> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -46,7 +46,7 @@ const Template: ComponentStory<typeof Thread> = args => (
     </Provider>
   </div>
 );
-const DarkTemplate: ComponentStory<typeof Thread> = args => (
+const DarkTemplate: StoryFn<typeof Thread> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -61,7 +61,7 @@ const DarkTemplate: ComponentStory<typeof Thread> = args => (
   </div>
 );
 
-const SquareTemplate: ComponentStory<typeof Thread> = args => (
+const SquareTemplate: StoryFn<typeof Thread> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -98,7 +98,12 @@ rootStore.threadStore.currentThread.originalMessage = {
   time: 1694447391423,
   onlineState: 3,
 };
-export const Default = Template.bind({});
-export const Dark = DarkTemplate.bind({});
-export const Square = SquareTemplate.bind({});
-// More on args: https://storybook.js.org/docs/react/writing-stories/args
+export const Default = {
+  render: Template,
+};
+export const Dark = {
+  render: DarkTemplate,
+};
+export const Square = {
+  render: SquareTemplate,
+};

@@ -43,6 +43,8 @@ export interface MessageInputProps {
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
   giftKeyboardProps?: GiftKeyboardProps;
+  onChange?: (value: string) => void;
+  onFocus?: () => void;
 }
 
 function converToMessage(e: string) {
@@ -181,6 +183,8 @@ const MessageInput = (props: MessageInputProps) => {
     customActions,
     style = {},
     giftKeyboardProps,
+    onChange,
+    onFocus,
   } = props;
 
   useEffect(() => {
@@ -285,7 +289,9 @@ const MessageInput = (props: MessageInputProps) => {
                     } else {
                       setInputHaveValue(false);
                     }
+                    onChange?.(value);
                   }}
+                  onFocus={onFocus}
                   conversation={conversation}
                   enabledMention={props.enabledMention}
                   onBeforeSendMessage={onBeforeSendMessage}

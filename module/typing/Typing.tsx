@@ -23,7 +23,7 @@ const Typing = (props: TypingProps) => {
   const classString = classNames(prefixCls, className);
   const visibleOut = rootStore.messageStore.typing[conversation.conversationId];
   const [visible, setVisible] = useState(false);
-  let timer = useRef<string | number | NodeJS.Timeout | undefined>();
+  const timer = useRef<string | number | NodeJS.Timeout | undefined>();
   const show = () => {
     setVisible(true);
     onShow?.();
@@ -61,5 +61,6 @@ const Typing = (props: TypingProps) => {
     </div>
   );
 };
-
-export default observer(Typing);
+const TypingOut = observer(Typing);
+TypingOut.displayName = 'Typing';
+export default TypingOut;

@@ -24,7 +24,7 @@ const Conversation = () => {
 
 如果默认的 `ConversationList` UI 不能满足需求，你可以 `ConversationList` 组件提供的 props 来进行自定义。
 
-1. 自定义组件的背景颜色，大小等样式。
+### 自定义组件的背景颜色，大小等样式。
 
 给组件添加 `className` 来定义样式
 
@@ -55,7 +55,7 @@ Define the conversation UI style in index.css:
 
 <div align=center > <img src="../image/cvs-bg.png" width = "200" height = "450" /></div>
 
-2. 自定义 `ConversationList` 组件的 header 元素。
+### 自定义 `ConversationList` 组件的 header 元素。
 
 ```jsx
 import React from 'react';
@@ -91,7 +91,7 @@ const Conversation = () => {
 
 <div align=center > <img src="../image/cvs-header2.png" width = "200" height = "450" /></div>
 
-3. 设置用户的头像和昵称。
+### 设置用户的头像和昵称。
 
 - 使用 `renderItem` 方法来渲染每个会话条目。
 - 使用 `ConversationItem` 组件的 props 来自定义组件。
@@ -140,7 +140,80 @@ const Conversation = () => {
 
 <div align=center > <img src="../image/cvs-nick.png" width = "200" height = "450" /></div>
 
-4. 使用 `conversationStore` 上提供的方法, 例如:
+### 自定义日期时间格式
+
+```jsx
+<ConversationList
+  itemProps={{
+    formatDateTime: (time: number) => {
+      // 将 time 时间戳格式化成自己需要的格式
+      return new Date(time).toLocaleString();
+    },
+  }}
+/>
+```
+
+### 自定义更多操作功能
+
+通过配置 itemProps 的 moreAction 属性来控制显示哪些功能，或者添加自定义功能
+
+```jsx
+<ConversationList
+  itemProps={{
+    moreAction: {
+      visible: true, // 是否显示更多操作
+      actions: [
+        {
+          content: 'DELETE', // 删除功能
+        },
+        {
+          content: 'PIN', // 置顶功能
+        },
+        {
+          content: 'SILENT', // 免打扰功能
+        },
+        {
+          content: '自定义功能',
+          onClick: () => {},
+          icon: <Icon type="STAR" />,
+        },
+      ],
+    },
+  }}
+/>
+```
+
+### 自定义会话最后一条消息内容
+
+通过设置 itemProps 中 renderMessageContent 方法来返回自定义消息内容
+
+```jsx
+<ConversationList
+  itemProps={{
+    renderMessageContent: message => {
+      return <div>自定义消息内容</div>;
+    },
+  }}
+/>
+```
+
+### 自定义消息未读数气泡颜色，头像大小，形状
+
+通过设置 itemProps 属性控制 ConversationItem 样式
+
+```jsx
+<ConversationList
+  itemProps={{
+    badgeColor: 'red', // 气泡颜色
+    avatarSize: 50, // 头像大小
+    avatarShape: 'circle', // 头像形状
+  }}
+/>
+```
+
+renderMessageContent
+
+### 使用 `conversationStore` 上提供的方法, 例如:
 
 - 使用 `topConversation` 方法置顶一个会话。
 - 使用 `addConversation` 方法添加一个会话。
