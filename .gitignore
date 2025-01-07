@@ -12,3 +12,5 @@ package-lock.json
 *.tmp
 /.vscode/
 agora-chat-uikit-*
+uikits/
+docs/

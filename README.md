@@ -1,8 +1,8 @@
-# Easemob UIKit for React
+# ShengWang Chat UIKit for React
 
 ![Static Badge](https://img.shields.io/badge/platform-React-green) ![Static Badge](https://img.shields.io/badge/language-typescript-green) ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/easemob/Easemob-UIKit-web) ![GitHub last commit](https://img.shields.io/github/last-commit/easemob/Easemob-UIKit-web) ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/easemob/Easemob-UIKit-web) ![GitHub License](https://img.shields.io/github/license/easemob/Easemob-UIKit-web) ![GitHub Tag](https://img.shields.io/github/v/tag/easemob/Easemob-UIKit-web) ![NPM Version](https://img.shields.io/npm/v/easemob-chat-uikit)
 
-本文将介绍环信新单群聊 UIKit。新单群聊 UIKit 致力于为开发者提供高效集成、即插即用、高自由度定制化的 UI 组件库，助力构建功能全面、设计美观的 IM 应用，轻松满足即时通信绝大多数场景。请下载示例进行体验。
+本文将介绍声网新单群聊 UIKit。新单群聊 UIKit 致力于为开发者提供高效集成、即插即用、高自由度定制化的 UI 组件库，助力构建功能全面、设计美观的 IM 应用，轻松满足即时通信绝大多数场景。请下载示例进行体验。
 
 ## 📌 目录
 
@@ -19,7 +19,7 @@
 
 ## 📖 简介
 
-Easemob UIKit for WEB 是集开发工具包与用户界面于一体的开发利器，全面的即插即用的 UI 组件将助力您轻松快速地将标准聊天功能集成到新旧客户端应用中。从会话列表到消息体等核心功能，从整体主题到颜色字体等细节样式，组件均可完全定制，打造契合您品牌标识的独特应用内聊天体验。
+ShengWang Chat UIKit for WEB 是集开发工具包与用户界面于一体的开发利器，全面的即插即用的 UI 组件将助力您轻松快速地将标准聊天功能集成到新旧客户端应用中。从会话列表到消息体等核心功能，从整体主题到颜色字体等细节样式，组件均可完全定制，打造契合您品牌标识的独特应用内聊天体验。
 
 特别注意：UIKit 支持单聊、群聊、客服、问诊、AI 陪聊等绝大多数聊天场景。
 
@@ -29,7 +29,7 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
 
 ## ✨ 功能
 
-`easemob-chat-uikit` 库提供以下功能：
+`shengwang-chat-uikit` 库提供以下功能：
 
 - 聊天界面，支持各种类型消息，和对消息的操作，音视频通话；
 - 会话列表，支持搜索、删除、指定、免打扰；
@@ -43,7 +43,7 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
 
 ## 🧩 组件
 
-`easemob-chat-uikit` 目前提供容器组件、模块组件、纯 UI 组件三个级别的组件，组件详情可以查看[故事书](https://storybook.easemob.com/)
+`shengwang-chat-uikit` 目前提供容器组件、模块组件、纯 UI 组件三个级别的组件，组件详情可以查看[故事书](https://storybook.easemob.com/)
 
 ## 🖥 运行示例 App
 
@@ -65,11 +65,11 @@ npm run dev
 
 ### 前提条件
 
-开启 Easemob Chat 服务前，请确保已经具备以下要素：
+开启 ShengWang Chat 服务前，请确保已经具备以下要素：
 
 - React 16.8.0 或以上版本；
 - React DOM 16.8.0 或以上版本；
-- Easemob Chat 项目和 App Key。
+- ShengWang Chat 项目和 appId。
 
 ### 支持的浏览器
 
@@ -129,31 +129,31 @@ cd my-app
 └── yarn.lock
 ```
 
-#### 2.集成 easemob-chat-uikit
+#### 2.集成 shengwang-chat-uikit
 
-##### 安装 easemob-chat-uikit
+##### 安装 shengwang-chat-uikit
 
 - 通过 npm 安装，运行以下命令：
 
 ```bash
-npm install easemob-chat-uikit --save
+npm install shengwang-chat-uikit --save
 ```
 
 - 通过 yarn 安装，运行以下命令：
 
 ```bash
-yarn add easemob-chat-uikit
+yarn add shengwang-chat-uikit
 ```
 
-##### 使用 easemob-chat-uikit 组件构建应用
+##### 使用 shengwang-chat-uikit 组件构建应用
 
-将 easemob-chat-uikit 库导入你的代码中：
+将 shengwang-chat-uikit 库导入你的代码中：
 
 ```javascript
 // App.js
 import React, { Component, useEffect } from 'react';
-import { Provider, Chat, ConversationList, useClient, rootStore } from 'easemob-chat-uikit';
-import 'easemob-chat-uikit/style.css';
+import { Provider, Chat, ConversationList, useClient, rootStore } from 'shengwang-chat-uikit';
+import 'shengwang-chat-uikit/style.css';
 
 const ChatApp = () => {
   const client = useClient();
@@ -162,7 +162,7 @@ const ChatApp = () => {
       client
         .open({
           user: '',
-          token: '',
+          accessToken: '',
         })
         .then(res => {
           console.log('get token success', res);
@@ -192,7 +192,7 @@ class App extends Component {
     return (
       <Provider
         initConfig={{
-          appKey: 'your app key',
+          appId: 'your appId',
         }}
       >
         <ChatApp />
@@ -225,7 +225,7 @@ npm run start
 可以通过组件 props 传递 className, style, prefix 修改样式
 
 ```javascript
-import { Chat, Button } from 'easemob-chat-uikit';
+import { Chat, Button } from 'shengwnag-chat-uikit';
 
 const ChatApp = () => {
   return (
@@ -242,7 +242,7 @@ const ChatApp = () => {
 可以通过容器组件的 renderX 方法来渲染自定义组件
 
 ```javascript
-import {Chat, Header} from 'easemob-chat-uikit'
+import {Chat, Header} from 'shengwnag-chat-uikit'
 
 const ChatApp = () => {
   const CustomHeader = <Header back content="Custom Header">
@@ -264,8 +264,8 @@ theme: {
     primaryColor?: string | number; // 16进制颜色值，或者Hue值
     mode?: 'light' | 'dark'; // 明暗主题
     avatarShape?: 'circle' | 'square'; // 头像圆形还是方形
-    bubbleShape?: 'ground' | 'square'; // 消息气泡大圆角还是小圆角
-    componentsShape?: 'ground' | 'square'; // 搜索，输入框，按钮组件 大圆角还是小圆角
+    bubbleShape?: 'round' | 'square'; // 消息气泡大圆角还是小圆角
+    componentsShape?: 'round' | 'square'; // 搜索，输入框，按钮组件 大圆角还是小圆角
 };
 ```
 
@@ -350,7 +350,7 @@ module.exports = {
 ## 🏠 项目结构
 
 ```
-easemob-uikit-web
+shengwang-chat-uikit
 ├── build // 打包后的产物
 ├── common // 公共样式
 ├── component // 纯UI组件
