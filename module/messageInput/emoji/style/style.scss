@@ -20,7 +20,7 @@ $emoji-prefix-cls: #{$cui-prefix}-emoji-container;
     line-height: 100%;
 }
 .cui-emoji-box{
-
+    display: flex;
     &>img{
         width: 25px;
         height: 25px;

@@ -344,13 +344,19 @@ let ContactList: FC<ContactListProps> = props => {
   // 渲染搜索列表
   useEffect(() => {
     const searchList = addressStore.searchList.map(
-      (item: { userId: any; groupid: any; nickname: any; groupname: any }) => {
+      (item: {
+        userId: string;
+        groupid: string;
+        nickname: string;
+        groupname: string;
+        avatarUrl: string;
+      }) => {
         const id = item.userId || item.groupid;
         const name = item.nickname || item.groupname;
         const data = {
           userId: id,
           nickname: name,
-          avatarUrl: addressStore.appUsersInfo[id]?.avatarurl,
+          avatarUrl: item.avatarUrl || addressStore.appUsersInfo[id]?.avatarurl,
         };
         return (
           <UserItem

@@ -87,6 +87,17 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   const chatbotIds = rootStore.addressStore?.contacts?.filter(item => {
     if (item.userId.indexOf('chatbot_') > -1) return true;
   });
+  chatbotIds.forEach(
+    (item: {
+      userId: string;
+      nickname: string;
+      silent?: boolean;
+      remark?: string;
+      avatarUrl?: string;
+    }) => {
+      item.avatarUrl = addressStore.appUsersInfo[item.userId]?.avatarurl;
+    },
+  );
 
   useEffect(() => {
     if (!open) {
@@ -181,11 +192,20 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   }));
 
   // 如果传了users 则左面的panel使用users的数据渲染， 没传的话展示ContactList
-  const defaultCheckedUsers = checkedUsers?.map(user => ({
-    type: 'contact' as const,
-    id: user.userId,
-  }));
+  const defaultCheckedUsers =
+    checkedUsers?.map(user => ({
+      type: 'contact' as const,
+      id: user.userId,
+    })) || [];
 
+  if (chatbotIds.length > 0) {
+    chatbotIds.forEach(item => {
+      defaultCheckedUsers?.push({
+        id: item.userId,
+        type: 'contact',
+      });
+    });
+  }
   return (
     <Modal
       open={open}
