@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CallKit 背景图片功能测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .demo-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .demo-header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .control-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .background-options {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .background-option {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .background-option.active {
+            border-color: #1890ff;
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+        }
+
+        .background-option:hover {
+            transform: scale(1.05);
+        }
+
+        .background-preview {
+            width: 120px;
+            height: 80px;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .default-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .custom-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .callkit-simulator {
+            width: 100%;
+            height: 400px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            margin: 20px auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            background: #000;
+        }
+
+        /* 模拟 MultiPartyFullLayout 的结构 */
+        .cui-callkit-multi-party-full-layout {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background-size: 100% 100% !important;
+            background-position: 0px 0px !important;
+            background-repeat: no-repeat !important;
+        }
+
+        .cui-callkit-header {
+            height: 60px;
+            flex-shrink: 0;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .cui-callkit-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            min-height: 0;
+            padding: 20px;
+        }
+
+        .cui-callkit-controls {
+            height: 60px;
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .video-window {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            margin: 0 5px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: background 0.3s;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .code-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .code-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>CallKit 背景图片功能测试</h1>
+            <p>测试 CallKit 组件的 backgroundImage 参数功能</p>
+        </div>
+
+        <div class="control-section">
+            <h3>选择背景图片</h3>
+            <div class="background-options">
+                <div class="background-option active" data-bg="default">
+                    <div class="background-preview default-bg">
+                        默认背景
+                    </div>
+                </div>
+                <div class="background-option"
+                    data-bg="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop">
+                    <div class="background-preview"
+                        style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=120&h=80&fit=crop')">
+                        山景
+                    </div>
+                </div>
+                <div class="background-option"
+                    data-bg="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop">
+                    <div class="background-preview"
+                        style="background-image: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=120&h=80&fit=crop')">
+                        森林
+                    </div>
+                </div>
+                <div class="background-option"
+                    data-bg="https://images.unsplash.com/photo-1464822759844-d150ee1b5b93?w=800&h=600&fit=crop">
+                    <div class="background-preview"
+                        style="background-image: url('https://images.unsplash.com/photo-1464822759844-d150ee1b5b93?w=120&h=80&fit=crop')">
+                        海景
+                    </div>
+                </div>
+                <div class="background-option"
+                    data-bg="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop">
+                    <div class="background-preview"
+                        style="background-image: url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=120&h=80&fit=crop')">
+                        太空
+                    </div>
+                </div>
+                <div class="background-option" data-bg="custom">
+                    <div class="background-preview" style="background: linear-gradient(45deg, #ff6b6b, #4ecdc4)">
+                        自定义
+                    </div>
+                </div>
+            </div>
+            <input type="url" id="customUrl" class="custom-input" placeholder="输入自定义图片URL..." style="display: none;">
+        </div>
+
+        <div class="callkit-simulator">
+            <div id="callkitContainer" class="cui-callkit-multi-party-full-layout">
+                <!-- Header -->
+                <div class="cui-callkit-header">
+                    群组通话 (4人) - 00:05:32
+                </div>
+
+                <!-- 视频内容区域 -->
+                <div class="cui-callkit-content">
+                    <div class="video-grid">
+                        <div class="video-window">你</div>
+                        <div class="video-window">张三</div>
+                        <div class="video-window">李四</div>
+                        <div class="video-window">王五</div>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="cui-callkit-controls">
+                    <button class="control-btn" title="静音">🎤</button>
+                    <button class="control-btn" title="摄像头">📹</button>
+                    <button class="control-btn" title="屏幕共享">📺</button>
+                    <button class="control-btn" title="挂断" style="background: rgba(255, 77, 79, 0.8);">📞</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="code-section">
+            <h3>实时代码示例</h3>
+            <div class="code-block" id="codeExample">
+                &lt;CallKit
+                videos={groupVideos}
+                layoutMode={LayoutMode.MULTI_PARTY}
+                callMode="group"
+                backgroundImage="默认背景"
+                showControls={true}
+                aspectRatio={1}
+                gap={12}
+                /&gt;
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const callkitContainer = document.getElementById('callkitContainer');
+        const codeExample = document.getElementById('codeExample');
+        const customUrlInput = document.getElementById('customUrl');
+        const backgroundOptions = document.querySelectorAll('.background-option');
+
+        let currentBackground = 'default';
+
+        // 背景图片选项点击事件
+        backgroundOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // 移除其他选项的激活状态
+                backgroundOptions.forEach(opt => opt.classList.remove('active'));
+                // 激活当前选项
+                option.classList.add('active');
+
+                const bgValue = option.dataset.bg;
+
+                if (bgValue === 'custom') {
+                    customUrlInput.style.display = 'block';
+                    customUrlInput.focus();
+                } else {
+                    customUrlInput.style.display = 'none';
+                    updateBackground(bgValue);
+                }
+            });
+        });
+
+        // 自定义URL输入事件
+        customUrlInput.addEventListener('input', (e) => {
+            const url = e.target.value.trim();
+            if (url) {
+                updateBackground(url);
+            }
+        });
+
+        // 更新背景
+        function updateBackground(bgValue) {
+            currentBackground = bgValue;
+
+            if (bgValue === 'default') {
+                callkitContainer.style.backgroundImage = '';
+                updateCodeExample('undefined');
+            } else {
+                callkitContainer.style.backgroundImage = `url(${bgValue})`;
+                updateCodeExample(`"${bgValue}"`);
+            }
+        }
+
+        // 更新代码示例
+        function updateCodeExample(bgValue) {
+            const codeTemplate = `&lt;CallKit
+  videos={groupVideos}
+  layoutMode={LayoutMode.MULTI_PARTY}
+  callMode="group"
+  backgroundImage={${bgValue}}
+  showControls={true}
+  aspectRatio={1}
+  gap={12}
+/&gt;`;
+            codeExample.innerHTML = codeTemplate;
+        }
+
+        // 初始化
+        updateCodeExample('undefined');
+    </script>
+</body>
+
+</html>

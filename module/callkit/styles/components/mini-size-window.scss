@@ -1,0 +1,346 @@
+@import '../variables.scss';
+@import '../mixins.scss';
+
+$callkit-prefix-cls: #{$cui-prefix}-callkit;
+
+// MiniSizeWindow 组件样式
+.#{$callkit-prefix-cls}-mini-window {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #2F3437;
+  font-size: 14px;
+  line-height: 1.4;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 2px 0px 8px 0px rgba(26, 26, 26, 0.10), 0px 4px 4px 0px rgba(77, 77, 77, 0.15);
+  transition: all $transition-fast;
+  flex: 1;
+  flex-direction: column;
+  padding: 8px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  gap: 4px;
+  color: #00FF95;
+  // 可点击状态
+  &.#{$callkit-prefix-cls}-mini-window-clickable {
+    cursor: pointer;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.9);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  // 1v1视频模式特殊样式
+  &.#{$callkit-prefix-cls}-mini-window-video {
+    width: 108px;
+    height: 192px;
+    border-radius: 12px;
+    border: none;
+    padding: 0;
+    overflow: hidden;
+    background: #000;
+    
+    // 移除普通模式的所有边框和背景
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    backdrop-filter: none;
+  }
+
+  // 普通模式的样式
+  &.#{$callkit-prefix-cls}-mini-window-normal {
+    // 保持原有的普通模式样式
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px;
+    background: #2F3437;
+    backdrop-filter: blur(10px);
+    
+    // 根据通话类型显示不同的左边框颜色
+    &.#{$callkit-prefix-cls}-mini-window-video {
+      border-left: 3px solid #52c41a;
+    }
+  }
+
+  &.#{$callkit-prefix-cls}-mini-window-audio {
+    border-left: 3px solid #1890ff;
+  }
+
+  // 为普通模式添加audio类型的样式支持
+  &.#{$callkit-prefix-cls}-mini-window-normal {
+    &.#{$callkit-prefix-cls}-mini-window-audio {
+      border-left: 3px solid #1890ff;
+    }
+  }
+
+  // 通话状态样式
+  &.#{$callkit-prefix-cls}-mini-window-connecting {
+    border-left-color: #faad14;
+  }
+
+  &.#{$callkit-prefix-cls}-mini-window-ringing {
+    border-left-color: #722ed1;
+    
+    .#{$callkit-prefix-cls}-mini-status-icon.ringing {
+      animation: ring-pulse 1.5s ease-in-out infinite;
+    }
+  }
+
+  &.#{$callkit-prefix-cls}-mini-window-connected {
+    border-left-color: #52c41a;
+  }
+}
+
+// 主要信息区域
+.#{$callkit-prefix-cls}-mini-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+  min-width: 0; // 允许文本截断
+}
+
+// 状态图标/头像
+.#{$callkit-prefix-cls}-mini-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // width: 24px;
+  // height: 24px;
+  // border-radius: 50%;
+  // background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+
+  .#{$callkit-prefix-cls}-mini-status-icon {
+    color: white;
+    
+    &.connecting {
+      color: #faad14;
+      animation: spin 1s linear infinite;
+    }
+    
+    &.ringing {
+      color: #722ed1;
+    }
+    
+    &.connected {
+      color: #52c41a;
+    }
+  }
+}
+
+// 文本信息
+.#{$callkit-prefix-cls}-mini-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0; // 允许文本截断
+  flex: 1;
+}
+
+// 通话时长
+.#{$callkit-prefix-cls}-mini-duration {
+  font-weight: 510;
+  color: #00FF95;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 18px;
+  letter-spacing: 0.014px;
+}
+
+// 参与者信息
+.#{$callkit-prefix-cls}-mini-participants {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// 快速控制按钮区域
+.#{$callkit-prefix-cls}-mini-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+// 控制按钮
+.#{$callkit-prefix-cls}-mini-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  transition: all $transition-fast;
+  cursor: pointer;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  // 激活状态（静音、关闭摄像头等）
+  &.#{$callkit-prefix-cls}-mini-control-btn-active {
+    background: rgba(255, 77, 79, 0.2);
+    color: #ff4d4f;
+    
+    &:hover {
+      background: rgba(255, 77, 79, 0.3);
+    }
+  }
+
+  // 危险操作（挂断）
+  &.#{$callkit-prefix-cls}-mini-control-btn-danger {
+    background: rgba(255, 77, 79, 0.2);
+    color: #ff4d4f;
+    
+    &:hover {
+      background: rgba(255, 77, 79, 0.4);
+      transform: scale(1.1);
+    }
+  }
+}
+
+// 恢复提示
+.#{$callkit-prefix-cls}-mini-restore-hint {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity $transition-fast;
+  pointer-events: none;
+  z-index: 1000;
+
+  // 小箭头
+  &::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.8);
+  }
+}
+
+// 鼠标悬停时显示提示
+.#{$callkit-prefix-cls}-mini-window-clickable:hover {
+  .#{$callkit-prefix-cls}-mini-restore-hint {
+    opacity: 1;
+  }
+}
+
+// 动画
+@keyframes ring-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// 响应式适配
+@media (max-width: $breakpoint-mobile) {
+  .#{$callkit-prefix-cls}-mini-window {
+    min-width: 160px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .#{$callkit-prefix-cls}-mini-avatar {
+    width: 20px;
+    height: 20px;
+  }
+
+  .#{$callkit-prefix-cls}-mini-control-btn {
+    width: 20px;
+    height: 20px;
+  }
+
+  .#{$callkit-prefix-cls}-mini-participants {
+    font-size: 9px;
+  }
+
+  .#{$callkit-prefix-cls}-mini-restore-hint {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+}
+
+// 1v1视频模式的视频相关样式
+.#{$callkit-prefix-cls}-mini-video-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.#{$callkit-prefix-cls}-mini-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.#{$callkit-prefix-cls}-mini-video-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #333 0%, #555 100%);
+  border-radius: 12px;
+}
+
+.#{$callkit-prefix-cls}-mini-avatar-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  text-transform: uppercase;
+} 

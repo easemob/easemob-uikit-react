@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CallKit 新布局系统测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        .demo-container {
+            width: 800px;
+            height: 600px;
+            margin: 20px auto;
+            border: 2px solid #333;
+            position: relative;
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .title {
+            text-align: center;
+            margin: 20px 0 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .description {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* 模拟新的 CallKit 布局系统 */
+        .cui-callkit {
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            background: #1a1a1a;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        /* OneToOne 完整布局 */
+        .cui-callkit-one-to-one-full-layout {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 视频内容区域 - 占满整个容器 */
+        .cui-callkit-video-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* 主视频（远程视频）- 背景 */
+        .cui-callkit-main-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* 画中画视频（本地视频）- 右上角 */
+        .cui-callkit-pip-video {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 160px;
+            height: 120px;
+            z-index: 21;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .cui-callkit-pip-video:hover {
+            transform: scale(1.05);
+            border-color: #1890ff;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        /* 渐变遮罩 */
+        .cui-callkit-overlay-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            background: linear-gradient(180deg,
+                    rgba(0, 0, 0, 0.30) 0%,
+                    rgba(0, 0, 0, 0.00) 20%,
+                    rgba(0, 0, 0, 0.00) 80%,
+                    rgba(0, 0, 0, 0.20) 100%);
+        }
+
+        /* Header - 浮动在视频内容之上 */
+        .cui-callkit-floating-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            height: 60px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            color: white;
+        }
+
+        .cui-callkit-floating-header .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .cui-callkit-floating-header .header-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .cui-callkit-floating-header .header-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cui-callkit-floating-header .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Controls - 浮动在视频内容之上 */
+        .cui-callkit-floating-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 10;
+            height: 60px;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 控制按钮 */
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            height: 56px;
+            padding: 0 24px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+        }
+
+        .control-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 18px;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .control-btn.disabled {
+            background: rgba(255, 0, 0, 0.7);
+        }
+
+        .control-btn.hangup {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        /* 最小化状态 */
+        .minimized .cui-callkit-pip-video {
+            display: none;
+        }
+
+        .minimized .cui-callkit-floating-controls {
+            display: none;
+        }
+
+        .cui-callkit-minimized-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .cui-callkit-minimized-controls:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .cui-callkit-minimized-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .cui-callkit-minimized-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            color: #52c41a;
+        }
+
+        .cui-callkit-minimized-time {
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .cui-callkit-minimized-quick-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .cui-callkit-minimized-quick-controls .mini-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            color: white;
+            cursor: pointer;
+        }
+
+        .cui-callkit-minimized-quick-controls .mini-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .cui-callkit-minimized-quick-controls .mini-btn.muted {
+            color: #ff4d4f;
+        }
+
+        .cui-callkit-minimized-quick-controls .mini-btn.camera-off {
+            color: #ff4d4f;
+        }
+
+        .cui-callkit-minimized-quick-controls .mini-btn.hangup {
+            color: #ff4d4f;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 style="text-align: center;">CallKit 新布局系统测试</h1>
+
+    <div class="title">正常状态 - OneToOne 完整布局</div>
+    <div class="description">
+        视频内容占满整个容器，Header 和 Controls 浮动在上面
+    </div>
+    <div class="demo-container">
+        <div class="cui-callkit">
+            <div class="cui-callkit-one-to-one-full-layout">
+                <!-- 视频内容区域 - 占满整个容器 -->
+                <div class="cui-callkit-video-content">
+                    <!-- 主视频（远程视频）- 背景 -->
+                    <div class="cui-callkit-main-video">
+                        远程视频 (占满整个容器)
+                    </div>
+
+                    <!-- 画中画视频（本地视频）- 右上角 -->
+                    <div class="cui-callkit-pip-video">
+                        本地视频 (画中画)
+                    </div>
+
+                    <!-- 渐变遮罩 -->
+                    <div class="cui-callkit-overlay-gradient"></div>
+                </div>
+
+                <!-- Header - 浮动在视频内容之上 -->
+                <div class="cui-callkit-floating-header">
+                    <div class="header-title">通话中 - 12:34</div>
+                    <div class="header-controls">
+                        <button class="header-btn" title="全屏">⛶</button>
+                        <button class="header-btn" title="最小化">⊞</button>
+                    </div>
+                </div>
+
+                <!-- Controls - 浮动在视频内容之上 -->
+                <div class="cui-callkit-floating-controls">
+                    <div class="controls">
+                        <button class="control-btn" title="静音">🎤</button>
+                        <button class="control-btn" title="摄像头">📹</button>
+                        <button class="control-btn hangup" title="挂断">📞</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="title">最小化状态</div>
+    <div class="description">
+        显示简化的控制界面，点击可恢复正常状态
+    </div>
+    <div class="demo-container">
+        <div class="cui-callkit">
+            <div class="cui-callkit-one-to-one-full-layout minimized">
+                <!-- 视频内容区域 -->
+                <div class="cui-callkit-video-content">
+                    <div class="cui-callkit-main-video">
+                        远程视频 (背景)
+                    </div>
+                    <div class="cui-callkit-overlay-gradient"></div>
+                </div>
+
+                <!-- 最小化控制界面 -->
+                <div class="cui-callkit-minimized-controls">
+                    <div class="cui-callkit-minimized-info">
+                        <div class="cui-callkit-minimized-avatar">📞</div>
+                        <div class="cui-callkit-minimized-time">12:34</div>
+                    </div>
+                    <div class="cui-callkit-minimized-quick-controls">
+                        <button class="mini-btn muted" title="静音">🔇</button>
+                        <button class="mini-btn" title="摄像头">📹</button>
+                        <button class="mini-btn hangup" title="挂断">📞</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="max-width: 800px; margin: 40px auto; padding: 20px; background: #f9f9f9; border-radius: 8px;">
+        <h3>新布局系统的优势：</h3>
+        <ul>
+            <li><strong>完全分离的布局逻辑：</strong>每种布局模式都有独立的组件，包含完整的 UI 结构</li>
+            <li><strong>OneToOne 真正的画中画：</strong>视频内容占满整个容器，Header 和 Controls 浮动在上面</li>
+            <li><strong>灵活的布局管理：</strong>可以轻松添加新的布局模式（如语音通话、屏幕共享等）</li>
+            <li><strong>职责分离清晰：</strong>CallKit 只负责状态管理，布局逻辑完全由 Layout 组件处理</li>
+            <li><strong>易于扩展：</strong>每个布局都是独立的，可以单独优化和测试</li>
+        </ul>
+
+        <h3>支持的布局模式：</h3>
+        <ul>
+            <li><strong>ONE_TO_ONE：</strong>1v1 视频通话，画中画布局</li>
+            <li><strong>MULTI_PARTY：</strong>多人视频通话，网格布局</li>
+            <li><strong>PREVIEW：</strong>预览模式，用于通话前的设备检测</li>
+            <li><strong>MINIMIZED：</strong>最小化模式，显示简化的控制界面</li>
+            <li><strong>VOICE_CALL：</strong>语音通话模式（待实现）</li>
+            <li><strong>SCREEN_SHARE：</strong>屏幕共享模式（待实现）</li>
+        </ul>
+    </div>
+</body>
+
+</html>

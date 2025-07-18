@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CallKit 光标继承测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .test-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .test-description {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .callkit-container {
+            width: 600px;
+            height: 400px;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        .debug-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+
+        .debug-info h3 {
+            margin: 0 0 12px 0;
+            font-size: 14px;
+            color: #4CAF50;
+        }
+
+        .debug-info .debug-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .debug-info .debug-label {
+            color: #ccc;
+        }
+
+        .debug-info .debug-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .instructions {
+            background: #e3f2fd;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .instructions h4 {
+            margin: 0 0 8px 0;
+            color: #1976D2;
+        }
+
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 4px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="test-container">
+        <h1>CallKit 光标继承测试</h1>
+
+        <div class="instructions">
+            <h4>测试说明：</h4>
+            <ul>
+                <li>将鼠标移动到 CallKit 组件的边缘（20px 内）</li>
+                <li>观察光标是否正确显示为 resize 形状</li>
+                <li>特别注意鼠标在 Header 和 Controls 区域边缘时的光标</li>
+                <li>右侧调试信息会显示当前的光标检测状态</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">多人视频通话 - 可调整大小</div>
+            <div class="test-description">
+                测试多人视频通话模式下的光标继承是否正确工作
+            </div>
+            <div class="callkit-container">
+                <div id="callkit-multi-party"></div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">1v1 视频通话 - 可调整大小</div>
+            <div class="test-description">
+                测试 1v1 视频通话模式下的光标继承是否正确工作
+            </div>
+            <div class="callkit-container">
+                <div id="callkit-one-to-one"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 调试信息显示 -->
+    <div class="debug-info">
+        <h3>调试信息</h3>
+        <div class="debug-item">
+            <span class="debug-label">鼠标位置:</span>
+            <span class="debug-value" id="mouse-position">-</span>
+        </div>
+        <div class="debug-item">
+            <span class="debug-label">边缘检测:</span>
+            <span class="debug-value" id="edge-detection">-</span>
+        </div>
+        <div class="debug-item">
+            <span class="debug-label">调整方向:</span>
+            <span class="debug-value" id="resize-direction">-</span>
+        </div>
+        <div class="debug-item">
+            <span class="debug-label">光标样式:</span>
+            <span class="debug-value" id="cursor-style">-</span>
+        </div>
+        <div class="debug-item">
+            <span class="debug-label">元素类型:</span>
+            <span class="debug-value" id="element-type">-</span>
+        </div>
+    </div>
+
+    <script type="module">
+        import React from 'https://esm.sh/react@18';
+        import ReactDOM from 'https://esm.sh/react-dom@18/client';
+        import CallKit from './module/callkit/CallKit.tsx';
+
+        // 模拟视频数据
+        const multiPartyVideos = [
+            {
+                id: 'user1',
+                nickname: '用户1',
+                avatar: 'https://via.placeholder.com/100x100/4CAF50/white?text=U1',
+                muted: false,
+                isLocalVideo: true,
+            },
+            {
+                id: 'user2',
+                nickname: '用户2',
+                avatar: 'https://via.placeholder.com/100x100/2196F3/white?text=U2',
+                muted: true,
+                isLocalVideo: false,
+            },
+            {
+                id: 'user3',
+                nickname: '用户3',
+                avatar: 'https://via.placeholder.com/100x100/FF9800/white?text=U3',
+                muted: false,
+                isLocalVideo: false,
+            },
+            {
+                id: 'user4',
+                nickname: '用户4',
+                avatar: 'https://via.placeholder.com/100x100/9C27B0/white?text=U4',
+                muted: false,
+                isLocalVideo: false,
+            },
+        ];
+
+        const oneToOneVideos = [
+            {
+                id: 'local',
+                nickname: '我',
+                avatar: 'https://via.placeholder.com/100x100/4CAF50/white?text=ME',
+                muted: false,
+                isLocalVideo: true,
+            },
+            {
+                id: 'remote',
+                nickname: '对方',
+                avatar: 'https://via.placeholder.com/100x100/2196F3/white?text=YOU',
+                muted: false,
+                isLocalVideo: false,
+            },
+        ];
+
+        // 调试信息更新
+        const updateDebugInfo = (event) => {
+            const mousePosition = document.getElementById('mouse-position');
+            const edgeDetection = document.getElementById('edge-detection');
+            const resizeDirection = document.getElementById('resize-direction');
+            const cursorStyle = document.getElementById('cursor-style');
+            const elementType = document.getElementById('element-type');
+
+            if (mousePosition) {
+                mousePosition.textContent = `${event.clientX}, ${event.clientY}`;
+            }
+
+            // 检查是否在 CallKit 元素上
+            const element = event.target;
+            const callkitElement = element.closest('.cui-callkit');
+
+            if (callkitElement) {
+                const rect = callkitElement.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const y = event.clientY - rect.top;
+
+                // 边缘检测逻辑（复制自 useResizable）
+                const threshold = 20;
+                const isNearTop = y <= threshold;
+                const isNearBottom = y >= rect.height - threshold;
+                const isNearLeft = x <= threshold;
+                const isNearRight = x >= rect.width - threshold;
+
+                let direction = '';
+                if (isNearTop && isNearLeft) direction = 'nw';
+                else if (isNearTop && isNearRight) direction = 'ne';
+                else if (isNearBottom && isNearLeft) direction = 'sw';
+                else if (isNearBottom && isNearRight) direction = 'se';
+                else if (isNearTop) direction = 'n';
+                else if (isNearBottom) direction = 's';
+                else if (isNearLeft) direction = 'w';
+                else if (isNearRight) direction = 'e';
+
+                if (edgeDetection) {
+                    edgeDetection.textContent = direction ? '是' : '否';
+                }
+
+                if (resizeDirection) {
+                    resizeDirection.textContent = direction || '无';
+                }
+
+                if (cursorStyle) {
+                    const computedStyle = window.getComputedStyle(callkitElement);
+                    cursorStyle.textContent = computedStyle.cursor;
+                }
+
+                if (elementType) {
+                    let type = element.className || element.tagName;
+                    if (type.length > 30) {
+                        type = type.substring(0, 30) + '...';
+                    }
+                    elementType.textContent = type;
+                }
+            } else {
+                if (edgeDetection) edgeDetection.textContent = '-';
+                if (resizeDirection) resizeDirection.textContent = '-';
+                if (cursorStyle) cursorStyle.textContent = '-';
+                if (elementType) elementType.textContent = '-';
+            }
+        };
+
+        // 添加鼠标移动监听
+        document.addEventListener('mousemove', updateDebugInfo);
+
+        // 渲染多人视频通话
+        const multiPartyRoot = ReactDOM.createRoot(document.getElementById('callkit-multi-party'));
+        multiPartyRoot.render(
+            React.createElement(CallKit, {
+                videos: multiPartyVideos,
+                layoutMode: 'MULTI_PARTY',
+                resizable: true,
+                draggable: true,
+                managedPosition: false,
+                showControls: true,
+                style: {
+                    width: '100%',
+                    height: '100%',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                },
+                onResize: (width, height) => {
+                    console.log('多人视频调整大小:', width, height);
+                },
+                onDrag: (position) => {
+                    console.log('多人视频拖动:', position);
+                },
+            })
+        );
+
+        // 渲染1v1视频通话
+        const oneToOneRoot = ReactDOM.createRoot(document.getElementById('callkit-one-to-one'));
+        oneToOneRoot.render(
+            React.createElement(CallKit, {
+                videos: oneToOneVideos,
+                layoutMode: 'ONE_TO_ONE',
+                resizable: true,
+                draggable: true,
+                managedPosition: false,
+                showControls: true,
+                style: {
+                    width: '100%',
+                    height: '100%',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '12px',
+                    overflow: 'hidden',
+                },
+                onResize: (width, height) => {
+                    console.log('1v1视频调整大小:', width, height);
+                },
+                onDrag: (position) => {
+                    console.log('1v1视频拖动:', position);
+                },
+            })
+        );
+    </script>
+</body>
+
+</html>

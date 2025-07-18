@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发起多人通话演示</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-title {
+            color: #1890ff;
+            border-bottom: 2px solid #1890ff;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .feature-list h3 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .feature-list li {
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .step-guide {
+            background: #e6f7ff;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #1890ff;
+        }
+
+        .step-guide h3 {
+            color: #1890ff;
+            margin-top: 0;
+        }
+
+        .step-guide ol {
+            color: #333;
+        }
+
+        .step-guide li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            background: #fff7e6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #ffd591;
+        }
+
+        .code-block {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .demo-link {
+            display: inline-block;
+            background: #1890ff;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .demo-link:hover {
+            background: #40a9ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">发起多人通话功能演示</h1>
+
+        <div class="feature-list">
+            <h3>✨ 新增功能特性</h3>
+            <ul>
+                <li><strong>主动发起群组通话：</strong>无需等待邀请，可以主动发起视频或语音群组通话</li>
+                <li><strong>成员选择界面：</strong>发起通话前先选择要邀请的群成员</li>
+                <li><strong>多选支持：</strong>可以同时选择多个成员参与通话</li>
+                <li><strong>即时开始：</strong>选择完成员后立即开始通话，无需等待接听</li>
+                <li><strong>通话类型区分：</strong>支持视频通话和语音通话两种模式</li>
+            </ul>
+        </div>
+
+        <div class="step-guide">
+            <h3>🚀 使用步骤</h3>
+            <ol>
+                <li>在应用中添加 CallKit 组件，并设置 <span class="highlight">groupMembers</span> 属性</li>
+                <li>调用 <span class="highlight">callKitRef.current?.startGroupCall('video')</span> 或 <span
+                        class="highlight">startGroupCall('audio')</span></li>
+                <li>系统会自动弹出群成员选择界面</li>
+                <li>选择要邀请的成员（支持多选）</li>
+                <li>点击"确定"按钮</li>
+                <li>通话立即开始，包含所有选中的成员</li>
+            </ol>
+        </div>
+
+        <div class="feature-list">
+            <h3>📋 代码示例</h3>
+            <div class="code-block">
+                // 1. 获取 CallKit 引用
+                const callKitRef = useRef&lt;CallKitRef&gt;(null);
+
+                // 2. 发起视频群组通话
+                const handleStartVideoGroupCall = () => {
+                callKitRef.current?.startGroupCall('video');
+                };
+
+                // 3. 发起语音群组通话
+                const handleStartAudioGroupCall = () => {
+                callKitRef.current?.startGroupCall('audio');
+                };
+
+                // 4. 配置 CallKit 组件
+                &lt;CallKit
+                ref={callKitRef}
+                groupMembers={mockGroupMembers}
+                onCallStart={handleCallStart}
+                // ... 其他配置
+                /&gt;
+            </div>
+        </div>
+
+        <div class="feature-list">
+            <h3>🎯 应用场景</h3>
+            <ul>
+                <li><strong>团队会议：</strong>项目经理快速发起团队会议，选择相关成员参与</li>
+                <li><strong>客户沟通：</strong>销售人员邀请技术专家和客户进行三方通话</li>
+                <li><strong>教育培训：</strong>老师发起小组讨论，选择特定学生参与</li>
+                <li><strong>家庭通话：</strong>组织家庭视频聊天，选择在线的家庭成员</li>
+            </ul>
+        </div>
+
+        <div class="step-guide">
+            <h3>🔧 技术实现</h3>
+            <ol>
+                <li><strong>状态管理：</strong>新增 <span class="highlight">isInitiatingGroupCall</span> 状态跟踪发起通话流程</li>
+                <li><strong>用户选择：</strong>复用现有的 UserSelect 组件进行成员选择</li>
+                <li><strong>动态标题：</strong>根据通话类型动态设置选择界面标题</li>
+                <li><strong>视频创建：</strong>自动为选中的成员创建视频流对象</li>
+                <li><strong>回调处理：</strong>通过 onCallStart 回调通知外部通话开始</li>
+            </ol>
+        </div>
+
+        <a href="invitation-demo.html" class="demo-link">🎮 查看完整演示</a>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #666; font-size: 14px;">
+            <p>💡 提示：完整的功能演示包含了邀请通知、发起多人通话、通话控制等所有功能，建议在实际项目中参考演示代码进行集成。</p>
+        </div>
+    </div>
+</body>
+
+</html>

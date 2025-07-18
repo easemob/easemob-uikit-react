@@ -84,9 +84,10 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   const [modalOpen, setModalOpen] = useState(open);
   const [selectedUsers, setSelectedUsers] = useState<UserInfoData[]>([]);
   // 创建群默认选中机器人
-  const chatbotIds = rootStore.addressStore?.contacts?.filter(item => {
-    if (item.userId.indexOf('chatbot_') > -1) return true;
-  });
+  const chatbotIds =
+    rootStore.addressStore?.contacts?.filter(item => {
+      if (item.userId.indexOf('chatbot_') > -1) return true;
+    }) || [];
   chatbotIds.forEach(
     (item: {
       userId: string;

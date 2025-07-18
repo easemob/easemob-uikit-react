@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖动点击事件冲突修复测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #1a1a1a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: white;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-title {
+            text-align: center;
+            color: #fff;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .demo-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .demo-section-title {
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .demo-button {
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+            backdrop-filter: blur(5px);
+        }
+
+        .demo-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .demo-button.active {
+            background: rgba(82, 196, 26, 0.3);
+            border-color: #52c41a;
+        }
+
+        .status-info {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .test-log {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 11px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .test-log-entry {
+            margin: 2px 0;
+            padding: 2px 0;
+        }
+
+        .test-log-entry.click {
+            color: #52c41a;
+        }
+
+        .test-log-entry.drag {
+            color: #1890ff;
+        }
+
+        .test-log-entry.error {
+            color: #ff4d4f;
+        }
+
+        .description {
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .description h3 {
+            margin: 0 0 10px 0;
+            color: #52c41a;
+        }
+
+        .description ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .description li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <h1 class="demo-title">拖动点击事件冲突修复测试</h1>
+
+        <div class="description">
+            <h3>测试说明</h3>
+            <p>这个测试页面用于验证最小化窗口拖动时不会意外触发点击事件的修复：</p>
+            <ul>
+                <li><strong>问题描述</strong>：最小化后拖动窗口，松开鼠标时窗口会意外恢复（触发了点击事件）</li>
+                <li><strong>修复方案</strong>：通过检测鼠标移动距离区分拖动和点击，只有真正的点击才触发恢复</li>
+                <li><strong>测试方法</strong>：创建最小化窗口，尝试拖动，观察是否会意外恢复</li>
+            </ul>
+        </div>
+
+        <!-- 基础功能测试 -->
+        <div class="demo-section">
+            <h2 class="demo-section-title">拖动点击冲突测试</h2>
+
+            <div class="demo-controls">
+                <button class="demo-button" onclick="createTestWindow()">创建测试窗口</button>
+                <button class="demo-button" onclick="toggleMinimized()">切换最小化</button>
+                <button class="demo-button" onclick="clearLog()">清空日志</button>
+                <button class="demo-button" onclick="destroyTestWindow()">销毁窗口</button>
+            </div>
+
+            <div class="status-info" id="test-status">状态：无测试窗口</div>
+
+            <div class="test-log" id="test-log">
+                <div class="test-log-entry">测试日志将显示在这里...</div>
+            </div>
+        </div>
+
+        <!-- 测试步骤说明 -->
+        <div class="demo-section">
+            <h2 class="demo-section-title">测试步骤</h2>
+            <div class="description">
+                <ol>
+                    <li>点击"创建测试窗口"按钮创建一个可拖动的 CallKit 窗口</li>
+                    <li>点击"切换最小化"按钮将窗口最小化</li>
+                    <li>尝试拖动最小化窗口（按住鼠标左键移动）</li>
+                    <li>松开鼠标，观察窗口是否会意外恢复</li>
+                    <li>点击最小化窗口（不拖动），观察窗口是否正常恢复</li>
+                    <li>查看测试日志，确认拖动和点击事件被正确区分</li>
+                </ol>
+                <p><strong>预期结果</strong>：拖动时不应该触发恢复，只有点击时才恢复窗口。</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import CallKit from './module/callkit/CallKit.js';
+        import React from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client';
+
+        // 测试数据
+        const testVideos = [
+            {
+                id: 'local',
+                nickname: '我',
+                avatar: null,
+                isLocalVideo: true,
+                muted: false,
+            },
+            {
+                id: 'remote',
+                nickname: '测试用户',
+                avatar: null,
+                isLocalVideo: false,
+                muted: false,
+            }
+        ];
+
+        let testRoot = null;
+        let testContainer = null;
+        let isMinimized = false;
+
+        // 日志记录
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `test-log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // 更新状态显示
+        function updateStatus(status) {
+            document.getElementById('test-status').textContent = `状态：${status}`;
+        }
+
+        // 创建测试窗口
+        window.createTestWindow = function () {
+            if (testContainer) {
+                destroyTestWindow();
+            }
+
+            // 创建浮动容器
+            testContainer = document.createElement('div');
+            testContainer.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 100px;
+                width: 400px;
+                height: 300px;
+                z-index: 1000;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            `;
+            document.body.appendChild(testContainer);
+
+            // 创建 React 根
+            testRoot = createRoot(testContainer);
+
+            // 渲染 CallKit
+            const callKitElement = React.createElement(CallKit, {
+                videos: testVideos,
+                layoutMode: 'one-to-one',
+                showControls: true,
+                resizable: true,
+                draggable: true,
+                managedPosition: true,
+                initialPosition: { left: 100, top: 100 },
+                initialSize: { width: 400, height: 300 },
+                minimizedSize: { width: 120, height: 80 },
+                callDuration: '00:02:15',
+                muted: false,
+                cameraEnabled: true,
+
+                onMinimizedChange: (minimized) => {
+                    isMinimized = minimized;
+                    const status = minimized ? '最小化模式' : '正常模式';
+                    updateStatus(`测试窗口 - ${status}`);
+                    addLog(`窗口状态变化: ${status}`, minimized ? 'click' : 'click');
+                },
+
+                onDragStart: (startPosition) => {
+                    addLog(`开始拖动: (${Math.round(startPosition.x)}, ${Math.round(startPosition.y)})`, 'drag');
+                },
+
+                onDrag: (newPosition, delta) => {
+                    addLog(`拖动中: 移动到 (${Math.round(newPosition.x)}, ${Math.round(newPosition.y)})`, 'drag');
+                },
+
+                onDragEnd: (finalPosition) => {
+                    addLog(`拖动结束: 最终位置 (${Math.round(finalPosition.x)}, ${Math.round(finalPosition.y)})`, 'drag');
+                },
+
+                onHangup: () => {
+                    addLog('通话挂断', 'click');
+                    destroyTestWindow();
+                }
+            });
+
+            testRoot.render(callKitElement);
+            updateStatus('测试窗口 - 正常模式');
+            addLog('创建了测试窗口', 'info');
+        };
+
+        // 切换最小化
+        window.toggleMinimized = function () {
+            if (!testContainer) {
+                addLog('错误：请先创建测试窗口', 'error');
+                return;
+            }
+
+            // 模拟点击最小化按钮
+            const minimizeButton = testContainer.querySelector('.cui-callkit-header button:last-child, .cui-callkit-minimized-controls');
+            if (minimizeButton) {
+                minimizeButton.click();
+                addLog('模拟点击最小化按钮', 'click');
+            } else {
+                addLog('错误：未找到最小化按钮', 'error');
+            }
+        };
+
+        // 清空日志
+        window.clearLog = function () {
+            const logContainer = document.getElementById('test-log');
+            logContainer.innerHTML = '<div class="test-log-entry">日志已清空...</div>';
+        };
+
+        // 销毁测试窗口
+        window.destroyTestWindow = function () {
+            if (testRoot) {
+                testRoot.unmount();
+                testRoot = null;
+            }
+            if (testContainer) {
+                document.body.removeChild(testContainer);
+                testContainer = null;
+            }
+            isMinimized = false;
+
+            updateStatus('无测试窗口');
+            addLog('销毁了测试窗口', 'info');
+        };
+
+        // 初始化
+        addLog('拖动点击事件冲突修复测试页面已加载', 'info');
+        addLog('请按照测试步骤进行测试', 'info');
+    </script>
+</body>
+
+</html>

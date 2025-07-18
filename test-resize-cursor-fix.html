@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resize 光标修复测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+
+        .test-container {
+            width: 600px;
+            height: 400px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            width: 280px;
+        }
+
+        .info {
+            margin: 20px auto;
+            max-width: 800px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .header {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        .header>* {
+            pointer-events: auto;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            min-height: 0;
+            pointer-events: none;
+        }
+
+        .content>* {
+            pointer-events: auto;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 8px;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .video {
+            background: #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .controls {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        .controls>* {
+            pointer-events: auto;
+        }
+
+        .controls button {
+            margin: 0 10px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background: #0056b3;
+        }
+
+        .controls button.danger {
+            background: #dc3545;
+        }
+
+        .controls button.danger:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="info">
+        <h3>Resize 光标修复测试</h3>
+        <p>此测试验证修复后的 resize 光标显示效果：</p>
+        <ul>
+            <li><strong>预期行为</strong>: 鼠标移动到边缘时立即显示对应的 resize 光标</li>
+            <li><strong>关键修复</strong>:
+                <ul>
+                    <li>useResizable 使用事件捕获阶段，优先级更高</li>
+                    <li>useDraggable 检查边缘区域、resize 光标和属性，避免覆盖</li>
+                    <li>子元素使用 pointer-events 避免阻挡事件</li>
+                </ul>
+            </li>
+            <li><strong>测试重点</strong>: 从外部缓慢移动鼠标到容器边缘，观察光标变化</li>
+        </ul>
+    </div>
+
+    <div class="debug-info" id="debugInfo">
+        <div><strong>调试信息:</strong></div>
+        <div>光标状态: <span id="cursorStatus">default</span></div>
+        <div>鼠标位置: <span id="mousePos">0, 0</span></div>
+        <div>边缘检测: <span id="edgeDetection">none</span></div>
+        <div>resize属性: <span id="resizeAttr">无</span></div>
+        <div>事件阶段: <span id="eventPhase">-</span></div>
+        <div>处理器: <span id="handlerInfo">-</span></div>
+        <div>容器光标: <span id="containerCursor">-</span></div>
+    </div>
+
+    <div class="test-container" id="testContainer">
+        <div class="header">
+            <div>多人视频通话</div>
+            <div>00:05:30</div>
+        </div>
+
+        <div class="content">
+            <div class="video-grid">
+                <div class="video">用户1</div>
+                <div class="video">用户2 🔇</div>
+                <div class="video">用户3</div>
+                <div class="video">用户4</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button>静音</button>
+            <button>摄像头</button>
+            <button class="danger">挂断</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('testContainer');
+        let resizeDirection = '';
+        let isDragging = false;
+
+        // 模拟修复后的 useResizable（使用捕获阶段）
+        function handleResizableMouseMove(e) {
+            const rect = container.getBoundingClientRect();
+            const threshold = 10;
+
+            const topDistance = e.clientY - rect.top;
+            const rightDistance = rect.right - e.clientX;
+            const bottomDistance = rect.bottom - e.clientY;
+            const leftDistance = e.clientX - rect.left;
+
+            let direction = '';
+            if (topDistance < threshold && leftDistance < threshold) direction = 'nw';
+            else if (topDistance < threshold && rightDistance < threshold) direction = 'ne';
+            else if (bottomDistance < threshold && leftDistance < threshold) direction = 'sw';
+            else if (bottomDistance < threshold && rightDistance < threshold) direction = 'se';
+            else if (topDistance < threshold) direction = 'n';
+            else if (rightDistance < threshold) direction = 'e';
+            else if (bottomDistance < threshold) direction = 's';
+            else if (leftDistance < threshold) direction = 'w';
+
+            resizeDirection = direction;
+
+            const cursorMap = {
+                n: 'ns-resize', s: 'ns-resize',
+                e: 'ew-resize', w: 'ew-resize',
+                nw: 'nwse-resize', ne: 'nesw-resize',
+                sw: 'nesw-resize', se: 'nwse-resize'
+            };
+
+            const cursor = cursorMap[direction] || 'default';
+            if (direction) {
+                container.style.setProperty('cursor', cursor, 'important');
+                container.setAttribute('data-resize-direction', direction);
+                // 强制重绘
+                container.offsetHeight;
+                updateDebugInfo(e, 'useResizable (捕获)', cursor);
+            } else {
+                if (container.style.cursor.includes('resize')) {
+                    container.style.removeProperty('cursor');
+                }
+                container.removeAttribute('data-resize-direction');
+                updateDebugInfo(e, 'useResizable (清除)', '清除resize');
+            }
+        }
+
+        // 检查是否在调整大小区域
+        function isInResizeArea(event) {
+            const rect = container.getBoundingClientRect();
+            const threshold = 10;
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const nearLeft = x <= threshold;
+            const nearRight = x >= rect.width - threshold;
+            const nearTop = y <= threshold;
+            const nearBottom = y >= rect.height - threshold;
+
+            return nearLeft || nearRight || nearTop || nearBottom;
+        }
+
+        // 模拟修复后的 useDraggable
+        function handleDraggableMouseMove(e) {
+            if (isDragging) return;
+
+            // 如果在调整大小区域，完全不处理光标
+            if (isInResizeArea(e)) {
+                updateDebugInfo(e, 'useDraggable (跳过-边缘)', '不处理');
+                return;
+            }
+
+            // 检查是否已经有 resize 光标
+            const currentCursor = container.style.cursor;
+            if (currentCursor && currentCursor.includes('resize')) {
+                updateDebugInfo(e, 'useDraggable (跳过-resize)', '不处理');
+                return;
+            }
+
+            // 检查是否有 data-resize-direction 属性
+            if (container.hasAttribute('data-resize-direction')) {
+                updateDebugInfo(e, 'useDraggable (跳过-属性)', '不处理');
+                return;
+            }
+
+            // 设置拖动光标
+            container.style.cursor = 'grab';
+            updateDebugInfo(e, 'useDraggable (内容区)', 'grab');
+        }
+
+        // 调试信息更新
+        function updateDebugInfo(e, handler, action) {
+            const cursor = window.getComputedStyle(container).cursor;
+            const resizeAttr = container.getAttribute('data-resize-direction') || '无';
+            const containerCursor = container.style.cursor || '无';
+
+            document.getElementById('cursorStatus').textContent = cursor;
+            document.getElementById('mousePos').textContent = `${e.clientX}, ${e.clientY}`;
+            document.getElementById('edgeDetection').textContent = resizeDirection || 'none';
+            document.getElementById('resizeAttr').textContent = resizeAttr;
+            document.getElementById('eventPhase').textContent = e.eventPhase === 1 ? '捕获' : '冒泡';
+            document.getElementById('handlerInfo').textContent = `${handler}: ${action}`;
+            document.getElementById('containerCursor').textContent = containerCursor;
+        }
+
+        function handleMouseLeave() {
+            if (!isDragging) {
+                resizeDirection = '';
+                container.style.removeProperty('cursor');
+                container.removeAttribute('data-resize-direction');
+            }
+        }
+
+        // 事件监听 - 模拟修复后的事件绑定顺序
+        // useResizable 使用捕获阶段（优先级更高）
+        container.addEventListener('mousemove', handleResizableMouseMove, true);
+        container.addEventListener('mouseleave', handleMouseLeave, true);
+
+        // useDraggable 使用冒泡阶段（优先级较低）
+        container.addEventListener('mousemove', handleDraggableMouseMove, false);
+
+        // 全局鼠标移动监听
+        document.addEventListener('mousemove', (e) => {
+            document.getElementById('mousePos').textContent = `${e.clientX}, ${e.clientY}`;
+        });
+
+        console.log('Resize 光标修复测试已加载');
+        console.log('useResizable 使用捕获阶段，useDraggable 使用冒泡阶段');
+        console.log('请将鼠标移动到容器边缘测试 resize 光标');
+    </script>
+</body>
+
+</html>

@@ -17,6 +17,13 @@ import ScrollList, { ScrollListProps } from './scrollList';
 import Broadcast, { BroadcastProps } from './broadcast';
 import Collapse, { CollapseProps } from './collapse';
 import UserItem, { UserItemProps } from './userItem';
+import {
+  useNotification,
+  NotificationConfig,
+  NotificationInstance,
+  NotificationProps,
+} from './notification';
+import NetworkQuality, { NetworkQualityProps } from './networkQuality';
 export type {
   AvatarProps,
   ButtonProps,
@@ -38,6 +45,9 @@ export type {
   CollapseProps,
   UserItemProps,
   TooltipProps,
+  NotificationConfig,
+  NotificationInstance,
+  NotificationProps,
 };
 
 export {
@@ -57,4 +67,5 @@ export {
   Broadcast,
   Collapse,
   UserItem,
+  useNotification,
 };

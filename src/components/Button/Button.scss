@@ -1,0 +1,193 @@
+.cui-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  transition: all 0.2s ease;
+  user-select: none;
+  white-space: nowrap;
+  
+  // 使用CSS变量，支持主题切换
+  border-radius: var(--cui-components-shape, 8px);
+  
+  // 基础样式
+  &__content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  &__loading-icon {
+    display: inline-block;
+    animation: cui-button-spin 1s linear infinite;
+    font-size: 12px;
+  }
+  
+  // 按钮类型样式
+  &--primary {
+    background: var(--cui-color-primary, #1890ff);
+    color: white;
+    box-shadow: var(--cui-shadow-sm, 0 1px 3px rgba(0,0,0,0.12));
+    
+    &:hover:not(.cui-button--disabled) {
+      background: var(--cui-color-primary-hover, #40a9ff);
+      box-shadow: var(--cui-shadow-md, 0 4px 6px rgba(0,0,0,0.12));
+      transform: translateY(-1px);
+    }
+    
+    &:active:not(.cui-button--disabled) {
+      background: var(--cui-color-primary-active, #096dd9);
+      transform: translateY(0);
+    }
+  }
+  
+  &--secondary {
+    background: var(--cui-color-surface, #f5f5f5);
+    color: var(--cui-color-text, #333);
+    border: 1px solid var(--cui-color-border, #e0e0e0);
+    
+    &:hover:not(.cui-button--disabled) {
+      background: var(--cui-color-background, #ffffff);
+      border-color: var(--cui-color-primary, #1890ff);
+      color: var(--cui-color-primary, #1890ff);
+    }
+  }
+  
+  &--danger {
+    background: var(--cui-color-error, #f44336);
+    color: white;
+    
+    &:hover:not(.cui-button--disabled) {
+      background: #f66659;
+    }
+    
+    &:active:not(.cui-button--disabled) {
+      background: #d32f2f;
+    }
+  }
+  
+  &--ghost {
+    background: transparent;
+    color: var(--cui-color-primary, #1890ff);
+    border: 1px solid var(--cui-color-primary, #1890ff);
+    
+    &:hover:not(.cui-button--disabled) {
+      background: var(--cui-color-primary, #1890ff);
+      color: white;
+    }
+  }
+  
+  // 尺寸样式
+  &--small {
+    font-size: 12px;
+    height: 28px;
+    min-width: 60px;
+  }
+  
+  &--medium {
+    font-size: 14px;
+    height: 36px;
+    min-width: 80px;
+  }
+  
+  &--large {
+    font-size: 16px;
+    height: 44px;
+    min-width: 100px;
+  }
+  
+  // 形状样式
+  &--round {
+    border-radius: var(--cui-border-radius-xl, 16px);
+  }
+  
+  &--circle {
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0;
+    
+    &.cui-button--small {
+      width: 28px;
+      height: 28px;
+      min-width: 28px;
+    }
+    
+    &.cui-button--large {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+    }
+  }
+  
+  // 状态样式
+  &--disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  &--loading {
+    cursor: default;
+    
+    .cui-button__content {
+      opacity: 0.6;
+    }
+  }
+  
+  // 波纹效果
+  &--ripple {
+    overflow: hidden;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.3s ease, height 0.3s ease;
+      pointer-events: none;
+    }
+    
+    &:active::before {
+      width: 200px;
+      height: 200px;
+    }
+  }
+}
+
+// 动画
+@keyframes cui-button-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// 暗色主题支持
+@media (prefers-color-scheme: dark) {
+  .cui-button {
+    &--secondary {
+      background: #2a2a2a;
+      color: #ffffff;
+      border-color: #404040;
+      
+      &:hover:not(.cui-button--disabled) {
+        background: #333333;
+      }
+    }
+  }
+} 

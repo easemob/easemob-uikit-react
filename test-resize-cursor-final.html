@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resize 光标拖动测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #f0f0f0;
+        }
+
+        .test-container {
+            width: 600px;
+            height: 400px;
+            margin: 20px auto;
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+            width: 300px;
+        }
+
+        .info {
+            margin: 20px auto;
+            max-width: 800px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .header {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        .header>* {
+            pointer-events: auto;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            min-height: 0;
+            pointer-events: none;
+        }
+
+        .content>* {
+            pointer-events: auto;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 8px;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+        }
+
+        .video {
+            background: #333;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .controls {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            pointer-events: none;
+        }
+
+        .controls>* {
+            pointer-events: auto;
+        }
+
+        .controls button {
+            margin: 0 10px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background: #0056b3;
+        }
+
+        .controls button.danger {
+            background: #dc3545;
+        }
+
+        .controls button.danger:hover {
+            background: #c82333;
+        }
+
+        /* 模拟 CallKit 样式 */
+        .cui-callkit-resizing {
+            * {
+                cursor: inherit !important;
+                user-select: none !important;
+            }
+        }
+
+        body.cui-callkit-dragging {
+            user-select: none !important;
+
+            * {
+                user-select: none !important;
+            }
+        }
+
+        .test-container[data-resize-direction="n"] {
+            cursor: ns-resize !important;
+        }
+
+        .test-container[data-resize-direction="s"] {
+            cursor: ns-resize !important;
+        }
+
+        .test-container[data-resize-direction="e"] {
+            cursor: ew-resize !important;
+        }
+
+        .test-container[data-resize-direction="w"] {
+            cursor: ew-resize !important;
+        }
+
+        .test-container[data-resize-direction="ne"] {
+            cursor: nesw-resize !important;
+        }
+
+        .test-container[data-resize-direction="nw"] {
+            cursor: nwse-resize !important;
+        }
+
+        .test-container[data-resize-direction="se"] {
+            cursor: nwse-resize !important;
+        }
+
+        .test-container[data-resize-direction="sw"] {
+            cursor: nesw-resize !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="info">
+        <h3>Resize 光标拖动测试</h3>
+        <p>此测试验证修复后的 resize 光标在拖动过程中的显示效果：</p>
+        <ul>
+            <li><strong>修复问题</strong>: 拖动过程中光标从 resize 变成 inherit 的问题</li>
+            <li><strong>关键修复</strong>:
+                <ul>
+                    <li>移除了 body.cui-callkit-dragging 中的 cursor: inherit !important</li>
+                    <li>保留了 .cui-callkit-resizing 中的 cursor: inherit 用于子元素</li>
+                    <li>确保容器的 resize 光标不被覆盖</li>
+                </ul>
+            </li>
+            <li><strong>测试步骤</strong>:
+                <ol>
+                    <li>移动鼠标到容器边缘，观察光标变为 resize 形状</li>
+                    <li>按下鼠标开始拖动，光标应该保持 resize 形状</li>
+                    <li>拖动过程中光标不应该变成 inherit</li>
+                    <li>松开鼠标，如果仍在边缘应该保持 resize 光标</li>
+                </ol>
+            </li>
+        </ul>
+    </div>
+
+    <div class="debug-info" id="debugInfo">
+        <div><strong>调试信息:</strong></div>
+        <div>光标状态: <span id="cursorStatus">default</span></div>
+        <div>鼠标位置: <span id="mousePos">0, 0</span></div>
+        <div>边缘检测: <span id="edgeDetection">none</span></div>
+        <div>拖动状态: <span id="dragStatus">未拖动</span></div>
+        <div>resize属性: <span id="resizeAttr">无</span></div>
+        <div>body类: <span id="bodyClass">无</span></div>
+        <div>容器类: <span id="containerClass">无</span></div>
+        <div>容器光标: <span id="containerCursor">-</span></div>
+        <div>body光标: <span id="bodyCursor">-</span></div>
+    </div>
+
+    <div class="test-container" id="testContainer">
+        <div class="header">
+            <div>多人视频通话</div>
+            <div>00:05:30</div>
+        </div>
+
+        <div class="content">
+            <div class="video-grid">
+                <div class="video">用户1</div>
+                <div class="video">用户2 🔇</div>
+                <div class="video">用户3</div>
+                <div class="video">用户4</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button>静音</button>
+            <button>摄像头</button>
+            <button class="danger">挂断</button>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('testContainer');
+        let resizeDirection = '';
+        let isDragging = false;
+        let dragStart = null;
+
+        // 获取 resize 方向
+        function getResizeDirection(e, rect) {
+            const threshold = 10;
+            const topDistance = e.clientY - rect.top;
+            const rightDistance = rect.right - e.clientX;
+            const bottomDistance = rect.bottom - e.clientY;
+            const leftDistance = e.clientX - rect.left;
+
+            let direction = '';
+            if (topDistance < threshold && leftDistance < threshold) direction = 'nw';
+            else if (topDistance < threshold && rightDistance < threshold) direction = 'ne';
+            else if (bottomDistance < threshold && leftDistance < threshold) direction = 'sw';
+            else if (bottomDistance < threshold && rightDistance < threshold) direction = 'se';
+            else if (topDistance < threshold) direction = 'n';
+            else if (rightDistance < threshold) direction = 'e';
+            else if (bottomDistance < threshold) direction = 's';
+            else if (leftDistance < threshold) direction = 'w';
+
+            return direction;
+        }
+
+        // 获取光标样式
+        function getCursorStyle(direction) {
+            const cursorMap = {
+                n: 'ns-resize', s: 'ns-resize',
+                e: 'ew-resize', w: 'ew-resize',
+                nw: 'nwse-resize', ne: 'nesw-resize',
+                sw: 'nesw-resize', se: 'nwse-resize'
+            };
+            return cursorMap[direction] || 'default';
+        }
+
+        // 鼠标移动处理
+        function handleMouseMove(e) {
+            const rect = container.getBoundingClientRect();
+            const direction = getResizeDirection(e, rect);
+
+            if (!isDragging) {
+                // 悬停状态
+                resizeDirection = direction;
+
+                if (direction) {
+                    const cursor = getCursorStyle(direction);
+                    container.style.setProperty('cursor', cursor, 'important');
+                    container.setAttribute('data-resize-direction', direction);
+                    container.offsetHeight; // 强制重绘
+                } else {
+                    if (container.style.cursor.includes('resize')) {
+                        container.style.removeProperty('cursor');
+                    }
+                    container.removeAttribute('data-resize-direction');
+                }
+            } else {
+                // 拖动状态 - 保持光标
+                const cursor = getCursorStyle(resizeDirection);
+                document.body.style.setProperty('cursor', cursor, 'important');
+
+                // 模拟调整大小
+                const deltaX = e.clientX - dragStart.x;
+                const deltaY = e.clientY - dragStart.y;
+
+                let newWidth = dragStart.width;
+                let newHeight = dragStart.height;
+
+                if (resizeDirection.includes('e')) {
+                    newWidth = Math.max(300, dragStart.width + deltaX);
+                }
+                if (resizeDirection.includes('w')) {
+                    newWidth = Math.max(300, dragStart.width - deltaX);
+                }
+                if (resizeDirection.includes('s')) {
+                    newHeight = Math.max(200, dragStart.height + deltaY);
+                }
+                if (resizeDirection.includes('n')) {
+                    newHeight = Math.max(200, dragStart.height - deltaY);
+                }
+
+                container.style.width = newWidth + 'px';
+                container.style.height = newHeight + 'px';
+            }
+
+            updateDebugInfo(e);
+        }
+
+        // 鼠标按下处理
+        function handleMouseDown(e) {
+            const rect = container.getBoundingClientRect();
+            const direction = getResizeDirection(e, rect);
+
+            if (!direction) return;
+
+            e.preventDefault();
+            e.stopPropagation();
+
+            isDragging = true;
+            resizeDirection = direction;
+            dragStart = {
+                x: e.clientX,
+                y: e.clientY,
+                width: rect.width,
+                height: rect.height
+            };
+
+            // 添加拖动样式
+            container.classList.add('cui-callkit-resizing');
+            document.body.classList.add('cui-callkit-dragging');
+
+            // 设置拖动时的光标
+            const cursor = getCursorStyle(direction);
+            document.body.style.setProperty('cursor', cursor, 'important');
+            document.body.style.setProperty('user-select', 'none', 'important');
+
+            updateDebugInfo(e);
+        }
+
+        // 鼠标抬起处理
+        function handleMouseUp(e) {
+            if (!isDragging) return;
+
+            isDragging = false;
+
+            // 移除拖动样式
+            container.classList.remove('cui-callkit-resizing');
+            document.body.classList.remove('cui-callkit-dragging');
+
+            // 恢复默认样式
+            document.body.style.setProperty('cursor', 'default', 'important');
+            document.body.style.setProperty('user-select', 'auto', 'important');
+
+            // 检查鼠标是否仍在边缘
+            const rect = container.getBoundingClientRect();
+            const direction = getResizeDirection(e, rect);
+
+            if (direction) {
+                const cursor = getCursorStyle(direction);
+                container.style.setProperty('cursor', cursor, 'important');
+                container.setAttribute('data-resize-direction', direction);
+                resizeDirection = direction;
+            } else {
+                container.removeAttribute('data-resize-direction');
+                if (container.style.cursor.includes('resize')) {
+                    container.style.removeProperty('cursor');
+                }
+                resizeDirection = '';
+            }
+
+            updateDebugInfo(e);
+        }
+
+        // 鼠标离开处理
+        function handleMouseLeave(e) {
+            if (!isDragging) {
+                resizeDirection = '';
+                container.removeAttribute('data-resize-direction');
+                container.style.removeProperty('cursor');
+                updateDebugInfo(e);
+            }
+        }
+
+        // 调试信息更新
+        function updateDebugInfo(e) {
+            const containerCursor = container.style.cursor || window.getComputedStyle(container).cursor;
+            const bodyCursor = document.body.style.cursor || window.getComputedStyle(document.body).cursor;
+            const resizeAttr = container.getAttribute('data-resize-direction') || '无';
+            const bodyClass = document.body.classList.contains('cui-callkit-dragging') ? 'cui-callkit-dragging' : '无';
+            const containerClass = container.classList.contains('cui-callkit-resizing') ? 'cui-callkit-resizing' : '无';
+
+            document.getElementById('cursorStatus').textContent = containerCursor;
+            document.getElementById('mousePos').textContent = `${e.clientX}, ${e.clientY}`;
+            document.getElementById('edgeDetection').textContent = resizeDirection || 'none';
+            document.getElementById('dragStatus').textContent = isDragging ? '拖动中' : '未拖动';
+            document.getElementById('resizeAttr').textContent = resizeAttr;
+            document.getElementById('bodyClass').textContent = bodyClass;
+            document.getElementById('containerClass').textContent = containerClass;
+            document.getElementById('containerCursor').textContent = containerCursor;
+            document.getElementById('bodyCursor').textContent = bodyCursor;
+        }
+
+        // 事件监听
+        container.addEventListener('mousemove', handleMouseMove, true);
+        container.addEventListener('mousedown', handleMouseDown, true);
+        container.addEventListener('mouseleave', handleMouseLeave, true);
+        document.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                handleMouseMove(e);
+            }
+        });
+
+        console.log('Resize 光标拖动测试已加载');
+        console.log('关键修复：移除了 body.cui-callkit-dragging 中的 cursor: inherit !important');
+        console.log('测试步骤：边缘悬停 -> 按下拖动 -> 观察光标保持 resize 形状');
+    </script>
+</body>
+
+</html>

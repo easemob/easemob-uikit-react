@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CallKit 最小化功能测试</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        /* 模拟 CallKit 最小化样式 */
+        .cui-callkit {
+            position: absolute;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .cui-callkit-normal {
+            left: 50px;
+            top: 50px;
+            width: 600px;
+            height: 400px;
+        }
+
+        .cui-callkit-minimized {
+            left: 300px;
+            top: 50px;
+            width: 120px;
+            height: 80px;
+        }
+
+        /* 最小化样式 */
+        .cui-callkit-minimized .cui-callkit-header {
+            display: none;
+        }
+
+        .cui-callkit-minimized .cui-callkit-content {
+            width: 100%;
+            height: calc(100% - 60px);
+            position: relative;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            cursor: pointer;
+            background: #2c2c2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .cui-callkit-minimized .cui-callkit-minimized-audio {
+            width: 100%;
+            height: 100%;
+            background: #2c2c2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cui-callkit-minimized .cui-callkit-minimized-avatar {
+            margin-bottom: 6px;
+        }
+
+        .cui-callkit-minimized .cui-callkit-minimized-avatar-placeholder {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00c851;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            margin: 0 auto;
+            color: white;
+        }
+
+        .cui-callkit-minimized .cui-callkit-minimized-avatar-placeholder::before {
+            content: '☎';
+            font-size: 10px;
+            color: white;
+        }
+
+        .cui-callkit-minimized .cui-callkit-minimized-time {
+            text-align: center;
+        }
+
+        .cui-callkit-minimized .cui-callkit-minimized-time span {
+            font-size: 12px;
+            font-weight: 600;
+            color: #00c851;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            letter-spacing: 0.3px;
+        }
+
+        .cui-callkit-minimized .cui-callkit-controls {
+            height: 60px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .cui-callkit-minimized .cui-call-controls {
+            height: 44px;
+            padding: 0 12px;
+            gap: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cui-callkit-minimized .cui-call-controls-button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .cui-callkit-minimized .cui-call-controls-button:nth-child(4),
+        .cui-callkit-minimized .cui-call-controls-button:nth-child(5) {
+            display: none;
+        }
+
+        .cui-callkit-minimized .cui-call-controls-button-disabled {
+            background: rgba(255, 0, 0, 0.7);
+        }
+
+        .cui-callkit-minimized .cui-call-controls-button-hangup {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        /* 正常状态样式 */
+        .cui-callkit-header {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .cui-callkit-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .cui-callkit-controls {
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .cui-call-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            height: 56px;
+            padding: 0 24px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 28px;
+        }
+
+        .cui-call-controls-button {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .cui-call-controls-button-disabled {
+            background: rgba(255, 0, 0, 0.7);
+        }
+
+        .cui-call-controls-button-hangup {
+            background: rgba(255, 0, 0, 0.8);
+        }
+
+        /* 悬停效果 */
+        .cui-callkit-minimized:hover .cui-callkit-content {
+            background: #3a3a3c;
+        }
+
+        .cui-callkit-minimized:hover .cui-callkit-minimized-avatar-placeholder {
+            background: #00d456;
+        }
+
+        .cui-callkit-minimized .cui-callkit-content:active {
+            transform: scale(0.98);
+            background: #1c1c1e;
+        }
+
+        /* 说明文字 */
+        .description {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 300px;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .toggle-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="description">
+            <h3>CallKit 最小化功能测试</h3>
+            <p>左边是正常状态，右边是最小化状态</p>
+            <p>最小化状态应该：</p>
+            <ul>
+                <li>隐藏 header</li>
+                <li>显示绿色电话图标和通话时间</li>
+                <li>底部显示简化的控制按钮</li>
+                <li>只显示静音、摄像头、挂断按钮</li>
+            </ul>
+        </div>
+
+        <button class="toggle-btn" onclick="toggleMinimized()">切换最小化状态</button>
+
+        <!-- 正常状态 CallKit -->
+        <div class="cui-callkit cui-callkit-normal" id="callkit">
+            <div class="cui-callkit-header">
+                <div>正常通话界面</div>
+                <div>
+                    <button onclick="toggleMinimized()"
+                        style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px; border-radius: 4px; cursor: pointer;">📱</button>
+                </div>
+            </div>
+            <div class="cui-callkit-content">
+                <div id="content-area">视频通话内容区域</div>
+            </div>
+            <div class="cui-callkit-controls">
+                <div class="cui-call-controls">
+                    <button class="cui-call-controls-button" title="静音">🎤</button>
+                    <button class="cui-call-controls-button cui-call-controls-button-disabled" title="摄像头">📹</button>
+                    <button class="cui-call-controls-button cui-call-controls-button-hangup" title="挂断">📞</button>
+                    <button class="cui-call-controls-button" title="屏幕共享">🖥️</button>
+                    <button class="cui-call-controls-button" title="扬声器">🔊</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isMinimized = false;
+
+        function toggleMinimized() {
+            const callkit = document.getElementById('callkit');
+            const contentArea = document.getElementById('content-area');
+
+            isMinimized = !isMinimized;
+
+            if (isMinimized) {
+                // 切换到最小化状态
+                callkit.className = 'cui-callkit cui-callkit-minimized';
+                contentArea.innerHTML = `
+                    <div class="cui-callkit-minimized-audio" onclick="toggleMinimized()">
+                        <div class="cui-callkit-minimized-avatar">
+                            <div class="cui-callkit-minimized-avatar-placeholder"></div>
+                        </div>
+                        <div class="cui-callkit-minimized-time">
+                            <span>00:02:15</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 切换到正常状态
+                callkit.className = 'cui-callkit cui-callkit-normal';
+                contentArea.innerHTML = '视频通话内容区域';
+            }
+        }
+
+        // 初始显示最小化状态
+        setTimeout(() => {
+            toggleMinimized();
+        }, 1000);
+    </script>
+</body>
+
+</html>

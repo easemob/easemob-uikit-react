@@ -56,6 +56,8 @@ import { ReactComponent as MemberGroup } from '../svgs/all.svg';
 import { ReactComponent as Loop } from '../svgs/icons/arrow_round.svg';
 import { ReactComponent as CameraArrow } from '../svgs/icons/video_camera_arrow_right.svg';
 import { ReactComponent as Mic } from '../svgs/icons/mic.svg';
+import { ReactComponent as MicOn } from '../svgs/icons/mic_on.svg';
+import { ReactComponent as MicOff } from '../svgs/icons/mic_slash.svg';
 import { ReactComponent as Gift } from '../svgs/icons/gift.svg';
 import { ReactComponent as Bell } from '../svgs/icons/bell.svg';
 import { ReactComponent as BellSlash } from '../svgs/icons/bell_slash.svg';
@@ -67,6 +69,7 @@ import { ReactComponent as SPINNER } from '../svgs/icons/spinner.svg';
 import { ReactComponent as VERTICAL_ARROW } from '../svgs/icons/vertical_n_arrows.svg';
 import { ReactComponent as VIDEO_CAMERA_PLUS } from '../svgs/icons/video_camera_splus.svg';
 import { ReactComponent as VIDEO_CAMERA_XMARK } from '../svgs/icons/video_camera_xmark.svg';
+import { ReactComponent as VIDEO_CAMERA_SLASH } from '../svgs/icons/video_camera_slash.svg';
 import { ReactComponent as BUBBLE_FILL } from '../svgs/icons/bubble_fill.svg';
 import { ReactComponent as EXCLAMATION_MARK_IN_CIRCLE } from '../svgs/icons/exclamation_mark_in_circle.svg';
 import { ReactComponent as LineArrow } from '../svgs/icons/line_n_arrow.svg';
@@ -82,6 +85,8 @@ import { ReactComponent as PERSON_ADD_FILL } from '../svgs/icons/person_add_fill
 import { ReactComponent as PERSON_MINUS } from '../svgs/icons/person_minus.svg';
 import { ReactComponent as TriangleInRectangleFill } from '../svgs/icons/triangle_in_rectangle_fill.svg';
 import { ReactComponent as SpeakerNVerticalBar } from '../svgs/icons/spkeaker_n_vertical_bar.svg';
+import { ReactComponent as SpeakerWave2 } from '../svgs/icons/speaker_wave_2.svg';
+import { ReactComponent as SpeakerXMark } from '../svgs/icons/speaker_xmark.svg';
 import { ReactComponent as RoundArrowThick } from '../svgs/icons/round_arrow_thick.svg';
 import { ReactComponent as TriangleInRectangle } from '../svgs/icons/triangle_in_rectangle.svg';
 import { ReactComponent as Folder } from '../svgs/icons/folder.svg';
@@ -93,6 +98,7 @@ import { ReactComponent as Hamburger } from '../svgs/icons/hamburger.svg';
 import { ReactComponent as PERSON_MINUS_FILL } from '../svgs/icons/person_minus_fill.svg';
 import { ReactComponent as Gear } from '../svgs/icons/gear.svg';
 import { ReactComponent as PhonePick } from '../svgs/icons/phone_pick.svg';
+import { ReactComponent as PhoneHang } from '../svgs/icons/phone_hang.svg';
 import { ReactComponent as VideoCamera } from '../svgs/icons/video_camera.svg';
 import { ReactComponent as PlusInCircle } from '../svgs/icons/plus_in_circle.svg';
 import { ReactComponent as PlusInCircleFill } from '../svgs/icons/plus_in_circle_fill.svg';
@@ -105,6 +111,11 @@ import { ReactComponent as ArrowTo } from '../svgs/icons/arrowto.svg';
 import { ReactComponent as Lock } from '../svgs/icons/lock.svg';
 import { ReactComponent as CircleNDot } from '../svgs/icons/circle_n_dot.svg';
 import { ReactComponent as PersonSlashFill } from '../svgs/icons/person_slash_fill.svg';
+
+import { ReactComponent as Boxes } from '../svgs/icons/boxes.svg';
+import { ReactComponent as Chevron4AllAround } from '../svgs/icons/chevron_4_all_around.svg';
+import { ReactComponent as Chevron4Cluster } from '../svgs/icons/chevron_4_cluster.svg';
+
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -166,6 +177,7 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       return <Face></Face>;
       break;
     case 'CROSS':
+    case 'X_MARK_THICK':
       return <Cross></Cross>;
       break;
     case 'AIR_PLANE':
@@ -266,6 +278,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'MIC':
       return <Mic></Mic>;
       break;
+    case 'MIC_ON':
+      return <MicOn></MicOn>;
+      break;
+    case 'MIC_OFF':
+      return <MicOff></MicOff>;
+      break;
     case 'GIFT':
       return <Gift></Gift>;
       break;
@@ -289,6 +307,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'VIDEO_CAMERA_XMARK':
       return <VIDEO_CAMERA_XMARK></VIDEO_CAMERA_XMARK>;
+      break;
+    case 'VIDEO_CAMERA_SLASH':
+      return <VIDEO_CAMERA_SLASH></VIDEO_CAMERA_SLASH>;
       break;
     case 'POWER':
       return <POWER></POWER>;
@@ -341,6 +362,12 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'SPEAKER_N_VERTICAL_BAR':
       return <SpeakerNVerticalBar></SpeakerNVerticalBar>;
       break;
+    case 'SPEAKER_WAVE_2':
+      return <SpeakerWave2></SpeakerWave2>;
+      break;
+    case 'SPEAKER_X_MARK':
+      return <SpeakerXMark></SpeakerXMark>;
+      break;
     case 'ROUND_ARROW_THICK':
       return <RoundArrowThick></RoundArrowThick>;
       //
@@ -374,6 +401,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'PHONE_PICK':
       return <PhonePick></PhonePick>;
+      break;
+    case 'PHONE_HANG':
+      return <PhoneHang></PhoneHang>;
       break;
     case 'VIDEO_CAMERA':
       return <VideoCamera></VideoCamera>;
@@ -413,8 +443,17 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
     case 'PERSON_SLASH_FILL':
       return <PersonSlashFill></PersonSlashFill>;
       break;
-      return '';
+    case 'CHEVRON_4_ALL_AROUND':
+      return <Chevron4AllAround></Chevron4AllAround>;
       break;
+    case 'CHEVRON_4_CLUSTER':
+      return <Chevron4Cluster></Chevron4Cluster>;
+      break;
+    case 'BOXES':
+      return <Boxes></Boxes>;
+      break;
+    default:
+      return null;
   }
 };
 
@@ -440,6 +479,7 @@ const Icon = ({
     minHeight: typeof height === 'string' ? height : `${height}px`,
     lineHeight: typeof height === 'string' ? height : `${height}px`,
     fill: color,
+    color,
   };
   const SVGElement = cloneElement(getIconNode(type), oriProps => ({
     style: {

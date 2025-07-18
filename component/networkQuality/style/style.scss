@@ -1,0 +1,118 @@
+@import '../../style/themes/default.scss';
+
+$network-quality-prefix: 'cui-network-quality';
+
+// 网络质量颜色定义
+$network-quality-colors: (
+  'level-3': #52c41a,  // 绿色 - 信号强
+  'level-2': #faad14,  // 橙色 - 信号中等
+  'level-1': #ff4d4f,  // 红色 - 信号弱
+);
+
+// 尺寸定义
+$network-quality-sizes: (
+  'small': (
+    width: 16px,
+    height: 12px,
+    bar-width: 3px,
+    gap: 2px,
+    border-radius: 2px,
+  ),
+  'medium': (
+    width: 20px,
+    height: 16px,
+    bar-width: 4px,
+    gap: 2px,
+    border-radius: 3px,
+  ),
+  'large': (
+    width: 24px,
+    height: 20px,
+    bar-width: 5px,
+    gap: 3px,
+    border-radius: 4px,
+  ),
+);
+
+// 主容器
+.#{$network-quality-prefix} {
+  display: inline-flex;
+  align-items: flex-end;
+  vertical-align: middle;
+  
+  // 信号条容器
+  &-bars {
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+  }
+  
+  // 单个信号条
+  &-bar {
+    background-color: rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    
+    // 默认状态 - 灰色
+    &:not(&-active) {
+      background-color: rgba(0, 0, 0, 0.15);
+    }
+    
+    // 激活状态会根据父级的 level 类来设置颜色
+  }
+  
+  // 不同尺寸的样式
+  @each $size, $config in $network-quality-sizes {
+    &-#{$size} {
+      width: map-get($config, width);
+      height: map-get($config, height);
+      
+      .#{$network-quality-prefix}-bar {
+        width: map-get($config, bar-width);
+        margin-right: map-get($config, gap);
+        border-radius: map-get($config, border-radius);
+        
+        &:last-child {
+          margin-right: 0;
+        }
+        
+        // 不同高度的信号条
+        &-1 {
+          height: 25%;
+        }
+        
+        &-2 {
+          height: 60%;
+        }
+        
+        &-3 {
+          height: 100%;
+        }
+      }
+    }
+  }
+  
+  // 不同等级的颜色
+  @each $level, $color in $network-quality-colors {
+    &.#{$network-quality-prefix}-#{$level} {
+      .#{$network-quality-prefix}-bar-active {
+        background-color: $color;
+      }
+    }
+  }
+  
+  // Hover 效果
+  &:hover {
+    .#{$network-quality-prefix}-bar-active {
+      opacity: 0.8;
+    }
+  }
+}
+
+// 深色模式支持
+@media (prefers-color-scheme: dark) {
+  .#{$network-quality-prefix} {
+    &-bar:not(&-bar-active) {
+      background-color: rgba(255, 255, 255, 0.25);
+    }
+  }
+} 

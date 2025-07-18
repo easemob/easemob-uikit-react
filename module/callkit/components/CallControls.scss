@@ -1,0 +1,176 @@
+@import '~/common/style/index.scss';
+
+$call-controls-prefix-cls: #{$cui-prefix}-call-controls;
+
+.#{$call-controls-prefix-cls} {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 56px;
+  max-width: 560px;
+  width: 100%;
+  justify-content: space-around;
+  // background: rgba(0, 0, 0, 0.7);
+  // backdrop-filter: blur(10px);
+  
+  // 按钮基础样式
+  &-button {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+
+    &-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 80px;
+    }
+
+    &-text {
+      font-size: 12px;
+      color: #fff;
+      height: 16px;
+      line-height: 16px;
+
+      color: #F9FAFA;
+      text-align: center;
+      /* Shadows/dark/middle */
+      text-shadow: 0px 4px 8px rgba(26, 26, 26, 0.20), 0px 1px 3px rgba(77, 77, 77, 0.30);
+      /* Alphabet/iOS/Label/Small */
+      font-family: "SF Pro";
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 510;
+    }
+    
+    &:hover {
+      // transform: scale(1.05);
+      // background: rgba(255, 255, 255, 0.3);
+    }
+    
+    &:active {
+      // transform: scale(0.95);
+      background: rgba(255, 255, 255, 0.80)
+    }
+    
+    // 激活状态（功能开启）
+    &-active {
+      background: rgba(255, 255, 255, 0.90);
+      
+      &:hover {
+        // background: rgba(255, 255, 255, 0.35);
+      }
+    }
+    
+    // 禁用状态（功能关闭）
+    &-disabled {
+      background: rgba(255, 255, 255, 0.20);
+      
+      &:hover {
+        // background: rgba(255, 0, 0, 0.8);
+      }
+      &:active {
+        background: rgba(255, 255, 255, 0.1);
+      }
+    }
+    
+    // 挂断按钮（固定红色）
+    &-hangup {
+      background: #FF6680;
+      
+      &:hover {
+        // background: rgba(255, 0, 0, 0.9);
+        // transform: scale(1.05);
+      }
+      &:active {
+        background-color: rgba(255, 102, 128, 0.8);
+      }
+    }
+    
+    // 接听按钮（固定绿色）
+    &-accept {
+      background: #52C41A;
+      
+      &:hover {
+        // background: rgba(82, 196, 26, 0.9);
+        // transform: scale(1.05);
+      }
+      &:active {
+        background-color: rgba(82, 196, 26, 0.8);
+      }
+    }
+    
+    // 屏幕共享激活状态（绿色）
+    &-sharing {
+      background: rgba(0, 200, 100, 0.8);
+      
+      &:hover {
+        background: rgba(0, 200, 100, 0.9);
+      }
+    }
+    
+    // 预览模式下禁用状态
+    &-preview-disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &:hover {
+        transform: none;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      
+      &:active {
+        transform: none;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      
+      // 禁用时图标颜色变灰
+      svg {
+        opacity: 0.6;
+      }
+    }
+  }
+  
+}
+
+// 响应式适配
+@media (max-width: 768px) {
+  .#{$call-controls-prefix-cls} {
+    gap: 12px;
+    padding: 0 16px;
+    
+    &-button {
+      width: 44px;
+      height: 44px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .#{$call-controls-prefix-cls} {
+    gap: 8px;
+    padding: 0 12px;
+    
+    &-button {
+      width: 40px;
+      height: 40px;
+    }
+    
+    &-indicator {
+      width: 10px;
+      height: 10px;
+      top: 2px;
+      right: 2px;
+    }
+  }
+} 
