@@ -4,6 +4,7 @@ import Button from '../../../component/button';
 import { Icon } from '../../../component/icon/Icon';
 import CallControls from '../components/CallControls';
 import type { FullLayoutProps } from '../types/layout';
+import { useVideoAspectRatio } from '../hooks/useVideoAspectRatio';
 
 /**
  * OneToOne 完整布局组件
@@ -58,9 +59,36 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
   invitation,
   callInfo,
 }) => {
+  // 🔧 添加视频位置互换状态
+  const [isLocalVideoMain, setIsLocalVideoMain] = React.useState(false);
   // 分离远程视频和本地视频
   const remoteVideo = videos.find(video => !video.isLocalVideo);
   const localVideo = videos.find(video => video.isLocalVideo);
+
+  // 🔧 检测本地视频流的实际分辨率
+  const { aspectRatio: localVideoAspectRatio } = useVideoAspectRatio(localVideo?.stream);
+
+  // 🔧 动态计算画中画视频的高度
+  const pipVideoStyle = React.useMemo(() => {
+    const baseWidth = 200; // 基础宽度，实际会通过CSS clamp限制
+    const calculatedHeight = baseWidth / localVideoAspectRatio;
+
+    // 限制最小和最大高度
+    const minHeight = 67;
+    const maxHeight = 200;
+    const finalHeight = Math.max(minHeight, Math.min(maxHeight, calculatedHeight));
+
+    console.log('🎬 画中画视频尺寸计算:', {
+      aspectRatio: localVideoAspectRatio,
+      calculatedHeight,
+      finalHeight,
+      baseWidth,
+    });
+
+    return {
+      height: `${finalHeight}px`,
+    };
+  }, [localVideoAspectRatio]);
 
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
@@ -86,24 +114,49 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
         };
       }
     } else {
-      // 通话模式：显示对方信息
-      const remoteUserInfo = callInfo || {};
-      const displayName =
-        remoteUserInfo.remoteUserNickname ||
-        remoteVideo?.nickname ||
-        remoteUserInfo.remoteUserId ||
-        '用户';
-      const displayAvatar = remoteUserInfo.remoteUserAvatar || remoteVideo?.avatar;
+      // 通话模式：根据当前主视频显示相应信息
+      if (isLocalVideoMain) {
+        // 本地视频在主窗口时，显示本地用户信息
+        return {
+          avatar: localVideo?.avatar,
+          content: localVideo?.nickname || '我',
+          subtitle: callDuration,
+        };
+      } else {
+        // 远程视频在主窗口时，显示远程用户信息
+        const remoteUserInfo = callInfo || {};
+        const displayName =
+          remoteUserInfo.remoteUserNickname ||
+          remoteVideo?.nickname ||
+          remoteUserInfo.remoteUserId ||
+          '用户';
+        const displayAvatar = remoteUserInfo.remoteUserAvatar || remoteVideo?.avatar;
 
-      return {
-        avatar: displayAvatar,
-        content: displayName,
-        subtitle: callDuration,
-      };
+        return {
+          avatar: displayAvatar,
+          content: displayName,
+          subtitle: callDuration,
+        };
+      }
     }
   };
 
   const headerInfo = getHeaderInfo();
+
+  // 🔧 处理视频点击，实现位置互换
+  const handleVideoClick = React.useCallback(
+    (videoId: string) => {
+      if (isShowingPreview || callMode === 'audio') {
+        return; // 预览模式和语音通话时不处理视频点击
+      }
+
+      console.log('🎬 视频点击:', videoId, '当前状态:', { isLocalVideoMain });
+
+      // 切换视频位置
+      setIsLocalVideoMain(prev => !prev);
+    },
+    [isShowingPreview, callMode],
+  );
 
   // 处理最小化状态下的点击
   const handleMinimizedClick = () => {
@@ -137,14 +190,55 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
           <div className={`${prefixCls}-main-video`}>{renderVideoWindow(localVideo, 0)}</div>
         )}
 
-        {/* 正常通话模式：主视频（远程视频）- 背景，语音通话时不显示 */}
-        {!isShowingPreview && remoteVideo && callMode !== 'audio' && (
-          <div className={`${prefixCls}-main-video`}>{renderVideoWindow(remoteVideo, 0)}</div>
-        )}
+        {/* 正常通话模式：主视频 - 根据状态决定显示本地或远程视频 */}
+        {!isShowingPreview && callMode !== 'audio' && (
+          <>
+            {/* 主视频窗口 */}
+            {isLocalVideoMain
+              ? localVideo && (
+                  <div
+                    className={`${prefixCls}-main-video`}
+                    onClick={() => handleVideoClick(localVideo.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {renderVideoWindow(localVideo, 0)}
+                  </div>
+                )
+              : remoteVideo && (
+                  <div
+                    className={`${prefixCls}-main-video`}
+                    onClick={() => handleVideoClick(remoteVideo.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {renderVideoWindow(remoteVideo, 0)}
+                  </div>
+                )}
 
-        {/* 正常通话模式：画中画视频（本地视频）- 右上角，语音通话时不显示 */}
-        {!isShowingPreview && localVideo && !isMinimized && callMode !== 'audio' && (
-          <div className={`${prefixCls}-pip-video`}>{renderVideoWindow(localVideo, 1)}</div>
+            {/* 画中画视频窗口 */}
+            {!isMinimized && (
+              <>
+                {isLocalVideoMain
+                  ? remoteVideo && (
+                      <div
+                        className={`${prefixCls}-pip-video`}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleVideoClick(remoteVideo.id)}
+                      >
+                        {renderVideoWindow(remoteVideo, 1)}
+                      </div>
+                    )
+                  : localVideo && (
+                      <div
+                        className={`${prefixCls}-pip-video`}
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => handleVideoClick(localVideo.id)}
+                      >
+                        {renderVideoWindow(localVideo, 1)}
+                      </div>
+                    )}
+              </>
+            )}
+          </>
         )}
 
         {/* 语音通话时的替代界面 */}

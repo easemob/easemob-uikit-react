@@ -43,8 +43,11 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     position: absolute;
     top: 64px;
     right: 13px;
-    width: 120px;
-    height: 67px;
+    // 🔧 自适应尺寸设置 - 根据视频流分辨率动态调整
+    width: clamp(120px, 21%, 200px); // 最小120px，最大200px，默认21%容器宽度
+    // 🔧 高度由JavaScript动态计算，根据视频流实际分辨率
+    // 🔧 高度将根据视频流比例动态计算，不再固定16:9
+    // height: clamp(67px, 8.4vw, 112px);
     z-index: 21; // 确保在主视频和遮罩之上
     border-radius: 8px;
     overflow: hidden;
@@ -64,6 +67,14 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
       border: none;
       border-radius: 8px;
       
+      // 🔧 确保视频内容正确填充容器
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; // 保持比例并填充整个容器
+        border-radius: 8px;
+      }
+      
       &:hover {
         transform: none; // 禁用双重缩放效果
       }
@@ -71,10 +82,16 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     
     // 移动端适配
     @media (max-width: $breakpoint-mobile) {
-      width: 120px;
-      height: 90px;
+      width: clamp(100px, 36%, 150px); // 移动端稍微调整，使用容器宽度的36%
       top: $gap-medium;
       right: $gap-medium;
+    }
+    
+    // 小屏幕适配
+    @media (max-width: 480px) {
+      width: 100px;
+      top: 8px;
+      right: 8px;
     }
   }
 
