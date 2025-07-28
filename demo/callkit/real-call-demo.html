@@ -157,28 +157,14 @@
             <p>
                 此版本支持URL参数登录和表单登录两种方式。登录成功后可以体验完整的CallKit通话功能，
                 包括一对一通话和群组通话。所有通话参数都会自动生成，用户只需要输入目标用户即可开始通话。
+
+                已经为 286421473624065 群组里的用户配置了头像， 昵称。 可以直接输入群组 ID 进行通话。
+
+                也为 zd1 zd2 lmx xu1 xu2配置了头像昵称，可使用这些用户进行通话，密码都是 1
             </p>
         </div>
 
-        <div style="margin-top: 30px;">
-            <h2>代码示例</h2>
-            <div class="code-block">
-                // URL参数自动登录
-                const urlParams = new URLSearchParams(window.location.search);
-                const userId = urlParams.get('userId');
-                const password = urlParams.get('password');
 
-                // 发起通话 - 极简使用
-                callKitRef.current?.startRealCall({
-                to: "target_user",
-                callType: "video"
-                });
-
-                // callId使用 connection.getUniqueId() 自动生成
-                // channel使用8位随机字符串自动生成
-                // token自动从 connection.getRTCToken() 获取
-            </div>
-        </div>
     </div>
 
     <script type="module" src="real-call-demo.tsx"></script>

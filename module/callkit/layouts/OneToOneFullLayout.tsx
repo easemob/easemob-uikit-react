@@ -58,6 +58,11 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
   // 🔧 新增：通话信息
   invitation,
   callInfo,
+
+  // 🔧 新增：多人视频通话相关状态
+  isGroupCall = false,
+  hasParticipants = false,
+  isConnected = false,
 }) => {
   // 🔧 添加视频位置互换状态
   const [isLocalVideoMain, setIsLocalVideoMain] = React.useState(false);
@@ -98,19 +103,13 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
         return {
           avatar: invitation.callerAvatar,
           content: invitation.callerName || '未知用户',
-          subtitle:
-            callMode === 'video'
-              ? '视频通话邀请 - 检查您的摄像头和麦克风'
-              : '语音通话邀请 - 检查您的麦克风',
+          subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
         };
       } else {
         return {
           avatar: undefined,
           content: '预览模式',
-          subtitle:
-            callMode === 'video'
-              ? '视频通话预览 - 检查您的摄像头和麦克风'
-              : '语音通话预览 - 检查您的麦克风',
+          subtitle: callMode === 'video' ? '视频通话预览 - 连接中...' : '语音通话预览 - 连接中...',
         };
       }
     } else {
@@ -198,8 +197,8 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
               ? localVideo && (
                   <div
                     className={`${prefixCls}-main-video`}
-                    onClick={() => handleVideoClick(localVideo.id)}
-                    style={{ cursor: 'pointer' }}
+                    // onClick={() => handleVideoClick(localVideo.id)}
+                    // style={{ cursor: 'pointer' }}
                   >
                     {renderVideoWindow(localVideo, 0)}
                   </div>
@@ -207,8 +206,8 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
               : remoteVideo && (
                   <div
                     className={`${prefixCls}-main-video`}
-                    onClick={() => handleVideoClick(remoteVideo.id)}
-                    style={{ cursor: 'pointer' }}
+                    // onClick={() => handleVideoClick(remoteVideo.id)}
+                    // style={{ cursor: 'pointer' }}
                   >
                     {renderVideoWindow(remoteVideo, 0)}
                   </div>
@@ -339,6 +338,10 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
             onHangup={onHangup}
             onPreviewAccept={onPreviewAccept}
             onPreviewReject={onPreviewReject}
+            // 🔧 新增：多人视频通话相关状态
+            isGroupCall={isGroupCall}
+            hasParticipants={hasParticipants}
+            isConnected={isConnected}
           />
         </div>
       )}

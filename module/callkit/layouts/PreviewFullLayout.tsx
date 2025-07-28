@@ -61,6 +61,11 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
   // 🔧 新增：通话信息
   invitation,
   callInfo,
+
+  // 🔧 新增：多人视频通话相关状态
+  isGroupCall = false,
+  hasParticipants = false,
+  isConnected = false,
 }) => {
   // 获取本地视频（预览模式下显示的视频）
   const localVideo = videos.find(video => video.isLocalVideo) || videos[0];
@@ -73,19 +78,13 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
         return {
           avatar: callInfo.remoteUserAvatar,
           content: callInfo.remoteUserNickname || callInfo.remoteUserId || '用户',
-          subtitle:
-            callMode === 'video'
-              ? '视频通话邀请 - 检查您的摄像头和麦克风'
-              : '语音通话邀请 - 检查您的麦克风',
+          subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
         };
       } else {
         return {
           avatar: undefined,
           content: '预览模式',
-          subtitle:
-            callMode === 'video'
-              ? '视频通话预览 - 检查您的摄像头和麦克风'
-              : '语音通话预览 - 检查您的麦克风',
+          subtitle: callMode === 'video' ? '视频通话预览 - 连接中...' : '语音通话预览 - 连接中...',
         };
       }
     } else {
@@ -94,19 +93,13 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
         return {
           avatar: invitation.callerAvatar,
           content: invitation.callerName || invitation.id || '用户',
-          subtitle:
-            callMode === 'video'
-              ? '视频通话邀请 - 检查您的摄像头和麦克风'
-              : '语音通话邀请 - 检查您的麦克风',
+          subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
         };
       } else {
         return {
           avatar: undefined,
           content: '预览模式',
-          subtitle:
-            callMode === 'video'
-              ? '视频通话预览 - 检查您的摄像头和麦克风'
-              : '语音通话预览 - 检查您的麦克风',
+          subtitle: callMode === 'video' ? '视频通话预览 - 连接中...' : '语音通话预览 - 连接中...',
         };
       }
     }
@@ -220,6 +213,10 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
             onHangup={onHangup}
             onPreviewAccept={onPreviewAccept}
             onPreviewReject={onPreviewReject}
+            // 🔧 新增：多人视频通话相关状态
+            isGroupCall={isGroupCall}
+            hasParticipants={hasParticipants}
+            isConnected={isConnected}
           />
         </div>
       )}

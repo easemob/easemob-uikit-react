@@ -42,6 +42,11 @@ export interface CallControlsProps {
 
   // 控制是否使用内部状态管理
   managed?: boolean;
+
+  // 🔧 新增：多人视频通话相关状态
+  isGroupCall?: boolean; // 是否为群组通话
+  hasParticipants?: boolean; // 是否有其他参与者加入
+  isConnected?: boolean; // 是否已连接到通话
 }
 
 const CallControls: React.FC<CallControlsProps> = ({
@@ -66,6 +71,10 @@ const CallControls: React.FC<CallControlsProps> = ({
   onPreviewAccept,
   onPreviewReject,
   managed = false,
+  // 🔧 新增：多人视频通话相关状态
+  isGroupCall = false,
+  hasParticipants = false,
+  isConnected = false,
 }) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('call-controls');
@@ -84,7 +93,37 @@ const CallControls: React.FC<CallControlsProps> = ({
     : propSpeakerEnabled ?? defaultSpeakerEnabled;
   const screenSharing = managed ? internalScreenSharing : propScreenSharing ?? defaultScreenSharing;
 
+  // 🔧 计算按钮是否应该禁用
+  const shouldDisableControls = React.useMemo(() => {
+    // 预览模式下禁用所有控制按钮（除了挂断/拒绝和接听）
+    if (isPreview) {
+      console.log('🔧 CallControls: 预览模式，禁用按钮');
+      return true;
+    }
+
+    // 多人视频通话中，如果未连接，禁用控制按钮
+    if (isGroupCall && !isConnected) {
+      console.log('🔧 CallControls: 多人视频通话，未连接，禁用按钮', {
+        isGroupCall,
+        hasParticipants,
+        isConnected,
+      });
+      return true;
+    }
+
+    console.log('🔧 CallControls: 按钮可用', {
+      isPreview,
+      isGroupCall,
+      hasParticipants,
+      isConnected,
+      shouldDisableControls: false,
+    });
+    return false;
+  }, [isPreview, isGroupCall, hasParticipants, isConnected]);
+
   const handleMuteClick = () => {
+    if (shouldDisableControls) return;
+
     const newMuted = !muted;
 
     if (managed) {
@@ -95,6 +134,8 @@ const CallControls: React.FC<CallControlsProps> = ({
   };
 
   const handleCameraClick = () => {
+    if (shouldDisableControls) return;
+
     const newCameraEnabled = !cameraEnabled;
 
     if (managed) {
@@ -105,6 +146,8 @@ const CallControls: React.FC<CallControlsProps> = ({
   };
 
   const handleSpeakerClick = () => {
+    if (shouldDisableControls) return;
+
     const newSpeakerEnabled = !speakerEnabled;
 
     if (managed) {
@@ -115,6 +158,8 @@ const CallControls: React.FC<CallControlsProps> = ({
   };
 
   const handleScreenShareClick = () => {
+    if (shouldDisableControls) return;
+
     const newScreenSharing = !screenSharing;
 
     if (managed) {
@@ -237,9 +282,11 @@ const CallControls: React.FC<CallControlsProps> = ({
           className={classNames(`${prefixCls}-button`, {
             [`${prefixCls}-button-active`]: !muted,
             [`${prefixCls}-button-disabled`]: muted,
+            [`${prefixCls}-button-preview-disabled`]: shouldDisableControls, // 🔧 根据条件禁用
           })}
           onClick={handleMuteClick}
           title={muted ? '取消静音' : '静音'}
+          disabled={shouldDisableControls} // 🔧 根据条件禁用点击
         >
           <Icon
             type={muted ? 'MIC_OFF' : 'MIC_ON'}
@@ -252,6 +299,7 @@ const CallControls: React.FC<CallControlsProps> = ({
           {muted ? 'Mike off' : 'Mike on'}
         </div>
       </div>
+
       {/* 摄像头按钮 - 语音通话时不显示 */}
       {callMode !== 'audio' && (
         <div className={classNames(`${prefixCls}-button-group`)}>
@@ -259,9 +307,11 @@ const CallControls: React.FC<CallControlsProps> = ({
             className={classNames(`${prefixCls}-button`, {
               [`${prefixCls}-button-active`]: cameraEnabled,
               [`${prefixCls}-button-disabled`]: !cameraEnabled,
+              [`${prefixCls}-button-preview-disabled`]: shouldDisableControls, // 🔧 根据条件禁用
             })}
             onClick={handleCameraClick}
             title={cameraEnabled ? '关闭摄像头' : '开启摄像头'}
+            disabled={shouldDisableControls} // 🔧 根据条件禁用点击
           >
             <Icon
               type={cameraEnabled ? 'VIDEO_CAMERA' : 'VIDEO_CAMERA_SLASH'}
@@ -295,9 +345,11 @@ const CallControls: React.FC<CallControlsProps> = ({
             className={classNames(`${prefixCls}-button`, {
               [`${prefixCls}-button-active`]: speakerEnabled,
               [`${prefixCls}-button-disabled`]: !speakerEnabled,
+              [`${prefixCls}-button-preview-disabled`]: shouldDisableControls, // 🔧 根据条件禁用
             })}
             onClick={handleSpeakerClick}
             title={speakerEnabled ? '关闭扬声器' : '开启扬声器'}
+            disabled={shouldDisableControls} // 🔧 根据条件禁用点击
           >
             <Icon
               type={speakerEnabled ? 'SPEAKER_WAVE_2' : 'SPEAKER_X_MARK'}

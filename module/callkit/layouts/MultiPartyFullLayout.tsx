@@ -63,6 +63,14 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
   // 🔧 新增：通话信息
   invitation,
   callInfo,
+
+  // 🔧 新增：多人视频通话相关状态
+  isGroupCall = false,
+  hasParticipants = false,
+  isConnected = false,
+
+  // 🔧 新增：布局切换回调
+  onLayoutModeChange,
 }) => {
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
@@ -73,13 +81,13 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
           avatar: invitation.groupAvatar,
           content:
             invitation.groupName || `群组通话 (${invitation.memberCount || videos.length}人)`,
-          subtitle: '群组通话邀请 - 检查您的设备',
+          subtitle: '群组通话邀请 - 连接中...',
         };
       } else {
         return {
           avatar: undefined,
           content: `群组通话 (${videos.length}人)`,
-          subtitle: '群组通话预览 - 检查您的设备',
+          subtitle: '群组通话预览 - 连接中...',
         };
       }
     } else {
@@ -206,6 +214,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
                 layoutOptions={layoutOptions}
                 renderVideoWindow={renderVideoWindow}
                 prefixCls={prefixCls}
+                onLayoutModeChange={onLayoutModeChange}
               />
             )}
           </div>
@@ -227,6 +236,10 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
                 onHangup={onHangup}
                 onPreviewAccept={onPreviewAccept}
                 onPreviewReject={onPreviewReject}
+                // 🔧 新增：多人视频通话相关状态
+                isGroupCall={isGroupCall}
+                hasParticipants={hasParticipants}
+                isConnected={isConnected}
               />
             </div>
           )}

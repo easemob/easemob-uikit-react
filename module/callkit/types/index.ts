@@ -162,6 +162,9 @@ export interface CallKitRef {
   playLocalVideoManually: () => void; // 手动播放本地视频
   createLocalVideoTrackForGroupCall: () => Promise<boolean>; // 为多人视频通话创建本地视频轨道
   addParticipants: (newMembers: string[]) => Promise<boolean>; // 添加参与者到当前通话
+
+  // 🔧 新增：调整CallKit尺寸的方法
+  adjustSize: (newSize: { width: number; height: number }) => void; // 动态调整CallKit尺寸
 }
 
 // CallKit主组件属性
@@ -284,6 +287,9 @@ export interface CallKitProps {
   onUserLeft?: (user: any, reason: string) => void; // 远程用户离开
   onUserUnpublished?: (user: any, mediaType: string) => void; // 远程用户停止发布流
   onRemoteVideoReady?: (videoInfo: VideoWindowProps) => void; // 远程视频流准备就绪
+
+  // 🔧 新增：布局切换回调
+  onLayoutModeChange?: (layoutMode: 'grid' | 'main') => void; // 布局模式切换回调
 }
 
 // React相关导入

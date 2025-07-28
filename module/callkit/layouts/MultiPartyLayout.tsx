@@ -547,6 +547,8 @@ interface MultiPartyLayoutProps {
   ) => React.ReactNode;
   prefixCls: string;
   style?: React.CSSProperties;
+  // 🔧 新增：布局切换回调
+  onLayoutModeChange?: (layoutMode: 'grid' | 'main') => void;
 }
 
 export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
@@ -556,6 +558,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
   renderVideoWindow,
   prefixCls,
   style,
+  onLayoutModeChange,
 }) => {
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [isMainVideoMode, setIsMainVideoMode] = useState(false);
@@ -569,18 +572,22 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
         // 首次进入主视频模式
         setSelectedVideoId(videoId);
         setIsMainVideoMode(true);
+        // 🔧 新增：调用布局切换回调
+        onLayoutModeChange?.('main');
       } else if (selectedVideoId !== videoId) {
         // 直接切换视频，不需要复杂动画
         setSelectedVideoId(videoId);
       }
     },
-    [isMainVideoMode, selectedVideoId],
+    [isMainVideoMode, selectedVideoId, onLayoutModeChange],
   );
 
   const handleExitMainVideoMode = useCallback(() => {
     setIsMainVideoMode(false);
     setSelectedVideoId(null);
-  }, []);
+    // 🔧 新增：调用布局切换回调
+    onLayoutModeChange?.('grid');
+  }, [onLayoutModeChange]);
 
   // 选择布局策略
   const strategy = isMainVideoMode ? new MainVideoLayoutStrategy() : new MultiPartyLayoutStrategy();

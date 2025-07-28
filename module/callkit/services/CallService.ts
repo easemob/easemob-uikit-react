@@ -154,7 +154,7 @@ export class CallService {
   async getAccessToken(): Promise<string> {
     try {
       const { app_id, rtc_token } = await this.connection.getRTCToken('*');
-      this.appId = app_id;
+      this.appId = 'c8a78f1878ec4a0d92c6a16d18c8b498'; // app_id;
       return rtc_token;
     } catch (error) {
       console.error('Failed to get RTC token:', error);
@@ -1008,6 +1008,17 @@ export class CallService {
           this.rtc.remoteAudioTrack = remoteAudioTrack;
           this.rtc.remoteUser = user;
 
+          // 🔧 新增：根据当前扬声器状态设置新音频轨道的音量
+          if (remoteAudioTrack && remoteAudioTrack.setVolume) {
+            const volume = this.speakerEnabled ? 100 : 0;
+            remoteAudioTrack.setVolume(volume);
+            console.log(
+              `🔧 新用户 ${user.uid} 音频轨道音量设置为: ${volume} (扬声器状态: ${
+                this.speakerEnabled ? '开启' : '关闭'
+              })`,
+            );
+          }
+
           // 播放远程音频
           remoteAudioTrack.play();
 
@@ -1015,6 +1026,7 @@ export class CallService {
             hasAudioTrack: !!remoteAudioTrack,
             userId: user.uid,
             totalAudioTracks: this.remoteAudioTracks.size,
+            speakerEnabled: this.speakerEnabled,
           });
 
           // 🔧 修复：在音频事件中，智能判断摄像头状态
@@ -2134,6 +2146,53 @@ export class CallService {
       return true;
     } catch (error) {
       console.error('添加参与者失败:', error);
+      return false;
+    }
+  }
+
+  // 🔧 新增：取消对指定用户的邀请
+  async cancelInvitation(userId: string) {
+    if (!this.currentCallInfo) {
+      console.error('无法取消邀请：当前没有进行中的通话');
+      return false;
+    }
+
+    if (this.callStatus !== CALL_STATUS.IN_CALL) {
+      console.error('无法取消邀请：当前不在通话中');
+      return false;
+    }
+
+    // 只能在多人通话中取消邀请
+    if (
+      this.currentCallInfo.type !== CALL_TYPE.VIDEO_MULTI &&
+      this.currentCallInfo.type !== CALL_TYPE.AUDIO_MULTI
+    ) {
+      console.error('无法取消邀请：当前不是多人通话');
+      return false;
+    }
+
+    try {
+      // 从邀请成员列表中移除
+      this.invitedMembers = this.invitedMembers.filter(member => member !== userId);
+
+      // 更新通话信息
+      if (this.currentCallInfo.invitedMembers) {
+        this.currentCallInfo.invitedMembers = this.currentCallInfo.invitedMembers.filter(
+          member => member !== userId,
+        );
+      }
+
+      // 发送取消邀请消息
+      await this.sendCancelMessage(userId);
+
+      console.log('成功取消用户邀请:', {
+        userId,
+        remainingInvitedMembers: this.invitedMembers,
+      });
+
+      return true;
+    } catch (error) {
+      console.error('取消邀请失败:', error);
       return false;
     }
   }

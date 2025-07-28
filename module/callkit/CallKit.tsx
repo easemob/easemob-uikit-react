@@ -170,6 +170,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     onInvitationReject,
     onCallStart,
     onCallEnd,
+    onLayoutModeChange,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('callkit', prefix);
@@ -196,6 +197,91 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const [internalPosition, setInternalPosition] = React.useState(initialPosition);
   const [internalSize, setInternalSize] = React.useState(initialSize);
   const internalRef = React.useRef<HTMLDivElement>(null);
+
+  // 🔧 新增：多人视频通话超时管理
+  const invitationTimers = React.useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const invitedMembers = React.useRef<Set<string>>(new Set());
+
+  // 🔧 清理指定用户的邀请定时器
+  const clearInvitationTimer = React.useCallback((userId: string) => {
+    const timer = invitationTimers.current.get(userId);
+    if (timer) {
+      clearTimeout(timer);
+      invitationTimers.current.delete(userId);
+      console.log(`🔧 清理用户 ${userId} 的邀请定时器`);
+    }
+  }, []);
+
+  // 🔧 清理所有邀请定时器
+  const clearAllInvitationTimers = React.useCallback(() => {
+    invitationTimers.current.forEach((timer, userId) => {
+      clearTimeout(timer);
+      console.log(`🔧 清理用户 ${userId} 的邀请定时器`);
+    });
+    invitationTimers.current.clear();
+    invitedMembers.current.clear();
+  }, []);
+
+  // 🔧 为指定用户设置邀请超时定时器
+  const setInvitationTimer = React.useCallback(
+    (userId: string, timeoutMs: number) => {
+      // 先清理已存在的定时器
+      clearInvitationTimer(userId);
+
+      // 添加到邀请成员列表
+      invitedMembers.current.add(userId);
+
+      // 设置新的定时器
+      const timer = setTimeout(() => {
+        console.log(`🔧 用户 ${userId} 邀请超时，发送取消消息`);
+
+        // 发送取消邀请消息
+        if (enableRealCall && callServiceRef.current) {
+          callServiceRef.current.cancelInvitation(userId);
+        }
+
+        // 从视频列表中移除该用户
+        setVideos(prevVideos => {
+          const updatedVideos = prevVideos.filter(video => {
+            const videoUserId = video.isLocalVideo
+              ? 'local'
+              : video.id.startsWith('remote-')
+              ? video.id.replace('remote-', '')
+              : video.id;
+            return videoUserId !== userId;
+          });
+
+          console.log(`🔧 从视频列表中移除超时用户 ${userId}，剩余视频:`, updatedVideos.length);
+          return updatedVideos;
+        });
+
+        // 清理定时器
+        invitationTimers.current.delete(userId);
+        invitedMembers.current.delete(userId);
+      }, timeoutMs);
+
+      invitationTimers.current.set(userId, timer);
+      console.log(`🔧 为用户 ${userId} 设置邀请定时器，超时时间: ${timeoutMs}ms`);
+    },
+    [enableRealCall, clearInvitationTimer],
+  );
+
+  // 🔧 用户加入时清理定时器
+  const handleUserJoined = React.useCallback(
+    (userId: string) => {
+      console.log(`🔧 用户 ${userId} 加入通话，清理邀请定时器`);
+      clearInvitationTimer(userId);
+      invitedMembers.current.delete(userId);
+    },
+    [clearInvitationTimer],
+  );
+
+  // 🔧 组件卸载时清理所有定时器
+  React.useEffect(() => {
+    return () => {
+      clearAllInvitationTimers();
+    };
+  }, [clearAllInvitationTimers]);
 
   // 最小化状态管理
   const [isMinimized, setIsMinimized] = React.useState(false);
@@ -272,6 +358,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   const handleCallEnd = React.useCallback(
     (reason: string) => {
+      // 🔧 新增：通话结束时清理所有邀请定时器
+      clearAllInvitationTimers();
+
       setVideos([]);
       setIsInCall(false);
       setCallStatus('idle');
@@ -282,7 +371,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       setCallerTargetInfo(null); // 🔧 清理主叫目标信息
       onCallEndRef.current?.();
     },
-    [propCallMode],
+    [propCallMode, clearAllInvitationTimers],
   );
 
   const handleInvitationReceived = React.useCallback((invitation: any) => {
@@ -298,9 +387,16 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const handleUserPublished = React.useCallback(
     (user: any, mediaType: string) => {
       console.log('远程用户发布流:', user, mediaType);
+
+      // 🔧 新增：用户加入时清理邀请定时器
+      if (user && user.uid) {
+        const userId = user.uid;
+        handleUserJoined(userId);
+      }
+
       props.onUserPublished?.(user, mediaType);
     },
-    [props.onUserPublished],
+    [props.onUserPublished, handleUserJoined],
   );
 
   // 新增：远程用户离开回调
@@ -1164,6 +1260,35 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           return await callServiceRef.current.addParticipants(newMembers);
         }
         return false;
+      },
+
+      // 🔧 新增：调整CallKit尺寸的方法
+      adjustSize: (newSize: { width: number; height: number }) => {
+        if (internalRef.current) {
+          const element = internalRef.current;
+
+          // 设置动画过渡
+          element.style.transition = 'width 0.3s ease-out, height 0.3s ease-out';
+
+          // 调整尺寸
+          element.style.width = `${newSize.width}px`;
+          element.style.height = `${newSize.height}px`;
+
+          // 重新计算位置，使其居中
+          const left = Math.max(0, (window.innerWidth - newSize.width) / 2);
+          const top = Math.max(0, window.scrollY + (window.innerHeight - newSize.height) / 2);
+          element.style.left = `${left}px`;
+          element.style.top = `${top}px`;
+
+          // 动画完成后清理样式并更新状态
+          setTimeout(() => {
+            if (element) {
+              element.style.transition = '';
+              setInternalSize(newSize);
+              setInternalPosition({ left, top });
+            }
+          }, 300);
+        }
       },
     }),
     [
@@ -2299,6 +2424,16 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             groupName: finalGroupName, // 使用获取到的群组名称或默认值
             members,
           });
+
+          // 🔧 新增：为每个邀请的用户设置超时定时器
+          const timeoutMs = autoRejectTime * 1000; // 转换为毫秒
+          selectedUsers.forEach(user => {
+            setInvitationTimer(user.userId, timeoutMs);
+          });
+
+          console.log(
+            `🔧 发起群组通话，为 ${selectedUsers.length} 个用户设置邀请定时器，超时时间: ${autoRejectTime}秒`,
+          );
         } else {
           // 演示模式：创建模拟视频流数据
           const mockVideos: VideoWindowProps[] = [
@@ -2399,6 +2534,16 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
               // 添加到现有视频列表中
               setVideos(prevVideos => [...prevVideos, ...newVideoWindows]);
+
+              // 🔧 新增：为每个邀请的用户设置超时定时器
+              const timeoutMs = autoRejectTime * 1000; // 转换为毫秒
+              newMembers.forEach(user => {
+                setInvitationTimer(user.userId, timeoutMs);
+              });
+
+              console.log(
+                `🔧 为 ${newMembers.length} 个用户设置邀请定时器，超时时间: ${autoRejectTime}秒`,
+              );
             } else {
               console.error('邀请新成员失败');
             }
@@ -2662,6 +2807,31 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
   }, [callMode, invitation, callerTargetInfo, enableRealCall, displayVideos]);
 
+  // 🔧 计算多人视频通话相关状态
+  const groupCallStatus = React.useMemo(() => {
+    const isGroupCall = callMode === 'group';
+    const hasParticipants = displayVideos.some(video => !video.isLocalVideo);
+    const isConnected =
+      callStatus === 'connected' ||
+      (enableRealCall && callServiceRef.current?.getCallStatus?.() === CALL_STATUS.IN_CALL);
+
+    console.log('🔧 CallKit: 多人视频通话状态计算', {
+      callMode,
+      displayVideos: displayVideos.map(v => ({ id: v.id, isLocalVideo: v.isLocalVideo })),
+      callStatus,
+      enableRealCall,
+      isGroupCall,
+      hasParticipants,
+      isConnected,
+    });
+
+    return {
+      isGroupCall,
+      hasParticipants,
+      isConnected,
+    };
+  }, [callMode, displayVideos, callStatus, enableRealCall]);
+
   // 缓存稳定的布局props，避免因callDuration更新导致的重新渲染
   const stableLayoutProps = React.useMemo(
     () => ({
@@ -2707,6 +2877,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       // 🔧 通话信息
       invitation,
       callInfo,
+      // 🔧 多人视频通话相关状态
+      ...groupCallStatus,
+      // 🔧 新增：布局切换回调
+      onLayoutModeChange,
     }),
     [
       isShowingPreview,
@@ -2746,6 +2920,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       invitation,
       callInfo,
       callerTargetInfo,
+      groupCallStatus,
+      onLayoutModeChange,
     ],
   );
 

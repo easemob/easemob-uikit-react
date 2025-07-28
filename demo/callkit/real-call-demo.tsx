@@ -59,6 +59,66 @@ const RealCallDemo: React.FC = () => {
   const [targetUser, setTargetUser] = useState('');
   const [isConfigured, setIsConfigured] = useState(false);
 
+  // 背景选择状态
+  const [selectedBackground, setSelectedBackground] = useState(0);
+
+  // 🔧 新增：CallKit尺寸状态管理
+  const [callKitSize, setCallKitSize] = useState({ width: 800, height: 600 });
+  const [currentLayoutMode, setCurrentLayoutMode] = useState<'grid' | 'main'>('grid');
+
+  // 预设背景图片
+  const backgroundOptions = [
+    {
+      id: 0,
+      name: '默认背景',
+      url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop&sat=-100',
+      thumbnail:
+        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&sat=-100',
+    },
+    {
+      id: 1,
+      name: '城市夜景',
+      url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1200&h=800&fit=crop',
+      thumbnail:
+        'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=200&h=150&fit=crop',
+    },
+    {
+      id: 2,
+      name: '自然风景',
+      url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop&sat=50',
+      thumbnail:
+        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&sat=50',
+    },
+    {
+      id: 3,
+      name: '抽象渐变',
+      url: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&h=800&fit=crop',
+      thumbnail: 'https://images.unsplash.com/photo-1557683316-973673baf926?w=200&h=150&fit=crop',
+    },
+    {
+      id: 4,
+      name: '科技感',
+      url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200&h=800&fit=crop',
+      thumbnail:
+        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=200&h=150&fit=crop',
+    },
+    {
+      id: 5,
+      name: '简约纯色',
+      url: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200&h=800&fit=crop',
+      thumbnail:
+        'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=200&h=150&fit=crop',
+    },
+  ];
+
+  // 处理背景切换
+  const handleBackgroundChange = (backgroundId: number) => {
+    setSelectedBackground(backgroundId);
+    notification.info({
+      message: `已切换到：${backgroundOptions[backgroundId].name}`,
+    });
+  };
+
   // 检查是否有URL参数，如果有则自动尝试登录
   useEffect(() => {
     if (urlParams.userId && urlParams.password) {
@@ -212,6 +272,10 @@ const RealCallDemo: React.FC = () => {
 
   // 开始计时
   const startTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = undefined;
+    }
     startTimeRef.current = Date.now();
     timerRef.current = setInterval(() => {
       const elapsed = Date.now() - (startTimeRef.current || 0);
@@ -250,7 +314,7 @@ const RealCallDemo: React.FC = () => {
     if (!targetUser) {
       notification.error({
         message: '请填写目标用户',
-        description: '请输入要通话的用户ID',
+        description: '请输入要通话的用户ID,或群组 ID',
       });
       return;
     }
@@ -409,6 +473,42 @@ const RealCallDemo: React.FC = () => {
     });
   };
 
+  // 🔧 新增：处理布局模式切换
+  const handleLayoutModeChange = (layoutMode: 'grid' | 'main') => {
+    console.log('布局模式切换:', layoutMode);
+    setCurrentLayoutMode(layoutMode);
+
+    if (layoutMode === 'main') {
+      // 切换到主视频模式时，调整为竖屏尺寸
+      const newSize = { width: 600, height: 800 };
+      setCallKitSize(newSize);
+
+      // 🔧 使用CallKit的adjustSize方法调整尺寸
+      if (callKitRef.current) {
+        callKitRef.current.adjustSize(newSize);
+      }
+
+      notification.info({
+        message: '已切换到主视频模式',
+        description: '调整为竖屏显示',
+      });
+    } else {
+      // 切换到网格模式时，恢复正常尺寸
+      const newSize = { width: 800, height: 600 };
+      setCallKitSize(newSize);
+
+      // 🔧 使用CallKit的adjustSize方法调整尺寸
+      if (callKitRef.current) {
+        callKitRef.current.adjustSize(newSize);
+      }
+
+      notification.info({
+        message: '已切换到网格模式',
+        description: '恢复正常显示',
+      });
+    }
+  };
+
   // 示例：模拟批量用户信息provider
   const mockGroupMemberProvider = async (userIds: string[]) => {
     // 模拟异步获取用户信息的过程
@@ -494,7 +594,7 @@ const RealCallDemo: React.FC = () => {
             <Input
               value={loginForm.userId}
               onChange={e => setLoginForm({ ...loginForm, userId: e.target.value })}
-              placeholder="输入用户ID"
+              placeholder="输入用户ID,或群组 ID"
             />
           </div>
           <div style={{ marginBottom: '15px' }}>
@@ -578,6 +678,10 @@ const RealCallDemo: React.FC = () => {
             <li>邀请状态: {hasInvitation ? '有邀请' : '无邀请'}</li>
             <li>通话时长: {callDuration}</li>
             <li>配置状态: {isConfigured ? '已配置' : '未配置'}</li>
+            <li>布局模式: {currentLayoutMode === 'main' ? '主视频模式' : '网格模式'}</li>
+            <li>
+              CallKit尺寸: {callKitSize.width} x {callKitSize.height}
+            </li>
           </ul>
         </div>
 
@@ -599,16 +703,86 @@ const RealCallDemo: React.FC = () => {
                 <Input
                   value={targetUser}
                   onChange={e => setTargetUser(e.target.value)}
-                  placeholder="输入目标用户ID"
+                  placeholder="输入目标, 或群组 ID"
                 />
                 <p style={{ marginTop: '10px', color: '#666', fontSize: '12px' }}>
-                  通话ID和频道名称将自动生成，无需手动配置
+                  必须点击完成配置才能发起通话，对方也必须完成配置才能收到邀请。
                 </p>
               </div>
             </div>
             <Button type="primary" onClick={handleConfigSubmit} style={{ marginTop: '15px' }}>
               完成配置
             </Button>
+          </div>
+        )}
+
+        {/* 背景选择面板 */}
+        {isConfigured && (
+          <div
+            style={{
+              marginBottom: '20px',
+              padding: '20px',
+              backgroundColor: '#f0f8ff',
+              borderRadius: '8px',
+              border: '1px solid #b3d9ff',
+            }}
+          >
+            <h3>背景选择</h3>
+            <p style={{ marginBottom: '15px', color: '#666', fontSize: '14px' }}>
+              选择通话界面的背景图片
+            </p>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                gap: '15px',
+                maxWidth: '600px',
+              }}
+            >
+              {backgroundOptions.map(option => (
+                <div
+                  key={option.id}
+                  style={{
+                    cursor: 'pointer',
+                    border:
+                      selectedBackground === option.id ? '3px solid #1890ff' : '2px solid #d9d9d9',
+                    borderRadius: '8px',
+                    padding: '8px',
+                    backgroundColor: 'white',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'center',
+                  }}
+                  onClick={() => handleBackgroundChange(option.id)}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.transform = 'scale(1.05)';
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                >
+                  <img
+                    src={option.thumbnail}
+                    alt={option.name}
+                    style={{
+                      width: '100%',
+                      height: '80px',
+                      objectFit: 'cover',
+                      borderRadius: '4px',
+                      marginBottom: '8px',
+                    }}
+                  />
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: selectedBackground === option.id ? '#1890ff' : '#666',
+                      fontWeight: selectedBackground === option.id ? 'bold' : 'normal',
+                    }}
+                  >
+                    {option.name}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -671,7 +845,7 @@ const RealCallDemo: React.FC = () => {
                   <Icon type="VIDEO_CAMERA" />
                   发起群组视频通话
                 </Button>
-                <Button
+                {/* <Button
                   type="primary"
                   onClick={() => handleStartGroupCall('audio')}
                   disabled={hasInvitation || isInCall}
@@ -679,7 +853,7 @@ const RealCallDemo: React.FC = () => {
                 >
                   <Icon type="MIC_ON" />
                   发起群组语音通话
-                </Button>
+                </Button> */}
               </div>
             </div>
 
@@ -730,26 +904,6 @@ const RealCallDemo: React.FC = () => {
           </>
         )}
 
-        {/* 功能说明 */}
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '15px',
-            backgroundColor: '#f5f5f5',
-            borderRadius: '8px',
-          }}
-        >
-          <h3>功能说明</h3>
-          <ul>
-            <li>✅ 真实通话功能：使用声网 RTC SDK 进行实际的音视频通话</li>
-            <li>✅ 环信信令：使用环信 IM SDK 进行通话邀请和信令交互</li>
-            <li>✅ 一对一通话：支持视频和语音一对一通话</li>
-            <li>✅ 群组通话：支持多人视频和语音通话</li>
-            <li>✅ 通话控制：支持静音、摄像头、扬声器等控制</li>
-            <li>✅ 自动状态管理：组件内部自动管理通话状态</li>
-          </ul>
-        </div>
-
         {/* CallKit 组件 */}
         <CallKit
           webimConnection={rootStore.client}
@@ -760,14 +914,17 @@ const RealCallDemo: React.FC = () => {
           gap={6}
           // 位置和大小管理
           managedPosition={true}
-          initialPosition={{ left: 100, top: 100 }}
-          initialSize={{ width: 800, height: 600 }}
+          initialPosition={{
+            left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
+            top: Math.max(0, window.scrollY + (window.innerHeight - callKitSize.height) / 2),
+          }}
+          initialSize={callKitSize}
           resizable={true}
           draggable={true}
           // 邀请相关配置
           showInvitationAvatar={true}
           showInvitationTimer={true}
-          autoRejectTime={600}
+          autoRejectTime={30}
           // 控制按钮
           showControls={true}
           muted={muted}
@@ -802,7 +959,8 @@ const RealCallDemo: React.FC = () => {
               },
             ];
           }}
-          backgroundImage="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&h=800&fit=crop&sat=-100"
+          backgroundImage={backgroundOptions[selectedBackground].url}
+          onLayoutModeChange={handleLayoutModeChange}
         />
       </div>
     </Provider>

@@ -84,6 +84,11 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
       }
     }
     
+    // 禁用状态下文本透明度降低 - 使用兄弟选择器
+    &-disabled ~ .#{$call-controls-prefix-cls}-button-text {
+      opacity: 0.2;
+    }
+    
     // 挂断按钮（固定红色）
     &-hangup {
       background: #FF6680;
@@ -121,9 +126,8 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
     
     // 预览模式下禁用状态
     &-preview-disabled {
-      opacity: 0.5;
       cursor: not-allowed;
-      
+      background: rgba(255, 255, 255, 0.2);
       &:hover {
         transform: none;
         background: rgba(255, 255, 255, 0.2);
@@ -138,6 +142,11 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
       svg {
         opacity: 0.6;
       }
+    }
+    
+    // 预览禁用状态下文本透明度降低 - 使用兄弟选择器
+    &-preview-disabled ~ .#{$call-controls-prefix-cls}-button-text {
+      opacity: 0.2;
     }
   }
   

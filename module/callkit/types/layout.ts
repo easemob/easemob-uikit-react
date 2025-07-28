@@ -87,6 +87,14 @@ export interface FullLayoutProps extends BaseLayoutProps {
     remoteUserNickname?: string;
     remoteUserAvatar?: string;
   };
+
+  // 🔧 新增：多人视频通话相关状态
+  isGroupCall?: boolean; // 是否为群组通话
+  hasParticipants?: boolean; // 是否有其他参与者加入
+  isConnected?: boolean; // 是否已连接到通话
+
+  // 🔧 新增：布局切换回调
+  onLayoutModeChange?: (layoutMode: 'grid' | 'main') => void;
 }
 
 /**
