@@ -1029,6 +1029,24 @@ export class CallService {
             speakerEnabled: this.speakerEnabled,
           });
 
+          // 🔧 1v1视频通话特殊处理：当只是音频状态变化时，不触发onRemoteVideoReady以避免闪动
+          const is1v1VideoCall = this.currentCallInfo?.type === CALL_TYPE.VIDEO_1V1;
+          const isExistingUser = this.joinedMembers.some(member => member.uid === user.uid);
+
+          if (is1v1VideoCall && isExistingUser) {
+            console.log(
+              '🔇 1v1视频通话：检测到现有用户的音频状态变化，跳过onRemoteVideoReady调用以避免闪动:',
+              {
+                用户ID: user.uid,
+                媒体类型: mediaType,
+              },
+            );
+            // 只更新成员状态，不触发UI更新
+            this.updateJoinedMember(user, mediaType, true);
+            console.log('更新成员状态 - 开启媒体流:', { uid: user.uid, mediaType, enabled: true });
+            return;
+          }
+
           // 🔧 修复：在音频事件中，智能判断摄像头状态
           // 如果用户已经有视频轨道，说明摄像头开启；否则检查成员状态
           const hasVideoTrack = this.remoteVideoTracks.has(user.uid);
@@ -1198,6 +1216,24 @@ export class CallService {
         // 清理远程音频轨道引用
         if (this.rtc.remoteAudioTrack && this.rtc.remoteUser?.uid === user.uid) {
           this.rtc.remoteAudioTrack = null;
+        }
+
+        // 🔧 1v1视频通话特殊处理：当只是音频状态变化时，不触发onRemoteVideoReady以避免闪动
+        const is1v1VideoCall = this.currentCallInfo?.type === CALL_TYPE.VIDEO_1V1;
+        const isExistingUser = this.joinedMembers.some(member => member.uid === user.uid);
+
+        if (is1v1VideoCall && isExistingUser) {
+          console.log(
+            '🔇 1v1视频通话：检测到现有用户的音频状态变化，跳过onRemoteVideoReady调用以避免闪动:',
+            {
+              用户ID: user.uid,
+              媒体类型: mediaType,
+            },
+          );
+          // 只更新成员状态，不触发UI更新
+          this.updateJoinedMember(user, mediaType, false);
+          console.log('更新成员状态 - 关闭媒体流:', { uid: user.uid, mediaType, enabled: false });
+          return;
         }
 
         // 🔧 修复：在音频停止事件中，智能判断摄像头状态

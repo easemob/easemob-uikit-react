@@ -670,6 +670,34 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           当前是否在通话中: isInCallRef.current,
         });
 
+        // 🔧 1v1视频通话特殊处理：当只是音频状态变化时，不调用setVideos以避免闪动
+        const currentCallMode = callModeRef.current;
+        const currentIsInCall = isInCallRef.current;
+        const is1v1VideoCall = currentCallMode === 'video' && currentIsInCall;
+
+        if (is1v1VideoCall) {
+          // 检查是否只是音频状态变化（摄像头状态未变，只是麦克风状态变化）
+          const existingVideo = videos.find(v => v.id === videoInfo.id);
+          if (existingVideo) {
+            const isOnlyAudioChange =
+              existingVideo.cameraEnabled === videoInfo.cameraEnabled &&
+              existingVideo.isWaiting === videoInfo.isWaiting &&
+              !videoInfo.removed;
+
+            if (isOnlyAudioChange) {
+              console.log('🔇 1v1视频通话：检测到只是音频状态变化，跳过setVideos调用以避免闪动:', {
+                视频ID: videoInfo.id,
+                旧麦克风状态: existingVideo.muted,
+                新麦克风状态: videoInfo.muted,
+                摄像头状态: videoInfo.cameraEnabled,
+              });
+              // 只调用外部回调，不更新videos数组
+              props.onRemoteVideoReady?.(videoInfo);
+              return;
+            }
+          }
+        }
+
         setVideos(prevVideos => {
           const existingIndex = prevVideos.findIndex(v => v.id === videoInfo.id);
 
