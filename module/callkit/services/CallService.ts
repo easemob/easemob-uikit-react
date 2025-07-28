@@ -49,12 +49,15 @@ export interface CallServiceConfig {
   onUserLeft?: (user: any, reason: string) => void;
   onUserUnpublished?: (user: any, mediaType: string) => void;
   onRemoteVideoReady?: (videoInfo: VideoWindowProps) => void;
+  onTalkingUsersChange?: (talkingUsers: string[]) => void; // 🔧 新增：说话用户变化回调
   userInfoProvider?: (
     userIds: string[],
   ) => Promise<Array<{ userId: string; nickname?: string; avatarUrl?: string }>>;
   groupInfoProvider?: (
     groupIds: string[],
   ) => Promise<Array<{ groupId: string; groupName?: string; groupAvatar?: string }>>;
+  // 🔧 新增：音量指示器配置
+  speakingVolumeThreshold?: number; // 说话指示器显示的音量阈值，范围1-100，默认60
 }
 
 export class CallService {
@@ -94,6 +97,7 @@ export class CallService {
   private onUserLeft?: (user: any, reason: string) => void;
   private onUserUnpublished?: (user: any, mediaType: string) => void;
   private onRemoteVideoReady?: (videoInfo: VideoWindowProps) => void;
+  private onTalkingUsersChange?: (talkingUsers: string[]) => void; // 🔧 新增：说话用户变化回调
   private userInfoProvider?: (
     userIds: string[],
   ) => Promise<Array<{ userId: string; nickname?: string; avatarUrl?: string }>>;
@@ -103,6 +107,9 @@ export class CallService {
 
   // 缓存的群组信息
   private cachedGroupInfos: { [key: string]: { groupName?: string; groupAvatar?: string } } = {};
+
+  // 🔧 新增：音量指示器阈值
+  private speakingVolumeThreshold: number = 60; // 默认阈值60
 
   constructor(config: CallServiceConfig) {
     this.connection = config.connection;
@@ -115,8 +122,11 @@ export class CallService {
     this.onUserLeft = config.onUserLeft;
     this.onUserUnpublished = config.onUserUnpublished;
     this.onRemoteVideoReady = config.onRemoteVideoReady;
+    this.onTalkingUsersChange = config.onTalkingUsersChange; // 🔧 新增：初始化说话用户变化回调
     this.userInfoProvider = config.userInfoProvider;
     this.groupInfoProvider = config.groupInfoProvider;
+    // 🔧 新增：初始化音量阈值
+    this.speakingVolumeThreshold = config.speakingVolumeThreshold ?? 60;
 
     // 从WebIM连接获取必要信息
     this.agoraUid = this.connection.user; // 使用userId作为agoraUid
@@ -548,8 +558,19 @@ export class CallService {
         this.appId,
         this.currentCallInfo.channel,
         this.accessToken,
-        this.agoraUid, // 使用string类型，不需要修改
+        this.agoraUid,
       );
+
+      console.log('成功加入频道:', uid);
+
+      // 🔧 新增：启用音量监听（只在多人通话中启用）
+      if (
+        this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
+        this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI
+      ) {
+        console.log('🔊 启用音量监听');
+        this.client.enableAudioVolumeIndicator();
+      }
     } catch (error) {
       console.error('Failed to join channel:', error);
       this.hangup('join channel failed');
@@ -603,7 +624,7 @@ export class CallService {
       const localVideoInfo = {
         id: 'local',
         isLocalVideo: true,
-        muted: false,
+        muted: this.isMuted(), // 🔧 修复：使用实际的静音状态而不是硬编码false
         cameraEnabled: true,
         nickname: this.userInfos[this.agoraUid]?.nickname || '我',
         avatar: this.userInfos[this.agoraUid]?.avatarUrl,
@@ -1271,6 +1292,38 @@ export class CallService {
       this.updateJoinedMember(user, mediaType, false);
       console.log('更新成员状态 - 关闭媒体流:', { uid: user.uid, mediaType, enabled: false });
     });
+
+    // 🔧 新增：监听谁在说话
+    this.client.on('volume-indicator', (volumes: any[]) => {
+      console.log('🔊 音量指示器事件:', volumes);
+
+      // 🔧 修复：使用配置的音量阈值而不是硬编码的60
+      const talkingUsers = volumes
+        .filter(volume => volume.level > this.speakingVolumeThreshold)
+        .map(volume => volume.uid);
+
+      // 🔧 新增：检查本地用户是否在说话
+      const localTalkingUsers = [...talkingUsers];
+      if (this.isMuted()) {
+        // 如果本地用户静音，从说话列表中移除
+        const localIndex = localTalkingUsers.indexOf(this.agoraUid);
+        if (localIndex > -1) {
+          localTalkingUsers.splice(localIndex, 1);
+        }
+      }
+
+      console.log(
+        '🎤 正在说话的用户:',
+        localTalkingUsers,
+        '本地用户ID:',
+        this.agoraUid,
+        '音量阈值:',
+        this.speakingVolumeThreshold,
+      );
+
+      // 通知UI更新说话状态
+      this.onTalkingUsersChange?.(localTalkingUsers);
+    });
   }
 
   // 添加消息监听器
@@ -1688,6 +1741,25 @@ export class CallService {
     this.rtc.localAudioTrack.setEnabled && this.rtc.localAudioTrack.setEnabled(newEnabled);
 
     console.log('麦克风状态:', newEnabled ? '开启' : '关闭');
+
+    // 🔧 新增：通知UI更新本地视频状态
+    const localVideoInfo: VideoWindowProps = {
+      id: 'local',
+      isLocalVideo: true,
+      muted: !newEnabled, // 返回muted状态（与enabled相反）
+      cameraEnabled: this.isCameraEnabled(),
+      nickname: this.userInfos[this.agoraUid]?.nickname || '我',
+      avatar: this.userInfos[this.agoraUid]?.avatarUrl || undefined,
+      stream: undefined,
+    };
+
+    this.onRemoteVideoReady?.(localVideoInfo);
+
+    console.log('本地视频静音状态已更新:', {
+      muted: localVideoInfo.muted,
+      nickname: localVideoInfo.nickname,
+      hasAvatar: !!localVideoInfo.avatar,
+    });
 
     return !newEnabled; // 返回muted状态（与enabled相反）
   }

@@ -171,20 +171,22 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     onCallStart,
     onCallEnd,
     onLayoutModeChange,
+    speakingVolumeThreshold,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('callkit', prefix);
 
   // 内部状态管理
   const [invitation, setInvitation] = useState<InvitationInfo | null>(null);
-  const [isInCall, setIsInCall] = useState(false);
-  const [videos, setVideos] = useState<VideoWindowProps[]>([]);
-  const [callMode, setCallMode] = useState<'video' | 'audio' | 'group'>(propCallMode || 'video');
   const [callStatus, setCallStatus] = useState<'idle' | 'calling' | 'ringing' | 'connected'>(
     'idle',
   );
+  const [isInCall, setIsInCall] = useState(false);
   const [isShowingPreview, setIsShowingPreview] = useState(false);
   const [localVideo, setLocalVideo] = useState<VideoWindowProps | null>(null);
+  const [videos, setVideos] = useState<VideoWindowProps[]>([]);
+  const [callMode, setCallMode] = useState<'video' | 'audio' | 'group'>(propCallMode || 'video');
+  const [talkingUsers, setTalkingUsers] = useState<string[]>([]); // 🔧 新增：正在说话的用户列表
 
   // 通知系统
   const [notificationApi, notificationContextHolder] = useNotification({
@@ -761,6 +763,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     [props.onRemoteVideoReady], // 只依赖于 props.onRemoteVideoReady
   );
 
+  // 🔧 新增：处理说话用户变化回调
+  const handleTalkingUsersChange = React.useCallback((talkingUsers: string[]) => {
+    console.log('🎤 说话用户变化:', talkingUsers);
+    setTalkingUsers(talkingUsers);
+  }, []);
+
   // 初始化 CallService
   React.useEffect(() => {
     if (enableRealCall && webimConnection) {
@@ -801,10 +809,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         onUserLeft: handleUserLeft,
         onUserUnpublished: handleUserUnpublished,
         onRemoteVideoReady: handleRemoteVideoReady,
+        onTalkingUsersChange: handleTalkingUsersChange, // 🔧 新增：说话用户变化回调
         // 用户信息提供器：优先使用 userInfoProvider，兼容旧的 userInfoProvider
         userInfoProvider: createUserInfoProvider(),
         // 群组信息提供器
         groupInfoProvider: createGroupInfoProvider(),
+        // 🔧 新增：音量指示器配置
+        speakingVolumeThreshold: props.speakingVolumeThreshold,
       };
 
       callServiceRef.current = new CallService(config);
@@ -857,6 +868,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     handleUserLeft,
     handleUserUnpublished,
     handleRemoteVideoReady,
+    handleTalkingUsersChange, // 🔧 新增：说话用户变化回调
     // userInfo, // If userInfo is a prop, uncomment and pass it.
   ]);
 
@@ -2222,21 +2234,46 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             {video.nickname && shouldShowNickname && (
               <div className={`${prefixCls}-video-info`}>
                 <div className={`${prefixCls}-nickname`}>{video.nickname}</div>
-                {(!video.cameraEnabled || video.muted) && (
-                  <div className={`${prefixCls}-indicators`}>
-                    {!video.cameraEnabled && (
-                      <Icon type="VIDEO_CAMERA_SLASH" width={14} height={14} color="#F9FAFA" />
-                    )}
-                    {video.muted && <Icon type="MIC_OFF" width={14} height={14} color="#F9FAFA" />}
-                  </div>
-                )}
+                <div className={`${prefixCls}-indicators`}>
+                  {/* {!video.cameraEnabled && (
+                    <Icon type="VIDEO_CAMERA_SLASH" width={14} height={14} color="#F9FAFA" />
+                  )} */}
+                  {video.muted && <Icon type="MIC_OFF" width={14} height={14} color="#F9FAFA" />}
+                  {/* 🔧 新增：说话指示器 - 只在多人视频通话中显示，样式与MIC_OFF保持一致 */}
+                  {/* 🔧 优化：当MIC_OFF显示时，不显示SPEAKER_WAVE_2，确保同一时间只有一个指示器 */}
+                  {callMode === 'group' &&
+                    !video.muted && // 🔧 新增：只有在不静音时才显示说话指示器
+                    !video.isLocalVideo &&
+                    (() => {
+                      // 从视频ID中提取用户ID（remote-xxx -> xxx）
+                      const userId = video.id.replace('remote-', '');
+                      const isTalking = talkingUsers.includes(userId);
+
+                      return isTalking ? (
+                        <Icon type="SPEAKER_WAVE_2" width={14} height={14} color="#4CAF50" />
+                      ) : null;
+                    })()}
+                  {/* 🔧 新增：本地用户说话指示器 */}
+                  {callMode === 'group' &&
+                    !video.muted && // 🔧 新增：只有在不静音时才显示说话指示器
+                    video.isLocalVideo &&
+                    (() => {
+                      // 🔧 修复：使用实际的用户ID而不是'local'
+                      const localUserId = webimConnection?.user || 'local';
+                      const isLocalTalking = talkingUsers.includes(localUserId);
+
+                      return isLocalTalking ? (
+                        <Icon type="SPEAKER_WAVE_2" width={14} height={14} color="#4CAF50" />
+                      ) : null;
+                    })()}
+                </div>
               </div>
             )}
           </div>
         </div>
       );
     },
-    [prefixCls, callMode, onVideoClick],
+    [prefixCls, callMode, onVideoClick, talkingUsers],
   );
 
   // 处理预览模式下的接听

@@ -939,7 +939,6 @@ const RealCallDemo: React.FC = () => {
           onHangup={handleHangup}
           onInvitationAccept={handleAcceptInvitation}
           onInvitationReject={handleRejectInvitation}
-          onCallStart={handleCallStart}
           onCallEnd={handleCallEnd}
           // 真实通话配置
           enableRealCall={isConfigured}
@@ -961,6 +960,15 @@ const RealCallDemo: React.FC = () => {
           }}
           backgroundImage={backgroundOptions[selectedBackground].url}
           onLayoutModeChange={handleLayoutModeChange}
+          // 🔧 新增：音量指示器配置示例
+          speakingVolumeThreshold={30} // 设置音量阈值为30，比默认的60更敏感
+          onCallStart={videos => {
+            console.log('通话开始:', videos);
+            notification.success({
+              message: '通话已开始',
+              description: `共 ${videos.length} 个参与者`,
+            });
+          }}
         />
       </div>
     </Provider>

@@ -276,6 +276,9 @@ export interface CallKitProps {
       >
     | { groupId: string; groupName?: string; groupAvatar?: string }[]; // 群组信息获取provider
 
+  // 🔧 新增：音量指示器配置
+  speakingVolumeThreshold?: number; // 说话指示器显示的音量阈值，范围1-100，默认60
+
   // 邀请事件回调
   onInvitationAccept?: (invitation: InvitationInfo) => void; // 接听邀请回调
   onInvitationReject?: (invitation: InvitationInfo) => void; // 拒绝邀请回调
