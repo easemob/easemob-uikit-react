@@ -2759,44 +2759,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     onHangup?.();
   }, [enableRealCall, onHangup, isShowingPreview, callStatus]);
 
-  // 计算当前通话中的成员，用于UserSelect的checkedUsers
-  const currentParticipants = React.useMemo(() => {
-    const result = displayVideos.map(video => {
-      // 处理不同的video.id格式，提取真实的userId
-      let userId = video.id;
-      if (video.isLocalVideo) {
-        // 本地视频：使用当前登录用户的ID（如果可以从webimConnection获取）
-        userId = webimConnection?.user || 'local';
-      } else if (video.id.startsWith('remote-')) {
-        // 远程视频：从'remote-userId'格式中提取userId
-        userId = video.id.replace('remote-', '');
-      }
-
-      return {
-        userId: userId,
-        nickname: video.nickname,
-        avatarUrl: video.avatar,
-      };
-    });
-
-    // 添加调试日志
-    console.log('🎯 currentParticipants 计算结果:', {
-      displayVideos数量: displayVideos.length,
-      displayVideos详情: displayVideos.map(v => ({
-        id: v.id,
-        nickname: v.nickname,
-        isLocalVideo: v.isLocalVideo,
-      })),
-      currentParticipants: result.map(p => ({
-        userId: p.userId,
-        nickname: p.nickname,
-      })),
-      当前用户ID: webimConnection?.user,
-    });
-
-    return result;
-  }, [displayVideos, webimConnection?.user]);
-
   // 合并群成员数据：优先使用从IM SDK获取的数据，如果没有则使用传统的groupMembers
   const effectiveGroupMembers = React.useMemo(() => {
     if (webimGroupMembers.length > 0) {
@@ -2990,6 +2952,45 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     ],
   );
 
+  // 计算当前通话中的成员，用于UserSelect的checkedUsers
+  const currentParticipants = React.useMemo(() => {
+    // 如果是发起群组通话，从effectiveGroupMembers中找到当前用户
+    if (isInitiatingGroupCall && webimConnection?.user) {
+      const currentUser = effectiveGroupMembers.find(
+        member => member.userId === webimConnection.user,
+      );
+      return currentUser ? [currentUser] : [];
+    }
+
+    // 否则返回当前通话的所有参与者
+    const result = displayVideos.map(video => {
+      // 处理不同的video.id格式，提取真实的userId
+      let userId = video.id;
+      if (video.isLocalVideo) {
+        // 本地视频：使用当前登录用户的ID
+        userId = webimConnection?.user || 'local';
+      } else if (video.id.startsWith('remote-')) {
+        // 远程视频：从'remote-userId'格式中提取userId
+        userId = video.id.replace('remote-', '');
+      }
+
+      // 从effectiveGroupMembers中找到对应的用户信息
+      const memberInfo = effectiveGroupMembers.find(member => member.userId === userId);
+      if (memberInfo) {
+        return memberInfo;
+      }
+
+      // 如果在effectiveGroupMembers中找不到，使用video中的信息
+      return {
+        userId: userId,
+        nickname: video.nickname,
+        avatarUrl: video.avatar,
+      };
+    });
+
+    return result;
+  }, [displayVideos, webimConnection?.user, effectiveGroupMembers, isInitiatingGroupCall]);
+
   return (
     <>
       {/* 通知系统 */}
@@ -2999,7 +3000,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       <UserSelect
         title={
           isLoadingGroupMembers
-            ? '正在加载群成员...' // 显示加载状态
+            ? '正在加载群成员...'
             : isInitiatingGroupCall
             ? `发起${groupCallType === 'video' ? '视频' : '语音'}群组通话`
             : userSelectTitle
@@ -3010,7 +3011,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         enableMultipleSelection
         onUserSelect={handleUserSelect}
         users={effectiveGroupMembers}
-        checkedUsers={isInitiatingGroupCall ? [] : currentParticipants}
+        checkedUsers={currentParticipants}
         closable={true}
       />
 
