@@ -765,6 +765,25 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
   }
 }
 
+// 🔧 网络质量组件样式覆盖
+.cui-callkit-network-quality {
+  width: 22px !important;
+  height: 22px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  // 保持其他样式不变
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 4px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
 // 全局拖动状态样式
 body.#{$callkit-prefix-cls}-dragging {
   user-select: none !important;

@@ -14,6 +14,8 @@ import Input from '../../component/input';
 import '../../component/style/index.scss';
 import Provider from '../../module/store/Provider';
 import rootStore from '../../module/store/index';
+import outgoingRingtone from './拨打电话.mp3';
+import incomingRingtone from './接听电话.mp3';
 
 // 从URL获取参数的工具函数
 const getUrlParams = () => {
@@ -344,9 +346,10 @@ const RealCallDemo: React.FC = () => {
       return;
     }
 
-    callKitRef.current?.startRealCall({
+    callKitRef.current?.startSingleCall({
       to: targetUser,
       callType: 'video',
+      msg: '邀请你进行视频通话',
     });
 
     notification.info({
@@ -363,9 +366,10 @@ const RealCallDemo: React.FC = () => {
       return;
     }
 
-    callKitRef.current?.startRealCall({
+    callKitRef.current?.startSingleCall({
       to: targetUser,
       callType: 'audio',
+      msg: '邀请你进行语音通话',
     });
 
     notification.info({
@@ -376,7 +380,11 @@ const RealCallDemo: React.FC = () => {
   // 发起群组通话
   const handleStartGroupCall = (callType: 'video' | 'audio') => {
     // 发起群组通话应该先显示用户选择界面，让用户选择要邀请的成员
-    callKitRef.current?.startGroupCall(targetUser, callType);
+    callKitRef.current?.startGroupCall({
+      groupId: targetUser,
+      callType,
+      msg: `邀请加入群组${callType === 'video' ? '视频' : '语音'}通话`,
+    });
 
     notification.info({
       message: `正在发起群组${callType === 'video' ? '视频' : '语音'}通话...`,
@@ -391,7 +399,7 @@ const RealCallDemo: React.FC = () => {
     startTimer();
 
     // 接听真实通话
-    callKitRef.current?.answerRealCall(true);
+    callKitRef.current?.answerCall(true);
 
     notification.success({
       message: `已接听${invitationData.type === 'video' ? '视频' : '语音'}通话`,
@@ -404,7 +412,7 @@ const RealCallDemo: React.FC = () => {
     setHasInvitation(false);
 
     // 拒绝真实通话
-    callKitRef.current?.answerRealCall(false);
+    callKitRef.current?.answerCall(false);
 
     notification.info({
       message: '已拒绝通话邀请',
@@ -415,7 +423,7 @@ const RealCallDemo: React.FC = () => {
   const handleHangup = () => {
     setIsInCall(false);
     stopTimer();
-    callKitRef.current?.hangupRealCall();
+    callKitRef.current?.hangupCall();
     // notification.error({
     //   message: '挂断成功',
     // });
@@ -636,12 +644,12 @@ const RealCallDemo: React.FC = () => {
   return (
     <Provider
       initConfig={{
-        appKey: loginForm.appKey,
+        appKey: '1107220708140392#gray', //loginForm.appKey,
         userId: loginForm.userId,
         password: loginForm.password,
         useUserInfo: true,
         maxMessages: 100,
-        isHttpDNS: false,
+        isHttpDNS: true,
         msyncUrl: 'wss://im-api-new-hsb.easemob.com/websocket',
         restUrl: 'https://a1-hsb.easemob.com',
       }}
@@ -906,7 +914,7 @@ const RealCallDemo: React.FC = () => {
 
         {/* CallKit 组件 */}
         <CallKit
-          webimConnection={rootStore.client}
+          chatClient={isConfigured ? rootStore.client : undefined}
           ref={callKitRef}
           // 基础配置
           layoutMode={LayoutMode.MULTI_PARTY}
@@ -925,28 +933,28 @@ const RealCallDemo: React.FC = () => {
           showInvitationAvatar={true}
           showInvitationTimer={true}
           autoRejectTime={30}
-          // 控制按钮
-          showControls={true}
-          muted={muted}
-          cameraEnabled={cameraEnabled}
-          speakerEnabled={speakerEnabled}
-          screenSharing={screenSharing}
+          // 控制按钮 去掉
+          // showControls={true}
+          // muted={muted}
+          // cameraEnabled={cameraEnabled}
+          // speakerEnabled={speakerEnabled}
+          // screenSharing={screenSharing}
           // 事件回调
-          onMuteToggle={handleMuteToggle}
-          onCameraToggle={handleCameraToggle}
-          onSpeakerToggle={handleSpeakerToggle}
-          onScreenShareToggle={handleScreenShareToggle}
-          onHangup={handleHangup}
+          // onMuteToggle={handleMuteToggle}
+          // onCameraToggle={handleCameraToggle}
+          // onSpeakerToggle={handleSpeakerToggle}
+          // onScreenShareToggle={handleScreenShareToggle}
+          // onHangup={handleHangup}
           onInvitationAccept={handleAcceptInvitation}
           onInvitationReject={handleRejectInvitation}
           onCallEnd={handleCallEnd}
           // 真实通话配置
-          enableRealCall={isConfigured}
+          // enableRealCall={isConfigured}
           // 群组成员选择相关
           // groupMembers={mockGroupMembers}
-          userSelectTitle="邀请群组成员"
+          userSelectTitle="邀请群组成员" // 默认值
           // 其他
-          callDuration={callDuration}
+          // callDuration={callDuration}
           userInfoProvider={mockGroupMemberProvider}
           groupInfoProvider={async (groupIds: string[]) => {
             // 批量获取群组信息
@@ -959,16 +967,46 @@ const RealCallDemo: React.FC = () => {
             ];
           }}
           backgroundImage={backgroundOptions[selectedBackground].url}
-          onLayoutModeChange={handleLayoutModeChange}
+          onLayoutModeChange={handleLayoutModeChange} // 默认值
           // 🔧 新增：音量指示器配置示例
-          speakingVolumeThreshold={30} // 设置音量阈值为30，比默认的60更敏感
-          onCallStart={videos => {
-            console.log('通话开始:', videos);
-            notification.success({
-              message: '通话已开始',
-              description: `共 ${videos.length} 个参与者`,
-            });
-          }}
+          // speakingVolumeThreshold={30} // 设置音量阈值为30，比默认的60更敏感
+          // onCallStart={videos => {
+          //   console.log('通话开始:', videos);
+          //   notification.success({
+          //     message: '通话已开始',
+          //     description: `共 ${videos.length} 个参与者`,
+          //   });
+          // }}
+          outgoingRingtoneSrc={outgoingRingtone} // 铃声文件路径
+          incomingRingtoneSrc={incomingRingtone} // 铃声文件路径
+          // enableRingtone={true} // 启用铃声
+          // ringtoneVolume={0.8} // 音量 80%
+          // ringtoneLoop={true} // 循环播放
+          // customIcons={{
+          //   controls: {
+          //     hangup: <div>123</div>,
+          //     micOn: <div>micOn</div>,
+          //     micOff: <div>micOff</div>,
+          //     cameraOn: <div>cameraOn</div>,
+          //     cameraOff: <div>cameraOff</div>,
+          //     speakerOn: <div>speakerOn</div>,
+          //     speakerOff: <div>speakerOff</div>,
+          //     accept: <div>accept</div>,
+          //     reject: <div>reject</div>,
+          //     // screenShareOn: <div>screenShareOn</div>,
+          //     // screenShareOff: <div>screenShareOff</div>,
+          //   },
+          //   header: {
+          //     back: <div>back</div>,
+          //     title: <div>title</div>,
+          //     close: <div>close</div>,
+
+          //     fullscreen: <div>fullscreen</div>,
+          //     exitFullscreen: <div>exitFullscreen</div>,
+          //     minimize: <div>minimize</div>,
+          //     addParticipant: <div>addParticipant</div>,
+          //   },
+          // }}
         />
       </div>
     </Provider>

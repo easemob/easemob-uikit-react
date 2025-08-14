@@ -32,7 +32,7 @@ import Thread, { ThreadListExpandableIcon } from '../thread';
 import ScrollList from '../../component/scrollList';
 import { ChatSDK } from 'module/SDK';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
-import CallKit from 'chat-callkit';
+import CallKit, { CallKitRef } from '../callkit';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { reportType } from '../chatroom/Chatroom';
@@ -75,27 +75,6 @@ export interface ChatProps {
   messageListProps?: MsgListProps;
   messageInputProps?: MessageInputProps;
 
-  rtcConfig?: {
-    appId: string; // 声网 appId
-    agoraUid: string | number; // rtc 用户 ID
-    onInvite?: (data: {
-      channel: string;
-      conversation: CurrentConversation;
-      type: 'audio' | 'video';
-    }) => Promise<[{ name: string; id: string; avatarurl?: string }]>; // 群租中邀请人加入音视频通话, 需要返回一个promise 包含被邀请人信息， id 为Chat用户 ID，name 为用户昵称
-    onAddPerson?: (data: RtcRoomInfo) => Promise<[{ id: string }]>; // 群聊音视频过程中邀请其他人加入音视频通话, 需要返回一个promise 包含被邀请人信息， id 为Chat用户 ID
-    getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>; // 获取 rtc 用户 ID 和Chat用户 ID 的映射 返回 {[rtcUserId]: chatUserId}
-    onStateChange?: (data: { type: string; confr: any }) => void; // 音视频通话状态变化
-    getRTCToken?: (data: {
-      channel: number | string;
-      chatUserId: string; // chat user ID
-    }) => Promise<{
-      agoraUid: string | number; // rtc user ID
-      accessToken: string;
-    }>; // 获取 rtc token， 返回声网用户 ID 和 token
-    groupAvatar?: string; // 群聊音视频通话时的头像
-    onRing?: (data: { channel: string }) => void; // 被呼叫时的回调 可以播放铃声
-  };
   onOpenThread?: (data: { id: string }) => void;
   onOpenThreadList?: () => void;
   onVideoCall?: (data: { channel: string }) => void;
@@ -121,7 +100,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     headerProps,
     messageListProps,
     messageInputProps,
-    rtcConfig,
     style = {},
     onOpenThread,
     onOpenThreadList,
@@ -150,9 +128,8 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   const globalConfig = features?.chat;
   const CVS = rootStore.conversationStore.currentCvs;
   const { suffixIcon, ...otherHeaderProps } = headerProps || {};
-
+  const callKitRef = useRef<CallKitRef>(null);
   useContacts();
-  const getRTCToken = rtcConfig?.getRTCToken;
   useEffect(() => {
     if (!rootStore.conversationStore.currentCvs.conversationId) {
       setIsEmpty(true);
@@ -417,228 +394,54 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   }
 
   // ----- video call -----------
-  const [currentCall, setCurrentCall] = useState<any>({});
-  const showInvite = async (conf: any) => {
-    // rtcConfig?.onAddPerson?.(conf);
-    const members = await rtcConfig?.onAddPerson?.(conf);
-    const rtcMembers = members?.map(item => {
-      // @ts-ignore
-      return item.id;
-    });
-    const options = {
-      callType: currentCall.callType,
-      chatType: 'groupChat',
-      to: rtcMembers,
-      // agoraUid: agoraUid,
-      message: t(`Start a ${currentCall.callType == 2 ? 'video' : 'audio'} meeting`),
-      groupId: conf.groupId,
-      groupName: conf.groupName,
-      accessToken: currentCall.accessToken,
-      channel: currentCall.channel,
-    };
-    CallKit.startCall(options);
-  };
-  const handleCallStateChange = async (info: any) => {
-    rtcConfig?.onStateChange?.(info);
-    switch (info.type) {
-      case 'hangup':
-      case 'refuse':
-        break;
-      case 'user-published':
-        // getIdMap
-        if (!info.confr) return;
-        try {
-          const idMap =
-            (await rtcConfig?.getIdMap?.({
-              userId: rootStore.client.user,
-              channel: info.confr.channel,
-            })) || {};
-
-          const membersId = Object.values(idMap);
-          const userInfo = {};
-          membersId.forEach(item => {
-            // @ts-ignore
-            userInfo[item] = {
-              nickname: rootStore.addressStore.appUsersInfo[item]?.nickname,
-              avatarUrl: rootStore.addressStore.appUsersInfo[item]?.avatarurl,
-            };
-          });
-          if (idMap && Object.keys(idMap).length > 0) {
-            CallKit.setUserIdMap(idMap);
-            CallKit.setUserInfo(userInfo);
-          }
-        } catch (e) {
-          console.error(e);
-        }
-        break;
-      case 'accept':
-        // let idMap =
-        //   (await rtcConfig?.getIdMap?.({
-        //     userId: rootStore.client.user,
-        //     channel: info.callInfo.channel,
-        //   })) || {};
-
-        // let membersId = Object.values(idMap);
-        // let userInfo = {};
-        // membersId.forEach(item => {
-        //   // @ts-ignore
-        //   userInfo[item] = {
-        //     nickname: rootStore.addressStore.appUsersInfo[item]?.nickname,
-        //     avatarUrl: rootStore.addressStore.appUsersInfo[item]?.avatarurl,
-        //   };
-        // });
-        // if (idMap && Object.keys(idMap).length > 0) {
-        //   console.log('有人加入时设置', idMap, userInfo);
-        //   CallKit.setUserIdMap(idMap);
-        //   CallKit.setUserInfo(userInfo);
-        // }
-        break;
-      default:
-        break;
-    }
-  };
-  const handleInvite = async (data: { channel: string; type: number; callerIMName: string }) => {
-    if (!getRTCToken) return console.error('need getRTCToken method to get token');
-    rtcConfig?.onRing?.(data);
-    const { agoraUid, accessToken } =
-      (await getRTCToken({
-        channel: data.channel,
-        chatUserId: rootStore.client.user,
-      })) || {};
-    if (!accessToken) return;
-    // --- 单人音视频被邀请方接听页面显示对方信息 --
-    const idMap =
-      (await rtcConfig?.getIdMap?.({
-        userId: rootStore.client.user,
-        channel: data.channel,
-      })) || {};
-
-    const membersId = Object.values(idMap);
-    const userInfo: Record<string, any> = {};
-    membersId.forEach(item => {
-      // @ts-ignore
-      userInfo[item] = {
-        nickname: rootStore.addressStore.appUsersInfo[item]?.nickname,
-        avatarUrl: rootStore.addressStore.appUsersInfo[item]?.avatarurl,
-      };
-    });
-    userInfo[data.callerIMName] = {
-      nickname: rootStore.addressStore.appUsersInfo[data.callerIMName]?.nickname,
-      avatarUrl: rootStore.addressStore.appUsersInfo[data.callerIMName]?.avatarurl,
-    };
-    if (idMap && Object.keys(idMap).length > 0) {
-      CallKit.setUserIdMap(idMap);
-      CallKit.setUserInfo(userInfo);
-    }
-
-    setCurrentCall({
-      ...data,
-      accessToken,
-      callType: data.type,
-    });
-    CallKit.answerCall(true, accessToken);
-  };
 
   const startVideoCall = async (type: 'video' | 'audio') => {
-    if (!getRTCToken) return console.error('need getRTCToken method to get token');
-    const channel = String(Math.ceil(Math.random() * 100000000));
-    const { agoraUid, accessToken } =
-      (await getRTCToken({
-        channel: channel,
-        chatUserId: rootStore.client.user,
-      })) || {};
-    if (!accessToken) return;
-    if (type == 'video') {
-      onVideoCall?.({
-        channel,
-      });
-    } else {
-      onAudioCall?.({
-        channel,
-      });
-    }
     if (CVS.chatType === 'groupChat') {
-      const members = await rtcConfig?.onInvite?.({ channel, conversation: CVS, type });
-      const rtcMembers = members?.map(item => {
-        return item.id;
-      });
-      const options = {
-        callType: type == 'video' ? 2 : 3,
-        chatType: 'groupChat',
-        to: rtcMembers,
-        agoraUid: agoraUid,
-        message: t(`Start a ${type} meeting`),
+      const msg = await callKitRef.current?.startGroupCall({
         groupId: CVS.conversationId,
-        groupName: CVS.name || '',
-        accessToken,
-        channel,
-      };
-      CallKit.startCall(options);
-      setCurrentCall({
-        channel,
-        accessToken,
-        groupId: CVS.conversationId,
-        groupName: CVS.name || '',
-        chatType: 'groupChat',
-        callType: type == 'video' ? 2 : 3,
+        callType: type,
+        msg: '邀请你进行音视频通话',
       });
-
-      const userInfo = {};
-      members?.forEach(item => {
-        // @ts-ignore
-        userInfo[item.id] = {
-          nickname: item.name,
-          avatarUrl: item.avatarurl,
-        };
-      });
-      // @ts-ignore
-      userInfo[rootStore.client.user] = {
-        nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
-        avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
-      };
-      CallKit.setUserInfo(userInfo);
-
+      if (msg) {
+        rootStore.messageStore.addMessage(msg as ChatSDK.MessageBody, 'groupChat', msg.to!);
+        console.log('msg --->', msg);
+      }
       return;
     }
-    const options = {
-      callType: type == 'video' ? 1 : 0,
-      chatType: 'singleChat',
-      to: CVS.conversationId,
-      agoraUid,
-      message: t(`Start a ${type} call`),
-      accessToken,
-      channel,
-    };
-    setCurrentCall({
-      channel,
-      accessToken,
-      targetId: CVS.conversationId,
-      targetName: CVS.name || '',
-      chatType: 'singleChat',
-      callType: type == 'video' ? 1 : 0,
-    });
 
-    CallKit.startCall(options);
-    // }
     try {
-      const idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
-      CallKit.setUserIdMap(idMap);
+      const msg = await callKitRef.current?.startSingleCall({
+        to: CVS.conversationId,
+        callType: type,
+        msg: `邀请你进行${type == 'video' ? '视频' : '语音'}通话`,
+      });
+      if (msg) {
+        rootStore.messageStore.addMessage(msg as ChatSDK.MessageBody, 'singleChat', msg.to!);
+        console.log('msg --->', msg);
+      }
     } catch (e) {
       console.error(e);
     }
+    // }
+    // try {
+    //   const idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
+    //   CallKit.setUserIdMap(idMap);
+    // } catch (e) {
+    //   console.error(e);
+    // }
 
-    CallKit.setUserInfo({
-      [CVS.conversationId]: {
-        nickname:
-          rootStore.addressStore.appUsersInfo[CVS.conversationId]?.nickname || CVS.conversationId,
-        avatarUrl: rootStore.addressStore.appUsersInfo[CVS.conversationId]?.avatarurl,
-      },
-      // @ts-ignore
-      [rootStore.client.user]: {
-        nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
-        avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
-      },
-    });
+    // CallKit.setUserInfo({
+    //   [CVS.conversationId]: {
+    //     nickname:
+    //       rootStore.addressStore.appUsersInfo[CVS.conversationId]?.nickname || CVS.conversationId,
+    //     avatarUrl: rootStore.addressStore.appUsersInfo[CVS.conversationId]?.avatarurl,
+    //   },
+    //   // @ts-ignore
+    //   [rootStore.client.user]: {
+    //     nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
+    //     avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
+    //   },
+    // });
   };
 
   useImperativeHandle(ref, () => ({
@@ -649,12 +452,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
       startVideoCall('audio');
     },
   }));
-  useEffect(() => {
-    if (!rtcConfig || !rtcConfig.appId) {
-      return;
-    }
-    CallKit.init(rtcConfig.appId, rtcConfig?.agoraUid, rootStore.client);
-  }, [rtcConfig?.appId, rtcConfig?.agoraUid]);
 
   // config rtc call
   let showAudioCall = true;
@@ -667,11 +464,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     showVideoCall = false;
   }
 
-  // not display rtc when rtcConfig is not set
-  if (!rtcConfig) {
-    showVideoCall = false;
-    showAudioCall = false;
-  }
   if (globalConfig?.header?.pinMessage === false) {
     showPinMessage = false;
   }
@@ -679,6 +471,10 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   // chatbot not display rtc
   if (CVS.conversationId?.indexOf('chatbot_') > -1) {
     showVideoCall = false;
+    showAudioCall = false;
+  }
+
+  if (CVS.chatType === 'groupChat') {
     showAudioCall = false;
   }
 
@@ -830,6 +626,26 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 });
               }}
               messageProps={{ ...messageProps, ...messageListProps?.messageProps }}
+              onRtcInviteMessageClick={async message => {
+                if (!callKitRef.current) return;
+                try {
+                  const msg = await callKitRef.current?.startSingleCall({
+                    to: message.from === rootStore.client.user ? message.to! : message.from!,
+                    callType: (message as ChatSDK.TextMsgBody).ext?.type == 1 ? 'video' : 'audio',
+                    msg: `邀请你进行${
+                      (message as ChatSDK.TextMsgBody).ext?.type == 1 ? '视频' : '语音'
+                    }通话`,
+                  });
+                  rootStore.messageStore.addMessage(
+                    msg as ChatSDK.MessageBody,
+                    'singleChat',
+                    msg.to!,
+                  );
+                  console.log('msg --->', msg);
+                } catch (e) {
+                  console.error(e);
+                }
+              }}
             ></MessageList>
           )}
           {messageInputProps?.enabledTyping && (
@@ -858,7 +674,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           )} */}
         </>
       )}
-      <CallKit
+      {/* <CallKit
         onAddPerson={showInvite}
         onStateChange={handleCallStateChange}
         onInvite={handleInvite}
@@ -868,7 +684,75 @@ let Chat = forwardRef((props: ChatProps, ref) => {
             {CVS.name}
           </Avatar>
         }
-      ></CallKit>
+      ></CallKit> */}
+      {rootStore.client.user && (
+        <CallKit
+          ref={callKitRef}
+          chatClient={rootStore.client}
+          initialSize={{
+            width: 748,
+            height: 523,
+          }}
+          managedPosition={true}
+          resizable={true}
+          draggable={true}
+          onInvitationAccept={() => {
+            callKitRef.current?.answerCall(true);
+          }}
+          onInvitationReject={() => {
+            callKitRef.current?.answerCall(false);
+          }}
+          onEndCallWithReason={(reason, callInfo) => {
+            console.log('🚀 onEndCallWithReason 接收到通话结束信22', reason, callInfo);
+            if (!callInfo.inviteMessageId) {
+              return;
+            }
+            if (callInfo.type === 0 || callInfo.type === 1) {
+              let msg = '';
+              switch (reason) {
+                case 'hangup':
+                  msg = `通话时长${callInfo.duration}`;
+                  break;
+                case 'reject':
+                  msg = '对方已拒绝';
+                  break;
+                case 'noResponse':
+                  msg = '对方未接听';
+                  break;
+                case 'cancel':
+                  msg = '已取消';
+                  break;
+                case 'busy':
+                  msg = '对方正忙';
+                  break;
+                case 'abnormalEnd':
+                  msg = '通话中断';
+                  break;
+                default:
+                  msg = '通话已结束';
+                  break;
+              }
+              rootStore.messageStore.updateMessage({
+                messageId: callInfo.inviteMessageId,
+                chatType: 'singleChat',
+                to:
+                  callInfo.calleeUserId === rootStore.client.user
+                    ? callInfo.callerUserId!
+                    : callInfo.calleeUserId!,
+                msg: msg,
+              });
+            } else {
+              rootStore.messageStore.updateMessage({
+                messageId: callInfo.inviteMessageId,
+                chatType: 'groupChat',
+                to: callInfo.groupId!,
+                msg: `通话已结束`,
+              });
+            }
+            console.log('onEndCallWithReason --->', reason, callInfo);
+          }}
+        ></CallKit>
+      )}
       <Modal
         open={reportOpen}
         title={t('report')}

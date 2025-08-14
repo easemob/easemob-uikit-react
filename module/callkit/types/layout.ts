@@ -1,5 +1,5 @@
 import React from 'react';
-import type { VideoWindowProps, ContainerSize, InvitationInfo } from './index';
+import type { VideoWindowProps, ContainerSize, InvitationInfo, CallKitIconMap } from './index';
 
 /**
  * 布局组件的通用 Props
@@ -23,7 +23,7 @@ export interface BaseLayoutProps {
   backgroundImage?: string;
 
   // 事件回调
-  callDuration?: string;
+  callDuration?: string; // 通话时长（内部管理）
   onMinimizedClick?: () => void;
 }
 
@@ -95,6 +95,17 @@ export interface FullLayoutProps extends BaseLayoutProps {
 
   // 🔧 新增：布局切换回调
   onLayoutModeChange?: (layoutMode: 'grid' | 'main') => void;
+
+  // 🔧 新增：网络质量相关状态
+  networkQuality?: Record<string, { uplinkNetworkQuality: number; downlinkNetworkQuality: number }>;
+
+  // 🔧 新增：Icon 自定义配置
+  customIcons?: CallKitIconMap; // 自定义图标映射
+  iconRenderer?: (
+    iconType: string,
+    defaultIcon: React.ReactElement,
+    context?: any,
+  ) => React.ReactElement; // 自定义图标渲染函数
 }
 
 /**

@@ -85,6 +85,7 @@ class MessageStore {
       setCurrentCVS: action,
       currentCvsMsgs: computed,
       sendMessage: action,
+      addMessage: action,
       receiveMessage: action,
       modifyMessage: action,
       sendChannelAck: action,
@@ -134,6 +135,37 @@ class MessageStore {
 
   setCurrentCVS(currentCVS: CurrentConversation) {
     this.currentCVS = currentCVS;
+  }
+
+  addMessage(message: ChatSDK.MessageBody, chatType: 'singleChat' | 'groupChat', to: string) {
+    this.message.byId.set(message.id, message);
+    this.message[chatType][to].push(message);
+  }
+
+  // internal use
+  updateMessage(params: {
+    messageId: string;
+    chatType: 'singleChat' | 'groupChat';
+    to: string;
+    msg: string;
+  }) {
+    const { messageId, chatType, to, msg } = params;
+    const message = this.message.byId.get(messageId) as ChatSDK.TextMsgBody;
+    if (message) {
+      this.message.byId.set(messageId, message);
+    }
+
+    const msgList = this.message[chatType][to];
+    const index = msgList.findIndex(
+      item => item.id === messageId || (item as any).mid === messageId,
+    );
+    if (index !== -1) {
+      // 🔧 使用 runInAction 和对象替换确保 MobX 能够跟踪变化
+      (msgList[index] as ChatSDK.TextMsgBody).ext!.rtcIsEnd = true;
+      runInAction(() => {
+        msgList[index] = { ...msgList[index], msg } as ChatSDK.TextMsgBody;
+      });
+    }
   }
 
   sendMessage(
@@ -373,6 +405,10 @@ class MessageStore {
   receiveMessage(message: BaseMessageType) {
     const curCvs = this.rootStore.conversationStore.currentCvs;
     const conversationId = getCvsIdFromMessage(message);
+    // rtc invite message
+    if (message.type === 'txt' && message.ext?.msgType === 'rtcCallWithAgora') {
+      message.ext.rtcIsEnd = false;
+    }
     //@ts-ignore
     if (
       curCvs &&

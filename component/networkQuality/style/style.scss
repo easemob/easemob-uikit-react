@@ -2,35 +2,35 @@
 
 $network-quality-prefix: 'cui-network-quality';
 
-// 网络质量颜色定义
+// 网络质量颜色定义 - 支持1-6级别
 $network-quality-colors: (
-  'level-3': #52c41a,  // 绿色 - 信号强
-  'level-2': #faad14,  // 橙色 - 信号中等
-  'level-1': #ff4d4f,  // 红色 - 信号弱
+  'excellent': #33FFAA,  // 绿色 - 信号极好/很好 (level 1-2)
+  'good': #faad14,       // 橙色 - 信号好/一般 (level 3-4)
+  'poor': #ff4d4f,       // 红色 - 信号差/极差 (level 5-6)
 );
 
-// 尺寸定义
+// 尺寸定义 - 恢复为3个信号条
 $network-quality-sizes: (
   'small': (
     width: 16px,
     height: 12px,
     bar-width: 3px,
     gap: 2px,
-    border-radius: 2px,
+    border-radius: 2px, // 🔧 增加圆角
   ),
   'medium': (
-    width: 20px,
-    height: 16px,
+    width: 22px,
+    height: 22px,
     bar-width: 4px,
-    gap: 2px,
-    border-radius: 3px,
+    gap: 3px,
+    border-radius: 5px, // 🔧 增加圆角
   ),
   'large': (
-    width: 24px,
-    height: 20px,
-    bar-width: 5px,
+    width: 22px,
+    height: 22px,
+    bar-width: 4px,
     gap: 3px,
-    border-radius: 4px,
+    border-radius: 5px, // 🔧 增加圆角
   ),
 );
 
@@ -49,15 +49,16 @@ $network-quality-sizes: (
   
   // 单个信号条
   &-bar {
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: rgba(0, 0, 0, 0.50);
     transition: all 0.3s ease;
+    border-radius: 2px; // 🔧 给所有信号条添加基础圆角
     
-    // 默认状态 - 灰色
+    // 默认状态 - 半透明黑色
     &:not(&-active) {
-      background-color: rgba(0, 0, 0, 0.15);
+      background-color: rgba(0, 0, 0, 0.50);
     }
     
-    // 激活状态会根据父级的 level 类来设置颜色
+    // 激活状态会根据父级的颜色类来设置颜色
   }
   
   // 不同尺寸的样式
@@ -75,7 +76,7 @@ $network-quality-sizes: (
           margin-right: 0;
         }
         
-        // 不同高度的信号条
+        // 3个不同高度的信号条
         &-1 {
           height: 25%;
         }
@@ -91,7 +92,7 @@ $network-quality-sizes: (
     }
   }
   
-  // 不同等级的颜色
+  // 不同质量等级的颜色
   @each $level, $color in $network-quality-colors {
     &.#{$network-quality-prefix}-#{$level} {
       .#{$network-quality-prefix}-bar-active {
@@ -112,7 +113,7 @@ $network-quality-sizes: (
 @media (prefers-color-scheme: dark) {
   .#{$network-quality-prefix} {
     &-bar:not(&-bar-active) {
-      background-color: rgba(255, 255, 255, 0.25);
+      background-color: rgba(0, 0, 0, 0.50);
     }
   }
 } 

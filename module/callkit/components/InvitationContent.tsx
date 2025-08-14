@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import classNames from 'classnames';
-import { InvitationInfo } from '../types';
-import { Icon } from '../../../component/icon/Icon';
-import Button from '../../../component/button';
 import Avatar from '../../../component/avatar';
+import Button from '../../../component/button';
+import { Icon } from '../../../component/icon/Icon';
+import { InvitationInfo, CallControlsIconMap } from '../types/index';
+// import '../styles/invitation.scss';
 
 interface InvitationContentProps {
   invitation: InvitationInfo;
@@ -16,6 +17,14 @@ interface InvitationContentProps {
   autoRejectTime?: number;
   className?: string;
   style?: React.CSSProperties;
+
+  // 🔧 新增：自定义图标支持
+  customIcons?: CallControlsIconMap;
+  iconRenderer?: (
+    iconType: string,
+    defaultIcon: React.ReactElement,
+    context?: any,
+  ) => React.ReactElement;
 }
 
 const InvitationContent: React.FC<InvitationContentProps> = ({
@@ -29,8 +38,47 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
   autoRejectTime = 30,
   className,
   style,
+  // 🔧 新增：自定义图标支持
+  customIcons,
+  iconRenderer,
 }) => {
   const [remainingTime, setRemainingTime] = useState(autoRejectTime);
+
+  // 🔧 新增：渲染图标的辅助函数
+  const renderIcon = React.useCallback(
+    (
+      iconKey: keyof CallControlsIconMap,
+      fallbackType: string,
+      iconProps: { width?: number; height?: number; color?: string } = {},
+    ) => {
+      const { width = 24, height = 24, color } = iconProps;
+
+      // 优先使用自定义图标
+      const customIcon = customIcons?.[iconKey];
+      if (customIcon) {
+        if (React.isValidElement(customIcon)) {
+          const elementProps = customIcon.props as any;
+          return React.cloneElement(customIcon, { width, height, color, ...(elementProps || {}) });
+        } else if (typeof customIcon === 'function') {
+          const CustomIconComponent = customIcon as React.ComponentType<any>;
+          return <CustomIconComponent width={width} height={height} color={color} />;
+        }
+      }
+
+      // 默认图标
+      const defaultIcon = (
+        <Icon type={fallbackType as any} width={width} height={height} color={color} />
+      );
+
+      // 使用自定义渲染函数
+      if (iconRenderer) {
+        return iconRenderer(iconKey, defaultIcon, { iconKey, fallbackType, iconProps });
+      }
+
+      return defaultIcon;
+    },
+    [customIcons, iconRenderer],
+  );
 
   // 倒计时逻辑
   useEffect(() => {
@@ -133,15 +181,14 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
       {/* 操作按钮 */}
       <div className="cui-callkit-invitation-actions" onClick={e => e.stopPropagation()}>
         <Button type="default" className="cui-callkit-invitation-reject-btn" onClick={handleReject}>
-          <Icon type="PHONE_HANG" width={24} height={24} color="#F9FAFA" />
+          {renderIcon('reject', 'PHONE_HANG', { width: 24, height: 24, color: '#F9FAFA' })}
         </Button>
         <Button type="primary" className="cui-callkit-invitation-accept-btn" onClick={handleAccept}>
-          <Icon
-            type={invitation.type === 'video' ? 'VIDEO_CAMERA' : 'PHONE_PICK'}
-            width={24}
-            height={24}
-            color="#F9FAFA"
-          />
+          {renderIcon('accept', invitation.type === 'video' ? 'VIDEO_CAMERA' : 'PHONE_PICK', {
+            width: 24,
+            height: 24,
+            color: '#F9FAFA',
+          })}
         </Button>
       </div>
     </div>

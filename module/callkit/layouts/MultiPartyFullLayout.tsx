@@ -71,6 +71,13 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
 
   // 🔧 新增：布局切换回调
   onLayoutModeChange,
+
+  // 🔧 新增：网络质量相关状态
+  networkQuality,
+
+  // 🔧 新增：Icon 自定义配置
+  customIcons,
+  iconRenderer,
 }) => {
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
@@ -105,6 +112,42 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
   };
 
   const headerInfo = getHeaderInfo();
+
+  // 🔧 新增：渲染 Header 图标的辅助函数
+  const renderHeaderIcon = React.useCallback(
+    (
+      iconKey: string,
+      fallbackType: string,
+      iconProps: { width?: number; height?: number; color?: string } = {},
+    ) => {
+      const { width = 24, height = 24, color } = iconProps;
+
+      // 优先使用自定义图标
+      const customIcon = customIcons?.header?.[iconKey];
+      if (customIcon) {
+        if (React.isValidElement(customIcon)) {
+          const elementProps = customIcon.props as any;
+          return React.cloneElement(customIcon, { width, height, color, ...(elementProps || {}) });
+        } else if (typeof customIcon === 'function') {
+          const CustomIconComponent = customIcon as React.ComponentType<any>;
+          return <CustomIconComponent width={width} height={height} color={color} />;
+        }
+      }
+
+      // 默认图标
+      const defaultIcon = (
+        <Icon type={fallbackType as any} width={width} height={height} color={color} />
+      );
+
+      // 使用自定义渲染函数
+      if (iconRenderer) {
+        return iconRenderer(iconKey, defaultIcon, { iconKey, fallbackType, iconProps });
+      }
+
+      return defaultIcon;
+    },
+    [customIcons, iconRenderer],
+  );
 
   // 处理最小化状态下的点击
   const handleMinimizedClick = () => {
@@ -169,12 +212,11 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
                   style={{ border: 'none' }}
                   onClick={onFullscreenToggle}
                 >
-                  <Icon
-                    type={isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND'}
-                    width={24}
-                    height={24}
-                    color="#F9FAFA"
-                  />
+                  {renderHeaderIcon(
+                    isFullscreen ? 'exitFullscreen' : 'fullscreen',
+                    isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
+                    { width: 24, height: 24, color: '#F9FAFA' },
+                  )}
                 </Button>,
                 <Button
                   key="minimize"
@@ -183,7 +225,11 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
                   style={{ border: 'none' }}
                   onClick={onMinimizedToggle}
                 >
-                  <Icon type="BOXES" width={24} height={24} color="#F9FAFA" />
+                  {renderHeaderIcon('minimize', 'BOXES', {
+                    width: 24,
+                    height: 24,
+                    color: '#F9FAFA',
+                  })}
                 </Button>,
                 // 添加参与者按钮 - 只在通话中时显示
                 ...(callStatus === 'connected'
@@ -195,7 +241,11 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
                         style={{ border: 'none' }}
                         onClick={onAddParticipant}
                       >
-                        <Icon type="PERSON_ADD" width={24} height={24} color="#F9FAFA" />
+                        {renderHeaderIcon('addParticipant', 'PERSON_ADD', {
+                          width: 24,
+                          height: 24,
+                          color: '#F9FAFA',
+                        })}
                       </Button>,
                     ]
                   : []),
@@ -240,6 +290,9 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
                 isGroupCall={isGroupCall}
                 hasParticipants={hasParticipants}
                 isConnected={isConnected}
+                // 🔧 新增：Icon 自定义配置
+                customIcons={customIcons?.controls}
+                iconRenderer={iconRenderer}
               />
             </div>
           )}

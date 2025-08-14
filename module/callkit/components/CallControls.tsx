@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config';
 import { Icon } from '../../../component/icon/Icon';
+import type { CallControlsIconMap } from '../types/index';
 import './CallControls.scss';
 
 export interface CallControlsProps {
@@ -47,6 +48,14 @@ export interface CallControlsProps {
   isGroupCall?: boolean; // 是否为群组通话
   hasParticipants?: boolean; // 是否有其他参与者加入
   isConnected?: boolean; // 是否已连接到通话
+
+  // 🔧 新增：Icon 自定义配置
+  customIcons?: CallControlsIconMap; // 自定义图标映射
+  iconRenderer?: (
+    iconType: string,
+    defaultIcon: React.ReactElement,
+    context?: any,
+  ) => React.ReactElement; // 自定义图标渲染函数
 }
 
 const CallControls: React.FC<CallControlsProps> = ({
@@ -75,9 +84,48 @@ const CallControls: React.FC<CallControlsProps> = ({
   isGroupCall = false,
   hasParticipants = false,
   isConnected = false,
+  // 🔧 新增：Icon 自定义配置
+  customIcons,
+  iconRenderer,
 }) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('call-controls');
+
+  // 🔧 新增：渲染图标的辅助函数
+  const renderIcon = React.useCallback(
+    (
+      iconKey: keyof CallControlsIconMap,
+      fallbackType: string,
+      iconProps: { width?: number; height?: number; color?: string } = {},
+    ) => {
+      const { width = 24, height = 24, color } = iconProps;
+
+      // 优先使用自定义图标
+      const customIcon = customIcons?.[iconKey];
+      if (customIcon) {
+        if (React.isValidElement(customIcon)) {
+          const elementProps = customIcon.props as any;
+          return React.cloneElement(customIcon, { width, height, color, ...(elementProps || {}) });
+        } else if (typeof customIcon === 'function') {
+          const CustomIconComponent = customIcon as React.ComponentType<any>;
+          return <CustomIconComponent width={width} height={height} color={color} />;
+        }
+      }
+
+      // 默认图标
+      const defaultIcon = (
+        <Icon type={fallbackType as any} width={width} height={height} color={color} />
+      );
+
+      // 使用自定义渲染函数
+      if (iconRenderer) {
+        return iconRenderer(iconKey, defaultIcon, { iconKey, fallbackType, iconProps });
+      }
+
+      return defaultIcon;
+    },
+    [customIcons, iconRenderer],
+  );
 
   // 内部状态管理
   const [internalMuted, setInternalMuted] = React.useState(defaultMuted);
@@ -194,7 +242,7 @@ const CallControls: React.FC<CallControlsProps> = ({
             onClick={isCaller ? handleHangupClick : handleRejectClick}
             title={isCaller ? '挂断' : '拒绝'}
           >
-            <Icon type="X_MARK_THICK" width={24} height={24} color={'#F9FAFA'} />
+            {renderIcon('reject', 'X_MARK_THICK', { width: 24, height: 24, color: '#F9FAFA' })}
           </button>
           <div className={classNames(`${prefixCls}-button-text`)}>
             {isCaller ? 'End' : 'Reject'}
@@ -213,12 +261,11 @@ const CallControls: React.FC<CallControlsProps> = ({
             title={muted ? '取消静音' : '静音'}
             disabled={true} // 预览模式下禁用点击
           >
-            <Icon
-              type={muted ? 'MIC_OFF' : 'MIC_ON'}
-              width={24}
-              height={24}
-              color={muted ? '#F9FAFA' : '#171A1C'}
-            />
+            {renderIcon(muted ? 'micOff' : 'micOn', muted ? 'MIC_OFF' : 'MIC_ON', {
+              width: 24,
+              height: 24,
+              color: muted ? '#F9FAFA' : '#171A1C',
+            })}
           </button>
           <div className={classNames(`${prefixCls}-button-text`)}>
             {muted ? 'Mike off' : 'Mike on'}
@@ -238,12 +285,15 @@ const CallControls: React.FC<CallControlsProps> = ({
               title={cameraEnabled ? '关闭摄像头' : '开启摄像头'}
               disabled={true} // 预览模式下禁用点击
             >
-              <Icon
-                type={cameraEnabled ? 'VIDEO_CAMERA' : 'VIDEO_CAMERA_SLASH'}
-                color={cameraEnabled ? '#171A1C' : '#F9FAFA'}
-                width={24}
-                height={24}
-              />
+              {renderIcon(
+                cameraEnabled ? 'cameraOn' : 'cameraOff',
+                cameraEnabled ? 'VIDEO_CAMERA' : 'VIDEO_CAMERA_SLASH',
+                {
+                  width: 24,
+                  height: 24,
+                  color: cameraEnabled ? '#171A1C' : '#F9FAFA',
+                },
+              )}
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>
               {cameraEnabled ? 'Camera on' : 'Camera off'}
@@ -259,12 +309,11 @@ const CallControls: React.FC<CallControlsProps> = ({
               onClick={handleAcceptClick}
               title="接听"
             >
-              <Icon
-                type={callMode === 'video' ? 'VIDEO_CAMERA' : 'PHONE_PICK'}
-                width={24}
-                height={24}
-                color={'#171A1C'}
-              />
+              {renderIcon('accept', callMode === 'video' ? 'VIDEO_CAMERA' : 'PHONE_PICK', {
+                width: 24,
+                height: 24,
+                color: '#171A1C',
+              })}
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>{'Accept'}</div>
           </div>
@@ -288,12 +337,11 @@ const CallControls: React.FC<CallControlsProps> = ({
           title={muted ? '取消静音' : '静音'}
           disabled={shouldDisableControls} // 🔧 根据条件禁用点击
         >
-          <Icon
-            type={muted ? 'MIC_OFF' : 'MIC_ON'}
-            width={24}
-            height={24}
-            color={muted ? '#F9FAFA' : '#171A1C'}
-          />
+          {renderIcon(muted ? 'micOff' : 'micOn', muted ? 'MIC_OFF' : 'MIC_ON', {
+            width: 24,
+            height: 24,
+            color: muted ? '#F9FAFA' : '#171A1C',
+          })}
         </button>
         <div className={classNames(`${prefixCls}-button-text`)}>
           {muted ? 'Mike off' : 'Mike on'}
@@ -313,12 +361,15 @@ const CallControls: React.FC<CallControlsProps> = ({
             title={cameraEnabled ? '关闭摄像头' : '开启摄像头'}
             disabled={shouldDisableControls} // 🔧 根据条件禁用点击
           >
-            <Icon
-              type={cameraEnabled ? 'VIDEO_CAMERA' : 'VIDEO_CAMERA_SLASH'}
-              color={cameraEnabled ? '#171A1C' : '#F9FAFA'}
-              width={24}
-              height={24}
-            />
+            {renderIcon(
+              cameraEnabled ? 'cameraOn' : 'cameraOff',
+              cameraEnabled ? 'VIDEO_CAMERA' : 'VIDEO_CAMERA_SLASH',
+              {
+                width: 24,
+                height: 24,
+                color: cameraEnabled ? '#171A1C' : '#F9FAFA',
+              },
+            )}
           </button>
           <div className={classNames(`${prefixCls}-button-text`)}>
             {cameraEnabled ? 'Camera on' : 'Camera off'}
@@ -351,12 +402,11 @@ const CallControls: React.FC<CallControlsProps> = ({
             title={speakerEnabled ? '关闭扬声器' : '开启扬声器'}
             disabled={shouldDisableControls} // 🔧 根据条件禁用点击
           >
-            <Icon
-              type={speakerEnabled ? 'SPEAKER_WAVE_2' : 'SPEAKER_X_MARK'}
-              width={24}
-              height={24}
-              color={speakerEnabled ? '#171A1C' : '#F9FAFA'}
-            />
+            {renderIcon(
+              speakerEnabled ? 'speakerOn' : 'speakerOff',
+              speakerEnabled ? 'SPEAKER_WAVE_2' : 'SPEAKER_X_MARK',
+              { width: 24, height: 24, color: speakerEnabled ? '#171A1C' : '#F9FAFA' },
+            )}
           </button>
           <div className={classNames(`${prefixCls}-button-text`)}>
             {speakerEnabled ? 'Speaker on' : 'Speaker off'}
@@ -371,7 +421,11 @@ const CallControls: React.FC<CallControlsProps> = ({
           onClick={handleHangupClick}
           title="挂断"
         >
-          <Icon type="X_MARK_THICK" width={24} height={24} color={'#F9FAFA'} />
+          {renderIcon('hangup', 'X_MARK_THICK', {
+            width: 24,
+            height: 24,
+            color: '#F9FAFA',
+          })}
         </button>
         <div className={classNames(`${prefixCls}-button-text`)}>{'End'}</div>
       </div>

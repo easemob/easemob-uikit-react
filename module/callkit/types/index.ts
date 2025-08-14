@@ -1,3 +1,7 @@
+import CallError from '../services/CallError';
+import { IAgoraRTCError } from 'agora-rtc-sdk-ng';
+import { CallInfo } from '../services/CallService';
+import { ChatSDK } from 'module/SDK';
 // 视频窗口属性
 export interface VideoWindowProps {
   id: string;
@@ -127,29 +131,31 @@ export interface CallKitRef {
   startCall: (videos: VideoWindowProps[]) => void; // 开始通话（演示模式）
   endCall: () => void; // 结束通话
   updateVideos: (videos: VideoWindowProps[]) => void; // 更新视频列表
-  startCalling: () => void; // 主叫发起呼叫
+  // startCalling: () => void; // 主叫发起呼叫
 
   // 状态查询方法
-  isInCall: () => boolean; // 是否在通话中
-  hasInvitation: () => boolean; // 是否有邀请
+
   getCallStatus: () => 'idle' | 'calling' | 'ringing' | 'connected'; // 获取呼叫状态
 
   // 预览相关方法
   showPreview: (callModeToSet?: 'video' | 'audio' | 'group') => void; // 显示预览界面
 
   // 新增：主动发起多人通话方法
-  startGroupCall: (groupId: string, callType?: 'video' | 'audio') => Promise<void>; // 发起多人通话，先显示用户选择界面
+  startGroupCall: (options: {
+    groupId: string;
+    callType: 'video' | 'audio';
+    msg: string;
+    ext?: Record<string, any>;
+  }) => Promise<ChatSDK.TextMsgBody | null>; // 发起多人通话，先显示用户选择界面
 
-  // 真实通话相关方法
-  startRealCall: (options: {
+  // 一对一通话方法
+  startSingleCall: (options: {
     to: string;
     callType: 'video' | 'audio';
-    groupId?: string;
-    groupName?: string;
-    members?: string[];
-  }) => void; // 发起真实通话
-  answerRealCall: (result: boolean) => void; // 接听真实通话
-  hangupRealCall: (reason?: string) => void; // 挂断真实通话
+    msg: string;
+  }) => Promise<ChatSDK.TextMsgBody | null>; // 发起真实通话
+  answerCall: (result: boolean) => void; // 接听真实通话
+  hangupCall: (reason?: string) => void; // 挂断真实通话
   setUserInfo: (userInfo: { [key: string]: any }) => void; // 设置用户信息
 
   // 音视频控制方法
@@ -193,8 +199,15 @@ export interface CallKitProps {
   screenSharing?: boolean;
 
   // 真实通话相关配置
-  webimConnection?: any; // 环信 IM 连接
+  chatClient?: ChatSDK.Connection; // 环信 IM 连接
   enableRealCall?: boolean; // 是否启用真实通话功能
+
+  // 🔧 新增：铃声相关配置
+  outgoingRingtoneSrc?: string; // 拨打电话铃声音频文件路径
+  incomingRingtoneSrc?: string; // 接听电话铃声音频文件路径
+  enableRingtone?: boolean; // 是否启用铃声，默认 true
+  ringtoneVolume?: number; // 铃声音量，范围 0-1，默认 0.8
+  ringtoneLoop?: boolean; // 是否循环播放，默认 true
 
   // 可调整大小相关
   resizable?: boolean;
@@ -225,17 +238,29 @@ export interface CallKitProps {
   // 最小化相关
   isMinimized?: boolean; // 最小化状态
   minimizedSize?: { width: number; height: number }; // 最小化时的尺寸，默认 { width: 200, height: 150 }
-  callDuration?: string; // 通话时长，用于最小化时显示
   onMinimizedChange?: (minimized: boolean) => void; // 最小化状态变化回调
   onMinimizedToggle?: () => void; // 最小化切换回调
 
   // 邀请相关配置
   invitationCustomContent?: React.ReactNode; // 自定义邀请内容
   acceptText?: string; // 接听按钮文本
-  rejectText?: string; // 挂断按钮文本
-  showInvitationAvatar?: boolean; // 是否显示邀请头像
-  showInvitationTimer?: boolean; // 是否显示邀请倒计时
+  rejectText?: string; // 拒绝按钮文本
+  showInvitationAvatar?: boolean; // 是否显示邀请者头像
+  showInvitationTimer?: boolean; // 是否显示倒计时
   autoRejectTime?: number; // 自动拒绝时间（秒）
+
+  // 群组成员选择相关
+  groupMembers?: any[]; // 群组成员列表
+  userSelectTitle?: string; // 用户选择弹窗标题
+
+  // 新增：基于 groupId 自动获取群成员的方式
+  webimGroupId?: string; // WebIM 群组 ID
+  userInfoProvider?: (
+    userIds: string[],
+  ) => Promise<Array<{ userId: string; nickname?: string; avatarUrl?: string }>>;
+  groupInfoProvider?: (
+    groupIds: string[],
+  ) => Promise<Array<{ groupId: string; groupName?: string; groupAvatar?: string }>>;
 
   // 事件回调
   onVideoClick?: (id: string) => void;
@@ -244,56 +269,68 @@ export interface CallKitProps {
   onSpeakerToggle?: (enabled: boolean) => void;
   onScreenShareToggle?: (sharing: boolean) => void;
   onHangup?: () => void;
-  onAddParticipant?: (newMembers?: any[]) => void;
-
-  // 群组成员选择相关
-  groupMembers?: any[]; // 群组成员列表，用于添加参与者时选择（传统方式）
-  userSelectTitle?: string; // 用户选择弹窗标题
-
-  // 新增：基于 groupId 自动获取群成员的方式
-  /** @deprecated 不再使用，请直接调用 startGroupCall(groupId) 方法 */
-  webimGroupId?: string; // [已废弃] 群组ID，现在统一通过 startGroupCall 方法传入
-
-  // 通用用户信息提供器 - 用于获取任何用户的头像昵称（包括群成员、邀请人等）
-  userInfoProvider?: (userIds: string[]) =>
-    | Promise<
-        {
-          userId: string;
-          nickname?: string;
-          avatarUrl?: string;
-        }[]
-      >
-    | { userId: string; nickname?: string; avatarUrl?: string }[]; // 通用用户信息获取provider
-
-  // 群组信息提供器 - 用于获取群组的名称和头像
-  groupInfoProvider?: (groupIds: string[]) =>
-    | Promise<
-        {
-          groupId: string;
-          groupName?: string;
-          groupAvatar?: string;
-        }[]
-      >
-    | { groupId: string; groupName?: string; groupAvatar?: string }[]; // 群组信息获取provider
-
-  // 🔧 新增：音量指示器配置
+  onAddParticipant?: () => void;
+  onInvitationAccept?: (invitation: InvitationInfo) => void;
+  onInvitationReject?: (invitation: InvitationInfo) => void;
+  onCallStart?: (videos: VideoWindowProps[]) => void;
+  onCallEnd?: (reason: string, callInfo: CallInfo) => void;
+  onLayoutModeChange?: (layoutMode: 'grid' | 'main') => void;
   speakingVolumeThreshold?: number; // 说话指示器显示的音量阈值，范围1-100，默认60
 
-  // 邀请事件回调
-  onInvitationAccept?: (invitation: InvitationInfo) => void; // 接听邀请回调
-  onInvitationReject?: (invitation: InvitationInfo) => void; // 拒绝邀请回调
-  onCallStart?: (videos: VideoWindowProps[]) => void; // 通话开始回调
-  onCallEnd?: () => void; // 通话结束回调
+  // 🔧 新增：Icon 自定义配置
+  customIcons?: CallKitIconMap; // 自定义图标映射
 
-  // Agora RTC 事件回调
-  onUserPublished?: (user: any, mediaType: string) => void; // 远程用户发布流
-  onUserLeft?: (user: any, reason: string) => void; // 远程用户离开
-  onUserUnpublished?: (user: any, mediaType: string) => void; // 远程用户停止发布流
-  onRemoteVideoReady?: (videoInfo: VideoWindowProps) => void; // 远程视频流准备就绪
-
-  // 🔧 新增：布局切换回调
-  onLayoutModeChange?: (layoutMode: 'grid' | 'main') => void; // 布局模式切换回调
+  onCallError?: (error: CallError) => void; // SDK error
+  onReceivedCall?: (callType: 'video' | 'audio' | 'group', userId: string, ext?: any) => void;
+  onRemoteUserJoined?: (userId: string, callType: 'video' | 'audio' | 'group') => void;
+  onRemoteUserLeft?: (userId: string, callType: 'video' | 'audio' | 'group') => void;
+  onRtcEngineCreated?: (rtc: any) => void;
+  onEndCallWithReason?: (reason: string, callInfo: CallInfo) => void;
 }
 
 // React相关导入
 import type React from 'react';
+
+// 🔧 新增：Icon 自定义相关类型
+export interface CustomIconProps {
+  type?: string;
+  width?: number;
+  height?: number;
+  color?: string;
+  [key: string]: any;
+}
+
+export type CustomIconComponent = React.ComponentType<CustomIconProps> | React.ReactElement;
+
+// CallControls 可自定义的图标
+export interface CallControlsIconMap {
+  micOn?: CustomIconComponent;
+  micOff?: CustomIconComponent;
+  cameraOn?: CustomIconComponent;
+  cameraOff?: CustomIconComponent;
+  speakerOn?: CustomIconComponent;
+  speakerOff?: CustomIconComponent;
+  hangup?: CustomIconComponent;
+  accept?: CustomIconComponent;
+  reject?: CustomIconComponent;
+  screenShare?: CustomIconComponent;
+  screenShareStop?: CustomIconComponent;
+}
+
+// Header 可自定义的图标
+export interface HeaderIconMap {
+  back?: CustomIconComponent;
+  close?: CustomIconComponent;
+  fullscreen?: CustomIconComponent;
+  exitFullscreen?: CustomIconComponent;
+  minimize?: CustomIconComponent;
+  more?: CustomIconComponent;
+  addParticipant?: CustomIconComponent; // 添加参与者按钮
+  [key: string]: CustomIconComponent | undefined;
+}
+
+// 全局 Icon 映射
+export interface CallKitIconMap {
+  controls?: CallControlsIconMap;
+  header?: HeaderIconMap;
+}

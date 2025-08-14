@@ -54,6 +54,7 @@ export const FullLayoutManager: React.FC<FullLayoutProps> = props => {
     // 其他
     callDuration = '00:00:00',
     onMinimizedClick,
+    ...restProps
   } = props;
 
   // 根据通话模式和状态选择布局

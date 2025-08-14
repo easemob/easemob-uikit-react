@@ -125,6 +125,19 @@ const canModifyMessage = (message: BaseMessageType) => {
   }
 };
 
+const getRtcMsgIcon = (message: BaseMessageType) => {
+  // @ts-ignore
+  if (message?.ext?.rtcIsEnd || !message?.mid) {
+    if (message?.ext?.type === 0) {
+      return 'PHONE_HANG';
+    } else {
+      return 'VIDEO_CAMERA';
+    }
+  } else {
+    return 'PHONE_PICK';
+  }
+};
+
 let BaseMessage = (props: BaseMessageProps) => {
   const {
     message,
@@ -173,6 +186,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     onClickThreadTitle,
     reactionConfig,
     formatDateTime,
+    onClick,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -305,9 +319,42 @@ let BaseMessage = (props: BaseMessageProps) => {
     );
   };
 
+  let isRtcInviteMessage = false;
+  if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
+    isRtcInviteMessage = true;
+  }
   const contentNode = hasBubble ? (
-    <div className={`${prefixCls}-content`} style={bubbleStyle}>
-      {props.children}
+    <div
+      className={`${prefixCls}-content`}
+      style={bubbleStyle}
+      onClick={() => {
+        onClick?.(message as ChatSDK.MessageBody);
+      }}
+    >
+      {isRtcInviteMessage ? (
+        <div className="rtc-invite-message-container">
+          {isRtcInviteMessage && direction === 'ltr' && (
+            <Icon
+              // @ts-ignore
+              type={getRtcMsgIcon(message)}
+              width={16}
+              height={16}
+            ></Icon>
+          )}
+          {props.children}
+          {isRtcInviteMessage && direction === 'rtl' && (
+            <Icon
+              color="#f9fafa"
+              // @ts-ignore
+              type={getRtcMsgIcon(message)}
+              width={16}
+              height={16}
+            ></Icon>
+          )}
+        </div>
+      ) : (
+        props.children
+      )}
       {thread && chatThreadOverview && threadNode()}
     </div>
   ) : (
@@ -601,10 +648,10 @@ let BaseMessage = (props: BaseMessageProps) => {
   }
 
   // 音视频邀请消息去掉更多操作
-  let isRtcInviteMessage = false;
-  if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
-    isRtcInviteMessage = true;
-  }
+  // let isRtcInviteMessage = false;
+  // if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
+  //   isRtcInviteMessage = true;
+  // }
 
   const handleClickEmoji = (emoji: string) => {
     onAddReactionEmoji && onAddReactionEmoji(emoji);
@@ -774,6 +821,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               ) : (
                 <></>
               )}
+              {/* {isRtcInviteMessage && <Icon type="STAR" width={16} height={16}></Icon>} */}
             </div>
           </div>
         </div>

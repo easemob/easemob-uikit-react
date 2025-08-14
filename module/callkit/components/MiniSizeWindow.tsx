@@ -105,17 +105,9 @@ export const MiniSizeWindow: React.FC<MiniSizeWindowProps> = ({
     }
   };
 
-  // 获取状态文本
-  const getStatusText = () => {
-    switch (callStatus) {
-      case 'connecting':
-        return '连接中...';
-      case 'ringing':
-        return '响铃中...';
-      case 'connected':
-      default:
-        return callDuration;
-    }
+  // 获取时长文本
+  const getDurationText = () => {
+    return callDuration || '00:00:00';
   };
 
   // 获取参与者信息
@@ -270,7 +262,7 @@ export const MiniSizeWindow: React.FC<MiniSizeWindowProps> = ({
 
           {/* 文本信息 */}
           <div className={`${prefixCls}-mini-text`}>
-            <div className={`${prefixCls}-mini-duration`}>{getStatusText()}</div>
+            <div className={`${prefixCls}-mini-duration`}>{getDurationText()}</div>
             {/* <div className={`${prefixCls}-mini-participants`}>{getParticipantInfo()}</div> */}
           </div>
         </>

@@ -20,13 +20,13 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
   gap = 8,
   maxVideos,
 
-  // 🔧 背景图片设置
+  // 🔧 多人通话背景图片设置
   backgroundImage,
 
   // 呼叫状态相关
   callMode = 'video',
   callStatus = 'calling',
-  isShowingPreview = false,
+  isShowingPreview = true,
 
   // 全屏相关
   isFullscreen = false,
@@ -49,6 +49,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
   onSpeakerToggle,
   onScreenShareToggle,
   onHangup,
+  onAddParticipant,
 
   // 预览模式回调
   onPreviewAccept,
@@ -66,9 +67,52 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
   isGroupCall = false,
   hasParticipants = false,
   isConnected = false,
+
+  // 🔧 新增：网络质量相关状态
+  networkQuality,
+
+  // 🔧 新增：Icon 自定义配置
+  customIcons,
+  iconRenderer,
 }) => {
   // 获取本地视频（预览模式下显示的视频）
-  const localVideo = videos.find(video => video.isLocalVideo) || videos[0];
+  const localVideo = videos.find(video => video.isLocalVideo);
+
+  // 🔧 新增：渲染 Header 图标的辅助函数
+  const renderHeaderIcon = React.useCallback(
+    (
+      iconKey: string,
+      fallbackType: string,
+      iconProps: { width?: number; height?: number; color?: string } = {},
+    ) => {
+      const { width = 24, height = 24, color } = iconProps;
+
+      // 优先使用自定义图标
+      const customIcon = customIcons?.header?.[iconKey];
+      if (customIcon) {
+        if (React.isValidElement(customIcon)) {
+          const elementProps = customIcon.props as any;
+          return React.cloneElement(customIcon, { width, height, color, ...(elementProps || {}) });
+        } else if (typeof customIcon === 'function') {
+          const CustomIconComponent = customIcon as React.ComponentType<any>;
+          return <CustomIconComponent width={width} height={height} color={color} />;
+        }
+      }
+
+      // 默认图标
+      const defaultIcon = (
+        <Icon type={fallbackType as any} width={width} height={height} color={color} />
+      );
+
+      // 使用自定义渲染函数
+      if (iconRenderer) {
+        return iconRenderer(iconKey, defaultIcon, { iconKey, fallbackType, iconProps });
+      }
+
+      return defaultIcon;
+    },
+    [customIcons, iconRenderer],
+  );
 
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
@@ -126,7 +170,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
     }
     return undefined; // 返回undefined，让CSS默认样式生效
   }, [backgroundImage]);
-
+  console.log('有 localVideo -->', localVideo, callMode);
   return (
     <div
       className={`${prefixCls}-one-to-one-full-layout`}
@@ -175,12 +219,11 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
               style={{ border: 'none' }}
               onClick={onFullscreenToggle}
             >
-              <Icon
-                type={isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND'}
-                width={24}
-                height={24}
-                color="#F9FAFA"
-              />
+              {renderHeaderIcon(
+                isFullscreen ? 'exitFullscreen' : 'fullscreen',
+                isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
+                { width: 24, height: 24, color: '#F9FAFA' },
+              )}
             </Button>,
             <Button
               key="minimize"
@@ -189,7 +232,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
               style={{ border: 'none' }}
               onClick={onMinimizedToggle}
             >
-              <Icon type="BOXES" width={24} height={24} color="#F9FAFA" />
+              {renderHeaderIcon('minimize', 'BOXES', { width: 24, height: 24, color: '#F9FAFA' })}
             </Button>,
           ]}
         />
@@ -217,6 +260,9 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
             isGroupCall={isGroupCall}
             hasParticipants={hasParticipants}
             isConnected={isConnected}
+            // 🔧 新增：Icon 自定义配置
+            customIcons={customIcons?.controls}
+            iconRenderer={iconRenderer}
           />
         </div>
       )}

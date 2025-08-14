@@ -20,6 +20,7 @@ const useEventHandler = (props: ProviderProps) => {
   useEffect(() => {
     client?.addEventHandler?.('UIKitMessage', {
       onTextMessage: message => {
+        console.log('onTextMessage', message);
         messageStore.receiveMessage(message);
       },
       onImageMessage: message => {

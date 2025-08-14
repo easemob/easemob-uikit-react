@@ -322,14 +322,14 @@ const ChatApp: FC<any> = () => {
                     visible: true,
                     actions: [{ content: '' }],
                   },
-                  suffixIcon: [
-                    'THREAD',
-                    'AUDIO',
-                    <Button key="11" type="text" shape="circle">
-                      {' '}
-                      <Icon type="PIN" width={24} height={24}></Icon>
-                    </Button>,
-                  ],
+                  // suffixIcon: [
+                  //   'THREAD',
+                  //   'AUDIO',
+                  //   <Button key="11" type="text" shape="circle">
+                  //     {' '}
+                  //     <Icon type="PIN" width={24} height={24}></Icon>
+                  //   </Button>,
+                  // ],
                   // suffixIcon: (
                   //   <div>
                   //     {currentCvs.chatType !== 'singleChat' && (
@@ -427,8 +427,8 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: appKey || 'easemob#easeim',
-        userId: userId || 'zd1',
+        appKey: appKey || '1107220708140392#gray',
+        userId: userId || 'p1',
         password: password || '1',
         useUserInfo: true,
         maxMessages: 100,

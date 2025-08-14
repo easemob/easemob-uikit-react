@@ -526,6 +526,14 @@ let TextMessage = (props: TextMessageProps) => {
       clearInterval(typingInterval);
     };
   }, [msg, currentIndex]);
+
+  if (
+    textMessage?.ext?.msgType === 'rtcCallWithAgora' &&
+    !textMessage.mid &&
+    textMessage.ext.rtcIsEnd == undefined
+  ) {
+    msg = '通话已结束';
+  }
   return (
     <>
       {onlyContent ? (
@@ -590,6 +598,7 @@ let TextMessage = (props: TextMessageProps) => {
             thread={_thread}
             chatThreadOverview={textMessage.chatThreadOverview}
             onClickThreadTitle={handleClickThreadTitle}
+            onClick={onClick}
             {...others}
           >
             <div

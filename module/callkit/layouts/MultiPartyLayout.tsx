@@ -208,16 +208,14 @@ export class MainVideoLayoutStrategy implements LayoutStrategy {
     if (containerSize.width === 0 || containerSize.height === 0) {
       return { width: '100%', height: '100%', actualWidth: 0, actualHeight: 0 };
     }
-    console.log('headerHeight', headerHeight, controlsHeight);
     // 简化计算：总的可用高度减去所有固定高度部分
     const totalFixedHeight = headerHeight + controlsHeight + 16 + 8; // header + controls + margins
     const containerPadding = 8;
-    const thumbnailHeight = 120;
+    const thumbnailHeight = 72;
     const containerGap = 12;
 
     const availableHeight = containerSize.height - totalFixedHeight - containerPadding * 2;
     const availableWidth = containerSize.width - containerPadding * 2;
-    console.log('availableHeight', availableHeight, availableWidth);
     // 主视频可用高度 = 可用高度 - 缩略图高度 - 间距
     const mainVideoMaxHeight =
       availableHeight - thumbnailHeight - containerGap - containerPadding * 2;
@@ -226,7 +224,6 @@ export class MainVideoLayoutStrategy implements LayoutStrategy {
     // 基于宽度计算视频尺寸
     let videoWidth = mainVideoMaxWidth;
     let videoHeight = videoWidth / aspectRatio;
-    console.log('mainVideoMaxHeight -->', mainVideoMaxHeight, videoWidth);
     // 如果高度超出限制，则基于高度计算
     if (videoHeight > mainVideoMaxHeight) {
       videoHeight = mainVideoMaxHeight;
@@ -272,9 +269,9 @@ export class MainVideoLayoutStrategy implements LayoutStrategy {
     const selectedVideo = videos.find(v => v.id === selectedVideoId) || videos[0];
     const otherVideos = videos.filter(v => v.id !== selectedVideo.id);
 
-    const thumbnailHeight = 120;
-    // 固定缩略图宽度为120px，保持正方形
-    const thumbnailWidth = 120;
+    const thumbnailHeight = 72;
+    // 固定缩略图宽度为72px，保持正方形
+    const thumbnailWidth = 72;
 
     return (
       <MainVideoLayoutContent
@@ -341,17 +338,6 @@ const MainVideoLayoutContent: React.FC<MainVideoLayoutContentProps> = ({
     if (!container) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = container;
-
-    // 调试信息
-    console.log('滚动检测:', {
-      scrollLeft,
-      scrollWidth,
-      clientWidth,
-      canScrollLeft: scrollLeft > 0,
-      canScrollRight: scrollLeft < scrollWidth - clientWidth - 5 - 16,
-      otherVideosCount: otherVideos.length,
-      thumbnailWidth,
-    });
 
     setCanScrollLeft(scrollLeft > 0);
     // 增加一些容差值(5px)来确保检测更灵敏
@@ -592,6 +578,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
   // 选择布局策略
   const strategy = isMainVideoMode ? new MainVideoLayoutStrategy() : new MultiPartyLayoutStrategy();
   const layoutConfig = strategy.calculateLayout(videos.length, containerSize);
+  console.log('layoutConfig', containerSize, layoutConfig);
   const videoSize = strategy.calculateVideoSize(layoutConfig, containerSize, layoutOptions);
 
   // 包装 renderVideoWindow 函数，添加点击事件和 hover 图标
@@ -619,13 +606,13 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
               }}
             >
               {renderVideoWindow(video, index, windowSize)}
-              {/* 主视频 hover 图标 */}
+              {/* 主视频 hover 图标 - 调整位置以避免与NetworkQuality重叠 */}
               <div
                 className="hover-icon"
                 style={{
                   position: 'absolute',
                   top: '8px',
-                  right: '8px',
+                  right: '32px', // 调整位置：NetworkQuality(right:8px + width:16px + gap:8px) = 32px
                   zIndex: 10,
                   opacity: 0,
                   transition: 'opacity 0.2s ease',
@@ -685,7 +672,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
             style={{
               position: 'absolute',
               top: '8px',
-              right: '8px',
+              right: '32px', // 调整位置：NetworkQuality(right:8px + width:16px + gap:8px) = 32px
               zIndex: 10,
               opacity: 0,
               transition: 'opacity 0.2s ease',
