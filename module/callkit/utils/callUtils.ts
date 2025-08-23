@@ -38,23 +38,23 @@ export const formatCallDuration = (seconds: number): string => {
  * 获取用户头像的辅助函数
  * @param userId 用户ID
  * @param userInfoProvider 用户信息提供者
- * @returns Promise<string> 头像URL
+ * @returns Promise<string | undefined> 头像URL，undefined时让组件显示默认图标
  */
 export const getUserAvatar = async (
   userId: string,
   userInfoProvider?: (userIds: string[]) => Promise<Array<{ userId: string; avatarUrl?: string }>>,
-): Promise<string> => {
+): Promise<string | undefined> => {
   if (!userInfoProvider) {
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+    return undefined; // 不使用假数据，让组件显示默认图标
   }
 
   try {
     const userInfos = await Promise.resolve(userInfoProvider([userId]));
     const userInfo = userInfos.find((info: any) => info.userId === userId);
-    return userInfo?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+    return userInfo?.avatarUrl; // 不使用假数据，让组件显示默认图标
   } catch (error) {
     console.warn(`获取用户 ${userId} 头像失败:`, error);
-    return `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+    return undefined; // 不使用假数据，让组件显示默认图标
   }
 };
 

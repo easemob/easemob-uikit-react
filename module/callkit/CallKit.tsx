@@ -559,9 +559,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               .map((userInfo: any) => ({
                 userId: userInfo.userId,
                 nickname: userInfo.nickname || userInfo.userId,
-                avatarUrl:
-                  userInfo.avatarUrl ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${userInfo.userId}`,
+                avatarUrl: userInfo.avatarUrl, // 不使用假数据，让组件显示默认图标
               }))
               .filter(member => member.userId); // 过滤掉无效的成员
 
@@ -590,7 +588,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             const basicMembers = memberUserIds.map((userId: string) => ({
               userId,
               nickname: userId,
-              avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+              avatarUrl: undefined, // 不使用假数据，让组件显示默认图标
             }));
             console.log(
               `👥 ${context}：使用基础信息创建群成员列表:`,
@@ -2775,7 +2773,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               muted: false,
               cameraEnabled: false, // 🔧 修改：群通话发起方默认摄像头关闭
               nickname: '我',
-              avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me', // 临时使用默认头像，后续会通过 userInfoProvider 更新
+              avatar: undefined, // 不使用假数据，让组件显示默认图标
             },
             // 添加选中的成员，初始状态为等待连接（显示头像）
             ...selectedUsers.map((user, index) => ({
@@ -2783,8 +2781,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               muted: false,
               cameraEnabled: false, // 初始状态显示头像，等待连接
               nickname: user.nickname,
-              avatar:
-                user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.userId}`,
+              avatar: user.avatarUrl, // 不使用假数据，让组件显示默认图标
               isWaiting: true, // 标记为等待状态
             })),
           ];
@@ -2915,9 +2912,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 muted: false,
                 cameraEnabled: false, // 初始状态显示头像，等待连接
                 nickname: user.nickname,
-                avatar:
-                  user.avatarUrl ||
-                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.userId}`,
+                avatar: user.avatarUrl, // 不使用假数据，让组件显示默认图标
                 isWaiting: true, // 标记为等待状态
               }));
 
@@ -2971,28 +2966,28 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   };
 
   const getUserAvatar = React.useCallback(
-    async (userId: string): Promise<string> => {
+    async (userId: string): Promise<string | undefined> => {
       if (!userInfoProvider) {
-        // 如果没有配置 userInfoProvider，返回默认头像
-        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+        // 如果没有配置 userInfoProvider，返回 undefined 让组件显示默认图标
+        return undefined;
       }
 
       try {
         const userInfos = await Promise.resolve(userInfoProvider([userId]));
         const userInfo = userInfos.find((info: any) => info.userId === userId);
-        return userInfo?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+        return userInfo?.avatarUrl; // 不使用假数据，让组件显示默认图标
       } catch (error) {
         console.warn(`获取用户 ${userId} 头像失败:`, error);
-        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+        return undefined; // 不使用假数据，让组件显示默认图标
       }
     },
     [userInfoProvider],
   );
 
   // 获取本地用户头像的辅助函数
-  const getLocalUserAvatar = React.useCallback(async (): Promise<string> => {
+  const getLocalUserAvatar = React.useCallback(async (): Promise<string | undefined> => {
     if (!chatClient?.user) {
-      return 'https://api.dicebear.com/7.x/avataaars/svg?seed=me';
+      return undefined; // 不使用假数据，让组件显示默认图标
     }
 
     return await getUserAvatar(chatClient.user);
