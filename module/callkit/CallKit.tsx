@@ -1475,17 +1475,39 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           }
         }
 
-        // 🔧 修复：1v1视频通话也使用相同的回调逻辑，避免直接调用answerCall
+        // 🔧 CallKit内部自动调用answerCall，现在有防重复调用保护
+        if (hasInitialized && callServiceRef.current) {
+          try {
+            console.log('🔧 CallKit内部自动执行接听操作');
+            await callServiceRef.current.answerCall(true);
+          } catch (error) {
+            console.error('🔧 CallKit自动接听失败:', error);
+          }
+        }
+
         setCallStatus('connected'); // 接听后进入通话状态
         setIsInCall(true);
         setInvitation(null);
         setIsShowingPreview(false);
         setLocalVideo(null);
+
+        // 触发外部回调通知接听事件（用户不需要再手动调用answerCall）
         onInvitationAcceptRef.current?.(invitationData);
       };
 
-      const handleReject = (invitationData: any) => {
+      const handleReject = async (invitationData: any) => {
         notificationApiRef.current.destroy(invitationNotificationKey);
+
+        // 🔧 CallKit内部自动调用answerCall，现在有防重复调用保护
+        if (hasInitialized && callServiceRef.current) {
+          try {
+            console.log('🔧 CallKit内部自动执行拒绝操作');
+            await callServiceRef.current.answerCall(false);
+          } catch (error) {
+            console.error('🔧 CallKit自动拒绝失败:', error);
+          }
+        }
+
         setCallStatus('idle'); // 拒绝后回到空闲状态
         setInvitation(null);
         setIsShowingPreview(false);
@@ -1497,6 +1519,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         setRealCallCameraEnabled(true);
         setRealCallSpeakerEnabled(true);
 
+        // 触发外部回调通知拒绝事件（用户不需要再手动调用answerCall）
         onInvitationRejectRef.current?.(invitationData);
       };
 
@@ -2544,19 +2567,42 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const handlePreviewAccept = async () => {
     // 🔧 群通话不再需要预览模式，只处理被叫方接听逻辑
     if (invitation) {
+      // 🔧 预览模式：CallKit内部自动调用answerCall，现在有防重复调用保护
+      if (hasInitialized && callServiceRef.current) {
+        try {
+          console.log('🔧 预览模式：CallKit内部自动执行接听操作');
+          await callServiceRef.current.answerCall(true);
+        } catch (error) {
+          console.error('🔧 预览模式：CallKit自动接听失败:', error);
+        }
+      }
+
       // 被叫方接听邀请的逻辑
       setIsShowingPreview(false);
       setCallStatus('connected');
       setIsInCall(true);
       setLocalVideo(null);
+
+      // 触发外部回调通知接听事件（用户不需要再手动调用answerCall）
       onInvitationAcceptRef.current?.(invitation);
     }
   };
 
   // 处理预览模式下的拒绝
-  const handlePreviewReject = () => {
+  const handlePreviewReject = async () => {
+    // 🔧 预览模式：CallKit内部自动调用answerCall，现在有防重复调用保护
+    if (hasInitialized && callServiceRef.current && invitation) {
+      try {
+        console.log('🔧 预览模式：CallKit内部自动执行拒绝操作');
+        await callServiceRef.current.answerCall(false);
+      } catch (error) {
+        console.error('🔧 预览模式：CallKit自动拒绝失败:', error);
+      }
+    }
+
     setIsShowingPreview(false);
     setCallStatus('idle');
+    const currentInvitation = invitation; // 保存当前邀请信息
     setInvitation(null);
     setLocalVideo(null);
     setCallMode('video'); // 重置为初始模式
@@ -2580,6 +2626,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         element.style.left = `${initialPosition.left}px`;
         element.style.top = `${initialPosition.top}px`;
       }
+    }
+
+    // 触发外部回调通知拒绝事件（用户不需要再手动调用answerCall）
+    if (currentInvitation) {
+      onInvitationRejectRef.current?.(currentInvitation);
     }
 
     // 🔧 重置群组通话相关状态到初始值

@@ -718,12 +718,12 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           enableRingtone={true} // 启用铃声
           ringtoneVolume={0.8} // 音量 80%
           ringtoneLoop={true} // 循环播放
-          onInvitationAccept={() => {
-            callKitRef.current?.answerCall(true);
-          }}
-          onInvitationReject={() => {
-            callKitRef.current?.answerCall(false);
-          }}
+          // onInvitationAccept={() => {
+          //   callKitRef.current?.answerCall(true);
+          // }}
+          // onInvitationReject={() => {
+          //   callKitRef.current?.answerCall(false);
+          // }}
           onEndCallWithReason={(reason, callInfo) => {
             console.log('🚀 onEndCallWithReason 接收到通话结束信22', reason, callInfo);
             if (!callInfo.inviteMessageId) {

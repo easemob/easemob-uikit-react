@@ -122,6 +122,9 @@ export class CallService {
   // 🔧 新增：跟踪用户是否经过了preview阶段（用于区分直接接听和preview后接听）
   private hasEnteredPreview: boolean = false;
 
+  // 🔧 新增：防止重复调用answerCall的标记
+  private isAnswering: boolean = false;
+
   // 🔧 新增：存储每个用户的视频轨道和音频轨道
   private remoteVideoTracks: Map<string, any> = new Map();
   private remoteAudioTracks: Map<string, any> = new Map();
@@ -619,21 +622,44 @@ export class CallService {
 
   // 接听通话
   async answerCall(result: boolean) {
-    if (!this.currentCallInfo) return;
+    if (!this.currentCallInfo) {
+      console.log('🔧 answerCall: 没有当前通话信息，忽略调用');
+      return;
+    }
 
-    // 🔧 停止铃声播放（接听或拒绝时）
-    this.stopRingtone();
+    // 🔧 防止重复调用：如果正在处理中，直接返回
+    if (this.isAnswering) {
+      console.log('🔧 answerCall: 正在处理中，防止重复调用', { result });
+      return;
+    }
 
-    if (result) {
-      // 接听通话 - 发送accept消息
-      this.sendAnswerCallMessage('accept');
-      // 发送响铃消息
-      //   this.sendAlertingMessage();
-    } else {
-      // 拒绝通话
-      this.sendAnswerCallMessage('refuse');
-      this.callStatus = CALL_STATUS.IDLE;
-      await this.cleanupPreviewMode(); // 拒绝通话时清理预览模式
+    console.log('🔧 answerCall: 开始处理', { result, callInfo: this.currentCallInfo });
+    this.isAnswering = true;
+
+    try {
+      // 🔧 停止铃声播放（接听或拒绝时）
+      this.stopRingtone();
+
+      if (result) {
+        // 接听通话 - 发送accept消息
+        this.sendAnswerCallMessage('accept');
+        console.log('✅ answerCall: 接听消息已发送');
+      } else {
+        // 拒绝通话
+        this.sendAnswerCallMessage('refuse');
+        this.callStatus = CALL_STATUS.IDLE;
+        await this.cleanupPreviewMode(); // 拒绝通话时清理预览模式
+        console.log('✅ answerCall: 拒绝消息已发送并清理完成');
+      }
+    } catch (error) {
+      console.error('❌ answerCall: 处理失败', error);
+      throw error;
+    } finally {
+      // 🔧 重置标记：在短暂延迟后重置，允许新的通话
+      setTimeout(() => {
+        this.isAnswering = false;
+        console.log('🔧 answerCall: 重置处理标记');
+      }, 1000); // 1秒后重置标记
     }
   }
 
@@ -813,6 +839,42 @@ export class CallService {
       }
     } else {
       console.log('🔧 跳过 client.join，客户端已连接或正在连接中:', this.client?.connectionState);
+
+      // 🔧 修复：如果客户端正在连接中，需要等待连接完成
+      if (this.client.connectionState === 'CONNECTING') {
+        console.log('🔧 客户端正在连接中，等待连接完成...');
+        try {
+          // 等待客户端连接状态变为CONNECTED，最多等待10秒
+          const waitForConnection = new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+              reject(new Error('等待客户端连接超时'));
+            }, 10000);
+
+            const checkConnection = () => {
+              if (this.client.connectionState === 'CONNECTED') {
+                clearTimeout(timeout);
+                console.log('🔧 客户端连接完成');
+                resolve();
+              } else if (this.client.connectionState === 'DISCONNECTED') {
+                clearTimeout(timeout);
+                reject(new Error('客户端连接失败'));
+              } else {
+                // 继续等待
+                setTimeout(checkConnection, 100);
+              }
+            };
+
+            checkConnection();
+          });
+
+          await waitForConnection;
+        } catch (error) {
+          console.error('🔧 等待客户端连接失败:', error);
+          this.hangup(HANGUP_REASON.ABNORMAL_END);
+          return;
+        }
+      }
+
       // 对于已连接的客户端，仍需要启用音量监听
       if (
         this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
@@ -1256,9 +1318,12 @@ export class CallService {
           );
         }
 
-        // 取消发布所有本地轨道（无论通话状态如何，只要有轨道就取消发布）
-        if (tracksToUnpublish.length > 0) {
+        // 取消发布所有本地轨道（只有在客户端连接时才取消发布）
+        if (tracksToUnpublish.length > 0 && this.client.connectionState === 'CONNECTED') {
           await this.client.unpublish(tracksToUnpublish);
+          console.log('✅ 成功取消发布轨道');
+        } else if (tracksToUnpublish.length > 0) {
+          console.log('🔧 跳过取消发布轨道，客户端未连接:', this.client.connectionState);
         }
       } catch (error) {
         console.error('❌ 取消发布轨道失败:', error);
@@ -1289,7 +1354,13 @@ export class CallService {
             '🔧 安全清理：取消发布本地轨道',
             tracksToSafeUnpublish.map(t => t.trackMediaType),
           );
-          await this.client.unpublish(tracksToSafeUnpublish);
+          // 🔧 修复：只有在客户端连接时才调用unpublish，避免"haven't joined yet"错误
+          if (this.client.connectionState === 'CONNECTED') {
+            await this.client.unpublish(tracksToSafeUnpublish);
+            console.log('✅ 安全清理：成功取消发布轨道');
+          } else {
+            console.log('🔧 安全清理：跳过取消发布，客户端未连接:', this.client.connectionState);
+          }
         }
       } catch (error) {
         console.warn('❌ 安全清理：取消发布轨道失败（忽略）:', error);
@@ -1300,8 +1371,34 @@ export class CallService {
     // 关闭音视频轨道
     if (this.rtc.localAudioTrack) {
       console.log('🔧 关闭本地音频轨道:', this.rtc.localAudioTrack.getTrackId?.());
-      this.rtc.localAudioTrack.close();
-      this.rtc.localAudioTrack = null;
+
+      // 🔧 修复：彻底停止音频轨道和相关MediaStreamTrack，释放麦克风资源
+      try {
+        // 获取并停止底层MediaStreamTrack，确保麦克风资源被释放
+        const mediaStreamTrack = this.rtc.localAudioTrack.getMediaStreamTrack?.();
+        if (mediaStreamTrack) {
+          console.log(
+            '🔧 停止音频MediaStreamTrack:',
+            mediaStreamTrack.id,
+            '状态:',
+            mediaStreamTrack.readyState,
+          );
+          if (mediaStreamTrack.readyState === 'live') {
+            mediaStreamTrack.stop();
+            console.log('✅ 麦克风MediaStreamTrack已停止');
+          }
+        }
+
+        // 关闭Agora轨道
+        this.rtc.localAudioTrack.close();
+        this.rtc.localAudioTrack = null;
+
+        console.log('🔧 本地音频轨道已彻底关闭并清空引用');
+      } catch (error) {
+        console.error('❌ 关闭音频轨道时发生错误:', error);
+        // 即使出错也要清空引用
+        this.rtc.localAudioTrack = null;
+      }
     }
     if (this.rtc.localVideoTrack) {
       console.log('🔧 关闭本地视频轨道:', this.rtc.localVideoTrack.getTrackId?.());
@@ -1337,8 +1434,17 @@ export class CallService {
       }
     }
 
+    // 🔧 强制延迟，确保轨道完全停止
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     // 🔧 最后检查：确保没有遗漏的MediaStreamTrack
-    this.checkAndCleanupAllMediaTracks();
+    await this.checkAndCleanupAllMediaTracks();
+
+    // 🔧 强制垃圾回收（如果支持的话）
+    if (window.gc) {
+      console.log('🔧 执行强制垃圾回收');
+      window.gc();
+    }
 
     // 🔧 清理所有远程音视频轨道
     this.remoteVideoTracks.forEach((track, userId) => {
@@ -3451,8 +3557,34 @@ export class CallService {
     // 关闭音视频轨道
     if (this.rtc.localAudioTrack) {
       console.log('清理预览模式：关闭本地音频轨道');
-      this.rtc.localAudioTrack.close();
-      this.rtc.localAudioTrack = null;
+
+      // 🔧 修复：彻底停止音频轨道和相关MediaStreamTrack，释放麦克风资源
+      try {
+        // 获取并停止底层MediaStreamTrack，确保麦克风资源被释放
+        const mediaStreamTrack = this.rtc.localAudioTrack.getMediaStreamTrack?.();
+        if (mediaStreamTrack) {
+          console.log(
+            '🔧 预览模式：停止音频MediaStreamTrack:',
+            mediaStreamTrack.id,
+            '状态:',
+            mediaStreamTrack.readyState,
+          );
+          if (mediaStreamTrack.readyState === 'live') {
+            mediaStreamTrack.stop();
+            console.log('✅ 预览模式：麦克风MediaStreamTrack已停止');
+          }
+        }
+
+        // 关闭Agora轨道
+        this.rtc.localAudioTrack.close();
+        this.rtc.localAudioTrack = null;
+
+        console.log('🔧 预览模式：本地音频轨道已彻底关闭并清空引用');
+      } catch (error) {
+        console.error('❌ 预览模式：关闭音频轨道时发生错误:', error);
+        // 即使出错也要清空引用
+        this.rtc.localAudioTrack = null;
+      }
     }
     if (this.rtc.localVideoTrack) {
       console.log('清理预览模式：关闭本地视频轨道');
@@ -3524,7 +3656,7 @@ export class CallService {
   }
 
   // 🔧 检查并清理所有可能遗漏的MediaStreamTrack
-  private checkAndCleanupAllMediaTracks() {
+  private async checkAndCleanupAllMediaTracks() {
     try {
       console.log('🔧 执行全局媒体轨道检查...');
 
@@ -3552,20 +3684,69 @@ export class CallService {
         }
       });
 
-      // 使用 navigator.mediaDevices.enumerateDevices 检查设备使用状态
+      // 🔧 新增：检查并清理audio元素中的轨道
+      const audioElements = document.querySelectorAll('audio');
+      audioElements.forEach((audio, index) => {
+        if (audio.srcObject) {
+          const mediaStream = audio.srcObject as MediaStream;
+          if (mediaStream && mediaStream.getTracks) {
+            const tracks = mediaStream.getTracks();
+            if (tracks.length > 0) {
+              console.log(
+                `🔧 发现音频元素 ${index} 仍有活跃轨道，正在清理:`,
+                tracks.map(t => ({ id: t.id, kind: t.kind, readyState: t.readyState })),
+              );
+              tracks.forEach(track => {
+                if (track.readyState === 'live') {
+                  console.log(`🔧 停止活跃音频轨道: ${track.id} (${track.kind})`);
+                  track.stop();
+                }
+              });
+              audio.srcObject = null;
+            }
+          }
+        }
+      });
+
+      // 🔧 新增：使用 navigator.mediaDevices.getUserMedia 检查活跃的媒体流
       if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-        navigator.mediaDevices
-          .enumerateDevices()
-          .then(devices => {
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            console.log(
-              '🔧 当前视频设备状态:',
-              videoDevices.map(d => ({ deviceId: d.deviceId, label: d.label })),
-            );
-          })
-          .catch(err => {
-            console.warn('检查设备状态失败:', err);
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          const audioDevices = devices.filter(device => device.kind === 'audioinput');
+
+          console.log('🔧 当前媒体设备状态:', {
+            视频设备: videoDevices.map(d => ({ deviceId: d.deviceId, label: d.label })),
+            音频设备: audioDevices.map(d => ({ deviceId: d.deviceId, label: d.label })),
           });
+
+          // 🔧 修复：不通过label判断设备占用状态，改用getUserMedia检查
+          console.log('🔧 检查麦克风权限和占用状态...');
+
+          // 尝试获取音频流来检查麦克风是否真正释放
+          try {
+            const testStream = await navigator.mediaDevices.getUserMedia({
+              audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+            });
+            console.log('✅ 麦克风已释放，可以正常获取新的音频流');
+
+            // 立即停止测试流
+            testStream.getTracks().forEach(track => {
+              track.stop();
+              console.log('🔧 停止测试音频轨道:', track.id);
+            });
+          } catch (error: any) {
+            if (error?.name === 'NotAllowedError') {
+              console.log('✅ 麦克风权限被拒绝，但这表示硬件资源已释放');
+            } else if (error?.name === 'NotFoundError') {
+              console.log('✅ 未找到音频设备，硬件资源状态正常');
+            } else {
+              console.warn('⚠️ 麦克风状态检查异常:', error);
+            }
+          }
+        } catch (err) {
+          console.warn('检查设备状态失败:', err);
+        }
       }
 
       console.log('🔧 全局媒体轨道检查完成');
