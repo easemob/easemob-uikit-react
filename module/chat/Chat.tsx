@@ -40,6 +40,8 @@ import { eventHandler } from '../../eventHandler';
 import Modal from '../../component/modal';
 import Checkbox from '../../component/checkbox';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
+import outgoingRingtone from './拨打电话.mp3';
+import incomingRingtone from './拨打电话.mp3';
 export interface RtcRoomInfo {
   callId: string;
   calleeDevId?: string;
@@ -565,6 +567,29 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     }
   };
 
+  const [callKitSize, setCallKitSize] = useState({ width: 748, height: 523 });
+  const handleLayoutModeChange = (layoutMode: 'grid' | 'main') => {
+    if (layoutMode === 'main') {
+      // 切换到主视频模式时，调整为竖屏尺寸
+      const newSize = { width: 512, height: 759 };
+      setCallKitSize(newSize);
+
+      // 🔧 使用CallKit的adjustSize方法调整尺寸
+      if (callKitRef.current) {
+        callKitRef.current.adjustSize(newSize);
+      }
+    } else {
+      // 切换到网格模式时，恢复正常尺寸
+      const newSize = { width: 748, height: 523 };
+      setCallKitSize(newSize);
+
+      // 🔧 使用CallKit的adjustSize方法调整尺寸
+      if (callKitRef.current) {
+        callKitRef.current.adjustSize(newSize);
+      }
+    }
+  };
+
   return (
     <div className={classString} style={{ ...style }}>
       {isEmpty ? (
@@ -670,32 +695,29 @@ let Chat = forwardRef((props: ChatProps, ref) => {
             <MessageInput {...messageInputConfig} {...messageInputProps}></MessageInput>
           )}
           {/* {modalOpen && (
-           
+              MULTI_PARTY = 'multi-party', // 多人网格布局
+  ONE_TO_ONE = 'one-to-one', // 1v1画中画布局
+  PREVIEW = 'preview', // 预览布局（竖屏）
+  SCREEN_SHARE = 'screen-share', // 屏幕共享布局
+  MINIMIZED = 'minimized', // 最小化布局
+  MAIN_VIDEO = 'main-video', // 主视频 + 缩略图布局
           )} */}
         </>
       )}
-      {/* <CallKit
-        onAddPerson={showInvite}
-        onStateChange={handleCallStateChange}
-        onInvite={handleInvite}
-        contactAvatar={rootStore.addressStore.appUsersInfo[currentCall.targetId]?.avatarurl}
-        groupAvatar={
-          <Avatar className="cui-callkit-groupAvatar" src={rtcConfig?.groupAvatar}>
-            {CVS.name}
-          </Avatar>
-        }
-      ></CallKit> */}
+
       {rootStore.client.user && (
         <CallKit
           ref={callKitRef}
           chatClient={rootStore.client}
-          initialSize={{
-            width: 748,
-            height: 523,
-          }}
+          initialSize={callKitSize}
           managedPosition={true}
           resizable={true}
           draggable={true}
+          outgoingRingtoneSrc={outgoingRingtone} // 铃声文件路径
+          incomingRingtoneSrc={incomingRingtone} // 铃声文件路径
+          enableRingtone={true} // 启用铃声
+          ringtoneVolume={0.8} // 音量 80%
+          ringtoneLoop={true} // 循环播放
           onInvitationAccept={() => {
             callKitRef.current?.answerCall(true);
           }}
@@ -713,9 +735,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 case 'hangup':
                   msg = `通话时长${callInfo.duration}`;
                   break;
-                case 'reject':
-                  msg = '对方已拒绝';
-                  break;
                 case 'noResponse':
                   msg = '对方未接听';
                   break;
@@ -727,6 +746,18 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                   break;
                 case 'abnormalEnd':
                   msg = '通话中断';
+                  break;
+                case 'remoteCancel':
+                  msg = '对方已取消';
+                  break;
+                case 'refuse':
+                  msg = '已拒绝';
+                  break;
+                case 'remoteRefuse':
+                  msg = '对方已拒绝';
+                  break;
+                case 'handleOnOtherDevice':
+                  msg = '已在其他设备处理';
                   break;
                 default:
                   msg = '通话已结束';
@@ -751,6 +782,25 @@ let Chat = forwardRef((props: ChatProps, ref) => {
             }
             console.log('onEndCallWithReason --->', reason, callInfo);
           }}
+          onLayoutModeChange={handleLayoutModeChange}
+          initialPosition={{
+            left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
+            top: Math.max(0, window.scrollY + (window.innerHeight - callKitSize.height) / 2),
+          }}
+          onResize={(width, height) => console.log('窗口尺寸:', width, height)}
+          // 可拖拽
+          onDragStart={() => console.log('开始拖拽')}
+          onDrag={position => console.log('拖拽位置:', position)}
+          onDragEnd={() => console.log('拖拽结束')}
+          minimizedSize={{ width: 300, height: 300 }}
+          // invitationCustomContent={<div style={{ color: '#fff' }}>123</div>}
+          // 按钮文本
+          acceptText="接听1"
+          rejectText="拒绝1"
+          // 邀请界面显示配置
+          showInvitationAvatar={false}
+          showInvitationTimer={false}
+          autoRejectTime={30} // 30秒自动拒绝
         ></CallKit>
       )}
       <Modal

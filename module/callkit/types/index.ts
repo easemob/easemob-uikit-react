@@ -95,6 +95,7 @@ export interface LayoutOptions {
 // 邀请信息
 export interface InvitationInfo {
   id: string;
+  callerUserId?: string; // 呼叫者userId
   type: 'video' | 'audio' | 'group'; // 邀请类型
   callerName?: string; // 呼叫者姓名
   callerAvatar?: string; // 呼叫者头像
@@ -143,7 +144,7 @@ export interface CallKitRef {
   // 新增：主动发起多人通话方法
   startGroupCall: (options: {
     groupId: string;
-    callType: 'video' | 'audio';
+    // callType: 'video' | 'audio';
     msg: string;
     ext?: Record<string, any>;
   }) => Promise<ChatSDK.TextMsgBody | null>; // 发起多人通话，先显示用户选择界面
@@ -155,18 +156,19 @@ export interface CallKitRef {
     msg: string;
   }) => Promise<ChatSDK.TextMsgBody | null>; // 发起真实通话
   answerCall: (result: boolean) => void; // 接听真实通话
-  hangupCall: (reason?: string) => void; // 挂断真实通话
+  exitCall: (reason?: string) => void; // 挂断真实通话
   setUserInfo: (userInfo: { [key: string]: any }) => void; // 设置用户信息
 
   // 音视频控制方法
   toggleMute: () => boolean; // 切换静音状态，返回新的静音状态
-  toggleCamera: () => boolean; // 切换摄像头状态，返回新的开启状态
+  toggleCamera: () => Promise<boolean>; // 切换摄像头状态，返回新的开启状态（异步）
   isMuted: () => boolean; // 获取当前静音状态
   isCameraEnabled: () => boolean; // 获取当前摄像头状态
   getJoinedMembers: () => any[]; // 获取加入的成员列表
   refreshLocalVideoStatus: () => void; // 刷新本地视频状态显示
   playLocalVideoManually: () => void; // 手动播放本地视频
   createLocalVideoTrackForGroupCall: () => Promise<boolean>; // 为多人视频通话创建本地视频轨道
+  createLocalVideoTrackFor1v1Preview: () => Promise<boolean>; // 为1v1视频通话创建预览模式的本地视频轨道
   addParticipants: (newMembers: string[]) => Promise<boolean>; // 添加参与者到当前通话
 
   // 🔧 新增：调整CallKit尺寸的方法

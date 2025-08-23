@@ -92,6 +92,9 @@ import { ChatroomProps } from './chatroom/Chatroom';
 import ChatroomMember from './chatroomMember';
 import ChatroomMessage from './chatroomMessage';
 
+import CallKit from './callkit';
+import { CallKitProps } from './callkit';
+
 export type {
   AudioMessageProps,
   BaseMessageProps,
@@ -151,6 +154,7 @@ export type {
   GroupMemberProps,
   UserCardMessageProps,
   UserSelectProps,
+  CallKitProps,
 };
 const UIKitProvider = Provider;
 export {
@@ -203,4 +207,5 @@ export {
   GroupMember,
   UserCardMessage,
   UserSelect,
+  CallKit,
 };

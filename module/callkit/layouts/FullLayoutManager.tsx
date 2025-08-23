@@ -59,29 +59,39 @@ export const FullLayoutManager: React.FC<FullLayoutProps> = props => {
 
   // 根据通话模式和状态选择布局
   const getLayoutMode = (): LayoutMode => {
-    console.log('getLayoutMode callMode --->', callMode);
-    console.log('getLayoutMode isShowingPreview --->', isShowingPreview);
+    console.log('🔧 getLayoutMode 调试信息:', {
+      callMode,
+      isShowingPreview,
+      isMinimized,
+      videos数量: videos.length,
+    });
 
     // 最小化状态优先
     if (isMinimized) {
+      console.log('🔧 返回布局模式: MINIMIZED');
       return LayoutMode.MINIMIZED;
     }
 
     // 预览模式：根据通话类型选择合适的布局
     if (isShowingPreview) {
       if (callMode === 'group') {
+        console.log('🔧 返回布局模式: MULTI_PARTY (群组预览)');
         return LayoutMode.MULTI_PARTY; // 多人视频通话预览使用多人布局
       } else {
+        console.log('🔧 返回布局模式: PREVIEW (1v1预览)');
         return LayoutMode.PREVIEW; // 1v1通话预览使用专门的预览布局
       }
     }
 
     // 根据通话模式选择布局
     if (callMode === 'group') {
+      console.log('🔧 返回布局模式: MULTI_PARTY (群组通话)');
       return LayoutMode.MULTI_PARTY; // 群组通话使用多人布局
     } else if (callMode === 'video' || callMode === 'audio') {
+      console.log('🔧 返回布局模式: ONE_TO_ONE (1v1通话)');
       return LayoutMode.ONE_TO_ONE; // 1v1通话使用一对一布局
     } else {
+      console.log('🔧 返回布局模式: ONE_TO_ONE (默认)');
       return LayoutMode.ONE_TO_ONE; // 默认使用一对一布局
     }
   };
