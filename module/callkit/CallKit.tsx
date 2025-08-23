@@ -8,6 +8,8 @@ import { useContainerSize } from './hooks/useContainerSize';
 import { useFullscreen } from './hooks/useFullscreen';
 import { useResizable } from './hooks/useResizable';
 import { useDraggable } from './hooks/useDraggable';
+import { useCallTimer } from './hooks/useCallTimer';
+import { useInvitationTimers } from './hooks/useInvitationTimers';
 import { FullLayoutManager } from './layouts/FullLayoutManager';
 import InvitationContent from './components/InvitationContent';
 import UserSelect from '../userSelect/UserSelect';
@@ -28,6 +30,7 @@ import type {
 } from './types/index';
 import type { FullLayoutProps } from './types/layout';
 import { LayoutMode } from './types/index';
+import { generateRandomChannel, getUserAvatar, calculateSafePosition } from './utils/callUtils';
 import './styles/index.scss';
 import CallError, { CallErrorCode } from './services/CallError';
 
@@ -36,20 +39,6 @@ import CallError, { CallErrorCode } from './services/CallError';
  * 使用 React.memo 进行性能优化
  */
 const MemoizedFullLayoutManager = memo<FullLayoutProps>(FullLayoutManager);
-
-/**
- * 生成随机channel字符串
- * @param length 字符串长度，默认8位
- * @returns 随机字符串
- */
-const generateRandomChannel = (length: number = 8): string => {
-  const CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += CHARS[Math.floor(Math.random() * CHARS.length)];
-  }
-  return result;
-};
 
 let groupCallInviteMsg = '邀请你进行音视频通话';
 /**
@@ -178,170 +167,34 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     maxCount: 1, // 最多显示一个邀请通知
   });
 
-  // 🔧 新增：内部通话计时状态
-  const [callDuration, setCallDuration] = React.useState('00:00:00');
-  const callStartTimeRef = React.useRef<number | null>(null);
-  const callTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  // 使用计时器hook
+  const { callDuration, startCallTimer, stopCallTimer } = useCallTimer();
 
-  // 🔧 格式化通话时间
-  const formatCallDuration = React.useCallback((seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-
-    if (hours > 0) {
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs
-        .toString()
-        .padStart(2, '0')}`;
-    }
-    return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, []);
-
-  // 🔧 开始计时
-  const startCallTimer = React.useCallback(() => {
-    console.log('🔧 开始计时 - 清理旧计时器');
-    if (callTimerRef.current) {
-      clearInterval(callTimerRef.current);
-    }
-
-    callStartTimeRef.current = Date.now();
-    setCallDuration('00:00:00');
-    console.log('🔧 计时器启动，开始时间:', new Date(callStartTimeRef.current));
-
-    callTimerRef.current = setInterval(() => {
-      if (callStartTimeRef.current) {
-        const elapsed = Math.floor((Date.now() - callStartTimeRef.current) / 1000);
-        const formattedTime = formatCallDuration(elapsed);
-        console.log('🔧 计时更新:', elapsed, 'seconds ->', formattedTime);
-        setCallDuration(formattedTime);
-      }
-    }, 1000);
-  }, [formatCallDuration]);
-
-  // 🔧 停止计时
-  const stopCallTimer = React.useCallback(() => {
-    console.log('🔧 停止计时器');
-    if (callTimerRef.current) {
-      clearInterval(callTimerRef.current);
-      callTimerRef.current = null;
-    }
-    callStartTimeRef.current = null;
-    setCallDuration('00:00:00');
-  }, []);
-
-  // 🔧 监听通话状态变化，自动开始/停止计时
+  // 监听通话状态变化，自动开始/停止计时
   React.useEffect(() => {
-    console.log('🔧 计时器状态检查:', { callStatus, isInCall, currentDuration: callDuration });
-
     if (callStatus === 'connected' && isInCall) {
-      // 通话开始时启动计时器
-      console.log('🔧 启动通话计时器');
       startCallTimer();
     } else if (callStatus === 'idle' || !isInCall) {
-      // 通话结束时停止计时器
-      console.log('🔧 停止通话计时器');
       stopCallTimer();
     }
   }, [callStatus, isInCall, startCallTimer, stopCallTimer]);
-
-  // 🔧 组件卸载时清理计时器
-  React.useEffect(() => {
-    return () => {
-      stopCallTimer();
-    };
-  }, [stopCallTimer]);
 
   // 内置位置和尺寸管理状态
   const [internalPosition, setInternalPosition] = React.useState(initialPosition);
   const [internalSize, setInternalSize] = React.useState(initialSize);
   const internalRef = React.useRef<HTMLDivElement>(null);
 
-  // 🔧 新增：多人视频通话超时管理
-  const invitationTimers = React.useRef<Map<string, NodeJS.Timeout>>(new Map());
-  const invitedMembers = React.useRef<Set<string>>(new Set());
+  // 使用邀请定时器hook
+  const { setInvitationTimer, clearInvitationTimer, clearAllInvitationTimers, handleUserJoined } =
+    useInvitationTimers();
 
-  // 🔧 清理指定用户的邀请定时器
-  const clearInvitationTimer = React.useCallback((userId: string) => {
-    const timer = invitationTimers.current.get(userId);
-    if (timer) {
-      clearTimeout(timer);
-      invitationTimers.current.delete(userId);
-      console.log(`🔧 清理用户 ${userId} 的邀请定时器`);
-    }
-  }, []);
-
-  // 🔧 清理所有邀请定时器
-  const clearAllInvitationTimers = React.useCallback(() => {
-    invitationTimers.current.forEach((timer, userId) => {
-      clearTimeout(timer);
-      console.log(`🔧 清理用户 ${userId} 的邀请定时器`);
-    });
-    invitationTimers.current.clear();
-    invitedMembers.current.clear();
-  }, []);
-
-  // 🔧 为指定用户设置邀请超时定时器
-  const setInvitationTimer = React.useCallback(
-    (userId: string, timeoutMs: number) => {
-      // 先清理已存在的定时器
-      clearInvitationTimer(userId);
-
-      // 添加到邀请成员列表
-      invitedMembers.current.add(userId);
-
-      // 设置新的定时器
-      const timer = setTimeout(() => {
-        console.log(`🔧 用户 ${userId} 邀请超时，发送取消消息`);
-
-        // 发送取消邀请消息
-        if (hasInitialized && callServiceRef.current) {
-          callServiceRef.current.cancelInvitation(userId);
-        }
-
-        // 从视频列表中移除该用户
-        setVideos(prevVideos => {
-          const updatedVideos = prevVideos.filter(video => {
-            const videoUserId = video.isLocalVideo
-              ? 'local'
-              : video.id.startsWith('remote-')
-              ? video.id.replace('remote-', '')
-              : video.id;
-            return videoUserId !== userId;
-          });
-
-          console.log(`🔧 从视频列表中移除超时用户 ${userId}，剩余视频:`, updatedVideos.length);
-          return updatedVideos;
-        });
-
-        // 清理定时器
-        invitationTimers.current.delete(userId);
-        invitedMembers.current.delete(userId);
-      }, timeoutMs);
-
-      invitationTimers.current.set(userId, timer);
-      console.log(`🔧 为用户 ${userId} 设置邀请定时器，超时时间: ${timeoutMs}ms`);
-    },
-    [hasInitialized, clearInvitationTimer],
-  );
-
-  // 🔧 用户加入时清理定时器
-  const handleUserJoined = React.useCallback(
+  // 处理邀请超时
+  const handleInvitationTimeout = React.useCallback(
     (userId: string) => {
-      console.log(`🔧 用户 ${userId} 加入通话，清理邀请定时器`);
-      clearInvitationTimer(userId);
-      invitedMembers.current.delete(userId);
-    },
-    [clearInvitationTimer],
-  );
-
-  // 🔧 新增：处理邀请用户被移除的回调
-  const handleInvitedUserRemoved = React.useCallback(
-    (userId: string, reason: 'refused' | 'cancelled' | 'timeout') => {
-      console.log(`🔧 邀请用户被移除: ${userId}, 原因: ${reason}`);
-
-      // 清理邀请定时器
-      clearInvitationTimer(userId);
-      invitedMembers.current.delete(userId);
+      // 发送取消邀请消息
+      if (hasInitialized && callServiceRef.current) {
+        callServiceRef.current.cancelInvitation(userId);
+      }
 
       // 从视频列表中移除该用户
       setVideos(prevVideos => {
@@ -353,20 +206,33 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             : video.id;
           return videoUserId !== userId;
         });
+        return updatedVideos;
+      });
+    },
+    [hasInitialized],
+  );
 
-        console.log(`🔧 立即从视频列表中移除用户 ${userId}，剩余视频:`, updatedVideos.length);
+  // 处理邀请用户被移除的回调
+  const handleInvitedUserRemoved = React.useCallback(
+    (userId: string, reason: 'refused' | 'cancelled' | 'timeout') => {
+      // 清理邀请定时器
+      clearInvitationTimer(userId);
+
+      // 从视频列表中移除该用户
+      setVideos(prevVideos => {
+        const updatedVideos = prevVideos.filter(video => {
+          const videoUserId = video.isLocalVideo
+            ? 'local'
+            : video.id.startsWith('remote-')
+            ? video.id.replace('remote-', '')
+            : video.id;
+          return videoUserId !== userId;
+        });
         return updatedVideos;
       });
     },
     [clearInvitationTimer],
   );
-
-  // 🔧 组件卸载时清理所有定时器
-  React.useEffect(() => {
-    return () => {
-      clearAllInvitationTimers();
-    };
-  }, [clearAllInvitationTimers]);
 
   // 最小化状态管理
   const [isMinimized, setIsMinimized] = React.useState(false);
@@ -381,7 +247,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 新增：从 IM SDK 获取的群成员状态
   const [webimGroupMembers, setWebimGroupMembers] = React.useState<any[]>([]); // 从IM SDK获取的群成员
   const [isLoadingGroupMembers, setIsLoadingGroupMembers] = React.useState(false); // 是否正在加载群成员
-  // 注释：currentWebimGroupId 不再需要，因为 startGroupCall 直接使用传入的 groupId
 
   // 🔧 新增：群组通话 Promise 控制
   const groupCallPromiseRef = useRef<{
@@ -409,6 +274,20 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // CallService 实例
   const callServiceRef = React.useRef<CallService | null>(null);
 
+  // 🔧 新增：监听通话模式变化，调整摄像头默认状态
+  React.useEffect(() => {
+    if (callMode === 'group') {
+      // 群通话模式：摄像头默认关闭
+      console.log('🔧 CallKit: 检测到群通话模式，设置摄像头默认关闭');
+      setRealCallCameraEnabled(false);
+    } else if (callMode === 'video') {
+      // 1v1视频通话模式：摄像头默认开启
+      console.log('🔧 CallKit: 检测到1v1视频通话模式，设置摄像头默认开启');
+      setRealCallCameraEnabled(true);
+    }
+    // 其他模式（如audio）保持当前状态不变
+  }, [callMode]);
+
   const handleCallStart = React.useCallback(
     (videos: VideoWindowProps[]) => {
       console.log('🚀 handleCallStart 接收到视频列表:', {
@@ -422,7 +301,40 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         })),
       });
 
-      setVideos(videos);
+      // 🔧 修复：合并而不是覆盖现有的远程视频，避免丢失已添加的远程视频
+      setVideos(prevVideos => {
+        console.log('🔧 handleCallStart: 合并视频列表', {
+          当前视频数量: prevVideos.length,
+          当前视频: prevVideos.map(v => ({ id: v.id, 是否本地: v.isLocalVideo })),
+          新传入视频数量: videos.length,
+          新传入视频: videos.map(v => ({ id: v.id, 是否本地: v.isLocalVideo })),
+        });
+
+        // 创建合并后的视频列表
+        const mergedVideos = [...prevVideos];
+
+        // 添加或更新 CallService 传递的视频
+        videos.forEach(newVideo => {
+          const existingIndex = mergedVideos.findIndex(v => v.id === newVideo.id);
+          if (existingIndex >= 0) {
+            // 更新现有视频
+            mergedVideos[existingIndex] = newVideo;
+            console.log('🔧 更新现有视频:', newVideo.id);
+          } else {
+            // 添加新视频
+            mergedVideos.push(newVideo);
+            console.log('🔧 添加新视频:', newVideo.id);
+          }
+        });
+
+        console.log('🔧 handleCallStart: 合并完成', {
+          合并后数量: mergedVideos.length,
+          合并后视频: mergedVideos.map(v => ({ id: v.id, 是否本地: v.isLocalVideo })),
+        });
+
+        return mergedVideos;
+      });
+
       setIsInCall(true);
       setCallStatus('connected');
       setIsShowingPreview(false); // 结束预览模式
@@ -444,10 +356,21 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   const handleCallEnd = React.useCallback(
     (reason: string, callInfo: CallInfo) => {
-      console.log('🚀 handleCallEnd 接收到通话结束信', onEndCallWithReasonRef);
+      const currentIsMinimized = isMinimizedRef.current;
+      console.log('🚀 handleCallEnd 接收到通话结束信', currentIsMinimized);
       // 🔧 新增：通话结束时清理所有邀请定时器
       clearAllInvitationTimers();
 
+      if (currentIsMinimized) {
+        console.log('🚀 最小化状态，恢复到正常大小', currentIsMinimized);
+        // 设置状态并执行DOM恢复操作
+        setIsMinimized(false);
+        restoreToNormalSize();
+        // 触发最小化状态变化回调
+        onMinimizedChange?.(false);
+      }
+
+      // 🔧 立即清理所有状态，停止视频播放尝试
       setVideos([]);
       setIsInCall(false);
       setCallStatus('idle');
@@ -455,15 +378,70 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       setLocalVideo(null);
       setInvitation(null);
       setCallMode('video'); // 重置为初始模式
-      setCallerTargetInfo(null); // 🔧 清理主叫目标信息
+      setCallerTargetInfo(null); // 清理主叫目标信息
+
+      // 重置真实通话状态到初始值
+      setRealCallMuted(false);
+      setRealCallCameraEnabled(true);
+      setRealCallSpeakerEnabled(true);
+
+      // 🔧 新增：重置CallKit尺寸和位置到初始状态
+      if (managedPosition) {
+        console.log('🔧 重置CallKit尺寸和位置到初始状态');
+        setInternalSize(initialSize);
+        setInternalPosition(initialPosition);
+
+        // 立即应用到DOM，避免视觉闪烁
+        const element = internalRef.current;
+        if (element) {
+          element.style.width = `${initialSize.width}px`;
+          element.style.height = `${initialSize.height}px`;
+          element.style.left = `${initialPosition.left}px`;
+          element.style.top = `${initialPosition.top}px`;
+        }
+      }
+
+      // 🔧 重置群组通话相关状态到初始值
+      setIsInitiatingGroupCall(false);
+      setGroupCallType('video');
+      setGroupId('');
+      setSelectedNewMembers([]);
+      setWebimGroupMembers([]);
+      setIsLoadingGroupMembers(false);
+      setIsUserSelectVisible(false);
+
+      // 🔧 强制清理：停止所有正在播放的视频元素
+      try {
+        const videoElements = document.querySelectorAll('video[data-video-id]');
+        videoElements.forEach((video: any) => {
+          if (video.srcObject) {
+            video.srcObject = null;
+          }
+          video.dataset.playingTrackId = '';
+          video.dataset.trackPlayed = '';
+        });
+        console.log('🔧 强制清理了所有视频元素');
+      } catch (error) {
+        console.warn('清理视频元素失败:', error);
+      }
+
       onEndCallWithReasonRef.current?.(reason, callInfo);
     },
-    [clearAllInvitationTimers, onEndCallWithReasonRef],
+    [
+      clearAllInvitationTimers,
+      onEndCallWithReasonRef,
+      onMinimizedChange,
+      managedPosition,
+      initialSize,
+      initialPosition,
+    ],
   );
-
   const handleInvitationReceived = React.useCallback((invitation: any) => {
+    console.log('🚀 接收到新邀请，重置最小化状态');
     setInvitation(invitation);
     setCallStatus('ringing');
+    // 🔧 新增：接收新邀请时确保从正常大小状态开始
+    setIsMinimized(false);
   }, []);
 
   // 新增：远程用户发布流回调
@@ -491,20 +469,15 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const isShowingPreviewRef = useRef(isShowingPreview);
   const isInCallRef = useRef(isInCall);
   const callModeRef = useRef(callMode);
-
-  // 💡 注释掉自动获取群成员的 useEffect，避免与 startGroupCall 重复
-  // 现在统一在 startGroupCall 方法中动态获取群成员，避免重复请求
-
-  // React.useEffect(() => {
-  //   // 这段代码已移至 startGroupCall 方法中，避免重复逻辑
-  // }, [webimGroupId, currentWebimGroupId, chatClient, userInfoProvider]);
+  const isMinimizedRef = useRef(isMinimized);
 
   // 更新状态引用
   React.useEffect(() => {
     isShowingPreviewRef.current = isShowingPreview;
     isInCallRef.current = isInCall;
     callModeRef.current = callMode;
-  }, [isShowingPreview, isInCall, callMode]);
+    isMinimizedRef.current = isMinimized;
+  }, [isShowingPreview, isInCall, callMode, isMinimized]);
 
   // 通用的群成员获取方法
   const fetchGroupMembers = React.useCallback(
@@ -512,21 +485,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       console.log(`🚀 ${context}：调用 fetchGroupMembers，参数:`, {
         groupId,
         hasWebimConnection: !!chatClient,
-        hasUserInfoProvider: !!userInfoProvider,
       });
 
-      if (!groupId || !chatClient || !userInfoProvider) {
+      if (!groupId || !chatClient) {
         console.warn(`❌ ${context}：缺少必要参数`, {
           groupId: !!groupId,
           chatClient: !!chatClient,
-          userInfoProvider: !!userInfoProvider,
         });
-        return [];
-      }
-
-      // 检查 chatClient 和 listGroupMembers 方法是否存在
-      if (typeof chatClient.listGroupMembers !== 'function') {
-        console.error(`❌ ${context}：webimConnection.listGroupMembers 方法不可用`);
         return [];
       }
 
@@ -582,6 +547,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
           // 使用 userInfoProvider 批量获取用户详细信息
           try {
+            if (!userInfoProvider) {
+              throw new Error('userInfoProvider not available, using fallback');
+            }
             const membersWithInfo = await Promise.resolve(userInfoProvider(memberUserIds));
             if (!Array.isArray(membersWithInfo)) {
               return [];
@@ -667,7 +635,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       const currentIsShowingPreview = isShowingPreviewRef.current;
       const currentIsInCall = isInCallRef.current;
       const currentCallMode = callModeRef.current;
-
+      console.log('视频流准备就绪:', videoInfo);
       // 如果是预览模式的本地视频（ID为local-preview），总是设置到localVideo状态
       if (videoInfo.id === 'local-preview') {
         setLocalVideo(videoInfo);
@@ -740,7 +708,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               摄像头状态: videoInfo.cameraEnabled,
             });
             // 只调用外部回调，不更新videos数组
-            props.onRemoteVideoReady?.(videoInfo);
             return;
           }
         }
@@ -904,7 +871,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     hasInitialized,
     chatClient,
     handleCallStart,
-    handleCallEnd,
     handleInvitationReceived,
 
     handleUserPublished,
@@ -930,7 +896,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       // 内部
       showInvitation: (invitationInfo: InvitationInfo) => {
         setInvitation(invitationInfo);
-        setCallStatus('ringing'); // 被叫：响铃中/被邀请中
+        // 🔧 修复：只有在非主叫状态下才设置为 ringing，避免覆盖主叫方的 calling 状态
+        if (callStatus !== 'calling') {
+          setCallStatus('ringing'); // 被叫：响铃中/被邀请中
+        }
 
         // 设置通话模式
         const currentCallMode = invitationInfo.type === 'group' ? 'group' : invitationInfo.type;
@@ -949,14 +918,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           });
         } else if (invitationInfo.type === 'video') {
           // 1v1视频通话的预览模式
-          setLocalVideo({
-            id: 'local-preview',
-            isLocalVideo: true,
-            nickname: '我',
-            muted: false,
-            cameraEnabled: true,
-            stream: undefined, // 这里应该是实际的本地视频流
-          });
+          console.log('🔧 1v1视频邀请：设置预览状态');
+          setIsShowingPreview(true);
+          // 不在这里设置localVideo，等待CallService创建实际的视频轨道后通过onRemoteVideoReady回调
         }
       },
       // 内部
@@ -966,6 +930,36 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         setIsShowingPreview(false);
         setLocalVideo(null);
         setCallMode('video'); // 重置为初始模式
+
+        // 🔧 重置真实通话状态到初始值
+        setRealCallMuted(false);
+        setRealCallCameraEnabled(true);
+        setRealCallSpeakerEnabled(true);
+
+        // 🔧 新增：重置CallKit尺寸和位置到初始状态
+        if (managedPosition) {
+          console.log('🔧 hideInvitation: 重置CallKit尺寸和位置到初始状态');
+          setInternalSize(initialSize);
+          setInternalPosition(initialPosition);
+
+          // 立即应用到DOM，避免视觉闪烁
+          const element = internalRef.current;
+          if (element) {
+            element.style.width = `${initialSize.width}px`;
+            element.style.height = `${initialSize.height}px`;
+            element.style.left = `${initialPosition.left}px`;
+            element.style.top = `${initialPosition.top}px`;
+          }
+        }
+
+        // 🔧 重置群组通话相关状态到初始值
+        setIsInitiatingGroupCall(false);
+        setGroupCallType('video');
+        setGroupId('');
+        setSelectedNewMembers([]);
+        setWebimGroupMembers([]);
+        setIsLoadingGroupMembers(false);
+        setIsUserSelectVisible(false);
       },
       // 内部
       startCall: (callVideos: VideoWindowProps[]) => {
@@ -989,6 +983,37 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         setIsShowingPreview(false);
         setLocalVideo(null);
         setCallMode('video'); // 重置为初始模式
+
+        // 🔧 重置真实通话状态到初始值
+        setRealCallMuted(false);
+        setRealCallCameraEnabled(true);
+        setRealCallSpeakerEnabled(true);
+
+        // 🔧 新增：重置CallKit尺寸和位置到初始状态
+        if (managedPosition) {
+          console.log('🔧 endCall: 重置CallKit尺寸和位置到初始状态');
+          setInternalSize(initialSize);
+          setInternalPosition(initialPosition);
+
+          // 立即应用到DOM，避免视觉闪烁
+          const element = internalRef.current;
+          if (element) {
+            element.style.width = `${initialSize.width}px`;
+            element.style.height = `${initialSize.height}px`;
+            element.style.left = `${initialPosition.left}px`;
+            element.style.top = `${initialPosition.top}px`;
+          }
+        }
+
+        // 🔧 重置群组通话相关状态到初始值
+        setIsInitiatingGroupCall(false);
+        setGroupCallType('video');
+        setGroupId('');
+        setSelectedNewMembers([]);
+        setWebimGroupMembers([]);
+        setIsLoadingGroupMembers(false);
+        setIsUserSelectVisible(false);
+
         // onCallEndRef.current?.(reason, callInfo);
       },
       // 内部
@@ -1009,19 +1034,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       // 发起多人通话
       startGroupCall: async (options: {
         groupId: string;
-        callType: 'video' | 'audio';
+        // callType: 'video' | 'audio';
         msg: string;
         ext?: Record<string, any>;
       }): Promise<ChatSDK.TextMsgBody | null> => {
-        const { groupId, callType, ext } = options;
+        const { groupId, ext } = options;
+        const callType = 'video';
         if (!groupId) {
           onCallError?.(CallError.create(CallErrorCode.CALL_PARAM_ERROR, 'groupId is required'));
           return null;
         }
-        if (!callType || !['video', 'audio'].includes(callType)) {
-          onCallError?.(CallError.create(CallErrorCode.CALL_PARAM_ERROR, 'callType is required'));
-          return null;
-        }
+
         groupCallInviteMsg = options.msg;
 
         // 🔧 创建 Promise 用于异步返回结果
@@ -1037,17 +1060,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
           // 获取当前最新的 webimConnection（避免闭包问题）
           const currentWebimConnection = chatClient;
-          const currentUserInfoProvider = userInfoProvider;
 
           // 异步操作，不阻塞 Promise 的创建
           (async () => {
             try {
               // 如果提供了webimConnection和userInfoProvider，直接获取当前群组的成员
-              if (currentWebimConnection && currentUserInfoProvider) {
+              if (currentWebimConnection) {
                 setIsLoadingGroupMembers(true);
 
                 // 🔧 使用封装的方法获取群成员
                 const formattedMembers = await fetchGroupMembers(groupId, 'startGroupCall');
+                console.log('🚀 获取群成员', formattedMembers);
                 setWebimGroupMembers(formattedMembers);
                 setIsLoadingGroupMembers(false);
               } else {
@@ -1165,13 +1188,20 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           return;
         }
 
+        // 🔧 新增：接听呼叫时确保从正常大小状态开始
+        if (result === true && isMinimizedRef.current) {
+          console.log('🚀 接听呼叫，从最小化状态恢复到正常大小');
+          setIsMinimized(false);
+          restoreToNormalSize();
+        }
+
         if (callServiceRef.current && invitation) {
           // 🔧 新增：被叫方接受1v1通话邀请时，设置主叫方用户信息用于Header显示
           if (invitation.type === 'video' || invitation.type === 'audio') {
             console.log('🎯 被叫方接受1v1通话，设置主叫方用户信息...');
 
             // 从invitation中获取主叫方信息
-            const callerUserId = invitation.id; // invitation.id是主叫方的userId
+            const callerUserId = invitation.callerUserId; // invitation.callerName是主叫方的userId
             const callerNickname = invitation.callerName || callerUserId;
             const callerAvatar = invitation.callerAvatar;
 
@@ -1183,7 +1213,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
             // 设置主叫方用户信息到CallService
             const callerUserInfo = {
-              [callerUserId]: {
+              [callerUserId || '']: {
                 nickname: callerNickname,
                 avatarUrl: callerAvatar,
               },
@@ -1242,7 +1272,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       },
 
       // exitCall
-      hangupCall: (reason?: string) => {
+      exitCall: (reason?: string) => {
         if (callServiceRef.current) {
           callServiceRef.current.hangup(reason);
         }
@@ -1264,9 +1294,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       },
 
       // 内部
-      toggleCamera: () => {
+      toggleCamera: async () => {
         if (callServiceRef.current) {
-          return callServiceRef.current.toggleCamera();
+          return await callServiceRef.current.toggleCamera();
         }
         return false;
       },
@@ -1307,6 +1337,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       createLocalVideoTrackForGroupCall: async () => {
         if (callServiceRef.current) {
           return await callServiceRef.current.createLocalVideoTrackForGroupCall();
+        }
+        return false;
+      },
+      createLocalVideoTrackFor1v1Preview: async () => {
+        if (callServiceRef.current) {
+          return await callServiceRef.current.createLocalVideoTrackFor1v1Preview();
         }
         return false;
       },
@@ -1431,6 +1467,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           }
         }
 
+        // 🔧 修复：1v1视频通话直接接听，使用与preview页面相同的回调逻辑
+        if (currentCallMode === 'video' && hasInitialized && callServiceRef.current) {
+          try {
+            console.log('🔧 1v1视频通话：点击接听，创建预览视频轨道');
+            await callServiceRef.current.createLocalVideoTrackFor1v1Preview();
+          } catch (error) {
+            console.error('🔧 1v1视频通话：创建预览视频轨道失败:', error);
+          }
+        }
+
+        // 🔧 修复：1v1视频通话也使用相同的回调逻辑，避免直接调用answerCall
         setCallStatus('connected'); // 接听后进入通话状态
         setIsInCall(true);
         setInvitation(null);
@@ -1446,6 +1493,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         setIsShowingPreview(false);
         setLocalVideo(null);
         setCallMode('video'); // 重置为初始模式
+
+        // 🔧 重置真实通话状态到初始值
+        setRealCallMuted(false);
+        setRealCallCameraEnabled(true);
+        setRealCallSpeakerEnabled(true);
+
         onInvitationRejectRef.current?.(invitationData);
       };
 
@@ -1484,8 +1537,15 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             });
           }
         }
+        // 🔧 修复：根据通话类型创建相应的视频轨道
         if (hasInitialized && callServiceRef.current) {
-          await callServiceRef.current.createLocalVideoTrackForGroupCall();
+          if (currentCallMode === 'group') {
+            console.log('🔧 notification点击：群组通话，创建群组视频轨道');
+            await callServiceRef.current.createLocalVideoTrackForGroupCall();
+          } else if (currentCallMode === 'video') {
+            console.log('🔧 notification点击：1v1视频通话，创建预览视频轨道');
+            await callServiceRef.current.createLocalVideoTrackFor1v1Preview();
+          }
         }
       };
 
@@ -1587,10 +1647,42 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     windowSize,
   ]);
 
-  // 获取实际的布局模式
+  // 获取实际的布局模式 - 根据通话状态和类型动态选择
   const actualLayoutMode = useMemo(() => {
-    return isMinimized ? LayoutMode.MINIMIZED : layoutMode;
-  }, [isMinimized, layoutMode]);
+    console.log('🔧 actualLayoutMode 计算:', {
+      isMinimized,
+      layoutMode,
+      callMode,
+      isShowingPreview,
+      isInCall,
+      videos数量: videos.length,
+    });
+
+    if (isMinimized) {
+      return LayoutMode.MINIMIZED;
+    }
+
+    // 预览模式：根据通话类型选择合适的布局
+    if (isShowingPreview) {
+      if (callMode === 'group') {
+        return LayoutMode.MULTI_PARTY; // 多人视频通话预览使用多人布局
+      } else {
+        return LayoutMode.PREVIEW; // 1v1通话预览使用专门的预览布局
+      }
+    }
+
+    // 通话模式：根据通话类型选择布局，优先级高于prop传入的layoutMode
+    if (isInCall) {
+      if (callMode === 'group') {
+        return LayoutMode.MULTI_PARTY; // 群组通话使用多人布局
+      } else if (callMode === 'video' || callMode === 'audio') {
+        return LayoutMode.ONE_TO_ONE; // 1v1通话使用一对一布局
+      }
+    }
+
+    // 如果不在通话中且不在预览中，使用传入的layoutMode
+    return layoutMode;
+  }, [isMinimized, layoutMode, callMode, isShowingPreview, isInCall, videos.length]);
 
   // 内置位置管理的调整大小处理函数
   const handleInternalResize = React.useCallback(
@@ -1678,7 +1770,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     if (managedPosition) {
       // 内置位置管理：合并内部状态和用户样式
       return {
-        position: 'absolute' as const,
+        position: 'fixed' as const,
         left: internalPosition.left,
         top: internalPosition.top,
         width: internalSize.width,
@@ -1691,6 +1783,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
   }, [managedPosition, internalPosition, internalSize, style]);
 
+  console.log('🚀 actualLayoutMode ==', actualLayoutMode);
   // 容器类名
   const containerClass = React.useMemo(
     () =>
@@ -1734,11 +1827,77 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       : minimizedSize; // 其他模式使用默认尺寸
   }, [callMode, minimizedSize]);
 
+  // 恢复到正常大小（不执行切换，直接恢复）
+  const restoreToNormalSize = React.useCallback(() => {
+    console.log('🔧 执行恢复到正常大小的DOM操作');
+    if (managedPosition) {
+      const element = internalRef.current;
+      if (element) {
+        // 获取当前最小化状态的中心点
+        const currentCenterX = internalPosition.left + actualMinimizedSize.width / 2;
+        const currentCenterY = internalPosition.top + actualMinimizedSize.height / 2;
+
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        // 计算屏幕中心位置（目标位置）
+        const targetCenterX = windowWidth / 2;
+        const targetCenterY = windowHeight / 2;
+
+        // 计算最终位置（保持中心点对齐）
+        const finalX = targetCenterX - initialSize.width / 2;
+        const finalY = targetCenterY - initialSize.height / 2;
+
+        // 确保不会超出屏幕边界
+        const margin = 20;
+        const safeTargetX = Math.max(
+          margin,
+          Math.min(finalX, windowWidth - initialSize.width - margin),
+        );
+        const safeTargetY = Math.max(
+          margin,
+          Math.min(finalY, windowHeight - initialSize.height - margin),
+        );
+
+        // 设置动画过渡
+        element.style.transition =
+          'left 0.3s ease-out, top 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out';
+        element.style.transformOrigin = 'center center';
+
+        // 同时改变位置和尺寸
+        element.style.left = `${safeTargetX}px`;
+        element.style.top = `${safeTargetY}px`;
+        element.style.width = `${initialSize.width}px`;
+        element.style.height = `${initialSize.height}px`;
+
+        // 动画完成后更新 React 状态并清理样式
+        setTimeout(() => {
+          if (element) {
+            element.style.transition = '';
+            element.style.transformOrigin = '';
+
+            // 同步更新 React 状态
+            setInternalPosition({
+              left: safeTargetX,
+              top: safeTargetY,
+            });
+            setInternalSize(initialSize);
+
+            // 从最小化恢复时，重新播放本地视频
+            if (hasInitialized && callServiceRef.current) {
+              callServiceRef.current.onRestoreFromMinimized();
+            }
+          }
+        }, 300);
+      }
+    }
+  }, [managedPosition, internalPosition, actualMinimizedSize, initialSize, hasInitialized]);
+
   // 处理最小化切换
   const handleMinimizedToggle = () => {
     const newMinimizedState = !isMinimized;
     setIsMinimized(newMinimizedState);
-
+    console.log('🚀 handleMinimizedToggle 最小化状态', newMinimizedState);
     if (managedPosition) {
       // 如果是最小化状态，执行自动吸附动画
       if (newMinimizedState) {
@@ -1778,11 +1937,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           );
 
           // 计算目标中心点
-          const targetCenterX = safeTargetX + actualMinimizedSize.width / 2;
+          const targetCenterX = safeTargetX + actualMinimizedSize.width;
           const targetCenterY = safeTargetY + actualMinimizedSize.height / 2;
 
           // 计算最终位置（保持中心点对齐）
-          const finalX = targetCenterX - actualMinimizedSize.width / 2;
+          const finalX = targetCenterX - actualMinimizedSize.width;
           const finalY = targetCenterY - actualMinimizedSize.height / 2;
 
           // 设置动画过渡
@@ -1894,6 +2053,19 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 渲染视频窗口 - 支持根据尺寸控制昵称显示
   const renderVideoWindow = React.useCallback(
     (video: VideoWindowProps, index: number, windowSize?: { width: number; height: number }) => {
+      // 🔧 防止在通话结束后继续尝试播放视频
+      if (!isInCall && callStatus === 'idle') {
+        return (
+          <div
+            key={video.id}
+            className={`${prefixCls}-window`}
+            style={{ width: '100%', height: '100%', background: '#000' }}
+          >
+            <div>通话已结束</div>
+          </div>
+        );
+      }
+
       const videoClass = classNames(`${prefixCls}-window`, {
         [`${prefixCls}-window-local`]: video.isLocalVideo,
         [`${prefixCls}-window-muted`]: video.muted,
@@ -1908,8 +2080,25 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             windowSize.height >= NICKNAME_DISPLAY_THRESHOLD));
 
       // 判断是否应该显示视频（而不是头像）
-      const shouldShowVideo =
-        video.videoElement || video.stream || (video.cameraEnabled && !video.isWaiting); // 摄像头开启且非等待状态时显示video元素
+      // 🔧 修复：只要摄像头开启就显示视频区域，不管是否有视频流
+      const shouldShowVideo = video.cameraEnabled && !video.isWaiting; // 摄像头开启且不在等待状态时显示video区域
+
+      // 🔧 调试日志
+      if (video.isLocalVideo) {
+        console.log('🔧 UI渲染判断:', {
+          videoId: video.id,
+          cameraEnabled: video.cameraEnabled,
+          isWaiting: video.isWaiting,
+          hasVideoElement: !!video.videoElement,
+          hasStream: !!video.stream,
+          shouldShowVideo,
+          显示模式: shouldShowVideo
+            ? '显示视频区域'
+            : !video.cameraEnabled
+            ? '摄像头关闭-显示头像'
+            : '摄像头开启但无视频-显示黑屏',
+        });
+      }
 
       return (
         <div
@@ -2048,85 +2237,164 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 />
               )
             ) : (
+              // 🔧 修复：区分主动关闭摄像头和摄像头开启但无视频流两种情况
               <div className={`${prefixCls}-placeholder`}>
-                {video.avatar ? (
-                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                    <img
-                      src={video.avatar}
-                      alt={video.nickname}
-                      className={`${prefixCls}-avatar`}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        borderRadius: 'inherit',
-                      }}
-                    />
-                    {/* 等待状态显示加载动画 */}
-                    {video.isWaiting && (
-                      <div
-                        className={`${prefixCls}-waiting-overlay`}
+                {!video.cameraEnabled ? (
+                  // 摄像头主动关闭：显示头像
+                  video.avatar ? (
+                    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                      <img
+                        src={video.avatar}
+                        alt={video.nickname}
+                        className={`${prefixCls}-avatar`}
                         style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
                           borderRadius: 'inherit',
                         }}
-                      >
+                      />
+                      {/* 等待状态显示加载动画 */}
+                      {video.isWaiting && (
                         <div
-                          className={`${prefixCls}-waiting-dots`}
+                          className={`${prefixCls}-waiting-overlay`}
                           style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
                             display: 'flex',
-                            gap: '4px',
                             alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 'inherit',
                           }}
                         >
                           <div
+                            className={`${prefixCls}-waiting-dots`}
                             style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#fff',
-                              animation: 'bounce 1.4s infinite ease-in-out both',
-                              animationDelay: '0s',
+                              display: 'flex',
+                              gap: '4px',
+                              alignItems: 'center',
                             }}
-                          />
-                          <div
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#fff',
-                              animation: 'bounce 1.4s infinite ease-in-out both',
-                              animationDelay: '0.16s',
-                            }}
-                          />
-                          <div
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#fff',
-                              animation: 'bounce 1.4s infinite ease-in-out both',
-                              animationDelay: '0.32s',
-                            }}
-                          />
+                          >
+                            <div
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#fff',
+                                animation: 'bounce 1.4s infinite ease-in-out both',
+                                animationDelay: '0s',
+                              }}
+                            />
+                            <div
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#fff',
+                                animation: 'bounce 1.4s infinite ease-in-out both',
+                                animationDelay: '0.16s',
+                              }}
+                            />
+                            <div
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#fff',
+                                animation: 'bounce 1.4s infinite ease-in-out both',
+                                animationDelay: '0.32s',
+                              }}
+                            />
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className={`${prefixCls}-avatar-placeholder`}
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: 'inherit',
+                        position: 'relative',
+                      }}
+                    >
+                      <Icon type="PERSON_SINGLE_FILL" width="40%" height="40%" color="#ffffff" />
+                      {/* 等待状态显示加载动画 */}
+                      {video.isWaiting && (
+                        <div
+                          className={`${prefixCls}-waiting-overlay`}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 'inherit',
+                          }}
+                        >
+                          <div
+                            className={`${prefixCls}-waiting-dots`}
+                            style={{
+                              display: 'flex',
+                              gap: '4px',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#fff',
+                                animation: 'bounce 1.4s infinite ease-in-out both',
+                                animationDelay: '0s',
+                              }}
+                            />
+                            <div
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#fff',
+                                animation: 'bounce 1.4s infinite ease-in-out both',
+                                animationDelay: '0.16s',
+                              }}
+                            />
+                            <div
+                              style={{
+                                width: '8px',
+                                height: '8px',
+                                borderRadius: '50%',
+                                backgroundColor: '#fff',
+                                animation: 'bounce 1.4s infinite ease-in-out both',
+                                animationDelay: '0.32s',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
                 ) : (
+                  // 摄像头开启但无视频流：显示黑屏
                   <div
-                    className={`${prefixCls}-avatar-placeholder`}
+                    className={`${prefixCls}-video-loading`}
                     style={{
                       width: '100%',
                       height: '100%',
+                      backgroundColor: '#000',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -2134,63 +2402,45 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                       position: 'relative',
                     }}
                   >
-                    <Icon type="PERSON_SINGLE_FILL" width="40%" height="40%" color="#ffffff" />
-                    {/* 等待状态显示加载动画 */}
                     {video.isWaiting && (
                       <div
-                        className={`${prefixCls}-waiting-overlay`}
+                        className={`${prefixCls}-waiting-dots`}
                         style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
                           display: 'flex',
+                          gap: '4px',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 'inherit',
                         }}
                       >
                         <div
-                          className={`${prefixCls}-waiting-dots`}
                           style={{
-                            display: 'flex',
-                            gap: '4px',
-                            alignItems: 'center',
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#fff',
+                            animation: 'bounce 1.4s infinite ease-in-out both',
+                            animationDelay: '0s',
                           }}
-                        >
-                          <div
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#fff',
-                              animation: 'bounce 1.4s infinite ease-in-out both',
-                              animationDelay: '0s',
-                            }}
-                          />
-                          <div
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#fff',
-                              animation: 'bounce 1.4s infinite ease-in-out both',
-                              animationDelay: '0.16s',
-                            }}
-                          />
-                          <div
-                            style={{
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              backgroundColor: '#fff',
-                              animation: 'bounce 1.4s infinite ease-in-out both',
-                              animationDelay: '0.32s',
-                            }}
-                          />
-                        </div>
+                        />
+                        <div
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#fff',
+                            animation: 'bounce 1.4s infinite ease-in-out both',
+                            animationDelay: '0.16s',
+                          }}
+                        />
+                        <div
+                          style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#fff',
+                            animation: 'bounce 1.4s infinite ease-in-out both',
+                            animationDelay: '0.32s',
+                          }}
+                        />
                       </div>
                     )}
                   </div>
@@ -2280,16 +2530,27 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         </div>
       );
     },
-    [prefixCls, callMode, onVideoClick, talkingUsers, networkQuality, chatClient],
+    [
+      prefixCls,
+      callMode,
+      onVideoClick,
+      talkingUsers,
+      networkQuality,
+      chatClient,
+      isInCall,
+      callStatus,
+    ],
   );
 
-  // 处理预览模式下的接听
-  const handlePreviewAccept = () => {
-    setIsShowingPreview(false);
-    setCallStatus('connected');
-    setIsInCall(true);
-    setLocalVideo(null);
+  // 处理预览模式下的接听通话
+  const handlePreviewAccept = async () => {
+    // 🔧 群通话不再需要预览模式，只处理被叫方接听逻辑
     if (invitation) {
+      // 被叫方接听邀请的逻辑
+      setIsShowingPreview(false);
+      setCallStatus('connected');
+      setIsInCall(true);
+      setLocalVideo(null);
       onInvitationAcceptRef.current?.(invitation);
     }
   };
@@ -2301,6 +2562,37 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     setInvitation(null);
     setLocalVideo(null);
     setCallMode('video'); // 重置为初始模式
+
+    // 🔧 重置真实通话状态到初始值
+    setRealCallMuted(false);
+    setRealCallCameraEnabled(true);
+    setRealCallSpeakerEnabled(true);
+
+    // 🔧 新增：重置CallKit尺寸和位置到初始状态
+    if (managedPosition) {
+      console.log('🔧 handlePreviewReject: 重置CallKit尺寸和位置到初始状态');
+      setInternalSize(initialSize);
+      setInternalPosition(initialPosition);
+
+      // 立即应用到DOM，避免视觉闪烁
+      const element = internalRef.current;
+      if (element) {
+        element.style.width = `${initialSize.width}px`;
+        element.style.height = `${initialSize.height}px`;
+        element.style.left = `${initialPosition.left}px`;
+        element.style.top = `${initialPosition.top}px`;
+      }
+    }
+
+    // 🔧 重置群组通话相关状态到初始值
+    setIsInitiatingGroupCall(false);
+    setGroupCallType('video');
+    setGroupId('');
+    setSelectedNewMembers([]);
+    setWebimGroupMembers([]);
+    setIsLoadingGroupMembers(false);
+    setIsUserSelectVisible(false);
+
     if (invitation) {
       onInvitationRejectRef.current?.(invitation);
     }
@@ -2333,11 +2625,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     if (
       effectiveGroupMembers.length === 0 && // 没有群成员数据
       chatClient &&
-      userInfoProvider &&
       hasInitialized &&
       callServiceRef.current
     ) {
-      console.log('🔍 被邀请方需要获取群成员，开始动态获取...');
+      console.log('🔍 被邀请方需要获取群成员，开始动态获取...', {
+        hasUserInfoProvider: !!userInfoProvider,
+        effectiveGroupMembersLength: effectiveGroupMembers.length,
+      });
 
       try {
         // 从 CallService 获取当前通话信息
@@ -2357,6 +2651,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           const formattedMembers = await fetchGroupMembers(targetGroupId, '被邀请方添加参与者');
           setWebimGroupMembers(formattedMembers);
           setIsLoadingGroupMembers(false);
+
+          console.log('✅ 被邀请方动态获取群成员成功:', {
+            获取成员数量: formattedMembers.length,
+            成员列表: formattedMembers.map((m: any) => `${m.userId}(${m.nickname})`),
+          });
         } else {
           console.warn('⚠️ 无法获取群组ID，可能不是群组通话');
           // 如果无法获取群组ID，提供一个提示但仍然打开选择界面
@@ -2369,7 +2668,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       // 没有任何群成员数据，且不满足动态获取条件
       console.log('⚠️ 无群成员数据且无法动态获取:', {
         hasWebimConnection: !!chatClient,
-        hasuserInfoProvider: !!userInfoProvider,
         hasCallService: !!callServiceRef.current,
         hasInitialized,
         effectiveGroupMembersLength: effectiveGroupMembers.length,
@@ -2388,6 +2686,33 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     if (isInitiatingGroupCall) {
       setIsInitiatingGroupCall(false);
 
+      // 🔧 重置真实通话状态到初始值
+      setRealCallMuted(false);
+      setRealCallCameraEnabled(true);
+      setRealCallSpeakerEnabled(true);
+
+      // 🔧 新增：重置CallKit尺寸和位置到初始状态
+      if (managedPosition) {
+        console.log('🔧 handleUserSelectCancel: 重置CallKit尺寸和位置到初始状态');
+        setInternalSize(initialSize);
+        setInternalPosition(initialPosition);
+
+        // 立即应用到DOM，避免视觉闪烁
+        const element = internalRef.current;
+        if (element) {
+          element.style.width = `${initialSize.width}px`;
+          element.style.height = `${initialSize.height}px`;
+          element.style.left = `${initialPosition.left}px`;
+          element.style.top = `${initialPosition.top}px`;
+        }
+      }
+
+      // 🔧 重置群组通话相关状态到初始值
+      setGroupCallType('video');
+      setGroupId('');
+      setWebimGroupMembers([]);
+      setIsLoadingGroupMembers(false);
+
       // 🔧 新增：用户取消选择，reject Promise
       if (groupCallPromiseRef.current) {
         groupCallPromiseRef.current.reject(new Error('用户取消了群组通话'));
@@ -2396,7 +2721,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
   };
 
-  // 处理用户选择确认
+  // 选完用户后，开始发起群组通话
   const handleUserSelectConfirm = async (selectedUsers: any[]) => {
     setIsUserSelectVisible(false);
 
@@ -2435,10 +2760,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             });
           }
 
-          // 群组视频通话：发起方直接进入群组视频布局，不进入预览模式
-          setCallStatus('calling'); // 主叫：呼叫中
+          // 🔧 修改：群组通话选择完成员后直接开始通话，不需要预览模式
+          setCallStatus('connected'); // 主叫：直接连接状态
           setCallMode('group');
-          setIsInCall(true); // 直接进入通话状态
+          setIsShowingPreview(false); // 🔧 修改：不进入预览模式，直接开始通话
+          setIsInCall(true); // 🔧 修改：直接进入通话状态
+          setIsInitiatingGroupCall(false); // 🔧 重置群通话发起状态
 
           // 创建群组视频布局数据：发起方的视频 + 被邀请方的等待状态
           const groupVideos: VideoWindowProps[] = [
@@ -2446,7 +2773,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               id: 'local',
               isLocalVideo: true,
               muted: false,
-              cameraEnabled: groupCallType === 'video',
+              cameraEnabled: false, // 🔧 修改：群通话发起方默认摄像头关闭
               nickname: '我',
               avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=me', // 临时使用默认头像，后续会通过 userInfoProvider 更新
             },
@@ -2507,10 +2834,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               ext,
             });
 
-            // 🔧 新增：为每个邀请的用户设置超时定时器
+            // 为每个邀请的用户设置超时定时器
             const timeoutMs = autoRejectTime * 1000; // 转换为毫秒
             selectedUsers.forEach(user => {
-              setInvitationTimer(user.userId, timeoutMs);
+              setInvitationTimer(user.userId, timeoutMs, handleInvitationTimeout);
             });
 
             // 🔧 新增：群组通话发送成功，resolve Promise
@@ -2527,13 +2854,18 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           }
         }
 
-        // 重置状态
-        setIsInitiatingGroupCall(false);
+        // 🔧 修复：不要在这里重置 isInitiatingGroupCall，应该在实际开始通话时重置
+        // setIsInitiatingGroupCall(false); // 移除过早的重置
         setSelectedNewMembers([]);
       } else {
         // 没有选择成员，重置状态
         setIsInitiatingGroupCall(false);
         setSelectedNewMembers([]);
+
+        // 🔧 重置真实通话状态到初始值
+        setRealCallMuted(false);
+        setRealCallCameraEnabled(true);
+        setRealCallSpeakerEnabled(true);
 
         // 🔧 新增：没有选择成员，resolve null
         if (groupCallPromiseRef.current) {
@@ -2595,7 +2927,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               // 为邀请的用户设置超时定时器
               const timeoutMs = autoRejectTime * 1000; // 转换为毫秒
               newMembers.forEach(user => {
-                setInvitationTimer(user.userId, timeoutMs);
+                setInvitationTimer(user.userId, timeoutMs, handleInvitationTimeout);
               });
 
               console.log(
@@ -2690,20 +3022,35 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   );
 
   const handleCameraToggle = React.useCallback(
-    (newCameraEnabled: boolean) => {
+    async (newCameraEnabled: boolean) => {
+      console.log('🔧 CallKit: handleCameraToggle被调用', {
+        newCameraEnabled,
+        hasInitialized,
+        hasCallService: !!callServiceRef.current,
+        currentRealCameraEnabled: realCallCameraEnabled,
+      });
+
       if (hasInitialized && callServiceRef.current) {
-        // 使用 CallService 的实际控制方法
-        const actualCameraEnabled = callServiceRef.current.toggleCamera();
-        // 更新内部状态
-        setRealCallCameraEnabled(actualCameraEnabled);
-        // 触发外部回调，传递实际状态
-        onCameraToggle?.(actualCameraEnabled);
+        // 使用 CallService 的实际控制方法（异步）
+        try {
+          console.log('🔧 CallKit: 调用 CallService.toggleCamera()');
+          const actualCameraEnabled = await callServiceRef.current.toggleCamera();
+          console.log('🔧 CallKit: toggleCamera返回结果:', actualCameraEnabled);
+
+          // 更新内部状态
+          setRealCallCameraEnabled(actualCameraEnabled);
+          // 触发外部回调，传递实际状态
+          onCameraToggle?.(actualCameraEnabled);
+        } catch (error) {
+          console.error('切换摄像头失败:', error);
+        }
       } else {
         // 演示模式，直接调用外部回调
+        console.log('🔧 CallKit: 演示模式，直接调用外部回调');
         onCameraToggle?.(newCameraEnabled);
       }
     },
-    [hasInitialized, onCameraToggle],
+    [hasInitialized, onCameraToggle, realCallCameraEnabled],
   );
 
   const handleSpeakerToggle = React.useCallback(
@@ -2732,23 +3079,68 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   );
 
   const handleHangup = React.useCallback(() => {
+    console.log('🔧 handleHangup 被调用', {
+      hasInitialized,
+      hasCallService: !!callServiceRef.current,
+    });
+
     if (hasInitialized && callServiceRef.current) {
       const isInPreviewMode = isShowingPreview && callStatus === 'calling';
-      console.log('🚀 取消群组通话');
+      console.log('🚀 准备挂断通话:', { isInPreviewMode, callStatus, isShowingPreview });
       callServiceRef.current.cancelGroupCall();
-      callServiceRef.current.hangup('cancel', isInPreviewMode);
+      callServiceRef.current.hangup('hangup', isInPreviewMode);
       // 演示模式，重置组件状态
-      //  setVideos([]);
-      //  setIsInCall(false);
-      //  setCallStatus('idle');
-      //  setIsShowingPreview(false);
-      //  setLocalVideo(null);
-      //  setInvitation(null);
-      //  setCallMode('video'); // 重置为初始模式
+      setVideos([]);
+      setIsInCall(false);
+      setCallStatus('idle');
+      setIsShowingPreview(false);
+      setLocalVideo(null);
+      setInvitation(null);
+      setCallMode('video'); // 重置为初始模式
+
+      // 🔧 重置真实通话状态到初始值
+      setRealCallMuted(false);
+      setRealCallCameraEnabled(true);
+      setRealCallSpeakerEnabled(true);
+      // 小窗状态恢复
+      setIsMinimized(false);
+
+      // 🔧 新增：重置CallKit尺寸和位置到初始状态
+      if (managedPosition) {
+        console.log('🔧 handleHangup: 重置CallKit尺寸和位置到初始状态');
+        setInternalSize(initialSize);
+        setInternalPosition(initialPosition);
+
+        // 立即应用到DOM，避免视觉闪烁
+        const element = internalRef.current;
+        if (element) {
+          element.style.width = `${initialSize.width}px`;
+          element.style.height = `${initialSize.height}px`;
+          element.style.left = `${initialPosition.left}px`;
+          element.style.top = `${initialPosition.top}px`;
+        }
+      }
+
+      // 🔧 重置群组通话相关状态到初始值
+      setIsInitiatingGroupCall(false);
+      setGroupCallType('video');
+      setGroupId('');
+      setSelectedNewMembers([]);
+      setWebimGroupMembers([]);
+      setIsLoadingGroupMembers(false);
+      setIsUserSelectVisible(false);
     }
     // 触发外部回调
     onHangup?.();
-  }, [hasInitialized, onHangup, isShowingPreview, callStatus]);
+  }, [
+    hasInitialized,
+    onHangup,
+    isShowingPreview,
+    callStatus,
+    managedPosition,
+    initialSize,
+    initialPosition,
+  ]);
 
   // 合并群成员数据：优先使用从IM SDK获取的数据，如果没有则使用传统的groupMembers
   const effectiveGroupMembers = React.useMemo(() => {
@@ -2829,18 +3221,28 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const groupCallStatus = React.useMemo(() => {
     const isGroupCall = callMode === 'group';
     const hasParticipants = displayVideos.some(video => !video.isLocalVideo);
-    const isConnected =
-      callStatus === 'connected' ||
-      (hasInitialized && callServiceRef.current?.getCallStatus?.() === CALL_STATUS.IN_CALL);
+
+    // 🔧 修复：对群通话使用RTC层面的真实连接状态，避免UI状态误导
+    const rtcCallStatus = hasInitialized ? callServiceRef.current?.getCallStatus?.() : null;
+    const isRTCConnected = rtcCallStatus === CALL_STATUS.IN_CALL;
+
+    // UI层面的连接状态（用于界面显示）
+    const isUIConnected = callStatus === 'connected' || isRTCConnected;
+
+    // 🔧 对于群通话，控制按钮使用RTC真实状态；其他通话使用UI状态
+    const isConnected = isGroupCall ? isRTCConnected : isUIConnected;
 
     console.log('🔧 CallKit: 多人视频通话状态计算', {
       callMode,
       displayVideos: displayVideos.map(v => ({ id: v.id, isLocalVideo: v.isLocalVideo })),
       callStatus,
+      rtcCallStatus,
       hasInitialized,
       isGroupCall,
       hasParticipants,
-      isConnected,
+      isUIConnected,
+      isRTCConnected,
+      isConnected: isConnected,
     });
 
     return {
@@ -2986,6 +3388,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     return result;
   }, [displayVideos, chatClient?.user, effectiveGroupMembers, isInitiatingGroupCall]);
 
+  console.log('🔧 CallKit: 群成员', effectiveGroupMembers);
   return (
     <>
       {/* 通知系统 */}

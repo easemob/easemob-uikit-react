@@ -69,7 +69,7 @@ const CallControls: React.FC<CallControlsProps> = ({
   speakerEnabled: propSpeakerEnabled,
   screenSharing: propScreenSharing,
   defaultMuted = false,
-  defaultCameraEnabled = true,
+  defaultCameraEnabled, // 🔧 将由组件内部根据通话模式计算
   defaultSpeakerEnabled = true,
   defaultScreenSharing = false,
   onMuteToggle,
@@ -90,6 +90,46 @@ const CallControls: React.FC<CallControlsProps> = ({
 }) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('call-controls');
+
+  // 🔧 新增：操作状态管理，防止并发操作
+  const [isTogglingCamera, setIsTogglingCamera] = React.useState(false);
+  const [isTogglingMic, setIsTogglingMic] = React.useState(false);
+  const [isTogglingSpeaker, setIsTogglingSpeaker] = React.useState(false);
+
+  // 🔧 新增：防抖控制
+  const debounceTimeRef = React.useRef<{
+    camera?: NodeJS.Timeout;
+    mic?: NodeJS.Timeout;
+    speaker?: NodeJS.Timeout;
+  }>({});
+
+  // 清理防抖定时器
+  React.useEffect(() => {
+    return () => {
+      Object.values(debounceTimeRef.current).forEach(timer => {
+        if (timer) clearTimeout(timer);
+      });
+    };
+  }, []);
+
+  // 🔧 根据通话模式计算合适的默认摄像头状态
+  const computedDefaultCameraEnabled = React.useMemo(() => {
+    // 如果props中明确提供了defaultCameraEnabled，使用props值
+    if (defaultCameraEnabled !== undefined) {
+      return defaultCameraEnabled;
+    }
+
+    // 根据通话模式设置默认值
+    if (isGroupCall || callMode === 'group') {
+      // 群通话默认摄像头关闭
+      console.log('🔧 CallControls: 群通话模式，摄像头默认关闭');
+      return false;
+    } else {
+      // 单人通话默认摄像头开启
+      console.log('🔧 CallControls: 单人通话模式，摄像头默认开启');
+      return true;
+    }
+  }, [defaultCameraEnabled, isGroupCall, callMode]);
 
   // 🔧 新增：渲染图标的辅助函数
   const renderIcon = React.useCallback(
@@ -129,13 +169,17 @@ const CallControls: React.FC<CallControlsProps> = ({
 
   // 内部状态管理
   const [internalMuted, setInternalMuted] = React.useState(defaultMuted);
-  const [internalCameraEnabled, setInternalCameraEnabled] = React.useState(defaultCameraEnabled);
+  const [internalCameraEnabled, setInternalCameraEnabled] = React.useState(
+    computedDefaultCameraEnabled,
+  );
   const [internalSpeakerEnabled, setInternalSpeakerEnabled] = React.useState(defaultSpeakerEnabled);
   const [internalScreenSharing, setInternalScreenSharing] = React.useState(defaultScreenSharing);
 
   // 根据模式决定使用哪个状态
   const muted = managed ? internalMuted : propMuted ?? defaultMuted;
-  const cameraEnabled = managed ? internalCameraEnabled : propCameraEnabled ?? defaultCameraEnabled;
+  const cameraEnabled = managed
+    ? internalCameraEnabled
+    : propCameraEnabled ?? computedDefaultCameraEnabled;
   const speakerEnabled = managed
     ? internalSpeakerEnabled
     : propSpeakerEnabled ?? defaultSpeakerEnabled;
@@ -143,18 +187,16 @@ const CallControls: React.FC<CallControlsProps> = ({
 
   // 🔧 计算按钮是否应该禁用
   const shouldDisableControls = React.useMemo(() => {
-    // 预览模式下禁用所有控制按钮（除了挂断/拒绝和接听）
-    if (isPreview) {
-      console.log('🔧 CallControls: 预览模式，禁用按钮');
-      return true;
-    }
+    // 🔧 修改：预览模式下允许操作按钮（麦克风、摄像头等）
+    // 只在特定条件下才禁用按钮
 
     // 多人视频通话中，如果未连接，禁用控制按钮
-    if (isGroupCall && !isConnected) {
+    if (isGroupCall && !isConnected && !isPreview) {
       console.log('🔧 CallControls: 多人视频通话，未连接，禁用按钮', {
         isGroupCall,
         hasParticipants,
         isConnected,
+        isPreview,
       });
       return true;
     }
@@ -169,41 +211,230 @@ const CallControls: React.FC<CallControlsProps> = ({
     return false;
   }, [isPreview, isGroupCall, hasParticipants, isConnected]);
 
-  const handleMuteClick = () => {
-    if (shouldDisableControls) return;
-
-    const newMuted = !muted;
-
-    if (managed) {
-      setInternalMuted(newMuted);
+  // 🔧 新增：麦克风按钮单独的禁用逻辑
+  const shouldDisableMuteButton = React.useMemo(() => {
+    // 🔧 操作进行中时禁用
+    if (isTogglingMic) {
+      return true;
     }
 
-    onMuteToggle?.(newMuted);
-  };
-
-  const handleCameraClick = () => {
-    if (shouldDisableControls) return;
-
-    const newCameraEnabled = !cameraEnabled;
-
-    if (managed) {
-      setInternalCameraEnabled(newCameraEnabled);
+    // 🔧 预览状态下禁用麦克风，确保必须发布audio轨道
+    if (isPreview) {
+      console.log('🔧 CallControls: 预览状态，禁用麦克风按钮', {
+        isPreview,
+        isGroupCall,
+        callMode,
+        reason: '预览状态下必须发布audio轨道用于user-published事件',
+      });
+      return true;
     }
 
-    onCameraToggle?.(newCameraEnabled);
-  };
-
-  const handleSpeakerClick = () => {
-    if (shouldDisableControls) return;
-
-    const newSpeakerEnabled = !speakerEnabled;
-
-    if (managed) {
-      setInternalSpeakerEnabled(newSpeakerEnabled);
+    // 🔧 群通话中，RTC未真正连接时禁用麦克风，确保必须发布audio轨道
+    if (isGroupCall && !isConnected) {
+      console.log('🔧 CallControls: 群通话RTC未连接，禁用麦克风按钮', {
+        isGroupCall,
+        isConnected,
+        isPreview,
+        isCaller,
+        reason: '群通话RTC连接前必须发布audio轨道用于user-published事件',
+      });
+      return true;
     }
 
-    onSpeakerToggle?.(newSpeakerEnabled);
-  };
+    // 其他情况使用通用禁用逻辑
+    return shouldDisableControls;
+  }, [isPreview, isGroupCall, isConnected, shouldDisableControls, isTogglingMic]);
+
+  // 🔧 新增：摄像头按钮单独的禁用逻辑
+  const shouldDisableCameraButton = React.useMemo(() => {
+    // 🔧 操作进行中时禁用
+    if (isTogglingCamera) {
+      return true;
+    }
+
+    // 摄像头在群通话中可以自由切换，不需要像麦克风那样强制禁用
+    // 只在真正无法操作的情况下才禁用
+
+    // 如果是群通话且不是预览模式且未连接，但允许摄像头操作
+    if (isGroupCall && !isConnected && !isPreview) {
+      console.log('🔧 CallControls: 群通话等待连接，摄像头按钮允许操作', {
+        isGroupCall,
+        isConnected,
+        isPreview,
+        reason: '摄像头在群通话等待阶段可以自由切换',
+      });
+      return false; // 不禁用摄像头
+    }
+
+    // 其他情况使用通用禁用逻辑
+    return shouldDisableControls;
+  }, [isGroupCall, isConnected, isPreview, shouldDisableControls, isTogglingCamera]);
+
+  // 🔧 修复：麦克风切换处理，添加防抖和状态管理
+  const handleMuteClick = React.useCallback(() => {
+    if (shouldDisableMuteButton || isTogglingMic) {
+      console.log('🔧 CallControls: 麦克风按钮被禁用或正在操作中，忽略点击', {
+        shouldDisableMuteButton,
+        isTogglingMic,
+      });
+      return;
+    }
+
+    // 清除之前的防抖定时器
+    if (debounceTimeRef.current.mic) {
+      clearTimeout(debounceTimeRef.current.mic);
+    }
+
+    // 设置防抖
+    debounceTimeRef.current.mic = setTimeout(async () => {
+      try {
+        setIsTogglingMic(true);
+        const newMuted = !muted;
+
+        console.log('🔧 CallControls: 开始切换麦克风状态', {
+          from: muted,
+          to: newMuted,
+        });
+
+        if (managed) {
+          setInternalMuted(newMuted);
+        }
+
+        // 调用回调函数
+        if (onMuteToggle) {
+          onMuteToggle(newMuted);
+          // 添加短暂延迟确保操作完成
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        console.log('🔧 CallControls: 麦克风状态切换成功');
+      } catch (error) {
+        console.error('🔧 CallControls: 麦克风状态切换失败:', error);
+
+        // 操作失败时恢复状态
+        if (managed) {
+          setInternalMuted(muted);
+        }
+      } finally {
+        setIsTogglingMic(false);
+      }
+    }, 200); // 200ms 防抖
+  }, [shouldDisableMuteButton, isTogglingMic, muted, managed, onMuteToggle]);
+
+  // 🔧 修复：摄像头切换处理，添加防抖和状态管理
+  const handleCameraClick = React.useCallback(() => {
+    if (shouldDisableCameraButton || isTogglingCamera) {
+      console.log('🔧 CallControls: 摄像头按钮被禁用或正在操作中，忽略点击', {
+        shouldDisableCameraButton,
+        isTogglingCamera,
+        currentCameraEnabled: cameraEnabled,
+        isPreview,
+        isGroupCall,
+        callMode,
+      });
+      return;
+    }
+
+    // 清除之前的防抖定时器
+    if (debounceTimeRef.current.camera) {
+      clearTimeout(debounceTimeRef.current.camera);
+    }
+
+    // 设置防抖
+    debounceTimeRef.current.camera = setTimeout(async () => {
+      try {
+        setIsTogglingCamera(true);
+        const newCameraEnabled = !cameraEnabled;
+
+        console.log('🔧 CallControls: 开始切换摄像头状态:', {
+          from: cameraEnabled,
+          to: newCameraEnabled,
+        });
+
+        if (managed) {
+          setInternalCameraEnabled(newCameraEnabled);
+        }
+
+        // 调用回调函数
+        if (onCameraToggle) {
+          onCameraToggle(newCameraEnabled);
+          // 添加短暂延迟确保操作完成
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        console.log('🔧 CallControls: 摄像头状态切换成功');
+      } catch (error) {
+        console.error('🔧 CallControls: 摄像头状态切换失败:', error);
+
+        // 操作失败时恢复状态
+        if (managed) {
+          setInternalCameraEnabled(cameraEnabled);
+        }
+      } finally {
+        setIsTogglingCamera(false);
+      }
+    }, 200); // 200ms 防抖
+  }, [
+    shouldDisableCameraButton,
+    isTogglingCamera,
+    cameraEnabled,
+    managed,
+    onCameraToggle,
+    isPreview,
+    isGroupCall,
+    callMode,
+  ]);
+
+  // 🔧 修复：扬声器切换处理，添加防抖和状态管理
+  const handleSpeakerClick = React.useCallback(() => {
+    if (shouldDisableControls || isTogglingSpeaker) {
+      console.log('🔧 CallControls: 扬声器按钮被禁用或正在操作中，忽略点击', {
+        shouldDisableControls,
+        isTogglingSpeaker,
+      });
+      return;
+    }
+
+    // 清除之前的防抖定时器
+    if (debounceTimeRef.current.speaker) {
+      clearTimeout(debounceTimeRef.current.speaker);
+    }
+
+    // 设置防抖
+    debounceTimeRef.current.speaker = setTimeout(async () => {
+      try {
+        setIsTogglingSpeaker(true);
+        const newSpeakerEnabled = !speakerEnabled;
+
+        console.log('🔧 CallControls: 开始切换扬声器状态', {
+          from: speakerEnabled,
+          to: newSpeakerEnabled,
+        });
+
+        if (managed) {
+          setInternalSpeakerEnabled(newSpeakerEnabled);
+        }
+
+        // 调用回调函数
+        if (onSpeakerToggle) {
+          onSpeakerToggle(newSpeakerEnabled);
+          // 添加短暂延迟确保操作完成
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        console.log('🔧 CallControls: 扬声器状态切换成功');
+      } catch (error) {
+        console.error('🔧 CallControls: 扬声器状态切换失败:', error);
+
+        // 操作失败时恢复状态
+        if (managed) {
+          setInternalSpeakerEnabled(speakerEnabled);
+        }
+      } finally {
+        setIsTogglingSpeaker(false);
+      }
+    }, 100); // 100ms 防抖，扬声器操作相对简单
+  }, [shouldDisableControls, isTogglingSpeaker, speakerEnabled, managed, onSpeakerToggle]);
 
   const handleScreenShareClick = () => {
     if (shouldDisableControls) return;
@@ -249,22 +480,30 @@ const CallControls: React.FC<CallControlsProps> = ({
           </div>
         </div>
 
-        {/* 麦克风按钮 - 预览模式下禁用 */}
+        {/* 麦克风按钮 - 群通话预览状态下禁用 */}
         <div className={classNames(`${prefixCls}-button-group`)}>
           <button
             className={classNames(`${prefixCls}-button`, {
-              [`${prefixCls}-button-active`]: !muted,
-              [`${prefixCls}-button-disabled`]: muted,
-              [`${prefixCls}-button-preview-disabled`]: true, // 预览模式下禁用
+              [`${prefixCls}-button-active`]: !muted && !shouldDisableMuteButton && !isTogglingMic,
+              [`${prefixCls}-button-disabled`]: muted || shouldDisableMuteButton || isTogglingMic,
+              [`${prefixCls}-button-loading`]: isTogglingMic,
             })}
             onClick={handleMuteClick}
-            title={muted ? '取消静音' : '静音'}
-            disabled={true} // 预览模式下禁用点击
+            title={
+              isTogglingMic
+                ? '麦克风状态切换中...'
+                : shouldDisableMuteButton
+                ? '群通话预览时必须开启麦克风'
+                : muted
+                ? '取消静音'
+                : '静音'
+            }
+            disabled={shouldDisableMuteButton || isTogglingMic} // 🔧 操作中也禁用
           >
             {renderIcon(muted ? 'micOff' : 'micOn', muted ? 'MIC_OFF' : 'MIC_ON', {
               width: 24,
               height: 24,
-              color: muted ? '#F9FAFA' : '#171A1C',
+              color: shouldDisableMuteButton ? '#171A1C' : muted ? '#F9FAFA' : '#171A1C',
             })}
           </button>
           <div className={classNames(`${prefixCls}-button-text`)}>
@@ -272,18 +511,28 @@ const CallControls: React.FC<CallControlsProps> = ({
           </div>
         </div>
 
-        {/* 摄像头按钮 - 只有视频通话时才显示，预览模式下禁用 */}
-        {callMode === 'video' && (
+        {/* 摄像头按钮 - 只有视频通话时才显示，群通话等待阶段也可操作 */}
+        {(callMode === 'video' || callMode === 'group') && (
           <div className={classNames(`${prefixCls}-button-group`)}>
             <button
               className={classNames(`${prefixCls}-button`, {
-                [`${prefixCls}-button-active`]: cameraEnabled,
-                [`${prefixCls}-button-disabled`]: !cameraEnabled,
-                [`${prefixCls}-button-preview-disabled`]: true, // 预览模式下禁用
+                [`${prefixCls}-button-active`]:
+                  cameraEnabled && !shouldDisableCameraButton && !isTogglingCamera,
+                [`${prefixCls}-button-disabled`]:
+                  !cameraEnabled || shouldDisableCameraButton || isTogglingCamera,
+                [`${prefixCls}-button-loading`]: isTogglingCamera,
               })}
               onClick={handleCameraClick}
-              title={cameraEnabled ? '关闭摄像头' : '开启摄像头'}
-              disabled={true} // 预览模式下禁用点击
+              title={
+                isTogglingCamera
+                  ? '摄像头状态切换中...'
+                  : shouldDisableCameraButton
+                  ? '摄像头暂时无法使用'
+                  : cameraEnabled
+                  ? '关闭摄像头'
+                  : '开启摄像头'
+              }
+              disabled={shouldDisableCameraButton || isTogglingCamera} // 🔧 操作中也禁用
             >
               {renderIcon(
                 cameraEnabled ? 'cameraOn' : 'cameraOff',
@@ -301,8 +550,9 @@ const CallControls: React.FC<CallControlsProps> = ({
           </div>
         )}
 
-        {/* 接听按钮 - 只有被叫方才显示 */}
-        {!isCaller && (
+        {/* 接听/开始通话按钮 */}
+        {!isCaller ? (
+          // 被叫方显示接听按钮
           <div className={classNames(`${prefixCls}-button-group`)}>
             <button
               className={classNames(`${prefixCls}-button`, `${prefixCls}-button-accept`)}
@@ -317,7 +567,23 @@ const CallControls: React.FC<CallControlsProps> = ({
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>{'Accept'}</div>
           </div>
-        )}
+        ) : isGroupCall ? (
+          // 🔧 新增：群通话主叫方显示开始通话按钮
+          <div className={classNames(`${prefixCls}-button-group`)}>
+            <button
+              className={classNames(`${prefixCls}-button`, `${prefixCls}-button-accept`)}
+              onClick={handleAcceptClick}
+              title="开始通话"
+            >
+              {renderIcon('accept', 'PHONE_PICK', {
+                width: 24,
+                height: 24,
+                color: '#171A1C',
+              })}
+            </button>
+            <div className={classNames(`${prefixCls}-button-text`)}>{'Start'}</div>
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -329,18 +595,26 @@ const CallControls: React.FC<CallControlsProps> = ({
       <div className={classNames(`${prefixCls}-button-group`)}>
         <button
           className={classNames(`${prefixCls}-button`, {
-            [`${prefixCls}-button-active`]: !muted,
-            [`${prefixCls}-button-disabled`]: muted,
-            [`${prefixCls}-button-preview-disabled`]: shouldDisableControls, // 🔧 根据条件禁用
+            [`${prefixCls}-button-active`]: !muted && !shouldDisableMuteButton && !isTogglingMic,
+            [`${prefixCls}-button-disabled`]: muted || shouldDisableMuteButton || isTogglingMic,
+            [`${prefixCls}-button-loading`]: isTogglingMic,
           })}
           onClick={handleMuteClick}
-          title={muted ? '取消静音' : '静音'}
-          disabled={shouldDisableControls} // 🔧 根据条件禁用点击
+          title={
+            isTogglingMic
+              ? '麦克风状态切换中...'
+              : shouldDisableMuteButton
+              ? '群通话预览时必须开启麦克风'
+              : muted
+              ? '取消静音'
+              : '静音'
+          }
+          disabled={shouldDisableMuteButton || isTogglingMic} // 🔧 操作中也禁用
         >
           {renderIcon(muted ? 'micOff' : 'micOn', muted ? 'MIC_OFF' : 'MIC_ON', {
             width: 24,
             height: 24,
-            color: muted ? '#F9FAFA' : '#171A1C',
+            color: shouldDisableMuteButton ? '#171A1C' : muted ? '#F9FAFA' : '#171A1C',
           })}
         </button>
         <div className={classNames(`${prefixCls}-button-text`)}>
@@ -353,13 +627,23 @@ const CallControls: React.FC<CallControlsProps> = ({
         <div className={classNames(`${prefixCls}-button-group`)}>
           <button
             className={classNames(`${prefixCls}-button`, {
-              [`${prefixCls}-button-active`]: cameraEnabled,
-              [`${prefixCls}-button-disabled`]: !cameraEnabled,
-              [`${prefixCls}-button-preview-disabled`]: shouldDisableControls, // 🔧 根据条件禁用
+              [`${prefixCls}-button-active`]:
+                cameraEnabled && !shouldDisableCameraButton && !isTogglingCamera,
+              [`${prefixCls}-button-disabled`]:
+                !cameraEnabled || shouldDisableCameraButton || isTogglingCamera,
+              [`${prefixCls}-button-loading`]: isTogglingCamera,
             })}
             onClick={handleCameraClick}
-            title={cameraEnabled ? '关闭摄像头' : '开启摄像头'}
-            disabled={shouldDisableControls} // 🔧 根据条件禁用点击
+            title={
+              isTogglingCamera
+                ? '摄像头状态切换中...'
+                : shouldDisableCameraButton
+                ? '摄像头暂时无法使用'
+                : cameraEnabled
+                ? '关闭摄像头'
+                : '开启摄像头'
+            }
+            disabled={shouldDisableCameraButton || isTogglingCamera} // 🔧 操作中也禁用
           >
             {renderIcon(
               cameraEnabled ? 'cameraOn' : 'cameraOff',
@@ -389,30 +673,30 @@ const CallControls: React.FC<CallControlsProps> = ({
         <Icon type="TRIANGLE_IN_RECTANGLE" width={24} height={24} color={'#fff'} />
       </button> */}
 
-      {/* 扬声器按钮 - 语音通话时不显示 */}
-      {callMode !== 'audio' && (
-        <div className={classNames(`${prefixCls}-button-group`)}>
-          <button
-            className={classNames(`${prefixCls}-button`, {
-              [`${prefixCls}-button-active`]: speakerEnabled,
-              [`${prefixCls}-button-disabled`]: !speakerEnabled,
-              [`${prefixCls}-button-preview-disabled`]: shouldDisableControls, // 🔧 根据条件禁用
-            })}
-            onClick={handleSpeakerClick}
-            title={speakerEnabled ? '关闭扬声器' : '开启扬声器'}
-            disabled={shouldDisableControls} // 🔧 根据条件禁用点击
-          >
-            {renderIcon(
-              speakerEnabled ? 'speakerOn' : 'speakerOff',
-              speakerEnabled ? 'SPEAKER_WAVE_2' : 'SPEAKER_X_MARK',
-              { width: 24, height: 24, color: speakerEnabled ? '#171A1C' : '#F9FAFA' },
-            )}
-          </button>
-          <div className={classNames(`${prefixCls}-button-text`)}>
-            {speakerEnabled ? 'Speaker on' : 'Speaker off'}
-          </div>
+      {/* 扬声器按钮 - 所有通话类型都显示 */}
+      <div className={classNames(`${prefixCls}-button-group`)}>
+        <button
+          className={classNames(`${prefixCls}-button`, {
+            [`${prefixCls}-button-active`]: speakerEnabled && !isTogglingSpeaker,
+            [`${prefixCls}-button-disabled`]: !speakerEnabled || isTogglingSpeaker,
+            [`${prefixCls}-button-loading`]: isTogglingSpeaker,
+          })}
+          onClick={handleSpeakerClick}
+          title={
+            isTogglingSpeaker ? '扬声器状态切换中...' : speakerEnabled ? '关闭扬声器' : '开启扬声器'
+          }
+          disabled={shouldDisableControls || isTogglingSpeaker} // 🔧 操作中也禁用
+        >
+          {renderIcon(
+            speakerEnabled ? 'speakerOn' : 'speakerOff',
+            speakerEnabled ? 'SPEAKER_WAVE_2' : 'SPEAKER_X_MARK',
+            { width: 24, height: 24, color: speakerEnabled ? '#171A1C' : '#F9FAFA' },
+          )}
+        </button>
+        <div className={classNames(`${prefixCls}-button-text`)}>
+          {speakerEnabled ? 'Speaker on' : 'Speaker off'}
         </div>
-      )}
+      </div>
 
       {/* 挂断按钮 */}
       <div className={classNames(`${prefixCls}-button-group`)}>

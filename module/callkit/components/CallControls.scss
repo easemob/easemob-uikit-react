@@ -83,10 +83,42 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
         background: rgba(255, 255, 255, 0.1);
       }
     }
+
+    // 🔧 新增：DOM级别的禁用状态 - 真正不可交互
+    &[disabled] {
+      cursor: not-allowed !important;
+      color: var(--Neutral-98, #F9FAFA) !important;
+      background: rgba(255, 255, 255, 0.20) !important; // 🔧 使用和摄像头关闭相同的背景
+      pointer-events: none;
+      
+      &:hover {
+        transform: none !important;
+        background: rgba(255, 255, 255, 0.20) !important;
+      }
+      
+      &:active {
+        transform: none !important;
+        background: rgba(255, 255, 255, 0.20) !important;
+      }
+      
+      // 禁用时图标使用深色
+      svg {
+        color: #171A1C !important;
+        fill: #171A1C !important;
+        stroke: #171A1C !important;
+      }
+    }
     
     // 禁用状态下文本透明度降低 - 使用兄弟选择器
     &-disabled ~ .#{$call-controls-prefix-cls}-button-text {
       opacity: 0.2;
+    }
+
+    // 🔧 新增：DOM禁用状态下文本样式
+    &[disabled] ~ .#{$call-controls-prefix-cls}-button-text {
+      color: var(--Neutral-98, #F9FAFA) !important;
+      opacity: 0.7 !important;
+      text-shadow: 0 4px 8px rgba(26, 26, 26, 0.20), 0 1px 3px rgba(77, 77, 77, 0.30) !important;
     }
     
     // 挂断按钮（固定红色）
