@@ -611,15 +611,15 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
                 className="hover-icon"
                 style={{
                   position: 'absolute',
-                  top: '8px',
-                  right: '32px', // 调整位置：NetworkQuality(right:8px + width:16px + gap:8px) = 32px
+                  top: '9px',
+                  right: '40px', // 调整位置：NetworkQuality(right:8px + width:16px + gap:8px) = 32px
                   zIndex: 10,
                   opacity: 0,
                   transition: 'opacity 0.2s ease',
                   // background: 'rgba(0, 0, 0, 0.6)',
                   borderRadius: '50%',
-                  width: '32px',
-                  height: '32px',
+                  width: '22px',
+                  height: '22px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

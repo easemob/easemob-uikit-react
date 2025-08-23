@@ -275,6 +275,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
               <CallControls
                 callMode={callMode}
                 isPreview={isShowingPreview}
+                isCaller={callStatus === 'calling'} // 🔧 新增：传递 isCaller 属性
                 muted={muted}
                 cameraEnabled={cameraEnabled}
                 speakerEnabled={speakerEnabled}
