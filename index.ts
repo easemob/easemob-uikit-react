@@ -57,6 +57,7 @@ import CallKit, {
   VideoWindowProps,
   LayoutMode,
   InvitationContent,
+  CallKitRef,
 } from './module/callkit';
 
 const UIKitProvider = Provider;
@@ -245,6 +246,7 @@ export type {
   CallKitProps,
   VideoWindowProps,
   LayoutMode,
+  CallKitRef,
 };
 
 export type { EventHandlerData, EventName };

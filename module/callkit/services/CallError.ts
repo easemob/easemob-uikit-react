@@ -37,4 +37,6 @@ class CallError {
     return new CallError(code, message, data);
   }
 }
+
+export { CallError };
 export default CallError;

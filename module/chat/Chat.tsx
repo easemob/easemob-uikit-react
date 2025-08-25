@@ -792,7 +792,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           onDragStart={() => console.log('开始拖拽')}
           onDrag={position => console.log('拖拽位置:', position)}
           onDragEnd={() => console.log('拖拽结束')}
-          minimizedSize={{ width: 300, height: 300 }}
+          // minimizedSize={{ width: 300, height: 300 }}
           // invitationCustomContent={<div style={{ color: '#fff' }}>123</div>}
           // 按钮文本
           acceptText="接听1"

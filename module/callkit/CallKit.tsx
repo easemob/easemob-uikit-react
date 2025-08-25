@@ -1844,7 +1844,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const actualMinimizedSize = React.useMemo(() => {
     const isOneToOneVideo = callMode === 'video'; // 1v1视频通话
     return isOneToOneVideo
-      ? { width: 108, height: 192 } // 1v1视频模式使用视频窗口尺寸
+      ? { width: 200, height: 360 } // 1v1视频模式使用视频窗口尺寸
       : minimizedSize; // 其他模式使用默认尺寸
   }, [callMode, minimizedSize]);
 
@@ -2764,7 +2764,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       // 🔧 新增：用户取消选择，reject Promise
       if (groupCallPromiseRef.current) {
-        groupCallPromiseRef.current.reject(new Error('用户取消了群组通话'));
+        // groupCallPromiseRef.current.reject({
+        //   errorType: 'callkit',
+        //   code: 0,
+        //   message: '用户取消了群组通话',
+        // });
         groupCallPromiseRef.current = null;
       }
     }

@@ -13,6 +13,9 @@ export type {
   InvitationNotificationProps,
 } from './types/index';
 
+export type { CallError, CallErrorCode } from './services/CallError';
+export type { CallInfo } from './services/CallService';
+
 // 向后兼容的类型导出
 export type { VideoLayoutProps } from './VideoLayout';
 export type { CallControlsProps } from './components/CallControls';

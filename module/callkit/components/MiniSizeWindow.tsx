@@ -132,8 +132,8 @@ export const MiniSizeWindow: React.FC<MiniSizeWindowProps> = ({
 
   const containerStyle = isOneToOneVideo
     ? {
-        width: '108px',
-        height: '192px',
+        width: '200px',
+        height: 'auto',
         borderRadius: '12px',
         overflow: 'hidden',
         ...style,

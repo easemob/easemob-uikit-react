@@ -524,7 +524,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     
     // 最小化时的内容区域
     .#{$callkit-prefix-cls}-content {
-      width: 300px;
+      width: 80px;
       height: calc(100% - 60px); // 减去控制按钮区域的高度
       position: relative;
       border-radius: 12px 12px 0 0; // 上方圆角

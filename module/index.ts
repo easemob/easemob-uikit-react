@@ -93,7 +93,8 @@ import ChatroomMember from './chatroomMember';
 import ChatroomMessage from './chatroomMessage';
 
 import CallKit from './callkit';
-import { CallKitProps } from './callkit';
+import { CallKitProps, CallInfo, CallErrorCode, CallError } from './callkit';
+import { CallKitRef } from './callkit/types/index';
 
 export type {
   AudioMessageProps,
@@ -155,6 +156,10 @@ export type {
   UserCardMessageProps,
   UserSelectProps,
   CallKitProps,
+  CallKitRef,
+  CallInfo,
+  CallErrorCode,
+  CallError,
 };
 const UIKitProvider = Provider;
 export {
