@@ -228,14 +228,14 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     // 画中画小视频（本地视频）
     .#{$callkit-prefix-cls}-pip-video {
       position: absolute;
-      top: $gap-large;
+      top: 55px;
       right: $gap-large;
       width: 160px;
       height: 120px;
       z-index: $z-index-pip;
       border-radius: $video-border-radius;
       overflow: hidden;
-      border: $video-border-width solid $border-color-hover;
+      // border: $video-border-width solid $border-color-hover;
       transition: all $transition-fast;
       
       &:hover {

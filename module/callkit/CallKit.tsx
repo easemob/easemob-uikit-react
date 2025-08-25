@@ -52,7 +52,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
     // 布局相关
     layoutMode = LayoutMode.MULTI_PARTY,
-    maxVideos,
+    maxVideos = 16,
     aspectRatio = 1,
     gap = 6,
 
@@ -1844,7 +1844,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const actualMinimizedSize = React.useMemo(() => {
     const isOneToOneVideo = callMode === 'video'; // 1v1视频通话
     return isOneToOneVideo
-      ? { width: 200, height: 360 } // 1v1视频模式使用视频窗口尺寸
+      ? { width: 200, height: 150 } // 1v1视频模式使用视频窗口尺寸
       : minimizedSize; // 其他模式使用默认尺寸
   }, [callMode, minimizedSize]);
 
@@ -3049,7 +3049,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   }, [chatClient?.user, getUserAvatar]);
 
   // 处理用户选择变化
+  const [userSelectDisabled, setUserSelectDisabled] = React.useState(false);
   const handleUserSelect = (user: any, users: any[]) => {
+    if (users.length >= maxVideos) {
+      setUserSelectDisabled(true);
+    }
     setSelectedNewMembers(users);
   };
 
@@ -3461,6 +3465,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         users={effectiveGroupMembers}
         checkedUsers={currentParticipants}
         closable={true}
+        disabled={userSelectDisabled}
       />
 
       {/* 根据呼叫状态显示界面 */}
