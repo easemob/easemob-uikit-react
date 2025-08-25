@@ -644,7 +644,7 @@ const RealCallDemo: React.FC = () => {
   return (
     <Provider
       initConfig={{
-        appKey: '1107220708140392#gray', //loginForm.appKey,
+        appKey: loginForm.appKey,
         userId: loginForm.userId,
         password: loginForm.password,
         useUserInfo: true,
