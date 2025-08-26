@@ -437,7 +437,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         primaryColor: 50, //'#33ffaa',
         mode: 'light',
         bubbleShape: 'round',
-        avatarShape: 'circle',
+        avatarShape: 'square',
         componentsShape: 'round',
         ripple: true,
       }}

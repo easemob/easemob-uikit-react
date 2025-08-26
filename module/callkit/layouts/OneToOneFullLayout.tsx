@@ -145,7 +145,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
       if (invitation) {
         return {
           avatar: invitation.callerAvatar,
-          content: invitation.callerName || '未知用户',
+          content: invitation.callerName || '',
           subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
         };
       } else {
@@ -171,7 +171,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
           remoteUserInfo.remoteUserNickname ||
           remoteVideo?.nickname ||
           remoteUserInfo.remoteUserId ||
-          '用户';
+          '';
         const displayAvatar = remoteUserInfo.remoteUserAvatar || remoteVideo?.avatar;
 
         return {
@@ -221,10 +221,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
   }, [backgroundImage]);
 
   return (
-    <div
-      className={`${prefixCls}-one-to-one-full-layout`}
-      style={{ ...backgroundStyle, backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
-    >
+    <div className={`${prefixCls}-one-to-one-full-layout`} style={{ ...backgroundStyle }}>
       {/* 视频内容区域 - 占满整个容器 */}
       <div className={`${prefixCls}-video-content`}>
         {/* 预览模式：本地视频作为主视频显示 */}
@@ -333,6 +330,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
       <div className={`${prefixCls}-floating-header`}>
         <Header
           avatarSrc={headerInfo.avatar}
+          avatarShape="square"
           content={headerInfo.content}
           style={{ color: 'white' }}
           subtitle={headerInfo.subtitle}

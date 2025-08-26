@@ -86,8 +86,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
       if (invitation && invitation.type === 'group') {
         return {
           avatar: invitation.groupAvatar,
-          content:
-            invitation.groupName || `群组通话 (${invitation.memberCount || videos.length}人)`,
+          content: invitation.groupName || `群组通话`,
           subtitle: '群组通话邀请 - 连接中...',
         };
       } else {
@@ -100,7 +99,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
     } else {
       // 通话模式：显示群组信息
       const groupInfo = callInfo || {};
-      const displayName = groupInfo.groupName || `群组通话 (${videos.length}人)`;
+      const displayName = groupInfo.groupName;
       const displayAvatar = groupInfo.groupAvatar;
 
       return {
@@ -201,6 +200,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
           <div className={`${prefixCls}-header`}>
             <Header
               avatarSrc={headerInfo.avatar}
+              avatarShape="square"
               content={headerInfo.content}
               style={{ color: 'white' }}
               subtitle={headerInfo.subtitle}

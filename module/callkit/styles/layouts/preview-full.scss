@@ -10,7 +10,8 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
   display: flex;
   flex-direction: column;
   position: relative;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.30) 0%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.20) 100%);
+  // background: linear-gradient(180deg, rgba(0, 0, 0, 0.30) 0%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.20) 100%);
+  background: #171A1C;
   // Header - 顶部固定
   .#{$callkit-prefix-cls}-header {
     height: $header-height;

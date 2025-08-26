@@ -162,8 +162,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 通知系统
   const [notificationApi, notificationContextHolder] = useNotification({
-    placement: 'top',
-    duration: 0, // 不自动关闭
+    placement: 'topRight',
+    duration: autoRejectTime, // 30秒
     maxCount: 1, // 最多显示一个邀请通知
   });
 
@@ -885,12 +885,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   useImperativeHandle(
     ref,
     () => ({
-      init: (rtcConfig: { chatClient: any }) => {
-        if (chatClient && chatClient?.user) {
-          console.log('🔍 CallKit 初始化 CallService', chatClient);
-          callServiceRef.current?.init(rtcConfig);
-        }
-      },
       // 内部
       showInvitation: (invitationInfo: InvitationInfo) => {
         setInvitation(invitationInfo);
@@ -1917,6 +1911,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 处理最小化切换
   const handleMinimizedToggle = () => {
     const newMinimizedState = !isMinimized;
+
+    // 如果当前是全屏模式且要切换到最小化，先退出全屏
+    if (newMinimizedState && isFullscreen) {
+      toggleFullscreen(); // 先退出全屏
+    }
+
     setIsMinimized(newMinimizedState);
     console.log('🚀 handleMinimizedToggle 最小化状态', newMinimizedState);
     if (managedPosition) {
@@ -2722,6 +2722,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         effectiveGroupMembersLength: effectiveGroupMembers.length,
       });
     }
+    if (currentParticipants.length >= maxVideos) {
+      setUserSelectDisabled(true);
+    } else {
+      setUserSelectDisabled(false);
+    }
 
     setIsUserSelectVisible(true);
     setSelectedNewMembers([]); // 重置选择
@@ -2730,6 +2735,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 处理用户选择取消
   const handleUserSelectCancel = () => {
     setIsUserSelectVisible(false);
+    setUserSelectDisabled(false);
     setSelectedNewMembers([]);
     // 如果是发起群组通话的情况，重置相关状态
     if (isInitiatingGroupCall) {
@@ -2764,11 +2770,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       // 🔧 新增：用户取消选择，reject Promise
       if (groupCallPromiseRef.current) {
-        // groupCallPromiseRef.current.reject({
-        //   errorType: 'callkit',
-        //   code: 0,
-        //   message: '用户取消了群组通话',
-        // });
         groupCallPromiseRef.current = null;
       }
     }
@@ -2987,32 +2988,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               console.error('邀请新成员失败');
             }
           });
-        } else {
-          // 演示模式：创建新的视频窗口并添加到状态中
-          const newVideoWindows: VideoWindowProps[] = newMembers.map(user => ({
-            id: `remote-${user.userId}`, // 使用一致的ID格式
-            muted: false,
-            cameraEnabled: Math.random() > 0.3, // 70% 概率开启摄像头（演示模式）
-            nickname: user.nickname,
-            avatar:
-              user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.userId}`,
-            isWaiting: false, // 演示模式不需要等待状态
-          }));
-
-          // 添加到现有视频列表中
-          setVideos(prevVideos => [...prevVideos, ...newVideoWindows]);
-
-          console.log(
-            '📹 演示模式：添加新参与者到视频列表:',
-            newVideoWindows.map(v => ({
-              id: v.id,
-              userId: v.id.replace('remote-', ''),
-              nickname: v.nickname,
-            })),
-          );
-
-          // 调用外部提供的邀请回调
-          onAddParticipant?.(newMembers);
         }
       }
 
@@ -3051,8 +3026,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 处理用户选择变化
   const [userSelectDisabled, setUserSelectDisabled] = React.useState(false);
   const handleUserSelect = (user: any, users: any[]) => {
-    if (users.length >= maxVideos) {
+    if (users.length + currentParticipants.length >= maxVideos) {
       setUserSelectDisabled(true);
+    } else {
+      userSelectDisabled && setUserSelectDisabled(false);
     }
     setSelectedNewMembers(users);
   };

@@ -188,6 +188,10 @@ export class CallService {
   private isRingtonePlaying: boolean = false; // 铃声播放状态
   private currentRingtoneType: 'outgoing' | 'incoming' | null = null; // 当前播放的铃声类型
 
+  // 🔧 新增：正在创建的轨道引用，用于处理竞态条件
+  private creatingVideoTrack: Promise<any> | null = null;
+  private creatingAudioTrack: Promise<any> | null = null;
+
   private UIdToUserIdMap: Map<string, string> = new Map();
 
   constructor(config: CallServiceConfig) {
@@ -389,8 +393,31 @@ export class CallService {
       // 🔧 标记用户已经进入了preview阶段（主叫方）
       this.hasEnteredPreview = true;
       try {
-        const localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+        // 🔧 修复：记录正在创建的轨道Promise，用于竞态条件处理
+        this.creatingVideoTrack = AgoraRTC.createCameraVideoTrack();
+        const localVideoTrack = await this.creatingVideoTrack;
+
+        // 🔧 修复：检查状态，如果已经挂断则立即清理资源
+        if (!this.currentCallInfo) {
+          console.log('🔧 检测到通话已挂断，立即清理刚创建的视频轨道');
+          try {
+            // 获取并停止底层MediaStreamTrack
+            const mediaStreamTrack = localVideoTrack.getMediaStreamTrack?.();
+            if (mediaStreamTrack) {
+              mediaStreamTrack.stop();
+              console.log('🔧 已停止泄漏的视频轨道MediaStreamTrack:', mediaStreamTrack.id);
+            }
+            localVideoTrack.close();
+            console.log('🔧 已关闭泄漏的视频轨道');
+          } catch (cleanupError) {
+            console.error('🔧 清理泄漏轨道时发生错误:', cleanupError);
+          }
+          this.creatingVideoTrack = null;
+          return null; // 提前返回，不继续后续操作
+        }
+
         this.rtc.localVideoTrack = localVideoTrack;
+        this.creatingVideoTrack = null; // 清除创建中的引用
 
         // 创建本地视频信息供预览模式使用
         const localVideoInfo: VideoWindowProps = {
@@ -408,10 +435,24 @@ export class CallService {
 
         // 🔧 延迟播放本地视频，确保UI渲染完成
         setTimeout(() => {
-          this.playLocalVideo();
+          // 🔧 再次检查状态，避免在延迟期间状态发生变化
+          if (this.callStatus !== CALL_STATUS.IDLE) {
+            this.playLocalVideo();
+          }
         }, 500);
       } catch (error) {
         console.error('create local video track failed', error);
+        this.creatingVideoTrack = null; // 清除创建中的引用
+
+        // 🔧 修复：确保即使创建失败也要清理可能获取的资源
+        if (error && typeof error === 'object' && 'track' in error) {
+          try {
+            (error as any).track.close();
+            console.log('🔧 已清理创建失败但可能获取了资源的轨道');
+          } catch (cleanupError) {
+            console.error('🔧 清理失败轨道时发生错误:', cleanupError);
+          }
+        }
       }
     } else if (callType === CALL_TYPE.VIDEO_MULTI) {
       // 群组视频通话：发起方处理音频轨道和视频轨道
@@ -595,6 +636,7 @@ export class CallService {
     }
     if (callInfo.type !== CALL_TYPE.VIDEO_MULTI) {
       this.timer = setTimeout(() => {
+        console.log('🔧 邀请超时，自动挂断');
         this.hangup(HANGUP_REASON.REMOTE_NO_RESPONSE);
       }, 30000);
     }
@@ -707,12 +749,8 @@ export class CallService {
       callId: string;
     },
   ) {
-    // 🔧 修复：支持指定目标信息，如果没有指定则使用当前通话信息
     const callInfo = targetCallInfo || this.currentCallInfo;
-    console.log('sendAnswerCallMessage result -->', result, callInfo);
-
     if (!callInfo) {
-      console.warn('没有可用的通话信息，无法发送应答消息');
       return;
     }
 
@@ -746,15 +784,12 @@ export class CallService {
 
   // 加入通话
   async joinCall() {
-    console.log('joinCall this.currentCallInfo -->', this.currentCallInfo);
     if (!this.currentCallInfo) {
       console.error('No current call info');
       return;
     }
 
-    // 🔧 修复：更完善的重复加入检查
     if (this.callStatus === CALL_STATUS.IN_CALL) {
-      console.log('已经在通话中，跳过重复加入操作');
       return;
     }
 
@@ -763,50 +798,28 @@ export class CallService {
       this.accessToken = await this.getAccessToken();
     }
 
-    // 🔧 关键修复：强制重新初始化客户端状态
-    console.log('🔧 joinCall 开始，当前客户端状态:', {
-      hasClient: !!this.client,
-      connectionState: this.client?.connectionState,
-      channelName: this.client?.channelName,
-      callStatus: this.callStatus,
-    });
-
     // 🔧 强制移除旧的监听器（避免重复监听）
     if (this.client) {
       try {
         this.client.removeAllListeners();
-        console.log('🔧 已移除旧的事件监听器');
       } catch (error) {
-        console.warn('🔧 移除旧监听器失败:', error);
+        console.warn('removeAllListeners error', error);
       }
     }
 
     // 🔧 重新添加事件监听器
-    console.log('🔧 重新添加 Agora RTC 事件监听器...');
     this.addAgoraRTCListeners();
 
     // 🔧 检查客户端连接状态 - 修复：同时检查CONNECTING和CONNECTED状态
     const isClientConnectedOrConnecting =
       this.client &&
       (this.client.connectionState === 'CONNECTED' || this.client.connectionState === 'CONNECTING');
-    console.log('🔧 客户端连接状态检查:', {
-      isConnectedOrConnecting: isClientConnectedOrConnecting,
-      connectionState: this.client?.connectionState,
-    });
 
     let uid;
 
-    // 🔧 修复：只有在未连接且未连接中时才执行join操作
+    // 只有在未连接且未连接中时才执行join操作
     if (!isClientConnectedOrConnecting) {
       try {
-        // 加入 Agora 频道 - 使用Number类型的agoraUid，参考原始代码
-        console.log(
-          'joinCall this.appId -->',
-          this.appId,
-          this.currentCallInfo.channel,
-          this.accessToken,
-          this.agoraUid,
-        );
         try {
           uid = await this.client.join(
             this.appId,
@@ -821,15 +834,11 @@ export class CallService {
           });
           throw error;
         }
-
-        console.log('成功加入频道:', uid);
-
         // 启用音量监听（只在多人通话中启用）
         if (
           this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
           this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI
         ) {
-          console.log('🔊 启用音量监听');
           this.client.enableAudioVolumeIndicator();
         }
       } catch (error) {
@@ -1285,6 +1294,45 @@ export class CallService {
   async hangup(reason: string = HANGUP_REASON.HANGUP, isCancel: boolean = false) {
     console.log('🔧 hangup 方法被调用:', { reason, isCancel, callStatus: this.callStatus });
 
+    // 🔧 修复：清理正在创建中的轨道（处理竞态条件）
+    if (this.creatingVideoTrack) {
+      console.log('🔧 发现正在创建的视频轨道，等待并清理...');
+      try {
+        const creatingTrack = await this.creatingVideoTrack;
+        if (creatingTrack) {
+          const mediaStreamTrack = creatingTrack.getMediaStreamTrack?.();
+          if (mediaStreamTrack) {
+            mediaStreamTrack.stop();
+            console.log('🔧 已停止正在创建的视频轨道MediaStreamTrack:', mediaStreamTrack.id);
+          }
+          creatingTrack.close();
+          console.log('🔧 已关闭正在创建的视频轨道');
+        }
+      } catch (error) {
+        console.error('🔧 清理正在创建的视频轨道时发生错误:', error);
+      }
+      this.creatingVideoTrack = null;
+    }
+
+    if (this.creatingAudioTrack) {
+      console.log('🔧 发现正在创建的音频轨道，等待并清理...');
+      try {
+        const creatingTrack = await this.creatingAudioTrack;
+        if (creatingTrack) {
+          const mediaStreamTrack = creatingTrack.getMediaStreamTrack?.();
+          if (mediaStreamTrack) {
+            mediaStreamTrack.stop();
+            console.log('🔧 已停止正在创建的音频轨道MediaStreamTrack:', mediaStreamTrack.id);
+          }
+          creatingTrack.close();
+          console.log('🔧 已关闭正在创建的音频轨道');
+        }
+      } catch (error) {
+        console.error('🔧 清理正在创建的音频轨道时发生错误:', error);
+      }
+      this.creatingAudioTrack = null;
+    }
+
     // 停止铃声播放（挂断时）
     this.stopRingtone();
 
@@ -1298,46 +1346,26 @@ export class CallService {
       this.intervalTimer = null;
     }
 
-    // 🔧 修复：先取消发布，再关闭音视频轨道
+    // 先取消发布，再关闭音视频轨道
     if (this.client && this.callStatus === CALL_STATUS.IN_CALL) {
       try {
         // 收集需要取消发布的轨道
         const tracksToUnpublish = [];
         if (this.rtc.localAudioTrack) {
           tracksToUnpublish.push(this.rtc.localAudioTrack);
-          console.log(
-            '🎙️ 发现本地音频轨道，准备取消发布:',
-            this.rtc.localAudioTrack.trackMediaType,
-          );
         }
         if (this.rtc.localVideoTrack) {
           tracksToUnpublish.push(this.rtc.localVideoTrack);
-          console.log(
-            '📹 发现本地视频轨道，准备取消发布:',
-            this.rtc.localVideoTrack.trackMediaType,
-          );
         }
 
         // 取消发布所有本地轨道（只有在客户端连接时才取消发布）
         if (tracksToUnpublish.length > 0 && this.client.connectionState === 'CONNECTED') {
           await this.client.unpublish(tracksToUnpublish);
-          console.log('✅ 成功取消发布轨道');
-        } else if (tracksToUnpublish.length > 0) {
-          console.log('🔧 跳过取消发布轨道，客户端未连接:', this.client.connectionState);
         }
       } catch (error) {
-        console.error('❌ 取消发布轨道失败:', error);
-        // 即使取消发布失败，也要继续清理流程
+        console.error('unpublish error:', error);
       }
     }
-
-    // 🔧 安全清理：确保轨道在关闭前被取消发布（不受callStatus限制）
-    console.log('🔧 hangup - 检查轨道清理条件:', {
-      hasClient: !!this.client,
-      hasAudioTrack: !!this.rtc.localAudioTrack,
-      hasVideoTrack: !!this.rtc.localVideoTrack,
-      callStatus: this.callStatus,
-    });
 
     if (this.client && (this.rtc.localAudioTrack || this.rtc.localVideoTrack)) {
       try {
@@ -1350,65 +1378,40 @@ export class CallService {
         }
 
         if (tracksToSafeUnpublish.length > 0) {
-          console.log(
-            '🔧 安全清理：取消发布本地轨道',
-            tracksToSafeUnpublish.map(t => t.trackMediaType),
-          );
           // 🔧 修复：只有在客户端连接时才调用unpublish，避免"haven't joined yet"错误
           if (this.client.connectionState === 'CONNECTED') {
             await this.client.unpublish(tracksToSafeUnpublish);
-            console.log('✅ 安全清理：成功取消发布轨道');
-          } else {
-            console.log('🔧 安全清理：跳过取消发布，客户端未连接:', this.client.connectionState);
           }
         }
       } catch (error) {
-        console.warn('❌ 安全清理：取消发布轨道失败（忽略）:', error);
-        // 忽略错误，继续关闭轨道
+        console.warn('unpublish error:', error);
       }
     }
 
     // 关闭音视频轨道
     if (this.rtc.localAudioTrack) {
-      console.log('🔧 关闭本地音频轨道:', this.rtc.localAudioTrack.getTrackId?.());
-
-      // 🔧 修复：彻底停止音频轨道和相关MediaStreamTrack，释放麦克风资源
       try {
         // 获取并停止底层MediaStreamTrack，确保麦克风资源被释放
         const mediaStreamTrack = this.rtc.localAudioTrack.getMediaStreamTrack?.();
         if (mediaStreamTrack) {
-          console.log(
-            '🔧 停止音频MediaStreamTrack:',
-            mediaStreamTrack.id,
-            '状态:',
-            mediaStreamTrack.readyState,
-          );
           if (mediaStreamTrack.readyState === 'live') {
             mediaStreamTrack.stop();
-            console.log('✅ 麦克风MediaStreamTrack已停止');
           }
         }
 
         // 关闭Agora轨道
         this.rtc.localAudioTrack.close();
         this.rtc.localAudioTrack = null;
-
-        console.log('🔧 本地音频轨道已彻底关闭并清空引用');
       } catch (error) {
-        console.error('❌ 关闭音频轨道时发生错误:', error);
-        // 即使出错也要清空引用
+        console.error('close local audio track error:', error);
         this.rtc.localAudioTrack = null;
       }
     }
     if (this.rtc.localVideoTrack) {
-      console.log('🔧 关闭本地视频轨道:', this.rtc.localVideoTrack.getTrackId?.());
-
-      // 🔧 彻底停止视频轨道和相关MediaStream
       try {
         // 获取轨道的MediaStream
         const mediaStreamTrack = this.rtc.localVideoTrack.getMediaStreamTrack?.();
         if (mediaStreamTrack) {
-          console.log('🔧 停止底层MediaStreamTrack:', mediaStreamTrack.id);
           mediaStreamTrack.stop();
         }
 
@@ -1419,34 +1422,30 @@ export class CallService {
         // 清理缓存的本地视频流
         if (this.localVideoStream) {
           this.localVideoStream.getTracks().forEach(track => {
-            console.log('🔧 停止缓存流中的轨道:', track.id);
             track.stop();
           });
           this.localVideoStream = null;
         }
-
-        console.log('🔧 本地视频轨道已彻底关闭并清空引用');
       } catch (error) {
-        console.error('❌ 关闭视频轨道时发生错误:', error);
-        // 即使出错也要清空引用
+        console.error('close local video track error:', error);
         this.rtc.localVideoTrack = null;
         this.localVideoStream = null;
       }
     }
 
-    // 🔧 强制延迟，确保轨道完全停止
+    // 强制延迟，确保轨道完全停止
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // 🔧 最后检查：确保没有遗漏的MediaStreamTrack
+    // 🔧 增强：确保没有遗漏的MediaStreamTrack（特别是快速挂断场景）
     await this.checkAndCleanupAllMediaTracks();
 
-    // 🔧 强制垃圾回收（如果支持的话）
-    if (window.gc) {
-      console.log('🔧 执行强制垃圾回收');
-      window.gc();
-    }
+    // 🔧 额外检查：强制等待一段时间后再次检查，确保异步清理完成
+    setTimeout(async () => {
+      await this.checkAndCleanupAllMediaTracks();
+      console.log('🔧 hangup：延迟媒体轨道清理检查完成');
+    }, 500);
 
-    // 🔧 清理所有远程音视频轨道
+    // 清理所有远程音视频轨道
     this.remoteVideoTracks.forEach((track, userId) => {
       try {
         track.stop();
@@ -1501,30 +1500,21 @@ export class CallService {
         this.client.connectionState === 'CONNECTING'
       ) {
         try {
-          console.log('检测到客户端已连接/正在连接，离开频道...');
           await this.client.leave();
-          console.log('✅ 已离开 RTC 频道');
         } catch (error) {
-          console.error('❌ 离开频道失败:', error);
-          // 不抛出错误，继续清理流程
+          console.error('leave error:', error);
         }
       }
 
-      // 🔧 移除 Agora RTC 事件监听器（在离开频道后）
+      // 移除 Agora RTC 事件监听器（在离开频道后）
       try {
         this.client.removeAllListeners();
-        console.log('✅ 已移除所有 Agora RTC 事件监听器');
       } catch (error) {
-        console.error('❌ 移除事件监听器失败:', error);
+        console.error('removeAllListeners error:', error);
       }
 
-      // 🔧 强制等待客户端状态更新
-      console.log('🔧 等待客户端状态更新...');
+      // 强制等待客户端状态更新
       await new Promise(resolve => setTimeout(resolve, 100));
-      console.log('🔧 客户端最终状态:', {
-        connectionState: this.client?.connectionState,
-        channelName: this.client?.channelName,
-      });
     }
 
     // 触发回调
@@ -1545,50 +1535,40 @@ export class CallService {
     this.speakerEnabled = true;
     // 🔧 重置preview状态标记
     this.hasEnteredPreview = false;
+    // 🔧 重置正在创建的轨道引用
+    this.creatingVideoTrack = null;
+    this.creatingAudioTrack = null;
 
     // 🔧 清理 UID 映射表，确保第二次通话时重新建立映射
     this.UIdToUserIdMap.clear();
-    console.log('🔧 已清理 UID 映射表');
 
     // 🔧 清理等待播放的视频轨道
     this.pendingVideoTracks.clear();
-    console.log('🔧 已清理待播放视频轨道');
 
     // 🔧 强制等待确保所有异步清理完成
     await new Promise(resolve => setTimeout(resolve, 200));
 
     // 🔧 最终检查：如果客户端仍然连接，强制重新创建客户端
     if (this.client && this.client.connectionState !== 'DISCONNECTED') {
-      console.log('🔧 检测到客户端未完全断开，重新创建客户端...');
+      // console.log('🔧 检测到客户端未完全断开，重新创建客户端...');
       try {
         // 销毁旧客户端
         if (this.client.destroy) {
           await this.client.destroy();
         }
       } catch (error) {
-        console.warn('🔧 销毁旧客户端失败:', error);
+        console.warn('destroy error:', error);
       }
 
       // 重新创建客户端
       this.client = AgoraRTC.createClient({ mode: 'live', codec: 'h264' });
       this.client.setClientRole('host');
-      console.log('🔧 已重新创建 Agora RTC 客户端');
     }
-
-    console.log('🔧 hangup 完成，最终状态:', {
-      callStatus: this.callStatus,
-      clientConnectionState: this.client?.connectionState,
-      hasCurrentCallInfo: !!this.currentCallInfo,
-      rtcTracksCleared: !this.rtc.localAudioTrack && !this.rtc.localVideoTrack,
-    });
-
-    console.log('✅ 通话已挂断，原因:', reason);
   }
 
   // 发送取消消息
   private sendCancelMessage(to?: string) {
     if (!this.currentCallInfo || !to) return;
-    console.log('---->sendCancelMessage', this.currentCallInfo, to);
     const msg = WebIM.message.create({
       type: 'cmd',
       chatType: 'singleChat',
@@ -1633,9 +1613,7 @@ export class CallService {
   // 添加 Agora RTC 事件监听器
   private addAgoraRTCListeners() {
     // 监听用户加入
-    this.client.on('user-joined', (user: IAgoraRTCRemoteUser) => {
-      console.log('user-joined:', user);
-    });
+    this.client.on('user-joined', (user: IAgoraRTCRemoteUser) => {});
 
     // 监听远程用户发布流
     this.client.on('user-published', async (user: any, mediaType: string) => {
@@ -1665,9 +1643,7 @@ export class CallService {
           try {
             const res = await this.connection.getUserIdByRTCUIds([user.uid]);
             userId = res.data[user.uid];
-            console.log('🚀 获取 userId -->', userId);
             this.UIdToUserIdMap.set(user.uid, userId || '');
-            console.log('🚀 获取 userId2 -->', this.UIdToUserIdMap.get(user.uid));
           } catch (error: any) {
             this.onCallError?.({
               errorType: CallErrorType.CHAT,
@@ -1692,12 +1668,12 @@ export class CallService {
 
             // 🔧 获取远程视频流
             const remoteVideoStream = this.getRemoteVideoStream(user.uid);
-            console.log('🎬 获取远程视频流结果:', {
-              用户ID: user.uid,
-              视频轨道存在: !!this.remoteVideoTracks.get(user.uid),
-              视频流存在: !!remoteVideoStream,
-              轨道ID: remoteVideoTrack?.getTrackId?.(),
-            });
+            // console.log('🎬 获取远程视频流结果:', {
+            //   用户ID: user.uid,
+            //   视频轨道存在: !!this.remoteVideoTracks.get(user.uid),
+            //   视频流存在: !!remoteVideoStream,
+            //   轨道ID: remoteVideoTrack?.getTrackId?.(),
+            // });
 
             // 创建远程视频信息
             const remoteVideoInfo: VideoWindowProps = {
@@ -1712,26 +1688,13 @@ export class CallService {
               isWaiting: false, // 明确设置不在等待状态，用于替换等待窗口
             };
 
-            console.log('📺 创建远程视频信息:', {
-              视频ID: remoteVideoInfo.id,
-              用户ID: userId,
-              昵称: remoteVideoInfo.nickname,
-              摄像头状态: remoteVideoInfo.cameraEnabled,
-              静音状态: remoteVideoInfo.muted,
-              用户信息: this.userInfos[userId],
-              是否替换等待窗口: remoteVideoInfo.isWaiting === false,
-            });
-
             this.onRemoteVideoReady?.(remoteVideoInfo);
 
             // 🔧 改进：使用事件驱动的方式等待视频元素准备好
             const videoId = `remote-${userId}`;
             this.pendingVideoTracks.set(videoId, remoteVideoTrack);
-
             // 等待视频元素准备好，最多等待10秒
             this.waitForVideoElement(videoId, remoteVideoTrack, 10000);
-
-            console.log('远程用户开启了摄像头，切换到视频显示:', userId);
           }
 
           if (mediaType === 'audio') {
@@ -1743,7 +1706,7 @@ export class CallService {
             this.rtc.remoteAudioTrack = remoteAudioTrack;
             this.rtc.remoteUser = user;
 
-            // 🔧 新增：根据当前扬声器状态设置新音频轨道的音量
+            // 根据当前扬声器状态设置新音频轨道的音量
             if (remoteAudioTrack && remoteAudioTrack.setVolume) {
               const volume = this.speakerEnabled ? 100 : 0;
               remoteAudioTrack.setVolume(volume);
@@ -1754,7 +1717,6 @@ export class CallService {
 
             // 🔧 1v1视频通话特殊处理：当只是音频状态变化时，不触发onRemoteVideoReady以避免闪动
             const is1v1VideoCall = this.currentCallInfo?.type === CALL_TYPE.VIDEO_1V1;
-            console.log('joinedMembers', this.joinedMembers);
             const isExistingUser = this.joinedMembers.some(member => member.uid === user.uid);
 
             if (is1v1VideoCall && isExistingUser) {
@@ -1788,8 +1750,6 @@ export class CallService {
         }, 500);
         // 更新加入的成员列表
         this.updateJoinedMember(user, mediaType, true);
-
-        console.log('Updated joinedMembers:', this.joinedMembers);
       } catch (error) {
         console.error('Failed to subscribe to remote user:', error);
       }
@@ -1797,7 +1757,6 @@ export class CallService {
 
     // 监听远程用户离开
     this.client.on('user-left', (user: any, reason: string) => {
-      console.log('user-left:', user, reason);
       const userId = this.UIdToUserIdMap.get(user.uid) || '';
       // 触发回调
       this.onRemoteUserLeft?.(
@@ -1812,9 +1771,8 @@ export class CallService {
       if (videoTrack) {
         try {
           videoTrack.stop();
-          console.log(`🎬 清理用户 ${userId} 的视频轨道`);
         } catch (error) {
-          console.warn(`清理用户 ${userId} 视频轨道失败:`, error);
+          console.warn(`stop video track error:`, error);
         }
         this.remoteVideoTracks.delete(userId);
       }
@@ -1822,9 +1780,8 @@ export class CallService {
       if (audioTrack) {
         try {
           audioTrack.stop();
-          console.log(`🎤 清理用户 ${userId} 的音频轨道`);
         } catch (error) {
-          console.warn(`清理用户 ${userId} 音频轨道失败:`, error);
+          console.warn(`stop audio track error:`, error);
         }
         this.remoteAudioTracks.delete(userId);
       }
@@ -1862,8 +1819,6 @@ export class CallService {
 
     // 监听远程用户停止发布流
     this.client.on('user-unpublished', (user: any, mediaType: string) => {
-      console.log('user-unpublished:', user, mediaType);
-
       // 触发回调
       this.onUserUnpublished?.(user, mediaType);
 
@@ -1882,7 +1837,6 @@ export class CallService {
         if (this.rtc.remoteVideoTrack && this.rtc.remoteUser?.uid === user.uid) {
           this.rtc.remoteVideoTrack = null;
         }
-        console.log('---->this.userInfos', this.userInfos);
         // 创建更新后的视频信息（关闭摄像头，显示头像）
         const updatedVideoInfo: VideoWindowProps = {
           id: `remote-${userId}`,
@@ -1944,8 +1898,6 @@ export class CallService {
 
         // 通知UI更新远程视频状态
         this.onRemoteVideoReady?.(updatedVideoInfo);
-
-        console.log('远程用户关闭了麦克风:', userId);
       }
 
       // 更新成员状态
@@ -1954,17 +1906,12 @@ export class CallService {
 
     // 🔧 新增：监听谁在说话
     this.client.on('volume-indicator', (volumes: any[]) => {
-      console.log('🔊 音量指示器事件:', volumes);
-
-      // 🔧 修复：使用配置的音量阈值而不是硬编码的60
       const talkingUsers = volumes
         .filter(volume => volume.level > this.speakingVolumeThreshold)
         .map(volume => this.UIdToUserIdMap.get(volume.uid) || '');
 
-      // 🔧 新增：检查本地用户是否在说话
       const localTalkingUsers = [...talkingUsers];
       if (this.isMuted()) {
-        // 如果本地用户静音，从说话列表中移除
         const localIndex = localTalkingUsers.indexOf(this.userId);
         if (localIndex > -1) {
           localTalkingUsers.splice(localIndex, 1);
@@ -1977,19 +1924,16 @@ export class CallService {
 
     // 监听自己网络质量
     this.client.on('network-quality', (quality: any) => {
-      console.log('🌐 网络质量:', quality);
       // 同时获取订阅的其他人的网络质量
       const others = this.client.getRemoteNetworkQuality(this.agoraUid);
       // others: {[uid]: {quality}} 转成 {[userId]: {quality}}
       const others2: any = Object.keys(others).reduce((acc: any, uid: string) => {
-        // 🔧 修复：将字符串 uid 转换为数字，因为 UIdToUserIdMap 的 key 实际存储为数字类型
         const numericUid = parseInt(uid, 10);
         const userId = this.UIdToUserIdMap.get(numericUid as any);
         acc[userId || ''] = others[uid];
         return acc;
       }, {});
       others2[this.userId] = quality;
-      console.log('🌐 其他人的网络质量:', others2, others, this.UIdToUserIdMap);
       this.onNetworkQualityChange?.(others2);
     });
   }
@@ -1998,16 +1942,8 @@ export class CallService {
   private addMessageListener() {
     this.connection.addEventHandler('callkit', {
       onTextMessage: (message: any) => {
-        console.log('🔧 onTextMessage 收到消息:', {
-          from: message.from,
-          action: message.ext?.action,
-          type: message.ext?.type,
-          hasExt: !!message.ext,
-        });
         console.log('onTextMessage message -->', message);
-
         if (message.ext && message.ext.action === 'invite') {
-          console.log('🔧 检测到邀请消息，调用 handleInvitationMessage');
           this.handleInvitationMessage(message);
         }
       },
@@ -2023,13 +1959,6 @@ export class CallService {
 
   // 处理邀请消息
   private async handleInvitationMessage(message: any) {
-    console.log('🔧 handleInvitationMessage 被调用:', {
-      from: message.from,
-      type: message.ext?.type,
-      callId: message.ext?.callId,
-      action: message.action,
-    });
-
     if (message.from === this.connection.context.jid.name) {
       return; // 忽略自己发送的消息
     }
@@ -2096,16 +2025,9 @@ export class CallService {
   // 处理信令消息
   private handleSignalMessage(message: any) {
     const ext = message.ext;
-    console.log('🔧 handleSignalMessage 收到消息:', {
-      action: ext.action,
-      type: ext.type,
-      from: message.from,
-      callId: ext.callId,
-    });
     console.log('---->cmd ext', ext);
     switch (ext.action) {
       case 'alert':
-        console.log('🔧 处理 alert 消息，调用 handleAlertMessage');
         this.handleAlertMessage(message);
         break;
       case 'confirmRing':
@@ -2132,13 +2054,7 @@ export class CallService {
 
   private async handleAlertMessage(message: any) {
     const ext = message.ext;
-    console.log('🔧 handleAlertMessage 被调用:', {
-      callType: ext.type,
-      from: message.from,
-      calleeDevId: ext.calleeDevId,
-    });
     this.timer && clearTimeout(this.timer);
-
     this.sendConfirmRingMessage(message.from, ext.calleeDevId, ext.callerDevId, ext.callId);
   }
 
@@ -2149,7 +2065,6 @@ export class CallService {
     callerDevId: string,
     callId: string,
   ) {
-    console.log('🚀 发送确认响铃消息:', to, calleeDevId, callerDevId, callId);
     if (!this.currentCallInfo) return;
     let status = true;
     if (callId !== this.currentCallInfo.callId) {
@@ -2161,12 +2076,10 @@ export class CallService {
       this.callStatus > CALL_STATUS.RECEIVED_CONFIRM_RING &&
       this.currentCallInfo.type !== CALL_TYPE.VIDEO_MULTI
     ) {
-      console.warn('caller is busy');
       status = false;
     }
 
     if (callerDevId !== this.connection.context.jid.clientResource) {
-      console.warn('caller device is different');
       return;
     }
 
@@ -2185,7 +2098,6 @@ export class CallService {
         msgType: 'rtcCallWithAgora',
       },
     });
-    console.log('🚀 发送确认响铃消息2:', msg);
     try {
       this.connection.send(msg);
     } catch (error: any) {
@@ -2200,38 +2112,22 @@ export class CallService {
   // 处理确认响铃消息
   private async handleConfirmRingMessage(message: any) {
     const ext = message.ext;
-    console.log('🔧 handleConfirmRingMessage 被调用:', {
-      callType: ext.type,
-      calleeDevId: ext.calleeDevId,
-      currentDevId: this.connection.context.jid.clientResource,
-      callStatus: this.callStatus,
-    });
+
     this.timer && clearTimeout(this.timer);
     if (ext.calleeDevId !== this.connection.context.jid.clientResource) {
-      console.log('handleConfirmRingMessage ext.calleeDevId -->', ext.calleeDevId);
       return; // 多端情况下的其他设备消息
     }
 
     if (!ext.status || this.callStatus < CALL_STATUS.ALERTING) {
-      // console.warn('The invitation has expired');
       this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
       return;
     }
 
     this.callStatus = CALL_STATUS.RECEIVED_CONFIRM_RING;
 
-    if (ext.type === CALL_TYPE.VIDEO_1V1) {
-      // 1v1视频通话：现在视频轨道的创建已移到用户点击接听进入预览时
-      console.log('🔧 1v1视频通话：handleConfirmRingMessage - 视频轨道将在用户接听时创建');
-    } else if (ext.type === CALL_TYPE.VIDEO_MULTI) {
-      // 多人视频通话：被叫方不在收到邀请时创建视频轨道
-      // 等待用户点击invitation后再创建
-    }
-
     const callType = this.convertCallTypeToString(
       this.currentCallInfo?.type || CALL_TYPE.AUDIO_1V1,
     );
-    console.log('----->this.userInfos', this.userInfos, ext);
     const inviteInfo: any = {
       id: ext.callId, // InvitationInfo 需要 id 字段
       callId: ext.callId,
@@ -2244,11 +2140,11 @@ export class CallService {
       callerAvatar: this.userInfos[message.from]?.avatarUrl, // 邀请人头像
       timestamp: ext.ts || Date.now(), // 邀请时间戳
     };
-    if (ext.type === CALL_TYPE.VIDEO_MULTI) {
-      inviteInfo.groupId = ext.groupId;
-      inviteInfo.groupName = this.cachedGroupInfos[message.to]?.groupName;
-      inviteInfo.groupAvatar = this.cachedGroupInfos[message.to]?.groupAvatar;
-    }
+    inviteInfo.groupId = ext.groupId;
+    inviteInfo.groupName = this.currentCallInfo?.groupName;
+    inviteInfo.groupAvatar = this.currentCallInfo?.groupAvatar;
+
+    console.log('---->inviteInfo', inviteInfo, this.currentCallInfo);
     // 触发邀请接收回调
     this.onInvitationReceived?.(inviteInfo);
   }
@@ -2341,8 +2237,6 @@ export class CallService {
       if (this.callStatus !== CALL_STATUS.IN_CALL) {
         this.callStatus = CALL_STATUS.CONFIRM_CALLEE;
         this.joinCall();
-      } else {
-        console.log('已经在通话中，跳过重复加入频道操作');
       }
     }
   }
@@ -2353,10 +2247,6 @@ export class CallService {
 
     // 🔧 修复：防止重复处理confirmCallee消息
     if (this.callStatus >= CALL_STATUS.CONFIRM_CALLEE) {
-      console.log('🔧 已经处理过confirmCallee消息，跳过重复处理:', {
-        currentStatus: this.callStatus,
-        messageId: message.id,
-      });
       return;
     }
 
@@ -2378,13 +2268,6 @@ export class CallService {
       return;
     }
 
-    // 被叫方确认后，自动加入通话
-    console.log('🔧 处理confirmCallee消息，准备加入通话:', {
-      当前状态: this.callStatus,
-      消息ID: message.id,
-      callId: ext.callId,
-    });
-
     if (this.callStatus < CALL_STATUS.CONFIRM_CALLEE) {
       this.callStatus = CALL_STATUS.CONFIRM_CALLEE;
     }
@@ -2399,12 +2282,10 @@ export class CallService {
 
     // 🔧 修复：如果当前正在通话中，不应该挂断当前通话
     if (this.callStatus === CALL_STATUS.IN_CALL) {
-      console.log('当前正在通话中，忽略 cancelCall 消息，不挂断当前通话');
       return;
     }
 
     if (this.currentCallInfo && message.from === this.currentCallInfo.callerUserId) {
-      console.log('收到 cancelCall 消息，挂断通话');
       this.hangup(HANGUP_REASON.REMOTE_CANCEL);
     }
   }
@@ -2430,9 +2311,7 @@ export class CallService {
     // 直接设置轨道的启用状态，不触发UI更新
     this.rtc.localAudioTrack.setEnabled && this.rtc.localAudioTrack.setEnabled(newEnabled);
 
-    console.log('麦克风状态:', newEnabled ? '开启' : '关闭');
-
-    // 🔧 新增：通知UI更新本地视频状态
+    // 通知UI更新本地视频状态
     const localVideoInfo: VideoWindowProps = {
       id: 'local',
       isLocalVideo: true,
@@ -2444,26 +2323,12 @@ export class CallService {
     };
 
     this.onRemoteVideoReady?.(localVideoInfo);
-
-    console.log('本地视频静音状态已更新:', {
-      muted: localVideoInfo.muted,
-      nickname: localVideoInfo.nickname,
-      hasAvatar: !!localVideoInfo.avatar,
-    });
-
     return !newEnabled; // 返回muted状态（与enabled相反）
   }
 
   // 切换摄像头状态
   async toggleCamera(): Promise<boolean> {
-    console.log('🔧 CallService: toggleCamera被调用，当前状态:', {
-      callStatus: this.callStatus,
-      hasVideoTrack: !!this.rtc.localVideoTrack,
-      videoEnabled: this.rtc.localVideoTrack?.enabled || false,
-      callType: this.currentCallInfo?.type,
-    });
-
-    // 🔧 修改：根据信令流程正确判断是否允许操作摄像头
+    // 根据信令流程正确判断是否允许操作摄像头
     // - INVITING: 主叫方发起通话后的状态 ✅ 允许
     // - ALERTING: 被叫方收到邀请的状态 ✅ 允许
     // - 其他更高级状态 ✅ 允许
@@ -2524,12 +2389,6 @@ export class CallService {
         };
 
         this.onRemoteVideoReady?.(localVideoInfo);
-
-        console.log('🔧 摄像头已开启（新创建）:', {
-          hasStream: !!localVideoInfo.stream,
-          hasVideoTrack: !!this.rtc.localVideoTrack,
-          videoTrackEnabled: this.rtc.localVideoTrack?.enabled,
-        });
         return true;
       } catch (error) {
         console.error('创建本地视频轨道失败:', error);
@@ -2560,28 +2419,14 @@ export class CallService {
       (track: any) => track.trackMediaType === 'video' && track === this.rtc.localVideoTrack,
     );
 
-    console.log(
-      `切换摄像头状态: ${currentEnabled ? '开启' : '关闭'} -> ${newEnabled ? '开启' : '关闭'}`,
-    );
-    console.log('当前轨道信息:', {
-      enabled: this.rtc.localVideoTrack.enabled,
-      published: isVideoTrackPublished,
-      trackId: this.rtc.localVideoTrack.getTrackId?.(),
-      mediaType: this.rtc.localVideoTrack.trackMediaType,
-      hasSetEnabledMethod: typeof this.rtc.localVideoTrack.setEnabled === 'function',
-    });
-
     // 如果摄像头开启
     if (newEnabled) {
       try {
         // 尝试启用现有轨道
         if (typeof this.rtc.localVideoTrack.setEnabled === 'function') {
           this.rtc.localVideoTrack.setEnabled(true);
-
           // 等待轨道状态更新完成
           await new Promise(resolve => setTimeout(resolve, 100));
-
-          console.log('setEnabled调用后轨道状态:', this.rtc.localVideoTrack.enabled);
         }
 
         // 如果轨道仍然未启用，尝试重新创建轨道
@@ -2598,12 +2443,6 @@ export class CallService {
           // 创建新的视频轨道
           const newVideoTrack = await AgoraRTC.createCameraVideoTrack();
           this.rtc.localVideoTrack = newVideoTrack;
-
-          console.log('重新创建的轨道状态:', {
-            enabled: newVideoTrack.enabled,
-            trackId: newVideoTrack.getTrackId?.(),
-          });
-
           // 如果新轨道也没启用，强制启用
           if (!newVideoTrack.enabled && typeof newVideoTrack.setEnabled === 'function') {
             newVideoTrack.setEnabled(true);
@@ -2641,12 +2480,6 @@ export class CallService {
         }, 100);
       } catch (error) {
         console.error('发布视频轨道失败:', error);
-        console.error('轨道状态信息:', {
-          enabled: this.rtc.localVideoTrack.enabled,
-          trackId: this.rtc.localVideoTrack.getTrackId?.(),
-          mediaType: this.rtc.localVideoTrack.trackMediaType,
-        });
-
         // 如果发布失败，恢复轨道状态
         this.rtc.localVideoTrack.setEnabled && this.rtc.localVideoTrack.setEnabled(false);
         this.onCallError?.({
@@ -2657,8 +2490,6 @@ export class CallService {
       }
     } else {
       // 摄像头关闭时，彻底停止轨道
-      console.log('🔧 开始关闭摄像头...');
-
       try {
         // 1. 先取消发布轨道（如果已发布）
         if (this.client && this.rtc.localVideoTrack) {
@@ -2669,7 +2500,6 @@ export class CallService {
           );
 
           if (isVideoTrackPublished) {
-            console.log('🔧 取消发布视频轨道...');
             await this.client.unpublish([this.rtc.localVideoTrack]);
           }
         }
@@ -2677,7 +2507,6 @@ export class CallService {
         // 2. 获取并停止底层MediaStreamTrack
         const mediaStreamTrack = this.rtc.localVideoTrack.getMediaStreamTrack?.();
         if (mediaStreamTrack) {
-          console.log('🔧 停止底层MediaStreamTrack:', mediaStreamTrack.id);
           mediaStreamTrack.stop();
         }
 
@@ -2686,8 +2515,6 @@ export class CallService {
 
         // 4. 清空引用
         this.rtc.localVideoTrack = null;
-
-        console.log('🔧 摄像头已彻底关闭');
       } catch (error) {
         console.error('❌ 关闭摄像头时发生错误:', error);
         // 即使出错也要清空引用，防止状态不一致
@@ -2710,16 +2537,6 @@ export class CallService {
     };
 
     this.onRemoteVideoReady?.(localVideoInfo);
-
-    console.log('🔧 toggleCamera本地视频状态已更新:', {
-      cameraEnabled: actualCameraEnabled,
-      muted: localVideoInfo.muted,
-      nickname: localVideoInfo.nickname,
-      hasAvatar: !!localVideoInfo.avatar,
-      hasStream: !!localVideoInfo.stream,
-      hasVideoTrack: !!this.rtc.localVideoTrack,
-      videoTrackEnabled: this.rtc.localVideoTrack?.enabled,
-    });
 
     return actualCameraEnabled;
   }

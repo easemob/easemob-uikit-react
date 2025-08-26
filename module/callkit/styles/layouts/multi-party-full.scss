@@ -11,7 +11,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
   flex-direction: column;
   position: relative;
   // background: url(../../../assets/callkit_bg.png) lightgray 0px 0px / 100% 100% no-repeat;
-  background: rgba(0, 0, 0, 0.8);
+  background: #171A1C;
   // Header - 顶部固定
   .#{$callkit-prefix-cls}-header {
     height: $header-height;

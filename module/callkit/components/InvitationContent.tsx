@@ -4,6 +4,7 @@ import Avatar from '../../../component/avatar';
 import Button from '../../../component/button';
 import { Icon } from '../../../component/icon/Icon';
 import { InvitationInfo, CallControlsIconMap } from '../types/index';
+import { RootContext } from '../../store/rootContext';
 // import '../styles/invitation.scss';
 
 interface InvitationContentProps {
@@ -43,6 +44,13 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
   iconRenderer,
 }) => {
   const [remainingTime, setRemainingTime] = useState(autoRejectTime);
+
+  const { theme } = React.useContext(RootContext);
+
+  let avatarShape: 'square' | 'circle' = 'square';
+  if (theme?.avatarShape) {
+    avatarShape = theme?.avatarShape;
+  }
 
   // 🔧 新增：渲染图标的辅助函数
   const renderIcon = React.useCallback(
@@ -123,9 +131,9 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
   // 获取显示的名称
   const getDisplayName = () => {
     if (invitation.type === 'group') {
-      return invitation.groupName || '群组通话';
+      return invitation.groupName || '';
     }
-    return invitation.callerName || '未知用户';
+    return invitation.callerName || '';
   };
 
   // 获取通话类型图标
@@ -165,7 +173,11 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
     <div className={containerClass} style={style}>
       {/* 头像区域 */}
       {showAvatar && (
-        <Avatar src={getDisplayAvatar() || getDisplayName().charAt(0).toUpperCase()} size={40} />
+        <Avatar
+          src={getDisplayAvatar() || getDisplayName().charAt(0).toUpperCase()}
+          size={40}
+          shape={avatarShape}
+        />
       )}
 
       {/* 信息区域 */}

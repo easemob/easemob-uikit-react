@@ -4,9 +4,10 @@
 .cui-callkit-invitation-content {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   justify-content: space-between;
-
+  padding-right: 4px;
+  margin-top: -2px;
   .cui-callkit-invitation-avatar {
     position: relative;
     width: 60px;
@@ -82,7 +83,7 @@
 
   .cui-callkit-invitation-actions {
     display: flex;
-    gap: 12px;
+    gap: 16px;
     justify-content: flex-end;
 
     .cui-callkit-invitation-reject-btn {

@@ -121,7 +121,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
       if (callInfo) {
         return {
           avatar: callInfo.remoteUserAvatar,
-          content: callInfo.remoteUserNickname || callInfo.remoteUserId || '用户',
+          content: callInfo.remoteUserNickname || callInfo.remoteUserId || '',
           subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
         };
       } else {
@@ -136,7 +136,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
       if (invitation) {
         return {
           avatar: invitation.callerAvatar,
-          content: invitation.callerName || invitation.id || '用户',
+          content: invitation.callerName || invitation.id || '',
           subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
         };
       } else {
@@ -172,10 +172,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
   }, [backgroundImage]);
   console.log('有 localVideo -->', localVideo, callMode);
   return (
-    <div
-      className={`${prefixCls}-one-to-one-full-layout`}
-      style={{ ...backgroundStyle, backgroundColor: 'rgba(0, 0, 0, 0.8)' }}
-    >
+    <div className={`${prefixCls}-one-to-one-full-layout`} style={{ ...backgroundStyle }}>
       {/* 视频内容区域 - 占满整个容器 */}
       <div className={`${prefixCls}-video-content`}>
         {/* 预览视频作为主视频显示 */}
@@ -235,6 +232,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
               {renderHeaderIcon('minimize', 'BOXES', { width: 24, height: 24, color: '#F9FAFA' })}
             </Button>,
           ]}
+          avatarShape="square"
         />
       </div>
 

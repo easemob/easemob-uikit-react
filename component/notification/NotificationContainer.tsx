@@ -13,8 +13,8 @@ const NotificationContainer: React.FC<NotificationContainerProps> = ({
   notifications,
   onRemove,
   placement = 'topRight',
-  top = 24,
-  bottom = 24,
+  top = 20,
+  bottom = 20,
   getContainer,
 }) => {
   const prefixCls = 'cui-notification';
@@ -39,13 +39,13 @@ const NotificationContainer: React.FC<NotificationContainerProps> = ({
         return {
           ...baseStyle,
           top,
-          left: 24,
+          left: 20,
         };
       case 'topRight':
         return {
           ...baseStyle,
           top,
-          right: 24,
+          right: 20,
         };
       case 'bottom':
         return {
@@ -58,19 +58,19 @@ const NotificationContainer: React.FC<NotificationContainerProps> = ({
         return {
           ...baseStyle,
           bottom,
-          left: 24,
+          left: 20,
         };
       case 'bottomRight':
         return {
           ...baseStyle,
           bottom,
-          right: 24,
+          right: 20,
         };
       default:
         return {
           ...baseStyle,
           top,
-          right: 24,
+          right: 20,
         };
     }
   };

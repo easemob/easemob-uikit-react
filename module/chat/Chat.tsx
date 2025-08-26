@@ -42,6 +42,7 @@ import Checkbox from '../../component/checkbox';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './拨打电话.mp3';
+import callkit_bg from '../assets/callkit_bg.png';
 export interface RtcRoomInfo {
   callId: string;
   calleeDevId?: string;
@@ -736,6 +737,9 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                   msg = `通话时长${callInfo.duration}`;
                   break;
                 case 'noResponse':
+                  msg = '未接听';
+                  break;
+                case 'remoteNoResponse':
                   msg = '对方未接听';
                   break;
                 case 'cancel':
@@ -798,9 +802,23 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           acceptText="接听1"
           rejectText="拒绝1"
           // 邀请界面显示配置
-          showInvitationAvatar={false}
-          showInvitationTimer={false}
+          showInvitationAvatar={true}
+          showInvitationTimer={true}
           autoRejectTime={30} // 30秒自动拒绝
+          backgroundImage={callkit_bg}
+          groupInfoProvider={async groupIds => {
+            return groupIds.map(groupId => {
+              return {
+                groupId: groupId,
+                groupName:
+                  rootStore.addressStore.groups.find(item => item.groupid === groupId)?.groupname ||
+                  groupId,
+                groupAvatar:
+                  rootStore.addressStore.groups.find(item => item.groupid === groupId)?.avatarUrl ||
+                  '',
+              };
+            });
+          }}
         ></CallKit>
       )}
       <Modal
