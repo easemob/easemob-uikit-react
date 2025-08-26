@@ -337,18 +337,19 @@ let BaseMessage = (props: BaseMessageProps) => {
             <Icon
               // @ts-ignore
               type={getRtcMsgIcon(message)}
-              width={16}
-              height={16}
+              color={themeMode === 'dark' ? '#F1F2F3' : '#75828A'}
+              width={22}
+              height={22}
             ></Icon>
           )}
           {props.children}
           {isRtcInviteMessage && direction === 'rtl' && (
             <Icon
-              color="#f9fafa"
+              color={themeMode === 'dark' ? '#C8CDD0' : '#F1F2F3'}
               // @ts-ignore
               type={getRtcMsgIcon(message)}
-              width={16}
-              height={16}
+              width={22}
+              height={22}
             ></Icon>
           )}
         </div>

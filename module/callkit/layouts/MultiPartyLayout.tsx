@@ -210,12 +210,13 @@ export class MainVideoLayoutStrategy implements LayoutStrategy {
     }
     // 简化计算：总的可用高度减去所有固定高度部分
     const totalFixedHeight = headerHeight + controlsHeight + 16 + 8; // header + controls + margins
-    const containerPadding = 8;
+    const containerPadding = 16;
     const thumbnailHeight = 72;
     const containerGap = 12;
 
-    const availableHeight = containerSize.height - totalFixedHeight - containerPadding * 2;
+    const availableHeight = containerSize.height - totalFixedHeight - 14; // 距离header 14
     const availableWidth = containerSize.width - containerPadding * 2;
+
     // 主视频可用高度 = 可用高度 - 缩略图高度 - 间距
     const mainVideoMaxHeight =
       availableHeight - thumbnailHeight - containerGap - containerPadding * 2;
@@ -233,12 +234,13 @@ export class MainVideoLayoutStrategy implements LayoutStrategy {
     // 确保最小尺寸
     videoWidth = Math.max(100, videoWidth);
     videoHeight = Math.max(100 / aspectRatio, videoHeight);
-    console.log('size计算', {
-      width: `${videoWidth}px`,
-      height: `${videoHeight}px`,
-      actualWidth: videoWidth,
-      actualHeight: videoHeight,
-    });
+
+    // 使用小的尺寸
+    if (videoWidth > videoHeight) {
+      videoWidth = videoHeight * aspectRatio;
+    } else {
+      videoHeight = videoWidth / aspectRatio;
+    }
     return {
       width: `${videoWidth}px`,
       height: `${videoHeight}px`,

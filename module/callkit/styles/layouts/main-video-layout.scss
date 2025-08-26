@@ -42,7 +42,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
 
   // 主视频区域
   .#{$callkit-prefix-cls}-main-video {
-    flex: 1;
+    // flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -84,6 +84,8 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     height: 72px;
     flex-shrink: 0;
     position: relative;
+    border-radius: 8px;
+    overflow: hidden;
     
     // 缩略图滚动容器
     .#{$callkit-prefix-cls}-thumbnails-scroll {
@@ -92,7 +94,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
       height: 100%;
       overflow-x: auto;
       overflow-y: hidden;
-      padding: 0 18px; // 为滑动按钮留出空间
+      // padding: 0 18px; // 为滑动按钮留出空间
       align-items: center;
       min-width: 100%;
       box-sizing: border-box;

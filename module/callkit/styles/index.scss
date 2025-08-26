@@ -64,8 +64,8 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     justify-content: center;
     align-items: center;
     z-index: 10;
-    margin-top: 16px;
-    margin-bottom: 8px;
+    margin-top: 8px;
+    margin-bottom: 16px;
   }
   
   // 空状态
@@ -679,7 +679,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     bottom: 8px;
     left: 8px;
     background: rgba(0, 0, 0, 0.5);
-    border-radius: 12px;
+    border-radius: 6px;
     padding: 0px 4px;
     backdrop-filter: blur(4px);
     display: flex;

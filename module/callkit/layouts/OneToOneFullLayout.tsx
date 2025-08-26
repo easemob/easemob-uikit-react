@@ -228,9 +228,9 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
   }, [backgroundImage]);
 
   return (
-    <div className={`${prefixCls}-one-to-one-full-layout`} style={{ ...backgroundStyle }}>
+    <div className={`${prefixCls}-one-to-one-full-layout`} style={{ background: '#171A1C' }}>
       {/* 视频内容区域 - 占满整个容器 */}
-      <div className={`${prefixCls}-video-content`}>
+      <div className={`${prefixCls}-video-content`} style={{ ...backgroundStyle }}>
         {/* 预览模式：本地视频作为主视频显示 */}
         {isShowingPreview && localVideo && callMode !== 'audio' && (
           <div className={`${prefixCls}-main-video`}>{renderVideoWindow(localVideo, 0)}</div>

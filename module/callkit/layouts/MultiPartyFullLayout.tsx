@@ -205,7 +205,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
               avatarSrc={headerInfo.avatar}
               avatarShape="square"
               content={headerInfo.content}
-              style={{ color: 'white' }}
+              style={{ color: 'white', padding: '0 16px' }}
               subtitle={headerInfo.subtitle}
               suffixIcon={[
                 <Button

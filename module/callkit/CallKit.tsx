@@ -2355,7 +2355,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                         position: 'relative',
                       }}
                     >
-                      <Icon type="PERSON_SINGLE_FILL" width="40%" height="40%" color="#ffffff" />
+                      <Icon type="PERSON_SINGLE_FILL" width="82%" height="82%" color="#464E53" />
                       {/* 等待状态显示加载动画 */}
                       {video.isWaiting && (
                         <div
