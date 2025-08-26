@@ -123,9 +123,9 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
   // 获取显示的头像
   const getDisplayAvatar = () => {
     if (invitation.type === 'group') {
-      return invitation.groupAvatar;
+      return invitation.groupAvatar || '';
     }
-    return invitation.callerAvatar;
+    return invitation.callerAvatar || '';
   };
 
   // 获取显示的名称
@@ -173,11 +173,9 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
     <div className={containerClass} style={style}>
       {/* 头像区域 */}
       {showAvatar && (
-        <Avatar
-          src={getDisplayAvatar() || getDisplayName().charAt(0).toUpperCase()}
-          size={40}
-          shape={avatarShape}
-        />
+        <Avatar src={getDisplayAvatar()} size={40} shape={avatarShape}>
+          {getDisplayName()}
+        </Avatar>
       )}
 
       {/* 信息区域 */}
