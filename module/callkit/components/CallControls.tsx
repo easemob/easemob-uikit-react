@@ -564,7 +564,7 @@ const CallControls: React.FC<CallControlsProps> = ({
               {renderIcon('accept', callMode === 'video' ? 'VIDEO_CAMERA' : 'PHONE_PICK', {
                 width: 24,
                 height: 24,
-                color: '#171A1C',
+                color: '#F9FAFA',
               })}
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>{'Accept'}</div>

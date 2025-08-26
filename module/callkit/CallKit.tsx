@@ -1587,7 +1587,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         duration: 0,
         icon: null,
         style: {
-          background: '#000',
+          background: '#2F3437',
           cursor: 'pointer',
         },
       });

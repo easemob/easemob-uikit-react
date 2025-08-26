@@ -607,7 +607,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
             >
               {renderVideoWindow(video, index, windowSize)}
               {/* 主视频 hover 图标 - 调整位置以避免与NetworkQuality重叠 */}
-              <div
+              {/* <div
                 className="hover-icon"
                 style={{
                   position: 'absolute',
@@ -626,7 +626,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
                 }}
               >
                 <Icon type="CHEVRON_4_CLUSTER" width={16} height={16} color="#ffffff" />
-              </div>
+              </div> */}
             </div>
           );
         } else {
@@ -667,7 +667,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
         >
           {renderVideoWindow(video, index, windowSize)}
           {/* 网格模式 hover 图标 */}
-          <div
+          {/* <div
             className="hover-icon"
             style={{
               position: 'absolute',
@@ -686,7 +686,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
             }}
           >
             <Icon type="CHEVRON_4_ALL_AROUND" width={16} height={16} color="#ffffff" />
-          </div>
+          </div> */}
         </div>
       );
     },

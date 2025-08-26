@@ -237,7 +237,7 @@ $notification-box-shadow: 2px 0px 8px 0px rgba(20, 12, 12, 0.1), 0px 4px 4px 0px
 // 深色模式支持
 @media (prefers-color-scheme: dark) {
   .#{$notification-prefix}-notice {
-    background: #1f1f1f;
+    background: #2F3437;
     box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 3px 6px -4px rgba(0, 0, 0, 0.32), 0 9px 28px 8px rgba(0, 0, 0, 0.2);
   }
   

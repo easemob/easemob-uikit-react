@@ -27,6 +27,7 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
     position: relative;
     background: rgba(255, 255, 255, 0.2);
     color: #fff;
+    backdrop-filter: blur(10px);
 
     &-group {
       display: flex;
@@ -75,6 +76,7 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
     // 禁用状态（功能关闭）
     &-disabled {
       background: rgba(255, 255, 255, 0.20);
+      cursor: not-allowed;
       
       &:hover {
         // background: rgba(255, 0, 0, 0.8);
@@ -136,7 +138,7 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
     
     // 接听按钮（固定绿色）
     &-accept {
-      background: #52C41A;
+      background: #0C7;
       
       &:hover {
         // background: rgba(82, 196, 26, 0.9);

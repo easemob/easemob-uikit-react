@@ -77,6 +77,7 @@ let UserItem: FC<UserItemProps> = props => {
   const themeMode = theme?.mode;
   const componentsShape = theme?.componentsShape || 'round';
   const themeRipple = theme?.ripple;
+  const avatarShapeInUserItem = props.avatarShape || theme?.avatarShape || 'circle';
   const prefixCls = getPrefixCls('userItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -145,7 +146,12 @@ let UserItem: FC<UserItemProps> = props => {
       {avatar ? (
         avatar
       ) : (
-        <Avatar src={data.avatarUrl} isOnline={data.isOnline} size={avatarSize} shape={avatarShape}>
+        <Avatar
+          src={data.avatarUrl}
+          isOnline={data.isOnline}
+          size={avatarSize}
+          shape={avatarShapeInUserItem}
+        >
           {data.nickname || data.userId}
         </Avatar>
       )}
