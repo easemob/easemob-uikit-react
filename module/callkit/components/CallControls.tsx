@@ -461,24 +461,26 @@ const CallControls: React.FC<CallControlsProps> = ({
   };
 
   const rootClass = classNames(prefixCls, className);
-
+  console.log('---->isPreview', isCaller, isGroupCall);
   // 预览模式下的按钮布局
   if (isPreview) {
     return (
       <div className={rootClass} style={style}>
         {/* 主叫方显示挂断按钮，被叫方显示拒绝按钮 */}
-        <div className={classNames(`${prefixCls}-button-group`)}>
-          <button
-            className={classNames(`${prefixCls}-button`, `${prefixCls}-button-hangup`)}
-            onClick={isCaller ? handleHangupClick : handleRejectClick}
-            title={isCaller ? '挂断' : '拒绝'}
-          >
-            {renderIcon('reject', 'X_MARK_THICK', { width: 24, height: 24, color: '#F9FAFA' })}
-          </button>
-          <div className={classNames(`${prefixCls}-button-text`)}>
-            {isCaller ? 'End' : 'Reject'}
+        {!isCaller && (
+          <div className={classNames(`${prefixCls}-button-group`)}>
+            <button
+              className={classNames(`${prefixCls}-button`, `${prefixCls}-button-hangup`)}
+              onClick={isCaller ? handleHangupClick : handleRejectClick}
+              title={isCaller ? '挂断' : '拒绝'}
+            >
+              {renderIcon('reject', 'X_MARK_THICK', { width: 24, height: 24, color: '#F9FAFA' })}
+            </button>
+            <div className={classNames(`${prefixCls}-button-text`)}>
+              {isCaller ? 'End' : 'Reject'}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* 麦克风按钮 - 群通话预览状态下禁用 */}
         <div className={classNames(`${prefixCls}-button-group`)}>
@@ -567,23 +569,18 @@ const CallControls: React.FC<CallControlsProps> = ({
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>{'Accept'}</div>
           </div>
-        ) : isGroupCall ? (
-          // 🔧 新增：群通话主叫方显示开始通话按钮
+        ) : (
           <div className={classNames(`${prefixCls}-button-group`)}>
             <button
-              className={classNames(`${prefixCls}-button`, `${prefixCls}-button-accept`)}
-              onClick={handleAcceptClick}
-              title="开始通话"
+              className={classNames(`${prefixCls}-button`, `${prefixCls}-button-hangup`)}
+              onClick={handleHangupClick}
+              title={'挂断'}
             >
-              {renderIcon('accept', 'PHONE_PICK', {
-                width: 24,
-                height: 24,
-                color: '#171A1C',
-              })}
+              {renderIcon('reject', 'X_MARK_THICK', { width: 24, height: 24, color: '#F9FAFA' })}
             </button>
-            <div className={classNames(`${prefixCls}-button-text`)}>{'Start'}</div>
+            <div className={classNames(`${prefixCls}-button-text`)}>{'End'}</div>
           </div>
-        ) : null}
+        )}
       </div>
     );
   }

@@ -10,8 +10,8 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
   display: flex;
   flex-direction: column;
   position: relative;
-  // background: linear-gradient(180deg, rgba(0, 0, 0, 0.30) 0%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.20) 100%);
-  background: #171A1C;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.30) 0%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.20) 100%);
+  // background: #171A1C;
   // Header - 顶部固定
   .#{$callkit-prefix-cls}-header {
     height: $header-height;
@@ -41,6 +41,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     overflow: hidden;
     position: relative;
     min-height: 0; // 重要：确保 flex 子项可以缩小
+    background: #171A1C;
   }
 
   // Controls - 底部固定
