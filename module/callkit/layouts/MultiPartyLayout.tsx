@@ -437,7 +437,6 @@ const MainVideoLayoutContent: React.FC<MainVideoLayoutContentProps> = ({
             <button
               className={`${prefixCls}-scroll-button ${prefixCls}-scroll-button-left`}
               onClick={() => scrollTo('left')}
-              aria-label="向左滑动"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path
@@ -456,7 +455,6 @@ const MainVideoLayoutContent: React.FC<MainVideoLayoutContentProps> = ({
             <button
               className={`${prefixCls}-scroll-button ${prefixCls}-scroll-button-right`}
               onClick={() => scrollTo('right')}
-              aria-label="向右滑动"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path

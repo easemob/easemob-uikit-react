@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '../../header/Header';
 import Button from '../../../component/button';
 import { Icon } from '../../../component/icon/Icon';
@@ -79,6 +80,8 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
   customIcons,
   iconRenderer,
 }) => {
+  const { t } = useTranslation();
+
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
     if (isShowingPreview) {
@@ -86,14 +89,14 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
       if (invitation && invitation.type === 'group') {
         return {
           avatar: invitation.groupAvatar,
-          content: invitation.groupName || `群组通话`,
-          subtitle: '群组通话邀请 - 连接中...',
+          content: invitation.groupName || (t('callkit.groupCall.groupCall') as string),
+          subtitle: t('callkit.groupCall.groupCallInvitation') as string,
         };
       } else {
         return {
           avatar: undefined,
-          content: `群组通话 (${videos.length}人)`,
-          subtitle: '群组通话预览 - 连接中...',
+          content: t('callkit.groupCall.groupCall') as string,
+          subtitle: t('callkit.groupCall.groupCallInvitation') as string,
         };
       }
     } else {
@@ -256,7 +259,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
           {/* 视频内容区域 - 中间弹性 */}
           <div className={`${prefixCls}-content`}>
             {videos.length === 0 ? (
-              <div className={`${prefixCls}-empty`}>暂无视频流</div>
+              <div className={`${prefixCls}-empty`}>{/** 暂无视频流 */}</div>
             ) : (
               <MultiPartyLayout
                 videos={videos}

@@ -76,7 +76,6 @@ $call-controls-prefix-cls: #{$cui-prefix}-call-controls;
     // 禁用状态（功能关闭）
     &-disabled {
       background: rgba(255, 255, 255, 0.20);
-      cursor: not-allowed;
       
       &:hover {
         // background: rgba(255, 0, 0, 0.8);

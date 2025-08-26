@@ -5,6 +5,7 @@ import { Icon } from '../../../component/icon/Icon';
 import CallControls from '../components/CallControls';
 import type { FullLayoutProps } from '../types/layout';
 import { useVideoAspectRatio } from '../hooks/useVideoAspectRatio';
+import { useTranslation } from 'react-i18next';
 
 /**
  * OneToOne 完整布局组件
@@ -71,6 +72,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
   customIcons,
   iconRenderer,
 }) => {
+  const { t } = useTranslation();
   // 🔧 添加视频位置互换状态
   const [isLocalVideoMain, setIsLocalVideoMain] = React.useState(false);
   // 分离远程视频和本地视频
@@ -140,6 +142,13 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
 
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
+    console.log('🔧 计算Header显示的信息:', {
+      isShowingPreview,
+      invitation,
+      callInfo,
+      isLocalVideoMain,
+      localVideo,
+    });
     if (isShowingPreview) {
       // 预览模式：显示邀请人信息
       if (invitation) {
@@ -161,7 +170,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
         // 本地视频在主窗口时，显示本地用户信息
         return {
           avatar: localVideo?.avatar,
-          content: localVideo?.nickname || '我',
+          content: localVideo?.nickname || (t('callkit.localUser.me') as string),
           subtitle: callDuration,
         };
       } else {
@@ -191,8 +200,6 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
       if (isShowingPreview || callMode === 'audio') {
         return; // 预览模式和语音通话时不处理视频点击
       }
-
-      console.log('🎬 视频点击:', videoId, '当前状态:', { isLocalVideoMain });
 
       // 切换视频位置
       setIsLocalVideoMain(prev => !prev);

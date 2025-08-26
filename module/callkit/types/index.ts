@@ -253,7 +253,8 @@ export interface CallKitProps {
 
   // 群组成员选择相关
   groupMembers?: any[]; // 群组成员列表
-  userSelectTitle?: string; // 用户选择弹窗标题
+  userSelectTitle?: string; // 用户选择弹窗标题（添加参与者时）
+  initiateGroupCallTitle?: string; // 发起群组通话时的弹窗标题
 
   // 新增：基于 groupId 自动获取群成员的方式
   webimGroupId?: string; // WebIM 群组 ID

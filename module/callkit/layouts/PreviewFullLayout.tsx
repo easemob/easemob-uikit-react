@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Header } from '../../header/Header';
 import Button from '../../../component/button';
 import { Icon } from '../../../component/icon/Icon';
@@ -75,6 +76,8 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
   customIcons,
   iconRenderer,
 }) => {
+  const { t } = useTranslation();
+
   // 获取本地视频（预览模式下显示的视频）
   const localVideo = videos.find(video => video.isLocalVideo);
 
@@ -116,19 +119,25 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
 
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
+    console.log('🔧 计算Header显示的信息:', {
+      callStatus,
+      callInfo,
+      invitation,
+      callMode,
+    });
     if (callStatus === 'calling') {
       // 主叫方预览模式：显示目标用户信息
       if (callInfo) {
         return {
           avatar: callInfo.remoteUserAvatar,
           content: callInfo.remoteUserNickname || callInfo.remoteUserId || '',
-          subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
+          subtitle: t('callkit.preview.connecting') as string,
         };
       } else {
         return {
           avatar: undefined,
-          content: '预览模式',
-          subtitle: callMode === 'video' ? '视频通话预览 - 连接中...' : '语音通话预览 - 连接中...',
+          content: t('callkit.preview.previewMode') as string,
+          subtitle: t('callkit.preview.connecting') as string,
         };
       }
     } else {
@@ -137,13 +146,19 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
         return {
           avatar: invitation.callerAvatar,
           content: invitation.callerName || invitation.id || '',
-          subtitle: callMode === 'video' ? '视频通话邀请 - 连接中...' : '语音通话邀请 - 连接中...',
+          subtitle:
+            callMode === 'video'
+              ? (t('callkit.preview.videoCallInvitation') as string)
+              : (t('callkit.preview.audioCallInvitation') as string),
         };
       } else {
         return {
           avatar: undefined,
-          content: '预览模式',
-          subtitle: callMode === 'video' ? '视频通话预览 - 连接中...' : '语音通话预览 - 连接中...',
+          content: t('callkit.preview.previewMode') as string,
+          subtitle:
+            callMode === 'video'
+              ? (t('callkit.preview.videoCallInvitation') as string)
+              : (t('callkit.preview.audioCallInvitation') as string),
         };
       }
     }
@@ -272,7 +287,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
             <div className={`${prefixCls}-minimized-avatar`}>
               <Icon type="PLAY" width={16} height={16} style={{ color: '#52c41a' }} />
             </div>
-            <div className={`${prefixCls}-minimized-time`}>准备中</div>
+            <div className={`${prefixCls}-minimized-time`}>{t('callkit.preview.preparing')}</div>
           </div>
           <div className={`${prefixCls}-minimized-quick-controls`}>
             <Button

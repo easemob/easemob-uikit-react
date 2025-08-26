@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, forwardRef, useImperativeHandle, useState, memo } from 'react';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import { ConfigContext } from '../../component/config';
 import { Icon } from '../../component/icon/Icon';
 import { NetworkQuality } from '../../component/networkQuality';
@@ -113,7 +114,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
     // 群组成员选择相关
     groupMembers = [],
-    userSelectTitle = '添加参与者',
+    userSelectTitle,
+    initiateGroupCallTitle,
 
     // 基于 groupId 自动获取群成员的方式  callInfoProvider
     userInfoProvider,
@@ -145,6 +147,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('callkit', prefix);
+  const { t } = useTranslation();
+
+  // 设置标题的默认值，支持用户自定义
+  const finalUserSelectTitle = userSelectTitle || t('callkit.userselect.addParticipants');
+  const finalInitiateGroupCallTitle =
+    initiateGroupCallTitle || t('callkit.userselect.initiateGroupCall');
 
   // 内部状态管理
   const [invitation, setInvitation] = useState<InvitationInfo | null>(null);
@@ -841,7 +849,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         getLocalUserAvatar().then(avatarUrl => {
           const localUserInfo = {
             [chatClient.user]: {
-              nickname: '我',
+              nickname: t('callkit.localUser.me') as string,
               avatarUrl: avatarUrl,
             },
           };
@@ -849,7 +857,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             callServiceRef.current.setUserInfo(localUserInfo);
             console.log('📝 CallService初始化后，已设置本地用户信息:', {
               userId: chatClient.user,
-              nickname: '我',
+              nickname: t('callkit.localUser.me') as string,
               avatarUrl: avatarUrl,
             });
           }
@@ -903,7 +911,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           setLocalVideo({
             id: 'local-preview',
             isLocalVideo: true,
-            nickname: '我',
+            nickname: t('callkit.localUser.me') as string,
             muted: false,
             cameraEnabled: true,
             stream: undefined, // 这里应该是实际的本地视频流
@@ -1141,7 +1149,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             setLocalVideo({
               id: 'local-preview',
               isLocalVideo: true,
-              nickname: '我',
+              nickname: t('callkit.localUser.me') as string,
               muted: false,
               cameraEnabled: true,
               stream: undefined, // 实际的本地视频流由 CallService 创建
@@ -2517,7 +2525,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 const currentUserId = video.isLocalVideo
                   ? chatClient?.user || 'local'
                   : video.id.replace('remote-', '');
-                console.log('currentUserId -->', currentUserId, video.id);
                 const userNetworkQuality = networkQuality?.[currentUserId];
 
                 if (!userNetworkQuality) return null;
@@ -2799,7 +2806,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             // 异步获取本地用户头像
             getLocalUserAvatar().then(avatarUrl => {
               userInfoMap[chatClient.user] = {
-                nickname: '我',
+                nickname: t('callkit.localUser.me') as string,
                 avatarUrl: avatarUrl,
               };
               if (callServiceRef.current) {
@@ -2828,7 +2835,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               isLocalVideo: true,
               muted: false,
               cameraEnabled: false, // 🔧 修改：群通话发起方默认摄像头关闭
-              nickname: '我',
+              nickname: t('callkit.localUser.me') as string,
               avatar: undefined, // 不使用假数据，让组件显示默认图标
             },
             // 添加选中的成员，初始状态为等待连接（显示头像）
@@ -3428,11 +3435,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       {/* 用户选择弹窗 */}
       <UserSelect
         title={
-          isLoadingGroupMembers
-            ? '正在加载群成员...'
-            : isInitiatingGroupCall
-            ? `发起${groupCallType === 'video' ? '视频' : '语音'}群组通话`
-            : userSelectTitle
+          isInitiatingGroupCall
+            ? isLoadingGroupMembers
+              ? (t('callkit.userselect.loadingGroupMembers') as string)
+              : finalInitiateGroupCallTitle
+            : isLoadingGroupMembers
+            ? (t('callkit.userselect.loadingGroupMembers') as string)
+            : finalUserSelectTitle
         }
         open={isUserSelectVisible}
         onCancel={handleUserSelectCancel}

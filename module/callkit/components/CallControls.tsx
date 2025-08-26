@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config';
 import { Icon } from '../../../component/icon/Icon';
+import { useTranslation } from 'react-i18next';
 import type { CallControlsIconMap } from '../types/index';
 import './CallControls.scss';
 
@@ -90,6 +91,7 @@ const CallControls: React.FC<CallControlsProps> = ({
 }) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('call-controls');
+  const { t } = useTranslation();
 
   // 🔧 新增：操作状态管理，防止并发操作
   const [isTogglingCamera, setIsTogglingCamera] = React.useState(false);
@@ -472,12 +474,16 @@ const CallControls: React.FC<CallControlsProps> = ({
             <button
               className={classNames(`${prefixCls}-button`, `${prefixCls}-button-hangup`)}
               onClick={isCaller ? handleHangupClick : handleRejectClick}
-              title={isCaller ? '挂断' : '拒绝'}
+              title={
+                isCaller
+                  ? (t('callkit.callcontrols.hangup') as string)
+                  : (t('callkit.callcontrols.reject') as string)
+              }
             >
               {renderIcon('reject', 'X_MARK_THICK', { width: 24, height: 24, color: '#F9FAFA' })}
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>
-              {isCaller ? 'End' : 'Reject'}
+              {isCaller ? t('callkit.callcontrols.end') : t('callkit.callcontrols.reject')}
             </div>
           </div>
         )}
@@ -493,12 +499,12 @@ const CallControls: React.FC<CallControlsProps> = ({
             onClick={handleMuteClick}
             title={
               isTogglingMic
-                ? '麦克风状态切换中...'
+                ? (t('callkit.callcontrols.micTogglingStatus') as string)
                 : shouldDisableMuteButton
-                ? '群通话预览时必须开启麦克风'
+                ? (t('callkit.callcontrols.micDisabledInGroupPreview') as string)
                 : muted
-                ? '取消静音'
-                : '静音'
+                ? (t('callkit.callcontrols.micOn') as string)
+                : (t('callkit.callcontrols.micOff') as string)
             }
             disabled={shouldDisableMuteButton || isTogglingMic} // 🔧 操作中也禁用
           >
@@ -509,7 +515,7 @@ const CallControls: React.FC<CallControlsProps> = ({
             })}
           </button>
           <div className={classNames(`${prefixCls}-button-text`)}>
-            {muted ? 'Mike off' : 'Mike on'}
+            {muted ? t('callkit.callcontrols.mikeOff') : t('callkit.callcontrols.mikeOn')}
           </div>
         </div>
 
@@ -527,12 +533,12 @@ const CallControls: React.FC<CallControlsProps> = ({
               onClick={handleCameraClick}
               title={
                 isTogglingCamera
-                  ? '摄像头状态切换中...'
+                  ? (t('callkit.callcontrols.cameraTogglingStatus') as string)
                   : shouldDisableCameraButton
-                  ? '摄像头暂时无法使用'
+                  ? (t('callkit.callcontrols.cameraDisabledTemporarily') as string)
                   : cameraEnabled
-                  ? '关闭摄像头'
-                  : '开启摄像头'
+                  ? (t('callkit.callcontrols.cameraOn') as string)
+                  : (t('callkit.callcontrols.cameraOff') as string)
               }
               disabled={shouldDisableCameraButton || isTogglingCamera} // 🔧 操作中也禁用
             >
@@ -547,7 +553,9 @@ const CallControls: React.FC<CallControlsProps> = ({
               )}
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>
-              {cameraEnabled ? 'Camera on' : 'Camera off'}
+              {cameraEnabled
+                ? t('callkit.callcontrols.cameraOnText')
+                : t('callkit.callcontrols.cameraOffText')}
             </div>
           </div>
         )}
@@ -559,7 +567,7 @@ const CallControls: React.FC<CallControlsProps> = ({
             <button
               className={classNames(`${prefixCls}-button`, `${prefixCls}-button-accept`)}
               onClick={handleAcceptClick}
-              title="接听"
+              title={t('callkit.callcontrols.accept') as string}
             >
               {renderIcon('accept', callMode === 'video' ? 'VIDEO_CAMERA' : 'PHONE_PICK', {
                 width: 24,
@@ -567,18 +575,22 @@ const CallControls: React.FC<CallControlsProps> = ({
                 color: '#F9FAFA',
               })}
             </button>
-            <div className={classNames(`${prefixCls}-button-text`)}>{'Accept'}</div>
+            <div className={classNames(`${prefixCls}-button-text`)}>
+              {t('callkit.callcontrols.accept')}
+            </div>
           </div>
         ) : (
           <div className={classNames(`${prefixCls}-button-group`)}>
             <button
               className={classNames(`${prefixCls}-button`, `${prefixCls}-button-hangup`)}
               onClick={handleHangupClick}
-              title={'挂断'}
+              title={t('callkit.callcontrols.hangup') as string}
             >
               {renderIcon('reject', 'X_MARK_THICK', { width: 24, height: 24, color: '#F9FAFA' })}
             </button>
-            <div className={classNames(`${prefixCls}-button-text`)}>{'End'}</div>
+            <div className={classNames(`${prefixCls}-button-text`)}>
+              {t('callkit.callcontrols.end')}
+            </div>
           </div>
         )}
       </div>
@@ -599,12 +611,12 @@ const CallControls: React.FC<CallControlsProps> = ({
           onClick={handleMuteClick}
           title={
             isTogglingMic
-              ? '麦克风状态切换中...'
+              ? (t('callkit.callcontrols.micTogglingStatus') as string)
               : shouldDisableMuteButton
-              ? '群通话预览时必须开启麦克风'
+              ? (t('callkit.callcontrols.micDisabledInGroupPreview') as string)
               : muted
-              ? '取消静音'
-              : '静音'
+              ? (t('callkit.callcontrols.micOn') as string)
+              : (t('callkit.callcontrols.micOff') as string)
           }
           disabled={shouldDisableMuteButton || isTogglingMic} // 🔧 操作中也禁用
         >
@@ -615,7 +627,7 @@ const CallControls: React.FC<CallControlsProps> = ({
           })}
         </button>
         <div className={classNames(`${prefixCls}-button-text`)}>
-          {muted ? 'Mike off' : 'Mike on'}
+          {muted ? t('callkit.callcontrols.mikeOff') : t('callkit.callcontrols.mikeOn')}
         </div>
       </div>
 
@@ -633,12 +645,12 @@ const CallControls: React.FC<CallControlsProps> = ({
             onClick={handleCameraClick}
             title={
               isTogglingCamera
-                ? '摄像头状态切换中...'
+                ? (t('callkit.callcontrols.cameraTogglingStatus') as string)
                 : shouldDisableCameraButton
-                ? '摄像头暂时无法使用'
+                ? (t('callkit.callcontrols.cameraDisabledTemporarily') as string)
                 : cameraEnabled
-                ? '关闭摄像头'
-                : '开启摄像头'
+                ? (t('callkit.callcontrols.cameraOn') as string)
+                : (t('callkit.callcontrols.cameraOff') as string)
             }
             disabled={shouldDisableCameraButton || isTogglingCamera} // 🔧 操作中也禁用
           >
@@ -653,7 +665,9 @@ const CallControls: React.FC<CallControlsProps> = ({
             )}
           </button>
           <div className={classNames(`${prefixCls}-button-text`)}>
-            {cameraEnabled ? 'Camera on' : 'Camera off'}
+            {cameraEnabled
+              ? t('callkit.callcontrols.cameraOnText')
+              : t('callkit.callcontrols.cameraOffText')}
           </div>
         </div>
       )}
@@ -680,7 +694,11 @@ const CallControls: React.FC<CallControlsProps> = ({
           })}
           onClick={handleSpeakerClick}
           title={
-            isTogglingSpeaker ? '扬声器状态切换中...' : speakerEnabled ? '关闭扬声器' : '开启扬声器'
+            isTogglingSpeaker
+              ? (t('callkit.callcontrols.speakerTogglingStatus') as string)
+              : speakerEnabled
+              ? (t('callkit.callcontrols.speakerOn') as string)
+              : (t('callkit.callcontrols.speakerOff') as string)
           }
           disabled={shouldDisableControls || isTogglingSpeaker} // 🔧 操作中也禁用
         >
@@ -691,7 +709,9 @@ const CallControls: React.FC<CallControlsProps> = ({
           )}
         </button>
         <div className={classNames(`${prefixCls}-button-text`)}>
-          {speakerEnabled ? 'Speaker on' : 'Speaker off'}
+          {speakerEnabled
+            ? t('callkit.callcontrols.speakerOnText')
+            : t('callkit.callcontrols.speakerOffText')}
         </div>
       </div>
 
@@ -700,7 +720,7 @@ const CallControls: React.FC<CallControlsProps> = ({
         <button
           className={classNames(`${prefixCls}-button`, `${prefixCls}-button-hangup`)}
           onClick={handleHangupClick}
-          title="挂断"
+          title={t('callkit.callcontrols.hangup') as string}
         >
           {renderIcon('hangup', 'X_MARK_THICK', {
             width: 24,
@@ -708,7 +728,9 @@ const CallControls: React.FC<CallControlsProps> = ({
             color: '#F9FAFA',
           })}
         </button>
-        <div className={classNames(`${prefixCls}-button-text`)}>{'End'}</div>
+        <div className={classNames(`${prefixCls}-button-text`)}>
+          {t('callkit.callcontrols.end')}
+        </div>
       </div>
     </div>
   );

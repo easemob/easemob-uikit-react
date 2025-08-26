@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import classNames from 'classnames';
+import { useTranslation } from 'react-i18next';
 import Avatar from '../../../component/avatar';
 import Button from '../../../component/button';
 import { Icon } from '../../../component/icon/Icon';
@@ -32,8 +33,8 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
   invitation,
   onAccept,
   onReject,
-  acceptText = '接听',
-  rejectText = '挂断',
+  acceptText,
+  rejectText,
   showAvatar = true,
   showTimer = true,
   autoRejectTime = 30,
@@ -44,8 +45,12 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
   iconRenderer,
 }) => {
   const [remainingTime, setRemainingTime] = useState(autoRejectTime);
-
+  const { t } = useTranslation();
   const { theme } = React.useContext(RootContext);
+
+  // 设置默认文本
+  const finalAcceptText = acceptText || t('callkit.callcontrols.accept');
+  const finalRejectText = rejectText || t('callkit.callcontrols.reject');
 
   let avatarShape: 'square' | 'circle' = 'square';
   if (theme?.avatarShape) {
@@ -152,18 +157,15 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
 
   // 获取通话类型描述
   const getCallTypeDescription = () => {
-    if (invitation.type === 'group' && invitation.memberCount) {
-      return `群组通话 • ${invitation.memberCount} 人`;
-    }
     switch (invitation.type) {
       case 'video':
-        return '视频通话邀请';
+        return t('callkit.invitation.videoCallDescription');
       case 'audio':
-        return '语音通话邀请';
+        return t('callkit.invitation.audioCallDescription');
       case 'group':
-        return '群组通话邀请';
+        return t('callkit.invitation.groupCallDescription');
       default:
-        return '通话邀请';
+        return t('callkit.invitation.callDescription');
     }
   };
 
