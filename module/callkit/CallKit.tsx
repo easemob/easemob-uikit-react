@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ConfigContext } from '../../component/config';
 import { Icon } from '../../component/icon/Icon';
 import { NetworkQuality } from '../../component/networkQuality';
+import LoadingDots from '../../component/loading/LoadingDots';
 import { useNotification } from '../../component/notification';
 import { useContainerSize } from './hooks/useContainerSize';
 import { useFullscreen } from './hooks/useFullscreen';
@@ -745,6 +746,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           // 更新现有视频
           const oldVideoInfo = prevVideos[existingIndex];
           const newVideos = [...prevVideos];
+
           newVideos[existingIndex] = videoInfo;
           return newVideos;
         } else {
@@ -1038,6 +1040,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         msg: string;
         ext?: Record<string, any>;
       }): Promise<ChatSDK.TextMsgBody | null> => {
+        // 检查当前是否在通话中
+        if (isInCall || callStatus !== 'idle') {
+          onCallError?.(
+            CallError.create(CallErrorCode.CALL_STATE_ERROR, 'is in call', {
+              currentStatus: callStatus,
+              isInCall,
+            }),
+          );
+          return null;
+        }
+
         const { groupId, ext } = options;
         const callType = 'video';
         if (!groupId) {
@@ -1095,6 +1108,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         msg: string;
         ext?: Record<string, any>;
       }) => {
+        // 检查当前是否在通话中
+        if (isInCall || callStatus !== 'idle') {
+          onCallError?.(
+            CallError.create(CallErrorCode.CALL_STATE_ERROR, 'is in call', {
+              currentStatus: callStatus,
+              isInCall,
+            }),
+          );
+          return null;
+        }
+
         if (callServiceRef.current && chatClient) {
           // 设置通话模式
           const currentCallMode = options.callType;
@@ -2109,26 +2133,31 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             windowSize.height >= NICKNAME_DISPLAY_THRESHOLD));
 
       // 判断是否应该显示视频（而不是头像）
-      // 🔧 修复：只要摄像头开启就显示视频区域，不管是否有视频流
-      const shouldShowVideo = video.cameraEnabled && !video.isWaiting; // 摄像头开启且不在等待状态时显示video区域
+      // 🔧 修复：处理 cameraEnabled 为 null 的情况，只要摄像头开启就显示视频区域
+      const normalizedCameraEnabled =
+        video.cameraEnabled === null ? false : Boolean(video.cameraEnabled);
+      const normalizedIsWaiting = video.isWaiting === undefined ? false : Boolean(video.isWaiting);
+      const shouldShowVideo = normalizedCameraEnabled && !normalizedIsWaiting; // 摄像头开启且不在等待状态时显示video区域
 
       // 🔧 调试日志
       if (video.isLocalVideo) {
         console.log('🔧 UI渲染判断:', {
           videoId: video.id,
-          cameraEnabled: video.cameraEnabled,
-          isWaiting: video.isWaiting,
+          原始cameraEnabled: video.cameraEnabled,
+          标准化cameraEnabled: normalizedCameraEnabled,
+          原始isWaiting: video.isWaiting,
+          标准化isWaiting: normalizedIsWaiting,
           hasVideoElement: !!video.videoElement,
           hasStream: !!video.stream,
           shouldShowVideo,
           显示模式: shouldShowVideo
             ? '显示视频区域'
-            : !video.cameraEnabled
+            : !normalizedCameraEnabled
             ? '摄像头关闭-显示头像'
             : '摄像头开启但无视频-显示黑屏',
         });
       }
-
+      console.log('---->renderVideoWindow', video);
       return (
         <div
           key={video.id}
@@ -2193,7 +2222,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
                           if (
                             video.isLocalVideo &&
-                            video.cameraEnabled &&
+                            normalizedCameraEnabled &&
                             callService.rtc?.localVideoTrack
                           ) {
                             // 本地视频轨道
@@ -2211,13 +2240,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                             ref.dataset.playingTrackId = trackId;
                             ref.dataset.trackPlayed = 'true';
                             console.log('✅ 本地视频轨道播放成功');
-                          } else if (!video.isLocalVideo && video.cameraEnabled) {
+                          } else if (!video.isLocalVideo && normalizedCameraEnabled) {
                             // 🔧 远程视频轨道 - 使用新的Map方式获取
                             targetTrack = callService.getRemoteVideoTrack?.(videoUserId);
                             trackId = targetTrack?.getTrackId?.() || '';
 
                             if (!targetTrack) {
-                              console.log(`❌ 找不到用户 ${videoUserId} 的视频轨道`);
+                              console.log(`❌ 最终找不到用户 ${videoUserId} 的视频轨道`, {
+                                videoUserId,
+                                videoId: video.id,
+                                所有远程轨道: callService.getAllRemoteVideoTracks?.(),
+                              });
                               return;
                             }
 
@@ -2234,7 +2267,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                           } else {
                             console.log('🚫 无法播放视频 - 检查条件:', {
                               isLocalVideo: video.isLocalVideo,
-                              cameraEnabled: video.cameraEnabled,
+                              原始cameraEnabled: video.cameraEnabled,
+                              标准化cameraEnabled: normalizedCameraEnabled,
                               hasCallService: !!callService,
                               hasRtc: !!callService?.rtc,
                               hasLocalVideoTrack: !!callService?.rtc?.localVideoTrack,
@@ -2268,7 +2302,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             ) : (
               // 🔧 修复：区分主动关闭摄像头和摄像头开启但无视频流两种情况
               <div className={`${prefixCls}-placeholder`}>
-                {!video.cameraEnabled ? (
+                {!normalizedCameraEnabled ? (
                   // 摄像头主动关闭：显示头像
                   video.avatar ? (
                     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -2284,63 +2318,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                         }}
                       />
                       {/* 等待状态显示加载动画 */}
-                      {video.isWaiting && (
-                        <div
-                          className={`${prefixCls}-waiting-overlay`}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: 'inherit',
-                          }}
-                        >
-                          <div
-                            className={`${prefixCls}-waiting-dots`}
-                            style={{
-                              display: 'flex',
-                              gap: '4px',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#fff',
-                                animation: 'bounce 1.4s infinite ease-in-out both',
-                                animationDelay: '0s',
-                              }}
-                            />
-                            <div
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#fff',
-                                animation: 'bounce 1.4s infinite ease-in-out both',
-                                animationDelay: '0.16s',
-                              }}
-                            />
-                            <div
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#fff',
-                                animation: 'bounce 1.4s infinite ease-in-out both',
-                                animationDelay: '0.32s',
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
+                      {video.isWaiting && <LoadingDots overlay />}
                     </div>
                   ) : (
                     <div
@@ -2357,63 +2335,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                     >
                       <Icon type="PERSON_SINGLE_FILL" width="82%" height="82%" color="#464E53" />
                       {/* 等待状态显示加载动画 */}
-                      {video.isWaiting && (
-                        <div
-                          className={`${prefixCls}-waiting-overlay`}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: 'inherit',
-                          }}
-                        >
-                          <div
-                            className={`${prefixCls}-waiting-dots`}
-                            style={{
-                              display: 'flex',
-                              gap: '4px',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#fff',
-                                animation: 'bounce 1.4s infinite ease-in-out both',
-                                animationDelay: '0s',
-                              }}
-                            />
-                            <div
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#fff',
-                                animation: 'bounce 1.4s infinite ease-in-out both',
-                                animationDelay: '0.16s',
-                              }}
-                            />
-                            <div
-                              style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                backgroundColor: '#fff',
-                                animation: 'bounce 1.4s infinite ease-in-out both',
-                                animationDelay: '0.32s',
-                              }}
-                            />
-                          </div>
-                        </div>
-                      )}
+                      {video.isWaiting && <LoadingDots overlay />}
                     </div>
                   )
                 ) : (
@@ -2431,47 +2353,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                       position: 'relative',
                     }}
                   >
-                    {video.isWaiting && (
-                      <div
-                        className={`${prefixCls}-waiting-dots`}
-                        style={{
-                          display: 'flex',
-                          gap: '4px',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#fff',
-                            animation: 'bounce 1.4s infinite ease-in-out both',
-                            animationDelay: '0s',
-                          }}
-                        />
-                        <div
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#fff',
-                            animation: 'bounce 1.4s infinite ease-in-out both',
-                            animationDelay: '0.16s',
-                          }}
-                        />
-                        <div
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: '#fff',
-                            animation: 'bounce 1.4s infinite ease-in-out both',
-                            animationDelay: '0.32s',
-                          }}
-                        />
-                      </div>
-                    )}
+                    {video.isWaiting && <LoadingDots />}
                   </div>
                 )}
               </div>
@@ -3120,6 +3002,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     console.log('🔧 handleHangup 被调用', {
       hasInitialized,
       hasCallService: !!callServiceRef.current,
+      callStatus,
+      isShowingPreview,
     });
 
     if (hasInitialized && callServiceRef.current) {
@@ -3186,7 +3070,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       console.log('📋 使用从startGroupCall动态获取的群成员数据:', webimGroupMembers);
       return webimGroupMembers;
     }
-    console.log('📋 使用传统的groupMembers数据:', groupMembers);
     return groupMembers;
   }, [webimGroupMembers, groupMembers]);
 
@@ -3426,7 +3309,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     return result;
   }, [displayVideos, chatClient?.user, effectiveGroupMembers, isInitiatingGroupCall]);
 
-  console.log('🔧 CallKit: 群成员', effectiveGroupMembers);
   return (
     <>
       {/* 通知系统 */}
