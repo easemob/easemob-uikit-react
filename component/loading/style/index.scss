@@ -1,0 +1,19 @@
+// @import '../../style/themes/index';
+@import '../../style/themes/default.scss';
+
+$loading-dots-prefix-cls: 'cui-loading-dots';
+
+.#{$loading-dots-prefix-cls} {
+  &-overlay {
+    z-index: 1;
+  }
+}
+
+@keyframes fade {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+} 

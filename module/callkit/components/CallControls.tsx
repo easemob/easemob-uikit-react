@@ -569,7 +569,7 @@ const CallControls: React.FC<CallControlsProps> = ({
               onClick={handleAcceptClick}
               title={t('callkit.callcontrols.accept') as string}
             >
-              {renderIcon('accept', callMode === 'video' ? 'VIDEO_CAMERA' : 'PHONE_PICK', {
+              {renderIcon('accept', 'PHONE_PICK', {
                 width: 24,
                 height: 24,
                 color: '#F9FAFA',
