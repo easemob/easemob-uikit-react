@@ -64,6 +64,10 @@
       // font-weight: 510;
       line-height: 22px; /* 137.5% */
       letter-spacing: 0.032px;
+      // 🔧 新增：文本溢出处理
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .cui-callkit-invitation-description {

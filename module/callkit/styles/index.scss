@@ -23,7 +23,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
 .#{$callkit-prefix-cls} {
   @include callkit-container;
   user-select: none !important;
-  
+  z-index: 1000;
   // 自动吸附过渡动画
   &.#{$callkit-prefix-cls}-auto-snap {
     transition: left 0.3s ease-out, top 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out;
