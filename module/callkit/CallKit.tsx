@@ -2132,6 +2132,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           (windowSize.width >= NICKNAME_DISPLAY_THRESHOLD &&
             windowSize.height >= NICKNAME_DISPLAY_THRESHOLD));
 
+      const shouldShowIndicator = windowSize && windowSize.width >= 75; // main 布局小，小窗的大小
+
       // 判断是否应该显示视频（而不是头像）
       // 🔧 修复：处理 cameraEnabled 为 null 的情况，只要摄像头开启就显示视频区域
       const normalizedCameraEnabled =
@@ -2360,9 +2362,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             )}
 
             {/* 用户昵称和摄像头/麦克风状态指示器 - 根据窗口尺寸控制显示 */}
-            {video.nickname && shouldShowNickname && (
+            {video.nickname && shouldShowIndicator && (
               <div className={`${prefixCls}-video-info`}>
-                <div className={`${prefixCls}-nickname`}>{video.nickname}</div>
+                {shouldShowNickname && (
+                  <div className={`${prefixCls}-nickname`}>{video.nickname}</div>
+                )}
                 <div className={`${prefixCls}-indicators`}>
                   {/* {!video.cameraEnabled && (
                     <Icon type="VIDEO_CAMERA_SLASH" width={14} height={14} color="#F9FAFA" />
@@ -2401,7 +2405,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
             {/* 🔧 新增：网络质量指示器 - 只在群组通话时显示，位于右上角 */}
             {callMode === 'group' &&
-              shouldShowNickname &&
+              shouldShowIndicator &&
               (() => {
                 // 获取当前用户的网络质量数据
                 const currentUserId = video.isLocalVideo
@@ -3026,6 +3030,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       setRealCallSpeakerEnabled(true);
       // 小窗状态恢复
       setIsMinimized(false);
+      setNetworkQuality(null);
 
       // 🔧 新增：重置CallKit尺寸和位置到初始状态
       if (managedPosition) {
