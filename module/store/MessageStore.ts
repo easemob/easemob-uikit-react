@@ -139,7 +139,11 @@ class MessageStore {
 
   addMessage(message: ChatSDK.MessageBody, chatType: 'singleChat' | 'groupChat', to: string) {
     this.message.byId.set(message.id, message);
-    this.message[chatType][to].push(message);
+    if (!this.message[chatType][to]) {
+      this.message[chatType][to] = [message];
+    } else {
+      this.message[chatType][to].push(message);
+    }
   }
 
   // internal use
@@ -155,7 +159,8 @@ class MessageStore {
       this.message.byId.set(messageId, message);
     }
 
-    const msgList = this.message[chatType][to];
+    const msgList = this.message[chatType][to] || [];
+    console.log('msgList', msgList);
     const index = msgList.findIndex(
       item => item.id === messageId || (item as any).mid === messageId,
     );
