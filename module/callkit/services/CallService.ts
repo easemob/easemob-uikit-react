@@ -466,7 +466,9 @@ export class CallService {
         }
 
         // 检查是否已有视频轨道（预览模式下可能已创建）
-        const hasExistingVideoTrack = this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled;
+        const hasExistingVideoTrack = Boolean(
+          this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled,
+        );
 
         // 创建本地视频信息，保持当前摄像头状态
         const localVideoInfo: VideoWindowProps = {
@@ -664,6 +666,10 @@ export class CallService {
 
   // 接听通话
   async answerCall(result: boolean) {
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
     if (!this.currentCallInfo) {
       console.log('🔧 answerCall: 没有当前通话信息，忽略调用');
       return;
@@ -929,7 +935,9 @@ export class CallService {
 
       if (this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI) {
         // 群组视频通话：检查是否已有视频轨道（预览模式下可能已创建）
-        const hasExistingVideoTrack = this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled;
+        const hasExistingVideoTrack = Boolean(
+          this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled,
+        );
 
         if (hasExistingVideoTrack) {
           // 如果已有启用的视频轨道，一起发布
@@ -980,7 +988,9 @@ export class CallService {
         }
 
         // 🔧 重新检查实际的摄像头状态（可能在上面被清理了）
-        const actualCameraEnabled = this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled;
+        const actualCameraEnabled = Boolean(
+          this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled,
+        );
 
         // 创建本地视频对象供UI显示
         localVideoInfo = {
@@ -1035,8 +1045,9 @@ export class CallService {
         }
 
         // 重新检查轨道状态
-        const finalHasEnabledVideoTrack =
-          this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled;
+        const finalHasEnabledVideoTrack = Boolean(
+          this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled,
+        );
 
         console.log('🔧 1v1视频通话：最终轨道状态:', {
           hasEnteredPreview: this.hasEnteredPreview,
@@ -1100,7 +1111,9 @@ export class CallService {
         }
 
         // 🔧 重新检查实际的摄像头状态（可能在上面被清理了）
-        const actualCameraEnabled = this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled;
+        const actualCameraEnabled = Boolean(
+          this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled,
+        );
 
         // 🔧 创建本地视频对象供UI显示，保持实际摄像头状态
         localVideoInfo = {
@@ -1437,11 +1450,19 @@ export class CallService {
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // 🔧 增强：确保没有遗漏的MediaStreamTrack（特别是快速挂断场景）
-    await this.checkAndCleanupAllMediaTracks();
+    try {
+      await this.checkAndCleanupAllMediaTracks();
+    } catch (error) {
+      console.error('checkAndCleanupAllMediaTracks error:', error);
+    }
 
     // 🔧 额外检查：强制等待一段时间后再次检查，确保异步清理完成
     setTimeout(async () => {
-      await this.checkAndCleanupAllMediaTracks();
+      try {
+        await this.checkAndCleanupAllMediaTracks();
+      } catch (err) {
+        console.error(err);
+      }
       console.log('🔧 hangup：延迟媒体轨道清理检查完成');
     }, 500);
 
@@ -1466,11 +1487,19 @@ export class CallService {
 
     // 清理旧的远程音视频轨道引用（向后兼容）
     if (this.rtc.remoteAudioTrack) {
-      this.rtc.remoteAudioTrack.stop();
+      try {
+        this.rtc.remoteAudioTrack.stop();
+      } catch (error) {
+        console.error('Failed to stop remote audio track:', error);
+      }
       this.rtc.remoteAudioTrack = null;
     }
     if (this.rtc.remoteVideoTrack) {
-      this.rtc.remoteVideoTrack.stop();
+      try {
+        this.rtc.remoteVideoTrack.stop();
+      } catch (error) {
+        console.error('Failed to stop remote video track:', error);
+      }
       this.rtc.remoteVideoTrack = null;
     }
     this.rtc.remoteUser = null;
@@ -1482,8 +1511,32 @@ export class CallService {
         this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
         this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI
       ) {
-        // 多人通话：向所有邀请的成员发送取消消息
-        this.invitedMembers.forEach(member => {
+        // 🔧 调试：打印已加入的人和已邀请的人
+        console.log('🔧 群组通话挂断调试信息:', {
+          已加入成员: this.joinedMembers.map(member => ({
+            uid: member.uid,
+            userId: this.UIdToUserIdMap.get(member.uid),
+            nickname: member.nickname || '未知',
+          })),
+          已邀请成员: this.invitedMembers,
+          当前通话信息: this.currentCallInfo,
+        });
+
+        // 🔧 优化：只向未加入的成员发送取消消息
+        const joinedUserIds = this.joinedMembers
+          .map(member => this.UIdToUserIdMap.get(member.uid))
+          .filter(Boolean);
+
+        console.log('🔧 已加入的用户ID列表:', joinedUserIds);
+
+        const membersToCancel = this.invitedMembers.filter(
+          member => !joinedUserIds.includes(member),
+        );
+
+        console.log('🔧 需要发送取消消息的成员:', membersToCancel);
+
+        // 多人通话：只向未加入的成员发送取消消息
+        membersToCancel.forEach(member => {
           this.sendCancelMessage(member);
         });
       } else {
@@ -1520,7 +1573,11 @@ export class CallService {
     // 触发回调
     if (this.currentCallInfo) {
       this.currentCallInfo!.duration = this.callDuration;
-      this.onCallEnd?.(reason, this.currentCallInfo as CallInfo);
+      try {
+        this.onCallEnd?.(reason, this.currentCallInfo as CallInfo);
+      } catch (error) {
+        console.error('onCallEnd error:', error);
+      }
     }
 
     // 🔧 彻底重置所有状态
@@ -1568,6 +1625,7 @@ export class CallService {
 
   // 发送取消消息
   private sendCancelMessage(to?: string) {
+    console.log('---->sendCancelMessage', this.currentCallInfo, to);
     if (!this.currentCallInfo || !to) return;
     const msg = WebIM.message.create({
       type: 'cmd',
@@ -1699,8 +1757,8 @@ export class CallService {
 
           if (mediaType === 'audio') {
             const remoteAudioTrack = user.audioTrack;
-            // 🔧 修改：将音频轨道存储到用户专用的Map中
-            this.remoteAudioTracks.set(userId, remoteAudioTrack);
+            // 🔧 修改：将音频轨道存储到用户专用的Map中（使用 uid 作为 key，保持与视频轨道一致）
+            this.remoteAudioTracks.set(user.uid, remoteAudioTrack);
 
             // 保持向后兼容
             this.rtc.remoteAudioTrack = remoteAudioTrack;
@@ -1718,31 +1776,33 @@ export class CallService {
             // 🔧 1v1视频通话特殊处理：当只是音频状态变化时，不触发onRemoteVideoReady以避免闪动
             const is1v1VideoCall = this.currentCallInfo?.type === CALL_TYPE.VIDEO_1V1;
             const isExistingUser = this.joinedMembers.some(member => member.uid === user.uid);
-
+            console.log('---->isExistingUser', this.joinedMembers, user);
             if (is1v1VideoCall && isExistingUser) {
               // 只更新成员状态，不触发UI更新
               this.updateJoinedMember(user, mediaType, true);
-              return;
+              // return;
             }
 
             // 🔧 修复：在音频事件中，智能判断摄像头状态
             // 如果用户已经有视频轨道，说明摄像头开启；否则检查成员状态
-            const hasVideoTrack = this.remoteVideoTracks.has(userId);
+            const hasVideoTrack = this.remoteVideoTracks.has(user.uid);
             const memberCameraStatus = this.getRemoteUserCameraStatus(userId);
             const cameraEnabled = hasVideoTrack || memberCameraStatus;
-
+            console.log('---->cameraEnabled', hasVideoTrack, memberCameraStatus, cameraEnabled);
             // 创建更新后的视频信息（开启麦克风状态）
             const updatedVideoInfo: VideoWindowProps = {
               id: `remote-${userId}`,
               isLocalVideo: false,
               muted: false, // 麦克风开启
               cameraEnabled: cameraEnabled,
+              // cameraEnabled: false, // 摄像头关闭
               nickname: this.userInfos[userId]?.nickname || userId,
               avatar: this.userInfos[userId]?.avatarUrl,
               // 保持当前的视频流状态
-              stream: cameraEnabled ? this.getRemoteVideoStream(userId) : undefined,
+              stream: cameraEnabled ? this.getRemoteVideoStream(user.uid) : undefined,
               isWaiting: false, // 明确设置不在等待状态
             };
+            console.log('---->updatedVideoInfo user-published', updatedVideoInfo);
 
             // 通知UI更新远程视频状态
             this.onRemoteVideoReady?.(updatedVideoInfo);
@@ -1764,9 +1824,9 @@ export class CallService {
         this.currentCallInfo?.type as unknown as 'video' | 'audio' | 'group',
       );
 
-      // 🔧 清理离开用户的所有媒体轨道
-      const videoTrack = this.remoteVideoTracks.get(userId);
-      const audioTrack = this.remoteAudioTracks.get(userId);
+      // 🔧 清理离开用户的所有媒体轨道（使用 uid 作为 key）
+      const videoTrack = this.remoteVideoTracks.get(user.uid);
+      const audioTrack = this.remoteAudioTracks.get(user.uid);
 
       if (videoTrack) {
         try {
@@ -1774,7 +1834,7 @@ export class CallService {
         } catch (error) {
           console.warn(`stop video track error:`, error);
         }
-        this.remoteVideoTracks.delete(userId);
+        this.remoteVideoTracks.delete(user.uid);
       }
 
       if (audioTrack) {
@@ -1783,7 +1843,7 @@ export class CallService {
         } catch (error) {
           console.warn(`stop audio track error:`, error);
         }
-        this.remoteAudioTracks.delete(userId);
+        this.remoteAudioTracks.delete(user.uid);
       }
 
       // 移除离开的用户
@@ -1830,8 +1890,8 @@ export class CallService {
           user.videoTrack.stop();
         }
 
-        // 🔧 从Map中清理用户的视频轨道
-        this.remoteVideoTracks.delete(userId);
+        // 🔧 从Map中清理用户的视频轨道（使用 uid 作为 key）
+        this.remoteVideoTracks.delete(user.uid);
 
         // 清理远程视频轨道引用
         if (this.rtc.remoteVideoTrack && this.rtc.remoteUser?.uid === user.uid) {
@@ -1849,6 +1909,8 @@ export class CallService {
           stream: undefined,
           isWaiting: false, // 明确设置不在等待状态
         };
+
+        console.log('---->updatedVideoInfo user-unpublished', updatedVideoInfo);
 
         // 通知UI更新远程视频状态
         this.onRemoteVideoReady?.(updatedVideoInfo);
@@ -1879,7 +1941,7 @@ export class CallService {
         }
 
         // 🔧 修复：在音频停止事件中，智能判断摄像头状态
-        const hasVideoTrack = this.remoteVideoTracks.has(userId);
+        const hasVideoTrack = this.remoteVideoTracks.has(user.uid);
         const memberCameraStatus = this.getRemoteUserCameraStatus(userId);
         const cameraEnabled = hasVideoTrack || memberCameraStatus;
 
@@ -1892,7 +1954,7 @@ export class CallService {
           nickname: this.userInfos[userId]?.nickname || userId,
           avatar: this.userInfos[userId]?.avatarUrl,
           // 保持当前的视频流状态
-          stream: cameraEnabled ? this.getRemoteVideoStream(userId) : undefined,
+          stream: cameraEnabled ? this.getRemoteVideoStream(user.uid) : undefined,
           isWaiting: false, // 明确设置不在等待状态
         };
 
@@ -2100,6 +2162,14 @@ export class CallService {
     });
     try {
       this.connection.send(msg);
+
+      // 对方弹出邀请后，如果30秒内没有响应，则自动挂断
+      if (this.currentCallInfo?.type !== CALL_TYPE.VIDEO_MULTI) {
+        this.timer = setTimeout(() => {
+          console.log('🔧 邀请超时，自动挂断');
+          this.hangup(HANGUP_REASON.REMOTE_NO_RESPONSE);
+        }, 30000);
+      }
     } catch (error: any) {
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
@@ -2122,7 +2192,9 @@ export class CallService {
       this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
       return;
     }
-
+    if (this.callStatus === CALL_STATUS.RECEIVED_CONFIRM_RING) {
+      return;
+    }
     this.callStatus = CALL_STATUS.RECEIVED_CONFIRM_RING;
 
     const callType = this.convertCallTypeToString(
@@ -2147,6 +2219,13 @@ export class CallService {
     console.log('---->inviteInfo', inviteInfo, this.currentCallInfo);
     // 触发邀请接收回调
     this.onInvitationReceived?.(inviteInfo);
+    this.timer = setTimeout(() => {
+      // 群组通话进行中，再去邀请别人，超时不挂断
+      if (this.callStatus !== CALL_STATUS.IN_CALL) {
+        console.log('---->hangup NO_RESPONSE', inviteInfo, this.callStatus);
+        this.hangup(HANGUP_REASON.NO_RESPONSE);
+      }
+    }, 30000);
   }
 
   // 处理应答消息
@@ -3119,11 +3198,41 @@ export class CallService {
       return false;
     }
 
+    // 🔧 调试：打印已加入的人和已邀请的人
+    console.log('🔧 cancelGroupCall 调试信息:', {
+      已加入成员: this.joinedMembers.map(member => ({
+        uid: member.uid,
+        userId: this.UIdToUserIdMap.get(member.uid),
+        nickname: member.nickname || '未知',
+        videoEnabled: member.videoEnabled,
+        audioEnabled: member.audioEnabled,
+      })),
+      已邀请成员: this.currentCallInfo.invitedMembers,
+      当前通话信息: {
+        callId: this.currentCallInfo.callId,
+        type: this.currentCallInfo.type,
+        groupId: this.currentCallInfo.groupId,
+      },
+    });
+
+    // 🔧 优化：只向未加入的成员发送取消消息
+    const joinedUserIds = this.joinedMembers
+      .map(member => this.UIdToUserIdMap.get(member.uid))
+      .filter(Boolean);
+
+    console.log('🔧 已加入的用户ID列表:', joinedUserIds);
+
+    const membersToCancel =
+      this.currentCallInfo.invitedMembers?.filter(member => !joinedUserIds.includes(member)) || [];
+
+    console.log('🔧 需要发送取消消息的成员:', membersToCancel);
+
     // 获取所有成员
     const members = this.currentCallInfo.invitedMembers;
     if (members) {
-      for (const member of members) {
-        console.log('🚀 取消群组通话:', member);
+      // 🔧 修改：只给未加入的成员发送取消消息
+      for (const member of membersToCancel) {
+        console.log('🚀 取消群组通话 - 发送取消消息给未加入成员:', member);
         await this.sendCancelMessage(member);
       }
     }
@@ -3293,12 +3402,51 @@ export class CallService {
 
   // 🔧 新增：获取指定用户的视频轨道
   getRemoteVideoTrack(userId: string): any {
-    return this.remoteVideoTracks.get(userId);
+    // 首先尝试直接用 userId 查找（可能是 uid）
+    let track = this.remoteVideoTracks.get(userId);
+    if (track) {
+      return track;
+    }
+
+    // 如果直接查找失败，通过 UIdToUserIdMap 反向查找对应的 uid
+    for (const [uid, mappedUserId] of this.UIdToUserIdMap.entries()) {
+      if (mappedUserId === userId) {
+        track = this.remoteVideoTracks.get(uid);
+        if (track) {
+          console.log(`🔧 通过映射找到用户 ${userId} 的视频轨道，uid: ${uid}`);
+          return track;
+        }
+      }
+    }
+
+    console.log(`❌ 找不到用户 ${userId} 的视频轨道`, {
+      直接查找: this.remoteVideoTracks.has(userId),
+      UIdToUserIdMap: Array.from(this.UIdToUserIdMap.entries()),
+      所有远程轨道: Array.from(this.remoteVideoTracks.entries()),
+    });
+    return null;
   }
 
   // 🔧 新增：获取指定用户的音频轨道
   getRemoteAudioTrack(userId: string): any {
-    return this.remoteAudioTracks.get(userId);
+    // 首先尝试直接用 userId 查找（可能是 uid）
+    let track = this.remoteAudioTracks.get(userId);
+    if (track) {
+      return track;
+    }
+
+    // 如果直接查找失败，通过 UIdToUserIdMap 反向查找对应的 uid
+    for (const [uid, mappedUserId] of this.UIdToUserIdMap.entries()) {
+      if (mappedUserId === userId) {
+        track = this.remoteAudioTracks.get(uid);
+        if (track) {
+          console.log(`🔧 通过映射找到用户 ${userId} 的音频轨道，uid: ${uid}`);
+          return track;
+        }
+      }
+    }
+
+    return null;
   }
 
   // 🔧 新增：获取所有远程视频轨道信息（用于调试）
