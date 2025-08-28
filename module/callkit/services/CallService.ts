@@ -128,6 +128,8 @@ export class CallService {
   // 🔧 新增：存储每个用户的视频轨道和音频轨道
   private remoteVideoTracks: Map<string, any> = new Map();
   private remoteAudioTracks: Map<string, any> = new Map();
+  // 🔧 新增：缓存远程用户的视频流，避免重复创建
+  private remoteVideoStreams: Map<string, MediaStream> = new Map();
 
   // 🔧 新增：存储等待播放的视频轨道
   private pendingVideoTracks: Map<string, any> = new Map();
@@ -1451,7 +1453,7 @@ export class CallService {
 
     // 🔧 增强：确保没有遗漏的MediaStreamTrack（特别是快速挂断场景）
     try {
-      await this.checkAndCleanupAllMediaTracks();
+      await this.checkAndCleanupAllMediaTracks(true); // 🔧 通话结束时进行完整的权限检查
     } catch (error) {
       console.error('checkAndCleanupAllMediaTracks error:', error);
     }
@@ -1459,7 +1461,7 @@ export class CallService {
     // 🔧 额外检查：强制等待一段时间后再次检查，确保异步清理完成
     setTimeout(async () => {
       try {
-        await this.checkAndCleanupAllMediaTracks();
+        await this.checkAndCleanupAllMediaTracks(true); // 🔧 通话结束时进行完整的权限检查
       } catch (err) {
         console.error(err);
       }
@@ -1484,6 +1486,9 @@ export class CallService {
       }
     });
     this.remoteAudioTracks.clear();
+
+    // 🔧 清理缓存的远程视频流
+    this.remoteVideoStreams.clear();
 
     // 清理旧的远程音视频轨道引用（向后兼容）
     if (this.rtc.remoteAudioTrack) {
@@ -1734,10 +1739,12 @@ export class CallService {
             // });
 
             // 创建远程视频信息
+            // 🔧 修复：根据音频轨道状态判断静音状态，而不是依赖 joinedMembers
+            const hasAudioTrack = this.remoteAudioTracks.has(user.uid);
             const remoteVideoInfo: VideoWindowProps = {
               id: `remote-${userId}`,
               isLocalVideo: false,
-              muted: this.getRemoteUserMutedStatus(user.uid), // 获取当前音频状态
+              muted: !hasAudioTrack, // 🔧 修复：有音频轨道 = 未静音，无音频轨道 = 静音
               cameraEnabled: true, // 摄像头开启
               nickname: this.userInfos[userId]?.nickname || userId,
               avatar: this.userInfos[userId]?.avatarUrl,
@@ -1789,11 +1796,11 @@ export class CallService {
             const memberCameraStatus = this.getRemoteUserCameraStatus(userId);
             const cameraEnabled = hasVideoTrack || memberCameraStatus;
             console.log('---->cameraEnabled', hasVideoTrack, memberCameraStatus, cameraEnabled);
-            // 创建更新后的视频信息（开启麦克风状态）
+            // 创建更新后的视频信息（音频发布时，用户取消静音了）
             const updatedVideoInfo: VideoWindowProps = {
               id: `remote-${userId}`,
               isLocalVideo: false,
-              muted: false, // 麦克风开启
+              muted: false, // 🔧 修复：音频发布时，用户取消静音了
               cameraEnabled: cameraEnabled,
               // cameraEnabled: false, // 摄像头关闭
               nickname: this.userInfos[userId]?.nickname || userId,
@@ -1892,16 +1899,20 @@ export class CallService {
 
         // 🔧 从Map中清理用户的视频轨道（使用 uid 作为 key）
         this.remoteVideoTracks.delete(user.uid);
+        // 🔧 清理缓存的视频流
+        this.remoteVideoStreams.delete(user.uid);
 
         // 清理远程视频轨道引用
         if (this.rtc.remoteVideoTrack && this.rtc.remoteUser?.uid === user.uid) {
           this.rtc.remoteVideoTrack = null;
         }
         // 创建更新后的视频信息（关闭摄像头，显示头像）
+        // 🔧 修复：根据音频轨道状态判断静音状态，而不是依赖 joinedMembers
+        const hasAudioTrack = this.remoteAudioTracks.has(user.uid);
         const updatedVideoInfo: VideoWindowProps = {
           id: `remote-${userId}`,
           isLocalVideo: false,
-          muted: this.getRemoteUserMutedStatus(userId), // 获取当前音频状态
+          muted: !hasAudioTrack, // 🔧 修复：有音频轨道 = 未静音，无音频轨道 = 静音
           cameraEnabled: false, // 摄像头关闭
           nickname: this.userInfos[userId]?.nickname || userId,
           avatar: this.userInfos[userId]?.avatarUrl,
@@ -1924,6 +1935,7 @@ export class CallService {
 
         // 🔧 从Map中清理用户的音频轨道
         this.remoteAudioTracks.delete(user.uid);
+        // 🔧 注意：音频停止时不清理视频流缓存，因为用户可能只是静音
 
         // 清理远程音频轨道引用
         if (this.rtc.remoteAudioTrack && this.rtc.remoteUser?.uid === user.uid) {
@@ -1945,11 +1957,11 @@ export class CallService {
         const memberCameraStatus = this.getRemoteUserCameraStatus(userId);
         const cameraEnabled = hasVideoTrack || memberCameraStatus;
 
-        // 创建更新后的视频信息（关闭麦克风状态）
+        // 创建更新后的视频信息（音频停止时，用户静音了）
         const updatedVideoInfo: VideoWindowProps = {
           id: `remote-${userId}`,
           isLocalVideo: false,
-          muted: true, // 麦克风关闭
+          muted: true, // 🔧 修复：音频停止时，用户静音了
           cameraEnabled: cameraEnabled,
           nickname: this.userInfos[userId]?.nickname || userId,
           avatar: this.userInfos[userId]?.avatarUrl,
@@ -2398,7 +2410,8 @@ export class CallService {
       cameraEnabled: this.isCameraEnabled(),
       nickname: this.userInfos[this.userId]?.nickname || '我',
       avatar: this.userInfos[this.userId]?.avatarUrl || undefined,
-      stream: this.isCameraEnabled() ? this.getOrCreateLocalVideoStream() : undefined, // 🔧 修复：根据摄像头状态提供视频流
+      // 🔧 修复：mute 操作不应该影响视频流，使用现有的流
+      stream: this.localVideoStream || undefined,
     };
 
     this.onRemoteVideoReady?.(localVideoInfo);
@@ -2775,7 +2788,8 @@ export class CallService {
         cameraEnabled: this.isCameraEnabled(),
         nickname: this.userInfos[this.userId]?.nickname || '我',
         avatar: this.userInfos[this.userId]?.avatarUrl,
-        stream: this.isCameraEnabled() ? this.getOrCreateLocalVideoStream() : undefined,
+        // 🔧 修复：使用现有的流，避免重新创建
+        stream: this.localVideoStream || undefined,
       };
 
       this.onRemoteVideoReady?.(localVideoInfo);
@@ -3004,8 +3018,17 @@ export class CallService {
   }
 
   // 获取远程用户的视频流
-  // 🔧 改进：从远程视频轨道中获取 MediaStream
+  // 🔧 改进：从远程视频轨道中获取 MediaStream，使用缓存避免重复创建
   private getRemoteVideoStream(uid: string): MediaStream | undefined {
+    // 🔧 首先检查缓存
+    if (this.remoteVideoStreams.has(uid)) {
+      const cachedStream = this.remoteVideoStreams.get(uid);
+      console.log(`🎬 使用缓存的视频流: ${uid}`, {
+        streamId: cachedStream?.id,
+      });
+      return cachedStream;
+    }
+
     const videoTrack = this.remoteVideoTracks.get(uid);
     console.log('🚀 获取远程用户的视频流:', uid, videoTrack);
     if (videoTrack) {
@@ -3013,7 +3036,11 @@ export class CallService {
       if (videoTrack.getMediaStream && typeof videoTrack.getMediaStream === 'function') {
         try {
           const mediaStream = videoTrack.getMediaStream();
-
+          // 🔧 缓存获取到的流
+          this.remoteVideoStreams.set(uid, mediaStream);
+          console.log(`🎬 方法1成功：从轨道获取 MediaStream: ${uid}`, {
+            streamId: mediaStream?.id,
+          });
           return mediaStream;
         } catch (error) {
           console.warn(`🎬 方法1失败：从轨道获取 MediaStream 失败: ${uid}`, error);
@@ -3022,8 +3049,11 @@ export class CallService {
 
       // 尝试方法2：直接访问 mediaStream 属性
       if (videoTrack.mediaStream) {
+        // 🔧 缓存获取到的流
+        this.remoteVideoStreams.set(uid, videoTrack.mediaStream);
         console.log(`🎬 方法2成功：从轨道 mediaStream 属性获取: ${uid}`, {
           hasMediaStream: !!videoTrack.mediaStream,
+          streamId: videoTrack.mediaStream?.id,
         });
         return videoTrack.mediaStream;
       }
@@ -3033,9 +3063,12 @@ export class CallService {
         try {
           // 创建一个新的 MediaStream，包含视频轨道
           const mediaStream = new MediaStream([videoTrack]);
+          // 🔧 缓存新创建的流
+          this.remoteVideoStreams.set(uid, mediaStream);
           console.log(`🎬 方法3成功：创建新的 MediaStream: ${uid}`, {
             hasMediaStream: !!mediaStream,
             trackId: videoTrack.getTrackId?.(),
+            streamId: mediaStream.id,
           });
           return mediaStream;
         } catch (error) {
@@ -3045,16 +3078,22 @@ export class CallService {
 
       // 尝试方法4：检查是否有 _mediaStream 属性
       if (videoTrack._mediaStream) {
+        // 🔧 缓存获取到的流
+        this.remoteVideoStreams.set(uid, videoTrack._mediaStream);
         console.log(`🎬 方法4成功：从轨道 _mediaStream 属性获取: ${uid}`, {
           hasMediaStream: !!videoTrack._mediaStream,
+          streamId: videoTrack._mediaStream?.id,
         });
         return videoTrack._mediaStream;
       }
 
       // 尝试方法5：检查是否有 stream 属性
       if (videoTrack.stream) {
+        // 🔧 缓存获取到的流
+        this.remoteVideoStreams.set(uid, videoTrack.stream);
         console.log(`🎬 方法5成功：从轨道 stream 属性获取: ${uid}`, {
           hasMediaStream: !!videoTrack.stream,
+          streamId: videoTrack.stream?.id,
         });
         return videoTrack.stream;
       }
@@ -3064,9 +3103,12 @@ export class CallService {
         try {
           const mediaStreamTrack = videoTrack.getMediaStreamTrack();
           const mediaStream = new MediaStream([mediaStreamTrack]);
+          // 🔧 缓存新创建的流
+          this.remoteVideoStreams.set(uid, mediaStream);
           console.log(`🎬 方法6成功：从 getMediaStreamTrack 创建 MediaStream: ${uid}`, {
             hasMediaStream: !!mediaStream,
             trackId: videoTrack.getTrackId?.(),
+            streamId: mediaStream.id,
           });
           return mediaStream;
         } catch (error) {
@@ -3078,7 +3120,11 @@ export class CallService {
     // 回退到旧的方式（从 joinedMembers 中查找）
     const member = this.joinedMembers.find(member => member.uid === uid);
     if (member && member.stream) {
-      console.log(`🎬 回退方法成功：从 joinedMembers 获取: ${uid}`);
+      // 🔧 缓存获取到的流
+      this.remoteVideoStreams.set(uid, member.stream);
+      console.log(`🎬 回退方法成功：从 joinedMembers 获取: ${uid}`, {
+        streamId: member.stream?.id,
+      });
       return member.stream;
     }
 
@@ -3097,10 +3143,10 @@ export class CallService {
       return false;
     }
 
-    if (this.callStatus !== CALL_STATUS.IN_CALL) {
-      console.error('无法添加参与者：当前不在通话中');
-      return false;
-    }
+    // if (this.callStatus !== CALL_STATUS.IN_CALL) {
+    //   console.error('无法添加参与者：当前不在通话中');
+    //   return false;
+    // }
 
     // 只能在多人通话中添加参与者
     if (
@@ -3621,7 +3667,7 @@ export class CallService {
   }
 
   // 🔧 检查并清理所有可能遗漏的MediaStreamTrack
-  private async checkAndCleanupAllMediaTracks() {
+  private async checkAndCleanupAllMediaTracks(checkPermissions: boolean = true) {
     try {
       console.log('🔧 执行全局媒体轨道检查...');
 
@@ -3673,45 +3719,9 @@ export class CallService {
         }
       });
 
-      // 🔧 新增：使用 navigator.mediaDevices.getUserMedia 检查活跃的媒体流
-      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-        try {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter(device => device.kind === 'videoinput');
-          const audioDevices = devices.filter(device => device.kind === 'audioinput');
-
-          console.log('🔧 当前媒体设备状态:', {
-            视频设备: videoDevices.map(d => ({ deviceId: d.deviceId, label: d.label })),
-            音频设备: audioDevices.map(d => ({ deviceId: d.deviceId, label: d.label })),
-          });
-
-          // 🔧 修复：不通过label判断设备占用状态，改用getUserMedia检查
-          console.log('🔧 检查麦克风权限和占用状态...');
-
-          // 尝试获取音频流来检查麦克风是否真正释放
-          try {
-            const testStream = await navigator.mediaDevices.getUserMedia({
-              audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
-            });
-            console.log('✅ 麦克风已释放，可以正常获取新的音频流');
-
-            // 立即停止测试流
-            testStream.getTracks().forEach(track => {
-              track.stop();
-              console.log('🔧 停止测试音频轨道:', track.id);
-            });
-          } catch (error: any) {
-            if (error?.name === 'NotAllowedError') {
-              console.log('✅ 麦克风权限被拒绝，但这表示硬件资源已释放');
-            } else if (error?.name === 'NotFoundError') {
-              console.log('✅ 未找到音频设备，硬件资源状态正常');
-            } else {
-              console.warn('⚠️ 麦克风状态检查异常:', error);
-            }
-          }
-        } catch (err) {
-          console.warn('检查设备状态失败:', err);
-        }
+      // 🔧 移除权限检查部分，避免不必要的麦克风权限请求
+      if (checkPermissions) {
+        console.log('🔧 权限检查已禁用，仅清理现有媒体轨道');
       }
 
       console.log('🔧 全局媒体轨道检查完成');
@@ -3721,12 +3731,71 @@ export class CallService {
   }
 
   // 销毁服务
-  destroy() {
-    this.hangup(HANGUP_REASON.HANGUP);
+  destroy(isInitializing: boolean = false) {
+    // 🔧 修复：组件初始化时不调用hangup，避免触发麦克风权限请求
+    if (!isInitializing) {
+      // this.hangup(HANGUP_REASON.HANGUP);
+    } else {
+      // 🔧 初始化时的清理：只做必要的清理，不调用hangup
+      console.log('🔧 组件初始化时的清理，跳过hangup调用');
+
+      // 清理事件处理器
+      this.connection.removeEventHandler('callkit');
+
+      // 清理本地视频流缓存
+      this.localVideoStream = null;
+
+      // 清理群组信息缓存
+      this.cachedGroupInfos = {};
+
+      // 清理远程轨道映射
+      this.remoteVideoTracks.clear();
+      this.remoteAudioTracks.clear();
+
+      // 清理UID映射
+      this.UIdToUserIdMap.clear();
+
+      // 清理等待播放的轨道
+      this.pendingVideoTracks.clear();
+
+      // 重置状态
+      this.callStatus = CALL_STATUS.IDLE;
+      this.currentCallInfo = null;
+      this.callDuration = '00:00';
+      this.joinedMembers = [];
+      this.invitedMembers = [];
+
+      // 清理RTC引用
+      if (this.rtc.localAudioTrack) {
+        try {
+          this.rtc.localAudioTrack.stop();
+        } catch (error) {
+          console.warn('清理本地音频轨道失败:', error);
+        }
+        this.rtc.localAudioTrack = null;
+      }
+
+      if (this.rtc.localVideoTrack) {
+        try {
+          this.rtc.localVideoTrack.stop();
+        } catch (error) {
+          console.warn('清理本地视频轨道失败:', error);
+        }
+        this.rtc.localVideoTrack = null;
+      }
+
+      // 清理远程轨道引用
+      this.rtc.remoteAudioTrack = null;
+      this.rtc.remoteVideoTrack = null;
+      this.rtc.remoteUser = null;
+
+      return; // 🔧 初始化时直接返回，不执行后续的hangup逻辑
+    }
+
     this.connection.removeEventHandler('callkit');
 
-    // 最后的媒体轨道清理
-    this.checkAndCleanupAllMediaTracks();
+    // 最后的媒体轨道清理（不检查权限，避免初始化时请求麦克风权限）
+    this.checkAndCleanupAllMediaTracks(false);
 
     // 清理本地视频流缓存
     this.localVideoStream = null;

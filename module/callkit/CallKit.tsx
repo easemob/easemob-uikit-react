@@ -6,6 +6,7 @@ import { Icon } from '../../component/icon/Icon';
 import { NetworkQuality } from '../../component/networkQuality';
 import LoadingDots from '../../component/loading/LoadingDots';
 import { useNotification } from '../../component/notification';
+import VideoPlayer from './components/VideoPlayer';
 import { useContainerSize } from './hooks/useContainerSize';
 import { useFullscreen } from './hooks/useFullscreen';
 import { useResizable } from './hooks/useResizable';
@@ -776,7 +777,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 处理网络质量变化回调
   const handleNetworkQualityChange = React.useCallback((networkQuality: any) => {
     console.log('🌐 网络质量变化:', networkQuality);
-    setNetworkQuality(networkQuality);
+    // 把 = 0 的值设置为上次的值
+    setNetworkQuality((prev: any) => {
+      const newNetworkQuality = { ...prev, ...networkQuality };
+      if (newNetworkQuality.uplinkNetworkQuality === 0) {
+        newNetworkQuality.uplinkNetworkQuality = prev.uplinkNetworkQuality;
+      }
+      if (newNetworkQuality.downlinkNetworkQuality === 0) {
+        newNetworkQuality.downlinkNetworkQuality = prev.downlinkNetworkQuality;
+      }
+      return newNetworkQuality;
+    });
   }, []);
 
   // 初始化 CallService
@@ -872,7 +883,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       return () => {
         // 清理时移除全局引用
         (window as any).callService = null;
-        callServiceRef.current?.destroy();
+        callServiceRef.current?.destroy(true); // 🔧 传递isInitializing=true，避免触发麦克风权限请求
       };
     }
   }, [
@@ -2160,6 +2171,14 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         });
       }
       console.log('---->renderVideoWindow', video);
+      if (video.videoElement) {
+        alert(video.id);
+      }
+      // 移除调试日志
+      // if (shouldShowVideo && !video.videoElement && !video.stream) {
+      //   console.log('---->video', video);
+      //   alert(video.id);
+      // }
       return (
         <div
           key={video.id}
@@ -2175,136 +2194,168 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           <div className={`${prefixCls}-video-container`}>
             {shouldShowVideo ? (
               video.videoElement ? (
-                <video
-                  className={`${prefixCls}-video`}
-                  data-video-id={video.id}
-                  data-local={video.isLocalVideo}
-                  muted={video.muted}
-                  autoPlay
-                  playsInline
+                <VideoPlayer
+                  videoId={video.id}
+                  isLocalVideo={Boolean(video.isLocalVideo)}
+                  stream={null}
+                  muted={Boolean(video.muted)}
+                  prefixCls={prefixCls}
+                  videoElement={video.videoElement}
                 />
               ) : video.stream ? (
-                <video
-                  ref={ref => {
-                    // 优化：只在stream变化时才设置srcObject，避免重复设置导致闪烁
-                    if (ref && video.stream && ref.srcObject !== video.stream) {
-                      ref.srcObject = video.stream;
-                    }
-                  }}
-                  className={`${prefixCls}-video`}
-                  data-video-id={video.id}
-                  data-local={video.isLocalVideo}
-                  muted={video.muted}
-                  autoPlay
-                  playsInline
+                <VideoPlayer
+                  videoId={video.id}
+                  isLocalVideo={Boolean(video.isLocalVideo)}
+                  stream={video.stream}
+                  muted={Boolean(video.muted)}
+                  prefixCls={prefixCls}
                 />
+              ) : // 🔧 改进：当 stream 为空但需要显示视频时，尝试从 CallService 获取视频流
+              // <video
+              //   ref={ref => {
+              //     if (ref) {
+              //       // 🔧 使用更可靠的重复播放检测
+              //       const videoTrackId = ref.dataset.playingTrackId;
+              //       const videoUserId = video.isLocalVideo
+              //         ? 'local'
+              //         : video.id.replace('remote-', '');
+
+              //       // 尝试播放视频轨道
+              //       const playVideoTrack = async () => {
+              //         try {
+              //           // 获取CallService实例
+              //           const callService = (window as any).callService;
+              //           if (!callService) {
+              //             console.log('CallService不可用');
+              //             return;
+              //           }
+
+              //           let targetTrack = null;
+              //           let trackId = '';
+
+              //           if (
+              //             video.isLocalVideo &&
+              //             normalizedCameraEnabled &&
+              //             callService.rtc?.localVideoTrack
+              //           ) {
+              //             // 本地视频轨道
+              //             targetTrack = callService.rtc.localVideoTrack;
+              //             trackId = targetTrack?.getTrackId?.() || 'local-track';
+
+              //             // 检查是否已经在播放这个轨道
+              //             if (videoTrackId === trackId) {
+              //               console.log('本地视频轨道已经在播放，跳过:', trackId);
+              //               return;
+              //             }
+
+              //             console.log('🎬 通过 renderVideoWindow 播放本地视频轨道到:', ref);
+              //             await targetTrack.play(ref);
+              //             ref.dataset.playingTrackId = trackId;
+              //             ref.dataset.trackPlayed = 'true';
+              //             console.log('✅ 本地视频轨道播放成功');
+              //           } else if (!video.isLocalVideo && normalizedCameraEnabled) {
+              //             // 🔧 远程视频轨道 - 使用新的Map方式获取
+              //             targetTrack = callService.getRemoteVideoTrack?.(videoUserId);
+              //             trackId = targetTrack?.getTrackId?.() || '';
+
+              //             if (!targetTrack) {
+              //               console.log(`❌ 最终找不到用户 ${videoUserId} 的视频轨道`, {
+              //                 videoUserId,
+              //                 videoId: video.id,
+              //                 所有远程轨道: callService.getAllRemoteVideoTracks?.(),
+              //               });
+              //               return;
+              //             }
+
+              //             // 检查是否已经在播放这个轨道
+              //             if (videoTrackId === trackId) {
+              //               console.log('远程视频轨道已经在播放，跳过:', trackId);
+              //               return;
+              //             }
+
+              //             await targetTrack.play(ref);
+              //             ref.dataset.playingTrackId = trackId;
+              //             ref.dataset.trackPlayed = 'true';
+              //             console.log('✅ 远程视频轨道播放成功');
+              //           } else {
+              //             console.log('🚫 无法播放视频 - 检查条件:', {
+              //               isLocalVideo: video.isLocalVideo,
+              //               原始cameraEnabled: video.cameraEnabled,
+              //               标准化cameraEnabled: normalizedCameraEnabled,
+              //               hasCallService: !!callService,
+              //               hasRtc: !!callService?.rtc,
+              //               hasLocalVideoTrack: !!callService?.rtc?.localVideoTrack,
+              //               videoId: video.id,
+              //               userId: videoUserId,
+              //               shouldShowVideo: shouldShowVideo,
+              //               hasGetRemoteVideoTrack:
+              //                 typeof callService.getRemoteVideoTrack === 'function',
+              //             });
+              //           }
+              //         } catch (error) {
+              //           console.warn('❌ 视频轨道播放失败:', error);
+              //           // 清除失败的标记，允许下次重试
+              //           ref.dataset.playingTrackId = '';
+              //           ref.dataset.trackPlayed = '';
+              //         }
+              //       };
+
+              //       // 延迟执行播放，确保DOM已经准备好
+              //       setTimeout(playVideoTrack, 100);
+              //     }
+              //   }}
+              //   className={`${prefixCls}-video`}
+              //   data-video-id={video.id}
+              //   data-local={video.isLocalVideo}
+              //   muted={video.muted}
+              //   autoPlay
+              //   playsInline
+              //   style={
+              //     video.isLocalVideo || video.id === 'local'
+              //       ? {
+              //           transform: 'scaleX(-1) !important',
+              //         }
+              //       : undefined
+              //   }
+              // />
+              video.avatar ? (
+                <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                  <img
+                    src={video.avatar}
+                    alt={video.nickname}
+                    className={`${prefixCls}-avatar`}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      borderRadius: 'inherit',
+                    }}
+                  />
+                  {/* 等待状态显示加载动画 */}
+                  {video.isWaiting && <LoadingDots overlay />}
+                </div>
               ) : (
-                // 🔧 改进：当 stream 为空但需要显示视频时，尝试从 CallService 获取视频流
-                <video
-                  ref={ref => {
-                    if (ref) {
-                      // 🔧 使用更可靠的重复播放检测
-                      const videoTrackId = ref.dataset.playingTrackId;
-                      const videoUserId = video.isLocalVideo
-                        ? 'local'
-                        : video.id.replace('remote-', '');
-
-                      // 尝试播放视频轨道
-                      const playVideoTrack = async () => {
-                        try {
-                          // 获取CallService实例
-                          const callService = (window as any).callService;
-                          if (!callService) {
-                            console.log('CallService不可用');
-                            return;
-                          }
-
-                          let targetTrack = null;
-                          let trackId = '';
-
-                          if (
-                            video.isLocalVideo &&
-                            normalizedCameraEnabled &&
-                            callService.rtc?.localVideoTrack
-                          ) {
-                            // 本地视频轨道
-                            targetTrack = callService.rtc.localVideoTrack;
-                            trackId = targetTrack?.getTrackId?.() || 'local-track';
-
-                            // 检查是否已经在播放这个轨道
-                            if (videoTrackId === trackId) {
-                              console.log('本地视频轨道已经在播放，跳过:', trackId);
-                              return;
-                            }
-
-                            console.log('🎬 通过 renderVideoWindow 播放本地视频轨道到:', ref);
-                            await targetTrack.play(ref);
-                            ref.dataset.playingTrackId = trackId;
-                            ref.dataset.trackPlayed = 'true';
-                            console.log('✅ 本地视频轨道播放成功');
-                          } else if (!video.isLocalVideo && normalizedCameraEnabled) {
-                            // 🔧 远程视频轨道 - 使用新的Map方式获取
-                            targetTrack = callService.getRemoteVideoTrack?.(videoUserId);
-                            trackId = targetTrack?.getTrackId?.() || '';
-
-                            if (!targetTrack) {
-                              console.log(`❌ 最终找不到用户 ${videoUserId} 的视频轨道`, {
-                                videoUserId,
-                                videoId: video.id,
-                                所有远程轨道: callService.getAllRemoteVideoTracks?.(),
-                              });
-                              return;
-                            }
-
-                            // 检查是否已经在播放这个轨道
-                            if (videoTrackId === trackId) {
-                              console.log('远程视频轨道已经在播放，跳过:', trackId);
-                              return;
-                            }
-
-                            await targetTrack.play(ref);
-                            ref.dataset.playingTrackId = trackId;
-                            ref.dataset.trackPlayed = 'true';
-                            console.log('✅ 远程视频轨道播放成功');
-                          } else {
-                            console.log('🚫 无法播放视频 - 检查条件:', {
-                              isLocalVideo: video.isLocalVideo,
-                              原始cameraEnabled: video.cameraEnabled,
-                              标准化cameraEnabled: normalizedCameraEnabled,
-                              hasCallService: !!callService,
-                              hasRtc: !!callService?.rtc,
-                              hasLocalVideoTrack: !!callService?.rtc?.localVideoTrack,
-                              videoId: video.id,
-                              userId: videoUserId,
-                              shouldShowVideo: shouldShowVideo,
-                              hasGetRemoteVideoTrack:
-                                typeof callService.getRemoteVideoTrack === 'function',
-                            });
-                          }
-                        } catch (error) {
-                          console.warn('❌ 视频轨道播放失败:', error);
-                          // 清除失败的标记，允许下次重试
-                          ref.dataset.playingTrackId = '';
-                          ref.dataset.trackPlayed = '';
-                        }
-                      };
-
-                      // 延迟执行播放，确保DOM已经准备好
-                      setTimeout(playVideoTrack, 100);
-                    }
+                <div
+                  className={`${prefixCls}-avatar-placeholder`}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 'inherit',
+                    position: 'relative',
                   }}
-                  className={`${prefixCls}-video`}
-                  data-video-id={video.id}
-                  data-local={video.isLocalVideo}
-                  muted={video.muted}
-                  autoPlay
-                  playsInline
-                />
+                >
+                  <Icon type="PERSON_SINGLE_FILL" width="82%" height="82%" color="#464E53" />
+                  {/* 等待状态显示加载动画 */}
+                  {video.isWaiting && <LoadingDots overlay />}
+                </div>
               )
             ) : (
               // 🔧 修复：区分主动关闭摄像头和摄像头开启但无视频流两种情况
               <div className={`${prefixCls}-placeholder`}>
-                {!normalizedCameraEnabled ? (
+                {
                   // 摄像头主动关闭：显示头像
                   video.avatar ? (
                     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -2340,24 +2391,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                       {video.isWaiting && <LoadingDots overlay />}
                     </div>
                   )
-                ) : (
-                  // 摄像头开启但无视频流：显示黑屏
-                  <div
-                    className={`${prefixCls}-video-loading`}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      backgroundColor: '#000',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: 'inherit',
-                      position: 'relative',
-                    }}
-                  >
-                    {video.isWaiting && <LoadingDots />}
-                  </div>
-                )}
+                }
               </div>
             )}
 
