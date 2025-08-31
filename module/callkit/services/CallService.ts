@@ -333,6 +333,7 @@ export class CallService {
     message?: string;
     groupId?: string;
     groupName?: string;
+    groupAvatar?: string;
     members?: string[]; // 多人通话时的成员列表
     ext?: Record<string, any>;
   }) {
@@ -345,6 +346,7 @@ export class CallService {
       message = '',
       groupId,
       groupName,
+      groupAvatar,
       members = [],
     } = options;
 
@@ -380,6 +382,7 @@ export class CallService {
       calleeUserId: callType === CALL_TYPE.VIDEO_MULTI ? groupId : (to as string),
       groupId,
       groupName,
+      groupAvatar,
       invitedMembers: members,
       joinedMembers: [],
     };
@@ -593,7 +596,7 @@ export class CallService {
       // 先尝试从缓存获取群组头像
       const cachedGroupInfo = this.cachedGroupInfos[callInfo.groupId];
       if (cachedGroupInfo?.groupAvatar) {
-        groupAvatar = cachedGroupInfo.groupAvatar;
+        groupAvatar = this.currentCallInfo?.groupAvatar || cachedGroupInfo.groupAvatar;
         console.log('✅ 使用缓存的群组头像:', { groupId: callInfo.groupId, groupAvatar });
       } else if (this.groupInfoProvider) {
         // 如果缓存中没有，尝试获取群组信息
@@ -604,7 +607,7 @@ export class CallService {
 
           if (groupInfo) {
             console.log('✅ 成功获取群组信息:', groupInfo);
-            groupAvatar = groupInfo.groupAvatar;
+            groupAvatar = this.currentCallInfo?.groupAvatar || groupInfo.groupAvatar;
 
             // 缓存群组信息
             this.cachedGroupInfos[callInfo.groupId] = {
@@ -1968,6 +1971,7 @@ export class CallService {
 
     // 监听远程用户离开
     this.client.on('user-left', (user: any, reason: string) => {
+      console.log('---->user-left', user, reason);
       const userId = this.UIdToUserIdMap.get(user.uid) || '';
 
       // 🔧 清理离开用户的所有媒体轨道（使用 uid 作为 key）
@@ -2174,6 +2178,17 @@ export class CallService {
           this.handleSignalMessage(message);
         }
       },
+
+      onDisconnected: (e: any) => {
+        if (e) {
+          // 多端被踢下线
+          if (e.type === '206') {
+            // 其他错误码场景下不存在该字段
+            // 当前设备挤下线的新登录设备的自定义扩展信息。
+            this.hangup(HANGUP_REASON.ABNORMAL_END, true);
+          }
+        }
+      },
     });
   }
 
@@ -2206,6 +2221,7 @@ export class CallService {
       calleeUserId: ext.type === CALL_TYPE.VIDEO_MULTI ? ext.groupId : message.to,
       groupId: ext.callkitGroupInfo?.groupId,
       groupName: ext.callkitGroupInfo?.groupName,
+      groupAvatar: ext.callkitGroupInfo?.groupAvatar,
       inviteMessageId: message.id,
     };
 
