@@ -78,7 +78,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
       }
       
       &:hover {
-        transform: none; // 禁用双重缩放效果
+        // transform: none; // 禁用双重缩放效果
       }
     }
     
@@ -268,7 +268,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.2);
+    background: #171A1C;
     color: white;
     font-size: 48px;
     font-weight: 600;

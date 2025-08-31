@@ -45,7 +45,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
     background: #000;
     
     // 移除普通模式的所有边框和背景
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    // box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     backdrop-filter: none;
   }
 

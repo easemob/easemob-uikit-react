@@ -150,6 +150,8 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
       localVideo,
     });
     if (isShowingPreview) {
+      console.log('---->预览模式', invitation);
+      alert('预览模式');
       // 预览模式：显示邀请人信息
       if (invitation) {
         return {
@@ -377,7 +379,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
             muted={muted}
             cameraEnabled={cameraEnabled}
             speakerEnabled={speakerEnabled}
-            screenSharing={screenSharing}
+            // screenSharing={screenSharing}
             onMuteToggle={onMuteToggle}
             onCameraToggle={onCameraToggle}
             onSpeakerToggle={onSpeakerToggle}

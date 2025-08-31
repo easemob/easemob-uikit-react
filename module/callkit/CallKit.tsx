@@ -346,8 +346,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       });
 
       setIsInCall(true);
+      setIsShowingPreview(false); // 结束预览模式, 由等待接听页面进入通话页面
       setCallStatus('connected');
-      setIsShowingPreview(false); // 结束预览模式
       setLocalVideo(null); // 清除预览时的localVideo状态
       setInvitation(null); // 清除邀请信息
 
@@ -470,7 +470,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         console.log('🔧 远程用户加入，更新通话状态从 calling 到 connected');
         setCallStatus('connected');
       }
-      // props.onUserPublished?.(user, mediaType);
     },
     [handleUserJoined],
   );
@@ -1177,6 +1176,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
           // 1v1通话：发起方进入预览模式
           setIsShowingPreview(true);
+
           setCallStatus('calling'); // 主叫：呼叫中
 
           // 如果是视频通话，设置本地视频预览
@@ -2401,39 +2401,43 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 {shouldShowNickname && (
                   <div className={`${prefixCls}-nickname`}>{video.nickname}</div>
                 )}
-                <div className={`${prefixCls}-indicators`}>
-                  {/* {!video.cameraEnabled && (
+                {(video.muted ||
+                  talkingUsers.includes(video.id.replace('remote-', '')) ||
+                  talkingUsers.includes(chatClient?.user)) && (
+                  <div className={`${prefixCls}-indicators`}>
+                    {/* {!video.cameraEnabled && (
                     <Icon type="VIDEO_CAMERA_SLASH" width={14} height={14} color="#F9FAFA" />
                   )} */}
-                  {video.muted && <Icon type="MIC_OFF" width={14} height={14} color="#F9FAFA" />}
-                  {/* 🔧 新增：说话指示器 - 只在多人视频通话中显示，样式与MIC_OFF保持一致 */}
-                  {/* 🔧 优化：当MIC_OFF显示时，不显示SPEAKER_WAVE_2，确保同一时间只有一个指示器 */}
-                  {callMode === 'group' &&
-                    !video.muted && // 🔧 新增：只有在不静音时才显示说话指示器
-                    !video.isLocalVideo &&
-                    (() => {
-                      // 从视频ID中提取用户ID（remote-xxx -> xxx）
-                      const userId = video.id.replace('remote-', '');
-                      const isTalking = talkingUsers.includes(userId);
+                    {video.muted && <Icon type="MIC_OFF" width={14} height={14} color="#F9FAFA" />}
+                    {/* 🔧 新增：说话指示器 - 只在多人视频通话中显示，样式与MIC_OFF保持一致 */}
+                    {/* 🔧 优化：当MIC_OFF显示时，不显示SPEAKER_WAVE_2，确保同一时间只有一个指示器 */}
+                    {callMode === 'group' &&
+                      !video.muted && // 🔧 新增：只有在不静音时才显示说话指示器
+                      !video.isLocalVideo &&
+                      (() => {
+                        // 从视频ID中提取用户ID（remote-xxx -> xxx）
+                        const userId = video.id.replace('remote-', '');
+                        const isTalking = talkingUsers.includes(userId);
 
-                      return isTalking ? (
-                        <Icon type="SPEAKER_WAVE_2" width={14} height={14} color="#4CAF50" />
-                      ) : null;
-                    })()}
-                  {/* 🔧 新增：本地用户说话指示器 */}
-                  {callMode === 'group' &&
-                    !video.muted && // 🔧 新增：只有在不静音时才显示说话指示器
-                    video.isLocalVideo &&
-                    (() => {
-                      // 🔧 修复：使用实际的用户ID而不是'local'
-                      const localUserId = chatClient?.user || 'local';
-                      const isLocalTalking = talkingUsers.includes(localUserId);
+                        return isTalking ? (
+                          <Icon type="SPEAKER_WAVE_2" width={14} height={14} color="#4CAF50" />
+                        ) : null;
+                      })()}
+                    {/* 🔧 新增：本地用户说话指示器 */}
+                    {callMode === 'group' &&
+                      !video.muted && // 🔧 新增：只有在不静音时才显示说话指示器
+                      video.isLocalVideo &&
+                      (() => {
+                        // 🔧 修复：使用实际的用户ID而不是'local'
+                        const localUserId = chatClient?.user || 'local';
+                        const isLocalTalking = talkingUsers.includes(localUserId);
 
-                      return isLocalTalking ? (
-                        <Icon type="SPEAKER_WAVE_2" width={14} height={14} color="#4CAF50" />
-                      ) : null;
-                    })()}
-                </div>
+                        return isLocalTalking ? (
+                          <Icon type="SPEAKER_WAVE_2" width={14} height={14} color="#4CAF50" />
+                        ) : null;
+                      })()}
+                  </div>
+                )}
               </div>
             )}
 
@@ -3049,6 +3053,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       console.log('🚀 准备挂断通话:', { isInPreviewMode, callStatus, isShowingPreview });
       callServiceRef.current.cancelGroupCall();
       callServiceRef.current.hangup('hangup', isInPreviewMode);
+      callServiceRef.current.sendHangupMessage();
       // 演示模式，重置组件状态
       setVideos([]);
       setIsInCall(false);

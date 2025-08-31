@@ -118,7 +118,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   const [isEmpty, setIsEmpty] = useState(true);
 
   const context = useContext(RootContext);
-  const { rootStore, features, theme, presenceMap } = context;
+  const { rootStore, features, theme, presenceMap, initConfig } = context;
   const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
@@ -402,7 +402,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     if (CVS.chatType === 'groupChat') {
       const msg = await callKitRef.current?.startGroupCall({
         groupId: CVS.conversationId,
-        callType: type,
         msg: '邀请你进行音视频通话',
       });
       if (msg) {
@@ -665,7 +664,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                   rootStore.messageStore.addMessage(
                     msg as ChatSDK.MessageBody,
                     'singleChat',
-                    msg.to!,
+                    msg?.to || '',
                   );
                   console.log('msg --->', msg);
                 } catch (e) {
@@ -788,19 +787,21 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           }}
           onLayoutModeChange={handleLayoutModeChange}
           initialPosition={{
-            left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
-            top: Math.max(0, window.scrollY + (window.innerHeight - callKitSize.height) / 2),
+            // left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
+            // top: Math.max(0, window.scrollY + (window.innerHeight - callKitSize.height) / 2),
+            left: window.innerWidth - callKitSize.width - 20,
+            top: 21,
           }}
-          onResize={(width, height) => console.log('窗口尺寸:', width, height)}
+          // onResize={(width, height) => console.log('窗口尺寸:', width, height)}
           // 可拖拽
-          onDragStart={() => console.log('开始拖拽')}
-          onDrag={position => console.log('拖拽位置:', position)}
-          onDragEnd={() => console.log('拖拽结束')}
+          // onDragStart={() => console.log('开始拖拽')}
+          // onDrag={position => console.log('拖拽位置:', position)}
+          // onDragEnd={() => console.log('拖拽结束')}
           // minimizedSize={{ width: 300, height: 300 }}
           // invitationCustomContent={<div style={{ color: '#fff' }}>123</div>}
           // 按钮文本
-          acceptText="接听1"
-          rejectText="拒绝1"
+          // acceptText="接听1"
+          // rejectText="拒绝1"
           // 邀请界面显示配置
           showInvitationAvatar={true}
           showInvitationTimer={true}
@@ -818,6 +819,34 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                   '',
               };
             });
+          }}
+          userInfoProvider={async userIds => {
+            return Promise.all(
+              userIds.map(async userId => {
+                if (!rootStore.addressStore.appUsersInfo[userId] && initConfig.useUserInfo) {
+                  const userInfo = await rootStore.client.fetchUserInfoById(userIds, [
+                    'nickname',
+                    'avatarurl',
+                  ]);
+                  console.log('🚀 userInfo', userInfo);
+                  if (userInfo) {
+                    userInfo.data &&
+                      Object.keys(userInfo.data).forEach(item => {
+                        rootStore.addressStore.appUsersInfo[item] = {
+                          userId: item,
+                          nickname: userInfo.data?.[item]?.nickname || '',
+                          avatarurl: userInfo.data?.[item]?.avatarurl || '',
+                        };
+                      });
+                  }
+                }
+                return {
+                  userId: userId,
+                  nickname: rootStore.addressStore.appUsersInfo[userId]?.nickname,
+                  avatarUrl: rootStore.addressStore.appUsersInfo[userId]?.avatarurl,
+                };
+              }),
+            );
           }}
         ></CallKit>
       )}
