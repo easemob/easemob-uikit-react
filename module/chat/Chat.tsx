@@ -32,7 +32,7 @@ import Thread, { ThreadListExpandableIcon } from '../thread';
 import ScrollList from '../../component/scrollList';
 import { ChatSDK } from 'module/SDK';
 import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
-import CallKit, { CallKitRef } from '../callkit';
+import CallKit, { CallKitRef, CallKitProps } from '../callkit';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { reportType } from '../chatroom/Chatroom';
@@ -80,8 +80,10 @@ export interface ChatProps {
 
   onOpenThread?: (data: { id: string }) => void;
   onOpenThreadList?: () => void;
-  onVideoCall?: (data: { channel: string }) => void;
-  onAudioCall?: (data: { channel: string }) => void;
+
+  // CallKit 相关配置
+  useCallkit?: boolean; // 是否启用 CallKit，默认为 true
+  callkitProps?: Partial<CallKitProps>; // CallKit 组件的配置参数
 }
 const getChatAvatarUrl = (cvs: CurrentConversation) => {
   if (cvs.chatType === 'singleChat') {
@@ -106,8 +108,8 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     style = {},
     onOpenThread,
     onOpenThreadList,
-    onAudioCall,
-    onVideoCall,
+    useCallkit = true,
+    callkitProps = {},
     renderRepliedMessage,
   } = props;
   const { t } = useTranslation();
@@ -532,7 +534,8 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           );
         } else if (item === 'AUDIO') {
           return (
-            showAudioCall && (
+            showAudioCall &&
+            useCallkit && (
               <Button
                 onClick={() => startVideoCall('audio')}
                 type="text"
@@ -545,7 +548,8 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           );
         } else if (item === 'VIDEO') {
           return (
-            showVideoCall && (
+            showVideoCall &&
+            useCallkit && (
               <Button
                 onClick={() => startVideoCall('video')}
                 type="text"
@@ -705,7 +709,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         </>
       )}
 
-      {rootStore.client.user && (
+      {rootStore.client.user && useCallkit && (
         <CallKit
           ref={callKitRef}
           chatClient={rootStore.client}
@@ -848,6 +852,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
               }),
             );
           }}
+          {...callkitProps}
         ></CallKit>
       )}
       <Modal
