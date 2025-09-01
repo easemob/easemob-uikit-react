@@ -382,7 +382,6 @@ const RealCallDemo: React.FC = () => {
     // 发起群组通话应该先显示用户选择界面，让用户选择要邀请的成员
     callKitRef.current?.startGroupCall({
       groupId: targetUser,
-      callType,
       msg: `邀请加入群组${callType === 'video' ? '视频' : '语音'}通话`,
     });
 
@@ -423,7 +422,7 @@ const RealCallDemo: React.FC = () => {
   const handleHangup = () => {
     setIsInCall(false);
     stopTimer();
-    callKitRef.current?.hangupCall();
+    callKitRef.current?.exitCall();
     // notification.error({
     //   message: '挂断成功',
     // });
@@ -538,31 +537,6 @@ const RealCallDemo: React.FC = () => {
         userId: 'user3',
         nickname: '王五',
         avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user3',
-      },
-      lxm: {
-        userId: 'lxm',
-        nickname: '李小明',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=lxm',
-      },
-      zd1: {
-        userId: 'zd1',
-        nickname: '张东1',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zd1',
-      },
-      zd2: {
-        userId: 'zd2',
-        nickname: '张东2',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zd1',
-      },
-      xu1: {
-        userId: 'xu1',
-        nickname: '徐成普1',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xu1',
-      },
-      xu2: {
-        userId: 'xu2',
-        nickname: '徐成普2',
-        avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=xu2',
       },
     };
     console.log('userInfoMap-->', userInfoMap[userIds[0]]);
@@ -853,15 +827,6 @@ const RealCallDemo: React.FC = () => {
                   <Icon type="VIDEO_CAMERA" />
                   发起群组视频通话
                 </Button>
-                {/* <Button
-                  type="primary"
-                  onClick={() => handleStartGroupCall('audio')}
-                  disabled={hasInvitation || isInCall}
-                  style={{ backgroundColor: '#1890ff' }}
-                >
-                  <Icon type="MIC_ON" />
-                  发起群组语音通话
-                </Button> */}
               </div>
             </div>
 

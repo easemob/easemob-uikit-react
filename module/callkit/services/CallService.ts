@@ -369,7 +369,7 @@ export class CallService {
 
     // 先判断是否处于通话中
     if (this.callStatus !== CALL_STATUS.IDLE) {
-      logError('🔧 startCall 失败：当前不是空闲状态', this.callStatus);
+      logError('startCall failed: not idle', this.callStatus);
       this.onCallError?.({
         errorType: CallErrorType.CALLKIT,
         code: CallErrorCode.CALL_STATE_ERROR,
@@ -467,7 +467,7 @@ export class CallService {
             (error as any).track.close();
             logDebug('🔧 已清理创建失败但可能获取了资源的轨道');
           } catch (cleanupError) {
-            logError('🔧 清理失败轨道时发生错误:', cleanupError);
+            logError('Failed to cleanup leaked track:', cleanupError);
           }
         }
       }
@@ -511,7 +511,7 @@ export class CallService {
           logDebug('群组视频通话：发起方音频轨道创建成功，摄像头保持关闭');
         }
       } catch (error) {
-        logError('群组视频通话：发起方初始化轨道失败:', error);
+        logError('Group video call: failed to initialize tracks for caller:', error);
       }
     }
 
@@ -596,7 +596,7 @@ export class CallService {
         logWarn('⚠️ userInfoProvider 未配置，无法获取邀请人信息');
       }
     } catch (error) {
-      logError('❌ 获取邀请人信息失败:', error);
+      logError('Failed to fetch inviter info:', error);
     }
 
     // 如果是群组通话，添加群组信息
@@ -632,7 +632,7 @@ export class CallService {
             logWarn('⚠️ 未找到群组信息');
           }
         } catch (error) {
-          logError('❌ 获取群组信息失败:', error);
+          logError('Failed to fetch group info:', error);
         }
       } else {
         logWarn('⚠️ groupInfoProvider 未配置，无法获取群组头像');
@@ -723,7 +723,7 @@ export class CallService {
         logDebug('✅ answerCall: 拒绝消息已发送并清理完成');
       }
     } catch (error) {
-      logError('❌ answerCall: 处理失败', error);
+      logError('answerCall failed:', error);
       throw error;
     } finally {
       // 🔧 重置标记：在短暂延迟后重置，允许新的通话
@@ -863,7 +863,7 @@ export class CallService {
           });
           throw error;
         }
-        // 启用音量监听（只在多人通话中启用）
+        // Enable volume indicator only for multi-party calls
         if (
           this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
           this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI
@@ -896,7 +896,7 @@ export class CallService {
                 resolve();
               } else if (this.client.connectionState === 'DISCONNECTED') {
                 clearTimeout(timeout);
-                reject(new Error('客户端连接失败'));
+                reject(new Error('Client connection failed'));
               } else {
                 // 继续等待
                 setTimeout(checkConnection, 100);
@@ -908,7 +908,7 @@ export class CallService {
 
           await waitForConnection;
         } catch (error) {
-          logError('🔧 等待客户端连接失败:', error);
+          logError('Failed to wait for client connection:', error);
           this.hangup(HANGUP_REASON.ABNORMAL_END);
           return;
         }
@@ -932,7 +932,7 @@ export class CallService {
         localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
         this.rtc.localAudioTrack = localAudioTrack;
       } catch (error) {
-        logError('创建本地音频轨道失败:', error);
+        logError('Failed to create local audio track:', error);
         this.sendHangupMessage();
         this.hangup(HANGUP_REASON.ABNORMAL_END);
         return;
