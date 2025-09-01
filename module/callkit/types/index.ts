@@ -1,5 +1,5 @@
 import CallError from '../services/CallError';
-import { IAgoraRTCError } from 'agora-rtc-sdk-ng';
+import { IAgoraRTCError, VideoEncoderConfigurationPreset } from 'agora-rtc-sdk-ng';
 import { CallInfo } from '../services/CallService';
 import { ChatSDK } from 'module/SDK';
 // 视频窗口属性
@@ -287,6 +287,8 @@ export interface CallKitProps {
 
   // 🔧 新增：Icon 自定义配置
   customIcons?: CallKitIconMap; // 自定义图标映射
+
+  encoderConfig?: VideoEncoderConfigurationPreset;
 
   onCallError?: (error: CallError) => void; // SDK error
   onReceivedCall?: (callType: 'video' | 'audio' | 'group', userId: string, ext?: any) => void;

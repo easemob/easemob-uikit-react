@@ -152,6 +152,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     logLevel = 'error',
     enableLogging = true,
     logPrefix = '[CallKit]',
+
+    encoderConfig,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('callkit', prefix);
@@ -696,6 +698,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         onRemoteUserJoined,
         onRemoteUserLeft,
         onRtcEngineCreated,
+        encoderConfig,
       };
 
       callServiceRef.current = new CallService(config);

@@ -1,4 +1,8 @@
-import AgoraRTC, { IAgoraRTCError, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
+import AgoraRTC, {
+  IAgoraRTCError,
+  IAgoraRTCRemoteUser,
+  VideoEncoderConfigurationPreset,
+} from 'agora-rtc-sdk-ng';
 import WebIM from 'easemob-websdk';
 import { VideoWindowProps } from '../types/index';
 import CallError from './CallError';
@@ -101,6 +105,7 @@ export interface CallServiceConfig {
   onRtcEngineCreated?: (rtc: any) => void;
   // 🔧 新增：当邀请的用户被移除时的回调（拒绝、取消等）
   onInvitedUserRemoved?: (userId: string, reason: 'refused' | 'cancelled' | 'timeout') => void;
+  encoderConfig?: VideoEncoderConfigurationPreset;
 }
 
 export class CallService {
@@ -194,6 +199,7 @@ export class CallService {
 
   // 🔧 新增：正在创建的轨道引用，用于处理竞态条件
   private creatingVideoTrack: Promise<any> | null = null;
+  private encoderConfig?: VideoEncoderConfigurationPreset;
   private creatingAudioTrack: Promise<any> | null = null;
 
   private UIdToUserIdMap: Map<string, string> = new Map();
@@ -217,6 +223,7 @@ export class CallService {
     this.onRemoteUserJoined = config.onRemoteUserJoined;
     this.onRemoteUserLeft = config.onRemoteUserLeft;
     this.onRtcEngineCreated = config.onRtcEngineCreated;
+    this.encoderConfig = config.encoderConfig;
     // 🔧 新增：初始化音量阈值
     this.speakingVolumeThreshold = config.speakingVolumeThreshold ?? 60;
     // 🔧 新增：初始化铃声配置
@@ -402,7 +409,9 @@ export class CallService {
       this.hasEnteredPreview = true;
       try {
         // 🔧 修复：记录正在创建的轨道Promise，用于竞态条件处理
-        this.creatingVideoTrack = AgoraRTC.createCameraVideoTrack();
+        this.creatingVideoTrack = AgoraRTC.createCameraVideoTrack(
+          this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
+        );
         const localVideoTrack = await this.creatingVideoTrack;
 
         // 🔧 修复：检查状态，如果已经挂断则立即清理资源
@@ -863,6 +872,7 @@ export class CallService {
         }
       } catch (error) {
         logError('Failed to join channel:', error);
+        this.sendHangupMessage();
         this.hangup(HANGUP_REASON.ABNORMAL_END);
         return;
       }
@@ -918,8 +928,15 @@ export class CallService {
     let localAudioTrack = this.rtc.localAudioTrack;
     if (!localAudioTrack) {
       logDebug('创建新的本地音频轨道');
-      localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-      this.rtc.localAudioTrack = localAudioTrack;
+      try {
+        localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        this.rtc.localAudioTrack = localAudioTrack;
+      } catch (error) {
+        logError('创建本地音频轨道失败:', error);
+        this.sendHangupMessage();
+        this.hangup(HANGUP_REASON.ABNORMAL_END);
+        return;
+      }
     } else {
       logDebug('重用已存在的本地音频轨道');
     }
@@ -940,6 +957,7 @@ export class CallService {
           ...(error as IAgoraRTCError),
         });
         logError('Failed to publish audio:', error);
+        this.sendHangupMessage();
         this.hangup(HANGUP_REASON.ABNORMAL_END);
         return;
       }
@@ -997,6 +1015,7 @@ export class CallService {
             ...(error as IAgoraRTCError),
           });
           logError('Failed to publish tracks for group call:', error);
+          this.sendHangupMessage();
           this.hangup(HANGUP_REASON.ABNORMAL_END);
           return;
         }
@@ -1049,7 +1068,9 @@ export class CallService {
             // 没有经过preview = 直接接听，创建默认开启的视频轨道
             logDebug('🔧 1v1视频通话：直接接听，创建默认开启的视频轨道');
             try {
-              localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+              localVideoTrack = await AgoraRTC.createCameraVideoTrack(
+                this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
+              );
               this.rtc.localVideoTrack = localVideoTrack;
               logDebug('🔧 1v1视频通话：默认视频轨道创建成功');
             } catch (error) {
@@ -2740,7 +2761,9 @@ export class CallService {
           }
 
           // 创建新的视频轨道
-          const newVideoTrack = await AgoraRTC.createCameraVideoTrack();
+          const newVideoTrack = await AgoraRTC.createCameraVideoTrack(
+            this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
+          );
           this.rtc.localVideoTrack = newVideoTrack;
           // 如果新轨道也没启用，强制启用
           if (!newVideoTrack.enabled && typeof newVideoTrack.setEnabled === 'function') {
@@ -3023,7 +3046,9 @@ export class CallService {
     this.hasEnteredPreview = true;
     logDebug('🔧 1v1视频通话：开始创建预览模式的本地视频轨道');
     try {
-      const localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+      const localVideoTrack = await AgoraRTC.createCameraVideoTrack(
+        this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
+      );
       this.rtc.localVideoTrack = localVideoTrack;
       logDebug('🔧 1v1视频通话：预览视频轨道创建成功');
 
