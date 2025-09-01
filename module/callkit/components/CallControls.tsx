@@ -5,6 +5,7 @@ import { Icon } from '../../../component/icon/Icon';
 import { useTranslation } from 'react-i18next';
 import type { CallControlsIconMap } from '../types/index';
 import './CallControls.scss';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 export interface CallControlsProps {
   className?: string;
@@ -124,11 +125,11 @@ const CallControls: React.FC<CallControlsProps> = ({
     // 根据通话模式设置默认值
     if (isGroupCall || callMode === 'group') {
       // 群通话默认摄像头关闭
-      console.log('🔧 CallControls: 群通话模式，摄像头默认关闭');
+      logDebug('🔧 CallControls: 群通话模式，摄像头默认关闭');
       return false;
     } else {
       // 单人通话默认摄像头开启
-      console.log('🔧 CallControls: 单人通话模式，摄像头默认开启');
+      logDebug('🔧 CallControls: 单人通话模式，摄像头默认开启');
       return true;
     }
   }, [defaultCameraEnabled, isGroupCall, callMode]);
@@ -194,7 +195,7 @@ const CallControls: React.FC<CallControlsProps> = ({
 
     // 多人视频通话中，如果未连接，禁用控制按钮
     if (isGroupCall && !isConnected && !isPreview) {
-      console.log('🔧 CallControls: 多人视频通话，未连接，禁用按钮', {
+      logDebug('🔧 CallControls: 多人视频通话，未连接，禁用按钮', {
         isGroupCall,
         hasParticipants,
         isConnected,
@@ -203,7 +204,7 @@ const CallControls: React.FC<CallControlsProps> = ({
       return true;
     }
 
-    console.log('🔧 CallControls: 按钮可用', {
+    logDebug('🔧 CallControls: 按钮可用', {
       isPreview,
       isGroupCall,
       hasParticipants,
@@ -222,7 +223,7 @@ const CallControls: React.FC<CallControlsProps> = ({
 
     // 🔧 预览状态下禁用麦克风，确保必须发布audio轨道
     if (isPreview) {
-      console.log('🔧 CallControls: 预览状态，禁用麦克风按钮', {
+      logDebug('🔧 CallControls: 预览状态，禁用麦克风按钮', {
         isPreview,
         isGroupCall,
         callMode,
@@ -233,7 +234,7 @@ const CallControls: React.FC<CallControlsProps> = ({
 
     // 🔧 群通话中，RTC未真正连接时禁用麦克风，确保必须发布audio轨道
     if (isGroupCall && !isConnected) {
-      console.log('🔧 CallControls: 群通话RTC未连接，禁用麦克风按钮', {
+      logDebug('🔧 CallControls: 群通话RTC未连接，禁用麦克风按钮', {
         isGroupCall,
         isConnected,
         isPreview,
@@ -259,7 +260,7 @@ const CallControls: React.FC<CallControlsProps> = ({
 
     // 如果是群通话且不是预览模式且未连接，但允许摄像头操作
     if (isGroupCall && !isConnected && !isPreview) {
-      console.log('🔧 CallControls: 群通话等待连接，摄像头按钮允许操作', {
+      logDebug('🔧 CallControls: 群通话等待连接，摄像头按钮允许操作', {
         isGroupCall,
         isConnected,
         isPreview,
@@ -275,7 +276,7 @@ const CallControls: React.FC<CallControlsProps> = ({
   // 🔧 修复：麦克风切换处理，添加防抖和状态管理
   const handleMuteClick = React.useCallback(() => {
     if (shouldDisableMuteButton || isTogglingMic) {
-      console.log('🔧 CallControls: 麦克风按钮被禁用或正在操作中，忽略点击', {
+      logDebug('🔧 CallControls: 麦克风按钮被禁用或正在操作中，忽略点击', {
         shouldDisableMuteButton,
         isTogglingMic,
       });
@@ -293,7 +294,7 @@ const CallControls: React.FC<CallControlsProps> = ({
         setIsTogglingMic(true);
         const newMuted = !muted;
 
-        console.log('🔧 CallControls: 开始切换麦克风状态', {
+        logDebug('🔧 CallControls: 开始切换麦克风状态', {
           from: muted,
           to: newMuted,
         });
@@ -309,9 +310,9 @@ const CallControls: React.FC<CallControlsProps> = ({
           await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        console.log('🔧 CallControls: 麦克风状态切换成功');
+        logDebug('🔧 CallControls: 麦克风状态切换成功');
       } catch (error) {
-        console.error('🔧 CallControls: 麦克风状态切换失败:', error);
+        logError('🔧 CallControls: 麦克风状态切换失败:', error);
 
         // 操作失败时恢复状态
         if (managed) {
@@ -326,7 +327,7 @@ const CallControls: React.FC<CallControlsProps> = ({
   // 🔧 修复：摄像头切换处理，添加防抖和状态管理
   const handleCameraClick = React.useCallback(() => {
     if (shouldDisableCameraButton || isTogglingCamera) {
-      console.log('🔧 CallControls: 摄像头按钮被禁用或正在操作中，忽略点击', {
+      logDebug('🔧 CallControls: 摄像头按钮被禁用或正在操作中，忽略点击', {
         shouldDisableCameraButton,
         isTogglingCamera,
         currentCameraEnabled: cameraEnabled,
@@ -348,7 +349,7 @@ const CallControls: React.FC<CallControlsProps> = ({
         setIsTogglingCamera(true);
         const newCameraEnabled = !cameraEnabled;
 
-        console.log('🔧 CallControls: 开始切换摄像头状态:', {
+        logDebug('🔧 CallControls: 开始切换摄像头状态:', {
           from: cameraEnabled,
           to: newCameraEnabled,
         });
@@ -364,9 +365,9 @@ const CallControls: React.FC<CallControlsProps> = ({
           await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        console.log('🔧 CallControls: 摄像头状态切换成功');
+        logDebug('🔧 CallControls: 摄像头状态切换成功');
       } catch (error) {
-        console.error('🔧 CallControls: 摄像头状态切换失败:', error);
+        logError('🔧 CallControls: 摄像头状态切换失败:', error);
 
         // 操作失败时恢复状态
         if (managed) {
@@ -390,7 +391,7 @@ const CallControls: React.FC<CallControlsProps> = ({
   // 🔧 修复：扬声器切换处理，添加防抖和状态管理
   const handleSpeakerClick = React.useCallback(() => {
     if (shouldDisableControls || isTogglingSpeaker) {
-      console.log('🔧 CallControls: 扬声器按钮被禁用或正在操作中，忽略点击', {
+      logDebug('🔧 CallControls: 扬声器按钮被禁用或正在操作中，忽略点击', {
         shouldDisableControls,
         isTogglingSpeaker,
       });
@@ -408,7 +409,7 @@ const CallControls: React.FC<CallControlsProps> = ({
         setIsTogglingSpeaker(true);
         const newSpeakerEnabled = !speakerEnabled;
 
-        console.log('🔧 CallControls: 开始切换扬声器状态', {
+        logDebug('🔧 CallControls: 开始切换扬声器状态', {
           from: speakerEnabled,
           to: newSpeakerEnabled,
         });
@@ -424,9 +425,9 @@ const CallControls: React.FC<CallControlsProps> = ({
           await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        console.log('🔧 CallControls: 扬声器状态切换成功');
+        logDebug('🔧 CallControls: 扬声器状态切换成功');
       } catch (error) {
-        console.error('🔧 CallControls: 扬声器状态切换失败:', error);
+        logError('🔧 CallControls: 扬声器状态切换失败:', error);
 
         // 操作失败时恢复状态
         if (managed) {
@@ -463,7 +464,7 @@ const CallControls: React.FC<CallControlsProps> = ({
   };
 
   const rootClass = classNames(prefixCls, className);
-  console.log('---->isPreview', isCaller, isGroupCall);
+  logDebug('---->isPreview', isCaller, isGroupCall);
   // 预览模式下的按钮布局
   if (isPreview) {
     return (

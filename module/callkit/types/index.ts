@@ -275,6 +275,11 @@ export interface CallKitProps {
   onAddParticipant?: () => void;
   onInvitationAccept?: (invitation: InvitationInfo) => void;
   onInvitationReject?: (invitation: InvitationInfo) => void;
+
+  // 日志管理配置
+  logLevel?: 'error' | 'warn' | 'info' | 'debug' | 'verbose'; // 日志级别，默认 'error'
+  enableLogging?: boolean; // 是否启用日志输出，默认 true
+  logPrefix?: string; // 日志前缀，默认 '[CallKit]'
   onCallStart?: (videos: VideoWindowProps[]) => void;
   onCallEnd?: (reason: string, callInfo: CallInfo) => void;
   onLayoutModeChange?: (layoutMode: 'grid' | 'main') => void;

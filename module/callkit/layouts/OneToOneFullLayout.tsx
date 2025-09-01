@@ -6,6 +6,7 @@ import CallControls from '../components/CallControls';
 import type { FullLayoutProps } from '../types/layout';
 import { useVideoAspectRatio } from '../hooks/useVideoAspectRatio';
 import { useTranslation } from 'react-i18next';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 /**
  * OneToOne 完整布局组件
@@ -92,7 +93,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
     const maxHeight = 200;
     const finalHeight = Math.max(minHeight, Math.min(maxHeight, calculatedHeight));
 
-    console.log('🎬 画中画视频尺寸计算:', {
+    logDebug('🎬 画中画视频尺寸计算:', {
       aspectRatio: localVideoAspectRatio,
       calculatedHeight,
       finalHeight,
@@ -142,7 +143,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
 
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
-    console.log('🔧 计算Header显示的信息:', {
+    logDebug('🔧 计算Header显示的信息:', {
       isShowingPreview,
       invitation,
       callInfo,
@@ -150,7 +151,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
       localVideo,
     });
     if (isShowingPreview) {
-      console.log('---->预览模式', invitation);
+      logDebug('---->预览模式', invitation);
       alert('预览模式');
       // 预览模式：显示邀请人信息
       if (invitation) {

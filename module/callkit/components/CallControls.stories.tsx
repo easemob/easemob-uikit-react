@@ -54,6 +54,7 @@ export default {
 } as Meta<typeof CallControls>;
 
 import { CallControlsProps } from './CallControls';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 const Template: StoryFn<CallControlsProps> = args => (
   <div
@@ -153,22 +154,22 @@ export const Interactive = {
           screenSharing={screenSharing}
           onMuteToggle={newMuted => {
             setMuted(newMuted);
-            console.log('静音状态:', newMuted);
+            logDebug('静音状态:', newMuted);
           }}
           onCameraToggle={enabled => {
             setCameraEnabled(enabled);
-            console.log('摄像头状态:', enabled);
+            logDebug('摄像头状态:', enabled);
           }}
           onSpeakerToggle={enabled => {
             setSpeakerEnabled(enabled);
-            console.log('扬声器状态:', enabled);
+            logDebug('扬声器状态:', enabled);
           }}
           onScreenShareToggle={sharing => {
             setScreenSharing(sharing);
-            console.log('屏幕共享状态:', sharing);
+            logDebug('屏幕共享状态:', sharing);
           }}
           onHangup={() => {
-            console.log('挂断通话');
+            logDebug('挂断通话');
             alert('通话已挂断');
           }}
         />

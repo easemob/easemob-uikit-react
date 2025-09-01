@@ -339,10 +339,7 @@ const ChatApp: FC<any> = () => {
                   //   </div>
                   // ),
                 }}
-                rtcConfig={{
-                  getRTCToken: getRTCToken,
-                  getIdMap: () => {},
-                }}
+                useCallkit={true}
                 // renderRepliedMessage={message => {
                 //   return <div>replied message {message.from}</div>;
                 // }}

@@ -6,6 +6,7 @@ import { Icon } from '../../../component/icon/Icon';
 import CallControls from '../components/CallControls';
 import { MultiPartyLayout } from './MultiPartyLayout';
 import type { FullLayoutProps } from '../types/layout';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 /**
  * MultiParty 完整布局组件
@@ -180,7 +181,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
     return undefined; // 返回undefined，让CSS默认样式生效
   }, [backgroundImage]);
 
-  console.log('isMinimized', isMinimized);
+  logDebug('isMinimized', isMinimized);
   return (
     <div className={`${prefixCls}-multi-party-full-layout`} style={backgroundStyle}>
       {/* 最小化状态的特殊处理 */}

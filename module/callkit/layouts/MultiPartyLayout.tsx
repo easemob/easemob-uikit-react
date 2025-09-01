@@ -10,6 +10,7 @@ import type {
   VideoSwitchingState,
 } from '../types/index';
 import { LayoutMode } from '../types/index';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 /**
  * 多人网格布局策略
@@ -425,7 +426,7 @@ const MainVideoLayoutContent: React.FC<MainVideoLayoutContentProps> = ({
     );
   };
 
-  console.log('canScrollLeft', canScrollLeft);
+  logDebug('canScrollLeft', canScrollLeft);
   return (
     <>
       {/* 主视频区域 */}
@@ -578,7 +579,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
   // 选择布局策略
   const strategy = isMainVideoMode ? new MainVideoLayoutStrategy() : new MultiPartyLayoutStrategy();
   const layoutConfig = strategy.calculateLayout(videos.length, containerSize);
-  console.log('layoutConfig', containerSize, layoutConfig);
+  logDebug('layoutConfig', containerSize, layoutConfig);
   const videoSize = strategy.calculateVideoSize(layoutConfig, containerSize, layoutOptions);
 
   // 包装 renderVideoWindow 函数，添加点击事件和 hover 图标

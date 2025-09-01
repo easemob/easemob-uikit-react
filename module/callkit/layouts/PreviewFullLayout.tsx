@@ -5,6 +5,7 @@ import Button from '../../../component/button';
 import { Icon } from '../../../component/icon/Icon';
 import CallControls from '../components/CallControls';
 import type { FullLayoutProps } from '../types/layout';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 /**
  * Preview 完整布局组件
@@ -119,7 +120,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
 
   // 🔧 计算Header显示的信息
   const getHeaderInfo = () => {
-    console.log('🔧 计算Header显示的信息:', {
+    logDebug('🔧 计算Header显示的信息:', {
       callStatus,
       callInfo,
       invitation,
@@ -185,7 +186,7 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
     }
     return undefined; // 返回undefined，让CSS默认样式生效
   }, [backgroundImage]);
-  console.log('有 localVideo -->', localVideo, callMode);
+  logDebug('有 localVideo -->', localVideo, callMode);
   return (
     <div className={`${prefixCls}-one-to-one-full-layout`} style={{ background: '#171A1C' }}>
       {/* 视频内容区域 - 占满整个容器 */}

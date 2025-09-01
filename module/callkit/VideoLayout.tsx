@@ -7,6 +7,7 @@ import { Header } from '../header/Header';
 import { Icon } from '../../component/icon/Icon';
 import Button from '../../component/button';
 import CallControls from './components/CallControls';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from './utils/logger';
 
 export interface VideoWindowProps {
   id: string;
@@ -62,7 +63,7 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
   onScreenShareToggle,
   onHangup,
 }) => {
-  console.log('VideoLayout', videos);
+  logDebug('VideoLayout', videos);
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('video-layout', prefix);
 
@@ -85,7 +86,7 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
           await (containerRef.current as any).msRequestFullscreen();
         }
       } catch (error) {
-        console.error('进入全屏失败:', error);
+        logError('进入全屏失败:', error);
       }
     }
   };
@@ -100,7 +101,7 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
         await (document as any).msExitFullscreen();
       }
     } catch (error) {
-      console.error('退出全屏失败:', error);
+      logError('退出全屏失败:', error);
     }
   };
 
@@ -276,7 +277,7 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
       finalVideoWidth = Math.max(100, finalVideoWidth);
       finalVideoHeight = Math.max(100 / aspectRatio, finalVideoHeight);
 
-      console.log('视频尺寸计算:', {
+      logDebug('视频尺寸计算:', {
         containerSize,
         availableHeight,
         videoContainerHeight,
@@ -340,7 +341,7 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
       (windowSize.width >= NICKNAME_DISPLAY_THRESHOLD &&
         windowSize.height >= NICKNAME_DISPLAY_THRESHOLD);
 
-    console.log('renderVideoWindow', video);
+    logDebug('renderVideoWindow', video);
     return (
       <div
         key={video.id}
@@ -468,7 +469,7 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
       // 使用优化后的尺寸计算算法
       const optimalSize = calculateOptimalVideoSize(layoutConfig);
 
-      console.log('优化后的视频尺寸:', optimalSize);
+      logDebug('优化后的视频尺寸:', optimalSize);
 
       // 为每一排创建行
       itemsPerRow.forEach((rowItems, rowIndex) => {
@@ -507,7 +508,7 @@ const VideoLayout: React.FC<VideoLayoutProps> = ({
     return displayVideos.map((video, index) => renderVideoWindow(video, index));
   };
 
-  console.log('displayVideos', displayVideos);
+  logDebug('displayVideos', displayVideos);
   return (
     <div ref={containerRef} className={containerClass} style={containerStyle}>
       <Header

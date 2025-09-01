@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 /**
  * 全屏控制Hook
@@ -18,7 +19,7 @@ export const useFullscreen = (containerRef: React.RefObject<HTMLDivElement>) => 
           await (containerRef.current as any).msRequestFullscreen();
         }
       } catch (error) {
-        console.error('进入全屏失败:', error);
+        logError('进入全屏失败:', error);
       }
     }
   };
@@ -34,7 +35,7 @@ export const useFullscreen = (containerRef: React.RefObject<HTMLDivElement>) => 
         await (document as any).msExitFullscreen();
       }
     } catch (error) {
-      console.error('退出全屏失败:', error);
+      logError('退出全屏失败:', error);
     }
   };
 

@@ -1,3 +1,5 @@
+import { logWarn, logError } from './logger';
+
 /**
  * 铃声管理器
  */
@@ -55,7 +57,7 @@ export class RingtoneManager {
       type === 'outgoing' ? this.outgoingRingtoneAudio : this.incomingRingtoneAudio;
 
     if (!audioElement) {
-      console.warn(`${type === 'outgoing' ? '外呼' : '来电'}铃声音频未配置`);
+      logWarn(`${type === 'outgoing' ? '外呼' : '来电'}铃声音频未配置`);
       return;
     }
 
@@ -70,7 +72,7 @@ export class RingtoneManager {
       this.isRingtonePlaying = true;
       this.currentRingtoneType = type;
     } catch (error) {
-      console.error(`播放${type === 'outgoing' ? '外呼' : '来电'}铃声失败:`, error);
+      logError(`播放${type === 'outgoing' ? '外呼' : '来电'}铃声失败:`, error);
     }
   }
 

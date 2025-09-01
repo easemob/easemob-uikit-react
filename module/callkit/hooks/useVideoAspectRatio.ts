@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 /**
  * 检测视频流实际分辨率的Hook
@@ -24,7 +25,7 @@ export const useVideoAspectRatio = (videoStream?: MediaStream | null) => {
     const handleLoadedMetadata = () => {
       if (video.videoWidth && video.videoHeight) {
         const ratio = video.videoWidth / video.videoHeight;
-        console.log('🎬 检测到视频分辨率:', {
+        logDebug('🎬 检测到视频分辨率:', {
           width: video.videoWidth,
           height: video.videoHeight,
           aspectRatio: ratio,
@@ -40,7 +41,7 @@ export const useVideoAspectRatio = (videoStream?: MediaStream | null) => {
         const settings = videoTrack.getSettings();
         if (settings.width && settings.height) {
           const ratio = settings.width / settings.height;
-          console.log('🎬 从轨道设置检测到视频分辨率:', {
+          logDebug('🎬 从轨道设置检测到视频分辨率:', {
             width: settings.width,
             height: settings.height,
             aspectRatio: ratio,

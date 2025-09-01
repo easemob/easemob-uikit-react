@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
 import { Icon } from '../../../component/icon/Icon';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
 
 export interface MiniSizeWindowProps {
   /** CSS类名前缀 */
@@ -146,7 +147,7 @@ export const MiniSizeWindow: React.FC<MiniSizeWindowProps> = ({
   // 🔧 改进：更完善的视频流处理逻辑
   React.useEffect(() => {
     if (isOneToOneVideo && videoRef.current) {
-      console.log('🎬 MiniSizeWindow 视频流处理:', {
+      logDebug('🎬 MiniSizeWindow 视频流处理:', {
         hasRemoteVideoStream: !!remoteVideoStream,
         hasRemoteVideoElement: !!remoteVideoElement,
         videoRef: !!videoRef.current,
@@ -155,12 +156,12 @@ export const MiniSizeWindow: React.FC<MiniSizeWindowProps> = ({
       });
 
       if (remoteVideoStream) {
-        console.log('🎬 设置远程视频流到最小化窗口');
+        logDebug('🎬 设置远程视频流到最小化窗口');
         videoRef.current.srcObject = remoteVideoStream;
 
         // 确保视频播放
         videoRef.current.play().catch(error => {
-          console.warn('🎬 最小化窗口视频播放失败:', error);
+          logWarn('🎬 最小化窗口视频播放失败:', error);
         });
       }
     }
@@ -169,7 +170,7 @@ export const MiniSizeWindow: React.FC<MiniSizeWindowProps> = ({
   // 🔧 新增：调试信息
   React.useEffect(() => {
     if (isOneToOneVideo) {
-      console.log('🔍 MiniSizeWindow 调试信息:', {
+      logDebug('🔍 MiniSizeWindow 调试信息:', {
         callType,
         callStatus,
         hasRemoteVideoStream: !!remoteVideoStream,

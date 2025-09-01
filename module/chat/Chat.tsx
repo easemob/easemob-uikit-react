@@ -400,15 +400,14 @@ let Chat = forwardRef((props: ChatProps, ref) => {
 
   // ----- video call -----------
 
-  const startVideoCall = async (type: 'video' | 'audio') => {
+  const startVideoCall = async (type: 'video' | 'group' | 'audio') => {
     if (CVS.chatType === 'groupChat') {
       const msg = await callKitRef.current?.startGroupCall({
         groupId: CVS.conversationId,
-        msg: '邀请你进行音视频通话',
+        msg: t('callkit.invitation.groupCallDescription'),
       });
       if (msg) {
         rootStore.messageStore.addMessage(msg as ChatSDK.MessageBody, 'groupChat', msg.to!);
-        console.log('msg --->', msg);
       }
       return;
     }
@@ -416,43 +415,24 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     try {
       const msg = await callKitRef.current?.startSingleCall({
         to: CVS.conversationId,
-        callType: type,
-        msg: `邀请你进行${type == 'video' ? '视频' : '语音'}通话`,
+        callType: type as 'video' | 'audio',
+        msg: t(
+          `callkit.invitation.${type == 'video' ? 'videoCallDescription' : 'audioCallDescription'}`,
+        ),
       });
       if (msg) {
         rootStore.messageStore.addMessage(msg as ChatSDK.MessageBody, 'singleChat', msg.to!);
-        console.log('msg --->', msg);
       }
     } catch (e) {
       console.error(e);
     }
-    // }
-    // try {
-    //   const idMap = await rtcConfig?.getIdMap?.({ userId: rootStore.client.user, channel });
-    //   CallKit.setUserIdMap(idMap);
-    // } catch (e) {
-    //   console.error(e);
-    // }
-
-    // CallKit.setUserInfo({
-    //   [CVS.conversationId]: {
-    //     nickname:
-    //       rootStore.addressStore.appUsersInfo[CVS.conversationId]?.nickname || CVS.conversationId,
-    //     avatarUrl: rootStore.addressStore.appUsersInfo[CVS.conversationId]?.avatarurl,
-    //   },
-    //   // @ts-ignore
-    //   [rootStore.client.user]: {
-    //     nickname: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.nickname,
-    //     avatarUrl: rootStore.addressStore.appUsersInfo[rootStore.client.user]?.avatarurl,
-    //   },
-    // });
   };
 
   useImperativeHandle(ref, () => ({
-    startVideoCall: () => {
-      startVideoCall('video');
+    startVideoCall: (chatType: 'singleChat' | 'groupChat') => {
+      startVideoCall(chatType === 'groupChat' ? 'group' : 'video');
     },
-    startAudioCall: () => {
+    startAudioCall: (chatType: 'singleChat' | 'groupChat') => {
       startVideoCall('audio');
     },
   }));
@@ -698,14 +678,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           ) : (
             <MessageInput {...messageInputConfig} {...messageInputProps}></MessageInput>
           )}
-          {/* {modalOpen && (
-              MULTI_PARTY = 'multi-party', // 多人网格布局
-  ONE_TO_ONE = 'one-to-one', // 1v1画中画布局
-  PREVIEW = 'preview', // 预览布局（竖屏）
-  SCREEN_SHARE = 'screen-share', // 屏幕共享布局
-  MINIMIZED = 'minimized', // 最小化布局
-  MAIN_VIDEO = 'main-video', // 主视频 + 缩略图布局
-          )} */}
         </>
       )}
 
@@ -796,16 +768,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
             left: window.innerWidth - callKitSize.width - 20,
             top: 21,
           }}
-          // onResize={(width, height) => console.log('窗口尺寸:', width, height)}
-          // 可拖拽
-          // onDragStart={() => console.log('开始拖拽')}
-          // onDrag={position => console.log('拖拽位置:', position)}
-          // onDragEnd={() => console.log('拖拽结束')}
-          // minimizedSize={{ width: 300, height: 300 }}
-          // invitationCustomContent={<div style={{ color: '#fff' }}>123</div>}
-          // 按钮文本
-          // acceptText="接听1"
-          // rejectText="拒绝1"
           // 邀请界面显示配置
           showInvitationAvatar={true}
           showInvitationTimer={true}

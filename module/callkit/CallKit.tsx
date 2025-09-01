@@ -34,6 +34,7 @@ import type {
 import type { FullLayoutProps } from './types/layout';
 import { LayoutMode } from './types/index';
 import { generateRandomChannel, getUserAvatar, calculateSafePosition } from './utils/callUtils';
+import { logger, LogLevel } from './utils/logger';
 import './styles/index.scss';
 import CallError, { CallErrorCode } from './services/CallError';
 
@@ -146,6 +147,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     onRemoteUserLeft,
     onRtcEngineCreated,
     onEndCallWithReason,
+
+    // 日志管理配置
+    logLevel = 'error',
+    enableLogging = true,
+    logPrefix = '[CallKit]',
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('callkit', prefix);
@@ -179,6 +185,35 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 使用计时器hook
   const { callDuration, startCallTimer, stopCallTimer } = useCallTimer();
+
+  // 初始化日志管理器
+  React.useEffect(() => {
+    // 根据 props 配置日志管理器
+    if (enableLogging) {
+      // 设置日志级别
+      const levelMap = {
+        error: LogLevel.ERROR,
+        warn: LogLevel.WARN,
+        info: LogLevel.INFO,
+        debug: LogLevel.DEBUG,
+        verbose: LogLevel.VERBOSE,
+      };
+
+      logger.setLevel(levelMap[logLevel] || LogLevel.ERROR);
+      logger.setConsoleEnabled(true);
+      logger.setPrefix(logPrefix);
+
+      logger.info('CallKit 日志管理器已初始化', {
+        level: logLevel,
+        enableLogging,
+        prefix: logPrefix,
+      });
+    } else {
+      // 禁用日志输出
+      logger.setConsoleEnabled(false);
+      logger.info('CallKit 日志输出已禁用');
+    }
+  }, [logLevel, enableLogging, logPrefix]);
 
   // 监听通话状态变化，自动开始/停止计时
   React.useEffect(() => {
@@ -288,11 +323,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   React.useEffect(() => {
     if (callMode === 'group') {
       // 群通话模式：摄像头默认关闭
-      console.log('🔧 CallKit: 检测到群通话模式，设置摄像头默认关闭');
+      logger.info('🔧 CallKit: 检测到群通话模式，设置摄像头默认关闭');
       setRealCallCameraEnabled(false);
     } else if (callMode === 'video') {
       // 1v1视频通话模式：摄像头默认开启
-      console.log('🔧 CallKit: 检测到1v1视频通话模式，设置摄像头默认开启');
+      logger.info('🔧 CallKit: 检测到1v1视频通话模式，设置摄像头默认开启');
       setRealCallCameraEnabled(true);
     }
     // 其他模式（如audio）保持当前状态不变
@@ -300,7 +335,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   const handleCallStart = React.useCallback(
     (videos: VideoWindowProps[]) => {
-      console.log('🚀 handleCallStart 接收到视频列表:', {
+      logger.info('🚀 handleCallStart 接收到视频列表:', {
         视频数量: videos.length,
         视频详情: videos.map(v => ({
           ID: v.id,
@@ -313,7 +348,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       // 🔧 修复：合并而不是覆盖现有的远程视频，避免丢失已添加的远程视频
       setVideos(prevVideos => {
-        console.log('🔧 handleCallStart: 合并视频列表', {
+        logger.info('🔧 handleCallStart: 合并视频列表', {
           当前视频数量: prevVideos.length,
           当前视频: prevVideos.map(v => ({ id: v.id, 是否本地: v.isLocalVideo })),
           新传入视频数量: videos.length,
@@ -329,15 +364,15 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           if (existingIndex >= 0) {
             // 更新现有视频
             mergedVideos[existingIndex] = newVideo;
-            console.log('🔧 更新现有视频:', newVideo.id);
+            logger.info('🔧 更新现有视频:', newVideo.id);
           } else {
             // 添加新视频
             mergedVideos.push(newVideo);
-            console.log('🔧 添加新视频:', newVideo.id);
+            logger.info('🔧 添加新视频:', newVideo.id);
           }
         });
 
-        console.log('🔧 handleCallStart: 合并完成', {
+        logger.info('🔧 handleCallStart: 合并完成', {
           合并后数量: mergedVideos.length,
           合并后视频: mergedVideos.map(v => ({ id: v.id, 是否本地: v.isLocalVideo })),
         });
@@ -367,12 +402,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const handleCallEnd = React.useCallback(
     (reason: string, callInfo: CallInfo) => {
       const currentIsMinimized = isMinimizedRef.current;
-      console.log('🚀 handleCallEnd 接收到通话结束信', currentIsMinimized);
+      logger.info('🚀 handleCallEnd 接收到通话结束信', currentIsMinimized);
       // 🔧 新增：通话结束时清理所有邀请定时器
       clearAllInvitationTimers();
 
       if (currentIsMinimized) {
-        console.log('🚀 最小化状态，恢复到正常大小', currentIsMinimized);
+        logger.info('🚀 最小化状态，恢复到正常大小', currentIsMinimized);
         // 设置状态并执行DOM恢复操作
         setIsMinimized(false);
         restoreToNormalSize();
@@ -397,7 +432,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       // 🔧 新增：重置CallKit尺寸和位置到初始状态
       if (managedPosition) {
-        console.log('🔧 重置CallKit尺寸和位置到初始状态');
+        logger.info('🔧 重置CallKit尺寸和位置到初始状态');
         setInternalSize(initialSize);
         setInternalPosition(initialPosition);
 
@@ -430,9 +465,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           video.dataset.playingTrackId = '';
           video.dataset.trackPlayed = '';
         });
-        console.log('🔧 强制清理了所有视频元素');
       } catch (error) {
-        console.warn('清理视频元素失败:', error);
+        logger.warn('清理视频元素失败:', error);
       }
 
       onEndCallWithReasonRef.current?.(reason, callInfo);
@@ -447,7 +481,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     ],
   );
   const handleInvitationReceived = React.useCallback((invitation: any) => {
-    console.log('🚀 接收到新邀请，重置最小化状态');
+    logger.info('🚀 接收到新邀请，重置最小化状态');
     setInvitation(invitation);
     setCallStatus('ringing');
     // 🔧 新增：接收新邀请时确保从正常大小状态开始
@@ -457,7 +491,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 新增：远程用户发布流回调
   const handleUserPublished = React.useCallback(
     (userId: string, mediaType: string) => {
-      console.log('远程用户发布流:', userId, mediaType, callStatus, callMode);
+      logger.info('远程用户发布流:', userId, mediaType, callStatus, callMode);
 
       // 🔧 新增：用户加入时清理邀请定时器
       if (userId) {
@@ -467,7 +501,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       // 🔧 修复：当有远程用户发布流时，如果当前状态是 calling，更新为 connected
       // 群组通话 callMode 是 video 应该是group
       if (callStatus === 'calling' || callStatus === 'idle') {
-        console.log('🔧 远程用户加入，更新通话状态从 calling 到 connected');
+        logger.info('🔧 远程用户加入，更新通话状态从 calling 到 connected');
         setCallStatus('connected');
       }
     },
@@ -491,13 +525,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 通用的群成员获取方法
   const fetchGroupMembers = React.useCallback(
     async (groupId: string, context: string = '通用') => {
-      console.log(`🚀 ${context}：调用 fetchGroupMembers，参数:`, {
+      logger.info(`🚀 ${context}：调用 fetchGroupMembers，参数:`, {
         groupId,
         hasWebimConnection: !!chatClient,
       });
 
       if (!groupId || !chatClient) {
-        console.warn(`❌ ${context}：缺少必要参数`, {
+        logger.warn(`❌ ${context}：缺少必要参数`, {
           groupId: !!groupId,
           chatClient: !!chatClient,
         });
@@ -505,7 +539,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       }
 
       try {
-        console.log(`🔄 ${context}：开始获取群成员，群组ID:`, groupId);
+        logger.info(`🔄 ${context}：开始获取群成员，群组ID:`, groupId);
 
         // 🔧 修改：循环分页获取所有群成员
         const allMemberUserIds: string[] = [];
@@ -514,7 +548,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         let hasMoreData = true;
 
         while (hasMoreData) {
-          console.log(`📄 ${context}：获取第 ${pageNum} 页，每页 ${pageSize} 个成员`);
+          logger.info(`📄 ${context}：获取第 ${pageNum} 页，每页 ${pageSize} 个成员`);
           try {
             const response = await chatClient.listGroupMembers({
               groupId: groupId,
@@ -548,11 +582,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           }
         }
 
-        console.log(`📊 ${context}：分页获取完成，总共获取到 ${allMemberUserIds.length} 个群成员`);
+        logger.info(`📊 ${context}：分页获取完成，总共获取到 ${allMemberUserIds.length} 个群成员`);
 
         if (allMemberUserIds.length > 0) {
           const memberUserIds = allMemberUserIds;
-          console.log(`📋 ${context}：获取到群成员UserIds:`, memberUserIds);
+          logger.info(`📋 ${context}：获取到群成员UserIds:`, memberUserIds);
 
           // 使用 userInfoProvider 批量获取用户详细信息
           try {
@@ -572,7 +606,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               }))
               .filter(member => member.userId); // 过滤掉无效的成员
 
-            console.log(`👥 ${context}：群成员获取成功:`, formattedMembers.length, '个有效成员');
+            logger.info(`👥 ${context}：群成员获取成功:`, formattedMembers.length, '个有效成员');
 
             // 🔧 新增：将用户信息设置到CallService中，确保nickname正确显示
             if (callServiceRef.current && formattedMembers.length > 0) {
@@ -584,7 +618,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 };
               });
               callServiceRef.current.setUserInfo(userInfoMap);
-              console.log(`📝 ${context}：已将用户信息设置到CallService:`, {
+              logger.info(`📝 ${context}：已将用户信息设置到CallService:`, {
                 用户数量: formattedMembers.length,
                 用户列表: formattedMembers.map((m: any) => `${m.userId}(${m.nickname})`),
               });
@@ -592,14 +626,14 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
             return formattedMembers;
           } catch (error) {
-            console.warn(`❌ ${context}：批量获取用户信息失败:`, error);
+            logger.warn(`❌ ${context}：批量获取用户信息失败:`, error);
             // 如果批量获取失败，使用基础信息
             const basicMembers = memberUserIds.map((userId: string) => ({
               userId,
               nickname: userId,
               avatarUrl: undefined, // 不使用假数据，让组件显示默认图标
             }));
-            console.log(
+            logger.info(
               `👥 ${context}：使用基础信息创建群成员列表:`,
               basicMembers.length,
               '个成员',
@@ -615,7 +649,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 };
               });
               callServiceRef.current.setUserInfo(userInfoMap);
-              console.log(`📝 ${context}：已将基础用户信息设置到CallService:`, {
+              logger.info(`📝 ${context}：已将基础用户信息设置到CallService:`, {
                 用户数量: basicMembers.length,
                 用户列表: basicMembers.map((m: any) => `${m.userId}(${m.nickname})`),
               });
@@ -624,11 +658,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             return basicMembers;
           }
         } else {
-          console.log(`⚠️ ${context}：群组中没有成员或成员数据为空`);
+          logger.info(`⚠️ ${context}：群组中没有成员或成员数据为空`);
           return [];
         }
       } catch (error) {
-        console.error(`❌ ${context}：获取群成员失败:`, error);
+        logger.error(`❌ ${context}：获取群成员失败:`, error);
         return [];
       }
     },
@@ -642,11 +676,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       const currentIsShowingPreview = isShowingPreviewRef.current;
       const currentIsInCall = isInCallRef.current;
       const currentCallMode = callModeRef.current;
-      console.log('视频流准备就绪:', videoInfo);
+      logger.info('视频流准备就绪:', videoInfo);
       // 如果是预览模式的本地视频（ID为local-preview），总是设置到localVideo状态
       if (videoInfo.id === 'local-preview') {
         setLocalVideo(videoInfo);
-        console.log('预览模式：设置本地视频到 localVideo 状态:', videoInfo);
+        logger.info('预览模式：设置本地视频到 localVideo 状态:', videoInfo);
       } else if (currentCallMode === 'group') {
         // 多人视频通话：无论是否在预览状态，都将本地视频添加到 videos 数组中
         setVideos(prevVideos => {
@@ -655,18 +689,18 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             // 更新现有的本地视频
             const newVideos = [...prevVideos];
             newVideos[existingIndex] = videoInfo;
-            console.log('多人视频通话：更新 videos 数组中的本地视频:', videoInfo);
+            logger.info('多人视频通话：更新 videos 数组中的本地视频:', videoInfo);
             return newVideos;
           } else {
             // 添加新的本地视频
-            console.log('多人视频通话：添加本地视频到 videos 数组:', videoInfo);
+            logger.info('多人视频通话：添加本地视频到 videos 数组:', videoInfo);
             return [...prevVideos, videoInfo];
           }
         });
       } else if (currentIsShowingPreview && videoInfo.id !== 'local-preview') {
         // 1v1预览模式下的其他本地视频
         setLocalVideo(videoInfo);
-        console.log('1v1预览模式：设置本地视频到 localVideo 状态:', videoInfo);
+        logger.info('1v1预览模式：设置本地视频到 localVideo 状态:', videoInfo);
       } else if (currentIsInCall) {
         // 1v1通话模式：更新 videos 数组中的本地视频
         setVideos(prevVideos => {
@@ -675,18 +709,18 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             // 更新现有的本地视频
             const newVideos = [...prevVideos];
             newVideos[existingIndex] = videoInfo;
-            console.log('1v1通话模式：更新 videos 数组中的本地视频:', videoInfo);
+            logger.info('1v1通话模式：更新 videos 数组中的本地视频:', videoInfo);
             return newVideos;
           } else {
             // 添加新的本地视频（这种情况不应该发生，但作为保险）
-            console.log('1v1通话模式：添加本地视频到 videos 数组:', videoInfo);
+            logger.info('1v1通话模式：添加本地视频到 videos 数组:', videoInfo);
             return [...prevVideos, videoInfo];
           }
         });
       }
     } else {
       // 远程视频：处理添加或移除
-      console.log('🎬 处理远程视频:', {
+      logger.info('🎬 处理远程视频:', {
         视频ID: videoInfo.id,
         是否移除: videoInfo.removed,
         当前通话模式: callModeRef.current,
@@ -708,7 +742,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             !videoInfo.removed;
 
           if (isOnlyAudioChange) {
-            console.log('🔇 1v1视频通话：检测到只是音频状态变化，跳过setVideos调用以避免闪动:', {
+            logger.info('🔇 1v1视频通话：检测到只是音频状态变化，跳过setVideos调用以避免闪动:', {
               视频ID: videoInfo.id,
               旧麦克风状态: existingVideo.muted,
               新麦克风状态: videoInfo.muted,
@@ -723,7 +757,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       setVideos(prevVideos => {
         const existingIndex = prevVideos.findIndex(v => v.id === videoInfo.id);
 
-        console.log('📋 远程视频处理前状态:', {
+        logger.info('📋 远程视频处理前状态:', {
           视频ID: videoInfo.id,
           现有索引: existingIndex,
           当前视频数量: prevVideos.length,
@@ -733,10 +767,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         // 如果标记为移除，从数组中删除
         if (videoInfo.removed) {
           if (existingIndex >= 0) {
-            console.log('🗑️ 从 videos 数组中移除离开的用户:', videoInfo.id);
+            logger.info('🗑️ 从 videos 数组中移除离开的用户:', videoInfo.id);
             return prevVideos.filter(v => v.id !== videoInfo.id);
           } else {
-            console.log('⚠️ 尝试移除不存在的用户:', videoInfo.id);
+            logger.info('⚠️ 尝试移除不存在的用户:', videoInfo.id);
             return prevVideos;
           }
         }
@@ -752,7 +786,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         } else {
           // 添加新的远程视频
           const newVideos = [...prevVideos, videoInfo];
-          console.log('🎯 添加新的远程视频:', {
+          logger.info('🎯 添加新的远程视频:', {
             新视频ID: videoInfo.id,
             新视频昵称: videoInfo.nickname,
             更新前数量: prevVideos.length,
@@ -767,7 +801,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 🔧 新增：处理说话用户变化回调
   const handleTalkingUsersChange = React.useCallback((talkingUsers: string[]) => {
-    console.log('🎤 说话用户变化:', talkingUsers);
+    logger.info('🎤 说话用户变化:', talkingUsers);
     setTalkingUsers(talkingUsers);
   }, []);
 
@@ -775,7 +809,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 处理网络质量变化回调
   const handleNetworkQualityChange = React.useCallback((networkQuality: any) => {
-    console.log('🌐 网络质量变化:', networkQuality);
+    logger.info('🌐 网络质量变化:', networkQuality);
     // 把 = 0 的值设置为上次的值
     setNetworkQuality((prev: any) => {
       const newNetworkQuality = { ...prev, ...networkQuality };
@@ -792,7 +826,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 初始化 CallService
   React.useEffect(() => {
     if (chatClient) {
-      console.log('🔍 CallKit 初始化 CallService', chatClient);
+      logger.info('🔍 CallKit 初始化 CallService', chatClient);
       // 避免重复初始化
       if (callServiceRef.current) {
         callServiceRef.current.destroy();
@@ -867,7 +901,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           };
           if (callServiceRef.current) {
             callServiceRef.current.setUserInfo(localUserInfo);
-            console.log('📝 CallService初始化后，已设置本地用户信息:', {
+            logger.info('📝 CallService初始化后，已设置本地用户信息:', {
               userId: chatClient.user,
               nickname: t('callkit.localUser.me') as string,
               avatarUrl: avatarUrl,
@@ -930,7 +964,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           });
         } else if (invitationInfo.type === 'video') {
           // 1v1视频通话的预览模式
-          console.log('🔧 1v1视频邀请：设置预览状态');
+          logger.info('🔧 1v1视频邀请：设置预览状态');
           setIsShowingPreview(true);
           // 不在这里设置localVideo，等待CallService创建实际的视频轨道后通过onRemoteVideoReady回调
         }
@@ -950,7 +984,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
         // 🔧 新增：重置CallKit尺寸和位置到初始状态
         if (managedPosition) {
-          console.log('🔧 hideInvitation: 重置CallKit尺寸和位置到初始状态');
+          logger.info('🔧 hideInvitation: 重置CallKit尺寸和位置到初始状态');
           setInternalSize(initialSize);
           setInternalPosition(initialPosition);
 
@@ -1003,7 +1037,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
         // 🔧 新增：重置CallKit尺寸和位置到初始状态
         if (managedPosition) {
-          console.log('🔧 endCall: 重置CallKit尺寸和位置到初始状态');
+          logger.info('🔧 endCall: 重置CallKit尺寸和位置到初始状态');
           setInternalSize(initialSize);
           setInternalPosition(initialPosition);
 
@@ -1093,7 +1127,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
                 // 🔧 使用封装的方法获取群成员
                 const formattedMembers = await fetchGroupMembers(groupId, 'startGroupCall');
-                console.log('🚀 获取群成员', formattedMembers);
+                logger.info('🚀 获取群成员', formattedMembers);
                 setWebimGroupMembers(formattedMembers);
                 setIsLoadingGroupMembers(false);
               } else {
@@ -1103,7 +1137,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
               setIsUserSelectVisible(true);
             } catch (error) {
-              console.error('startGroupCall 异步操作失败:', error);
+              logger.error('startGroupCall 异步操作失败:', error);
               // 如果异步操作失败，不影响用户选择界面的显示
               setIsUserSelectVisible(true);
             }
@@ -1148,7 +1182,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 targetUserAvatar = userInfo.avatarUrl;
               }
             } catch (error) {
-              console.warn('获取用户信息失败:', error);
+              logger.warn('获取用户信息失败:', error);
             }
           }
 
@@ -1161,7 +1195,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               },
             };
             callServiceRef.current.setUserInfo(targetUserInfo);
-            console.log('📝 主叫方发起1v1通话时，已设置被叫方用户信息到CallService:', {
+            logger.info('📝 主叫方发起1v1通话时，已设置被叫方用户信息到CallService:', {
               userId: options.to,
               nickname: targetUserNickname,
               avatar: targetUserAvatar,
@@ -1209,7 +1243,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             to: options.to,
             ext: options.ext,
           });
-          console.log('发送的邀请消息', msg);
+          logger.info('发送的邀请消息', msg);
           return msg as ChatSDK.TextMsgBody;
         } else {
           onCallError?.(CallError.create(CallErrorCode.CALL_PARAM_ERROR, 'chatClient is required'));
@@ -1225,7 +1259,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
         // 🔧 新增：接听呼叫时确保从正常大小状态开始
         if (result === true && isMinimizedRef.current) {
-          console.log('🚀 接听呼叫，从最小化状态恢复到正常大小');
+          logger.info('🚀 接听呼叫，从最小化状态恢复到正常大小');
           setIsMinimized(false);
           restoreToNormalSize();
         }
@@ -1233,14 +1267,14 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         if (callServiceRef.current && invitation) {
           // 🔧 新增：被叫方接受1v1通话邀请时，设置主叫方用户信息用于Header显示
           if (invitation.type === 'video' || invitation.type === 'audio') {
-            console.log('🎯 被叫方接受1v1通话，设置主叫方用户信息...');
+            logger.info('🎯 被叫方接受1v1通话，设置主叫方用户信息...');
 
             // 从invitation中获取主叫方信息
             const callerUserId = invitation.callerUserId; // invitation.callerName是主叫方的userId
             const callerNickname = invitation.callerName || callerUserId;
             const callerAvatar = invitation.callerAvatar;
 
-            console.log('📝 被叫方获取到主叫方信息:', {
+            logger.info('📝 被叫方获取到主叫方信息:', {
               userId: callerUserId,
               nickname: callerNickname,
               avatar: callerAvatar,
@@ -1262,12 +1296,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               targetUserAvatar: callerAvatar,
             });
 
-            console.log('✅ 被叫方已设置主叫方用户信息到CallService和callerTargetInfo');
+            logger.info('✅ 被叫方已设置主叫方用户信息到CallService和callerTargetInfo');
           }
 
           // 被邀请方接受群组通话邀请时，获取群成员信息确保nickname正确显示
           if (result && invitation?.type === 'group') {
-            console.log('🎯 被邀请方接受群组通话，开始获取群成员信息...');
+            logger.info('🎯 被邀请方接受群组通话，开始获取群成员信息...');
 
             // 从邀请信息或CallService获取群组ID
             let groupId: string | undefined;
@@ -1279,21 +1313,21 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               groupId = callInfo?.groupId;
             }
 
-            console.log('🔍 被邀请方获取到的群组ID:', groupId);
+            logger.info('🔍 被邀请方获取到的群组ID:', groupId);
 
             if (groupId && chatClient && userInfoProvider) {
               try {
                 // 使用封装的方法获取群成员信息
                 const formattedMembers = await fetchGroupMembers(groupId, '被邀请方接受邀请');
-                console.log('✅ 被邀请方成功获取群成员信息:', {
+                logger.info('✅ 被邀请方成功获取群成员信息:', {
                   成员数量: formattedMembers.length,
                   成员列表: formattedMembers.map((m: any) => `${m.userId}(${m.nickname})`),
                 });
               } catch (error) {
-                console.warn('⚠️ 被邀请方获取群成员信息失败:', error);
+                logger.warn('⚠️ 被邀请方获取群成员信息失败:', error);
               }
             } else {
-              console.warn('⚠️ 被邀请方无法获取群成员信息:', {
+              logger.warn('⚠️ 被邀请方无法获取群成员信息:', {
                 有群组ID: !!groupId,
                 有webimConnection: !!chatClient,
                 有userInfoProvider: !!userInfoProvider,
@@ -1467,7 +1501,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
         // 🔧 新增：被邀请方直接接听群组通话时，获取群成员信息确保nickname正确显示
         if (currentCallMode === 'group' && invitationData.groupId) {
-          console.log('🎯 被邀请方直接接听群组通话，开始获取群成员信息...');
+          logger.info('🎯 被邀请方直接接听群组通话，开始获取群成员信息...');
 
           if (chatClient && userInfoProvider) {
             try {
@@ -1476,15 +1510,15 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 invitationData.groupId,
                 '被邀请方直接接听',
               );
-              console.log('✅ 被邀请方直接接听时成功获取群成员信息:', {
+              logger.info('✅ 被邀请方直接接听时成功获取群成员信息:', {
                 成员数量: formattedMembers.length,
                 成员列表: formattedMembers.map((m: any) => `${m.userId}(${m.nickname})`),
               });
             } catch (error) {
-              console.warn('⚠️ 被邀请方直接接听时获取群成员信息失败:', error);
+              logger.warn('⚠️ 被邀请方直接接听时获取群成员信息失败:', error);
             }
           } else {
-            console.warn('⚠️ 被邀请方无法获取群成员信息:', {
+            logger.warn('⚠️ 被邀请方无法获取群成员信息:', {
               有webimConnection: !!chatClient,
               有userInfoProvider: !!userInfoProvider,
               邀请groupId: invitationData.groupId,
@@ -1495,30 +1529,30 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         // 如果是多人视频通话，需要先创建本地视频轨道
         if (currentCallMode === 'group' && hasInitialized && callServiceRef.current) {
           try {
-            console.log('多人视频通话：直接接听，开始创建本地视频轨道');
+            logger.info('多人视频通话：直接接听，开始创建本地视频轨道');
             await callServiceRef.current.createLocalVideoTrackForGroupCall();
           } catch (error) {
-            console.error('多人视频通话：创建本地视频轨道失败:', error);
+            logger.error('多人视频通话：创建本地视频轨道失败:', error);
           }
         }
 
         // 🔧 修复：1v1视频通话直接接听，使用与preview页面相同的回调逻辑
         if (currentCallMode === 'video' && hasInitialized && callServiceRef.current) {
           try {
-            console.log('🔧 1v1视频通话：点击接听，创建预览视频轨道');
+            logger.info('🔧 1v1视频通话：点击接听，创建预览视频轨道');
             await callServiceRef.current.createLocalVideoTrackFor1v1Preview();
           } catch (error) {
-            console.error('🔧 1v1视频通话：创建预览视频轨道失败:', error);
+            logger.error('🔧 1v1视频通话：创建预览视频轨道失败:', error);
           }
         }
 
         // 🔧 CallKit内部自动调用answerCall，现在有防重复调用保护
         if (hasInitialized && callServiceRef.current) {
           try {
-            console.log('🔧 CallKit内部自动执行接听操作');
+            logger.info('🔧 CallKit内部自动执行接听操作');
             await callServiceRef.current.answerCall(true);
           } catch (error) {
-            console.error('🔧 CallKit自动接听失败:', error);
+            logger.error('🔧 CallKit自动接听失败:', error);
           }
         }
 
@@ -1538,10 +1572,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         // 🔧 CallKit内部自动调用answerCall，现在有防重复调用保护
         if (hasInitialized && callServiceRef.current) {
           try {
-            console.log('🔧 CallKit内部自动执行拒绝操作');
+            logger.info('🔧 CallKit内部自动执行拒绝操作');
             await callServiceRef.current.answerCall(false);
           } catch (error) {
-            console.error('🔧 CallKit自动拒绝失败:', error);
+            logger.error('🔧 CallKit自动拒绝失败:', error);
           }
         }
 
@@ -1565,7 +1599,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         // 隐藏通知，显示预览界面
         notificationApiRef.current.destroy(invitationNotificationKey);
         setIsShowingPreview(true);
-        console.log('invitation --->', invitation);
+        logger.info('invitation --->', invitation);
 
         // 设置通话模式：invitation.type 现在已经是正确的字符串类型
         const currentCallMode = invitation.type === 'group' ? 'group' : invitation.type;
@@ -1580,7 +1614,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 invitation.groupId,
                 '被邀请方预览界面',
               );
-              console.log('✅ 被邀请方预览时成功获取群成员信息:', {
+              logger.info('✅ 被邀请方预览时成功获取群成员信息:', {
                 成员数量: formattedMembers.length,
                 成员列表: formattedMembers.map((m: any) => `${m.userId}(${m.nickname})`),
               });
@@ -1598,10 +1632,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         // 🔧 修复：根据通话类型创建相应的视频轨道
         if (hasInitialized && callServiceRef.current) {
           if (currentCallMode === 'group') {
-            console.log('🔧 notification点击：群组通话，创建群组视频轨道');
+            logger.info('🔧 notification点击：群组通话，创建群组视频轨道');
             await callServiceRef.current.createLocalVideoTrackForGroupCall();
           } else if (currentCallMode === 'video') {
-            console.log('🔧 notification点击：1v1视频通话，创建预览视频轨道');
+            logger.info('🔧 notification点击：1v1视频通话，创建预览视频轨道');
             await callServiceRef.current.createLocalVideoTrackFor1v1Preview();
           }
         }
@@ -1707,7 +1741,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 获取实际的布局模式 - 根据通话状态和类型动态选择
   const actualLayoutMode = useMemo(() => {
-    console.log('🔧 actualLayoutMode 计算:', {
+    logger.info('🔧 actualLayoutMode 计算:', {
       isMinimized,
       layoutMode,
       callMode,
@@ -1841,7 +1875,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
   }, [managedPosition, internalPosition, internalSize, style]);
 
-  console.log('🚀 actualLayoutMode ==', actualLayoutMode);
+  logger.info('🚀 actualLayoutMode ==', actualLayoutMode);
   // 容器类名
   const containerClass = React.useMemo(
     () =>
@@ -1887,7 +1921,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 恢复到正常大小（不执行切换，直接恢复）
   const restoreToNormalSize = React.useCallback(() => {
-    console.log('🔧 执行恢复到正常大小的DOM操作');
+    logger.info('🔧 执行恢复到正常大小的DOM操作');
     if (managedPosition) {
       const element = internalRef.current;
       if (element) {
@@ -1961,7 +1995,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
 
     setIsMinimized(newMinimizedState);
-    console.log('🚀 handleMinimizedToggle 最小化状态', newMinimizedState);
+    logger.info('🚀 handleMinimizedToggle 最小化状态', newMinimizedState);
     if (managedPosition) {
       // 如果是最小化状态，执行自动吸附动画
       if (newMinimizedState) {
@@ -2154,7 +2188,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       // 🔧 调试日志
       if (video.isLocalVideo) {
-        console.log('🔧 UI渲染判断:', {
+        logger.info('🔧 UI渲染判断:', {
           videoId: video.id,
           原始cameraEnabled: video.cameraEnabled,
           标准化cameraEnabled: normalizedCameraEnabled,
@@ -2170,15 +2204,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             : '摄像头开启但无视频-显示黑屏',
         });
       }
-      console.log('---->renderVideoWindow', video);
+      logger.info('---->renderVideoWindow', video);
       if (video.videoElement) {
         alert(video.id);
       }
-      // 移除调试日志
-      // if (shouldShowVideo && !video.videoElement && !video.stream) {
-      //   console.log('---->video', video);
-      //   alert(video.id);
-      // }
       return (
         <div
           key={video.id}
@@ -2210,115 +2239,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                   muted={Boolean(video.muted)}
                   prefixCls={prefixCls}
                 />
-              ) : // 🔧 改进：当 stream 为空但需要显示视频时，尝试从 CallService 获取视频流
-              // <video
-              //   ref={ref => {
-              //     if (ref) {
-              //       // 🔧 使用更可靠的重复播放检测
-              //       const videoTrackId = ref.dataset.playingTrackId;
-              //       const videoUserId = video.isLocalVideo
-              //         ? 'local'
-              //         : video.id.replace('remote-', '');
-
-              //       // 尝试播放视频轨道
-              //       const playVideoTrack = async () => {
-              //         try {
-              //           // 获取CallService实例
-              //           const callService = (window as any).callService;
-              //           if (!callService) {
-              //             console.log('CallService不可用');
-              //             return;
-              //           }
-
-              //           let targetTrack = null;
-              //           let trackId = '';
-
-              //           if (
-              //             video.isLocalVideo &&
-              //             normalizedCameraEnabled &&
-              //             callService.rtc?.localVideoTrack
-              //           ) {
-              //             // 本地视频轨道
-              //             targetTrack = callService.rtc.localVideoTrack;
-              //             trackId = targetTrack?.getTrackId?.() || 'local-track';
-
-              //             // 检查是否已经在播放这个轨道
-              //             if (videoTrackId === trackId) {
-              //               console.log('本地视频轨道已经在播放，跳过:', trackId);
-              //               return;
-              //             }
-
-              //             console.log('🎬 通过 renderVideoWindow 播放本地视频轨道到:', ref);
-              //             await targetTrack.play(ref);
-              //             ref.dataset.playingTrackId = trackId;
-              //             ref.dataset.trackPlayed = 'true';
-              //             console.log('✅ 本地视频轨道播放成功');
-              //           } else if (!video.isLocalVideo && normalizedCameraEnabled) {
-              //             // 🔧 远程视频轨道 - 使用新的Map方式获取
-              //             targetTrack = callService.getRemoteVideoTrack?.(videoUserId);
-              //             trackId = targetTrack?.getTrackId?.() || '';
-
-              //             if (!targetTrack) {
-              //               console.log(`❌ 最终找不到用户 ${videoUserId} 的视频轨道`, {
-              //                 videoUserId,
-              //                 videoId: video.id,
-              //                 所有远程轨道: callService.getAllRemoteVideoTracks?.(),
-              //               });
-              //               return;
-              //             }
-
-              //             // 检查是否已经在播放这个轨道
-              //             if (videoTrackId === trackId) {
-              //               console.log('远程视频轨道已经在播放，跳过:', trackId);
-              //               return;
-              //             }
-
-              //             await targetTrack.play(ref);
-              //             ref.dataset.playingTrackId = trackId;
-              //             ref.dataset.trackPlayed = 'true';
-              //             console.log('✅ 远程视频轨道播放成功');
-              //           } else {
-              //             console.log('🚫 无法播放视频 - 检查条件:', {
-              //               isLocalVideo: video.isLocalVideo,
-              //               原始cameraEnabled: video.cameraEnabled,
-              //               标准化cameraEnabled: normalizedCameraEnabled,
-              //               hasCallService: !!callService,
-              //               hasRtc: !!callService?.rtc,
-              //               hasLocalVideoTrack: !!callService?.rtc?.localVideoTrack,
-              //               videoId: video.id,
-              //               userId: videoUserId,
-              //               shouldShowVideo: shouldShowVideo,
-              //               hasGetRemoteVideoTrack:
-              //                 typeof callService.getRemoteVideoTrack === 'function',
-              //             });
-              //           }
-              //         } catch (error) {
-              //           console.warn('❌ 视频轨道播放失败:', error);
-              //           // 清除失败的标记，允许下次重试
-              //           ref.dataset.playingTrackId = '';
-              //           ref.dataset.trackPlayed = '';
-              //         }
-              //       };
-
-              //       // 延迟执行播放，确保DOM已经准备好
-              //       setTimeout(playVideoTrack, 100);
-              //     }
-              //   }}
-              //   className={`${prefixCls}-video`}
-              //   data-video-id={video.id}
-              //   data-local={video.isLocalVideo}
-              //   muted={video.muted}
-              //   autoPlay
-              //   playsInline
-              //   style={
-              //     video.isLocalVideo || video.id === 'local'
-              //       ? {
-              //           transform: 'scaleX(-1) !important',
-              //         }
-              //       : undefined
-              //   }
-              // />
-              video.avatar ? (
+              ) : video.avatar ? (
                 <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                   <img
                     src={video.avatar}
@@ -2501,10 +2422,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       // 🔧 预览模式：CallKit内部自动调用answerCall，现在有防重复调用保护
       if (hasInitialized && callServiceRef.current) {
         try {
-          console.log('🔧 预览模式：CallKit内部自动执行接听操作');
+          logger.info('🔧 预览模式：CallKit内部自动执行接听操作');
           await callServiceRef.current.answerCall(true);
         } catch (error) {
-          console.error('🔧 预览模式：CallKit自动接听失败:', error);
+          logger.error('🔧 预览模式：CallKit自动接听失败:', error);
         }
       }
 
@@ -2524,10 +2445,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     // 🔧 预览模式：CallKit内部自动调用answerCall，现在有防重复调用保护
     if (hasInitialized && callServiceRef.current && invitation) {
       try {
-        console.log('🔧 预览模式：CallKit内部自动执行拒绝操作');
+        logger.info('🔧 预览模式：CallKit内部自动执行拒绝操作');
         await callServiceRef.current.answerCall(false);
       } catch (error) {
-        console.error('🔧 预览模式：CallKit自动拒绝失败:', error);
+        logger.error('🔧 预览模式：CallKit自动拒绝失败:', error);
       }
     }
 
@@ -2545,7 +2466,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
     // 🔧 新增：重置CallKit尺寸和位置到初始状态
     if (managedPosition) {
-      console.log('🔧 handlePreviewReject: 重置CallKit尺寸和位置到初始状态');
+      logger.info('🔧 handlePreviewReject: 重置CallKit尺寸和位置到初始状态');
       setInternalSize(initialSize);
       setInternalPosition(initialPosition);
 
@@ -2586,7 +2507,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 处理添加参与者按钮点击
   const handleAddParticipant = async () => {
-    console.log('🚀 打开用户选择弹窗:', {
+    logger.info('🚀 打开用户选择弹窗:', {
       effectiveGroupMembers数量: effectiveGroupMembers.length,
       effectiveGroupMembers: effectiveGroupMembers.map(m => ({
         userId: m.userId,
@@ -2608,7 +2529,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       hasInitialized &&
       callServiceRef.current
     ) {
-      console.log('🔍 被邀请方需要获取群成员，开始动态获取...', {
+      logger.info('🔍 被邀请方需要获取群成员，开始动态获取...', {
         hasUserInfoProvider: !!userInfoProvider,
         effectiveGroupMembersLength: effectiveGroupMembers.length,
       });
@@ -2618,7 +2539,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         const currentCallInfo = callServiceRef.current.getCurrentCallInfo();
         const targetGroupId = currentCallInfo?.groupId;
 
-        console.log('📞 当前通话信息:', {
+        logger.info('📞 当前通话信息:', {
           callInfo: currentCallInfo,
           groupId: targetGroupId,
           callType: currentCallInfo?.type,
@@ -2632,21 +2553,21 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           setWebimGroupMembers(formattedMembers);
           setIsLoadingGroupMembers(false);
 
-          console.log('✅ 被邀请方动态获取群成员成功:', {
+          logger.info('✅ 被邀请方动态获取群成员成功:', {
             获取成员数量: formattedMembers.length,
             成员列表: formattedMembers.map((m: any) => `${m.userId}(${m.nickname})`),
           });
         } else {
-          console.warn('⚠️ 无法获取群组ID，可能不是群组通话');
+          logger.warn('⚠️ 无法获取群组ID，可能不是群组通话');
           // 如果无法获取群组ID，提供一个提示但仍然打开选择界面
-          console.log('📝 无群组ID，使用传统groupMembers或提示用户');
+          logger.info('📝 无群组ID，使用传统groupMembers或提示用户');
         }
       } catch (error) {
-        console.error('❌ 获取通话信息失败:', error);
+        logger.error('❌ 获取通话信息失败:', error);
       }
     } else if (effectiveGroupMembers.length === 0) {
       // 没有任何群成员数据，且不满足动态获取条件
-      console.log('⚠️ 无群成员数据且无法动态获取:', {
+      logger.info('⚠️ 无群成员数据且无法动态获取:', {
         hasWebimConnection: !!chatClient,
         hasCallService: !!callServiceRef.current,
         hasInitialized,
@@ -2679,7 +2600,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       // 🔧 新增：重置CallKit尺寸和位置到初始状态
       if (managedPosition) {
-        console.log('🔧 handleUserSelectCancel: 重置CallKit尺寸和位置到初始状态');
+        logger.info('🔧 handleUserSelectCancel: 重置CallKit尺寸和位置到初始状态');
         setInternalSize(initialSize);
         setInternalPosition(initialPosition);
 
@@ -2735,7 +2656,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               };
               if (callServiceRef.current) {
                 callServiceRef.current.setUserInfo(userInfoMap);
-                console.log('📝 发起群组通话前，已设置用户信息到CallService:', {
+                logger.info('📝 发起群组通话前，已设置用户信息到CallService:', {
                   用户数量: Object.keys(userInfoMap).length,
                   用户列表: Object.entries(userInfoMap).map(
                     ([userId, info]) => `${userId}(${info.nickname})`,
@@ -2780,21 +2701,21 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           let finalGroupAvatar: string | undefined;
           if (groupInfoProvider) {
             try {
-              console.log('🔍 获取群组信息:', groupId);
+              logger.info('🔍 获取群组信息:', groupId);
               const groupInfos = await Promise.resolve(groupInfoProvider([groupId]));
               const groupInfo = groupInfos.find(info => info.groupId === groupId);
               if (groupInfo?.groupName) {
                 finalGroupName = groupInfo.groupName;
                 finalGroupAvatar = groupInfo.groupAvatar;
-                console.log('✅ 成功获取群组名称:', finalGroupName);
+                logger.info('✅ 成功获取群组名称:', finalGroupName);
               } else {
-                console.log('⚠️ 未获取到群组名称，使用默认值:', finalGroupName);
+                logger.info('⚠️ 未获取到群组名称，使用默认值:', finalGroupName);
               }
             } catch (error) {
-              console.warn('❌ 获取群组信息失败，使用默认值:', error);
+              logger.warn('❌ 获取群组信息失败，使用默认值:', error);
             }
           } else {
-            console.log('⚠️ 未配置groupInfoProvider，使用groupId作为群组名称');
+            logger.info('⚠️ 未配置groupInfoProvider，使用groupId作为群组名称');
           }
 
           // 🔧 设置主叫目标群组信息，用于Header显示
@@ -2803,7 +2724,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             targetGroupName: finalGroupName,
             targetGroupAvatar: finalGroupAvatar,
           });
-
+          logger.info('🔧 handleUserSelectConfirm: 开始发起群组通话', {
+            groupId,
+            finalGroupName,
+            finalGroupAvatar,
+            members,
+            groupCallType,
+          });
           try {
             const msg = await callServiceRef.current.startCall({
               callId: generateRandomChannel(10),
@@ -2813,6 +2740,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               to: members, // 主要接收者
               groupId: groupId,
               groupName: finalGroupName, // 使用获取到的群组名称或默认值
+              groupAvatar: finalGroupAvatar,
               members,
               msg: groupCallInviteMsg,
               ext,
@@ -2882,7 +2810,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             };
           });
           callServiceRef.current.setUserInfo(newUserInfoMap);
-          console.log('📝 添加参与者前，已设置新成员信息到CallService:', {
+          logger.info('📝 添加参与者前，已设置新成员信息到CallService:', {
             新成员数量: newMembers.length,
             新成员列表: newMembers.map((m: any) => `${m.userId}(${m.nickname})`),
           });
@@ -2891,7 +2819,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           const memberIds = newMembers.map(user => user.userId);
           callServiceRef.current.addParticipants(memberIds).then(success => {
             if (success) {
-              console.log('成功邀请新成员:', memberIds);
+              logger.info('成功邀请新成员:', memberIds);
 
               // 为新邀请的成员创建等待状态的视频窗口
               const newVideoWindows: VideoWindowProps[] = newMembers.map(user => ({
@@ -2912,11 +2840,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 setInvitationTimer(user.userId, timeoutMs, handleInvitationTimeout);
               });
 
-              console.log(
+              logger.info(
                 `🔧 为 ${newMembers.length} 个用户设置邀请定时器，超时时间: ${autoRejectTime}秒`,
               );
             } else {
-              console.error('邀请新成员失败');
+              logger.error('邀请新成员失败');
             }
           });
         }
@@ -2938,7 +2866,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         const userInfo = userInfos.find((info: any) => info.userId === userId);
         return userInfo?.avatarUrl; // 不使用假数据，让组件显示默认图标
       } catch (error) {
-        console.warn(`获取用户 ${userId} 头像失败:`, error);
+        logger.warn(`获取用户 ${userId} 头像失败:`, error);
         return undefined; // 不使用假数据，让组件显示默认图标
       }
     },
@@ -2985,7 +2913,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   const handleCameraToggle = React.useCallback(
     async (newCameraEnabled: boolean) => {
-      console.log('🔧 CallKit: handleCameraToggle被调用', {
+      logger.info('🔧 CallKit: handleCameraToggle被调用', {
         newCameraEnabled,
         hasInitialized,
         hasCallService: !!callServiceRef.current,
@@ -2995,20 +2923,20 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       if (hasInitialized && callServiceRef.current) {
         // 使用 CallService 的实际控制方法（异步）
         try {
-          console.log('🔧 CallKit: 调用 CallService.toggleCamera()');
+          logger.info('🔧 CallKit: 调用 CallService.toggleCamera()');
           const actualCameraEnabled = await callServiceRef.current.toggleCamera();
-          console.log('🔧 CallKit: toggleCamera返回结果:', actualCameraEnabled);
+          logger.info('🔧 CallKit: toggleCamera返回结果:', actualCameraEnabled);
 
           // 更新内部状态
           setRealCallCameraEnabled(actualCameraEnabled);
           // 触发外部回调，传递实际状态
           onCameraToggle?.(actualCameraEnabled);
         } catch (error) {
-          console.error('切换摄像头失败:', error);
+          logger.error('切换摄像头失败:', error);
         }
       } else {
         // 演示模式，直接调用外部回调
-        console.log('🔧 CallKit: 演示模式，直接调用外部回调');
+        logger.info('🔧 CallKit: 演示模式，直接调用外部回调');
         onCameraToggle?.(newCameraEnabled);
       }
     },
@@ -3041,7 +2969,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   );
 
   const handleHangup = React.useCallback(() => {
-    console.log('🔧 handleHangup 被调用', {
+    logger.info('🔧 handleHangup 被调用', {
       hasInitialized,
       hasCallService: !!callServiceRef.current,
       callStatus,
@@ -3050,7 +2978,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
     if (hasInitialized && callServiceRef.current) {
       const isInPreviewMode = isShowingPreview && callStatus === 'calling';
-      console.log('🚀 准备挂断通话:', { isInPreviewMode, callStatus, isShowingPreview });
+      logger.info('🚀 准备挂断通话:', { isInPreviewMode, callStatus, isShowingPreview });
       callServiceRef.current.cancelGroupCall();
       callServiceRef.current.hangup('hangup', isInPreviewMode);
       callServiceRef.current.sendHangupMessage();
@@ -3073,7 +3001,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       // 🔧 新增：重置CallKit尺寸和位置到初始状态
       if (managedPosition) {
-        console.log('🔧 handleHangup: 重置CallKit尺寸和位置到初始状态');
+        logger.info('🔧 handleHangup: 重置CallKit尺寸和位置到初始状态');
         setInternalSize(initialSize);
         setInternalPosition(initialPosition);
 
@@ -3111,7 +3039,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   // 合并群成员数据：优先使用从IM SDK获取的数据，如果没有则使用传统的groupMembers
   const effectiveGroupMembers = React.useMemo(() => {
     if (webimGroupMembers.length > 0) {
-      console.log('📋 使用从startGroupCall动态获取的群成员数据:', webimGroupMembers);
+      logger.info('📋 使用从startGroupCall动态获取的群成员数据:', webimGroupMembers);
       return webimGroupMembers;
     }
     return groupMembers;
@@ -3197,7 +3125,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     // 🔧 对于群通话，控制按钮使用RTC真实状态；其他通话使用UI状态
     const isConnected = isGroupCall ? isRTCConnected : isUIConnected;
 
-    console.log('🔧 CallKit: 多人视频通话状态计算', {
+    logger.info('🔧 CallKit: 多人视频通话状态计算', {
       callMode,
       displayVideos: displayVideos.map(v => ({ id: v.id, isLocalVideo: v.isLocalVideo })),
       callStatus,

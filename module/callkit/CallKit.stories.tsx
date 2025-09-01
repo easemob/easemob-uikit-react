@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import CallKit from './CallKit';
 import { LayoutMode } from './types/index';
 import type { VideoWindowProps } from './types/index';
+import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from './utils/logger';
 
 const meta = {
   title: 'Module/CallKit/CallKit',
@@ -260,7 +261,7 @@ export const ResizableMode: Story = {
     speakerEnabled: true,
     screenSharing: false,
     onResize: (width: number, height: number) => {
-      console.log(`组件大小已调整为: ${width}x${height}`);
+      logDebug(`组件大小已调整为: ${width}x${height}`);
     },
   },
   parameters: {
@@ -291,7 +292,7 @@ export const ResizableOneToOne: Story = {
     speakerEnabled: true,
     screenSharing: false,
     onResize: (width: number, height: number) => {
-      console.log(`1v1模式组件大小已调整为: ${width}x${height}`);
+      logDebug(`1v1模式组件大小已调整为: ${width}x${height}`);
     },
   },
   parameters: {
@@ -369,14 +370,11 @@ export const MinimizedDemo = () => {
       <div style={{ marginBottom: '30px' }}>
         <h4>视频通话最小化 (120x80)</h4>
         <CallKit
-          videos={mockVideos1}
           managedPosition={true}
           initialPosition={{ left: 50, top: 50 }}
           initialSize={{ width: 600, height: 400 }}
           minimizedSize={{ width: 120, height: 80 }}
           isMinimized={isMinimized}
-          callDuration={callDuration}
-          onMinimizedToggle={setIsMinimized}
           resizable={true}
           draggable={true}
           showControls={true}
@@ -387,14 +385,11 @@ export const MinimizedDemo = () => {
       <div style={{ marginBottom: '30px' }}>
         <h4>语音通话最小化 (120x80) - 深色主题</h4>
         <CallKit
-          videos={[]} // 无视频，模拟语音通话
           managedPosition={true}
           initialPosition={{ left: 300, top: 50 }}
           initialSize={{ width: 600, height: 400 }}
           minimizedSize={{ width: 120, height: 80 }}
           isMinimized={isMinimized}
-          callDuration={callDuration}
-          onMinimizedToggle={setIsMinimized}
           resizable={true}
           draggable={true}
           showControls={true}

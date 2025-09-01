@@ -1,3 +1,4 @@
+import { logWarn } from './logger';
 /**
  * CallKit工具函数
  */
@@ -53,7 +54,7 @@ export const getUserAvatar = async (
     const userInfo = userInfos.find((info: any) => info.userId === userId);
     return userInfo?.avatarUrl; // 不使用假数据，让组件显示默认图标
   } catch (error) {
-    console.warn(`获取用户 ${userId} 头像失败:`, error);
+    logWarn(`获取用户 ${userId} 头像失败:`, error);
     return undefined; // 不使用假数据，让组件显示默认图标
   }
 };
