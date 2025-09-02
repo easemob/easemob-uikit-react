@@ -181,7 +181,6 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
     return undefined; // 返回undefined，让CSS默认样式生效
   }, [backgroundImage]);
 
-  logDebug('isMinimized', isMinimized);
   return (
     <div className={`${prefixCls}-multi-party-full-layout`} style={backgroundStyle}>
       {/* 最小化状态的特殊处理 */}

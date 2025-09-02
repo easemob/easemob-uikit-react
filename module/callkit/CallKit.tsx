@@ -229,7 +229,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       if (hasInitialized && callServiceRef.current) {
         callServiceRef.current.cancelInvitation(userId);
       }
-
+      logger.debug('handleInvitationTimeout', userId);
       setVideos(prevVideos => {
         const updatedVideos = prevVideos.filter(video => {
           const videoUserId = video.isLocalVideo
@@ -418,7 +418,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   }, []);
 
   const handleUserPublished = React.useCallback(
-    (userId: string, mediaType: string) => {
+    (userId: string) => {
       if (userId) {
         handleUserJoined(userId);
       }
@@ -2371,6 +2371,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   );
 
   const handleHangup = React.useCallback(() => {
+    logger.debug('handleHangup');
     if (hasInitialized && callServiceRef.current) {
       const isInPreviewMode = isShowingPreview && callStatus === 'calling';
       callServiceRef.current.cancelGroupCall();

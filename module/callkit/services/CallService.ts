@@ -72,7 +72,7 @@ export interface CallServiceConfig {
   onCallEnd?: (reason: string, callInfo: CallInfo) => void;
   onInvitationReceived?: (invitation: any) => void;
   onCallDurationUpdate?: (duration: string) => void;
-  onUserPublished?: (user: any, mediaType: string) => void;
+  onUserPublished?: (user: any) => void;
   // onUserLeft?: (user: any, reason: string) => void;
   onUserUnpublished?: (user: any, mediaType: string) => void;
   onRemoteVideoReady?: (videoInfo: VideoWindowProps) => void;
@@ -149,7 +149,7 @@ export class CallService {
   private onCallEnd?: (reason: string, callInfo: CallInfo) => void;
   private onInvitationReceived?: (invitation: any) => void;
   private onCallDurationUpdate?: (duration: string) => void;
-  private onUserPublished?: (user: any, mediaType: string) => void;
+  private onUserPublished?: (user: any) => void;
   // private onUserLeft?: (user: any, reason: string) => void;
   private onUserUnpublished?: (user: any, mediaType: string) => void;
   private onRemoteVideoReady?: (videoInfo: VideoWindowProps) => void;
@@ -223,7 +223,7 @@ export class CallService {
     this.onRemoteUserJoined = config.onRemoteUserJoined;
     this.onRemoteUserLeft = config.onRemoteUserLeft;
     this.onRtcEngineCreated = config.onRtcEngineCreated;
-    this.encoderConfig = config.encoderConfig;
+    this.encoderConfig = config.encoderConfig ?? '720p';
     // Initialize volume threshold
     this.speakingVolumeThreshold = config.speakingVolumeThreshold ?? 60;
     // Initialize ringtone configuration
@@ -562,6 +562,7 @@ export class CallService {
             nickname: myInfo.nickname,
             avatarURL: myInfo.avatarUrl,
           };
+          inviteExt.em_push_ext.custom.callerNickname = myInfo.nickname;
           this.setUserInfo({
             [this.userId]: myInfo,
           });
@@ -626,7 +627,8 @@ export class CallService {
       chatType: callInfo.type === CALL_TYPE.VIDEO_MULTI ? 'groupChat' : 'singleChat',
       type: 'txt',
       to: to,
-      msg: text,
+      msg:
+        text || (callInfo.type === CALL_TYPE.VIDEO_MULTI ? '邀请您进行群组通话' : '邀请您进行通话'),
       ext: inviteExt,
     };
     if (callInfo.type === CALL_TYPE.VIDEO_MULTI) {
@@ -1543,10 +1545,11 @@ export class CallService {
         logDebug('Members to send cancel message to:', membersToCancel);
 
         // 多人通话：只向未加入的成员发送取消消息
-
+        logDebug('---->sendCancelMessage3');
         this.sendCancelMessage(this.currentCallInfo.groupId || '', 'groupChat', membersToCancel);
       } else {
         // 一对一通话
+        logDebug('---->sendCancelMessage4');
         this.sendCancelMessage(this.currentCallInfo.calleeUserId || '', 'singleChat');
       }
     }
@@ -1635,7 +1638,7 @@ export class CallService {
     chatType: 'singleChat' | 'groupChat',
     receiverList?: string[],
   ) {
-    logDebug('---->sendCancelMessage', this.currentCallInfo, to);
+    logDebug('---->sendCancelMessage', this.currentCallInfo, to, receiverList);
     if (!this.currentCallInfo || !to) return;
     // 改成群通话发送群定向消息
 
@@ -1742,9 +1745,10 @@ export class CallService {
     // 监听用户加入
     this.client.on('user-joined', async (user: IAgoraRTCRemoteUser) => {
       logDebug('---->user-joined', user);
+      this.updateJoinedMember(user, '', true);
+      // 触发回调, 清楚邀请定时器
 
       // 获取用户ID映射
-
       let userId = this.UIdToUserIdMap.get(user.uid.toString()) || '';
       if (!userId) {
         try {
@@ -1759,6 +1763,8 @@ export class CallService {
           });
         }
       }
+      // 触发回调, 清楚邀请定时器
+      this.onUserPublished?.(userId);
       this.onRemoteUserJoined?.(userId, 'group');
 
       const hasAudioTrack = this.remoteAudioTracks.has(user.uid.toString());
@@ -1829,8 +1835,8 @@ export class CallService {
         }
         this.onRemoteUserJoined?.(userId, mediaType as 'video' | 'audio' | 'group');
 
-        // 触发回调
-        this.onUserPublished?.(userId, mediaType);
+        // 触发回调, 清楚邀请定时器
+        this.onUserPublished?.(userId);
         setTimeout(async () => {
           if (mediaType === 'video') {
             const remoteVideoTrack = user.videoTrack;
@@ -1903,7 +1909,11 @@ export class CallService {
             }
 
             // 播放远程音频
-            remoteAudioTrack.play();
+            try {
+              remoteAudioTrack.play();
+            } catch (error) {
+              logWarn('---->remoteAudioTrack.play error', error);
+            }
 
             // 🔧 1v1视频通话特殊处理：当只是音频状态变化时，不触发onRemoteVideoReady以避免闪动
             const is1v1VideoCall = this.currentCallInfo?.type === CALL_TYPE.VIDEO_1V1;
@@ -2121,6 +2131,7 @@ export class CallService {
   }
 
   private handleUserLeft(userId: string, reason: string) {
+    logDebug('---->handleUserLeft', userId, reason);
     this.onRemoteUserLeft?.(
       userId,
       this.currentCallInfo?.type as unknown as 'video' | 'audio' | 'group',
@@ -2176,6 +2187,7 @@ export class CallService {
           if (e.type === '206') {
             // 其他错误码场景下不存在该字段
             // 当前设备挤下线的新登录设备的自定义扩展信息。
+            logDebug('---->onDisconnected 206');
             this.hangup(HANGUP_REASON.ABNORMAL_END, true);
           }
         }
@@ -2340,6 +2352,7 @@ export class CallService {
         msgType: 'rtcCallWithAgora',
       },
     });
+    logDebug('---->sendConfirmRingMessage', msg);
     try {
       this.connection.send(msg);
 
@@ -2361,6 +2374,7 @@ export class CallService {
 
   // 处理确认响铃消息
   private async handleConfirmRingMessage(message: any) {
+    logDebug('---->handleConfirmRingMessage', message);
     const ext = message.ext;
 
     if (ext.calleeDevId !== this.connection.context.jid.clientResource) {
@@ -2374,6 +2388,7 @@ export class CallService {
     this.timer && clearTimeout(this.timer);
 
     if (!ext.status || this.callStatus < CALL_STATUS.ALERTING) {
+      logDebug('---->handleConfirmRingMessage 1');
       this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
       return;
     }
@@ -2444,6 +2459,7 @@ export class CallService {
         // 其他设备处理了
         const reason =
           ext.result === 'accept' ? 'accepted on other devices' : 'refused on other devices';
+        logDebug('---->handleAnswerCallMessage 2', reason);
         this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
         return;
       }
@@ -2467,6 +2483,7 @@ export class CallService {
         this.onInvitedUserRemoved?.(message.from, 'refused');
       } else {
         // 一对一通话 拒绝则挂断
+        logDebug('---->handleAnswerCallMessage 3', reason);
         this.hangup(reason);
       }
     } else {
@@ -2538,6 +2555,7 @@ export class CallService {
 
     // 收到其他设备的 confirmCallee 消息，挂断当前通话
     if (ext.calleeDevId !== this.connection.context.jid.clientResource) {
+      logDebug('---->handleConfirmCalleeMessage 2');
       this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
       return;
     }
@@ -2545,6 +2563,7 @@ export class CallService {
     // 收到拒绝或忙线的 confirmCallee 消息，挂断通话
     if (ext.result !== 'accept') {
       const reason = ext.result === 'busy' ? HANGUP_REASON.BUSY : HANGUP_REASON.REFUSE;
+      logDebug('---->handleConfirmCalleeMessage 3', reason);
       this.hangup(reason);
       return;
     }
@@ -2567,6 +2586,7 @@ export class CallService {
     }
 
     if (this.currentCallInfo && message.from === this.currentCallInfo.callerUserId) {
+      logDebug('---->handleCancelCallMessage 1');
       this.hangup(HANGUP_REASON.REMOTE_CANCEL);
     }
   }
@@ -2809,7 +2829,7 @@ export class CallService {
         // 4. 清空引用
         this.rtc.localVideoTrack = null;
       } catch (error) {
-        logError('❌ 关闭摄像头时发生错误:', error);
+        logError('close local video track failed:', error);
         // 即使出错也要清空引用，防止状态不一致
         this.rtc.localVideoTrack = null;
       }
@@ -2865,7 +2885,7 @@ export class CallService {
         logDebug('Preview mode: camera enabled');
         return true;
       } catch (error) {
-        logError('🔧 预览模式：创建视频轨道失败:', error);
+        logError('createCameraVideoTrack failed:', error);
         return false;
       }
     } else {
@@ -2898,7 +2918,7 @@ export class CallService {
         logDebug('Preview mode: camera disabled');
         return false;
       } catch (error) {
-        logError('🔧 预览模式：关闭摄像头失败:', error);
+        logError('close camera failed:', error);
         return false;
       }
     }
@@ -3044,7 +3064,7 @@ export class CallService {
 
       return true;
     } catch (error) {
-      logError('🔧 1v1视频通话：创建预览视频轨道失败:', error);
+      logError('createLocalVideoTrackFor1v1Preview failed:', error);
       return false;
     }
   }
@@ -3162,7 +3182,7 @@ export class CallService {
 
       // 如果所有元素都没找到，不再尝试字符串ID播放
       if (!played) {
-        logError('无法找到合适的video元素播放本地视频');
+        logError('cannot find video element to play local video');
       }
     }, 200); // 增加延迟时间到200ms
   }
@@ -3246,7 +3266,7 @@ export class CallService {
           });
           return mediaStream;
         } catch (error) {
-          logWarn(`🎬 方法1失败：从轨道获取 MediaStream 失败: ${uid}`, error);
+          logWarn(`Method 1 failed: get MediaStream from track: ${uid}`, error);
         }
       }
 
@@ -3275,7 +3295,7 @@ export class CallService {
           });
           return mediaStream;
         } catch (error) {
-          logWarn(`🎬 方法3失败：创建 MediaStream 失败: ${uid}`, error);
+          logWarn(`Method 3 failed: create MediaStream: ${uid}`, error);
         }
       }
 
@@ -3315,7 +3335,7 @@ export class CallService {
           });
           return mediaStream;
         } catch (error) {
-          logWarn(`🎬 方法6失败：从 getMediaStreamTrack 创建 MediaStream 失败: ${uid}`, error);
+          logWarn(`Method 6 failed: create MediaStream from getMediaStreamTrack: ${uid}`, error);
         }
       }
     }
@@ -3342,7 +3362,7 @@ export class CallService {
   // 添加参与者到当前通话
   async addParticipants(newMembers: string[]) {
     if (!this.currentCallInfo) {
-      logError('无法添加参与者：当前没有进行中的通话');
+      logError('cannot add participants: no ongoing call');
       return false;
     }
 
@@ -3356,12 +3376,12 @@ export class CallService {
       this.currentCallInfo.type !== CALL_TYPE.VIDEO_MULTI &&
       this.currentCallInfo.type !== CALL_TYPE.AUDIO_MULTI
     ) {
-      logError('无法添加参与者：当前不是多人通话');
+      logError('cannot add participants: not a multi-party call');
       return false;
     }
 
     if (newMembers.length === 0) {
-      logWarn('没有新成员需要添加');
+      logWarn('no new members to add');
       return false;
     }
 
@@ -3390,7 +3410,7 @@ export class CallService {
 
       return true;
     } catch (error) {
-      logError('添加参与者失败:', error);
+      logError('add participants failed:', error);
       return false;
     }
   }
@@ -3398,12 +3418,12 @@ export class CallService {
   // 群通话 被邀请人超时了， 发送取消
   async cancelInvitation(userId: string) {
     if (!this.currentCallInfo) {
-      logError('无法取消邀请：当前没有进行中的通话');
+      logError('cannot cancel invitation: no ongoing call');
       return false;
     }
 
     if (this.callStatus !== CALL_STATUS.IN_CALL) {
-      logError('无法取消邀请：当前不在通话中');
+      logError('cannot cancel invitation: not in call');
       return false;
     }
 
@@ -3412,7 +3432,7 @@ export class CallService {
       this.currentCallInfo.type !== CALL_TYPE.VIDEO_MULTI &&
       this.currentCallInfo.type !== CALL_TYPE.AUDIO_MULTI
     ) {
-      logError('无法取消邀请：当前不是多人通话');
+      logError('cannot cancel invitation: not a multi-party call');
       return false;
     }
 
@@ -3431,11 +3451,12 @@ export class CallService {
       }
 
       // 发送取消邀请消息
+      logDebug('---->sendCancelMessage1');
       await this.sendCancelMessage(this.currentCallInfo.groupId || '', 'groupChat', [userId]);
 
       return true;
     } catch (error) {
-      logError('取消邀请失败:', error);
+      logError('cancel invitation failed:', error);
       return false;
     }
   }
@@ -3443,7 +3464,7 @@ export class CallService {
   // 取消群组通话，给每个人都发送 cancel 消息
   async cancelGroupCall() {
     if (!this.currentCallInfo) {
-      logError('无法取消群组通话：当前没有进行中的通话');
+      logError('cannot cancel group call: no ongoing call');
       return false;
     }
 
@@ -3477,6 +3498,7 @@ export class CallService {
     // 获取所有成员
     const members = this.currentCallInfo.invitedMembers;
     if (membersToCancel.length > 0) {
+      logDebug('---->sendCancelMessage2');
       await this.sendCancelMessage(
         this.currentCallInfo.groupId || '',
         'groupChat',
@@ -3583,7 +3605,9 @@ export class CallService {
           setTimeout(() => tryPlayVideo(attempt + 1, maxAttempts), delay);
           return;
         } else {
-          logWarn(`❌ 重试 ${maxAttempts} 次后仍未找到用户 ${userId} 对应的video元素`);
+          logWarn(
+            `❌ Retry ${maxAttempts} times but still cannot find video element for user ${userId}`,
+          );
           // 🔧 改进：将轨道存储到等待队列中，等待UI通知
           const videoId = `remote-${userId}`;
           this.pendingVideoTracks.set(videoId, remoteVideoTrack);
@@ -3629,7 +3653,7 @@ export class CallService {
             logDebug(`User ${userId} video track playback completed (sync mode)`);
           }
         } catch (error) {
-          logError(`❌ 播放用户 ${userId} 的视频轨道时发生错误:`, error);
+          logError(`❌ Error playing video track for user ${userId}:`, error);
           targetElement.dataset.playedTrackId = '';
 
           // 如果播放失败且还有重试机会，重试播放
@@ -3639,7 +3663,7 @@ export class CallService {
           }
         }
       } else {
-        logWarn(`❌ 用户 ${userId} 的视频轨道不可用`);
+        logWarn(`❌ Video track for user ${userId} is not available`);
       }
     };
 
@@ -3723,7 +3747,7 @@ export class CallService {
         // 取消发布所有本地轨道
         if (tracksToUnpublish.length > 0) {
           logDebug(
-            '清理预览模式：正在取消发布本地轨道...',
+            'Clean up preview mode: unpublishing local tracks...',
             tracksToUnpublish.map(t => t.trackMediaType),
           );
           await this.client.unpublish(tracksToUnpublish);
@@ -3738,7 +3762,7 @@ export class CallService {
           logDebug('Clean up preview mode: failed to leave channel (may not have joined):', error);
         }
       } catch (error) {
-        logError('清理预览模式：取消发布轨道失败:', error);
+        logError('clean up preview mode: failed to unpublish tracks:', error);
       }
     }
 
@@ -3755,13 +3779,13 @@ export class CallService {
 
         if (tracksToSafeUnpublish.length > 0) {
           logDebug(
-            '🔧 预览模式安全清理：取消发布本地轨道',
+            '🔧 Safe cleanup preview mode: unpublishing local tracks',
             tracksToSafeUnpublish.map(t => t.trackMediaType),
           );
           await this.client.unpublish(tracksToSafeUnpublish);
         }
       } catch (error) {
-        logWarn('❌ 预览模式安全清理：取消发布轨道失败（忽略）:', error);
+        logWarn('❌ Safe cleanup preview mode: failed to unpublish tracks (ignore):', error);
         // 忽略错误，继续关闭轨道
       }
     }
@@ -3776,7 +3800,7 @@ export class CallService {
         const mediaStreamTrack = this.rtc.localAudioTrack.getMediaStreamTrack?.();
         if (mediaStreamTrack) {
           logDebug(
-            '🔧 预览模式：停止音频MediaStreamTrack:',
+            '🔧 Stop audio MediaStreamTrack in preview mode:',
             mediaStreamTrack.id,
             '状态:',
             mediaStreamTrack.readyState,
@@ -3793,7 +3817,7 @@ export class CallService {
 
         logDebug('Preview mode: local audio track completely closed and reference cleared');
       } catch (error) {
-        logError('❌ 预览模式：关闭音频轨道时发生错误:', error);
+        logError('❌ Error closing audio track in preview mode:', error);
         // 即使出错也要清空引用
         this.rtc.localAudioTrack = null;
       }
@@ -3806,7 +3830,7 @@ export class CallService {
         // 获取轨道的MediaStream
         const mediaStreamTrack = this.rtc.localVideoTrack.getMediaStreamTrack?.();
         if (mediaStreamTrack) {
-          logDebug('Preview mode: stop underlying MediaStreamTrack:', mediaStreamTrack.id);
+          logDebug('Stop underlying MediaStreamTrack in preview mode:', mediaStreamTrack.id);
           mediaStreamTrack.stop();
         }
 
@@ -3816,7 +3840,7 @@ export class CallService {
 
         logDebug('Preview mode: local video track completely closed');
       } catch (error) {
-        logError('❌ 预览模式：关闭视频轨道时发生错误:', error);
+        logError('❌ Error closing video track in preview mode:', error);
         // 即使出错也要清空引用
         this.rtc.localVideoTrack = null;
       }
@@ -3825,7 +3849,7 @@ export class CallService {
     // 清理本地视频流缓存
     if (this.localVideoStream) {
       this.localVideoStream.getTracks().forEach(track => {
-        logDebug('Preview mode: stop track in cached stream:', track.id);
+        logDebug('Stop track in cached stream in preview mode:', track.id);
         track.stop();
       });
       this.localVideoStream = null;
@@ -3881,7 +3905,7 @@ export class CallService {
             const tracks = mediaStream.getTracks();
             if (tracks.length > 0) {
               logDebug(
-                `🔧 发现视频元素 ${index} 仍有活跃轨道，正在清理:`,
+                `Found active track in video element ${index}, cleaning up:`,
                 tracks.map(t => ({ id: t.id, kind: t.kind, readyState: t.readyState })),
               );
               tracks.forEach(track => {
@@ -3905,7 +3929,7 @@ export class CallService {
             const tracks = mediaStream.getTracks();
             if (tracks.length > 0) {
               logDebug(
-                `🔧 发现音频元素 ${index} 仍有活跃轨道，正在清理:`,
+                `Found active track in audio element ${index}, cleaning up:`,
                 tracks.map(t => ({ id: t.id, kind: t.kind, readyState: t.readyState })),
               );
               tracks.forEach(track => {
@@ -3927,7 +3951,7 @@ export class CallService {
 
       logDebug('Global media track check completed');
     } catch (error) {
-      logError('❌ 全局媒体轨道检查失败:', error);
+      logError('Global media track check failed:', error);
     }
   }
 
@@ -3971,7 +3995,7 @@ export class CallService {
         try {
           this.rtc.localAudioTrack.stop();
         } catch (error) {
-          logWarn('清理本地音频轨道失败:', error);
+          logWarn('clean up local audio track failed:', error);
         }
         this.rtc.localAudioTrack = null;
       }
@@ -3980,7 +4004,7 @@ export class CallService {
         try {
           this.rtc.localVideoTrack.stop();
         } catch (error) {
-          logWarn('清理本地视频轨道失败:', error);
+          logWarn('clean up local video track failed:', error);
         }
         this.rtc.localVideoTrack = null;
       }
@@ -4039,7 +4063,7 @@ export class CallService {
 
       // 检查是否超时
       if (Date.now() - startTime > maxWaitTime) {
-        logWarn(`⏰ 等待视频元素超时: ${videoId}`);
+        logWarn(`⏰ Wait for video element timeout: ${videoId}`);
         // 回退到原来的重试机制
         this.playRemoteVideoToExistingElements(track, videoId.replace('remote-', ''));
         return;
@@ -4068,7 +4092,7 @@ export class CallService {
         this.outgoingRingtoneAudio.preload = 'auto';
         logDebug('Outgoing call ringtone initialized successfully:', this.outgoingRingtoneSrc);
       } catch (error) {
-        logError('🔔 拨打电话铃声初始化失败:', error);
+        logError('Initialize outgoing call ringtone failed:', error);
         this.outgoingRingtoneAudio = null;
       }
     }
@@ -4082,7 +4106,7 @@ export class CallService {
         this.incomingRingtoneAudio.preload = 'auto';
         logDebug('Incoming call ringtone initialized successfully:', this.incomingRingtoneSrc);
       } catch (error) {
-        logError('🔔 接听电话铃声初始化失败:', error);
+        logError('Initialize incoming call ringtone failed:', error);
         this.incomingRingtoneAudio = null;
       }
     }
@@ -4135,7 +4159,7 @@ export class CallService {
       this.isRingtonePlaying = false;
       this.currentRingtoneType = null;
     } catch (error) {
-      logError('🔔 停止铃声失败:', error);
+      logError('Stop ringtone failed:', error);
     }
   }
 

@@ -579,7 +579,6 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
   // 选择布局策略
   const strategy = isMainVideoMode ? new MainVideoLayoutStrategy() : new MultiPartyLayoutStrategy();
   const layoutConfig = strategy.calculateLayout(videos.length, containerSize);
-  logDebug('layoutConfig', containerSize, layoutConfig);
   const videoSize = strategy.calculateVideoSize(layoutConfig, containerSize, layoutOptions);
 
   // 包装 renderVideoWindow 函数，添加点击事件和 hover 图标

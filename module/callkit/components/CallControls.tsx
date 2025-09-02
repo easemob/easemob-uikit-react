@@ -464,7 +464,6 @@ const CallControls: React.FC<CallControlsProps> = ({
   };
 
   const rootClass = classNames(prefixCls, className);
-  logDebug('---->isPreview', isCaller, isGroupCall);
   // 预览模式下的按钮布局
   if (isPreview) {
     return (
