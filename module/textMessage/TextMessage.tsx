@@ -529,6 +529,7 @@ let TextMessage = (props: TextMessageProps) => {
 
   if (
     textMessage?.ext?.msgType === 'rtcCallWithAgora' &&
+    // @ts-ignore
     !textMessage.mid &&
     textMessage.ext.rtcIsEnd == undefined
   ) {

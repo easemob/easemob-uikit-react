@@ -1999,6 +1999,7 @@ export class CallService {
 
       // 移除离开的用户
       this.joinedMembers = this.joinedMembers.filter(member => member.uid !== user.uid);
+
       this.handleUserLeft(userId, reason);
     });
 
@@ -2136,6 +2137,13 @@ export class CallService {
       userId,
       this.currentCallInfo?.type as unknown as 'video' | 'audio' | 'group',
     );
+
+    this.invitedMembers = this.invitedMembers.filter(member => member !== userId);
+    if (this.currentCallInfo) {
+      this.currentCallInfo.invitedMembers = this.currentCallInfo.invitedMembers?.filter(
+        member => member !== userId,
+      );
+    }
 
     // 如果是1v1通话，远程用户离开则挂断
     if (
@@ -2333,6 +2341,20 @@ export class CallService {
       status = false;
     }
 
+    // 判断这个人如果已经在群通话中，或者已经不在邀请列表中，则status为false
+    if (this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI) {
+      const joinedUserIds = this.joinedMembers.map(member => this.UIdToUserIdMap.get(member.uid));
+      if (joinedUserIds.includes(to)) {
+        logDebug('user already in group call');
+        status = false;
+      }
+      logger.debug('currentCallInfo.invitedMembers', this.currentCallInfo.invitedMembers);
+      if (!this.currentCallInfo.invitedMembers?.includes(to)) {
+        logDebug('user has been removed from group call');
+        status = false;
+      }
+    }
+
     if (callerDevId !== this.connection.context.jid.clientResource) {
       return;
     }
@@ -2478,6 +2500,9 @@ export class CallService {
         // 多人通话：只记录拒绝状态，不挂断通话
         // 从邀请列表中移除拒绝的用户
         this.invitedMembers = this.invitedMembers.filter(member => member !== message.from);
+        this.currentCallInfo.invitedMembers = this.currentCallInfo.invitedMembers?.filter(
+          member => member !== message.from,
+        );
 
         // 群组通话，被叫拒绝后，立即从主叫的窗口中移除
         this.onInvitedUserRemoved?.(message.from, 'refused');
@@ -3386,14 +3411,13 @@ export class CallService {
     }
 
     try {
-      // 更新邀请成员列表
-      this.invitedMembers = [...this.invitedMembers, ...newMembers];
+      // 更新邀请成员列表, 去重
+      this.invitedMembers = [...new Set([...this.invitedMembers, ...newMembers])];
 
       // 更新通话信息
       if (this.currentCallInfo.invitedMembers) {
         this.currentCallInfo.invitedMembers = [
-          ...this.currentCallInfo.invitedMembers,
-          ...newMembers,
+          ...new Set([...this.currentCallInfo.invitedMembers, ...newMembers]),
         ];
       } else {
         this.currentCallInfo.invitedMembers = newMembers;
