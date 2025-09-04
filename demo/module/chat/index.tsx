@@ -203,6 +203,8 @@ const ChatApp: FC<any> = () => {
                 {
                   conversationId: 'zd1',
                   chatType: 'singleChat',
+                  lastMessage: {},
+                  unreadCount: 0,
                 },
               ]);
               return false;
@@ -424,7 +426,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: appKey || '1107220708140392#gray',
+        appKey: appKey || 'org#app',
         userId: userId || 'p1',
         password: password || '1',
         useUserInfo: true,
