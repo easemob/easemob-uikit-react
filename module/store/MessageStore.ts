@@ -6,7 +6,7 @@ import type { ReactionData } from '../reaction/ReactionMessage';
 import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji } from '../utils';
 import { RootStore } from './index';
 import { AT_ALL } from '../messageInput/suggestList/SuggestList';
-import { TextMessageType } from 'chatuim2/types/module/types/messageType';
+import type { TextMessageType } from '../types/messageType';
 import { eventHandler } from '../../eventHandler';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
@@ -18,7 +18,7 @@ import {
 } from '../utils/index';
 
 import { resetCache } from '../hooks/useHistoryMsg';
-
+let debounceTimer: any = null;
 export interface Message {
   singleChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
   groupChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
@@ -85,6 +85,7 @@ class MessageStore {
       setCurrentCVS: action,
       currentCvsMsgs: computed,
       sendMessage: action,
+      addMessage: action,
       receiveMessage: action,
       modifyMessage: action,
       sendChannelAck: action,
@@ -126,7 +127,7 @@ class MessageStore {
     const MAX_LENGTH = this.rootStore.initConfig.maxMessages || 200;
     if (this.message.byId.size >= MAX_LENGTH) {
       // 删除最早添加的键值
-      const firstKey = this.message.byId.keys().next().value;
+      const firstKey = this.message.byId.keys().next().value || '';
       this.message.byId.delete(firstKey);
     }
     this.message.byId.set(key, value);
@@ -134,6 +135,42 @@ class MessageStore {
 
   setCurrentCVS(currentCVS: CurrentConversation) {
     this.currentCVS = currentCVS;
+  }
+
+  addMessage(message: ChatSDK.MessageBody, chatType: 'singleChat' | 'groupChat', to: string) {
+    this.message.byId.set(message.id, message);
+    if (!this.message[chatType][to]) {
+      this.message[chatType][to] = [message];
+    } else {
+      this.message[chatType][to].push(message);
+    }
+  }
+
+  // internal use
+  updateMessage(params: {
+    messageId: string;
+    chatType: 'singleChat' | 'groupChat';
+    to: string;
+    msg: string;
+  }) {
+    const { messageId, chatType, to, msg } = params;
+    const message = this.message.byId.get(messageId) as ChatSDK.TextMsgBody;
+    if (message) {
+      this.message.byId.set(messageId, message);
+    }
+
+    const msgList = this.message[chatType][to] || [];
+    console.log('msgList', msgList);
+    const index = msgList.findIndex(
+      item => item.id === messageId || (item as any).mid === messageId,
+    );
+    if (index !== -1) {
+      // 🔧 使用 runInAction 和对象替换确保 MobX 能够跟踪变化
+      (msgList[index] as ChatSDK.TextMsgBody).ext!.rtcIsEnd = true;
+      runInAction(() => {
+        msgList[index] = { ...msgList[index], msg } as ChatSDK.TextMsgBody;
+      });
+    }
   }
 
   sendMessage(
@@ -372,14 +409,24 @@ class MessageStore {
 
   receiveMessage(message: BaseMessageType) {
     const curCvs = this.rootStore.conversationStore.currentCvs;
+    const conversationId = getCvsIdFromMessage(message);
+    // rtc invite message
+    if (message.type === 'txt' && message.ext?.msgType === 'rtcCallWithAgora') {
+      message.ext.rtcIsEnd = false;
+    }
     //@ts-ignore
     if (
       curCvs &&
       curCvs.chatType === message.chatType &&
-      curCvs.conversationId === message.from &&
+      curCvs.conversationId === conversationId &&
       message.chatType != 'chatRoom'
     ) {
-      this.sendChannelAck(curCvs);
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        this.sendChannelAck(curCvs);
+      }, 1000);
     }
     const isChatbot = message.from?.includes?.('chatbot_');
     if (isChatbot) {
@@ -394,7 +441,7 @@ class MessageStore {
       // @ts-ignore
       message.bySelf = true;
     }
-    const conversationId = getCvsIdFromMessage(message);
+
     // @ts-ignore
     if (message.broadcast) {
       this.message.broadcast.push(message);
@@ -496,7 +543,7 @@ class MessageStore {
     }
 
     // 更新最后一条消息，置顶
-    const lastTime = cvs.lastMessage.time;
+    const lastTime = cvs.lastMessage?.time || 0;
     // @ts-ignore
     if (lastTime < message.time && !isCurrentCvs) {
       cvs.unreadCount = cvs.unreadCount + 1;
@@ -542,9 +589,21 @@ class MessageStore {
         const conversationId = getCvsIdFromMessage(msg as BaseMessageType);
         // @ts-ignore
         msg.status = status;
+        let i: number;
         // @ts-ignore
-        const i = this.message[msg.chatType][conversationId]?.indexOf(msg); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
-        if (typeof i === 'undefined' || i == -1) return;
+        const hasMsg = this.message[msg.chatType][conversationId]?.find((item, index) => {
+          // @ts-ignore
+          if (item.id == msgId || item.mid == msgId) {
+            i = index;
+            return true;
+          }
+        });
+        if (!hasMsg) {
+          return;
+        }
+        // @ts-ignore
+        // const i = this.message[msg.chatType][conversationId]?.indexOf(msg); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
+        // if (typeof i === 'undefined' || i == -1) return;
         // @ts-ignore
         this.message[msg.chatType][conversationId].splice(i, 1, msg);
         // this.message[chatType][to][i] = msg;
@@ -974,7 +1033,7 @@ class MessageStore {
         modifiedMessage: msg,
       })
       .then(res => {
-        this.modifyLocalMessage(messageId, res.message);
+        this.modifyLocalMessage(messageId, res.message as ChatSDK.ExcludeAckMessageBody);
         eventHandler.dispatchSuccess('modifyMessage');
       })
       .catch(err => {

@@ -6,7 +6,7 @@ import { Provider } from '../../module';
 import Tabs from '~/component/tabs';
 import Drawer from '~/component/drawer';
 
-import Collapse from '~/component/collapse';
+import Collapse from '../../component/collapse';
 import './index.scss';
 
 const items = [

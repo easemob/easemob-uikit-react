@@ -3,7 +3,7 @@ import BaseMessage, { BaseMessageProps } from './baseMessage';
 import FileMessage, { FileMessageProps } from './fileMessage';
 import ImageMessage, { ImageMessageProps, ImagePreviewProps } from './imageMessage';
 import NoticeMessage, { NoticeMessageProps } from './noticeMessage';
-import TextMessage, { TextMessageProps } from './textMessage';
+import { TextMessage, TextMessageProps } from './textMessage';
 import VideoMessage, { VideoMessageProps } from './videoMessage';
 import MessageStatus, { MessageStatusProps } from './messageStatus';
 import CombinedMessage, { CombinedMessageProps } from './combinedMessage';
@@ -92,6 +92,10 @@ import { ChatroomProps } from './chatroom/Chatroom';
 import ChatroomMember from './chatroomMember';
 import ChatroomMessage from './chatroomMessage';
 
+import CallKit from './callkit';
+import { CallKitProps, CallInfo, CallErrorCode, CallError } from './callkit';
+import { CallKitRef } from './callkit/types/index';
+
 export type {
   AudioMessageProps,
   BaseMessageProps,
@@ -151,6 +155,11 @@ export type {
   GroupMemberProps,
   UserCardMessageProps,
   UserSelectProps,
+  CallKitProps,
+  CallKitRef,
+  CallInfo,
+  CallErrorCode,
+  CallError,
 };
 const UIKitProvider = Provider;
 export {
@@ -203,4 +212,5 @@ export {
   GroupMember,
   UserCardMessage,
   UserSelect,
+  CallKit,
 };

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主视频布局演示</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .demo-header h1 {
+            color: #1890ff;
+            margin-bottom: 10px;
+        }
+
+        .demo-header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .video-container {
+            width: 100%;
+            height: 600px;
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 8px;
+            height: 100%;
+        }
+
+        .main-video-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 8px;
+        }
+
+        .main-video-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .thumbnails-area {
+            height: 120px;
+            position: relative;
+        }
+
+        .thumbnails-scroll {
+            display: flex;
+            gap: 8px;
+            height: 100%;
+            overflow-x: auto;
+            padding: 0 40px;
+            align-items: center;
+        }
+
+        .thumbnails-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .thumbnails-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .thumbnails-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .scroll-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .scroll-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .scroll-button:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+
+        .scroll-button-left {
+            left: 8px;
+        }
+
+        .scroll-button-right {
+            right: 8px;
+        }
+
+        .scroll-button svg {
+            transition: all 0.2s ease;
+        }
+
+        .scroll-button:hover svg {
+            transform: scale(1.1);
+        }
+
+        .video-window {
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-window:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        .video-window.selected {
+            border-color: #1890ff;
+        }
+
+        .video-window .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .video-window .nickname {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            backdrop-filter: blur(4px);
+        }
+
+        .thumbnail-video {
+            width: 160px;
+            height: 120px;
+            flex-shrink: 0;
+        }
+
+        .thumbnail-video .avatar {
+            width: 24px;
+            height: 24px;
+            font-size: 12px;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(4px);
+            z-index: 10;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.05);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .control-btn {
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: #40a9ff;
+            transform: translateY(-1px);
+        }
+
+        .control-btn.active {
+            background: #52c41a;
+        }
+
+        .instruction {
+            background: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            padding: 16px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .instruction h3 {
+            color: #1890ff;
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+
+        .instruction p {
+            color: #666;
+            margin: 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1>主视频布局演示</h1>
+            <p>点击视频窗口体验主视频布局功能</p>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎯 功能说明</h2>
+            <div class="instruction">
+                <h3>如何使用</h3>
+                <p>1. 在网格布局中点击任意视频窗口<br>
+                    2. 被点击的视频会变大显示在上方，其他视频变小显示在下方<br>
+                    3. 下方的缩略图支持左右滑动浏览，当视频数量较多时会显示左右滑动按钮<br>
+                    4. 点击滑动按钮或直接滚动鼠标滚轮可快速浏览缩略图<br>
+                    5. 点击返回按钮或再次点击主视频可切换回网格布局</p>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>🎬 视频布局演示</h2>
+
+            <div class="video-container" id="videoContainer">
+                <!-- 网格布局 -->
+                <div class="grid-layout" id="gridLayout">
+                    <!-- 视频窗口将由JavaScript生成 -->
+                </div>
+
+                <!-- 主视频布局 -->
+                <div class="main-video-layout hidden" id="mainVideoLayout">
+                    <button class="back-button" onclick="exitMainVideoMode()">返回网格视图</button>
+                    <div class="main-video-area">
+                        <div class="video-window" id="mainVideo" style="width: 100%; height: 100%;">
+                            <!-- 主视频内容 -->
+                        </div>
+                    </div>
+                    <div class="thumbnails-area">
+                        <!-- 左滑动按钮 -->
+                        <button class="scroll-button scroll-button-left hidden" id="scrollLeftBtn"
+                            onclick="scrollThumbnails('left')">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M8 2L4 6L8 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </button>
+
+                        <!-- 右滑动按钮 -->
+                        <button class="scroll-button scroll-button-right hidden" id="scrollRightBtn"
+                            onclick="scrollThumbnails('right')">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M4 2L8 6L4 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </button>
+
+                        <div class="thumbnails-scroll" id="thumbnailsContainer">
+                            <!-- 缩略图将由JavaScript生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="control-btn" onclick="toggleLayout()">切换布局模式</button>
+                <button class="control-btn" onclick="addVideo()">添加视频</button>
+                <button class="control-btn" onclick="removeVideo()">移除视频</button>
+                <button class="control-btn" onclick="resetDemo()">重置演示</button>
+            </div>
+        </div>
+
+        <div class="demo-section">
+            <h2>💡 技术特点</h2>
+            <ul>
+                <li><strong>响应式设计</strong>：自适应不同屏幕尺寸</li>
+                <li><strong>流畅动画</strong>：平滑的过渡效果</li>
+                <li><strong>交互友好</strong>：直观的点击操作</li>
+                <li><strong>滚动支持</strong>：缩略图区域支持左右滑动</li>
+                <li><strong>无障碍访问</strong>：支持键盘导航</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 模拟视频数据
+        const videoData = [
+            { id: 'local', nickname: '我', avatar: '我', isLocal: true },
+            { id: 'alice', nickname: 'Alice', avatar: 'A' },
+            { id: 'bob', nickname: 'Bob', avatar: 'B' },
+            { id: 'charlie', nickname: 'Charlie', avatar: 'C' },
+            { id: 'david', nickname: 'David', avatar: 'D' },
+            { id: 'eve', nickname: 'Eve', avatar: 'E' },
+            { id: 'frank', nickname: 'Frank', avatar: 'F' },
+            { id: 'grace', nickname: 'Grace', avatar: 'G' },
+            { id: 'henry', nickname: 'Henry', avatar: 'H' },
+        ];
+
+        let currentVideos = [...videoData];
+        let selectedVideoId = null;
+        let isMainVideoMode = false;
+
+        // 创建视频窗口元素
+        function createVideoWindow(video, isMainVideo = false) {
+            const videoEl = document.createElement('div');
+            videoEl.className = `video-window ${isMainVideo ? 'main-video' : ''}`;
+            videoEl.setAttribute('data-video-id', video.id);
+            videoEl.onclick = () => selectVideo(video.id);
+
+            videoEl.innerHTML = `
+                <div class="avatar">${video.avatar}</div>
+                <div class="nickname">${video.nickname}</div>
+            `;
+
+            return videoEl;
+        }
+
+        // 创建缩略图
+        function createThumbnail(video) {
+            const thumbnailEl = document.createElement('div');
+            thumbnailEl.className = 'video-window thumbnail-video';
+            thumbnailEl.setAttribute('data-video-id', video.id);
+            thumbnailEl.onclick = () => selectVideo(video.id);
+
+            thumbnailEl.innerHTML = `
+                <div class="avatar">${video.avatar}</div>
+                <div class="nickname">${video.nickname}</div>
+            `;
+
+            return thumbnailEl;
+        }
+
+        // 渲染网格布局
+        function renderGridLayout() {
+            const gridLayout = document.getElementById('gridLayout');
+            gridLayout.innerHTML = '';
+
+            currentVideos.forEach(video => {
+                const videoEl = createVideoWindow(video);
+                gridLayout.appendChild(videoEl);
+            });
+        }
+
+        // 渲染主视频布局
+        function renderMainVideoLayout() {
+            const selectedVideo = currentVideos.find(v => v.id === selectedVideoId);
+            const otherVideos = currentVideos.filter(v => v.id !== selectedVideoId);
+
+            // 渲染主视频
+            const mainVideo = document.getElementById('mainVideo');
+            mainVideo.innerHTML = `
+                <div class="avatar" style="width: 80px; height: 80px; font-size: 32px;">${selectedVideo.avatar}</div>
+                <div class="nickname" style="font-size: 16px; padding: 8px 16px;">${selectedVideo.nickname}</div>
+            `;
+            mainVideo.onclick = () => selectVideo(selectedVideo.id);
+
+            // 渲染缩略图
+            const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+            thumbnailsContainer.innerHTML = '';
+
+            otherVideos.forEach(video => {
+                const thumbnailEl = createThumbnail(video);
+                thumbnailsContainer.appendChild(thumbnailEl);
+            });
+
+            // 检查滚动状态
+            setTimeout(() => {
+                checkScrollState();
+            }, 100);
+        }
+
+        // 检查滚动状态
+        function checkScrollState() {
+            const container = document.getElementById('thumbnailsContainer');
+            const leftBtn = document.getElementById('scrollLeftBtn');
+            const rightBtn = document.getElementById('scrollRightBtn');
+
+            if (!container || !leftBtn || !rightBtn) return;
+
+            const { scrollLeft, scrollWidth, clientWidth } = container;
+            const canScrollLeft = scrollLeft > 0;
+            const canScrollRight = scrollLeft < scrollWidth - clientWidth - 1;
+
+            if (canScrollLeft) {
+                leftBtn.classList.remove('hidden');
+            } else {
+                leftBtn.classList.add('hidden');
+            }
+
+            if (canScrollRight) {
+                rightBtn.classList.remove('hidden');
+            } else {
+                rightBtn.classList.add('hidden');
+            }
+        }
+
+        // 滑动缩略图
+        function scrollThumbnails(direction) {
+            const container = document.getElementById('thumbnailsContainer');
+            if (!container) return;
+
+            const scrollAmount = 168; // 缩略图宽度(160px) + 间距(8px)
+            const currentScrollLeft = container.scrollLeft;
+            const targetScrollLeft = direction === 'left'
+                ? currentScrollLeft - scrollAmount * 2
+                : currentScrollLeft + scrollAmount * 2;
+
+            container.scrollTo({
+                left: targetScrollLeft,
+                behavior: 'smooth'
+            });
+
+            // 滑动后检查状态
+            setTimeout(() => {
+                checkScrollState();
+            }, 300);
+        }
+
+        // 选择视频
+        function selectVideo(videoId) {
+            if (isMainVideoMode && selectedVideoId === videoId) {
+                // 如果在主视频模式下点击当前主视频，退出主视频模式
+                exitMainVideoMode();
+            } else {
+                // 切换到主视频模式
+                selectedVideoId = videoId;
+                enterMainVideoMode();
+            }
+        }
+
+        // 进入主视频模式
+        function enterMainVideoMode() {
+            isMainVideoMode = true;
+            document.getElementById('gridLayout').classList.add('hidden');
+            document.getElementById('mainVideoLayout').classList.remove('hidden');
+            renderMainVideoLayout();
+        }
+
+        // 退出主视频模式
+        function exitMainVideoMode() {
+            isMainVideoMode = false;
+            selectedVideoId = null;
+            document.getElementById('gridLayout').classList.remove('hidden');
+            document.getElementById('mainVideoLayout').classList.add('hidden');
+            renderGridLayout();
+        }
+
+        // 切换布局模式
+        function toggleLayout() {
+            if (isMainVideoMode) {
+                exitMainVideoMode();
+            } else {
+                // 自动选择第一个视频进入主视频模式
+                if (currentVideos.length > 0) {
+                    selectVideo(currentVideos[0].id);
+                }
+            }
+        }
+
+        // 添加视频
+        function addVideo() {
+            const availableVideos = videoData.filter(v => !currentVideos.some(cv => cv.id === v.id));
+            if (availableVideos.length > 0) {
+                currentVideos.push(availableVideos[0]);
+                if (isMainVideoMode) {
+                    renderMainVideoLayout();
+                } else {
+                    renderGridLayout();
+                }
+            }
+        }
+
+        // 移除视频
+        function removeVideo() {
+            if (currentVideos.length > 1) {
+                const removedVideo = currentVideos.pop();
+                if (isMainVideoMode && selectedVideoId === removedVideo.id) {
+                    exitMainVideoMode();
+                } else if (isMainVideoMode) {
+                    renderMainVideoLayout();
+                } else {
+                    renderGridLayout();
+                }
+            }
+        }
+
+        // 重置演示
+        function resetDemo() {
+            currentVideos = [...videoData];
+            exitMainVideoMode();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function () {
+            renderGridLayout();
+
+            // 添加滚动事件监听器
+            const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+            if (thumbnailsContainer) {
+                thumbnailsContainer.addEventListener('scroll', checkScrollState);
+            }
+        });
+    </script>
+</body>
+
+</html>

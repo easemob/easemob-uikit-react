@@ -18,10 +18,10 @@ export interface AudioMessageProps extends Omit<BaseMessageProps, 'bubbleType'> 
   prefix?: string;
   style?: React.CSSProperties;
   className?: string;
-  nickName?: string;
+  // nickName?: string;
   bubbleClass?: string;
   type?: 'primary' | 'secondly';
-  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
+  // renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onlyContent?: boolean;
 }
 
@@ -33,11 +33,12 @@ const AudioMessage = (props: AudioMessageProps) => {
     prefix: customizePrefixCls,
     className,
     type,
-    renderUserProfile,
-    nickName,
+    // renderUserProfile,
+    // nickName,
     thread,
     onlyContent = false,
     bubbleClass,
+    onClick,
     ...others
   } = props;
 
@@ -80,7 +81,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     className,
   );
 
-  const [sourceUrl, setUrl] = useState('');
+  const [sourceUrl, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!audioMessage.url) return;
     const options = {
@@ -97,6 +98,8 @@ const AudioMessage = (props: AudioMessageProps) => {
     chatSDK.utils.download.call(rootStore.client, options);
   }, [audioMessage.url]);
   const playAudio = () => {
+    const preventDefault = onClick && onClick(audioMessage);
+    if (preventDefault === true) return;
     setPlayStatus(true);
     console.log('audioRef', audioRef.current);
     (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current.play().catch(err => {
@@ -323,7 +326,7 @@ const AudioMessage = (props: AudioMessageProps) => {
           direction={bySelf ? 'rtl' : 'ltr'}
           message={audioMessage}
           time={messageTime}
-          nickName={nickName}
+          // nickName={nickName}
           status={status}
           bubbleType={bubbleType}
           onReplyMessage={handleReplyMsg}
@@ -338,7 +341,7 @@ const AudioMessage = (props: AudioMessageProps) => {
           onResendMessage={handleResendMessage}
           select={select}
           onMessageCheckChange={handleMsgCheckChange}
-          renderUserProfile={renderUserProfile}
+          // renderUserProfile={renderUserProfile}
           onCreateThread={handleCreateThread}
           thread={_thread}
           chatThreadOverview={audioMessage.chatThreadOverview}

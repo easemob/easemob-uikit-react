@@ -19,9 +19,9 @@ export class NoticeMessageBody {
   id: string;
   message?: string;
   time: number;
-  type: 'notice' | 'recall';
+  type: 'notice' | 'recall' | 'notice';
   ext?: Record<string, any>;
-  noticeType: 'recall' | 'pin' | 'unpin';
+  noticeType: 'recall' | 'pin' | 'unpin' | 'notice';
   constructor(props: NoticeMessageBodyProps) {
     const { message, time, noticeType, ext, type = 'notice' } = props;
     this.id = Date.now().toString();
@@ -73,6 +73,11 @@ const NoticeMessage = (props: NoticeMessageProps) => {
       } as BaseMessageType)} ${t('removed a pin message')}`;
       break;
     default:
+      message = `${getMsgSenderNickname({
+        from: noticeMessage.ext?.from,
+        chatType: noticeMessage.ext?.chatType,
+        to: noticeMessage.ext?.to,
+      } as BaseMessageType)} ${noticeMessage.message}`;
       break;
   }
 

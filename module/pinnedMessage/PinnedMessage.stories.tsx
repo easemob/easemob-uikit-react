@@ -4,13 +4,32 @@ import PinnedMessage from './index';
 import rootStore from '../store';
 import Provider from '../store/Provider';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+const description = {
+  en: {
+    bubbleClass: 'bubble class',
+    message: 'pinned message',
+  },
+  zh: {
+    bubbleClass: '气泡类名',
+    message: '被置顶的消息',
+  },
+};
+
 export default {
   title: 'Module/PinnedMessage',
   component: PinnedMessage,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
-    bubbleType: '',
+    bubbleClass: {
+      control: 'text',
+      description: description[lang].bubbleClass,
+    },
+    message: {
+      control: 'object',
+      description: description[lang].message,
+    },
   },
 } as Meta<typeof PinnedMessage>;
 

@@ -40,7 +40,6 @@ export interface GroupDetailProps {
   groupMemberProps?: GroupMemberProps;
   onLeaveGroup?: () => void;
   onDestroyGroup?: () => void;
-  // 是否显示群成员列表
   onGroupMemberVisibleChange?: (visible: boolean) => void;
 }
 
@@ -240,7 +239,11 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
         style={{ ...style, display: memberVisible.open ? 'none' : 'flex' }}
       >
         <div className={`${prefixCls}-header`}>
-          <Avatar src={avatarUrl} size={100} shape={componentsShape}>
+          <Avatar
+            src={avatarUrl}
+            size={100}
+            shape={componentsShape === 'round' ? 'circle' : 'square'}
+          >
             {infoData?.name}
           </Avatar>
           <div>

@@ -3,13 +3,73 @@ import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
 import AudioMessage from './index';
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    audioMessage: 'Audio message received from SDK',
+    prefix: 'Prefix',
+    style: 'Style',
+    className: 'Class name',
+    bubbleClass: 'Bubble class name',
+    type: 'Bubble type',
+    onlyContent: 'Only show content, not bubble',
+  },
+  zh: {
+    audioMessage: '从SDK收到的语音消息',
+    prefix: '组件类名前缀',
+    style: '组件样式',
+    className: '组件类名',
+    bubbleClass: '气泡类名',
+    type: '气泡类型',
+    onlyContent: '只显示内容, 不显示气泡',
+  },
+};
 export default {
   title: 'Module/AudioMessage',
   component: AudioMessage,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
-    bubbleType: '',
+    audioMessage: {
+      control: {
+        type: 'object',
+      },
+      description: description[lang].audioMessage,
+    },
+    prefix: {
+      control: {
+        type: 'text',
+      },
+      description: description[lang].prefix,
+    },
+    style: {
+      control: {
+        type: 'object',
+      },
+      description: description[lang].style,
+    },
+    className: {
+      control: {
+        type: 'text',
+      },
+      description: description[lang].className,
+    },
+    bubbleClass: {
+      control: {
+        type: 'text',
+      },
+      description: description[lang].bubbleClass,
+    },
+    type: {
+      control: 'select',
+      options: ['primary', 'secondly'],
+      description: description[lang].type,
+    },
+    onlyContent: {
+      control: {
+        type: 'boolean',
+      },
+      description: description[lang].onlyContent,
+    },
   },
 } as Meta<typeof AudioMessage>;
 

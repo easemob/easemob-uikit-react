@@ -14,6 +14,6 @@ const Avatar = InternalAvatar as any as CompoundedComponent;
 Avatar.Group = Group;
 
 Avatar.displayName = 'Avatar';
-export default Avatar as any;
+export default Avatar;
 
 export type { AvatarProps };

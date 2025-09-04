@@ -2,7 +2,7 @@ import React, { useEffect, ReactNode, memo, useMemo } from 'react';
 import { RootProvider } from './rootContext';
 import rootStore from './index';
 
-import { chatSDK } from '../SDK';
+import { chatSDK, ChatSDK } from '../SDK';
 import { useEventHandler } from '../hooks/chat';
 
 import { initReactI18next } from 'react-i18next';
@@ -125,18 +125,27 @@ const Provider: React.FC<ProviderProps> = props => {
     isFixedDeviceId = true,
     useOwnUploadFun = false,
   } = initConfig;
+
+  //@ts-ignore
+  const initOptions: ChatSDK.ConnectionParameters = {
+    delivery: true,
+    url: msyncUrl,
+    apiUrl: restUrl,
+    isHttpDNS,
+    deviceId,
+    useReplacedMessageContents,
+    isFixedDeviceId,
+    useOwnUploadFun,
+    //@ts-ignore
+    uikitVersion: '1.6.0',
+  };
+
+  if (appKey) {
+    initOptions.appKey = appKey;
+  }
+
   const client = useMemo(() => {
-    return new chatSDK.connection({
-      appKey: appKey,
-      delivery: true,
-      url: msyncUrl,
-      apiUrl: restUrl,
-      isHttpDNS,
-      deviceId,
-      useReplacedMessageContents,
-      isFixedDeviceId,
-      useOwnUploadFun,
-    });
+    return new chatSDK.connection(initOptions);
   }, [appKey]);
 
   rootStore.setClient(client);

@@ -5,12 +5,78 @@ import VideoMessage from './index';
 import Icon, { IconProps } from '../../component/icon';
 import { FileObj } from '../types/messageType';
 import Provider from '../store/Provider';
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    videoMessage: 'Video Message',
+    prefix: 'css class name prefix',
+    className: 'css class name',
+    style: 'css style',
+    bubbleClass: 'bubble class',
+    type: 'type',
+    videoProps: 'video props',
+  },
+  zh: {
+    videoMessage: '视频消息',
+    prefix: 'css 类名前缀',
+    className: 'css 类名',
+    style: 'css 样式',
+    bubbleClass: 'bubble 类名',
+    type: '类型',
+    videoProps: 'video 标签属性',
+  },
+};
 export default {
   title: 'Module/VideoMessage',
   component: VideoMessage,
   // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-  argTypes: {},
+  argTypes: {
+    videoMessage: {
+      description: description[lang].videoMessage,
+      control: {
+        type: 'object',
+      },
+    },
+    prefix: {
+      description: description[lang].prefix,
+      control: {
+        type: 'text',
+      },
+    },
+    className: {
+      description: description[lang].className,
+      control: {
+        type: 'text',
+      },
+    },
+    style: {
+      description: description[lang].style,
+      control: {
+        type: 'object',
+      },
+    },
+    bubbleClass: {
+      description: description[lang].bubbleClass,
+      control: {
+        type: 'text',
+      },
+    },
+    type: {
+      description: description[lang].type,
+      control: {
+        type: 'select',
+        options: ['primary', 'secondly'],
+      },
+    },
+    videoProps: {
+      description: description[lang].videoProps,
+      control: {
+        type: 'object',
+      },
+    },
+  },
 } as Meta<typeof VideoMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args

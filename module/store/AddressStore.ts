@@ -181,7 +181,7 @@ class AddressStore {
     let userInfo = this.appUsersInfo[userId];
     if (!userInfo) {
       try {
-        userInfo = (await this.getUserInfo(userId, widthPresence, true)) || {};
+        userInfo = (await this.getUserInfo(userId, widthPresence, true)) || { userId };
       } catch (error) {
         console.log('addContactToContactList error');
       }
@@ -341,19 +341,25 @@ class AddressStore {
   getUserInfo = (userId: string, withPresence: boolean = false, force = false) => {
     let userInfo = this.appUsersInfo?.[userId];
     if (!userInfo || force) {
-      return getUsersInfo({ userIdList: [userId], withPresence }).then(() => {
-        userInfo = this.appUsersInfo?.[userId];
-        runInAction(() => {
-          this.appUsersInfo[userId] = userInfo;
+      return getUsersInfo({ userIdList: [userId], withPresence })
+        .then(() => {
+          userInfo = this.appUsersInfo?.[userId];
+          runInAction(() => {
+            this.appUsersInfo[userId] = userInfo;
+          });
+          return userInfo;
+        })
+        .catch(err => {
+          console.warn('get getUsersInfo failed', err);
         });
-        return userInfo;
-      });
     }
     return Promise.resolve(userInfo);
   };
 
   getUserInfoWithPresence = (userIdList: string[]) => {
-    getUsersInfo({ userIdList });
+    getUsersInfo({ userIdList }).catch(err => {
+      console.warn('get getUsersInfo failed', err);
+    });
   };
 
   setChatroom(chatroom: any) {
@@ -988,5 +994,5 @@ class AddressStore {
     this.blockList = [];
   }
 }
-
 export default AddressStore;
+export { AddressStore };

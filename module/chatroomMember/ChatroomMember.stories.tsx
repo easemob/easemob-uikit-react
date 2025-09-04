@@ -5,33 +5,77 @@ import ChatroomMember from './index';
 import rootStore from '../store';
 import Provider from '../store/Provider';
 import { AppUserInfo } from '../store/index';
-import Header, { HeaderProps } from '../header';
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    chatroomMember:
+      'ChatroomMember component is a container component that encapsulates the chatroom member function. It is mainly used to display the member list of a chatroom and support search and mute list operations. It is suitable for scenarios such as displaying member lists, searching for members, and muting members in a chatroom.',
+    prefix: 'Prefix',
+    className: 'Class name',
+    style: 'Style',
+    chatroomId: 'Chatroom id',
+    headerProps: 'props for Header',
+    memberListProps: 'props for member list',
+    muteListProps: 'props for mute list',
+    memberListProps_search: 'Whether to display the search box',
+    memberListProps_placeholder: 'Search box placeholder',
+    memberListProps_renderEmpty:
+      'The content displayed when rendering an empty list, return value is ReactNode',
+    memberListProps_renderItem:
+      'Render the content of each item, parameter is AppUserInfo, return value is ReactNode',
+    memberListProps_UserItemProps: 'UserItem props',
+  },
+  zh: {
+    chatroomMember: '聊天室成员组件用来展示聊天室成员列表，支持搜索，聊天室owner支持禁言列表。',
+    prefix: '组件类名前缀',
+    className: '组件类名',
+    style: '组件样式',
+    chatroomId: '聊天室 id',
+    headerProps: 'Header 组件的参数',
+    memberListProps: '成员列表的参数',
+    muteListProps: '禁言列表的参数',
+    memberListProps_search: '是否显示搜索框',
+    memberListProps_placeholder: '搜索框的 placeholder',
+    memberListProps_renderEmpty: '没有数据时显示的内容， 返回值为 ReactNode',
+    memberListProps_renderItem: '渲染每一项的内容， 参数为 AppUserInfo， 返回值为 ReactNode',
+    memberListProps_UserItemProps: 'UserItem 的参数',
+  },
+};
 export default {
   title: 'Container/ChatroomMember',
   component: ChatroomMember,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
+  parameters: {
+    docs: {
+      description: {
+        component: description[lang].chatroomMember,
+      },
+    },
+  },
   argTypes: {
     prefix: {
       control: 'text',
-      description: 'css class name prefix',
-      default: 'cui',
+      description: description[lang].prefix,
+      type: 'string',
     },
     className: {
       control: 'text',
-      description: 'css class name',
+      type: 'string',
+      description: description[lang].className,
     },
     style: {
       control: 'object',
-      description: 'css style',
+      description: description[lang].style,
     },
     chatroomId: {
       control: 'text',
-      description: 'chatroom id',
+      type: 'string',
+      description: description[lang].chatroomId,
     },
     headerProps: {
       control: 'object',
-      description: 'props for Header',
+      description: description[lang].headerProps,
       defaultValue: {
         avatar: '',
         onAvatarClick: () => {},
@@ -42,7 +86,7 @@ export default {
     },
     memberListProps: {
       control: 'object',
-      description: 'props for member list',
+      description: description[lang].memberListProps,
       defaultValue: {
         search: true,
         placeholder: 'Search',
@@ -62,10 +106,22 @@ export default {
         },
         UserItemProps: {} as UserItemProps,
       },
+      table: {
+        type: {
+          summary: 'object',
+          detail: `{
+  search?: boolean; // ${description[lang].memberListProps_search}
+  placeholder?: string; // ${description[lang].memberListProps_placeholder}
+  renderEmpty?: () => ReactNode; // ${description[lang].memberListProps_renderEmpty}
+  renderItem?: (item: AppUserInfo) => ReactNode; // ${description[lang].memberListProps_renderItem}
+  UserItemProps?: UserItemProps; // ${description[lang].memberListProps_UserItemProps}
+}`,
+        },
+      },
     },
     muteListProps: {
       control: 'object',
-      description: 'props for mute list',
+      description: description[lang].muteListProps,
       defaultValue: {
         search: true,
         placeholder: 'Search',
@@ -84,6 +140,18 @@ export default {
           );
         },
         UserItemProps: {} as UserItemProps,
+      },
+      table: {
+        type: {
+          summary: 'object',
+          detail: `{
+  search?: boolean; // ${description[lang].memberListProps_search}
+  placeholder?: string; // ${description[lang].memberListProps_placeholder}
+  renderEmpty?: () => ReactNode; // ${description[lang].memberListProps_renderEmpty}
+  renderItem?: (item: AppUserInfo) => ReactNode; // ${description[lang].memberListProps_renderItem}
+  UserItemProps?: UserItemProps; // ${description[lang].memberListProps_UserItemProps}
+}`,
+        },
       },
     },
   },

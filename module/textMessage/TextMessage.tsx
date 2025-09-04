@@ -44,7 +44,11 @@ export interface TextMessageProps extends BaseMessageProps {
   showEditedTag?: boolean;
 }
 
-export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = true) => {
+export const renderTxt = (
+  txt: string | undefined | null,
+  parseUrl: boolean = true,
+  onClick: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void,
+) => {
   const urlRegex = /(https?:\/\/\S+)/gi;
   if (txt === undefined || txt === null) {
     return [];
@@ -73,6 +77,7 @@ export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = tr
           style={{
             verticalAlign: 'text-top',
           }}
+          crossOrigin="anonymous"
         />,
       );
     } else {
@@ -86,6 +91,7 @@ export const renderTxt = (txt: string | undefined | null, parseUrl: boolean = tr
       if (urlRegex.test(text!.toString())) {
         const replacedText = reactStringReplace(text?.toString() || '', urlRegex, (match, i) => (
           <a
+            onClick={onClick}
             key={match + i}
             target="_blank"
             rel="noopener noreferrer"
@@ -141,7 +147,7 @@ const REGEX_VALID_URL = new RegExp(
   'i',
 );
 
-const TextMessage = (props: TextMessageProps) => {
+let TextMessage = (props: TextMessageProps) => {
   let {
     prefix: customizePrefixCls,
     textMessage,
@@ -158,6 +164,7 @@ const TextMessage = (props: TextMessageProps) => {
     onlyContent = false,
     onOpenThreadPanel,
     showEditedTag = true,
+    onClick,
     ...others
   } = props;
   if (!textMessage.chatType) return null;
@@ -490,11 +497,17 @@ const TextMessage = (props: TextMessageProps) => {
     onOpenThreadPanel?.(textMessage.chatThreadOverview?.id || '');
   };
   const [currentIndex, setCurrentIndex] = useState(0);
+  const handleClickUrl = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    const preventDefault = onClick?.(textMessage);
+    if (preventDefault === true) {
+      e.preventDefault();
+    }
+  };
   useEffect(() => {
     if ((textMessage as any).printed != false) {
       return;
     }
-    const msgArr = renderTxt(msg, true);
+    const msgArr = renderTxt(msg, true, handleClickUrl);
     const message = (msgArr.length > 1 ? msgArr : msgArr[0] || '') as string[] | string;
     if (currentIndex >= message.length) {
       return;
@@ -513,11 +526,20 @@ const TextMessage = (props: TextMessageProps) => {
       clearInterval(typingInterval);
     };
   }, [msg, currentIndex]);
+
+  if (
+    textMessage?.ext?.msgType === 'rtcCallWithAgora' &&
+    // @ts-ignore
+    !textMessage.mid &&
+    textMessage.ext.rtcIsEnd == undefined
+  ) {
+    msg = '通话已结束';
+  }
   return (
     <>
       {onlyContent ? (
         <div className={urlData?.title || urlData?.description ? `${prefixCls}-url-container` : ''}>
-          <span className={classString}>{renderTxt(msg, true)}</span>
+          <span className={classString}>{renderTxt(msg, true, handleClickUrl)}</span>
           {(urlData?.title || urlData?.description) && (
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
@@ -535,7 +557,7 @@ const TextMessage = (props: TextMessageProps) => {
                 <span className={`${transPrefix}-text`}>
                   {
                     // @ts-ignore
-                    renderTxt(textMessage.translations?.[0]?.text, true)
+                    renderTxt(textMessage.translations?.[0]?.text, true, handleClickUrl)
                   }
                 </span>
                 <div className={`${transPrefix}-action`}>
@@ -577,13 +599,16 @@ const TextMessage = (props: TextMessageProps) => {
             thread={_thread}
             chatThreadOverview={textMessage.chatThreadOverview}
             onClickThreadTitle={handleClickThreadTitle}
+            onClick={onClick}
             {...others}
           >
             <div
               className={urlData?.title || urlData?.description ? `${prefixCls}-url-container` : ''}
             >
               <span className={classString} style={{ ...style }}>
-                {(textMessage as any).printed == false ? text : renderTxt(msg, true)}
+                {(textMessage as any).printed == false
+                  ? text
+                  : renderTxt(msg, true, handleClickUrl)}
               </span>
               {(urlData?.title || urlData?.description) && (
                 <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
@@ -601,7 +626,7 @@ const TextMessage = (props: TextMessageProps) => {
                     <span className={`${transPrefix}-text`}>
                       {
                         // @ts-ignore
-                        renderTxt(textMessage.translations?.[0]?.text, true)
+                        renderTxt(textMessage.translations?.[0]?.text, true, handleClickUrl)
                       }
                     </span>
                     <div className={`${transPrefix}-action`}>
@@ -638,6 +663,8 @@ const TextMessage = (props: TextMessageProps) => {
   );
 };
 
-const TextMessageOut = memo(observer(TextMessage));
-TextMessageOut.displayName = 'TextMessage';
-export default TextMessageOut;
+TextMessage = memo(observer(TextMessage)) as (props: TextMessageProps) => JSX.Element;
+
+export { TextMessage };
+// TextMessageOut.displayName = 'TextMessage';
+// export default TextMessageOut;

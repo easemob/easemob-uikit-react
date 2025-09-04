@@ -10,7 +10,7 @@ const useContacts = () => {
 
   const { client, addressStore } = rootStore;
 
-  let [contacts, setContacts] = useState<Array<{ userId: string; nickname: string }>>(
+  const [contacts, setContacts] = useState<Array<{ userId: string; nickname: string }>>(
     rootStore.addressStore.contacts,
   );
 
@@ -46,27 +46,31 @@ const useUserInfo = (
   const rootStore = useContext(RootContext).rootStore;
   useEffect(() => {
     if (!rootStore.loginState) return;
-    let keys = Object.keys(rootStore.addressStore.appUsersInfo);
-    let cvsUserIds = rootStore.conversationStore.conversationList
+    const keys = Object.keys(rootStore.addressStore.appUsersInfo);
+    const cvsUserIds = rootStore.conversationStore.conversationList
       .filter(item => item.chatType === 'singleChat' && !keys.includes(item.conversationId))
       .map(cvs => cvs.conversationId);
-    let contactsUserIds = rootStore.addressStore.contacts
+    const contactsUserIds = rootStore.addressStore.contacts
       .filter(item => {
         return !keys.includes(item.userId);
       })
       .map(item => item.userId);
-    let blockListUserIds = rootStore.addressStore.blockList.filter(item => !keys.includes(item));
+    const blockListUserIds = rootStore.addressStore.blockList.filter(item => !keys.includes(item));
 
     if (userList === 'blocklist') {
       getUsersInfo({
         userIdList: blockListUserIds,
         withPresence: false,
+      }).catch(err => {
+        console.warn('get getUsersInfo failed', err);
       });
       return;
     }
     getUsersInfo({
       userIdList: userList == 'conversation' ? cvsUserIds : contactsUserIds,
       withPresence,
+    }).catch(err => {
+      console.warn('get getUsersInfo failed', err);
     });
   }, [
     rootStore.conversationStore.conversationList.length,
@@ -80,7 +84,7 @@ const useGroups = () => {
   const pageSize = 200;
   let pageNum = 1;
   const { client, addressStore } = getStore();
-  let hasNext = addressStore.hasGroupsNext;
+  const hasNext = addressStore.hasGroupsNext;
 
   const getJoinedGroupList = () => {
     if (!hasNext) return;
@@ -114,7 +118,7 @@ const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
   const pageSize = 20;
   let pageNum = 1;
   const { client, addressStore } = getStore();
-  let groupItem = getGroupItemFromGroupsById(groupId);
+  const groupItem = getGroupItemFromGroupsById(groupId);
   let hasNext = groupItem?.hasMembersNext;
   if (hasNext === undefined) hasNext = true;
 
@@ -137,11 +141,13 @@ const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
         userIds.length && useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
         if (withUserInfo == true) {
           // appUsersInfo 里面有的用户信息不再去获取
-          let keys = Object.keys(addressStore.appUsersInfo);
+          const keys = Object.keys(addressStore.appUsersInfo);
           userIds = userIds.filter(item => !keys.includes(item));
           getUsersInfo({
             userIdList: userIds,
             withPresence: false,
+          }).catch(err => {
+            console.warn('get getUsersInfo failed', err);
           });
         }
 

@@ -202,6 +202,8 @@ const Conversations: FC<ConversationListProps> = props => {
       if (useUserInfoConfig) {
         getUsersInfo({
           userIdList: [rootStore.client.user],
+        }).catch(e => {
+          console.warn('getUsersInfo error', e);
         });
       }
     }

@@ -1,4 +1,5 @@
-import UserCardMessage from './UserCardMessage';
+import { UserCardMessage } from './UserCardMessage';
 
-export default UserCardMessage;
 export type { UserCardMessageProps } from './UserCardMessage';
+export { UserCardMessage };
+export default UserCardMessage;

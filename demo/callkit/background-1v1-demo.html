@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CallKit 1v1 语音背景图片演示</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .demo-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        .control-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .control-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .demo-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .primary-button {
+            background: #1890ff;
+            color: white;
+        }
+
+        .primary-button:hover {
+            background: #40a9ff;
+        }
+
+        .secondary-button {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .secondary-button:hover {
+            background: #e6e6e6;
+        }
+
+        .callkit-container {
+            width: 400px;
+            height: 300px;
+            border: 2px solid #d9d9d9;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .preset-button {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .preset-button:hover {
+            background: #f5f5f5;
+        }
+
+        .preset-button.active {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <div class="demo-section">
+            <h1 class="demo-title">CallKit 1v1 语音背景图片演示</h1>
+            <p class="demo-description">
+                演示1v1语音通话时支持自定义背景图片功能。在语音通话模式下，CallKit 会使用指定的背景图片作为通话界面背景。
+            </p>
+        </div>
+
+        <div class="demo-section">
+            <h2 class="demo-title">背景图片设置</h2>
+
+            <div class="control-group">
+                <label class="control-label">背景图片 URL：</label>
+                <input type="text" id="backgroundImage" class="control-input"
+                    placeholder="请输入图片URL，例如：https://example.com/image.jpg">
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">预设背景图片：</label>
+                <div class="preset-buttons">
+                    <button class="preset-button"
+                        data-url="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop">自然风景</button>
+                    <button class="preset-button"
+                        data-url="https://images.unsplash.com/photo-1557683316-973673baf926?w=800&h=600&fit=crop">抽象几何</button>
+                    <button class="preset-button"
+                        data-url="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800&h=600&fit=crop">渐变背景</button>
+                    <button class="preset-button"
+                        data-url="https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=800&h=600&fit=crop">商务风格</button>
+                    <button class="preset-button" data-url="">清除背景</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label class="control-label">通话模式：</label>
+                <select id="callMode" class="control-select">
+                    <option value="audio">语音通话</option>
+                    <option value="video">视频通话</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button id="startCall" class="demo-button primary-button">开始通话</button>
+                <button id="endCall" class="demo-button secondary-button">结束通话</button>
+            </div>
+
+            <div class="callkit-container" id="callkitContainer"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import CallKit from '../../module/callkit/CallKit.tsx';
+        import React from 'react';
+        import ReactDOM from 'react-dom/client';
+
+        // 模拟视频数据
+        const createMockVideos = (callMode) => {
+            if (callMode === 'video') {
+                return [
+                    {
+                        id: 'local-video',
+                        stream: null,
+                        videoElement: null,
+                        nickname: '我',
+                        avatar: '',
+                        isLocalVideo: true,
+                        muted: false,
+                        cameraEnabled: true,
+                    },
+                    {
+                        id: 'remote-user',
+                        stream: null,
+                        videoElement: null,
+                        nickname: '对方用户',
+                        avatar: '',
+                        isLocalVideo: false,
+                        muted: false,
+                        cameraEnabled: true,
+                    }
+                ];
+            } else {
+                // 语音通话时只显示本地用户
+                return [
+                    {
+                        id: 'local-user',
+                        stream: null,
+                        videoElement: null,
+                        nickname: '我',
+                        avatar: '',
+                        isLocalVideo: true,
+                        muted: false,
+                        cameraEnabled: false,
+                    }
+                ];
+            }
+        };
+
+        let callkitRef = null;
+        let currentCallStatus = 'idle';
+
+        // 初始化 CallKit
+        const initCallKit = () => {
+            const container = document.getElementById('callkitContainer');
+            if (container) {
+                const root = ReactDOM.createRoot(container);
+                root.render(React.createElement(CallKit, {
+                    ref: (ref) => { callkitRef = ref; },
+                    style: { width: '100%', height: '100%' },
+                    backgroundImage: document.getElementById('backgroundImage').value || undefined,
+                    callMode: document.getElementById('callMode').value,
+                    callStatus: currentCallStatus,
+                    isShowingPreview: currentCallStatus === 'calling',
+                    videos: createMockVideos(document.getElementById('callMode').value),
+                    onHangup: () => {
+                        currentCallStatus = 'idle';
+                        updateCallKit();
+                    },
+                    onMuteToggle: (muted) => {
+                        console.log('静音状态切换:', muted);
+                    },
+                    onCameraToggle: (enabled) => {
+                        console.log('摄像头状态切换:', enabled);
+                    },
+                    onSpeakerToggle: (enabled) => {
+                        console.log('扬声器状态切换:', enabled);
+                    },
+                }));
+            }
+        };
+
+        // 更新 CallKit
+        const updateCallKit = () => {
+            const container = document.getElementById('callkitContainer');
+            if (container) {
+                const root = ReactDOM.createRoot(container);
+                root.render(React.createElement(CallKit, {
+                    ref: (ref) => { callkitRef = ref; },
+                    style: { width: '100%', height: '100%' },
+                    backgroundImage: document.getElementById('backgroundImage').value || undefined,
+                    callMode: document.getElementById('callMode').value,
+                    callStatus: currentCallStatus,
+                    isShowingPreview: currentCallStatus === 'calling',
+                    videos: createMockVideos(document.getElementById('callMode').value),
+                    onHangup: () => {
+                        currentCallStatus = 'idle';
+                        updateCallKit();
+                    },
+                    onMuteToggle: (muted) => {
+                        console.log('静音状态切换:', muted);
+                    },
+                    onCameraToggle: (enabled) => {
+                        console.log('摄像头状态切换:', enabled);
+                    },
+                    onSpeakerToggle: (enabled) => {
+                        console.log('扬声器状态切换:', enabled);
+                    },
+                }));
+            }
+        };
+
+        // 事件监听
+        document.getElementById('startCall').addEventListener('click', () => {
+            currentCallStatus = 'connected';
+            updateCallKit();
+        });
+
+        document.getElementById('endCall').addEventListener('click', () => {
+            currentCallStatus = 'idle';
+            updateCallKit();
+        });
+
+        // 背景图片输入框变化
+        document.getElementById('backgroundImage').addEventListener('input', () => {
+            updateCallKit();
+        });
+
+        // 通话模式变化
+        document.getElementById('callMode').addEventListener('change', () => {
+            updateCallKit();
+        });
+
+        // 预设背景按钮
+        document.querySelectorAll('.preset-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // 移除其他按钮的active状态
+                document.querySelectorAll('.preset-button').forEach(btn => btn.classList.remove('active'));
+                // 添加当前按钮的active状态
+                button.classList.add('active');
+
+                const url = button.dataset.url;
+                document.getElementById('backgroundImage').value = url;
+                updateCallKit();
+            });
+        });
+
+        // 初始化
+        initCallKit();
+    </script>
+</body>
+
+</html>

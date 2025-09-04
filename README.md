@@ -162,7 +162,7 @@ const ChatApp = () => {
       client
         .open({
           user: '',
-          token: '',
+          accessToken: '',
         })
         .then(res => {
           console.log('get token success', res);
@@ -176,11 +176,11 @@ const ChatApp = () => {
   }, [client]);
 
   return (
-    <div>
-      <div>
+    <div style={{ display: 'flex', height: '100vh' }}>
+      <div style={{ width: '350px' }}>
         <ConversationList />
       </div>
-      <div>
+      <div style={{ flex: '1' }}>
         <Chat />
       </div>
     </div>

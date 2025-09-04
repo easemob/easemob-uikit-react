@@ -11,7 +11,6 @@ export interface RootConsumerProps {
 export interface ContextProps {
   rootStore: RootStore;
   initConfig: {
-    appKey: string;
     token?: string;
     userId?: string;
     translationTargetLanguage?: string;
@@ -19,7 +18,16 @@ export interface ContextProps {
     maxMessages?: number;
     isFixedDeviceId?: boolean;
     useOwnUploadFun?: boolean;
-  };
+  } & (
+    | {
+        appKey: string;
+        appId?: string;
+      }
+    | {
+        appKey?: string;
+        appId: string;
+      }
+  );
   client: ChatSDK.Connection;
   features?: {
     chat?: {
@@ -106,7 +114,7 @@ export interface ContextProps {
 
 export const RootContext = React.createContext<ContextProps>({
   rootStore: {} as RootStore,
-  initConfig: {} as { appKey: string },
+  initConfig: {} as { appKey?: string; appId: string } | { appKey: string; appId?: string },
   client: {} as ChatSDK.Connection,
   reactionConfig: { map: {} },
   theme: {},

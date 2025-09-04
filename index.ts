@@ -48,6 +48,18 @@ import {
   usePinnedMessage,
   PinnedMessage,
 } from './module/index';
+
+// CallKit 组件和类型导出
+import CallKit, {
+  InvitationInfo,
+  InvitationNotificationProps,
+  CallKitProps,
+  VideoWindowProps,
+  LayoutMode,
+  InvitationContent,
+  CallKitRef,
+} from './module/callkit';
+
 const UIKitProvider = Provider;
 import {
   Avatar,
@@ -141,6 +153,8 @@ export {
   UserCardMessage,
   UserItem,
   UserSelect,
+  CallKit,
+  InvitationContent,
 };
 
 export type {
@@ -224,5 +238,15 @@ export type {
   UserSelectProps,
   PinnedMessageProps,
 } from './module/index';
+
+// CallKit 类型导出
+export type {
+  InvitationInfo,
+  InvitationNotificationProps,
+  CallKitProps,
+  VideoWindowProps,
+  LayoutMode,
+  CallKitRef,
+};
 
 export type { EventHandlerData, EventName };

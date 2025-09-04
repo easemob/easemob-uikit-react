@@ -30,7 +30,11 @@ const UrlMessage2 = (props: UrlMessageProps) => {
     const logo = images?.[0];
     content = (
       <>
-        <div>{logo && <img src={logo} alt="image" className="message-text-url-img" />}</div>
+        <div>
+          {logo && (
+            <img src={logo} alt="image" className="message-text-url-img" crossOrigin="anonymous" />
+          )}
+        </div>
         <div
           className={classNames('message-text-url-info', {
             'message-text-url-info-dark': themeMode === 'dark',

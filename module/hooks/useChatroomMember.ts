@@ -35,7 +35,9 @@ const useChatroomMember = (chatroomId: string) => {
         rootStore.addressStore.updateChatroomMemberCount(chatroomId, res.count);
 
         if (getInfoMembers.length > 0) {
-          getUsersInfo({ userIdList: getInfoMembers, withPresence: false });
+          getUsersInfo({ userIdList: getInfoMembers, withPresence: false }).catch(err => {
+            console.warn('get getUsersInfo failed', err);
+          });
         }
       })
       .catch(err => {

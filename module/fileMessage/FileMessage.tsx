@@ -38,6 +38,7 @@ const FileMessage = (props: FileMessageProps) => {
     nickName,
     renderUserProfile,
     thread,
+    onClick,
     ...baseMsgProps
   } = props;
 
@@ -72,6 +73,8 @@ const FileMessage = (props: FileMessageProps) => {
   );
 
   const handleClick = () => {
+    const preventDefault = onClick && onClick(fileMessage);
+    if (preventDefault === true) return;
     fetch(fileMessage.url)
       .then(res => {
         return res.blob();

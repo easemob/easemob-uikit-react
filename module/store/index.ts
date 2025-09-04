@@ -15,9 +15,15 @@ import { ChatSDK } from 'module/SDK';
 import { clearPageNum } from '../hooks/useConversation';
 import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
 import { ProviderProps } from '../store/Provider';
-interface InitConfig {
-  appKey: string;
-}
+type InitConfig =
+  | {
+      appKey: string;
+      appId?: string;
+    }
+  | {
+      appKey?: string;
+      appId: string;
+    };
 class RootStore {
   messageStore;
   conversationStore;

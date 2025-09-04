@@ -270,7 +270,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       lastMsg = t('unsentAMessage') as string;
       break;
     default:
-      console.warn('unexpected message type:', data.lastMessage?.type);
+      // console.warn('unexpected message type:', data.lastMessage?.type);
       break;
   }
   lastMsg = renderMessageContent?.(data.lastMessage as BaseMessageType) ?? lastMsg;

@@ -1,0 +1,119 @@
+@import '../../style/themes/default.scss';
+
+$network-quality-prefix: 'cui-network-quality';
+
+// 网络质量颜色定义 - 支持1-6级别
+$network-quality-colors: (
+  'excellent': #33FFAA,  // 绿色 - 信号极好/很好 (level 1-2)
+  'good': #faad14,       // 橙色 - 信号好/一般 (level 3-4)
+  'poor': #ff4d4f,       // 红色 - 信号差/极差 (level 5-6)
+);
+
+// 尺寸定义 - 恢复为3个信号条
+$network-quality-sizes: (
+  'small': (
+    width: 16px,
+    height: 12px,
+    bar-width: 3px,
+    gap: 2px,
+    border-radius: 2px, // 🔧 增加圆角
+  ),
+  'medium': (
+    width: 22px,
+    height: 22px,
+    bar-width: 4px,
+    gap: 3px,
+    border-radius: 5px, // 🔧 增加圆角
+  ),
+  'large': (
+    width: 22px,
+    height: 22px,
+    bar-width: 4px,
+    gap: 3px,
+    border-radius: 5px, // 🔧 增加圆角
+  ),
+);
+
+// 主容器
+.#{$network-quality-prefix} {
+  display: inline-flex;
+  align-items: flex-end;
+  vertical-align: middle;
+  
+  // 信号条容器
+  &-bars {
+    display: flex;
+    align-items: flex-end;
+    height: 100%;
+  }
+  
+  // 单个信号条
+  &-bar {
+    background-color: rgba(0, 0, 0, 0.50);
+    transition: all 0.3s ease;
+    border-radius: 2px; // 🔧 给所有信号条添加基础圆角
+    
+    // 默认状态 - 半透明黑色
+    &:not(&-active) {
+      background-color: rgba(0, 0, 0, 0.50);
+    }
+    
+    // 激活状态会根据父级的颜色类来设置颜色
+  }
+  
+  // 不同尺寸的样式
+  @each $size, $config in $network-quality-sizes {
+    &-#{$size} {
+      width: map-get($config, width);
+      height: map-get($config, height);
+      
+      .#{$network-quality-prefix}-bar {
+        width: map-get($config, bar-width);
+        margin-right: map-get($config, gap);
+        border-radius: map-get($config, border-radius);
+        
+        &:last-child {
+          margin-right: 0;
+        }
+        
+        // 3个不同高度的信号条
+        &-1 {
+          height: 25%;
+        }
+        
+        &-2 {
+          height: 60%;
+        }
+        
+        &-3 {
+          height: 100%;
+        }
+      }
+    }
+  }
+  
+  // 不同质量等级的颜色
+  @each $level, $color in $network-quality-colors {
+    &.#{$network-quality-prefix}-#{$level} {
+      .#{$network-quality-prefix}-bar-active {
+        background-color: $color;
+      }
+    }
+  }
+  
+  // Hover 效果
+  &:hover {
+    .#{$network-quality-prefix}-bar-active {
+      opacity: 0.8;
+    }
+  }
+}
+
+// 深色模式支持
+@media (prefers-color-scheme: dark) {
+  .#{$network-quality-prefix} {
+    &-bar:not(&-bar-active) {
+      background-color: rgba(0, 0, 0, 0.50);
+    }
+  }
+} 

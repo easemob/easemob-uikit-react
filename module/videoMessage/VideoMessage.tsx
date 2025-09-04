@@ -38,6 +38,7 @@ const VideoMessage = (props: VideoMessageProps) => {
     prefix,
     videoProps,
     bubbleClass,
+    onClick,
     ...baseMsgProps
   } = props;
 
@@ -261,6 +262,12 @@ const VideoMessage = (props: VideoMessageProps) => {
       rootStore.messageStore.sendReadAck(videoMessage.id, videoMessage.from || '');
     }
   };
+  const handleClickVideo = (e: React.MouseEvent<HTMLVideoElement>) => {
+    const preventDefault = onClick?.(videoMessage);
+    if (preventDefault === true) {
+      e.preventDefault();
+    }
+  };
   return (
     <BaseMessage
       id={videoMessage.id}
@@ -312,6 +319,7 @@ const VideoMessage = (props: VideoMessageProps) => {
               ? '&origin-file=true'
               : '?em-redirect=true&origin-file=true'
           }`}
+          onClick={handleClickVideo}
           {...videoProps}
         ></video>
       </div>

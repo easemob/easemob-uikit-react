@@ -15,6 +15,7 @@ export interface MessageStatusProps {
   type?: 'icon' | 'text';
   prefixCls?: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 const MessageStatus = (props: MessageStatusProps) => {
@@ -23,7 +24,13 @@ const MessageStatus = (props: MessageStatusProps) => {
   const { theme } = context;
   const themeMode = theme?.mode || 'light';
   let statusNode: ReactNode;
-  const { status = 'default', type = 'icon', prefixCls: customizePrefixCls, className } = props;
+  const {
+    status = 'default',
+    type = 'icon',
+    prefixCls: customizePrefixCls,
+    className,
+    style,
+  } = props;
   const prefixCls = getPrefixCls('message-status', customizePrefixCls);
 
   const classString = classNames(
@@ -38,7 +45,11 @@ const MessageStatus = (props: MessageStatusProps) => {
   switch (status) {
     case 'sending':
       statusNode =
-        type == 'icon' ? <img alt="sending" src={sending as unknown as string}></img> : '发送中';
+        type == 'icon' ? (
+          <img alt="sending" src={sending as unknown as string} crossOrigin="anonymous"></img>
+        ) : (
+          '发送中'
+        );
       break;
     case 'sent':
       statusNode = type == 'icon' ? <Icon type="CHECK" width={20} height={20}></Icon> : '已发送';
@@ -74,7 +85,11 @@ const MessageStatus = (props: MessageStatusProps) => {
       statusNode = null;
       break;
   }
-  return <span className={classString}>{statusNode}</span>;
+  return (
+    <span className={classString} style={style}>
+      {statusNode}
+    </span>
+  );
 };
 
 export { MessageStatus };

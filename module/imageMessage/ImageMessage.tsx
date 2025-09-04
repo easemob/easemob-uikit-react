@@ -40,6 +40,7 @@ const ImageMessage = (props: ImageMessageProps) => {
     prefix,
     bubbleClass,
     imgProps,
+    onClick,
     ...others
   } = props;
   let type = props.type;
@@ -111,6 +112,10 @@ const ImageMessage = (props: ImageMessageProps) => {
     };
   };
   const handleClickImg = (url: string) => {
+    if (onClick) {
+      const preventDefault = onClick(message);
+      if (preventDefault === true) return;
+    }
     setPreviewVisible(true);
     canvasDataURL(url, { quality: 1 });
     onClickImage?.(url);
@@ -321,6 +326,10 @@ const ImageMessage = (props: ImageMessageProps) => {
 
   // const classSting = classNames('message-image-content', className);
   const imgRef = useRef<HTMLImageElement>(null);
+  let msgHeight = message.height;
+  if (message.width && message.height && message.width > 300) {
+    msgHeight = (message.height * 300) / message.width;
+  }
   return (
     <div>
       <BaseMessage
@@ -360,8 +369,8 @@ const ImageMessage = (props: ImageMessageProps) => {
           {/* {img.current} */}
           <img
             ref={imgRef}
-            // width={75}
-            // height={75}
+            width={message.width == 0 ? '' : message.width}
+            height={msgHeight == 0 ? '' : msgHeight}
             onError={function () {
               //@ts-ignore
               setImgUrl(defaultImg);
@@ -374,6 +383,7 @@ const ImageMessage = (props: ImageMessageProps) => {
             src={imgUrl}
             alt={message.file?.filename}
             onClick={() => handleClickImg(message.url || renderImgUrl)}
+            crossOrigin="anonymous"
             {...imgProps}
           />
         </div>
@@ -416,6 +426,7 @@ export const ImagePreview = (props: ImagePreviewProps) => {
         }}
       >
         <img
+          crossOrigin="anonymous"
           className="message-image-big"
           src={previewImageUrl}
           alt={alt}

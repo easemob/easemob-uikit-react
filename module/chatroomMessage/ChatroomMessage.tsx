@@ -16,12 +16,7 @@ import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface ChatroomMessageProps {
   prefix?: string;
   className?: string;
-  label?: string;
-  prefixIcon?: ReactNode;
-  avatar?: ReactNode;
-  nickname?: string;
-  content?: ReactNode;
-  // type: 'img' | 'txt';
+  style?: React.CSSProperties;
   message: ChatSDK.MessageBody;
   targetLanguage?: string;
   onReport?: (message: ChatSDK.MessageBody) => void;
@@ -36,7 +31,7 @@ interface CustomAction {
   }[];
 }
 const ChatroomMessage = (props: ChatroomMessageProps) => {
-  const { prefix: customizePrefixCls, className, message, targetLanguage, onReport } = props;
+  const { prefix: customizePrefixCls, className, style, message, targetLanguage, onReport } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-chatroom', customizePrefixCls);
   const classString = classNames(prefixCls, className);
@@ -166,36 +161,33 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   };
 
   const handlePinMessage = () => {
-    console.log('pin message', message, list);
-
-    // list.forEach(item => {
-    //   console.log('------->listItem', item);
-    //   // @ts-ignore
-    //   unpinMessage(item.message.mid || item.message.id);
-    // });
-    // // @ts-ignore
-    // pinMessage(message.mid || message.id).then(() => {
-    //   rootStore.pinnedMessagesStore.pushPinnedMessage('chatRoom', message.to, {
-    //     operatorId: rootStore.client.user,
-    //     pinTime: Date.now(),
-    //     message,
-    //   });
-    // });
-
-    const promiseList = list.map(item => {
+    list.forEach(item => {
       // @ts-ignore
-      return unpinMessage(item.message.mid || item.message.id);
+      unpinMessage(item.message.mid || item.message.id);
     });
-    Promise.all(promiseList).then(() => {
-      // @ts-ignore
-      pinMessage(message.mid || message.id).then(() => {
-        rootStore.pinnedMessagesStore.pushPinnedMessage('chatRoom', message.to, {
-          operatorId: rootStore.client.user,
-          pinTime: Date.now(),
-          message,
-        });
+    // @ts-ignore
+    pinMessage(message.mid || message.id).then(() => {
+      rootStore.pinnedMessagesStore.pushPinnedMessage('chatRoom', message.to, {
+        operatorId: rootStore.client.user,
+        pinTime: Date.now(),
+        message,
       });
     });
+
+    // const promiseList = list.map(item => {
+    //   // @ts-ignore
+    //   return unpinMessage(item.message.mid || item.message.id);
+    // });
+    // Promise.all(promiseList).then(() => {
+    //   // @ts-ignore
+    //   pinMessage(message.mid || message.id).then(() => {
+    //     rootStore.pinnedMessagesStore.pushPinnedMessage('chatRoom', message.to, {
+    //       operatorId: rootStore.client.user,
+    //       pinTime: Date.now(),
+    //       message,
+    //     });
+    //   });
+    // });
 
     setIsPopoverOpen(false);
   };
@@ -286,7 +278,12 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
       <div className={`${prefixCls}-gift`}>
         {t('sent')}
         <div>{t(giftData.giftName)}</div>
-        <img src={giftData.giftIcon} alt="" className={`${prefixCls}-gift-img`} />
+        <img
+          src={giftData.giftIcon}
+          alt=""
+          className={`${prefixCls}-gift-img`}
+          crossOrigin="anonymous"
+        />
         <div className={`${prefixCls}-gift-number`}>x{giftData.giftCount || 1}</div>
       </div>
     );
@@ -305,6 +302,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   return (
     <div
       className={classString}
+      style={{ ...style }}
       onMouseOver={() => setHoverStatus(true)}
       onMouseLeave={() => {
         if (!isPopoverOpen) {

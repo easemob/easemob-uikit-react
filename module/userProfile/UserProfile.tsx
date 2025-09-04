@@ -34,6 +34,8 @@ const UserProfile = (props: UserProfileProps) => {
     if (!addressStore.appUsersInfo?.[userId] && useUserInfo) {
       getUsersInfo({
         userIdList: [userId],
+      }).catch(err => {
+        console.warn('get getUsersInfo failed', err);
       });
     }
   }, []);

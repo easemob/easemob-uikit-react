@@ -39,7 +39,7 @@ export interface HeaderProps {
     }>;
     tooltipProps?: TooltipProps;
   };
-  onClickAvatar?: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  onClickAvatar?: (e: React.MouseEvent<HTMLElement, MouseEvent>) => void;
   onClickClose?: () => void;
   onClickBack?: () => void;
 }
@@ -88,11 +88,12 @@ const Header: FC<HeaderProps> = props => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   let menuNode;
+  const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
   if (moreAction?.visible) {
     menuNode = (
       <ul className={`${prefixCls}-more`}>
         {moreAction.actions.map((item, index) => {
-          if (item.visible == false) return null;
+          if (item.visible == false || item.content === '') return null;
           return (
             <li
               className={themeMode == 'dark' ? 'cui-li-dark' : ''}
@@ -112,6 +113,7 @@ const Header: FC<HeaderProps> = props => {
   }
 
   let contentNode: ReactNode;
+  const tooltipRef = React.createRef<HTMLDivElement>();
   if (typeof renderContent == 'function') {
     contentNode = renderContent();
   } else {
@@ -139,7 +141,7 @@ const Header: FC<HeaderProps> = props => {
             <Avatar
               shape={avatarShape}
               src={avatarSrc}
-              onClick={(e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+              onClick={(e: React.MouseEvent<HTMLElement, MouseEvent>) => {
                 onClickAvatar?.(e);
               }}
               size={40}
@@ -167,6 +169,7 @@ const Header: FC<HeaderProps> = props => {
                 onOpenChange={c => {
                   setMenuOpen(c);
                 }}
+                getPopupContainer={() => tooltipRef.current as HTMLElement}
                 {...moreAction?.tooltipProps}
               >
                 {
@@ -176,6 +179,7 @@ const Header: FC<HeaderProps> = props => {
                     onClick={() => {
                       onClickEllipsis?.();
                     }}
+                    ref={tooltipRef}
                   >
                     {moreAction.icon ? (
                       moreAction.icon

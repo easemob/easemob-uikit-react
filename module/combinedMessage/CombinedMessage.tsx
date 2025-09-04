@@ -8,7 +8,7 @@ import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import Icon from '../../component/icon';
 import Modal from '../../component/modal';
-import TextMessage from '../textMessage';
+import { TextMessage } from '../textMessage';
 import ImageMessage from '../imageMessage';
 import FileMessage from '../fileMessage';
 import AudioMessage from '../audioMessage';
@@ -60,6 +60,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     thread,
     showSummary = true,
     onlyContent = false,
+    onClick,
     ...others
   } = props;
   //   combinedMessage = comMsg;
@@ -335,6 +336,10 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   };
 
   const showCombinedMsgs = () => {
+    const preventDefault = onClick?.(combinedMessage);
+    if (preventDefault === true) {
+      return;
+    }
     setModalOpen(true);
     if (combinedMessage.messages) {
       createDetailContent(combinedMessage.messages);

@@ -5,78 +5,184 @@ import Chat, { ChatProps } from './index';
 import rootStore from '../store';
 import Provider from '../store/Provider';
 import { HeaderProps } from '../header';
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    chat: `Chat is a chat page component that includes Header, MessageList, and MessageInput components, providing the following functions:
+
+- Sending and receiving messages, including text, emojis, pictures, voice, video, files, business cards, and combining multiple types of messages.
+- Operations for responding to messages with emojis, citations, retractions, deletions, translations, and edits.
+- Clearing local messages.
+- Deleting a conversation.
+- Pulling historical messages.`,
+    prefix: 'Prefix',
+    className: 'Class name',
+    style: 'Style',
+    headerProps: 'props for Header',
+    messageListProps: 'props for MessageList',
+    messageInputProps: 'props for MessageInput',
+    rtcConfig:
+      'Audio and video call related configurations, after configuring this parameter, the audio and video call buttons will be displayed in the header',
+    onOpenThread: 'Callback of opening thread',
+    onVideoCall: 'Callback of starting a video call',
+    onAudioCall: 'Callback of starting an audio call',
+    renderHeader: 'Render header',
+    renderMessageList: 'Render message list',
+    renderMessageInput: 'Render message input',
+    renderRepliedMessage: 'Render replied message',
+    renderEmpty: 'The content displayed when rendering an empty conversation',
+    rtcConfig_appId: 'Agora appId',
+    rtcConfig_agoraUid: 'rtc user ID',
+    rtcConfig_onInvite: `In the group, when starting an audio and video call, clicking the call button will trigger this callback function. This function needs to return a promise containing the information of the invited person, id is the Chat user ID, name is the user nickname to be displayed`,
+    rtcConfig_onAddPerson:
+      'Invite other people to join the audio and video call in the group chat, and return a promise containing the information of the invited person, id is the Chat user ID',
+    rtcConfig_getIdMap: `Provide a function to get the mapping of current channel rtc user ID and Chat user ID, this function needs to return {[rtcUserId]: chatUserId}`,
+    rtcConfig_onStateChange: 'Callback function for audio and video call status change',
+    rtcConfig_onRing: 'Callback when being called, you can play a ringtone',
+    rtcConfig_getRTCToken: `Provide a function, receive channel and chatUserId, and return the Agora user ID and the token to join the channel`,
+    rtcConfig_groupAvatar: 'Avatar for group audio and video calls',
+  },
+  zh: {
+    chat: `Chat 是聊天页面组件，包含了 Header, MessageList, MessageInput 三个组件，提供了以下功能:
+ - 发送和接收消息, 包括文本，表情，图片，语音，视频，文件，名片，合并类型的消息。
+ - 对消息进行表情回复，引用，撤回，删除，翻译，编辑的操作。
+ - 清除本地消息。
+ - 删除会话。
+ - 拉历史消息。`,
+    prefix: '组件类名前缀',
+    className: '组件类名',
+    style: '组件样式',
+    headerProps: 'Header 组件的参数',
+    messageListProps: 'MessageList 组件的参数',
+    messageInputProps: 'MessageInput 组件的参数',
+    rtcConfig: '音视频通话相关配置，配置了这个参数后，会在头部显示音视频通话按钮',
+    onOpenThread: '打开子区域的回调',
+    onVideoCall: '发起视频通话的回调',
+    onAudioCall: '发起音频通话的回调',
+    renderHeader: '渲染头部',
+    renderMessageList: '渲染消息列表',
+    renderMessageInput: '渲染消息输入框',
+    renderRepliedMessage: '渲染回复消息',
+    renderEmpty: '渲染空会话时展示的内容',
+    rtcConfig_appId: '声网 appId',
+    rtcConfig_agoraUid: 'rtc 用户 ID',
+    rtcConfig_onInvite:
+      '群组中发起音视频通话, 点击呼叫按钮时触发这个回调函数，这个函数需要返回一个promise 包含被邀请人信息，id 为Chat用户 ID，name 为要显示的用户昵称',
+    rtcConfig_onAddPerson:
+      '群聊音视频过程中邀请其他人加入音视频通话, 需要返回一个promise 包含被邀请人信息， id 为Chat用户 ID',
+    rtcConfig_getIdMap:
+      '提供一个函数获取当前channel rtc 用户 ID 和Chat用户 ID 的映射，这个函数需要返回{[rtcUserId]: chatUserId}',
+    rtcConfig_onStateChange: '音视频通话状态变化的回调函数',
+    rtcConfig_onRing: '被呼叫时的回调 可以播放铃声',
+    rtcConfig_getRTCToken: `提供一个函数，接收 channel和chatUserId, 能返回声网用户 ID 和 加入channel的token`,
+    rtcConfig_groupAvatar: '群聊音视频通话时的头像',
+  },
+};
 export default {
   title: 'Container/Chat',
   component: Chat,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
+  parameters: {
+    docs: {
+      description: {
+        component: description[lang].chat,
+      },
+    },
+  },
   argTypes: {
     prefix: {
       control: 'text',
-      description: 'css class name prefix',
+      description: description[lang].prefix,
       default: 'cui',
+      type: 'string',
     },
     className: {
       control: 'text',
-      description: 'css class name',
+      description: description[lang].className,
+      type: 'string',
     },
     style: {
       control: 'object',
-      description: 'css style',
+      description: description[lang].style,
     },
     headerProps: {
       control: 'object',
-      description: 'props for Header',
+      description: description[lang].headerProps,
     },
     messageListProps: {
       control: 'object',
-      description: 'props for MessageList',
+      description: description[lang].messageListProps,
     },
     messageInputProps: {
       control: 'object',
-      description: 'props for MessageInput',
+      description: description[lang].messageInputProps,
     },
     rtcConfig: {
       control: 'object',
-      description: 'Audio and video call related configurations',
+      description: description[lang].rtcConfig,
+      table: {
+        type: {
+          summary: 'object',
+          detail: `{
+  appId: string; // ${description[lang].rtcConfig_appId}
+  agoraUid: string | number; // ${description[lang].rtcConfig_agoraUid}
+  onInvite?: (data: {
+    channel: string;
+    conversation: CurrentConversation;
+    type: 'audio' | 'video';
+  }) => Promise<[{ name: string; id: string; avatarurl?: string }]>; // ${description[lang].rtcConfig_onInvite}
+  onAddPerson?: (data: RtcRoomInfo) => Promise<[{ id: string }]>; // ${description[lang].rtcConfig_onAddPerson}
+  getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>; // ${description[lang].rtcConfig_getIdMap}
+  onStateChange?: (data: { type: string; confr: any }) => void; // ${description[lang].rtcConfig_onStateChange}
+  getRTCToken?: (data: {
+    channel: number | string;
+    chatUserId: string; // chat user ID
+  }) => Promise<{
+    agoraUid: string | number; // rtc user ID
+    accessToken: string;
+  }>; // ${description[lang].rtcConfig_getRTCToken}
+  groupAvatar?: string; // ${description[lang].rtcConfig_groupAvatar}
+  onRing?: (data: { channel: string }) => void; // ${description[lang].rtcConfig_onRing}
+}`,
+        },
+      },
     },
     onOpenThread: {
       type: 'function',
-      description: 'callback of opening thread',
+      description: description[lang].onOpenThread,
     },
     onVideoCall: {
       type: 'function',
-      description: 'callback of starting a video call',
+      description: description[lang].onVideoCall,
     },
     onAudioCall: {
       type: 'function',
-      description: 'callback of starting an audio call',
+      description: description[lang].onAudioCall,
     },
     renderHeader: {
       type: 'function',
       // action: 'renderHeader',
-      description: 'render header',
+      description: description[lang].renderHeader,
     },
     renderMessageList: {
       type: 'function',
-      description: 'render message list',
+      description: description[lang].renderMessageList,
     },
     renderMessageInput: {
       type: 'function',
-      description: 'render message input',
+      description: description[lang].renderMessageInput,
     },
     renderRepliedMessage: {
       type: 'function',
-      description: 'render replied message',
+      description: description[lang].renderRepliedMessage,
     },
     renderEmpty: {
       type: 'function',
-      description: 'render empty',
+      description: description[lang].renderEmpty,
     },
   },
 } as Meta<React.FC<ChatProps>>;
-
-// More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 
 rootStore.conversationStore.setCurrentCvs({
   chatType: 'singleChat',

@@ -3,40 +3,74 @@ import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
 import { GroupDetail } from './index';
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+// 添加中文和英文的描述
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    prefix: 'Prefix',
+    className: 'CSS class',
+    style: 'CSS style',
+    conversation: 'Conversation',
+    onUserIdCopied: 'On user id copied',
+    onLeaveGroup: 'On leave group',
+    onDestroyGroup: 'On destroy group',
+    groupMemberProps: 'GroupMember component props',
+    onGroupMemberVisibleChange: 'Callback of GroupMember visible change',
+  },
+  zh: {
+    prefix: '前缀',
+    className: 'CSS 类名',
+    style: 'CSS 样式',
+    conversation: '会话',
+    onUserIdCopied: '用户 ID 复制',
+    onLeaveGroup: '离开群组',
+    onDestroyGroup: '销毁群组',
+    groupMemberProps: 'GroupMember 组件属性',
+    onGroupMemberVisibleChange: 'GroupMember 可见性变化的回调',
+  },
+};
+
 export default {
   title: 'Module/GroupDetail',
   component: GroupDetail,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
     prefix: {
       control: 'text',
-      description: 'css class name prefix',
+      description: description[lang].prefix,
       default: 'cui',
     },
     className: {
       control: 'text',
-      description: 'css class name',
+      description: description[lang].className,
     },
     style: {
       control: 'object',
-      description: 'css style',
+      description: description[lang].style,
     },
     conversation: {
       control: 'object',
-      description: 'conversation object',
+      description: description[lang].conversation,
     },
     onUserIdCopied: {
       type: 'function',
-      description: 'callback of copying user id',
+      description: description[lang].onUserIdCopied,
     },
     onLeaveGroup: {
       type: 'function',
-      description: 'callback of leaving group',
+      description: description[lang].onLeaveGroup,
     },
     onDestroyGroup: {
       type: 'function',
-      description: 'callback of destroying group',
+      description: description[lang].onDestroyGroup,
+    },
+    groupMemberProps: {
+      control: 'object',
+      description: description[lang].groupMemberProps,
+    },
+    onGroupMemberVisibleChange: {
+      type: 'function',
+      description: description[lang].onGroupMemberVisibleChange,
     },
   },
 } as Meta<typeof GroupDetail>;

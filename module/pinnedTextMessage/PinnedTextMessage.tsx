@@ -88,7 +88,6 @@ const PinnedTextMessage = (props: PinnedTextMessageProps) => {
 
   const pinedMsg = props.message.message as ChatSDK.TextMsgBody;
   const userInfo = pinedMsg?.ext?.chatroom_uikit_userInfo || {};
-  console.log('----->', props.message, rootStore.client.user);
   return (
     <div className={classString} style={style}>
       <div className={`${prefixCls}-text`} ref={textRef}>

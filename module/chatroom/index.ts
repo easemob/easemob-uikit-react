@@ -1,5 +1,5 @@
-import Chatroom from './Chatroom';
+import { Chatroom } from './Chatroom';
 
+export { Chatroom };
 export type { ChatroomProps } from './Chatroom';
-Chatroom.displayName = 'Chatroom';
 export default Chatroom;

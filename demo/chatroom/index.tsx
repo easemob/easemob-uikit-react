@@ -49,6 +49,10 @@ const ChatApp = observer(() => {
       })
       .then(res => {
         console.log('获取token成功');
+
+        client.getChatRooms({ pagenum: 1, pagesize: 20 }).then(res => {
+          console.log('getChatRooms', res);
+        });
       });
   };
   const renderMessage = message => {
@@ -66,7 +70,7 @@ const ChatApp = observer(() => {
           mode: 'light',
         }}
         initConfig={{
-          appKey: 'easemob#easeim',
+          appKey: 'easemob-demo#sdk111',
         }}
         local={{
           fallbackLng: 'en',

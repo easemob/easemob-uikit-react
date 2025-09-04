@@ -1,0 +1,49 @@
+// 尺寸变量
+$header-height: 60px;
+$controls-height: 60px;
+$container-max-width: 748px;
+$container-max-height: 530px;
+$container-padding: 8px;
+$container-border-radius: 8px;
+
+// 间距变量
+$gap-small: 4px;
+$gap-medium: 8px;
+$gap-large: 16px;
+
+// 颜色变量
+$background-color: #000;
+$window-background: #1a1a1a;
+$placeholder-background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$border-color: transparent;
+$border-color-hover: #33B1FF; // primary 6
+$border-color-local: #1890ff;
+$text-color: #F9FAFA;
+$text-color-secondary: rgba(255, 255, 255, 0.6);
+
+// 阴影变量
+$shadow-light: 0 2px 8px rgba(0, 0, 0, 0.1);
+$shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.2);
+$shadow-heavy: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+// 动画变量
+$transition-fast: 0.2s ease;
+$transition-medium: 0.3s ease;
+$transition-slow: 0.5s ease;
+
+// 视频窗口变量
+$video-border-radius: 8px;
+$video-border-width: 2px;
+$avatar-size: 60px;
+$avatar-size-small: 40px;
+
+// z-index 层级
+$z-index-header: 10;
+$z-index-controls: 10;
+$z-index-pip: 20;
+$z-index-fullscreen: 1000;
+
+// 响应式断点
+$breakpoint-mobile: 480px;
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px; 

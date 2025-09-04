@@ -1,18 +1,77 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-
+import { renderTxt } from '../textMessage/TextMessage';
 import ChatroomMessage from './index';
-import Icon, { IconProps } from '../../component/icon';
-import { FileObj } from '../types/messageType';
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+import Provider from '../store/Provider';
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    chatroomMessage: 'Chatroom message component',
+    prefix: 'Prefix',
+    className: 'Class name',
+    style: 'Style',
+    message: 'The message object',
+    targetLanguage: 'The target language of translation',
+    onReport:
+      'The callback function for reporting, the parameter is the message object, you need to implement the pop-up report dialog by yourself',
+  },
+  zh: {
+    chatroomMessage: '聊天室消息组件',
+    prefix: '组件类名前缀',
+    className: '组件类名',
+    style: '组件样式',
+    message: '消息对象',
+    targetLanguage: '翻译的目标语言',
+    onReport: '举报的回调函数, 参数为消息对象, 需要自己实现弹出举报的弹框',
+  },
+};
+
 export default {
   title: 'Module/ChatroomMessage',
   component: ChatroomMessage,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-  argTypes: {},
+  argTypes: {
+    prefix: {
+      control: 'text',
+      type: 'string',
+      description: description[lang].prefix,
+    },
+    className: {
+      control: 'text',
+      type: 'string',
+      description: description[lang].className,
+    },
+    style: {
+      control: 'object',
+      description: description[lang].style,
+    },
+    message: {
+      control: 'object',
+      description: description[lang].message,
+    },
+    targetLanguage: {
+      control: 'text',
+      description: description[lang].targetLanguage,
+    },
+    onReport: {
+      action: 'report',
+      description: description[lang].onReport,
+    },
+  },
 } as Meta<typeof ChatroomMessage>;
 
+const Template: StoryFn<typeof ChatroomMessage> = args => (
+  <Provider
+    initConfig={{
+      appKey: 'a#b',
+    }}
+  >
+    <ChatroomMessage {...args} />
+  </Provider>
+);
+
 export const textMessage = {
+  render: Template,
   args: {
     message: {
       type: 'txt',
@@ -21,7 +80,7 @@ export const textMessage = {
       to: 'chatroomId',
       chatType: 'chatRoom',
       // bySelf: true,
-      from: 'myUserId',
+      from: 'Leo',
       time: Date.now(),
       // status: 'sent',
     },
@@ -29,6 +88,7 @@ export const textMessage = {
 };
 
 export const giftMessage = {
+  render: Template,
   args: {
     message: {
       id: '1231026004235920980',
@@ -45,7 +105,7 @@ export const giftMessage = {
       ext: {
         chatroom_uikit_userInfo: {
           userId: 'pev4pyzbwnutbp7a',
-          nickname: '阿朱',
+          nickname: 'Leo',
           avatarURL:
             'https://a1.easemob.com/easemob/chatroom-uikit/chatfiles/a27bd9a0-79f8-11ee-8f83-551faec94303',
           gender: 1,

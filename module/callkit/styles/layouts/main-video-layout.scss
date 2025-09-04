@@ -1,0 +1,418 @@
+@import '../variables.scss';
+@import '../mixins.scss';
+
+$callkit-prefix-cls: #{$cui-prefix}-callkit;
+
+// 主视频布局样式
+.#{$callkit-prefix-cls}-main-video-mode {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px !important;
+  position: relative;
+  padding: $container-padding + 8px;
+  box-sizing: border-box;
+
+  // 返回按钮
+  .#{$callkit-prefix-cls}-back-button {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all $transition-fast;
+    backdrop-filter: blur(4px);
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.9);
+      transform: scale(1.05);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  // 主视频区域
+  .#{$callkit-prefix-cls}-main-video {
+    // flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
+    position: relative;
+    // 移除overflow: hidden，让容器适应内容
+    
+    .#{$callkit-prefix-cls}-main-video-wrapper {
+      position: relative;
+      border-radius: $video-border-radius;
+      overflow: hidden;
+      box-shadow: $shadow-medium;
+      transition: all $transition-fast;
+      
+      &:hover {
+        // transform: scale(1.01); // 移除缩放效果，保持边框精确
+        box-shadow: $shadow-heavy;
+      }
+      
+      .#{$callkit-prefix-cls}-window {
+        width: 100%;
+        height: 100%;
+        border-radius: $video-border-radius;
+        
+        // 主视频的昵称样式
+        .#{$callkit-prefix-cls}-nickname {
+          // font-size: 14px;
+          // padding: 6px 12px;
+          // background: rgba(0, 0, 0, 0.8);
+          // backdrop-filter: blur(6px);
+        }
+      }
+    }
+  }
+
+  // 缩略图区域
+  .#{$callkit-prefix-cls}-thumbnails {
+    width: 100%;
+    height: 72px;
+    flex-shrink: 0;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    // 缩略图滚动容器
+    .#{$callkit-prefix-cls}-thumbnails-scroll {
+      display: flex;
+      gap: $gap-medium;
+      height: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      // padding: 0 18px; // 为滑动按钮留出空间
+      align-items: center;
+      min-width: 100%;
+      box-sizing: border-box;
+      
+      // 强制内容宽度，确保能触发滚动
+      // 当有5个或更多缩略图时，总宽度 = (160px + 8px) * n - 8px + 80px(padding)
+      
+      // 隐藏滚动条
+      &::-webkit-scrollbar {
+        display: none;
+      }
+      
+      // 火狐浏览器隐藏滚动条
+      scrollbar-width: none;
+    }
+    
+    // 滑动按钮
+    .#{$callkit-prefix-cls}-scroll-button {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      border: none;
+      background: rgba(255, 255, 255, 0.50);
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all $transition-fast;
+      backdrop-filter: blur(10px);
+      height: 100%;
+      width: 16px;
+      padding: 0;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.60);
+        // transform: translateY(-50%) scale(1.1);
+      }
+      
+      &:active {
+        // transform: translateY(-50%) scale(0.95);
+        background: rgba(255, 255, 255, 0.50);
+      }
+      
+      // 左滑动按钮
+      &.#{$callkit-prefix-cls}-scroll-button-left {
+        left: 0px;
+        border-radius: 8px 0px 0px 8px;
+      }
+      
+      // 右滑动按钮
+      &.#{$callkit-prefix-cls}-scroll-button-right {
+        right: 0px;
+        border-radius: 0px 8px 8px 0px;
+      }
+      
+      // 图标样式
+      svg {
+        transition: all $transition-fast;
+      }
+      
+      &:hover svg {
+        // transform: scale(1.1);
+      }
+    }
+    
+    // 缩略图包装器
+    .#{$callkit-prefix-cls}-thumbnail-wrapper {
+      position: relative;
+      border-radius: $video-border-radius;
+      overflow: hidden;
+      // border: 2px solid transparent;
+      transition: all $transition-fast;
+      // box-shadow: $shadow-light;
+      
+      &:hover {
+        // border-color: $border-color-hover;
+        // transform: scale(1.1);
+        // box-shadow: $shadow-medium;
+      }
+      
+      &:active {
+        transform: scale(0.95);
+      }
+      
+      .#{$callkit-prefix-cls}-window {
+        width: 100%;
+        height: 100%;
+        border-radius: $video-border-radius;
+        
+        // 缩略图的昵称样式
+        .#{$callkit-prefix-cls}-nickname {
+          // font-size: 10px;
+          // padding: 2px 6px;
+          // bottom: 4px;
+          // left: 4px;
+        }
+        
+        // 缩略图的静音指示器
+        .#{$callkit-prefix-cls}-muted-indicator {
+          top: 4px;
+          right: 4px;
+          padding: 2px;
+          font-size: 10px;
+        }
+      }
+    }
+  }
+
+  // 空状态样式
+  .#{$callkit-prefix-cls}-empty {
+    @include empty-state;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  // 响应式适配
+  @media (max-width: $breakpoint-mobile) {
+    padding: $gap-small;
+    gap: $gap-small;
+    
+    .#{$callkit-prefix-cls}-back-button {
+      top: 8px;
+      left: 8px;
+      padding: 6px 8px;
+      font-size: 11px;
+    }
+    
+    .#{$callkit-prefix-cls}-thumbnails {
+      height: 80px;
+      
+      .#{$callkit-prefix-cls}-thumbnails-scroll {
+        gap: $gap-small;
+        padding: 0 32px; // 为较小的滑动按钮留出空间
+        
+        .#{$callkit-prefix-cls}-thumbnail-wrapper {
+          &:hover {
+            transform: scale(1.05);
+          }
+        }
+      }
+      
+      // 移动端滑动按钮调整
+      .#{$callkit-prefix-cls}-scroll-button {
+        width: 28px;
+        height: 28px;
+        
+        &.#{$callkit-prefix-cls}-scroll-button-left {
+          left: 4px;
+        }
+        
+        &.#{$callkit-prefix-cls}-scroll-button-right {
+          right: 4px;
+        }
+        
+        svg {
+          width: 10px;
+          height: 10px;
+        }
+      }
+    }
+    
+    .#{$callkit-prefix-cls}-main-video {
+      .#{$callkit-prefix-cls}-main-video-wrapper {
+        .#{$callkit-prefix-cls}-window {
+          .#{$callkit-prefix-cls}-nickname {
+            font-size: 12px;
+            padding: 4px 8px;
+          }
+        }
+      }
+    }
+  }
+  
+  @media (max-width: $breakpoint-tablet) {
+    .#{$callkit-prefix-cls}-thumbnails {
+      height: 100px;
+      
+      .#{$callkit-prefix-cls}-thumbnails-scroll {
+        .#{$callkit-prefix-cls}-thumbnail-wrapper {
+          .#{$callkit-prefix-cls}-window {
+            .#{$callkit-prefix-cls}-nickname {
+              font-size: 9px;
+              padding: 1px 4px;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  // 平滑过渡动画
+  &.#{$callkit-prefix-cls}-mode-entering {
+    .#{$callkit-prefix-cls}-main-video {
+      .#{$callkit-prefix-cls}-main-video-wrapper {
+        transform: scale(0.9);
+        opacity: 0;
+        animation: mainVideoEnter $transition-medium forwards;
+      }
+    }
+    
+    .#{$callkit-prefix-cls}-thumbnails {
+      transform: translateY(20px);
+      opacity: 0;
+      animation: thumbnailsEnter $transition-medium 0.1s forwards;
+    }
+  }
+  
+  &.#{$callkit-prefix-cls}-mode-exiting {
+    .#{$callkit-prefix-cls}-main-video {
+      .#{$callkit-prefix-cls}-main-video-wrapper {
+        animation: mainVideoExit $transition-medium forwards;
+      }
+    }
+    
+    .#{$callkit-prefix-cls}-thumbnails {
+      animation: thumbnailsExit $transition-medium forwards;
+    }
+  }
+}
+
+// 进入动画
+@keyframes mainVideoEnter {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes thumbnailsEnter {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+// 退出动画
+@keyframes mainVideoExit {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes thumbnailsExit {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+}
+
+// 当只有一个视频时的特殊样式
+.#{$callkit-prefix-cls}-main-video-mode.#{$callkit-prefix-cls}-single-video {
+  .#{$callkit-prefix-cls}-thumbnails {
+    display: none;
+  }
+  
+  .#{$callkit-prefix-cls}-main-video {
+    flex: 1;
+    
+    .#{$callkit-prefix-cls}-main-video-wrapper {
+      max-width: 100%;
+      max-height: 100%;
+    }
+  }
+}
+
+// 键盘导航支持
+.#{$callkit-prefix-cls}-main-video-mode {
+  .#{$callkit-prefix-cls}-thumbnail-wrapper:focus,
+  .#{$callkit-prefix-cls}-main-video-wrapper:focus {
+    outline: 2px solid $border-color-local;
+    outline-offset: 2px;
+  }
+}
+
+  // 提示框动画
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+// 统一的视频出现动画 - 所有视频窗口都使用此动画
+@keyframes videoAppearing {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// 应用视频出现动画的样式
+.#{$callkit-prefix-cls}-video-appearing {
+  animation: videoAppearing 0.8s cubic-bezier(0.34, 1.25, 0.75, 1) forwards;
+} 

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { forwardRef, useContext } from 'react';
 import './style/style.scss';
 import { tuple } from '../_utils/type';
 import classNames from 'classnames';
@@ -7,13 +7,13 @@ import { RootContext } from '../../module/store/rootContext';
 import Ripple from '../ripple/Ripple';
 
 const buttonShapes = tuple('circle', 'round', 'default');
-export type ButtonShape = typeof buttonShapes[number];
+export type ButtonShape = (typeof buttonShapes)[number];
 
 const buttonSizes = tuple('small', 'medium', 'large');
-export type ButtonSize = typeof buttonSizes[number];
+export type ButtonSize = (typeof buttonSizes)[number];
 
 const buttonTypes = tuple('primary', 'default', 'ghost', 'text');
-export type ButtonType = typeof buttonTypes[number];
+export type ButtonType = (typeof buttonTypes)[number];
 
 export interface ButtonProps {
   className?: string;
@@ -27,21 +27,26 @@ export interface ButtonProps {
   onClick?: React.MouseEventHandler<HTMLElement>;
   ripple?: boolean;
   rippleColor?: string;
+  ref?: React.Ref<HTMLButtonElement>;
 }
+// 支持ref属性
 
-export const Button = ({
-  className,
-  type = 'default',
-  size = 'medium',
-  shape,
-  disabled = false,
-  icon,
-  children = 'button',
-  style = {},
-  onClick,
-  ripple,
-  rippleColor,
-}: ButtonProps) => {
+export const ButtonInner = (
+  {
+    className,
+    type = 'default',
+    size = 'medium',
+    shape,
+    disabled = false,
+    icon,
+    children = 'button',
+    style = {},
+    onClick,
+    ripple,
+    rippleColor,
+  }: ButtonProps,
+  ref: any,
+) => {
   const { theme } = useContext(RootContext);
   const themeMode = theme?.mode;
   const themeRipple = theme?.ripple;
@@ -69,9 +74,12 @@ export const Button = ({
       className={classes}
       disabled={disabled}
       style={{ ...style }}
+      ref={ref}
     >
       {rippleProp && <Ripple color={rippleColor} />}
       {children}
     </button>
   );
 };
+
+export const Button = forwardRef(ButtonInner);

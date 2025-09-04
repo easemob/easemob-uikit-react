@@ -286,12 +286,12 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
       prefixCls={prefixCls}
       overlayClassName={customOverlayClassName}
       getTooltipContainer={getPopupContainer || getTooltipContainer || getContextPopupContainer}
-      ref={ref}
+      // ref={ref}
       builtinPlacements={getTooltipPlacements()}
       overlay={getOverlay()}
       visible={tempOpen}
       onVisibleChange={onOpenChange}
-      onPopupAlign={onPopupAlign}
+      // onPopupAlign={onPopupAlign}
       // trigger={['contextMenu']}
       overlayInnerStyle={formattedOverlayInnerStyle}
       // showArrow={false}
@@ -306,6 +306,7 @@ const Tooltip = React.forwardRef<unknown, TooltipProps>((props, ref) => {
         motionDeadline: 1000,
       }}
     >
+      {/* {child} */}
       {tempOpen ? cloneElement(child, { className: childCls }) : child}
     </RcTooltip>
   );

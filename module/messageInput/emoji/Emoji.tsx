@@ -83,6 +83,7 @@ const Emoji = (props: EmojiProps) => {
                   alt={k}
                   width={emojiWidth}
                   height={emojiWidth}
+                  crossOrigin="anonymous"
                 />
               ) : (
                 v
@@ -93,6 +94,7 @@ const Emoji = (props: EmojiProps) => {
                 alt={k}
                 width={emojiWidth}
                 height={emojiWidth}
+                crossOrigin="anonymous"
               />
             )}
           </div>

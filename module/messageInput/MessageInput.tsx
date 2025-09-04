@@ -110,38 +110,91 @@ const MessageInput = (props: MessageInputProps) => {
     if (!textareaRef.current) return;
     // @ts-ignore
     const i = textareaRef.current.divRef.current as any;
-    const offset = i.innerText.length;
-    let n: any, a: any;
+
+    // 创建表情图片元素
+    const createEmojiImage = () => {
+      const img = new Image();
+      img.src = t;
+      img.setAttribute('data-key', e);
+      img.setAttribute('width', '16px');
+      img.setAttribute('height', '16px');
+      img.draggable = false;
+      img.className = 'message-text-emoji';
+      img.setAttribute('title', e.replace('[', '').replace(']', ''));
+      img.setAttribute('style', 'vertical-align: middle');
+      return img;
+    };
+
+    let inserted = false;
+
+    // 首先尝试使用 Selection API
     if ('getSelection' in window) {
       const s = window.getSelection();
-      if (s && 1 === s.rangeCount) {
-        i.focus();
-        n = s.getRangeAt(0);
-        a = new Image();
-        (a.src = t),
-          a.setAttribute('data-key', e),
-          a.setAttribute('width', '16px'),
-          a.setAttribute('height', '16px'),
-          (a.draggable = !1),
-          (a.className = 'message-text-emoji'),
-          a.setAttribute('title', e.replace('[', '').replace(']', '')),
-          a.setAttribute('style', 'vertical-align: middle');
-        n.deleteContents(), n.insertNode(a), n.collapse(false), s.removeAllRanges(), s.addRange(n);
+      if (s && s.rangeCount > 0) {
+        try {
+          i.focus();
+          const n = s.getRangeAt(0);
+          const a = createEmojiImage();
+          n.deleteContents();
+          n.insertNode(a);
+          n.collapse(false);
+          s.removeAllRanges();
+          s.addRange(n);
+          inserted = true;
+        } catch (error) {
+          console.warn('Selection API failed, using fallback method:', error);
+        }
       }
-    } else if ('selection' in document) {
-      i.focus(),
-        // @ts-ignore
-        (n = document.selection.createRange()).pasteHTML(
-          '<img class="emoj-insert" draggable="false" data-key="' +
-            e +
-            '" title="' +
-            e.replace('[', '').replace(']', '') +
-            '" src="' +
-            t +
-            '">',
-        ),
-        i.focus();
     }
+
+    // 如果 Selection API 失败，使用备用方案
+    if (!inserted) {
+      try {
+        i.focus();
+        const a = createEmojiImage();
+        // 如果没有选区，就插入到末尾
+        i.appendChild(a);
+
+        // 设置光标到表情后面
+        if ('getSelection' in window) {
+          const range = document.createRange();
+          range.setStartAfter(a);
+          range.collapse(true);
+          const sel = window.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(range);
+        }
+        inserted = true;
+      } catch (error) {
+        console.warn('Fallback method failed:', error);
+      }
+    }
+
+    // 如果还是失败，使用最后的备用方案（直接操作 innerHTML）
+    if (!inserted) {
+      try {
+        // @ts-ignore
+        if ('selection' in document) {
+          i.focus();
+          // @ts-ignore
+          const n = document.selection.createRange();
+          n.pasteHTML(
+            '<img class="emoj-insert" crossOrigin="anonymous" draggable="false" data-key="' +
+              e +
+              '" title="' +
+              e.replace('[', '').replace(']', '') +
+              '" src="' +
+              t +
+              '">',
+          );
+          i.focus();
+        }
+      } catch (error) {
+        console.warn('IE fallback method failed:', error);
+      }
+    }
+
+    // 更新文本值
     const str = converToMessage(i.innerHTML).trim();
     // @ts-ignore
     textareaRef.current.setTextareaValue(str);
@@ -151,23 +204,52 @@ const MessageInput = (props: MessageInputProps) => {
     if (!textareaRef.current) return;
     // @ts-ignore
     const el = textareaRef.current.divRef.current as any;
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
-    const sel = window.getSelection();
-    sel?.removeAllRanges();
-    sel?.addRange(range);
+
+    // 首先确保元素获得焦点
+    el.focus();
+
+    try {
+      // 尝试设置光标到末尾
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    } catch (error) {
+      // 如果设置光标失败，至少确保元素有焦点
+      console.warn('Failed to set cursor position:', error);
+      // 在移动端，有时候需要稍微延迟一下
+      setTimeout(() => {
+        el.focus();
+      }, 10);
+    }
   };
   const handleSelectEmoji = (emojiString: keyof typeof emoji.map) => {
     if (!emojiString) return;
 
+    // 确保输入框获得焦点，特别是在移动端
+    if (textareaRef.current) {
+      // @ts-ignore
+      const inputElement = textareaRef.current.divRef.current as HTMLElement;
+      if (inputElement) {
+        inputElement.focus();
+        // 在移动端，可能需要稍微延迟一下以确保焦点生效
+        setTimeout(() => {
+          const src = new URL(`/module/assets/reactions/${emoji.map[emojiString]}`, import.meta.url)
+            .href;
+          insertCustomHtml(src, emojiString);
+        }, 10);
+      }
+    }
+
+    // 更新文本值
     // @ts-ignore
-    textareaRef.current.setTextareaValue(value => value + emojiString);
+    textareaRef.current.setTextareaValue(value => {
+      return value + emojiString;
+    });
 
-    const src = new URL(`/module/assets/reactions/${emoji.map[emojiString]}`, import.meta.url).href;
-    insertCustomHtml(src, emojiString);
-
-    // setInputHaveValue(false);
+    setInputHaveValue(true);
   };
   const {
     actions = defaultActions,
@@ -304,7 +386,7 @@ const MessageInput = (props: MessageInputProps) => {
                   // @ts-ignore
                   onSelected={handleSelectEmoji}
                   onClick={handleClickEmojiIcon}
-                  placement="bottomRight"
+                  placement="topLeft"
                 ></Emoji>
               );
             } else if (item.name === 'MORE' && item.visible) {

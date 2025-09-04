@@ -1,7 +1,7 @@
 // 开发用demo
 import React, { useEffect, useState, FC } from 'react';
 import ReactDOM from 'react-dom/client';
-import TextMessage from '../../../module/textMessage';
+import { TextMessage } from '../../../module/textMessage';
 import List from '../../../component/list';
 import Header from '../../../module/header';
 import { ContactItem, ContactList, ContactDetail } from '../../../module/contactList';
@@ -308,6 +308,10 @@ const ChatApp: FC<any> = () => {
                     formatDateTime: (time: number) => {
                       return new Date(time).toLocaleString();
                     },
+                    onClick: msg => {
+                      console.log('msg', msg);
+                      return false; // preventDefault: false, Do not block default behavior
+                    },
                   },
                 }}
                 messageInputProps={{
@@ -315,17 +319,17 @@ const ChatApp: FC<any> = () => {
                 }}
                 headerProps={{
                   moreAction: {
-                    visible: false,
+                    visible: true,
                     actions: [{ content: '' }],
                   },
-                  suffixIcon: [
-                    'THREAD',
-                    'AUDIO',
-                    <Button key="11" type="text" shape="circle">
-                      {' '}
-                      <Icon type="PIN" width={24} height={24}></Icon>
-                    </Button>,
-                  ],
+                  // suffixIcon: [
+                  //   'THREAD',
+                  //   'AUDIO',
+                  //   <Button key="11" type="text" shape="circle">
+                  //     {' '}
+                  //     <Icon type="PIN" width={24} height={24}></Icon>
+                  //   </Button>,
+                  // ],
                   // suffixIcon: (
                   //   <div>
                   //     {currentCvs.chatType !== 'singleChat' && (
@@ -335,10 +339,7 @@ const ChatApp: FC<any> = () => {
                   //   </div>
                   // ),
                 }}
-                rtcConfig={{
-                  getRTCToken: getRTCToken,
-                  getIdMap: () => {},
-                }}
+                useCallkit={true}
                 // renderRepliedMessage={message => {
                 //   return <div>replied message {message.from}</div>;
                 // }}
@@ -423,9 +424,9 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: appKey || 'easemob#easeim',
-        userId: userId || 'sttest',
-        password: password || '123',
+        appKey: appKey || '1107220708140392#gray',
+        userId: userId || 'p1',
+        password: password || '1',
         useUserInfo: true,
         maxMessages: 100,
       }}
@@ -433,7 +434,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         primaryColor: 50, //'#33ffaa',
         mode: 'light',
         bubbleShape: 'round',
-        avatarShape: 'circle',
+        avatarShape: 'square',
         componentsShape: 'round',
         ripple: true,
       }}

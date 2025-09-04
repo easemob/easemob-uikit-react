@@ -194,6 +194,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
                 src={
                   (repliedMsg as ChatSDK.ImgMsgBody).thumb || (repliedMsg as ChatSDK.ImgMsgBody).url
                 }
+                crossOrigin="anonymous"
               ></img>
             </div>
             <ImagePreview

@@ -1,0 +1,298 @@
+@import '../variables.scss';
+@import '../mixins.scss';
+
+$callkit-prefix-cls: #{$cui-prefix}-callkit;
+
+// OneToOne 完整布局样式
+.#{$callkit-prefix-cls}-one-to-one-full-layout {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.30) 0%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.00) 20%, rgba(0, 0, 0, 0.20) 100%);
+  // background: #171A1C;
+
+  // 视频内容区域 - 占满整个容器
+  .#{$callkit-prefix-cls}-video-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background: #171A1C;
+  }
+
+  // 主视频（远程视频）- 背景
+  .#{$callkit-prefix-cls}-main-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    
+    .#{$callkit-prefix-cls}-window {
+      width: 100%;
+      height: 100%;
+      border-radius: 0; // 移除圆角，占满整个容器
+      border: none;
+    }
+  }
+
+  // 画中画视频（本地视频）- 右上角
+  .#{$callkit-prefix-cls}-pip-video {
+    position: absolute;
+    top: 64px;
+    right: 13px;
+    // 🔧 自适应尺寸设置 - 根据视频流分辨率动态调整
+    width: clamp(120px, 21%, 200px); // 最小120px，最大200px，默认21%容器宽度
+    // 🔧 高度由JavaScript动态计算，根据视频流实际分辨率
+    // 🔧 高度将根据视频流比例动态计算，不再固定16:9
+    // height: clamp(67px, 8.4vw, 112px);
+    z-index: 21; // 确保在主视频和遮罩之上
+    border-radius: 8px;
+    overflow: hidden;
+    border: none;
+    transition: all $transition-fast;
+    box-shadow: 2px 0px 8px 0px rgba(26, 26, 26, 0.10), 0px 4px 4px 0px rgba(77, 77, 77, 0.15);
+    
+    &:hover {
+      // transform: scale(1.05);
+      border-color: $border-color-local;
+      // box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+    }
+    
+    .#{$callkit-prefix-cls}-window {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 8px;
+      
+      // 🔧 确保视频内容正确填充容器
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; // 保持比例并填充整个容器
+        border-radius: 8px;
+      }
+      
+      &:hover {
+        // transform: none; // 禁用双重缩放效果
+      }
+    }
+    
+    // 移动端适配
+    @media (max-width: $breakpoint-mobile) {
+      width: clamp(100px, 36%, 150px); // 移动端稍微调整，使用容器宽度的36%
+      top: $gap-medium;
+      right: $gap-medium;
+    }
+    
+    // 小屏幕适配
+    @media (max-width: 480px) {
+      width: 100px;
+      top: 8px;
+      right: 8px;
+    }
+  }
+
+  // 渐变遮罩 - 增强 Header 和 Controls 的可读性
+  .#{$callkit-prefix-cls}-overlay-gradient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2; // 在主视频之上，但在画中画和控件之下
+    pointer-events: none; // 不阻挡用户交互
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.30) 0%,
+      rgba(0, 0, 0, 0.00) 20%,
+      rgba(0, 0, 0, 0.00) 80%,
+      rgba(0, 0, 0, 0.20) 100%
+    );
+  }
+
+  // Header - 浮动在视频内容之上
+  .#{$callkit-prefix-cls}-floating-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    height: $header-height;
+    background: transparent; // 透明背景
+    
+    // Header内容样式调整
+    .cui-header {
+      background: transparent;
+      border: none;
+      margin: 7px 4px 0;
+      .cui-header-content-text{
+        color: $gray-98 !important;
+      }
+      .cui-header-content-sub{
+        color: $gray-7;
+      }
+      .cui-header-title,
+      .cui-header-subtitle {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); // 添加文字阴影增强可读性
+      }
+    }
+  }
+
+  // Controls - 浮动在视频内容之上
+  .#{$callkit-prefix-cls}-floating-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 10;
+    height: $controls-height;
+    background: transparent; // 透明背景
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  // 最小化状态的控制区域
+  .#{$callkit-prefix-cls}-minimized-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 20;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all $transition-fast;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.9);
+    }
+  }
+
+  // 最小化状态的信息区域
+  .#{$callkit-prefix-cls}-minimized-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  // 最小化状态的头像
+  .#{$callkit-prefix-cls}-minimized-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  // 最小化状态的时间显示
+  .#{$callkit-prefix-cls}-minimized-time {
+    color: white;
+    font-size: 12px;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  // 最小化状态的快速控制按钮
+  .#{$callkit-prefix-cls}-minimized-quick-controls {
+    display: flex;
+    gap: 8px;
+    
+    .cui-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all $transition-fast;
+      
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.1);
+      }
+    }
+  }
+
+  // 语音通话内容区域
+  .#{$callkit-prefix-cls}-audio-call-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    z-index: 1;
+  }
+
+  // 语音通话头像区域
+  .#{$callkit-prefix-cls}-audio-call-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+
+  // 语音通话头像占位符
+  .#{$callkit-prefix-cls}-avatar-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #171A1C;
+    color: white;
+    font-size: 48px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  // 语音通话信息区域
+  .#{$callkit-prefix-cls}-audio-call-info {
+    text-align: center;
+    color: white;
+  }
+
+  // 通话者姓名
+  .#{$callkit-prefix-cls}-caller-name {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  // 通话状态
+  .#{$callkit-prefix-cls}-call-status {
+    font-size: 16px;
+    opacity: 0.9;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+} 

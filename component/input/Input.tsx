@@ -14,7 +14,6 @@ import { ConfigContext } from '../config/index';
 import './style/style.scss';
 import Icon from '../icon';
 import { RootContext } from '../../module/store/rootContext';
-import { o } from 'vitest/dist/index-2f5b6168';
 export interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
   prefix?: string;
   className?: string;

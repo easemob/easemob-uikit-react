@@ -22,14 +22,14 @@ export interface UserCardMessageProps extends BaseMessageProps {
   style?: React.CSSProperties;
   className?: string;
   type?: 'primary' | 'secondly';
-  onClick?: (url: string) => void;
+  // onClick?: (url: string) => void;
   bubbleClass?: string;
   nickName?: string;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onUserIdCopied?: (userId: string) => void;
 }
 
-const UserCardMessage = (props: UserCardMessageProps) => {
+let UserCardMessage = (props: UserCardMessageProps) => {
   const {
     customMessage: message,
     renderUserProfile,
@@ -387,6 +387,7 @@ const UserCardMessage = (props: UserCardMessageProps) => {
     </div>
   );
 };
-const UserCardMessageOut = observer(UserCardMessage);
-UserCardMessageOut.displayName = 'UserCardMessage';
-export default UserCardMessageOut;
+UserCardMessage = observer(UserCardMessage);
+// UserCardMessageOut.displayName = 'UserCardMessage';
+// export default UserCardMessageOut;
+export { UserCardMessage };

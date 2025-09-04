@@ -3,12 +3,52 @@ import { StoryFn, Meta } from '@storybook/react';
 
 import MessageStatus from './index';
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    style: 'css style',
+    prefixCls: 'prefixCls',
+    className: 'className',
+    status: 'status',
+    type: 'type',
+  },
+  zh: {
+    style: '样式',
+    prefixCls: '前缀',
+    className: '类名',
+    status: '状态',
+    type: '类型',
+  },
+};
+
 export default {
   title: 'Module/MessageStatus',
   component: MessageStatus,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
-  argTypes: {},
+  argTypes: {
+    prefixCls: {
+      control: 'text',
+      description: description[lang].prefixCls,
+    },
+    className: {
+      control: 'text',
+      description: description[lang].className,
+    },
+    style: {
+      control: 'object',
+      description: description[lang].style,
+    },
+    status: {
+      control: 'select',
+      options: ['received', 'read', 'unread', 'sent', 'failed', 'sending', 'default'],
+      description: description[lang].status,
+    },
+    type: {
+      control: 'select',
+      options: ['icon', 'text'],
+      description: description[lang].type,
+    },
+  },
 } as Meta<typeof MessageStatus>;
 
 export const sending = {

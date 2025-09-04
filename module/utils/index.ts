@@ -66,7 +66,7 @@ export function getCvsIdFromMessage(message: BaseMessageType | NoticeMessageBody
 }
 
 export function getEmojiHtml({ src = '', dataKey = '', alt = '' }) {
-  return `<span><img  src=${src} data-key=${dataKey} alt=${alt} width="20" height="20" style="vertical-align: middle" /></span>`;
+  return `<span><img  crossOrigin="anonymous" src=${src} data-key=${dataKey} alt=${alt} width="20" height="20" style="vertical-align: middle" /></span>`;
 }
 
 export const renderHtml = (txt: string): string => {
@@ -110,7 +110,9 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
     subList.splice(findIndex, 1);
   }
   if (subList.length > 0 && withPresence) {
-    client.subscribePresence({ usernames: subList, expiry: 2592000 });
+    client.subscribePresence({ usernames: subList, expiry: 2592000 }).catch(err => {
+      console.warn('subscribePresence failed', err);
+    });
   }
 
   return new Promise((resolve, reject) => {

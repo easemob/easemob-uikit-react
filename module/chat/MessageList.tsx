@@ -16,7 +16,7 @@ import './style/style.scss';
 import List from '../../component/list';
 import ScrollList from '../../component/scrollList';
 import { useGroupMembers, useGroupAdmins } from '../hooks/useAddress';
-import TextMessage from '../textMessage';
+import { TextMessage } from '../textMessage';
 import AudioMessage from '../audioMessage';
 import FileMessage from '../fileMessage';
 import ImageMessage, { ImagePreview } from '../imageMessage';
@@ -46,6 +46,7 @@ export interface MsgListProps {
   conversation?: CurrentConversation;
   messageProps?: BaseMessageProps;
   onOpenThreadPanel?: (threadId: string) => void;
+  onRtcInviteMessageClick?: (message: ChatSDK.MessageBody) => void;
 }
 
 const MessageScrollList = ScrollList<ChatSDK.MessageBody | NoticeMessageBody>();
@@ -63,6 +64,7 @@ let MessageList: FC<MsgListProps> = props => {
     isThread,
     messageProps,
     style = {},
+    onRtcInviteMessageClick,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -154,6 +156,38 @@ let MessageList: FC<MsgListProps> = props => {
         <NoticeMessage noticeMessage={messageData[data.index] as NoticeMessageBody}></NoticeMessage>
       );
     } else if (messageData[data.index].type == 'txt') {
+      if ((messageData[data.index] as ChatSDK.TextMsgBody)?.chatType === 'groupChat') {
+        const isRtcInviteMessage =
+          (messageData[data.index] as ChatSDK.TextMsgBody)?.ext?.msgType === 'rtcCallWithAgora';
+        if (isRtcInviteMessage) {
+          let msg = '';
+          if (
+            // @ts-ignore
+            messageData[data.index].ext.rtcIsEnd ||
+            // @ts-ignore
+            (!messageData[data.index].mid && messageData[data.index].ext.rtcIsEnd == undefined)
+          ) {
+            msg = '通话已结束';
+          } else {
+            // @ts-ignore
+            msg = messageData[data.index].msg;
+          }
+          return (
+            <NoticeMessage
+              noticeMessage={
+                {
+                  id: messageData[data.index].id,
+                  type: 'notice',
+
+                  message: msg,
+                  time: (messageData[data.index] as ChatSDK.TextMsgBody).time,
+                  noticeType: 'notice',
+                } as NoticeMessageBody
+              }
+            ></NoticeMessage>
+          );
+        }
+      }
       return (
         <TextMessage
           key={messageData[data.index].id}
@@ -166,6 +200,14 @@ let MessageList: FC<MsgListProps> = props => {
           thread={isThread}
           onOpenThreadPanel={props.onOpenThreadPanel || (() => {})}
           {...memoProps.messageProps}
+          onClick={(message: ChatSDK.MessageBody) => {
+            const isRtcInviteMessage =
+              (messageData[data.index] as ChatSDK.TextMsgBody)?.ext?.msgType === 'rtcCallWithAgora';
+            isRtcInviteMessage &&
+              onRtcInviteMessageClick?.(messageData[data.index] as ChatSDK.MessageBody);
+            memoProps.messageProps?.onClick?.(message);
+            return true;
+          }}
         >
           {/* {(messageData[data.index] as ChatSDK.TextMsgBody).msg} */}
         </TextMessage>

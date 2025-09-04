@@ -2,15 +2,53 @@ import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
 import UserProfile from './index';
-import { rootStore } from 'chatuim2';
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+const description = {
+  en: {
+    prefix: 'css class name prefix',
+    className: 'css class name',
+    style: 'css style',
+    userId: 'user ID',
+  },
+  zh: {
+    prefix: 'css 类名前缀',
+    className: 'css 类名',
+    style: 'css 样式',
+    userId: '用户ID',
+  },
+};
 export default {
   title: 'Module/UserProfile',
   component: UserProfile,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
-    // backgroundColor: { control: 'color' },
+    prefix: {
+      description: description[lang].prefix,
+      control: {
+        type: 'text',
+      },
+      type: 'string',
+    },
+    className: {
+      description: description[lang].className,
+      control: {
+        type: 'text',
+      },
+      type: 'string',
+    },
+    style: {
+      description: description[lang].style,
+      control: {
+        type: 'object',
+      },
+    },
+    userId: {
+      description: description[lang].userId,
+      control: {
+        type: 'text',
+      },
+      type: 'string',
+    },
   },
 } as Meta<typeof UserProfile>;
 

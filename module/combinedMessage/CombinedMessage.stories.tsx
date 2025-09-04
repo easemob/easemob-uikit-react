@@ -1,15 +1,76 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import TextMessage from '../textMessage';
 import CombinedMessage from './index';
 
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    combinedMessage: 'Combined message received from SDK',
+    prefix: 'Prefix',
+    style: 'Style',
+    className: 'Class name',
+    type: 'Bubble type',
+    bubbleClass: 'Bubble class name',
+    onShowDetail: 'Show detail callback function, parameter is message object',
+    showSummary: 'Whether to show summary',
+    onlyContent: 'Only show content, not bubble',
+  },
+  zh: {
+    combinedMessage: '从SDK收到的合并消息',
+    prefix: '组件类名前缀',
+    style: '组件样式',
+    className: '组件类名',
+    type: '气泡类型',
+    bubbleClass: '气泡类名',
+    onShowDetail: '展示详情的回调函数, 参数为消息对象',
+    showSummary: '是否显示摘要',
+    onlyContent: '只显示内容, 不显示气泡',
+  },
+};
 export default {
   title: 'Module/CombinedMessage',
   component: CombinedMessage,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
-    backgroundColor: { control: 'color' },
+    prefix: {
+      control: 'text',
+      type: 'string',
+      description: description[lang].prefix,
+    },
+    className: {
+      control: 'text',
+      type: 'string',
+      description: description[lang].className,
+    },
+    style: {
+      control: 'object',
+      description: description[lang].style,
+    },
+    combinedMessage: {
+      control: 'object',
+      description: description[lang].combinedMessage,
+    },
+    type: {
+      control: 'select',
+      options: ['primary', 'secondly'],
+      description: description[lang].type,
+    },
+    bubbleClass: {
+      control: 'text',
+      description: description[lang].bubbleClass,
+    },
+    onShowDetail: {
+      action: 'showDetail',
+      description: description[lang].onShowDetail,
+    },
+    showSummary: {
+      control: 'boolean',
+      description: description[lang].showSummary,
+    },
+    onlyContent: {
+      control: 'boolean',
+      description: description[lang].onlyContent,
+    },
   },
 } as Meta<typeof CombinedMessage>;
 

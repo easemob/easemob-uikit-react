@@ -18,7 +18,6 @@ import Modal from '../../component/modal';
 import { useTranslation } from 'react-i18next';
 import { eventHandler } from '../../eventHandler';
 import { ChatSDK } from '../SDK';
-import { i } from 'vitest/dist/index-2f5b6168';
 export interface ChatroomMemberProps {
   prefix?: string;
   className?: string;

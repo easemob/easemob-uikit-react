@@ -3,68 +3,120 @@ import { StoryFn, Meta } from '@storybook/react';
 
 import MessageInput from './index';
 import Provider from '../store/Provider';
-import { e } from 'vitest/dist/index-2f5b6168';
-// More on default export: https://storybook.js.org/docs/react/writing-stories/introduction#default-export
+
+// 添加中文和英文的描述
+const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
+
+const description = {
+  en: {
+    prefix: 'css class name prefix',
+    className: 'css class name',
+    style: 'css style',
+    enabledTyping: 'Whether to enable typing',
+    conversation: 'The current conversation',
+    showSendButton: 'Whether to show the send button',
+    sendButtonIcon: 'Send button icon',
+    row: 'Number of rows',
+    placeHolder: 'Input box placeholder',
+    disabled: 'Whether to disable',
+    isChatThread: 'Whether it is a chat thread',
+    enabledMention: 'Whether to enable @mention',
+    actions: 'Custom action buttons',
+    customActions: 'Custom + button actions',
+    onSendMessage: 'Send message callback',
+    onBeforeSendMessage: 'Before sending message callback',
+    giftKeyboardProps: 'Gift keyboard props',
+  },
+  zh: {
+    prefix: '类名前缀',
+    className: '类名',
+    style: '样式',
+    enabledTyping: '是否启用打字状态',
+    conversation: '当前会话',
+    showSendButton: '是否显示发送按钮',
+    sendButtonIcon: '发送按钮图标',
+    row: '行数',
+    placeHolder: '输入框占位符',
+    disabled: '是否禁用',
+    isChatThread: '是否是聊天线程',
+    enabledMention: '是否启用@提及',
+    actions: '自定义动作按钮',
+    customActions: '自定义+按钮里面的动作',
+    onSendMessage: '发送消息回调',
+    onBeforeSendMessage: '发送消息前回调',
+    giftKeyboardProps: '礼物键盘属性',
+  },
+};
 export default {
   title: 'Module/MessageInput',
   component: MessageInput,
-  // More on argTypes: https://storybook.js.org/docs/react/api/argtypes
   argTypes: {
     prefix: {
       control: 'text',
-      description: 'css class name prefix',
+      description: description[lang].prefix,
       default: 'cui',
     },
     className: {
       control: 'text',
-      description: 'css class name',
+      description: description[lang].className,
     },
     style: {
       control: 'object',
-      description: 'css style',
+      description: description[lang].style,
     },
     enabledTyping: {
       control: 'boolean',
-      description: 'Whether to enable typing',
+      description: description[lang].enabledTyping,
       default: true,
     },
     conversation: {
       control: 'object',
-      description: 'The current conversation',
+      description: description[lang].conversation,
     },
     showSendButton: {
       control: 'boolean',
-      description: 'Whether to show the send button',
+      description: description[lang].showSendButton,
       default: true,
     },
     sendButtonIcon: {
       control: 'object',
-      description: 'Send button icon',
+      description: description[lang].sendButtonIcon,
     },
     row: {
       control: 'number',
-      description: 'Number of rows',
+      description: description[lang].row,
       default: 1,
     },
     placeHolder: {
       control: 'text',
-      description: 'Input box placeholder',
+      description: description[lang].placeHolder,
     },
     disabled: {
       control: 'boolean',
-      description: 'Whether to disable',
+      description: description[lang].disabled,
     },
     isChatThread: {
       control: 'boolean',
-      description: 'Whether it is a chat thread',
+      description: description[lang].isChatThread,
     },
     enabledMention: {
       control: 'boolean',
-      description: 'Whether to enable @mention',
+      description: description[lang].enabledMention,
+      table: {
+        type: { summary: 'boolean' },
+        defaultValue: { summary: 'true' },
+      },
     },
     actions: {
       control: 'object',
-      description: 'Custom action buttons',
+      description: description[lang].actions,
+      table: {
+        type: { summary: 'Action[]' },
+        defaultValue: {
+          summary:
+            '[{ name: "RECORDER", visible: true, icon: "" }, { name: "TEXTAREA", visible: true, icon: "" }, { name: "EMOJI", visible: true, icon: "" }, { name: "MORE", visible: true, icon: "" }]',
+        },
+      },
       defaultValue: [
         {
           name: 'RECORDER',
@@ -90,7 +142,14 @@ export default {
     },
     customActions: {
       control: 'object',
-      description: 'Custom action buttons',
+      description: description[lang].customActions,
+      table: {
+        type: { summary: 'Action[]' },
+        defaultValue: {
+          summary:
+            '[{ content: "FILE" }, { content: "IMAGE" }, { content: "VIDEO" }, { content: "CARD" }]',
+        },
+      },
       defaultValue: [
         { content: 'FILE' },
         { content: 'IMAGE' },
@@ -100,15 +159,15 @@ export default {
     },
     onSendMessage: {
       action: 'onSendMessage',
-      description: 'Send message callback',
+      description: description[lang].onSendMessage,
     },
     onBeforeSendMessage: {
       action: 'onBeforeSendMessage',
-      description: 'Before sending message callback',
+      description: description[lang].onBeforeSendMessage,
     },
     giftKeyboardProps: {
       control: 'object',
-      description: 'Gift keyboard props',
+      description: description[lang].giftKeyboardProps,
     },
   },
 } as Meta<typeof MessageInput>;

@@ -141,6 +141,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
             src={new URL(`/module/assets/reactions/${path}`, import.meta.url).href}
             width={emojiWidth}
             height={emojiWidth}
+            crossOrigin="anonymous"
           />
         )}
         <span className={`${prefixCls}-count`}>{count}</span>

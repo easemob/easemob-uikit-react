@@ -60,10 +60,10 @@ const Gift = (props: GiftProps) => {
   const handleActionClick = () => {};
   return (
     <div className={classString} onClick={clickGift} key={title}>
-      <img src={image as any as string} alt={title} />
+      <img src={image as any as string} alt={title} crossOrigin="anonymous" />
       {!selected && <div className={`${prefixCls}-title`}>{title}</div>}
       <div className={`${prefixCls}-subtitle`}>
-        <img src={coin as any as string} alt="coin" /> {subTitle}
+        <img src={coin as any as string} alt="coin" crossOrigin="anonymous" /> {subTitle}
       </div>
       {selected && (
         <div className={`${prefixCls}-button`} onClick={action?.onClick || handleActionClick}>

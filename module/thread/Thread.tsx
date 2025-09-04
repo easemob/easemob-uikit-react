@@ -11,7 +11,7 @@ import Header from '../header';
 import MessageInput, { MessageInputProps } from '../messageInput';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
-import TextMessage from '../textMessage';
+import { TextMessage } from '../textMessage';
 import ImageMessage from '../imageMessage';
 import FileMessage from '../fileMessage';
 import AudioMessage from '../audioMessage';

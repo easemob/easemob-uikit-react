@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主视频布局演示 - 左右滑动按钮</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .demo-title {
+            font-size: 24px;
+            color: #1890ff;
+            margin: 0 0 10px 0;
+        }
+
+        .demo-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .instructions {
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .instructions h3 {
+            margin: 0 0 15px 0;
+            color: #1890ff;
+            font-size: 16px;
+        }
+
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn.primary {
+            background: #1890ff;
+            color: white;
+            border-color: #1890ff;
+        }
+
+        .btn.primary:hover {
+            background: #40a9ff;
+        }
+
+        .video-layout {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .mock-callkit {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mock-header {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            color: white;
+            font-size: 14px;
+        }
+
+        .mock-content {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .mock-main-video {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mock-main-video:hover {
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        .mock-thumbnails {
+            position: relative;
+            height: 120px;
+            display: flex;
+            align-items: center;
+        }
+
+        .scroll-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            z-index: 10;
+            transition: all 0.2s;
+        }
+
+        .scroll-button:hover {
+            background: rgba(0, 0, 0, 0.8);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .scroll-button.left {
+            left: 10px;
+        }
+
+        .scroll-button.right {
+            right: 10px;
+        }
+
+        .thumbnails-container {
+            flex: 1;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 0 60px;
+        }
+
+        .thumbnails-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .thumbnails-scroll {
+            display: flex;
+            gap: 10px;
+            height: 120px;
+            width: max-content;
+            transition: transform 0.3s ease;
+        }
+
+        .mock-thumbnail {
+            width: 160px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .mock-thumbnail:hover {
+            background: rgba(0, 0, 0, 0.4);
+            transform: scale(1.05);
+        }
+
+        .mock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            height: 100%;
+        }
+
+        .mock-video {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mock-video:hover {
+            background: rgba(0, 0, 0, 0.4);
+            transform: scale(1.02);
+        }
+
+        .mock-controls {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .mock-control-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .mock-control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .back-button {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .highlight {
+            background: #fff2e6;
+            border: 2px solid #ffa940;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                border-color: #ffa940;
+            }
+
+            50% {
+                border-color: #ff7a45;
+            }
+
+            100% {
+                border-color: #ffa940;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1 class="demo-title">🎥 主视频布局演示 - 左右滑动按钮</h1>
+            <p class="demo-description">
+                演示 CallKit 组件的主视频布局模式和缩略图滑动功能
+            </p>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 操作说明</h3>
+            <ol>
+                <li><strong>点击网格中的任意视频</strong> - 进入主视频布局模式</li>
+                <li><strong>观察底部缩略图区域</strong> - 当视频数量较多时，左右滑动按钮会自动出现</li>
+                <li><strong>点击滑动按钮</strong> - 左右滑动查看更多缩略图</li>
+                <li><strong>点击缩略图</strong> - 切换主视频</li>
+                <li><strong>点击"返回网格视图"</strong> - 回到网格布局模式</li>
+            </ol>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="removeVideo" onclick="removeVideo()">移除视频</button>
+            <button class="btn primary" id="addVideo" onclick="addVideo()">添加视频</button>
+            <button class="btn" id="resetDemo" onclick="resetDemo()">重置演示</button>
+            <span id="videoCount">当前显示 8 / 15 个视频</span>
+        </div>
+
+        <div class="video-layout">
+            <div class="mock-callkit" id="mockCallkit">
+                <!-- Header -->
+                <div class="mock-header">
+                    <div>多人视频通话</div>
+                    <div>00:05:23</div>
+                </div>
+
+                <!-- Main Content -->
+                <div class="mock-content" id="mockContent">
+                    <!-- 网格布局 -->
+                    <div class="mock-grid" id="gridLayout">
+                        <!-- 视频会在这里动态生成 -->
+                    </div>
+
+                    <!-- 主视频布局 -->
+                    <div class="mock-main-video hidden" id="mainVideo">
+                        主视频 - User 1
+                    </div>
+
+                    <div class="mock-thumbnails hidden" id="thumbnails">
+                        <button class="scroll-button left" id="scrollLeft" onclick="scrollThumbnails('left')">‹</button>
+                        <button class="scroll-button right" id="scrollRight"
+                            onclick="scrollThumbnails('right')">›</button>
+                        <div class="thumbnails-container">
+                            <div class="thumbnails-scroll" id="thumbnailsScroll">
+                                <!-- 缩略图会在这里动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 返回按钮 -->
+                <button class="back-button hidden" id="backButton" onclick="exitMainVideoMode()">返回网格视图</button>
+
+                <!-- Controls -->
+                <div class="mock-controls">
+                    <button class="mock-control-btn">🔇</button>
+                    <button class="mock-control-btn">📹</button>
+                    <button class="mock-control-btn">🔊</button>
+                    <button class="mock-control-btn">📱</button>
+                    <button class="mock-control-btn">❌</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status" id="status">
+            当前状态：网格布局模式 - 点击任意视频进入主视频模式
+        </div>
+    </div>
+
+    <script>
+        let videoCount = 8;
+        let maxVideos = 15;
+        let isMainVideoMode = false;
+        let selectedVideoIndex = 0;
+        let scrollPosition = 0;
+
+        const videoNames = [
+            'You (Local)', 'Alice', 'Bob', 'Charlie', 'David', 'Emma', 'Frank', 'Grace',
+            'Henry', 'Ivy', 'Jack', 'Kate', 'Leo', 'Mia', 'Noah'
+        ];
+
+        function updateVideoCount() {
+            document.getElementById('videoCount').textContent = `当前显示 ${videoCount} / ${maxVideos} 个视频`;
+            document.getElementById('removeVideo').disabled = videoCount <= 1;
+            document.getElementById('addVideo').disabled = videoCount >= maxVideos;
+        }
+
+        function addVideo() {
+            if (videoCount < maxVideos) {
+                videoCount++;
+                updateVideoCount();
+                if (isMainVideoMode) {
+                    updateMainVideoLayout();
+                } else {
+                    updateGridLayout();
+                }
+            }
+        }
+
+        function removeVideo() {
+            if (videoCount > 1) {
+                videoCount--;
+                updateVideoCount();
+                if (isMainVideoMode) {
+                    updateMainVideoLayout();
+                } else {
+                    updateGridLayout();
+                }
+            }
+        }
+
+        function updateGridLayout() {
+            const gridLayout = document.getElementById('gridLayout');
+            gridLayout.innerHTML = '';
+
+            for (let i = 0; i < videoCount; i++) {
+                const video = document.createElement('div');
+                video.className = 'mock-video';
+                video.textContent = videoNames[i];
+                video.onclick = () => enterMainVideoMode(i);
+                gridLayout.appendChild(video);
+            }
+        }
+
+        function enterMainVideoMode(videoIndex) {
+            isMainVideoMode = true;
+            selectedVideoIndex = videoIndex;
+
+            // 隐藏网格布局
+            document.getElementById('gridLayout').classList.add('hidden');
+
+            // 显示主视频布局
+            document.getElementById('mainVideo').classList.remove('hidden');
+            document.getElementById('thumbnails').classList.remove('hidden');
+            document.getElementById('backButton').classList.remove('hidden');
+
+            // 高亮显示
+            document.getElementById('mockCallkit').classList.add('highlight');
+            setTimeout(() => {
+                document.getElementById('mockCallkit').classList.remove('highlight');
+            }, 3000);
+
+            updateMainVideoLayout();
+            updateStatus('主视频布局模式 - 点击缩略图切换主视频，点击滑动按钮浏览更多视频');
+        }
+
+        function exitMainVideoMode() {
+            isMainVideoMode = false;
+
+            // 显示网格布局
+            document.getElementById('gridLayout').classList.remove('hidden');
+
+            // 隐藏主视频布局
+            document.getElementById('mainVideo').classList.add('hidden');
+            document.getElementById('thumbnails').classList.add('hidden');
+            document.getElementById('backButton').classList.add('hidden');
+
+            updateStatus('网格布局模式 - 点击任意视频进入主视频模式');
+        }
+
+        function updateMainVideoLayout() {
+            // 更新主视频
+            const mainVideo = document.getElementById('mainVideo');
+            mainVideo.textContent = `主视频 - ${videoNames[selectedVideoIndex]}`;
+
+            // 更新缩略图
+            const thumbnailsScroll = document.getElementById('thumbnailsScroll');
+            thumbnailsScroll.innerHTML = '';
+
+            for (let i = 0; i < videoCount; i++) {
+                if (i !== selectedVideoIndex) {
+                    const thumbnail = document.createElement('div');
+                    thumbnail.className = 'mock-thumbnail';
+                    thumbnail.textContent = videoNames[i];
+                    thumbnail.onclick = () => switchMainVideo(i);
+                    thumbnailsScroll.appendChild(thumbnail);
+                }
+            }
+
+            // 更新滚动按钮显示状态
+            updateScrollButtons();
+        }
+
+        function switchMainVideo(videoIndex) {
+            selectedVideoIndex = videoIndex;
+            updateMainVideoLayout();
+            updateStatus(`已切换到主视频：${videoNames[videoIndex]}`);
+        }
+
+        function updateScrollButtons() {
+            const container = document.querySelector('.thumbnails-container');
+            const scroll = document.getElementById('thumbnailsScroll');
+
+            if (!container || !scroll) return;
+
+            const canScrollLeft = container.scrollLeft > 0;
+            const canScrollRight = container.scrollLeft < scroll.scrollWidth - container.clientWidth - 1;
+
+            document.getElementById('scrollLeft').style.display = canScrollLeft ? 'flex' : 'none';
+            document.getElementById('scrollRight').style.display = canScrollRight ? 'flex' : 'none';
+        }
+
+        function scrollThumbnails(direction) {
+            const container = document.querySelector('.thumbnails-container');
+            const scrollAmount = 170; // 缩略图宽度 + 间距
+
+            if (direction === 'left') {
+                container.scrollBy({ left: -scrollAmount * 2, behavior: 'smooth' });
+            } else {
+                container.scrollBy({ left: scrollAmount * 2, behavior: 'smooth' });
+            }
+
+            setTimeout(updateScrollButtons, 300);
+        }
+
+        function updateStatus(message) {
+            const status = document.getElementById('status');
+            status.textContent = `当前状态：${message}`;
+            status.classList.add('fade-in');
+            setTimeout(() => status.classList.remove('fade-in'), 300);
+        }
+
+        function resetDemo() {
+            videoCount = 8;
+            isMainVideoMode = false;
+            selectedVideoIndex = 0;
+            scrollPosition = 0;
+
+            updateVideoCount();
+            exitMainVideoMode();
+            updateGridLayout();
+            updateStatus('演示已重置 - 点击任意视频进入主视频模式');
+        }
+
+        // 初始化
+        updateVideoCount();
+        updateGridLayout();
+
+        // 监听滚动事件
+        document.querySelector('.thumbnails-container')?.addEventListener('scroll', updateScrollButtons);
+
+        // 自动演示
+        setTimeout(() => {
+            if (confirm('是否启动自动演示？\n\n将自动添加视频并进入主视频模式来展示滑动按钮功能。')) {
+                // 添加更多视频
+                videoCount = 12;
+                updateVideoCount();
+                updateGridLayout();
+
+                // 延迟进入主视频模式
+                setTimeout(() => {
+                    enterMainVideoMode(0);
+                    updateStatus('自动演示：已进入主视频模式，请尝试点击左右滑动按钮！');
+                }, 1000);
+            }
+        }, 2000);
+    </script>
+</body>
+
+</html>

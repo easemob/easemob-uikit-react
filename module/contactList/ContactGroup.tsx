@@ -8,7 +8,7 @@ export interface ContactGroupProps {
   prefix?: string;
   children?: ReactNode;
   title?: string;
-  unreadCount?: number;
+  unreadCount?: number; // 好友请求列表，显示没有处理的请求数
   itemCount?: number;
   itemHeight?: number;
   onclickTitle?: (data: any) => void;

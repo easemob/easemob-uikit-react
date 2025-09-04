@@ -1,0 +1,268 @@
+@import '../../style/themes/default.scss';
+
+$notification-prefix: 'cui-notification';
+$notification-width: 368px;
+$notification-margin: 16px;
+$notification-padding: 16px;
+$notification-border-radius: 12px;
+$notification-box-shadow: 2px 0px 8px 0px rgba(20, 12, 12, 0.1), 0px 4px 4px 0px rgba(77, 77, 77, 0.15);
+
+
+// 通知容器
+.#{$notification-prefix} {
+  position: fixed;
+  z-index: 1050;
+  
+  // 每个通知项之间的间距
+  .#{$notification-prefix}-notice {
+    margin-bottom: $notification-margin;
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// 通知项
+.#{$notification-prefix}-notice {
+  position: relative;
+  width: $notification-width;
+  max-width: calc(100vw - 48px);
+  margin-left: auto;
+  margin-right: auto;
+  background: #fff;
+  border-radius: $notification-border-radius;
+  box-shadow: $notification-box-shadow;
+  pointer-events: auto;
+  overflow: hidden;
+  line-height: 1.5715;
+  word-wrap: break-word;
+  
+  // 初始状态 - 隐藏
+  opacity: 0;
+  transform: translateX(100%);
+  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
+  
+  // 显示状态
+  &.#{$notification-prefix}-notice-visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  // 离开状态
+  &.#{$notification-prefix}-notice-leaving {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  
+  // 可点击样式
+  &.#{$notification-prefix}-notice-clickable {
+    cursor: pointer;
+    
+    &:hover {
+      background: #fafafa;
+    }
+  }
+  
+  // 不同位置的动画
+  .#{$notification-prefix}-topLeft &,
+  .#{$notification-prefix}-bottomLeft & {
+    transform: translateX(-100%);
+    
+    &.#{$notification-prefix}-notice-visible {
+      transform: translateX(0);
+    }
+    
+    &.#{$notification-prefix}-notice-leaving {
+      transform: translateX(-100%);
+    }
+  }
+  
+  .#{$notification-prefix}-top &,
+  .#{$notification-prefix}-bottom & {
+    transform: translateY(-100%);
+    
+    &.#{$notification-prefix}-notice-visible {
+      transform: translateY(0);
+    }
+    
+    &.#{$notification-prefix}-notice-leaving {
+      transform: translateY(-100%);
+    }
+  }
+  
+  .#{$notification-prefix}-bottom &,
+  .#{$notification-prefix}-bottomLeft &,
+  .#{$notification-prefix}-bottomRight & {
+    &:not(.#{$notification-prefix}-notice-leaving) {
+      transform: translateY(100%);
+      
+      &.#{$notification-prefix}-notice-visible {
+        transform: translateY(0);
+      }
+    }
+    
+    &.#{$notification-prefix}-notice-leaving {
+      transform: translateY(100%);
+    }
+  }
+}
+
+// 通知内容
+.#{$notification-prefix}-notice-content {
+  display: flex;
+  align-items: flex-start;
+  padding: $notification-padding;
+  position: relative;
+}
+
+// 图标
+.#{$notification-prefix}-notice-icon {
+  flex-shrink: 0;
+  margin-right: 12px;
+  margin-top: 2px;
+  font-size: 24px;
+  line-height: 1;
+}
+
+// 消息包装器
+.#{$notification-prefix}-notice-message-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+// 消息标题
+.#{$notification-prefix}-notice-message {
+  font-size: 16px;
+  font-weight: 500;
+  color: rgba(0, 0, 0, 0.85);
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+// 消息描述
+.#{$notification-prefix}-notice-description {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.65);
+  line-height: 1.5715;
+}
+
+// 关闭按钮
+.#{$notification-prefix}-notice-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.3s;
+  
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: rgba(0, 0, 0, 0.85);
+  }
+  
+  &:focus {
+    outline: none;
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
+// 不同类型的样式
+.#{$notification-prefix}-notice-success {
+  .#{$notification-prefix}-notice-icon {
+    color: #52c41a;
+  }
+}
+
+.#{$notification-prefix}-notice-info {
+  .#{$notification-prefix}-notice-icon {
+    color: #1890ff;
+  }
+}
+
+.#{$notification-prefix}-notice-warning {
+  .#{$notification-prefix}-notice-icon {
+    color: #faad14;
+  }
+}
+
+.#{$notification-prefix}-notice-error {
+  .#{$notification-prefix}-notice-icon {
+    color: #ff4d4f;
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .#{$notification-prefix}-notice {
+    width: calc(100vw - 32px);
+    margin: 0 16px 16px;
+  }
+  
+  .#{$notification-prefix}-notice-content {
+    padding: 12px;
+  }
+  
+  .#{$notification-prefix}-notice-icon {
+    margin-right: 8px;
+    font-size: 20px;
+  }
+  
+  .#{$notification-prefix}-notice-message {
+    font-size: 14px;
+  }
+  
+  .#{$notification-prefix}-notice-description {
+    font-size: 12px;
+  }
+  
+  .#{$notification-prefix}-notice-close {
+    top: 12px;
+    right: 12px;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+}
+
+// 深色模式支持
+@media (prefers-color-scheme: dark) {
+  .#{$notification-prefix}-notice {
+    background: #2F3437;
+    box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.32), 0 3px 6px -4px rgba(0, 0, 0, 0.32), 0 9px 28px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .#{$notification-prefix}-notice-message {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  
+  .#{$notification-prefix}-notice-description {
+    color: rgba(255, 255, 255, 0.65);
+  }
+  
+  .#{$notification-prefix}-notice-close {
+    color: rgba(255, 255, 255, 0.45);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.85);
+    }
+    
+    &:focus {
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+  
+  .#{$notification-prefix}-notice-clickable:hover {
+    background: #2a2a2a;
+  }
+} 

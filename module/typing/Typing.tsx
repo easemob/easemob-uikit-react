@@ -15,7 +15,7 @@ export interface TypingProps {
   conversation: CurrentConversation;
 }
 
-const Typing = (props: TypingProps) => {
+let Typing = (props: TypingProps) => {
   const { prefix: customizePrefixCls, className, style, onHide, onShow, conversation } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -61,6 +61,6 @@ const Typing = (props: TypingProps) => {
     </div>
   );
 };
-const TypingOut = observer(Typing);
-TypingOut.displayName = 'Typing';
-export default TypingOut;
+Typing = observer(Typing);
+
+export { Typing };

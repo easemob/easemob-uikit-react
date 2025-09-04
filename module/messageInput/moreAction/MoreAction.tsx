@@ -1,4 +1,4 @@
-import React, { useState, ReactNode, useRef, useContext, MouseEventHandler } from 'react';
+import React, { useState, ReactNode, useRef, useContext } from 'react';
 import classNames from 'classnames';
 import './style/style.scss';
 import { ConfigContext } from '../../../component/config/index';
@@ -224,35 +224,46 @@ let MoreAction = (props: MoreActionProps) => {
       console.warn('No specified conversation');
       return;
     }
+    const img = new Image();
+    img.src = URL.createObjectURL(e.target.files?.[0] as unknown as MediaSource);
+    img.onload = () => {
+      const option = {
+        type: 'img',
+        to: currentCVS.conversationId,
+        chatType: currentCVS.chatType,
+        file: file,
+        isChatThread,
+        width: img.width,
+        height: img.height,
+        onFileUploadComplete: data => {
+          const sendMsg = messageStore.message.byId.get(imageMessage.id) as ChatSDK.MessageBody;
+          (sendMsg as any).thumb = data.thumb;
+          (sendMsg as any).url = data.url;
+          messageStore.modifyMessage(imageMessage.id, sendMsg);
+        },
+        isGif: file.filename.endsWith('.gif'),
+      } as ChatSDK.CreateImgMsgParameters;
+      const imageMessage = chatSDK.message.create(option);
+      if (onBeforeSendMessage) {
+        onBeforeSendMessage(imageMessage).then(cvs => {
+          if (cvs) {
+            imageMessage.to = cvs.conversationId;
+            (imageMessage as ImageMessageType).chatType = cvs.chatType;
+          }
 
-    const option = {
-      type: 'img',
-      to: currentCVS.conversationId,
-      chatType: currentCVS.chatType,
-      file: file,
-      isChatThread,
-      onFileUploadComplete: data => {
-        const sendMsg = messageStore.message.byId.get(imageMessage.id) as ChatSDK.MessageBody;
-        (sendMsg as any).thumb = data.thumb;
-        (sendMsg as any).url = data.url;
-        messageStore.modifyMessage(imageMessage.id, sendMsg);
-      },
-    } as ChatSDK.CreateImgMsgParameters;
-    const imageMessage = chatSDK.message.create(option);
-
-    if (onBeforeSendMessage) {
-      onBeforeSendMessage(imageMessage).then(cvs => {
-        if (cvs) {
-          imageMessage.to = cvs.conversationId;
-          (imageMessage as ImageMessageType).chatType = cvs.chatType;
-        }
-
+          messageStore.sendMessage(imageMessage);
+        });
+      } else {
         messageStore.sendMessage(imageMessage);
-      });
-    } else {
-      messageStore.sendMessage(imageMessage);
-    }
-    imageEl!.current!.value = '';
+      }
+      imageEl!.current!.value = '';
+
+      // 释放 URL 对象以避免内存泄漏
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = error => {
+      console.error('Failed to load image:', error);
+    };
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'file' | 'video') => {

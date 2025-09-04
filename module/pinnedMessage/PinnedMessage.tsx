@@ -9,7 +9,7 @@ import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
-import TextMessage from '../textMessage';
+import { TextMessage } from '../textMessage';
 import ImageMessage from '../imageMessage';
 import FileMessage from '../fileMessage';
 import AudioMessage from '../audioMessage';

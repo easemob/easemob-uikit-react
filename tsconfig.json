@@ -16,7 +16,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "baseUrl": ".",
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "types": ["vite/client"]
     // "paths": {
     //   "~": ["/"]
     // }

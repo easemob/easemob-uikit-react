@@ -10,8 +10,9 @@ import { RootContext } from '../../module/store/rootContext';
 import { Tooltip } from '../tooltip/Tooltip';
 export interface AvatarProps {
   size?: 'large' | 'small' | 'default' | number;
-  shape?: 'circle' | 'square';
-  src?: React.ReactNode;
+  /** Whether to show red dot without number */
+  shape?: 'circle' | 'square' /** 形状 */;
+  src?: string;
   icon?: React.ReactNode;
   style?: React.CSSProperties;
   prefixCls?: string;
@@ -27,7 +28,7 @@ export interface AvatarProps {
     text?: string;
     icon?: HTMLImageElement | string;
   };
-  onClick?: (e?: React.MouseEvent<HTMLElement>) => void;
+  onClick?: (e: React.MouseEvent<HTMLElement>) => void;
   /* callback when img load error */
   /* return false to prevent Avatar show default fallback behavior, then you can do fallback by your self */
   onError?: () => boolean;
@@ -66,7 +67,7 @@ export const InternalAvatar = (props: any, ref: any) => {
     alt,
     children,
     draggable,
-    crossOrigin,
+    crossOrigin = 'anonymous',
     srcSet,
     isOnline,
     presence,
@@ -202,7 +203,7 @@ export const InternalAvatar = (props: any, ref: any) => {
             {React.isValidElement(presence.icon) ? (
               presence.icon
             ) : (
-              <img alt={presence.text} src={presence.icon} />
+              <img alt={presence.text} src={presence.icon} crossOrigin={crossOrigin} />
             )}
           </div>
         </Tooltip>

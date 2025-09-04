@@ -65,7 +65,7 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
             <span>{t('image')}</span>
             <div className={`${prefixCls}-summary-desc-img`}>
               {/* <Icon type="IMG" color="#75828A" width={24} height={24}></Icon> */}
-              <img src={msg.thumb || msg.url}></img>
+              <img src={msg.thumb || msg.url} crossOrigin="anonymous"></img>
             </div>
           </div>
         );

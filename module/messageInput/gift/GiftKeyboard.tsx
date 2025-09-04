@@ -168,6 +168,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
           setOpen(!isOpen);
         }}
         open={isOpen}
+        placement="topLeft"
       >
         {iconNode}
       </Tooltip>
