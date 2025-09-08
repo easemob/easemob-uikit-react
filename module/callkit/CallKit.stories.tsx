@@ -1,13 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import CallKit from './CallKit';
-import { LayoutMode } from './types/index';
-import type { VideoWindowProps } from './types/index';
+import CallKit from './index';
+import type { VideoWindowProps, CallKitRef } from './types/index';
 import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from './utils/logger';
 
+// Storybook 演示用的 Wrapper 组件
+const CallKitDemo = (props: any) => {
+  const callKitRef = useRef<CallKitRef>(null);
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    // 使用 showPreview 方法来显示 CallKit 预览模式
+    const timer = setTimeout(() => {
+      if (callKitRef.current) {
+        // 如果有 videos 则模拟通话，否则显示预览
+        if (props.videos && props.videos.length > 0) {
+          // 使用 props 中指定的 callMode，如果没有则根据视频数量决定
+          const callMode = props.callMode || (props.videos.length > 2 ? 'group' : 'video');
+          callKitRef.current.showPreview(callMode);
+          // 延迟一点再开始通话，确保预览模式设置了正确的 callMode
+          setTimeout(() => {
+            if (callKitRef.current) {
+              callKitRef.current.startCall(props.videos);
+            }
+          }, 100);
+        } else {
+          callKitRef.current.showPreview(props.callMode || 'video');
+        }
+        setIsReady(true);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [props.videos, props.callMode]);
+
+  return (
+    <div
+      style={{
+        width: props.managedPosition === false ? '100%' : '748px',
+        height: props.managedPosition === false ? '600px' : '523px',
+        position: 'relative',
+      }}
+    >
+      <CallKit ref={callKitRef} {...props} />
+      {!isReady && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: '#1a1a1a',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontSize: '16px',
+            zIndex: 1000,
+          }}
+        >
+          Initializing CallKit Demo...
+        </div>
+      )}
+    </div>
+  );
+};
+
 const meta = {
-  title: 'Module/CallKit/CallKit',
-  component: CallKit,
+  title: 'Module/CallKit',
+  component: CallKitDemo,
   parameters: {
     layout: 'centered',
     docs: {
@@ -18,30 +81,214 @@ const meta = {
   },
   tags: ['autodocs'],
   argTypes: {
-    layoutMode: {
-      control: 'select',
-      options: Object.values(LayoutMode),
+    // 基础配置
+    className: {
+      control: 'text',
+      description: '自定义CSS类名',
+    },
+    prefix: {
+      control: 'text',
+      description: 'CSS类名前缀',
+    },
+
+    // 布局相关
+    maxVideos: {
+      control: { type: 'number', min: 1, max: 20 },
+      description: '最大显示视频数量',
     },
     aspectRatio: {
       control: { type: 'range', min: 0.5, max: 2, step: 0.1 },
+      description: '视频窗口宽高比',
     },
     gap: {
       control: { type: 'range', min: 0, max: 20, step: 2 },
+      description: '视频窗口间隙（像素）',
     },
-    maxVideos: {
-      control: { type: 'number', min: 1, max: 20 },
+    backgroundImage: {
+      control: 'text',
+      description: '多人通话背景图片URL',
     },
+
+    // 通话模式
+    callMode: {
+      control: 'select',
+      options: ['video', 'audio', 'group'],
+      description: '通话模式，如果不提供则从邀请信息推断',
+    },
+
+    // 控制按钮相关
+    showControls: {
+      control: 'boolean',
+      description: '是否显示控制按钮',
+    },
+    muted: {
+      control: 'boolean',
+      description: '是否静音',
+    },
+    cameraEnabled: {
+      control: 'boolean',
+      description: '是否启用摄像头',
+    },
+    speakerEnabled: {
+      control: 'boolean',
+      description: '是否启用扬声器',
+    },
+
+    // 铃声相关配置
+    enableRingtone: {
+      control: 'boolean',
+      description: '是否启用铃声',
+    },
+    ringtoneVolume: {
+      control: { type: 'range', min: 0, max: 1, step: 0.1 },
+      description: '铃声音量，范围0-1',
+    },
+    ringtoneLoop: {
+      control: 'boolean',
+      description: '是否循环播放铃声',
+    },
+    outgoingRingtoneSrc: {
+      control: 'text',
+      description: '拨打电话铃声音频文件路径',
+    },
+    incomingRingtoneSrc: {
+      control: 'text',
+      description: '接听电话铃声音频文件路径',
+    },
+
+    // 可调整大小相关
     resizable: {
       control: 'boolean',
+      description: '是否可调整大小',
     },
     minWidth: {
       control: { type: 'number', min: 200, max: 800, step: 50 },
+      description: '最小宽度',
     },
     minHeight: {
       control: { type: 'number', min: 150, max: 600, step: 50 },
+      description: '最小高度',
     },
+    maxWidth: {
+      control: { type: 'number', min: 800, max: 2000, step: 50 },
+      description: '最大宽度',
+    },
+    maxHeight: {
+      control: { type: 'number', min: 600, max: 1500, step: 50 },
+      description: '最大高度',
+    },
+
+    // 拖动相关
+    draggable: {
+      control: 'boolean',
+      description: '是否可拖动',
+    },
+    dragHandle: {
+      control: 'text',
+      description: 'CSS选择器，指定拖动手柄区域',
+    },
+
+    // 内置位置管理
+    managedPosition: {
+      control: 'boolean',
+      description: '是否使用内置位置管理',
+    },
+
+    // 最小化相关
+    isMinimized: {
+      control: 'boolean',
+      description: '最小化状态',
+    },
+
+    // 邀请相关配置
+    acceptText: {
+      control: 'text',
+      description: '接听按钮文本',
+    },
+    rejectText: {
+      control: 'text',
+      description: '拒绝按钮文本',
+    },
+    showInvitationAvatar: {
+      control: 'boolean',
+      description: '是否显示邀请者头像',
+    },
+    showInvitationTimer: {
+      control: 'boolean',
+      description: '是否显示倒计时',
+    },
+    autoRejectTime: {
+      control: { type: 'number', min: 10, max: 120, step: 5 },
+      description: '自动拒绝时间（秒）',
+    },
+
+    // 群组成员选择相关
+    userSelectTitle: {
+      control: 'text',
+      description: '用户选择弹窗标题（添加参与者时）',
+    },
+    initiateGroupCallTitle: {
+      control: 'text',
+      description: '发起群组通话时的弹窗标题',
+    },
+
+    // 日志管理配置
+    logLevel: {
+      control: 'select',
+      options: ['error', 'warn', 'info', 'debug', 'verbose'],
+      description: '日志级别',
+    },
+    enableLogging: {
+      control: 'boolean',
+      description: '是否启用日志输出',
+    },
+    logPrefix: {
+      control: 'text',
+      description: '日志前缀',
+    },
+
+    // 音量阈值配置
+    speakingVolumeThreshold: {
+      control: { type: 'range', min: 1, max: 100, step: 1 },
+      description: '说话指示器显示的音量阈值，范围1-100',
+    },
+
+    // 禁用复杂类型的控制器
+    style: { control: false, description: '自定义内联样式' },
+    chatClient: { control: false, description: '环信IM SDK实例' },
+    groupMembers: { control: false, description: '群组成员列表' },
+    userInfoProvider: { control: false, description: '用户信息提供器' },
+    groupInfoProvider: { control: false, description: '群组信息提供器' },
+    customIcons: { control: false, description: '自定义图标映射' },
+    encoderConfig: { control: false, description: '视频编码配置' },
+    invitationCustomContent: { control: false, description: '自定义邀请内容' },
+
+    // 回调函数
+    onVideoClick: { control: false, description: '视频点击回调' },
+    onMuteToggle: { control: false, description: '静音切换回调' },
+    onCameraToggle: { control: false, description: '摄像头切换回调' },
+    onSpeakerToggle: { control: false, description: '扬声器切换回调' },
+    onScreenShareToggle: { control: false, description: '屏幕共享切换回调' },
+    onHangup: { control: false, description: '挂断回调' },
+    onAddParticipant: { control: false, description: '添加参与者回调' },
+    onInvitationAccept: { control: false, description: '接受邀请回调' },
+    onInvitationReject: { control: false, description: '拒绝邀请回调' },
+    onCallStart: { control: false, description: '通话开始回调' },
+    onCallEnd: { control: false, description: '通话结束回调' },
+    onLayoutModeChange: { control: false, description: '布局模式切换回调' },
+    onResize: { control: false, description: '大小调整回调' },
+    onDragStart: { control: false, description: '拖动开始回调' },
+    onDrag: { control: false, description: '拖动回调' },
+    onDragEnd: { control: false, description: '拖动结束回调' },
+    onMinimizedChange: { control: false, description: '最小化状态变化回调' },
+    onCallError: { control: false, description: 'SDK错误回调' },
+    onReceivedCall: { control: false, description: '接收到通话回调' },
+    onRemoteUserJoined: { control: false, description: '远程用户加入回调' },
+    onRemoteUserLeft: { control: false, description: '远程用户离开回调' },
+    onRtcEngineCreated: { control: false, description: 'RTC引擎创建回调' },
+    onEndCallWithReason: { control: false, description: '带原因的通话结束回调' },
   },
-} as Meta<typeof CallKit>;
+} as Meta<typeof CallKitDemo>;
 
 export default meta;
 type Story = any;
@@ -92,44 +339,14 @@ const mockVideos12: VideoWindowProps[] = [
 export const Default: Story = {
   args: {
     videos: mockVideos4,
-    layoutMode: LayoutMode.MULTI_PARTY,
     aspectRatio: 1,
     gap: 8,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
-  },
-};
-
-// 预览模式（单个视频）
-export const PreviewMode: Story = {
-  args: {
-    videos: mockVideos1,
-    layoutMode: LayoutMode.PREVIEW,
-    aspectRatio: 9 / 16, // 竖屏比例
-    gap: 8,
-    showControls: true,
-    muted: false,
-    cameraEnabled: true,
-    speakerEnabled: true,
-    screenSharing: false,
-  },
-};
-
-// 1v1模式
-export const OneToOneMode: Story = {
-  args: {
-    videos: mockVideos2,
-    layoutMode: LayoutMode.ONE_TO_ONE,
-    aspectRatio: 16 / 9, // 横屏比例
-    gap: 8,
-    showControls: true,
-    muted: false,
-    cameraEnabled: true,
-    speakerEnabled: true,
-    screenSharing: false,
+    // 添加这些属性来强制显示CallKit
+    managedPosition: false, // 不使用固定定位，适配Storybook
   },
 };
 
@@ -137,14 +354,14 @@ export const OneToOneMode: Story = {
 export const MultiParty4: Story = {
   args: {
     videos: mockVideos4,
-    layoutMode: LayoutMode.MULTI_PARTY,
+    callMode: 'group', // 明确指定为群组通话模式
     aspectRatio: 1,
     gap: 8,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
+    managedPosition: false,
   },
 };
 
@@ -152,14 +369,14 @@ export const MultiParty4: Story = {
 export const MultiParty8: Story = {
   args: {
     videos: mockVideos8,
-    layoutMode: LayoutMode.MULTI_PARTY,
+    callMode: 'group', // 明确指定为群组通话模式
     aspectRatio: 1,
     gap: 6,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
+    managedPosition: false,
   },
 };
 
@@ -167,14 +384,14 @@ export const MultiParty8: Story = {
 export const MultiParty12: Story = {
   args: {
     videos: mockVideos12,
-    layoutMode: LayoutMode.MULTI_PARTY,
+    callMode: 'group', // 明确指定为群组通话模式
     aspectRatio: 1,
     gap: 4,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
+    managedPosition: false,
   },
 };
 
@@ -182,14 +399,12 @@ export const MultiParty12: Story = {
 export const NoVideos: Story = {
   args: {
     videos: [],
-    layoutMode: LayoutMode.MULTI_PARTY,
     aspectRatio: 1,
     gap: 8,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
   },
 };
 
@@ -197,14 +412,12 @@ export const NoVideos: Story = {
 export const AutoLayout: Story = {
   args: {
     videos: mockVideos2, // 可以在控制面板中修改视频数量来测试自动布局
-    layoutMode: LayoutMode.MULTI_PARTY, // 使用默认模式，让系统自动选择
     aspectRatio: 1,
     gap: 8,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
   },
 };
 
@@ -212,14 +425,12 @@ export const AutoLayout: Story = {
 export const NoControls: Story = {
   args: {
     videos: mockVideos4,
-    layoutMode: LayoutMode.MULTI_PARTY,
     aspectRatio: 1,
     gap: 8,
     showControls: false,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
   },
 };
 
@@ -227,14 +438,12 @@ export const NoControls: Story = {
 export const CustomStyle: Story = {
   args: {
     videos: mockVideos4,
-    layoutMode: LayoutMode.MULTI_PARTY,
     aspectRatio: 1,
     gap: 12,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
     style: {
       border: '2px solid #1890ff',
       borderRadius: '12px',
@@ -247,7 +456,6 @@ export const CustomStyle: Story = {
 export const ResizableMode: Story = {
   args: {
     videos: mockVideos4,
-    layoutMode: LayoutMode.MULTI_PARTY,
     aspectRatio: 1,
     gap: 8,
     showControls: true,
@@ -259,7 +467,6 @@ export const ResizableMode: Story = {
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
     onResize: (width: number, height: number) => {
       logDebug(`组件大小已调整为: ${width}x${height}`);
     },
@@ -278,7 +485,7 @@ export const ResizableMode: Story = {
 export const ResizableOneToOne: Story = {
   args: {
     videos: mockVideos2,
-    layoutMode: LayoutMode.ONE_TO_ONE,
+    callMode: 'video', // 明确指定为1v1视频通话模式
     aspectRatio: 16 / 9,
     gap: 8,
     showControls: true,
@@ -290,7 +497,6 @@ export const ResizableOneToOne: Story = {
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
     onResize: (width: number, height: number) => {
       logDebug(`1v1模式组件大小已调整为: ${width}x${height}`);
     },
@@ -308,14 +514,14 @@ export const ResizableOneToOne: Story = {
 export const MainVideoLayout: Story = {
   args: {
     videos: mockVideos8,
-    layoutMode: LayoutMode.MAIN_VIDEO,
+    callMode: 'group', // 明确指定为群组通话模式
     aspectRatio: 16 / 9,
     gap: 8,
     showControls: true,
     muted: false,
     cameraEnabled: true,
     speakerEnabled: true,
-    screenSharing: false,
+    managedPosition: false,
   },
   parameters: {
     docs: {
@@ -325,76 +531,4 @@ export const MainVideoLayout: Story = {
       },
     },
   },
-};
-
-// 最小化功能演示
-export const MinimizedDemo = () => {
-  const [isMinimized, setIsMinimized] = useState(false);
-  const [callDuration, setCallDuration] = useState('00:00:01'); // 从 1 秒开始
-
-  // 模拟通话时长更新
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCallDuration(prev => {
-        const [hours, minutes, seconds] = prev.split(':').map(Number);
-        const totalSeconds = hours * 3600 + minutes * 60 + seconds + 1;
-        const newHours = Math.floor(totalSeconds / 3600);
-        const newMinutes = Math.floor((totalSeconds % 3600) / 60);
-        const newSeconds = totalSeconds % 60;
-        return `${newHours.toString().padStart(2, '0')}:${newMinutes
-          .toString()
-          .padStart(2, '0')}:${newSeconds.toString().padStart(2, '0')}`;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <div style={{ padding: '20px', background: '#f0f0f0', minHeight: '100vh' }}>
-      <h3>最小化功能演示</h3>
-      <p>点击 BOXES 按钮切换最小化状态，最小化后点击任何位置恢复正常布局</p>
-
-      <div style={{ marginBottom: '20px' }}>
-        <label>
-          <input
-            type="checkbox"
-            checked={isMinimized}
-            onChange={e => setIsMinimized(e.target.checked)}
-          />
-          最小化状态
-        </label>
-      </div>
-
-      {/* 视频通话最小化演示 */}
-      <div style={{ marginBottom: '30px' }}>
-        <h4>视频通话最小化 (120x80)</h4>
-        <CallKit
-          managedPosition={true}
-          initialPosition={{ left: 50, top: 50 }}
-          initialSize={{ width: 600, height: 400 }}
-          minimizedSize={{ width: 120, height: 80 }}
-          isMinimized={isMinimized}
-          resizable={true}
-          draggable={true}
-          showControls={true}
-        />
-      </div>
-
-      {/* 语音通话最小化演示 */}
-      <div style={{ marginBottom: '30px' }}>
-        <h4>语音通话最小化 (120x80) - 深色主题</h4>
-        <CallKit
-          managedPosition={true}
-          initialPosition={{ left: 300, top: 50 }}
-          initialSize={{ width: 600, height: 400 }}
-          minimizedSize={{ width: 120, height: 80 }}
-          isMinimized={isMinimized}
-          resizable={true}
-          draggable={true}
-          showControls={true}
-        />
-      </div>
-    </div>
-  );
 };

@@ -1,5 +1,5 @@
 // 主要组件导入
-import CallKit from './CallKit';
+import { CallKit } from './CallKit';
 import VideoLayout from './VideoLayout';
 import CallControls from './components/CallControls';
 

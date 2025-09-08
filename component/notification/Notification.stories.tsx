@@ -5,7 +5,7 @@ import { useNotification } from './index';
 import Icon from '../icon';
 
 const meta: Meta = {
-  title: 'Component/Notification',
+  title: 'pure component/Notification',
   parameters: {
     layout: 'centered',
     docs: {

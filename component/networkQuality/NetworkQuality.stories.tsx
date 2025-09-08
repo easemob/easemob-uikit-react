@@ -3,7 +3,7 @@ import { Meta } from '@storybook/react';
 import NetworkQuality from './NetworkQuality';
 
 export default {
-  title: 'Component/NetworkQuality',
+  title: 'pure component/NetworkQuality',
   component: NetworkQuality,
   parameters: {
     layout: 'centered',
@@ -11,7 +11,7 @@ export default {
   argTypes: {
     level: {
       control: 'select',
-      options: [1, 2, 3],
+      options: [1, 2, 3, 4, 5, 6],
       description: '网络质量等级',
     },
     size: {
@@ -35,15 +35,15 @@ export const DifferentLevels = {
   render: () => (
     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
       <div style={{ textAlign: 'center' }}>
-        <NetworkQuality level={1} />
+        <NetworkQuality level={6} />
         <div style={{ marginTop: '8px', fontSize: '12px' }}>信号弱</div>
       </div>
       <div style={{ textAlign: 'center' }}>
-        <NetworkQuality level={2} />
+        <NetworkQuality level={3} />
         <div style={{ marginTop: '8px', fontSize: '12px' }}>信号中等</div>
       </div>
       <div style={{ textAlign: 'center' }}>
-        <NetworkQuality level={3} />
+        <NetworkQuality level={1} />
         <div style={{ marginTop: '8px', fontSize: '12px' }}>信号强</div>
       </div>
     </div>
@@ -81,7 +81,7 @@ export const WeakSignal = {
 // 2格橙色
 export const MediumSignal = {
   args: {
-    level: 2,
+    level: 3,
     size: 'medium',
   },
 };
@@ -89,7 +89,7 @@ export const MediumSignal = {
 // 3格绿色
 export const StrongSignal = {
   args: {
-    level: 3,
+    level: 6,
     size: 'medium',
   },
 };

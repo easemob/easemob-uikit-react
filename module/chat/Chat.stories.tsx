@@ -43,6 +43,8 @@ const description = {
     rtcConfig_onRing: 'Callback when being called, you can play a ringtone',
     rtcConfig_getRTCToken: `Provide a function, receive channel and chatUserId, and return the Agora user ID and the token to join the channel`,
     rtcConfig_groupAvatar: 'Avatar for group audio and video calls',
+    useCallkit: 'Whether to use Callkit',
+    callkitProps: 'Callkit props',
   },
   zh: {
     chat: `Chat 是聊天页面组件，包含了 Header, MessageList, MessageInput 三个组件，提供了以下功能:
@@ -78,6 +80,8 @@ const description = {
     rtcConfig_onRing: '被呼叫时的回调 可以播放铃声',
     rtcConfig_getRTCToken: `提供一个函数，接收 channel和chatUserId, 能返回声网用户 ID 和 加入channel的token`,
     rtcConfig_groupAvatar: '群聊音视频通话时的头像',
+    useCallkit: '是否使用 Callkit',
+    callkitProps: 'Callkit 参数',
   },
 };
 export default {
@@ -118,36 +122,6 @@ export default {
       control: 'object',
       description: description[lang].messageInputProps,
     },
-    rtcConfig: {
-      control: 'object',
-      description: description[lang].rtcConfig,
-      table: {
-        type: {
-          summary: 'object',
-          detail: `{
-  appId: string; // ${description[lang].rtcConfig_appId}
-  agoraUid: string | number; // ${description[lang].rtcConfig_agoraUid}
-  onInvite?: (data: {
-    channel: string;
-    conversation: CurrentConversation;
-    type: 'audio' | 'video';
-  }) => Promise<[{ name: string; id: string; avatarurl?: string }]>; // ${description[lang].rtcConfig_onInvite}
-  onAddPerson?: (data: RtcRoomInfo) => Promise<[{ id: string }]>; // ${description[lang].rtcConfig_onAddPerson}
-  getIdMap?: (data: { userId: string; channel: string }) => Promise<{ [key: string]: string }>; // ${description[lang].rtcConfig_getIdMap}
-  onStateChange?: (data: { type: string; confr: any }) => void; // ${description[lang].rtcConfig_onStateChange}
-  getRTCToken?: (data: {
-    channel: number | string;
-    chatUserId: string; // chat user ID
-  }) => Promise<{
-    agoraUid: string | number; // rtc user ID
-    accessToken: string;
-  }>; // ${description[lang].rtcConfig_getRTCToken}
-  groupAvatar?: string; // ${description[lang].rtcConfig_groupAvatar}
-  onRing?: (data: { channel: string }) => void; // ${description[lang].rtcConfig_onRing}
-}`,
-        },
-      },
-    },
     onOpenThread: {
       type: 'function',
       description: description[lang].onOpenThread,
@@ -180,6 +154,14 @@ export default {
     renderEmpty: {
       type: 'function',
       description: description[lang].renderEmpty,
+    },
+    useCallkit: {
+      control: 'boolean',
+      description: description[lang].useCallkit,
+    },
+    callkitProps: {
+      control: 'object',
+      description: description[lang].callkitProps,
     },
   },
 } as Meta<React.FC<ChatProps>>;
