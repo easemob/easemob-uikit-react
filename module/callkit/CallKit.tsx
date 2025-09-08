@@ -2687,5 +2687,5 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 });
 
 CallKit.displayName = 'CallKit';
-
+export { CallKit };
 export default CallKit;
