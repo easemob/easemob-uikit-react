@@ -81,7 +81,7 @@ const AudioMessage = (props: AudioMessageProps) => {
     className,
   );
 
-  const [sourceUrl, setUrl] = useState<string | null>(null);
+  const [sourceUrl, setUrl] = useState<string | undefined>(undefined);
   useEffect(() => {
     if (!audioMessage.url) return;
     const options = {
@@ -100,12 +100,21 @@ const AudioMessage = (props: AudioMessageProps) => {
   const playAudio = () => {
     const preventDefault = onClick && onClick(audioMessage);
     if (preventDefault === true) return;
-    setPlayStatus(true);
-    console.log('audioRef', audioRef.current);
-    (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current.play().catch(err => {
-      console.error('err', err);
-      setPlayStatus(false);
+    const audioElements = document.getElementsByTagName('audio');
+    Array.from(audioElements).forEach(audio => {
+      if (!audio.paused) {
+        audio.pause();
+        audio.currentTime = 0; // 重置进度
+      }
     });
+    setPlayStatus(true);
+    setTimeout(() => {
+      (audioRef as unknown as React.MutableRefObject<HTMLAudioElement>).current
+        .play()
+        .catch(err => {
+          setPlayStatus(false);
+        });
+    }, 10);
 
     // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
     if (
@@ -305,6 +314,26 @@ const AudioMessage = (props: AudioMessageProps) => {
 
     rootStore.threadStore.getChatThreadDetail(audioMessage?.chatThreadOverview?.id || '');
   };
+  const handlePauseAudio = () => {
+    console.log('handlePauseAudio');
+    setPlayStatus(false);
+  };
+  // 监听 audio 事件
+  useEffect(() => {
+    const audio = audioRef.current as unknown as HTMLAudioElement;
+    if (!audio) return;
+
+    // 暂停事件：结束播放动画
+    const handlePause = () => {
+      setPlayStatus(false);
+      console.log('音频已暂停（主动停止或自然结束前的暂停）');
+    };
+
+    audio.addEventListener('pause', handlePause);
+    return () => {
+      audio.removeEventListener('pause', handlePause); // 组件卸载时移除监听
+    };
+  }, []);
   return (
     <>
       {onlyContent ? (

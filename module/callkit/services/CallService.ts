@@ -4152,6 +4152,14 @@ export class CallService {
       return;
     }
 
+    const audioElements = document.getElementsByTagName('audio');
+    Array.from(audioElements).forEach(audio => {
+      if (!audio.paused) {
+        audio.pause();
+        audio.currentTime = 0; // 重置进度
+      }
+    });
+
     try {
       this.isRingtonePlaying = true;
       this.currentRingtoneType = type;
