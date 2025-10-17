@@ -106,6 +106,9 @@ export interface CallServiceConfig {
   // Callback when invited user is removed (refused, cancelled, etc.)
   onInvitedUserRemoved?: (userId: string, reason: 'refused' | 'cancelled' | 'timeout') => void;
   encoderConfig?: VideoEncoderConfigurationPreset;
+  // Ringtone callbacks
+  onRingtoneStart?: (type: 'outgoing' | 'incoming') => void;
+  onRingtoneEnd?: (type: 'outgoing' | 'incoming') => void;
 }
 
 export class CallService {
@@ -180,6 +183,9 @@ export class CallService {
   private onRtcEngineCreated?: (rtc: any) => void;
 
   private onCallError?: (error: CallError) => void;
+  // Ringtone callbacks
+  private onRingtoneStart?: (type: 'outgoing' | 'incoming') => void;
+  private onRingtoneEnd?: (type: 'outgoing' | 'incoming') => void;
   // Cached group information
   private cachedGroupInfos: { [key: string]: { groupName?: string; groupAvatar?: string } } = {};
 
@@ -223,6 +229,8 @@ export class CallService {
     this.onRemoteUserJoined = config.onRemoteUserJoined;
     this.onRemoteUserLeft = config.onRemoteUserLeft;
     this.onRtcEngineCreated = config.onRtcEngineCreated;
+    this.onRingtoneStart = config.onRingtoneStart;
+    this.onRingtoneEnd = config.onRingtoneEnd;
     this.encoderConfig = config.encoderConfig ?? '720p';
     // Initialize volume threshold
     this.speakingVolumeThreshold = config.speakingVolumeThreshold ?? 60;
@@ -4163,6 +4171,7 @@ export class CallService {
     try {
       this.isRingtonePlaying = true;
       this.currentRingtoneType = type;
+      this.onRingtoneStart?.(type);
       audioElement.currentTime = 0; // 从头开始播放
       await audioElement.play();
     } catch (error) {
@@ -4188,8 +4197,12 @@ export class CallService {
         audioElement.currentTime = 0;
       }
 
+      const lastType = this.currentRingtoneType;
       this.isRingtonePlaying = false;
       this.currentRingtoneType = null;
+      if (lastType) {
+        this.onRingtoneEnd?.(lastType);
+      }
     } catch (error) {
       logError('Stop ringtone failed:', error);
     }

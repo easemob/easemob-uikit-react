@@ -1,7 +1,15 @@
-import React, { ReactNode, useState, useRef, useEffect, useContext } from 'react';
+import React, {
+  ReactNode,
+  useState,
+  useRef,
+  useEffect,
+  useContext,
+  useImperativeHandle,
+} from 'react';
 import classNames from 'classnames';
 import Emoji from './emoji';
 import Recorder from './recorder';
+import type { RecorderRef } from './recorder/Recorder';
 import Textarea from './textarea';
 import './style/style.scss';
 import { emoji } from './emoji/emojiConfig';
@@ -45,6 +53,9 @@ export interface MessageInputProps {
   giftKeyboardProps?: GiftKeyboardProps;
   onChange?: (value: string) => void;
   onFocus?: () => void;
+  // 通话中禁用录音
+  disableRecorder?: boolean;
+  disableRecorderTitle?: string; // 已国际化后的提示文案
 }
 
 function converToMessage(e: string) {
@@ -95,7 +106,17 @@ const defaultActions: Actions = [
   },
 ];
 
-const MessageInput = (props: MessageInputProps) => {
+export interface MessageInputRef {
+  stopRecording: () => void;
+}
+
+const MessageInput = React.forwardRef<MessageInputRef, MessageInputProps>((props, ref) => {
+  const recorderRef = useRef<RecorderRef | null>(null);
+  useImperativeHandle(ref, () => ({
+    stopRecording: () => {
+      recorderRef.current?.stopRecording();
+    },
+  }));
   const [isShowTextarea, setTextareaShow] = useState(true);
   const [isShowRecorder, setShowRecorder] = useState(true);
   const [isShowSelect, setIsShowSelect] = useState(false);
@@ -267,6 +288,8 @@ const MessageInput = (props: MessageInputProps) => {
     giftKeyboardProps,
     onChange,
     onFocus,
+    disableRecorder,
+    disableRecorderTitle,
   } = props;
 
   useEffect(() => {
@@ -339,12 +362,15 @@ const MessageInput = (props: MessageInputProps) => {
     <div className={classString} style={{ ...style }}>
       {isShowRecorder && !inputHaveValue && (
         <Recorder
+          ref={recorderRef}
           isChatThread={isChatThread}
           onBeforeSendMessage={onBeforeSendMessage}
           conversation={conversation}
           onShow={() => setTextareaShow(false)}
           onHide={() => setTextareaShow(true)}
           onSend={() => setTextareaShow(true)}
+          disabled={Boolean(disableRecorder)}
+          disabledTitle={disableRecorderTitle}
         ></Recorder>
       )}
 
@@ -449,6 +475,7 @@ const MessageInput = (props: MessageInputProps) => {
       )}
     </div>
   );
-};
-MessageInput.defaultActions = defaultActions;
+});
+(MessageInput as any).defaultActions = defaultActions;
+MessageInput.displayName = 'MessageInput';
 export default observer(MessageInput);

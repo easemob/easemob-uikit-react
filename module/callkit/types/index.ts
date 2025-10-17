@@ -296,6 +296,12 @@ export interface CallKitProps {
   onRemoteUserLeft?: (userId: string, callType: 'video' | 'audio' | 'group') => void;
   onRtcEngineCreated?: (rtc: any) => void;
   onEndCallWithReason?: (reason: string, callInfo: CallInfo) => void;
+
+  onRingtoneStart?: (type: 'outgoing' | 'incoming') => void;
+  onRingtoneEnd?: (type: 'outgoing' | 'incoming') => void;
+  onCallStatusChanged?: (
+    status: 'idle' | 'calling' | 'ringing' | 'connected' | 'disconnected',
+  ) => void;
 }
 
 // React相关导入

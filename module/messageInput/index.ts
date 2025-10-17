@@ -7,6 +7,6 @@ export type { EmojiProps } from './emoji';
 export type { SelectedControlsProps } from './selectedControls';
 export type { SuggestListProps } from './suggestList';
 export type { TextareaProps } from './textarea';
-
+export type { MessageInputRef } from './MessageInput';
 MessageInput.displayName = 'MessageInput';
 export default MessageInput;

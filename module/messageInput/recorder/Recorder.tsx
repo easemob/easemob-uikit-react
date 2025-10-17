@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useContext } from 'react';
+import React, { useEffect, useRef, useState, useContext, useImperativeHandle } from 'react';
 import classNames from 'classnames';
 import { chatSDK, ChatSDK } from '../../SDK';
 import './style/style.scss';
@@ -22,12 +22,18 @@ export interface RecorderProps {
   conversation?: CurrentConversation;
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
   isChatThread?: boolean;
+  disabled?: boolean;
+  disabledTitle?: string; // 已国际化
+}
+
+export interface RecorderRef {
+  stopRecording: () => void;
 }
 
 let MediaStream: any;
 let recorder: typeof HZRecorder;
 let timer: number;
-const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
+const Recorder = React.forwardRef<RecorderRef, RecorderProps>((props: RecorderProps, ref) => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
@@ -46,6 +52,8 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
     iconStyle = {},
     liveContentStyle = {},
     className,
+    disabled,
+    disabledTitle,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('recorder', customizePrefixCls);
@@ -115,6 +123,12 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       clearInterval(timer);
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    stopRecording: () => {
+      handleClick('stop');
+    },
+  }));
   const currentCVS = conversation ? conversation : messageStore.currentCVS;
 
   useEffect(() => {
@@ -183,9 +197,20 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
   };
 
   const initNode = (
-    <div className={`${prefixCls}-iconBox`} style={{ ...iconStyle }} title={t('record') as string}>
-      <Button type="text" shape="circle" onClick={() => handleClick('start')}>
-        <Icon type="CIRCLE_WAVE" width={24} height={24}></Icon>
+    <div
+      className={classNames(`${prefixCls}-iconBox`, {
+        [`${prefixCls}-iconBox-disabled`]: disabled,
+      })}
+      style={{ ...iconStyle }}
+      title={disabled ? disabledTitle : (t('record') as string)}
+    >
+      <Button
+        type="text"
+        shape="circle"
+        onClick={() => !disabled && handleClick('start')}
+        disabled={disabled}
+      >
+        <Icon type="CIRCLE_WAVE" width={24} height={24} />
       </Button>
     </div>
   );
@@ -226,6 +251,7 @@ const Recorder: React.FC<RecorderProps> = (props: RecorderProps) => {
       {isRecording ? liveNode : initNode}
     </div>
   );
-};
-
+});
+Recorder;
+Recorder.displayName = 'Recorder';
 export { Recorder };

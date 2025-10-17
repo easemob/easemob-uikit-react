@@ -17,7 +17,7 @@ import Avatar from '../../component/avatar';
 import Button from '../../component/button';
 import { Search } from '../../component/input/Search';
 import Header, { HeaderProps } from '../header';
-import MessageInput, { MessageInputProps } from '../messageInput';
+import MessageInput, { MessageInputProps, MessageInputRef } from '../messageInput';
 import List from '../../component/list';
 import { MessageList, MsgListProps } from './MessageList';
 import { getStore } from '../store';
@@ -574,6 +574,15 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     }
   };
 
+  const messageInputRef = useRef<MessageInputRef>(null);
+
+  useEffect(() => {
+    if (messageInputRef.current) {
+      messageInputRef.current.stopRecording();
+    }
+  }, [CVS.conversationId]);
+
+  const [isInCall, setIsInCall] = useState(false); // 是否在通话中, 通话中不允许录语音消息
   return (
     <div className={classString} style={{ ...style }}>
       {isEmpty ? (
@@ -676,7 +685,13 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           {renderMessageInput ? (
             renderMessageInput()
           ) : (
-            <MessageInput {...messageInputConfig} {...messageInputProps}></MessageInput>
+            <MessageInput
+              {...messageInputConfig}
+              {...messageInputProps}
+              ref={messageInputRef}
+              disableRecorder={isInCall}
+              disableRecorderTitle={isInCall ? (t('inCallDisabledRecorder') as string) : ''}
+            ></MessageInput>
           )}
         </>
       )}
@@ -813,6 +828,16 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 };
               }),
             );
+          }}
+          onRingtoneStart={() => {
+            messageInputRef.current?.stopRecording();
+          }}
+          onCallStatusChanged={status => {
+            if (status === 'connected' || status === 'ringing' || status === 'calling') {
+              setIsInCall(true);
+            } else {
+              setIsInCall(false);
+            }
           }}
           {...callkitProps}
         ></CallKit>

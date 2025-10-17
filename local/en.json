@@ -208,5 +208,6 @@
     "callkit.preview.previewMode": "Preview mode",
     "callkit.preview.preparing": "Preparing",
     "callkit.groupCall.groupCall": "Group call",
-    "callkit.groupCall.groupCallInvitation": "Invites you to a group call"
+    "callkit.groupCall.groupCallInvitation": "Invites you to a group call",
+    "inCallDisabledRecorder": "In call disabled recorder"
 }

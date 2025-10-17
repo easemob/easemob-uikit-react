@@ -148,6 +148,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     onRtcEngineCreated,
     onEndCallWithReason,
 
+    onRingtoneStart, // 铃声开始播放
+    onRingtoneEnd, // 铃声结束播放
+    onCallStatusChanged, // 通话状态变化
+
     // 日志管理配置
     logLevel = 'error',
     enableLogging = true,
@@ -215,6 +219,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       stopCallTimer();
     }
   }, [callStatus, isInCall, startCallTimer, stopCallTimer]);
+
+  // 触发外部通话状态变化回调
+  React.useEffect(() => {
+    onCallStatusChanged?.(callStatus);
+  }, [callStatus, onCallStatusChanged]);
 
   // 内置位置和尺寸管理状态
   const [internalPosition, setInternalPosition] = React.useState(initialPosition);
@@ -693,6 +702,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         enableRingtone,
         ringtoneVolume,
         ringtoneLoop,
+        onRingtoneStart,
+        onRingtoneEnd,
         onCallError,
         onReceivedCall,
         onRemoteUserJoined,
