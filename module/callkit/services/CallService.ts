@@ -2633,15 +2633,15 @@ export class CallService {
     this.handleUserLeft(message.from, HANGUP_REASON.HANGUP);
   }
 
-  // 切换静音状态
+  // 切换麦克风状态
   toggleMute(): boolean {
-    if (
-      this.callStatus < CALL_STATUS.CONFIRM_RING ||
-      this.callStatus === CALL_STATUS.RECEIVED_CONFIRM_RING
-    ) {
-      logWarn('not joined the call yet');
-      return false;
-    }
+    // if (
+    //   this.callStatus < CALL_STATUS.CONFIRM_RING ||
+    //   this.callStatus === CALL_STATUS.RECEIVED_CONFIRM_RING
+    // ) {
+    //   logWarn('not joined the call yet');
+    //   return false;
+    // }
 
     if (!this.rtc.localAudioTrack) {
       logWarn('Local audio track does not exist');
@@ -2960,15 +2960,16 @@ export class CallService {
   // 🔧 新增：扬声器状态管理
   private speakerEnabled: boolean = true; // 内部扬声器状态
 
-  // 🔧 新增：切换扬声器状态
+  // 切换扬声器状态
   toggleSpeaker(): boolean {
-    if (
-      this.callStatus < CALL_STATUS.CONFIRM_RING ||
-      this.callStatus === CALL_STATUS.RECEIVED_CONFIRM_RING
-    ) {
-      logWarn('not joined the call yet');
-      return false;
-    }
+    // 没加入之前可以关闭扬声器
+    // if (
+    //   this.callStatus < CALL_STATUS.CONFIRM_RING ||
+    //   this.callStatus === CALL_STATUS.RECEIVED_CONFIRM_RING
+    // ) {
+    //   logWarn('not joined the call yet');
+    //   return false;
+    // }
 
     // 切换内部扬声器状态
     this.speakerEnabled = !this.speakerEnabled;

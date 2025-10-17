@@ -275,7 +275,7 @@ const CallControls: React.FC<CallControlsProps> = ({
 
   // 🔧 修复：麦克风切换处理，添加防抖和状态管理
   const handleMuteClick = React.useCallback(() => {
-    if (shouldDisableMuteButton || isTogglingMic) {
+    if (isTogglingMic) {
       logDebug('🔧 CallControls: 麦克风按钮被禁用或正在操作中，忽略点击', {
         shouldDisableMuteButton,
         isTogglingMic,
@@ -390,7 +390,7 @@ const CallControls: React.FC<CallControlsProps> = ({
 
   // 🔧 修复：扬声器切换处理，添加防抖和状态管理
   const handleSpeakerClick = React.useCallback(() => {
-    if (shouldDisableControls || isTogglingSpeaker) {
+    if (isTogglingSpeaker) {
       logDebug('🔧 CallControls: 扬声器按钮被禁用或正在操作中，忽略点击', {
         shouldDisableControls,
         isTogglingSpeaker,
@@ -506,7 +506,7 @@ const CallControls: React.FC<CallControlsProps> = ({
                 ? (t('callkit.callcontrols.micOn') as string)
                 : (t('callkit.callcontrols.micOff') as string)
             }
-            disabled={shouldDisableMuteButton || isTogglingMic} // 🔧 操作中也禁用
+            disabled={isTogglingMic} // 🔧 操作中也禁用
           >
             {renderIcon(muted ? 'micOff' : 'micOn', muted ? 'MIC_OFF' : 'MIC_ON', {
               width: 24,
@@ -618,7 +618,7 @@ const CallControls: React.FC<CallControlsProps> = ({
               ? (t('callkit.callcontrols.micOn') as string)
               : (t('callkit.callcontrols.micOff') as string)
           }
-          disabled={shouldDisableMuteButton || isTogglingMic} // 🔧 操作中也禁用
+          disabled={isTogglingMic} // 🔧 操作中也禁用
         >
           {renderIcon(muted ? 'micOff' : 'micOn', muted ? 'MIC_OFF' : 'MIC_ON', {
             width: 24,
@@ -700,7 +700,7 @@ const CallControls: React.FC<CallControlsProps> = ({
               ? (t('callkit.callcontrols.speakerOn') as string)
               : (t('callkit.callcontrols.speakerOff') as string)
           }
-          disabled={shouldDisableControls || isTogglingSpeaker} // 🔧 操作中也禁用
+          disabled={isTogglingSpeaker} // 🔧 操作中也禁用
         >
           {renderIcon(
             speakerEnabled ? 'speakerOn' : 'speakerOff',
