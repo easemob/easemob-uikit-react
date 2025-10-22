@@ -1077,9 +1077,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         }
       },
 
-      toggleMute: () => {
+      toggleMute: async () => {
         if (callServiceRef.current) {
-          return callServiceRef.current.toggleMute();
+          return await callServiceRef.current.toggleMute();
         }
         return false;
       },
@@ -2323,10 +2323,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   };
 
   const handleMuteToggle = React.useCallback(
-    (newMuted: boolean) => {
+    async (newMuted: boolean) => {
       if (hasInitialized && callServiceRef.current) {
         // 使用 CallService 的实际控制方法
-        const actualMuted = callServiceRef.current.toggleMute();
+        const actualMuted = !(await callServiceRef.current.toggleMute());
         // 更新内部状态
         setRealCallMuted(actualMuted);
         // 触发外部回调，传递实际状态

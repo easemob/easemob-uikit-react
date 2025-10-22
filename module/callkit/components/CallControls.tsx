@@ -214,39 +214,11 @@ const CallControls: React.FC<CallControlsProps> = ({
     return false;
   }, [isPreview, isGroupCall, hasParticipants, isConnected]);
 
-  // 🔧 新增：麦克风按钮单独的禁用逻辑
+  // 🔧 更新：麦克风按钮允许在预览/未连接阶段点击
   const shouldDisableMuteButton = React.useMemo(() => {
-    // 🔧 操作进行中时禁用
-    if (isTogglingMic) {
-      return true;
-    }
-
-    // 🔧 预览状态下禁用麦克风，确保必须发布audio轨道
-    if (isPreview) {
-      logDebug('🔧 CallControls: 预览状态，禁用麦克风按钮', {
-        isPreview,
-        isGroupCall,
-        callMode,
-        reason: '预览状态下必须发布audio轨道用于user-published事件',
-      });
-      return true;
-    }
-
-    // 🔧 群通话中，RTC未真正连接时禁用麦克风，确保必须发布audio轨道
-    if (isGroupCall && !isConnected) {
-      logDebug('🔧 CallControls: 群通话RTC未连接，禁用麦克风按钮', {
-        isGroupCall,
-        isConnected,
-        isPreview,
-        isCaller,
-        reason: '群通话RTC连接前必须发布audio轨道用于user-published事件',
-      });
-      return true;
-    }
-
-    // 其他情况使用通用禁用逻辑
-    return shouldDisableControls;
-  }, [isPreview, isGroupCall, isConnected, shouldDisableControls, isTogglingMic]);
+    // 仅在操作进行中禁用，其他阶段均允许点击
+    return Boolean(isTogglingMic);
+  }, [isTogglingMic]);
 
   // 🔧 新增：摄像头按钮单独的禁用逻辑
   const shouldDisableCameraButton = React.useMemo(() => {
@@ -612,8 +584,6 @@ const CallControls: React.FC<CallControlsProps> = ({
           title={
             isTogglingMic
               ? (t('callkit.callcontrols.micTogglingStatus') as string)
-              : shouldDisableMuteButton
-              ? (t('callkit.callcontrols.micDisabledInGroupPreview') as string)
               : muted
               ? (t('callkit.callcontrols.micOn') as string)
               : (t('callkit.callcontrols.micOff') as string)

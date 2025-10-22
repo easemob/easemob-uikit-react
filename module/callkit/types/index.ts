@@ -160,7 +160,7 @@ export interface CallKitRef {
   setUserInfo: (userInfo: { [key: string]: any }) => void; // 设置用户信息
 
   // 音视频控制方法
-  toggleMute: () => boolean; // 切换静音状态，返回新的静音状态
+  toggleMute: () => Promise<boolean>; // 切换静音状态，返回新的静音状态
   toggleCamera: () => Promise<boolean>; // 切换摄像头状态，返回新的开启状态（异步）
   isMuted: () => boolean; // 获取当前静音状态
   isCameraEnabled: () => boolean; // 获取当前摄像头状态

@@ -210,6 +210,8 @@ export class CallService {
 
   private UIdToUserIdMap: Map<string, string> = new Map();
 
+  private enableMic: boolean = true;
+
   constructor(config: CallServiceConfig) {
     this.connection = config.connection;
     this.onCallStart = config.onCallStart;
@@ -795,6 +797,7 @@ export class CallService {
 
   // 加入通话
   async joinCall() {
+    console.log('joinCall');
     if (!this.currentCallInfo) {
       logError('No current call info');
       return;
@@ -904,6 +907,26 @@ export class CallService {
     }
 
     // 🔧 修复：检查是否已存在音频轨道，避免重复创建
+    // let localAudioTrack = this.rtc.localAudioTrack;
+    // if (!localAudioTrack) {
+    //   logDebug('Creating new local audio track');
+    //   try {
+    //     localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+    //     this.rtc.localAudioTrack = localAudioTrack;
+    //   } catch (error) {
+    //     logError('Failed to create local audio track:', error);
+    //     this.sendHangupMessage();
+    //     this.hangup(HANGUP_REASON.ABNORMAL_END);
+    //     return;
+    //   }
+    // } else {
+    //   logDebug('Reusing existing local audio track');
+    // }
+    // const config: any[] = [localAudioTrack];
+    const videos: VideoWindowProps[] = [];
+
+    let localVideoInfo;
+    const config: any[] = [];
     let localAudioTrack = this.rtc.localAudioTrack;
     if (!localAudioTrack) {
       logDebug('Creating new local audio track');
@@ -916,12 +939,21 @@ export class CallService {
         this.hangup(HANGUP_REASON.ABNORMAL_END);
         return;
       }
-    } else {
-      logDebug('Reusing existing local audio track');
     }
-    const config: any[] = [localAudioTrack];
-    const videos: VideoWindowProps[] = [];
-
+    config.push(localAudioTrack);
+    if (!this.enableMic) {
+      console.log('disable mic', this.rtc.localAudioTrack);
+      if (this.rtc.localAudioTrack) {
+        this.rtc.localAudioTrack.setEnabled(false);
+      }
+      // const mediaStreamTrack = this.rtc.localAudioTrack.getMediaStreamTrack?.();
+      // if (mediaStreamTrack) {
+      //   logDebug('Stop underlying MediaStreamTrack of disabled track:', mediaStreamTrack.id);
+      //   mediaStreamTrack.setEnabled(false);
+      // }
+      // this.rtc.localAudioTrack.close();
+      // this.rtc.localAudioTrack = null;
+    }
     // 根据通话类型处理
     if (
       this.currentCallInfo.type === CALL_TYPE.AUDIO_1V1 ||
@@ -942,7 +974,6 @@ export class CallService {
       }
     } else {
       // 视频通话
-      let localVideoInfo;
 
       if (this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI) {
         // 群组视频通话：检查是否已有视频轨道（预览模式下可能已创建）
@@ -984,6 +1015,7 @@ export class CallService {
         }
 
         try {
+          console.log('publish config', config);
           await this.client.publish(config); // 发布音频轨道和可能的视频轨道
         } catch (error) {
           this.onCallError?.({
@@ -1127,7 +1159,6 @@ export class CallService {
         const actualCameraEnabled = Boolean(
           this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled,
         );
-
         // 🔧 创建本地视频对象供UI显示，保持实际摄像头状态
         localVideoInfo = {
           id: 'local',
@@ -1841,7 +1872,7 @@ export class CallService {
             });
           }
         }
-        this.onRemoteUserJoined?.(userId, mediaType as 'video' | 'audio' | 'group');
+        // this.onRemoteUserJoined?.(userId, mediaType as 'video' | 'audio' | 'group');
 
         // 触发回调, 清楚邀请定时器
         this.onUserPublished?.(userId);
@@ -2634,7 +2665,7 @@ export class CallService {
   }
 
   // 切换麦克风状态
-  toggleMute(): boolean {
+  async toggleMute(): Promise<boolean> {
     // if (
     //   this.callStatus < CALL_STATUS.CONFIRM_RING ||
     //   this.callStatus === CALL_STATUS.RECEIVED_CONFIRM_RING
@@ -2642,32 +2673,50 @@ export class CallService {
     //   logWarn('not joined the call yet');
     //   return false;
     // }
+    this.enableMic = !this.enableMic;
 
-    if (!this.rtc.localAudioTrack) {
-      logWarn('Local audio track does not exist');
-      return false;
+    if (this.rtc.localAudioTrack) {
+      const currentEnabled = this.rtc.localAudioTrack.enabled;
+
+      // 直接设置轨道的启用状态，不触发UI更新
+      this.rtc.localAudioTrack.setEnabled && this.rtc.localAudioTrack.setEnabled(this.enableMic);
+
+      // 通知UI更新本地视频状态
+      const localVideoInfo: VideoWindowProps = {
+        id: 'local',
+        isLocalVideo: true,
+        muted: !this.enableMic, // 返回muted状态（与enabled相反）
+        cameraEnabled: this.isCameraEnabled(),
+        nickname: this.userInfos[this.userId]?.nickname || '我',
+        avatar: this.userInfos[this.userId]?.avatarUrl || undefined,
+        // 🔧 修复：mute 操作不应该影响视频流，使用现有的流
+        stream: this.localVideoStream || undefined,
+      };
+
+      this.onRemoteVideoReady?.(localVideoInfo);
+      if (!this.enableMic) {
+        this.rtc.localAudioTrack = null;
+      }
+    } else if (this.enableMic) {
+      this.rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      if (this.callStatus == CALL_STATUS.IN_CALL) {
+        await this.client.publish([this.rtc.localAudioTrack]);
+      }
+
+      const localVideoInfo: VideoWindowProps = {
+        id: 'local',
+        isLocalVideo: true,
+        muted: !this.enableMic, // 返回muted状态（与enabled相反）
+        cameraEnabled: this.isCameraEnabled(),
+        nickname: this.userInfos[this.userId]?.nickname || '我',
+        avatar: this.userInfos[this.userId]?.avatarUrl || undefined,
+        // 🔧 修复：mute 操作不应该影响视频流，使用现有的流
+        stream: this.localVideoStream || undefined,
+      };
+      this.onRemoteVideoReady?.(localVideoInfo);
     }
 
-    const currentEnabled = this.rtc.localAudioTrack.enabled;
-    const newEnabled = !currentEnabled;
-
-    // 直接设置轨道的启用状态，不触发UI更新
-    this.rtc.localAudioTrack.setEnabled && this.rtc.localAudioTrack.setEnabled(newEnabled);
-
-    // 通知UI更新本地视频状态
-    const localVideoInfo: VideoWindowProps = {
-      id: 'local',
-      isLocalVideo: true,
-      muted: !newEnabled, // 返回muted状态（与enabled相反）
-      cameraEnabled: this.isCameraEnabled(),
-      nickname: this.userInfos[this.userId]?.nickname || '我',
-      avatar: this.userInfos[this.userId]?.avatarUrl || undefined,
-      // 🔧 修复：mute 操作不应该影响视频流，使用现有的流
-      stream: this.localVideoStream || undefined,
-    };
-
-    this.onRemoteVideoReady?.(localVideoInfo);
-    return !newEnabled; // 返回muted状态（与enabled相反）
+    return this.enableMic; // 返回muted状态（与enabled相反）
   }
 
   // 切换摄像头状态
@@ -2720,7 +2769,6 @@ export class CallService {
           logDebug('toggleCamera (newly created): start playing local video');
           this.playLocalVideo();
         }, 100);
-
         // 通知UI更新本地视频状态（摄像头开启）
         const localVideoInfo: VideoWindowProps = {
           id: 'local',
@@ -2871,7 +2919,6 @@ export class CallService {
     // 通知UI更新本地视频状态
     // 注意：如果摄像头被关闭，轨道已被销毁，实际状态是false
     const actualCameraEnabled = this.rtc.localVideoTrack ? newEnabled : false;
-
     const localVideoInfo: VideoWindowProps = {
       id: 'local',
       isLocalVideo: true,
@@ -3020,7 +3067,7 @@ export class CallService {
 
   // 获取当前静音状态
   isMuted(): boolean {
-    return this.rtc.localAudioTrack ? !this.rtc.localAudioTrack.enabled : false;
+    return this.rtc.localAudioTrack ? !this.rtc.localAudioTrack.enabled : !this.enableMic;
   }
 
   // 获取当前摄像头状态
