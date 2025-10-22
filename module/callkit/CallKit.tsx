@@ -2576,6 +2576,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       networkQuality,
       // 🔧 新增：Icon 自定义配置
       customIcons,
+      // 🔧 新增：拖动状态，避免拖动触发清屏点击
+      isDragging,
+      justFinishedDrag,
     }),
     [
       isShowingPreview,
@@ -2619,6 +2622,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       onLayoutModeChange,
       networkQuality,
       customIcons,
+      isDragging,
+      justFinishedDrag,
     ],
   );
 

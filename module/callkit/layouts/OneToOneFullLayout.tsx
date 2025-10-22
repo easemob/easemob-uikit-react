@@ -72,6 +72,9 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
   // 🔧 新增：Icon 自定义配置
   customIcons,
   iconRenderer,
+  // 🔧 新增：拖动状态
+  isDragging,
+  justFinishedDrag,
 }) => {
   const { t } = useTranslation();
   // 🔧 添加视频位置互换状态
@@ -230,6 +233,14 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
     return undefined; // 返回undefined，让CSS默认样式生效
   }, [backgroundImage]);
 
+  // 增加一个清屏的state,默认是false
+  const [isClearScreen, setIsClearScreen] = React.useState(false);
+  // 点击主视频时切换清屏状态
+  const handleClearScreen = (e: React.MouseEvent) => {
+    // 拖动中或拖动刚结束时不触发清屏
+    if (isDragging || justFinishedDrag) return;
+    setIsClearScreen(!isClearScreen);
+  };
   return (
     <div className={`${prefixCls}-one-to-one-full-layout`} style={{ background: '#171A1C' }}>
       {/* 视频内容区域 - 占满整个容器 */}
@@ -247,6 +258,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
               ? localVideo && (
                   <div
                     className={`${prefixCls}-main-video`}
+                    onClick={(e: React.MouseEvent) => handleClearScreen(e)}
                     // onClick={() => handleVideoClick(localVideo.id)}
                     // style={{ cursor: 'pointer' }}
                   >
@@ -256,6 +268,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
               : remoteVideo && (
                   <div
                     className={`${prefixCls}-main-video`}
+                    onClick={(e: React.MouseEvent) => handleClearScreen(e)}
                     // onClick={() => handleVideoClick(remoteVideo.id)}
                     // style={{ cursor: 'pointer' }}
                   >
@@ -337,42 +350,46 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
       </div>
 
       {/* Header - 浮动在视频内容之上 */}
-      <div className={`${prefixCls}-floating-header`}>
-        <Header
-          avatarSrc={headerInfo.avatar}
-          avatarShape="square"
-          content={headerInfo.content}
-          style={{ color: 'white' }}
-          subtitle={headerInfo.subtitle}
-          suffixIcon={[
-            <Button
-              key="fullscreen"
-              type="ghost"
-              size="small"
-              style={{ border: 'none' }}
-              onClick={onFullscreenToggle}
-            >
-              {renderHeaderIcon(
-                isFullscreen ? 'exitFullscreen' : 'fullscreen',
-                isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
-                { width: 24, height: 24, color: '#F9FAFA' },
-              )}
-            </Button>,
-            <Button
-              key="minimize"
-              type="ghost"
-              size="small"
-              style={{ border: 'none' }}
-              onClick={onMinimizedToggle}
-            >
-              {renderHeaderIcon('minimize', 'BOXES', { width: 24, height: 24, color: '#F9FAFA' })}
-            </Button>,
-          ]}
-        />
-      </div>
-
+      {!isClearScreen && (
+        <div
+          className={`${prefixCls}-floating-header`}
+          onClick={(e: React.MouseEvent) => handleClearScreen(e)}
+        >
+          <Header
+            avatarSrc={headerInfo.avatar}
+            avatarShape="square"
+            content={headerInfo.content}
+            style={{ color: 'white' }}
+            subtitle={headerInfo.subtitle}
+            suffixIcon={[
+              <Button
+                key="fullscreen"
+                type="ghost"
+                size="small"
+                style={{ border: 'none' }}
+                onClick={onFullscreenToggle}
+              >
+                {renderHeaderIcon(
+                  isFullscreen ? 'exitFullscreen' : 'fullscreen',
+                  isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
+                  { width: 24, height: 24, color: '#F9FAFA' },
+                )}
+              </Button>,
+              <Button
+                key="minimize"
+                type="ghost"
+                size="small"
+                style={{ border: 'none' }}
+                onClick={onMinimizedToggle}
+              >
+                {renderHeaderIcon('minimize', 'BOXES', { width: 24, height: 24, color: '#F9FAFA' })}
+              </Button>,
+            ]}
+          />
+        </div>
+      )}
       {/* Controls - 浮动在视频内容之上 */}
-      {showControls && !isMinimized && (
+      {showControls && !isMinimized && !isClearScreen && (
         <div className={`${prefixCls}-floating-controls`}>
           <CallControls
             callMode={callMode}

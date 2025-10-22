@@ -80,6 +80,9 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
   // 🔧 新增：Icon 自定义配置
   customIcons,
   iconRenderer,
+  // 🔧 新增：拖动状态
+  isDragging,
+  justFinishedDrag,
 }) => {
   const { t } = useTranslation();
 
@@ -181,6 +184,14 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
     return undefined; // 返回undefined，让CSS默认样式生效
   }, [backgroundImage]);
 
+  // 增加一个清屏的state,默认是false
+  const [isClearScreen, setIsClearScreen] = React.useState(false);
+  // 点击主视频时切换清屏状态
+  const handleClearScreen = (e: React.MouseEvent) => {
+    // 拖动中或拖动刚结束时不触发清屏
+    if (isDragging || justFinishedDrag) return;
+    setIsClearScreen(!isClearScreen);
+  };
   return (
     <div className={`${prefixCls}-multi-party-full-layout`} style={backgroundStyle}>
       {/* 最小化状态的特殊处理 */}
@@ -200,64 +211,72 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
       ) : (
         <>
           {/* Header - 顶部固定 */}
-          <div className={`${prefixCls}-header`}>
-            <Header
-              avatarSrc={headerInfo.avatar}
-              avatarShape="square"
-              content={headerInfo.content}
-              style={{ color: 'white', padding: '0 16px' }}
-              subtitle={headerInfo.subtitle}
-              suffixIcon={[
-                <Button
-                  key="fullscreen"
-                  type="ghost"
-                  size="small"
-                  style={{ border: 'none' }}
-                  onClick={onFullscreenToggle}
-                >
-                  {renderHeaderIcon(
-                    isFullscreen ? 'exitFullscreen' : 'fullscreen',
-                    isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
-                    { width: 24, height: 24, color: '#F9FAFA' },
-                  )}
-                </Button>,
-                <Button
-                  key="minimize"
-                  type="ghost"
-                  size="small"
-                  style={{ border: 'none' }}
-                  onClick={onMinimizedToggle}
-                >
-                  {renderHeaderIcon('minimize', 'BOXES', {
-                    width: 24,
-                    height: 24,
-                    color: '#F9FAFA',
-                  })}
-                </Button>,
-                // 添加参与者按钮 - 只在通话中时显示
-                ...(callStatus === 'connected'
-                  ? [
-                      <Button
-                        key="add-participant"
-                        type="ghost"
-                        size="small"
-                        style={{ border: 'none' }}
-                        onClick={onAddParticipant}
-                      >
-                        {renderHeaderIcon('addParticipant', 'PERSON_ADD', {
-                          width: 24,
-                          height: 24,
-                          color: '#F9FAFA',
-                        })}
-                      </Button>,
-                    ]
-                  : []),
-              ]}
-            />
-          </div>
+          {!isClearScreen && (
+            <div
+              className={`${prefixCls}-header`}
+              onClick={(e: React.MouseEvent) => handleClearScreen(e)}
+            >
+              <Header
+                avatarSrc={headerInfo.avatar}
+                avatarShape="square"
+                content={headerInfo.content}
+                style={{ color: 'white', padding: '0 16px' }}
+                subtitle={headerInfo.subtitle}
+                suffixIcon={[
+                  <Button
+                    key="fullscreen"
+                    type="ghost"
+                    size="small"
+                    style={{ border: 'none' }}
+                    onClick={onFullscreenToggle}
+                  >
+                    {renderHeaderIcon(
+                      isFullscreen ? 'exitFullscreen' : 'fullscreen',
+                      isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
+                      { width: 24, height: 24, color: '#F9FAFA' },
+                    )}
+                  </Button>,
+                  <Button
+                    key="minimize"
+                    type="ghost"
+                    size="small"
+                    style={{ border: 'none' }}
+                    onClick={onMinimizedToggle}
+                  >
+                    {renderHeaderIcon('minimize', 'BOXES', {
+                      width: 24,
+                      height: 24,
+                      color: '#F9FAFA',
+                    })}
+                  </Button>,
+                  // 添加参与者按钮 - 只在通话中时显示
+                  ...(callStatus === 'connected'
+                    ? [
+                        <Button
+                          key="add-participant"
+                          type="ghost"
+                          size="small"
+                          style={{ border: 'none' }}
+                          onClick={onAddParticipant}
+                        >
+                          {renderHeaderIcon('addParticipant', 'PERSON_ADD', {
+                            width: 24,
+                            height: 24,
+                            color: '#F9FAFA',
+                          })}
+                        </Button>,
+                      ]
+                    : []),
+                ]}
+              />
+            </div>
+          )}
 
           {/* 视频内容区域 - 中间弹性 */}
-          <div className={`${prefixCls}-content`}>
+          <div
+            className={`${prefixCls}-content`}
+            onClick={(e: React.MouseEvent) => handleClearScreen(e)}
+          >
             {videos.length === 0 ? (
               <div className={`${prefixCls}-empty`}>{/** 暂无视频流 */}</div>
             ) : (
@@ -273,7 +292,7 @@ export const MultiPartyFullLayout: React.FC<FullLayoutProps> = ({
           </div>
 
           {/* Controls - 底部固定 */}
-          {showControls && (
+          {showControls && !isClearScreen && (
             <div className={`${prefixCls}-controls`}>
               <CallControls
                 callMode={callMode}

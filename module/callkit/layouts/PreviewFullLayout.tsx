@@ -76,6 +76,9 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
   // 🔧 新增：Icon 自定义配置
   customIcons,
   iconRenderer,
+  // 🔧 新增：拖动状态
+  isDragging,
+  justFinishedDrag,
 }) => {
   const { t } = useTranslation();
 
@@ -187,13 +190,27 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
     return undefined; // 返回undefined，让CSS默认样式生效
   }, [backgroundImage]);
   logDebug('有 localVideo -->', localVideo, callMode);
+
+  // 增加一个清屏的state,默认是false
+  const [isClearScreen, setIsClearScreen] = React.useState(false);
+  // 点击主视频时切换清屏状态
+  const handleClearScreen = (e: React.MouseEvent) => {
+    // 拖动中或拖动刚结束时不触发清屏
+    if (isDragging || justFinishedDrag) return;
+    setIsClearScreen(!isClearScreen);
+  };
   return (
     <div className={`${prefixCls}-one-to-one-full-layout`} style={{ background: '#171A1C' }}>
       {/* 视频内容区域 - 占满整个容器 */}
       <div className={`${prefixCls}-video-content`} style={{ ...backgroundStyle }}>
         {/* 预览视频作为主视频显示 */}
         {localVideo && callMode !== 'audio' && (
-          <div className={`${prefixCls}-main-video`}>{renderVideoWindow(localVideo, 0)}</div>
+          <div
+            className={`${prefixCls}-main-video`}
+            onClick={(e: React.MouseEvent) => handleClearScreen(e)}
+          >
+            {renderVideoWindow(localVideo, 0)}
+          </div>
         )}
 
         {/* 语音通话时的替代界面 */}
@@ -218,42 +235,47 @@ export const PreviewFullLayout: React.FC<FullLayoutProps> = ({
       </div>
 
       {/* Header - 浮动在视频内容之上 */}
-      <div className={`${prefixCls}-floating-header`}>
-        <Header
-          avatarSrc={headerInfo.avatar}
-          content={headerInfo.content}
-          style={{ color: 'white' }}
-          subtitle={headerInfo.subtitle}
-          suffixIcon={[
-            <Button
-              key="fullscreen"
-              type="ghost"
-              size="small"
-              style={{ border: 'none' }}
-              onClick={onFullscreenToggle}
-            >
-              {renderHeaderIcon(
-                isFullscreen ? 'exitFullscreen' : 'fullscreen',
-                isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
-                { width: 24, height: 24, color: '#F9FAFA' },
-              )}
-            </Button>,
-            <Button
-              key="minimize"
-              type="ghost"
-              size="small"
-              style={{ border: 'none' }}
-              onClick={onMinimizedToggle}
-            >
-              {renderHeaderIcon('minimize', 'BOXES', { width: 24, height: 24, color: '#F9FAFA' })}
-            </Button>,
-          ]}
-          avatarShape="square"
-        />
-      </div>
+      {!isClearScreen && (
+        <div
+          className={`${prefixCls}-floating-header`}
+          onClick={(e: React.MouseEvent) => handleClearScreen(e)}
+        >
+          <Header
+            avatarSrc={headerInfo.avatar}
+            content={headerInfo.content}
+            style={{ color: 'white' }}
+            subtitle={headerInfo.subtitle}
+            suffixIcon={[
+              <Button
+                key="fullscreen"
+                type="ghost"
+                size="small"
+                style={{ border: 'none' }}
+                onClick={onFullscreenToggle}
+              >
+                {renderHeaderIcon(
+                  isFullscreen ? 'exitFullscreen' : 'fullscreen',
+                  isFullscreen ? 'CHEVRON_4_CLUSTER' : 'CHEVRON_4_ALL_AROUND',
+                  { width: 24, height: 24, color: '#F9FAFA' },
+                )}
+              </Button>,
+              <Button
+                key="minimize"
+                type="ghost"
+                size="small"
+                style={{ border: 'none' }}
+                onClick={onMinimizedToggle}
+              >
+                {renderHeaderIcon('minimize', 'BOXES', { width: 24, height: 24, color: '#F9FAFA' })}
+              </Button>,
+            ]}
+            avatarShape="square"
+          />
+        </div>
+      )}
 
       {/* Controls - 浮动在视频内容之上 */}
-      {showControls && !isMinimized && (
+      {showControls && !isMinimized && !isClearScreen && (
         <div className={`${prefixCls}-floating-controls`}>
           <CallControls
             callMode={callMode}

@@ -106,6 +106,10 @@ export interface FullLayoutProps extends BaseLayoutProps {
     defaultIcon: React.ReactElement,
     context?: any,
   ) => React.ReactElement; // 自定义图标渲染函数
+
+  // 🔧 新增：拖动状态（用于避免拖动触发点击）
+  isDragging?: boolean;
+  justFinishedDrag?: boolean;
 }
 
 /**

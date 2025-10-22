@@ -137,7 +137,7 @@ export class MultiPartyLayoutStrategy implements LayoutStrategy {
     prefixCls: string,
     gap: number,
     selectedVideoId?: string,
-    onVideoClick?: (videoId: string) => void,
+    onVideoClick?: (e: React.MouseEvent, videoId: string) => void,
     switchingState?: VideoSwitchingState,
   ): React.ReactNode {
     const { itemsPerRow, rows } = layoutConfig;
@@ -262,7 +262,7 @@ export class MainVideoLayoutStrategy implements LayoutStrategy {
     prefixCls: string,
     gap: number,
     selectedVideoId?: string,
-    onVideoClick?: (videoId: string) => void,
+    onVideoClick?: (e: React.MouseEvent, videoId: string) => void,
     switchingState?: VideoSwitchingState,
     onExitMainVideoMode?: () => void,
   ): React.ReactNode {
@@ -310,7 +310,7 @@ interface MainVideoLayoutContentProps {
   ) => React.ReactNode;
   prefixCls: string;
   gap: number;
-  onVideoClick?: (videoId: string) => void;
+  onVideoClick?: (e: React.MouseEvent, videoId: string) => void;
   isMainVideoMode?: boolean;
   onExitMainVideoMode?: () => void;
 }
@@ -417,6 +417,11 @@ const MainVideoLayoutContent: React.FC<MainVideoLayoutContentProps> = ({
           position: 'relative',
         }}
         key={selectedVideo.id} // 添加key确保在切换时重新触发动画
+        onClick={(e: React.MouseEvent) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onVideoClick?.(e, selectedVideo.id);
+        }}
       >
         {renderVideoWindow(selectedVideo, 0, {
           width: videoSize.actualWidth,
@@ -503,7 +508,11 @@ const MainVideoLayoutContent: React.FC<MainVideoLayoutContentProps> = ({
                       flexShrink: 0,
                       cursor: 'pointer',
                     }}
-                    onClick={() => onVideoClick?.(video.id)}
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      onVideoClick?.(e, video.id);
+                    }}
                   >
                     {renderVideoWindow(video, index + 1, {
                       width: thumbnailWidth,
@@ -554,7 +563,9 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
   const [switchingToVideoId, setSwitchingToVideoId] = useState<string | null>(null);
 
   const handleVideoClick = useCallback(
-    (videoId: string) => {
+    (e: React.MouseEvent, videoId: string) => {
+      e.stopPropagation();
+      e.preventDefault();
       if (!isMainVideoMode) {
         // 首次进入主视频模式
         setSelectedVideoId(videoId);
@@ -638,7 +649,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
                 height: '100%',
                 cursor: 'pointer',
               }}
-              onClick={() => handleVideoClick(video.id)}
+              onClick={(e: React.MouseEvent) => handleVideoClick(e, video.id)}
             >
               {renderVideoWindow(video, index, windowSize)}
             </div>
@@ -655,7 +666,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
             cursor: 'pointer',
             position: 'relative',
           }}
-          onClick={() => handleVideoClick(video.id)}
+          onClick={(e: React.MouseEvent) => handleVideoClick(e, video.id)}
           onMouseEnter={e => {
             const icon = (e.currentTarget as HTMLElement).querySelector('.hover-icon');
             if (icon) (icon as HTMLElement).style.opacity = '1';
@@ -709,7 +720,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
         prefixCls,
         layoutOptions.gap,
         selectedVideoId || undefined,
-        handleVideoClick,
+        (e: React.MouseEvent, videoId: string) => handleVideoClick(e, videoId),
         {
           isVideoSwitching,
           switchingFromVideoId,
