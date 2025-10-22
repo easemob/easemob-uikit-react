@@ -77,7 +77,7 @@ export interface LayoutStrategy {
     prefixCls: string,
     gap: number,
     selectedVideoId?: string,
-    onVideoClick?: (videoId: string) => void,
+    onVideoClick?: (e: React.MouseEvent, videoId: string) => void,
     switchingState?: VideoSwitchingState,
     onExitMainVideoMode?: () => void,
   ): React.ReactNode;
@@ -298,7 +298,7 @@ export interface CallKitProps {
   onEndCallWithReason?: (reason: string, callInfo: CallInfo) => void;
 
   onRingtoneStart?: (type: 'outgoing' | 'incoming') => void;
-  onRingtoneEnd?: (type: 'outgoing' | 'incoming') => void;
+  onRingtoneEnd?: () => void;
   onCallStatusChanged?: (
     status: 'idle' | 'calling' | 'ringing' | 'connected' | 'disconnected',
   ) => void;

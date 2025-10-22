@@ -2307,6 +2307,7 @@ export class CallService {
     this.onReceivedCall?.(ext.type, message.from, ext.ext);
 
     this.sendAlertingMessage();
+    this.playRingtone('incoming');
 
     if (this.userInfoProvider) {
       // 被邀请方信息
