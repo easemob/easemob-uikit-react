@@ -2213,7 +2213,7 @@ export class CallService {
   }
   // 添加消息监听器
   private addMessageListener() {
-    this.connection.addEventHandler('callkit', {
+    this.connection?.addEventHandler?.('callkit', {
       onTextMessage: (message: any) => {
         logDebug('onTextMessage message -->', message);
         if (message.ext && message.ext.action === 'invite') {
@@ -4046,7 +4046,7 @@ export class CallService {
       logDebug('Component initialization cleanup, skip hangup call');
 
       // 清理事件处理器
-      this.connection.removeEventHandler('callkit');
+      this.connection?.removeEventHandler?.('callkit');
 
       // 清理本地视频流缓存
       this.localVideoStream = null;
@@ -4098,7 +4098,7 @@ export class CallService {
       return; // 🔧 初始化时直接返回，不执行后续的hangup逻辑
     }
 
-    this.connection.removeEventHandler('callkit');
+    this.connection?.removeEventHandler?.('callkit');
 
     // 最后的媒体轨道清理（不检查权限，避免初始化时请求麦克风权限）
     this.checkAndCleanupAllMediaTracks(false);
