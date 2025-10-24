@@ -20,7 +20,7 @@ import Custom from '../assets/presence/custom2.png';
 
 export interface ProviderProps {
   initConfig: {
-    appKey: string;
+    appKey?: string;
     userId?: string;
     token?: string;
     password?: string;

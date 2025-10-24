@@ -29,7 +29,7 @@ export { default as InvitationContent } from './components/InvitationContent';
 
 // 布局组件导出
 export { MultiPartyLayout } from './layouts/MultiPartyLayout';
-export { PreviewLayout } from './layouts/PreviewLayout';
+// export { PreviewLayout } from './layouts/PreviewLayout';
 export { FullLayoutManager } from './layouts/FullLayoutManager';
 
 // 完整布局组件导出

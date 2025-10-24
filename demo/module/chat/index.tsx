@@ -342,6 +342,10 @@ const ChatApp: FC<any> = () => {
                   // ),
                 }}
                 useCallkit={true}
+                callkitProps={{
+                  logLevel: 'debug',
+                  enableLogging: true,
+                }}
                 // renderRepliedMessage={message => {
                 //   return <div>replied message {message.from}</div>;
                 // }}
@@ -426,9 +430,11 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: appKey || 'org#app',
-        userId: userId || 'p1',
-        password: password || '1',
+        appKey: appKey || 'easemob#easeim',
+        userId: 'db726e81cd',
+        token:
+          'YWMt5C7aqqskEfCEZjcKFtyjOVzzvlQ7sUrSpVuQGlyIzFRFFPmQglwR8Js9JYoO0rN6AwMAAAGZ8Oq32TeeSADSOACXRag9NaqiTmMU6gSyzBjYsi3o-rOhpaYetRD2NA',
+        // password: password || '1',
         useUserInfo: true,
         maxMessages: 100,
       }}

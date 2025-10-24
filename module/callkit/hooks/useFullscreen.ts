@@ -40,7 +40,9 @@ export const useFullscreen = (containerRef: React.RefObject<HTMLDivElement>) => 
   };
 
   // 切换全屏
-  const toggleFullscreen = () => {
+  const toggleFullscreen = (e: React.MouseEvent) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     if (isFullscreen) {
       exitFullscreen();
     } else {

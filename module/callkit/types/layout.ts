@@ -47,11 +47,11 @@ export interface FullLayoutProps extends BaseLayoutProps {
 
   // 全屏相关
   isFullscreen?: boolean;
-  onFullscreenToggle?: () => void;
+  onFullscreenToggle?: (e: React.MouseEvent) => void;
 
   // 最小化相关
   isMinimized?: boolean;
-  onMinimizedToggle?: () => void;
+  onMinimizedToggle?: (e: React.MouseEvent) => void;
 
   // 控制按钮相关
   showControls?: boolean;
@@ -66,7 +66,7 @@ export interface FullLayoutProps extends BaseLayoutProps {
   onSpeakerToggle?: (enabled: boolean) => void;
   onScreenShareToggle?: (sharing: boolean) => void;
   onHangup?: () => void;
-  onAddParticipant?: () => void;
+  onAddParticipant?: (event: React.MouseEvent) => void;
 
   // 预览模式回调
   onPreviewAccept?: () => void;

@@ -272,7 +272,7 @@ export interface CallKitProps {
   onSpeakerToggle?: (enabled: boolean) => void;
   onScreenShareToggle?: (sharing: boolean) => void;
   onHangup?: () => void;
-  onAddParticipant?: () => void;
+  onAddParticipant?: (event: React.MouseEvent) => void;
   onInvitationAccept?: (invitation: InvitationInfo) => void;
   onInvitationReject?: (invitation: InvitationInfo) => void;
 

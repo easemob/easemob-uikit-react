@@ -1644,6 +1644,9 @@ export class CallService {
     this.creatingVideoTrack = null;
     this.creatingAudioTrack = null;
 
+    this.enableMic = true;
+    this.speakerEnabled = true;
+
     // 🔧 清理 UID 映射表，确保第二次通话时重新建立映射
     this.UIdToUserIdMap.clear();
 
@@ -4071,6 +4074,8 @@ export class CallService {
       this.joinedMembers = [];
       this.invitedMembers = [];
 
+      this.enableMic = true;
+      this.speakerEnabled = true;
       // 清理RTC引用
       if (this.rtc.localAudioTrack) {
         try {

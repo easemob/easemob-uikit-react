@@ -1598,11 +1598,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
   }, [managedPosition, internalPosition, actualMinimizedSize, initialSize, hasInitialized]);
 
-  const handleMinimizedToggle = () => {
+  const handleMinimizedToggle = (event: React.MouseEvent) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
     const newMinimizedState = !isMinimized;
 
     if (newMinimizedState && isFullscreen) {
-      toggleFullscreen();
+      toggleFullscreen(event);
     }
 
     setIsMinimized(newMinimizedState);
@@ -1721,13 +1723,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     onMinimizedChange?.(newMinimizedState);
   };
 
-  const handleMinimizedClick = (event?: React.MouseEvent) => {
+  const handleMinimizedClick = (event?: React.MouseEvent | undefined) => {
     if (isDragging || justFinishedDrag) {
       return;
     }
 
     if (isMinimized) {
-      handleMinimizedToggle();
+      handleMinimizedToggle(event as React.MouseEvent);
     }
   };
 
@@ -2029,7 +2031,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
   };
 
-  const handleAddParticipant = async () => {
+  const handleAddParticipant = async (e: React.MouseEvent) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     if (
       effectiveGroupMembers.length === 0 &&
       chatClient &&
