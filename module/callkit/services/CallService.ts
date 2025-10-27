@@ -797,7 +797,6 @@ export class CallService {
 
   // 加入通话
   async joinCall() {
-    console.log('joinCall');
     if (!this.currentCallInfo) {
       logError('No current call info');
       return;
@@ -942,7 +941,6 @@ export class CallService {
     }
     config.push(localAudioTrack);
     if (!this.enableMic) {
-      console.log('disable mic', this.rtc.localAudioTrack);
       if (this.rtc.localAudioTrack) {
         this.rtc.localAudioTrack.setEnabled(false);
       }
@@ -1015,7 +1013,6 @@ export class CallService {
         }
 
         try {
-          console.log('publish config', config);
           await this.client.publish(config); // 发布音频轨道和可能的视频轨道
         } catch (error) {
           this.onCallError?.({

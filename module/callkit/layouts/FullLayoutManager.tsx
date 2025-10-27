@@ -85,7 +85,6 @@ export const FullLayoutManager: React.FC<FullLayoutProps> = props => {
   };
 
   const actualLayoutMode = getLayoutMode();
-  console.log('%c actualLayoutMode -->', 'color: red; font-weight: bold;', actualLayoutMode);
   // 根据布局模式渲染对应的完整布局组件
   switch (actualLayoutMode) {
     case LayoutMode.ONE_TO_ONE:

@@ -623,7 +623,7 @@ const RealCallDemo: React.FC = () => {
         password: loginForm.password,
         useUserInfo: true,
         maxMessages: 100,
-        isHttpDNS: true,
+        isHttpDNS: false,
         msyncUrl: 'wss://im-api-new-hsb.easemob.com/websocket',
         restUrl: 'https://a1-hsb.easemob.com',
       }}
