@@ -11,7 +11,7 @@ import Icon from '../../component/icon';
 import { RepliedMsg } from '../repliedMessage';
 import { ChatSDK } from '../SDK';
 import { useTranslation } from 'react-i18next';
-import { EmojiKeyBoard } from '../reaction';
+import { EmojiKeyBoard, EmojiKeyBoardRef } from '../reaction';
 import { ReactionMessage, ReactionData, ReactionMessageProps } from '../reaction';
 import rootStore, { getStore } from '../store';
 import Checkbox from '../../component/checkbox';
@@ -20,6 +20,7 @@ import { observer } from 'mobx-react-lite';
 import { EmojiConfig } from '../messageInput/emoji/Emoji';
 import { RootContext } from '../store/rootContext';
 import { use } from 'i18next';
+import { useIsMobile } from '../hooks/useScreen';
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -192,6 +193,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const context = useContext(RootContext);
   const { theme } = context;
+  const isMobile = useIsMobile();
   const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('message-base', customizePrefixCls);
   let avatarToShow: ReactNode = avatar;
@@ -246,7 +248,10 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   const [isButtonVisible, setIsButtonVisible] = useState(false); // 控制操作按钮的显示
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [isReactionVisible, setIsReactionVisible] = useState(false);
+  const [isReactionVisible, setIsReactionVisible] = useState(false); // 标记表情键盘的显示，显示时鼠标离开不会隐藏操作按钮
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+  const [forceInlineActionsOnMobile, setForceInlineActionsOnMobile] = useState(false);
 
   const clickThreadTitle = () => {
     onClickThreadTitle?.();
@@ -487,10 +492,90 @@ let BaseMessage = (props: BaseMessageProps) => {
     onPinMessage && onPinMessage();
   };
 
+  // 音视频邀请消息去掉更多操作
+  // let isRtcInviteMessage = false;
+  // if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
+  //   isRtcInviteMessage = true;
+  // }
+
+  const handleClickEmoji = (emoji: string) => {
+    onAddReactionEmoji && onAddReactionEmoji(emoji);
+  };
+
+  const handleDeleteReactionEmoji = (emoji: string) => {
+    onDeleteReactionEmoji && onDeleteReactionEmoji(emoji);
+  };
+
+  const handleShowReactionUserList = (emoji: string) => {
+    onShowReactionUserList && onShowReactionUserList(emoji);
+  };
+
+  const selectedList: string[] = [];
+  if (reactionData) {
+    reactionData.forEach(item => {
+      if (item.isAddedBySelf) {
+        selectedList.push(item.reaction);
+      }
+    });
+  }
+
+  const reactionRef = useRef<EmojiKeyBoardRef>(null);
   let menuNode: ReactNode | undefined;
   if (moreAction?.visible) {
+    const extraMobileItems: ReactNode[] = [];
+    if (isMobile) {
+      if (reaction && status != 'failed') {
+        extraMobileItems.push(
+          <li
+            key="__mobile_reaction__"
+            className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+            onClick={e => {
+              setIsPopoverOpen(false);
+              setIsButtonVisible(true);
+              setForceInlineActionsOnMobile(true);
+              reactionRef.current?.open?.();
+            }}
+          >
+            <EmojiKeyBoard
+              ref={reactionRef}
+              // @ts-ignore
+              reactionConfig={reactionConfig}
+              onSelected={handleClickEmoji}
+              selectedList={selectedList}
+              onDelete={handleDeleteReactionEmoji}
+              placement={isCurrentUser ? 'bottomRight' : 'bottomLeft'}
+              onClick={e => {
+                setIsReactionVisible(true);
+              }}
+              onOpenChange={open => {
+                setIsReactionVisible(open);
+                setIsButtonVisible(open);
+              }}
+            ></EmojiKeyBoard>
+            {t('reaction')}
+          </li>,
+        );
+      }
+      if (thread && !chatThreadOverview && status != 'failed') {
+        extraMobileItems.push(
+          <li
+            key="__mobile_thread__"
+            className={themeMode == 'dark' ? 'cui-li-dark' : ''}
+            onClick={() => {
+              setIsPopoverOpen(false);
+              handleClickThreadIcon();
+            }}
+          >
+            <Icon type="HASHTAG_IN_BUBBLE_FILL" width={16} height={16}></Icon>
+            {t('thread')}
+          </li>,
+        );
+      }
+    }
+
     menuNode = (
       <ul className={morePrefixCls}>
+        {extraMobileItems}
         {moreAction?.actions?.map((item, index) => {
           if (item.content === 'DELETE' && item.visible !== false) {
             return (
@@ -648,33 +733,6 @@ let BaseMessage = (props: BaseMessageProps) => {
     );
   }
 
-  // 音视频邀请消息去掉更多操作
-  // let isRtcInviteMessage = false;
-  // if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
-  //   isRtcInviteMessage = true;
-  // }
-
-  const handleClickEmoji = (emoji: string) => {
-    onAddReactionEmoji && onAddReactionEmoji(emoji);
-  };
-
-  const handleDeleteReactionEmoji = (emoji: string) => {
-    onDeleteReactionEmoji && onDeleteReactionEmoji(emoji);
-  };
-
-  const handleShowReactionUserList = (emoji: string) => {
-    onShowReactionUserList && onShowReactionUserList(emoji);
-  };
-
-  const selectedList: string[] = [];
-  if (reactionData) {
-    reactionData.forEach(item => {
-      if (item.isAddedBySelf) {
-        selectedList.push(item.reaction);
-      }
-    });
-  }
-
   // ---- select message ------
   const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
     const result = e.target.checked;
@@ -707,13 +765,42 @@ let BaseMessage = (props: BaseMessageProps) => {
           style={{ ...style, paddingLeft: select ? '38px' : '' }}
           onMouseOver={() => {
             // setHoverStatus(true)
-            setIsButtonVisible(true);
+            if (!isMobile) setIsButtonVisible(true);
           }}
           onMouseLeave={() => {
             // setHoverStatus(false);
-            if (!isPopoverOpen && !isReactionVisible) {
+            if (!isMobile && !isPopoverOpen && !isReactionVisible) {
               setIsButtonVisible(false);
             }
+          }}
+          onTouchStart={() => {
+            if (!isMobile) return;
+            longPressTriggeredRef.current = false;
+            if (longPressTimerRef.current) {
+              clearTimeout(longPressTimerRef.current);
+            }
+            longPressTimerRef.current = window.setTimeout(() => {
+              setIsPopoverOpen(true);
+              setIsButtonVisible(true);
+              longPressTriggeredRef.current = true;
+            }, 600);
+          }}
+          onTouchEnd={() => {
+            if (!isMobile) return;
+            if (longPressTimerRef.current) {
+              clearTimeout(longPressTimerRef.current);
+              longPressTimerRef.current = null;
+            }
+          }}
+          onTouchMove={() => {
+            if (!isMobile) return;
+            if (longPressTimerRef.current) {
+              clearTimeout(longPressTimerRef.current);
+              longPressTimerRef.current = null;
+            }
+          }}
+          onContextMenu={e => {
+            if (isMobile) e.preventDefault();
           }}
         >
           <>
@@ -759,7 +846,10 @@ let BaseMessage = (props: BaseMessageProps) => {
             <div className={`${prefixCls}-body`}>
               {contentNode}
 
-              {isButtonVisible && moreAction.visible && !select && !isRtcInviteMessage ? (
+              {(isButtonVisible || (isMobile && forceInlineActionsOnMobile)) &&
+              moreAction.visible &&
+              !select &&
+              !isRtcInviteMessage ? (
                 <>
                   {moreAction.visible && (
                     <Tooltip
@@ -783,7 +873,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                       )}
                     </Tooltip>
                   )}
-                  {reaction && status != 'failed' && (
+                  {!isMobile && reaction && status != 'failed' && (
                     <EmojiKeyBoard
                       // @ts-ignore
                       reactionConfig={reactionConfig}
@@ -800,7 +890,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                       }}
                     ></EmojiKeyBoard>
                   )}
-                  {thread && !chatThreadOverview && status != 'failed' && (
+                  {!isMobile && thread && !chatThreadOverview && status != 'failed' && (
                     <Icon
                       type="THREAD"
                       onClick={handleClickThreadIcon}

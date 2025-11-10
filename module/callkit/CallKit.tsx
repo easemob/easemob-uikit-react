@@ -37,7 +37,7 @@ import { generateRandomChannel, getUserAvatar, calculateSafePosition } from './u
 import { logger, LogLevel } from './utils/logger';
 import './styles/index.scss';
 import CallError, { CallErrorCode } from './services/CallError';
-
+import { useIsMobile } from '../hooks/useScreen';
 /**
  * 优化的 FullLayoutManager 组件
  * 使用 React.memo 进行性能优化
@@ -162,7 +162,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('callkit', prefix);
   const { t } = useTranslation();
-
+  const isMobile = useIsMobile();
   // 设置标题的默认值，支持用户自定义
   const finalUserSelectTitle = userSelectTitle || t('callkit.userselect.addParticipants');
   const finalInitiateGroupCallTitle =
@@ -382,8 +382,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         if (element) {
           element.style.width = `${initialSize.width}px`;
           element.style.height = `${initialSize.height}px`;
-          element.style.left = `${initialPosition.left}px`;
-          element.style.top = `${initialPosition.top}px`;
+          element.style.left = `${isMobile ? 0 : initialPosition.left}px`;
+          element.style.top = `${isMobile ? 0 : initialPosition.top}px`;
         }
       }
 
@@ -797,8 +797,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           if (element) {
             element.style.width = `${initialSize.width}px`;
             element.style.height = `${initialSize.height}px`;
-            element.style.left = `${initialPosition.left}px`;
-            element.style.top = `${initialPosition.top}px`;
+            element.style.left = `${isMobile ? 0 : initialPosition.left}px`;
+            element.style.top = `${isMobile ? 0 : initialPosition.top}px`;
           }
         }
 
@@ -842,8 +842,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           if (element) {
             element.style.width = `${initialSize.width}px`;
             element.style.height = `${initialSize.height}px`;
-            element.style.left = `${initialPosition.left}px`;
-            element.style.top = `${initialPosition.top}px`;
+            element.style.left = `${isMobile ? 0 : initialPosition.left}px`;
+            element.style.top = `${isMobile ? 0 : initialPosition.top}px`;
           }
         }
 
@@ -1154,14 +1154,14 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
           const left = Math.max(0, (window.innerWidth - newSize.width) / 2);
           const top = Math.max(0, window.scrollY + (window.innerHeight - newSize.height) / 2);
-          element.style.left = `${left}px`;
-          element.style.top = `${top}px`;
+          element.style.left = `${isMobile ? 0 : left}px`;
+          element.style.top = `${isMobile ? 0 : top}px`;
 
           setTimeout(() => {
             if (element) {
               element.style.transition = '';
               setInternalSize(newSize);
-              setInternalPosition({ left, top });
+              setInternalPosition({ left: isMobile ? 0 : left, top: isMobile ? 0 : top });
             }
           }, 300);
         }
@@ -1494,16 +1494,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     if (managedPosition) {
       return {
         position: 'fixed' as const,
-        left: internalPosition.left,
-        top: internalPosition.top,
+        left: isMobile ? 0 : internalPosition.left,
+        top: isMobile ? 0 : internalPosition.top,
         width: internalSize.width,
         height: internalSize.height,
+        padding: isMobile ? 0 : undefined,
         ...style,
       };
     } else {
       return style;
     }
-  }, [managedPosition, internalPosition, internalSize, style]);
+  }, [managedPosition, internalPosition, internalSize, style, isMobile]);
 
   const containerClass = React.useMemo(
     () =>
@@ -1695,8 +1696,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             'left 0.3s ease-out, top 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out';
           element.style.transformOrigin = 'center center';
 
-          element.style.left = `${safeTargetX}px`;
-          element.style.top = `${safeTargetY}px`;
+          element.style.left = `${isMobile ? 0 : safeTargetX}px`;
+          element.style.top = `${isMobile ? 0 : safeTargetY}px`;
           element.style.width = `${initialSize.width}px`;
           element.style.height = `${initialSize.height}px`;
 
@@ -1706,8 +1707,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               element.style.transformOrigin = '';
 
               setInternalPosition({
-                left: safeTargetX,
-                top: safeTargetY,
+                left: isMobile ? 0 : safeTargetX,
+                top: isMobile ? 0 : safeTargetY,
               });
               setInternalSize(initialSize);
 
@@ -2004,8 +2005,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       if (element) {
         element.style.width = `${initialSize.width}px`;
         element.style.height = `${initialSize.height}px`;
-        element.style.left = `${initialPosition.left}px`;
-        element.style.top = `${initialPosition.top}px`;
+        element.style.left = `${isMobile ? 0 : initialPosition.left}px`;
+        element.style.top = `${isMobile ? 0 : initialPosition.top}px`;
       }
     }
 
@@ -2083,8 +2084,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         if (element) {
           element.style.width = `${initialSize.width}px`;
           element.style.height = `${initialSize.height}px`;
-          element.style.left = `${initialPosition.left}px`;
-          element.style.top = `${initialPosition.top}px`;
+          element.style.left = `${isMobile ? 0 : initialPosition.left}px`;
+          element.style.top = `${isMobile ? 0 : initialPosition.top}px`;
         }
       }
 
@@ -2415,8 +2416,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         if (element) {
           element.style.width = `${initialSize.width}px`;
           element.style.height = `${initialSize.height}px`;
-          element.style.left = `${initialPosition.left}px`;
-          element.style.top = `${initialPosition.top}px`;
+          element.style.left = `${isMobile ? 0 : initialPosition.left}px`;
+          element.style.top = `${isMobile ? 0 : initialPosition.top}px`;
         }
       }
 

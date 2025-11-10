@@ -7,12 +7,21 @@ $text-modify-prefix-cls: #{$cui-prefix}-modify-textarea;
 .#{$cui-prefix}-message-text-url-container{
     width: 230px;
     word-break: break-all;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
 
     .#{$text-msg-prefix-cls} {
         word-break: break-all;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
 }
 .#{$text-msg-prefix-cls} {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     font-size: $font-size-lg;
     line-height: 24px;
     font-style: normal;

@@ -1,13 +1,14 @@
-import React, { ReactNode, useState, useContext } from 'react';
+import React, { ReactNode, useState, useContext, useImperativeHandle, useRef } from 'react';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Button from '../../component/button';
 // import { emoji } from '../messageInput/emoji/emojiConfig';
-import { Emoji, EmojiProps } from '../messageInput/emoji/Emoji';
+import { Emoji, EmojiProps, EmojiRef } from '../messageInput/emoji/Emoji';
 import Icon from '../../component/icon';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import { emoji } from './emojiConfig';
 import { RootContext } from '../store/rootContext';
+import { useIsMobile } from '../hooks/useScreen';
 import './style/style.scss';
 export interface EmojiKeyBoardProps {
   prefixCls?: string;
@@ -20,7 +21,12 @@ export interface EmojiKeyBoardProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
+export interface EmojiKeyBoardRef {
+  open?: () => void;
+  close?: () => void;
+}
+
+const EmojiKeyBoard = React.forwardRef<EmojiKeyBoardRef, EmojiKeyBoardProps>((props, ref) => {
   const {
     onSelected,
     selectedList,
@@ -35,6 +41,7 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
   const { reactionConfig: globalRatConfig } = context;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('reaction-icon', customizePrefixCls);
+  const isMobile = useIsMobile();
   const handleSelectedEmoji = (emoji: string) => {
     onSelected?.(emoji);
   };
@@ -44,13 +51,26 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
   };
 
   const classString = classNames(prefixCls);
+  const emojiRef = useRef<EmojiRef>(null);
+  useImperativeHandle(ref, () => ({
+    open: () => emojiRef.current?.open?.(),
+    close: () => emojiRef.current?.close?.(),
+  }));
   return (
     <Emoji
+      ref={emojiRef}
       emojiConfig={reactionConfig || (globalRatConfig as EmojiProps['emojiConfig']) || emoji}
       selectedList={selectedList}
       onSelected={handleSelectedEmoji}
       onDelete={handleDeleteEmoji}
-      icon={<Icon type="FACE_PLUS" width={20} height={20} className={classString} />}
+      icon={
+        <Icon
+          type="FACE_PLUS"
+          width={isMobile ? 16 : 20}
+          height={isMobile ? 16 : 20}
+          className={classString}
+        />
+      }
       placement={placement}
       onClick={e => {
         onClick?.(e);
@@ -60,6 +80,6 @@ const EmojiKeyBoard = (props: EmojiKeyBoardProps) => {
       }}
     ></Emoji>
   );
-};
-
+});
+EmojiKeyBoard.displayName = 'EmojiKeyBoard';
 export { EmojiKeyBoard };

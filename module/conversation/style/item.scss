@@ -11,6 +11,9 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
     position: relative;
     border-radius: $cvs-item-border-radius;
     margin: $cvs-item-margin;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
     &-selected{
         background-color: $cvs-item-selected-bg-color !important;
         .#{$conversation-prefix-cls}-nickname{
@@ -35,8 +38,9 @@ $conversation-prefix-cls: #{$cui-prefix}-conversationItem;
         max-width: calc(100% - 96px); //136
         width: 100%;
         overflow: hidden;
-        // flex: 1;
-        // position: relative;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
     
     &-info{

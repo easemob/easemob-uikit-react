@@ -83,6 +83,7 @@ import { useChatContext } from './hooks/useChatContext';
 import { useAddressContext } from './hooks/useAddressContext';
 import { useThreadContext } from './hooks/useThreadContext';
 import { useSDK } from './hooks/useSDK';
+import { useIsMobile, useScreen } from './hooks/useScreen';
 import Thread, { ThreadProps } from './thread';
 import UserProfile, { UserProfileProps } from './userProfile';
 import { Blocklist, BlocklistProps } from './blocklist';
@@ -198,6 +199,8 @@ export {
   usePinnedMessage,
   useHistoryMessages,
   useSDK,
+  useIsMobile,
+  useScreen,
   useConversationContext,
   useChatContext,
   useAddressContext,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import './style/panel.scss';
 import Icon from '../../component/icon';
 import Button from '../../component/button';
@@ -12,18 +12,40 @@ export interface ThreadListExpandableIconProps {
   style?: React.CSSProperties;
   onClose?: () => void;
   icon?: React.ReactNode;
+  iconWidth?: string | number;
+  iconHeight?: string | number;
+  onClickItem?: () => void;
 }
-const ThreadListExpandableIcon = (props: ThreadListExpandableIconProps) => {
-  const { style, icon } = props;
+export interface ThreadListExpandableIconRef {
+  open: () => void;
+  close: () => void;
+}
 
-  const handleClose = () => {
+const ThreadListExpandableIcon = (
+  props: ThreadListExpandableIconProps,
+  ref: React.Ref<ThreadListExpandableIconRef>,
+) => {
+  const { style, icon, iconWidth, iconHeight } = props;
+
+  const handleClose = (e?: React.MouseEvent<HTMLDivElement>) => {
+    e?.stopPropagation();
     setIsOpen(false);
     props.onClose?.();
   };
 
   const [isOpen, setIsOpen] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    open: () => {
+      setIsOpen(true);
+    },
+    close: () => {
+      setIsOpen(false);
+    },
+  }));
   return (
     <Tooltip
+      destroyTooltipOnHide
       overlayInnerStyle={{ padding: 0 }}
       title={
         <ThreadList
@@ -33,6 +55,7 @@ const ThreadListExpandableIcon = (props: ThreadListExpandableIconProps) => {
           onClose={handleClose}
           onClickItem={() => {
             setIsOpen(false);
+            props.onClickItem?.();
           }}
         ></ThreadList>
       }
@@ -49,11 +72,15 @@ const ThreadListExpandableIcon = (props: ThreadListExpandableIconProps) => {
         icon
       ) : (
         <Button type="text" shape="circle">
-          <Icon type="HASHTAG_IN_BUBBLE_FILL" width={24} height={24}></Icon>
+          <Icon
+            type="HASHTAG_IN_BUBBLE_FILL"
+            width={iconWidth ? iconWidth : 24}
+            height={iconHeight ? iconHeight : 24}
+          ></Icon>
         </Button>
       )}
     </Tooltip>
   );
 };
 
-export default observer(ThreadListExpandableIcon);
+export default observer(forwardRef(ThreadListExpandableIcon));

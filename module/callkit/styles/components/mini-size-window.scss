@@ -273,7 +273,7 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
 // 响应式适配
 @media (max-width: $breakpoint-mobile) {
   .#{$callkit-prefix-cls}-mini-window {
-    min-width: 160px;
+    // min-width: 160px;
     padding: 6px 8px;
     font-size: 11px;
   }

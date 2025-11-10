@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useImperativeHandle } from 'react';
 import { Tooltip, TooltipProps } from '../../../component/tooltip/Tooltip';
 import Button, { ButtonProps } from '../../../component/button';
 import { emoji as defaultEmojiConfig } from './emojiConfig';
@@ -33,7 +33,12 @@ export interface EmojiProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-const Emoji = (props: EmojiProps) => {
+export interface EmojiRef {
+  open?: () => void;
+  close?: () => void;
+}
+
+const Emoji = React.forwardRef<EmojiRef, EmojiProps>((props, ref) => {
   const {
     onSelected,
     icon,
@@ -128,6 +133,11 @@ const Emoji = (props: EmojiProps) => {
     </div>
   );
 
+  useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
+    close: () => setOpen(false),
+  }));
+
   const iconNode = icon ? (
     <div
       onClick={handleClickIcon}
@@ -179,5 +189,6 @@ const Emoji = (props: EmojiProps) => {
       </Tooltip>
     );
   }
-};
+});
+Emoji.displayName = 'Emoji';
 export { Emoji };

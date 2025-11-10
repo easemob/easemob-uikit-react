@@ -8,6 +8,7 @@ import React, {
   forwardRef,
   useImperativeHandle,
 } from 'react';
+import { createPortal } from 'react-dom';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
@@ -43,6 +44,7 @@ import { usePinnedMessage } from '../hooks/usePinnedMessage';
 import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './拨打电话.mp3';
 import callkit_bg from '../assets/callkit_bg.png';
+import { useIsMobile, useScreen } from '../hooks/useScreen';
 export interface RtcRoomInfo {
   callId: string;
   calleeDevId?: string;
@@ -116,7 +118,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('chat', customizePrefixCls);
   const { show } = usePinnedMessage();
-
+  const isMobile = useIsMobile();
   const [isEmpty, setIsEmpty] = useState(true);
 
   const context = useContext(RootContext);
@@ -132,7 +134,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   const { appUsersInfo } = rootStore.addressStore || {};
   const globalConfig = features?.chat;
   const CVS = rootStore.conversationStore.currentCvs;
-  const { suffixIcon, ...otherHeaderProps } = headerProps || {};
+  const { suffixIcon, moreAction, ...otherHeaderProps } = headerProps || {};
   const callKitRef = useRef<CallKitRef>(null);
   useContacts();
   useEffect(() => {
@@ -164,34 +166,51 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   //------ global config ------
   // config header
   let showHeaderThreadListBtn = true;
-  let headerMoreAction = {
-    visible: true,
-    actions: [
-      {
-        content: t('clearMsgs'),
-        onClick: () => {
-          rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
-          rootStore.client.removeHistoryMessages({
-            targetId: CVS.conversationId,
-            chatType: CVS.chatType as 'singleChat' | 'groupChat',
-            beforeTimeStamp: Date.now(),
-          });
-        },
-      },
-      {
-        content: t('deleteCvs'),
-        onClick: () => {
-          rootStore.conversationStore.deleteConversation(rootStore.conversationStore.currentCvs);
-
-          rootStore.client.deleteConversation({
-            channel: CVS.conversationId,
-            chatType: CVS.chatType as 'singleChat' | 'groupChat',
-            deleteRoam: true,
-          });
-        },
-      },
-    ],
+  type HeaderMenuAction = {
+    visible?: boolean;
+    icon?: React.ReactNode;
+    content: React.ReactNode;
+    onClick?: () => void;
   };
+
+  let headerMoreAction: {
+    visible: boolean;
+    actions: HeaderMenuAction[];
+  } = headerProps?.moreAction
+    ? {
+        visible: headerProps?.moreAction?.visible ?? true,
+        actions: headerProps?.moreAction?.actions ?? [],
+      }
+    : {
+        visible: true,
+        actions: [
+          {
+            content: t('clearMsgs') as React.ReactNode,
+            onClick: () => {
+              rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
+              rootStore.client.removeHistoryMessages({
+                targetId: CVS.conversationId,
+                chatType: CVS.chatType as 'singleChat' | 'groupChat',
+                beforeTimeStamp: Date.now(),
+              });
+            },
+          },
+          {
+            content: t('deleteCvs') as React.ReactNode,
+            onClick: () => {
+              rootStore.conversationStore.deleteConversation(
+                rootStore.conversationStore.currentCvs,
+              );
+
+              rootStore.client.deleteConversation({
+                channel: CVS.conversationId,
+                chatType: CVS.chatType as 'singleChat' | 'groupChat',
+                deleteRoam: true,
+              });
+            },
+          },
+        ],
+      };
 
   if (globalConfig?.header) {
     if (globalConfig?.header?.threadList == false) {
@@ -210,6 +229,9 @@ let Chat = forwardRef((props: ChatProps, ref) => {
       headerMoreAction.actions.pop();
     }
   }
+
+  // 移动端：将原先 header 右侧的快捷按钮（PIN/THREAD/AUDIO/VIDEO）收纳到更多菜单中
+  // 注意：必须在相关开关（showPinMessage/showAudioCall/showVideoCall）初始化之后执行
 
   const handleReport = (message: any) => {
     setReportOpen(true);
@@ -437,6 +459,11 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     },
   }));
 
+  const threadListExpandableIconRef = useRef<{
+    open: () => void;
+    close: () => void;
+  }>(null);
+
   // config rtc call
   let showAudioCall = true;
   let showVideoCall = true;
@@ -460,6 +487,80 @@ let Chat = forwardRef((props: ChatProps, ref) => {
 
   if (CVS.chatType === 'groupChat') {
     showAudioCall = false;
+  }
+
+  // 移动端：将原先 header 右侧的快捷按钮（PIN/THREAD/AUDIO/VIDEO）收纳到更多菜单中
+  if (isMobile) {
+    let suffixIcon = headerProps?.suffixIcon;
+    if (!suffixIcon) {
+      suffixIcon = ['PIN', 'THREAD', 'AUDIO', 'VIDEO'];
+    }
+
+    if (suffixIcon instanceof Array) {
+      const mobileActions: Array<HeaderMenuAction> = [];
+
+      suffixIcon.forEach(item => {
+        if (item === 'PIN') {
+          if (showPinMessage) {
+            mobileActions.push({
+              icon: <Icon width={20} height={20} type="PIN" />,
+              content: t('Pinned Messages') as React.ReactNode,
+              onClick: () => {
+                show();
+              },
+            });
+          }
+        } else if (item === 'THREAD') {
+          if (CVS.chatType == 'groupChat' && showHeaderThreadListBtn) {
+            mobileActions.push({
+              icon: (
+                <ThreadListExpandableIcon
+                  style={{ width: '100vw' }}
+                  iconWidth={20}
+                  iconHeight={20}
+                  key="thread"
+                  ref={threadListExpandableIconRef}
+                  icon={<Icon type="HASHTAG_IN_BUBBLE_FILL" width={20} height={20}></Icon>}
+                  onClose={() => {
+                    console.log('onClose', threadListExpandableIconRef.current);
+                    // threadListExpandableIconRef.current?.close?.();
+                  }}
+                  onClickItem={() => {
+                    console.log('onClickItem', threadListExpandableIconRef.current);
+                    // threadListExpandableIconRef.current?.close?.();
+                  }}
+                ></ThreadListExpandableIcon>
+              ),
+              content: t('threadList') as React.ReactNode,
+              onClick: () => {
+                threadListExpandableIconRef.current?.open?.();
+              },
+            });
+          }
+        } else if (item === 'AUDIO') {
+          if (showAudioCall && useCallkit) {
+            mobileActions.push({
+              icon: <Icon type="PHONE_PICK" width={20} height={20} />,
+              content: t('audioCall') as React.ReactNode,
+              onClick: () => startVideoCall('audio'),
+            });
+          }
+        } else if (item === 'VIDEO') {
+          if (showVideoCall && useCallkit) {
+            mobileActions.push({
+              icon: <Icon type="VIDEO_CAMERA" width={20} height={20} />,
+              content: t('videoCall') as React.ReactNode,
+              onClick: () => startVideoCall('video'),
+            });
+          }
+        }
+      });
+      if (headerProps?.moreAction) {
+        headerMoreAction.actions = [...mobileActions, ...headerProps.moreAction.actions];
+      } else {
+        headerMoreAction.actions = [...mobileActions, ...headerMoreAction.actions];
+      }
+    }
   }
 
   // --- report ---
@@ -487,6 +588,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
       });
   };
   const renderHeaderSuffixIcon = () => {
+    if (isMobile) return null;
     let suffixIcon = headerProps?.suffixIcon;
     if (!suffixIcon) {
       // 返回默认的
@@ -550,12 +652,27 @@ let Chat = forwardRef((props: ChatProps, ref) => {
       return null;
     }
   };
+  const { width, height } = useScreen();
+  const [callKitSize, setCallKitSize] = useState(
+    isMobile ? { width: width, height: height } : { width: 748, height: 523 },
+  );
 
-  const [callKitSize, setCallKitSize] = useState({ width: 748, height: 523 });
+  // 为 CallKit 创建 Portal 容器，避免随 Chat 容器的 display:none 一起隐藏
+  const [callkitContainer, setCallkitContainer] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    let el = document.getElementById('callkit-portal-root');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'callkit-portal-root';
+      document.body.appendChild(el);
+    }
+    setCallkitContainer(el);
+  }, []);
   const handleLayoutModeChange = (layoutMode: 'grid' | 'main') => {
     if (layoutMode === 'main') {
       // 切换到主视频模式时，调整为竖屏尺寸
-      const newSize = { width: 512, height: 759 };
+      const newSize = isMobile ? { width: width, height: height } : { width: 512, height: 759 };
       setCallKitSize(newSize);
 
       // 🔧 使用CallKit的adjustSize方法调整尺寸
@@ -564,7 +681,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
       }
     } else {
       // 切换到网格模式时，恢复正常尺寸
-      const newSize = { width: 748, height: 523 };
+      const newSize = isMobile ? { width: width, height: height } : { width: 748, height: 523 };
       setCallKitSize(newSize);
 
       // 🔧 使用CallKit的adjustSize方法调整尺寸
@@ -589,7 +706,12 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         renderEmpty ? (
           renderEmpty()
         ) : (
-          <Empty text={t('noConversation')}></Empty>
+          <Empty
+            text={t('noConversation')}
+            onClickBack={() => {
+              otherHeaderProps?.onClickBack?.();
+            }}
+          ></Empty>
         )
       ) : (
         <>
@@ -630,6 +752,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 rootStore.conversationStore.currentCvs.conversationId
               }
               moreAction={headerMoreAction}
+              back={isMobile}
               {...otherHeaderProps}
             ></Header>
           )}
@@ -696,152 +819,147 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         </>
       )}
 
-      {rootStore.client.user && useCallkit && (
-        <CallKit
-          ref={callKitRef}
-          chatClient={rootStore.client}
-          initialSize={callKitSize}
-          managedPosition={true}
-          resizable={true}
-          draggable={true}
-          outgoingRingtoneSrc={outgoingRingtone} // 铃声文件路径
-          incomingRingtoneSrc={incomingRingtone} // 铃声文件路径
-          enableRingtone={true} // 启用铃声
-          ringtoneVolume={0.8} // 音量 80%
-          ringtoneLoop={true} // 循环播放
-          // onInvitationAccept={() => {
-          //   callKitRef.current?.answerCall(true);
-          // }}
-          // onInvitationReject={() => {
-          //   callKitRef.current?.answerCall(false);
-          // }}
-          onEndCallWithReason={(reason, callInfo) => {
-            console.log('🚀 onEndCallWithReason 接收到通话结束信22', reason, callInfo);
-            if (!callInfo.inviteMessageId) {
-              return;
-            }
-            if (callInfo.type === 0 || callInfo.type === 1) {
-              let msg = '';
-              switch (reason) {
-                case 'hangup':
-                  msg = `通话时长${callInfo.duration}`;
-                  break;
-                case 'noResponse':
-                  msg = '未接听';
-                  break;
-                case 'remoteNoResponse':
-                  msg = '对方未接听';
-                  break;
-                case 'cancel':
-                  msg = '已取消';
-                  break;
-                case 'busy':
-                  msg = '对方正忙';
-                  break;
-                case 'abnormalEnd':
-                  msg = '通话中断';
-                  break;
-                case 'remoteCancel':
-                  msg = '对方已取消';
-                  break;
-                case 'refuse':
-                  msg = '已拒绝';
-                  break;
-                case 'remoteRefuse':
-                  msg = '对方已拒绝';
-                  break;
-                case 'handleOnOtherDevice':
-                  msg = '已在其他设备处理';
-                  break;
-                default:
-                  msg = '通话已结束';
-                  break;
+      {rootStore.client.user &&
+        useCallkit &&
+        callkitContainer &&
+        createPortal(
+          <CallKit
+            ref={callKitRef}
+            chatClient={rootStore.client}
+            initialSize={callKitSize}
+            managedPosition={true}
+            resizable={true}
+            draggable={true}
+            outgoingRingtoneSrc={outgoingRingtone}
+            incomingRingtoneSrc={incomingRingtone}
+            enableRingtone={true}
+            ringtoneVolume={0.8}
+            ringtoneLoop={true}
+            onEndCallWithReason={(reason, callInfo) => {
+              console.log('🚀 onEndCallWithReason 接收到通话结束信22', reason, callInfo);
+              if (!callInfo.inviteMessageId) {
+                return;
               }
-              rootStore.messageStore.updateMessage({
-                messageId: callInfo.inviteMessageId,
-                chatType: 'singleChat',
-                to:
-                  callInfo.calleeUserId === rootStore.client.user
-                    ? callInfo.callerUserId!
-                    : callInfo.calleeUserId!,
-                msg: msg,
-              });
-            } else {
-              rootStore.messageStore.updateMessage({
-                messageId: callInfo.inviteMessageId,
-                chatType: 'groupChat',
-                to: callInfo.groupId!,
-                msg: `通话已结束`,
-              });
-            }
-            console.log('onEndCallWithReason --->', reason, callInfo);
-          }}
-          onLayoutModeChange={handleLayoutModeChange}
-          initialPosition={{
-            // left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
-            // top: Math.max(0, window.scrollY + (window.innerHeight - callKitSize.height) / 2),
-            left: window.innerWidth - callKitSize.width - 20,
-            top: 21,
-          }}
-          // 邀请界面显示配置
-          showInvitationAvatar={true}
-          showInvitationTimer={true}
-          autoRejectTime={30} // 30秒自动拒绝
-          backgroundImage={callkit_bg}
-          groupInfoProvider={async groupIds => {
-            return groupIds.map(groupId => {
-              return {
-                groupId: groupId,
-                groupName:
-                  rootStore.addressStore.groups.find(item => item.groupid === groupId)?.groupname ||
-                  groupId,
-                groupAvatar:
-                  rootStore.addressStore.groups.find(item => item.groupid === groupId)?.avatarUrl ||
-                  '',
-              };
-            });
-          }}
-          userInfoProvider={async userIds => {
-            return Promise.all(
-              userIds.map(async userId => {
-                if (!rootStore.addressStore.appUsersInfo[userId] && initConfig.useUserInfo) {
-                  const userInfo = await rootStore.client.fetchUserInfoById(userIds, [
-                    'nickname',
-                    'avatarurl',
-                  ]);
-                  console.log('🚀 userInfo', userInfo);
-                  if (userInfo) {
-                    userInfo.data &&
-                      Object.keys(userInfo.data).forEach(item => {
-                        rootStore.addressStore.appUsersInfo[item] = {
-                          userId: item,
-                          nickname: userInfo.data?.[item]?.nickname || '',
-                          avatarurl: userInfo.data?.[item]?.avatarurl || '',
-                        };
-                      });
-                  }
+              if (callInfo.type === 0 || callInfo.type === 1) {
+                let msg = '';
+                switch (reason) {
+                  case 'hangup':
+                    msg = `通话时长${callInfo.duration}`;
+                    break;
+                  case 'noResponse':
+                    msg = '未接听';
+                    break;
+                  case 'remoteNoResponse':
+                    msg = '对方未接听';
+                    break;
+                  case 'cancel':
+                    msg = '已取消';
+                    break;
+                  case 'busy':
+                    msg = '对方正忙';
+                    break;
+                  case 'abnormalEnd':
+                    msg = '通话中断';
+                    break;
+                  case 'remoteCancel':
+                    msg = '对方已取消';
+                    break;
+                  case 'refuse':
+                    msg = '已拒绝';
+                    break;
+                  case 'remoteRefuse':
+                    msg = '对方已拒绝';
+                    break;
+                  case 'handleOnOtherDevice':
+                    msg = '已在其他设备处理';
+                    break;
+                  default:
+                    msg = '通话已结束';
+                    break;
                 }
+                rootStore.messageStore.updateMessage({
+                  messageId: callInfo.inviteMessageId,
+                  chatType: 'singleChat',
+                  to:
+                    callInfo.calleeUserId === rootStore.client.user
+                      ? callInfo.callerUserId!
+                      : callInfo.calleeUserId!,
+                  msg: msg,
+                });
+              } else {
+                rootStore.messageStore.updateMessage({
+                  messageId: callInfo.inviteMessageId,
+                  chatType: 'groupChat',
+                  to: callInfo.groupId!,
+                  msg: `通话已结束`,
+                });
+              }
+              console.log('onEndCallWithReason --->', reason, callInfo);
+            }}
+            onLayoutModeChange={handleLayoutModeChange}
+            initialPosition={{
+              left: window.innerWidth - callKitSize.width - 20,
+              top: 21,
+            }}
+            showInvitationAvatar={true}
+            showInvitationTimer={true}
+            autoRejectTime={30}
+            backgroundImage={callkit_bg}
+            groupInfoProvider={async groupIds => {
+              return groupIds.map(groupId => {
                 return {
-                  userId: userId,
-                  nickname: rootStore.addressStore.appUsersInfo[userId]?.nickname,
-                  avatarUrl: rootStore.addressStore.appUsersInfo[userId]?.avatarurl,
+                  groupId: groupId,
+                  groupName:
+                    rootStore.addressStore.groups.find(item => item.groupid === groupId)
+                      ?.groupname || groupId,
+                  groupAvatar:
+                    rootStore.addressStore.groups.find(item => item.groupid === groupId)
+                      ?.avatarUrl || '',
                 };
-              }),
-            );
-          }}
-          onRingtoneStart={() => {
-            messageInputRef.current?.stopRecording();
-          }}
-          onCallStatusChanged={status => {
-            if (status === 'connected' || status === 'ringing' || status === 'calling') {
-              setIsInCall(true);
-            } else {
-              setIsInCall(false);
-            }
-          }}
-          {...callkitProps}
-        ></CallKit>
-      )}
+              });
+            }}
+            userInfoProvider={async userIds => {
+              return Promise.all(
+                userIds.map(async userId => {
+                  if (!rootStore.addressStore.appUsersInfo[userId] && initConfig.useUserInfo) {
+                    const userInfo = await rootStore.client.fetchUserInfoById(userIds, [
+                      'nickname',
+                      'avatarurl',
+                    ]);
+                    console.log('🚀 userInfo', userInfo);
+                    if (userInfo) {
+                      userInfo.data &&
+                        Object.keys(userInfo.data).forEach(item => {
+                          rootStore.addressStore.appUsersInfo[item] = {
+                            userId: item,
+                            nickname: userInfo.data?.[item]?.nickname || '',
+                            avatarurl: userInfo.data?.[item]?.avatarurl || '',
+                          };
+                        });
+                    }
+                  }
+                  return {
+                    userId: userId,
+                    nickname: rootStore.addressStore.appUsersInfo[userId]?.nickname,
+                    avatarUrl: rootStore.addressStore.appUsersInfo[userId]?.avatarurl,
+                  };
+                }),
+              );
+            }}
+            onRingtoneStart={() => {
+              messageInputRef.current?.stopRecording();
+            }}
+            onCallStatusChanged={status => {
+              if (status === 'connected' || status === 'ringing' || status === 'calling') {
+                setIsInCall(true);
+              } else {
+                setIsInCall(false);
+              }
+            }}
+            {...callkitProps}
+          ></CallKit>,
+          callkitContainer,
+        )}
       <Modal
         open={reportOpen}
         title={t('report')}

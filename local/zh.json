@@ -209,5 +209,6 @@
     "callkit.preview.preparing": "准备中",
     "callkit.groupCall.groupCall": "群组通话",
     "callkit.groupCall.groupCallInvitation": "邀请您进行群组通话",
-    "inCallDisabledRecorder": "通话中禁止录音"
+    "inCallDisabledRecorder": "通话中禁止录音",
+    "reaction": "表情回复"
 }

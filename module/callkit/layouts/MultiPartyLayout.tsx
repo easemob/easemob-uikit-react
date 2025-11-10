@@ -11,7 +11,7 @@ import type {
 } from '../types/index';
 import { LayoutMode } from '../types/index';
 import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
-
+import { useIsMobile } from '../../hooks/useScreen';
 /**
  * 多人网格布局策略
  */
@@ -20,51 +20,107 @@ export class MultiPartyLayoutStrategy implements LayoutStrategy {
     if (videoCount === 0) {
       return { rows: 0, cols: 0, itemsPerRow: [], maxCols: 0, mode: LayoutMode.MULTI_PARTY };
     }
-
-    if (videoCount <= 4) {
-      // 1排
-      return {
-        rows: 1,
-        cols: videoCount,
-        maxCols: videoCount,
-        itemsPerRow: [videoCount],
-        mode: LayoutMode.MULTI_PARTY,
-      };
-    } else if (videoCount <= 12) {
-      // 2排
-      let maxCols;
-      if (videoCount <= 8) {
-        maxCols = 4; // 5-8个视频: 第一排4个
-      } else if (videoCount <= 10) {
-        maxCols = 5; // 9-10个视频: 第一排5个
+    console.log('containerSize ---->', containerSize);
+    // 移动端
+    if (containerSize.width < 530) {
+      if (videoCount <= 2) {
+        return {
+          rows: 1,
+          cols: videoCount,
+          maxCols: videoCount,
+          itemsPerRow: [videoCount],
+          mode: LayoutMode.MULTI_PARTY,
+        };
+      } else if (videoCount > 2 && videoCount <= 4) {
+        return {
+          rows: 2,
+          cols: 2,
+          maxCols: 2,
+          itemsPerRow: [2, videoCount - 2],
+          mode: LayoutMode.MULTI_PARTY,
+        };
+      } else if (videoCount > 4 && videoCount <= 9) {
+        if (videoCount <= 6) {
+          return {
+            rows: 3,
+            cols: 2,
+            maxCols: 2,
+            itemsPerRow: [2, 2, videoCount - 4],
+            mode: LayoutMode.MULTI_PARTY,
+          };
+        }
+        return {
+          rows: 3,
+          cols: 3,
+          maxCols: 3,
+          itemsPerRow: [3, 3, videoCount - 6],
+          mode: LayoutMode.MULTI_PARTY,
+        };
       } else {
-        maxCols = 6; // 11-12个视频: 第一排6个
+        if (videoCount <= 12) {
+          return {
+            rows: 4,
+            cols: 3,
+            maxCols: 3,
+            itemsPerRow: [3, 3, 3, videoCount - 9],
+            mode: LayoutMode.MULTI_PARTY,
+          };
+        }
+        return {
+          rows: 4,
+          cols: 4,
+          maxCols: 4,
+          itemsPerRow: [4, 4, 4, videoCount - 12],
+          mode: LayoutMode.MULTI_PARTY,
+        };
       }
-
-      const firstRowItems = Math.min(maxCols, videoCount);
-      const secondRowItems = Math.max(0, videoCount - maxCols);
-
-      return {
-        rows: 2,
-        cols: maxCols,
-        maxCols: maxCols,
-        itemsPerRow: [firstRowItems, secondRowItems].filter(num => num > 0),
-        mode: LayoutMode.MULTI_PARTY,
-      };
     } else {
-      // 3排
-      const maxCols = 6;
-      const firstRowItems = 6;
-      const secondRowItems = 6;
-      const thirdRowItems = Math.max(0, videoCount - maxCols * 2);
+      // 桌面端
+      if (videoCount <= 4) {
+        // 1排
+        return {
+          rows: 1,
+          cols: videoCount,
+          maxCols: videoCount,
+          itemsPerRow: [videoCount],
+          mode: LayoutMode.MULTI_PARTY,
+        };
+      } else if (videoCount <= 12) {
+        // 2排
+        let maxCols;
+        if (videoCount <= 8) {
+          maxCols = 4; // 5-8个视频: 第一排4个
+        } else if (videoCount <= 10) {
+          maxCols = 5; // 9-10个视频: 第一排5个
+        } else {
+          maxCols = 6; // 11-12个视频: 第一排6个
+        }
 
-      return {
-        rows: 3,
-        cols: maxCols,
-        maxCols: maxCols,
-        itemsPerRow: [firstRowItems, secondRowItems, thirdRowItems].filter(num => num > 0),
-        mode: LayoutMode.MULTI_PARTY,
-      };
+        const firstRowItems = Math.min(maxCols, videoCount);
+        const secondRowItems = Math.max(0, videoCount - maxCols);
+
+        return {
+          rows: 2,
+          cols: maxCols,
+          maxCols: maxCols,
+          itemsPerRow: [firstRowItems, secondRowItems].filter(num => num > 0),
+          mode: LayoutMode.MULTI_PARTY,
+        };
+      } else {
+        // 3排
+        const maxCols = 6;
+        const firstRowItems = 6;
+        const secondRowItems = 6;
+        const thirdRowItems = Math.max(0, videoCount - maxCols * 2);
+
+        return {
+          rows: 3,
+          cols: maxCols,
+          maxCols: maxCols,
+          itemsPerRow: [firstRowItems, secondRowItems, thirdRowItems].filter(num => num > 0),
+          mode: LayoutMode.MULTI_PARTY,
+        };
+      }
     }
   }
 

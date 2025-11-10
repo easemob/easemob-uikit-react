@@ -19,7 +19,7 @@ import Modal, { ModalProps } from '../../component/modal';
 import { ContactList } from '../contactList';
 import { use } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { set } from 'mobx';
+import { useIsMobile } from '../hooks/useScreen';
 export interface UserSelectProps extends ModalProps {
   prefix?: string;
   className?: string;
@@ -74,10 +74,12 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const classString = classNames(
     prefixCls,
     {
       [`${prefixCls}-${themeMode}`]: !!themeMode,
+      [`${prefixCls}-mobile`]: isMobile,
     },
     className,
   );
@@ -210,7 +212,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
   return (
     <Modal
       open={open}
-      width={720}
+      width={isMobile ? '100%' : 720}
       title={title}
       footer={footer}
       bodyStyle={{ padding: 0 }}
@@ -291,64 +293,99 @@ const UserSelect: React.FC<UserSelectProps> = props => {
             ></ContactList>
           )}
         </div>
-        <div className={`${prefixCls}-container`}>
-          {selectedPanelHeader ? (
-            <div className={`${prefixCls}-header`}>{selectedPanelHeader}</div>
-          ) : (
-            <div className={`${prefixCls}-header`}>{`${t('Selected group members')}（${
-              selectedUsers.length
-            }）`}</div>
-          )}
-          {/** 右侧已经选出来的人 */}
-          <div className={`${prefixCls}-body`}>
-            {selectedUsers.map(user => {
-              return (
-                <UserItem
-                  avatarSize={40}
-                  key={user.userId}
-                  data={user}
-                  // onCheckboxChange={handleSelect}
-                  checked
-                  closeable={user.userId.indexOf('chatbot_') === -1}
-                  onClose={handleItemClose}
-                  onClick={data => {
-                    handleItemClose(user);
-                  }}
-                ></UserItem>
-              );
-            })}
-          </div>
-          {selectedPanelFooter ? (
-            <div className={`${prefixCls}-footer`}>{selectedPanelFooter}</div>
-          ) : (
-            <div className={`${prefixCls}-footer`}>
-              {/* <Button type="primary" style={{ width: '68px' }} onClick={createGroup}>
+        {!isMobile && (
+          <div className={`${prefixCls}-container`}>
+            {selectedPanelHeader ? (
+              <div className={`${prefixCls}-header`}>{selectedPanelHeader}</div>
+            ) : (
+              <div className={`${prefixCls}-header`}>{`${t('Selected group members')}（${
+                selectedUsers.length
+              }）`}</div>
+            )}
+            {/** 右侧已经选出来的人 */}
+            <div className={`${prefixCls}-body`}>
+              {selectedUsers.map(user => {
+                return (
+                  <UserItem
+                    avatarSize={40}
+                    key={user.userId}
+                    data={user}
+                    // onCheckboxChange={handleSelect}
+                    checked
+                    closeable={user.userId.indexOf('chatbot_') === -1}
+                    onClose={handleItemClose}
+                    onClick={data => {
+                      handleItemClose(user);
+                    }}
+                  ></UserItem>
+                );
+              })}
+            </div>
+            {selectedPanelFooter ? (
+              <div className={`${prefixCls}-footer`}>{selectedPanelFooter}</div>
+            ) : (
+              <div className={`${prefixCls}-footer`}>
+                {/* <Button type="primary" style={{ width: '68px' }} onClick={createGroup}>
                 确定
               </Button> */}
-              <div>
-                <Button
-                  style={{ marginRight: '24px', width: '68px' }}
-                  type="primary"
-                  onClick={e => {
-                    onConfirm?.(selectedUsers);
-                  }}
-                  disabled={selectedUsers.length === 0}
-                >
-                  {others?.okText || t('confirmBtn')}
-                </Button>
-                <Button
-                  style={{ width: '68px' }}
-                  type="default"
-                  onClick={e => {
-                    onCancel?.(e);
-                  }}
-                >
-                  {others.cancelText || t('cancelBtn')}
-                </Button>
+                <div>
+                  <Button
+                    style={{ marginRight: '24px', width: '68px' }}
+                    type="primary"
+                    onClick={e => {
+                      onConfirm?.(selectedUsers);
+                    }}
+                    disabled={selectedUsers.length === 0}
+                  >
+                    {others?.okText || t('confirmBtn')}
+                  </Button>
+                  <Button
+                    style={{ width: '68px' }}
+                    type="default"
+                    onClick={e => {
+                      onCancel?.(e);
+                    }}
+                  >
+                    {others.cancelText || t('cancelBtn')}
+                  </Button>
+                </div>
               </div>
+            )}
+          </div>
+        )}
+        {isMobile && selectedPanelFooter && (
+          <div className={`${prefixCls}-footer`} style={{ flex: 'none' }}>
+            {selectedPanelFooter}
+          </div>
+        )}
+        {isMobile && !selectedPanelHeader && (
+          <div className={`${prefixCls}-footer`} style={{ flex: 'none' }}>
+            {/* <Button type="primary" style={{ width: '68px' }} onClick={createGroup}>
+                确定
+              </Button> */}
+            <div>
+              <Button
+                style={{ marginRight: '24px', width: '68px' }}
+                type="primary"
+                onClick={e => {
+                  onConfirm?.(selectedUsers);
+                }}
+                disabled={selectedUsers.length === 0}
+              >
+                {others?.okText || t('confirmBtn')}
+              </Button>
+              <Button
+                style={{ width: '68px' }}
+                type="default"
+                onClick={e => {
+                  onCancel?.(e);
+                }}
+              >
+                {others.cancelText || t('cancelBtn')}
+              </Button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </Modal>
   );

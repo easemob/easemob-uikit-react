@@ -54,6 +54,12 @@ $groupSetting-prefix-cls: #{$cui-prefix}-groupSetting;
             text-overflow: ellipsis;
             text-align: center;
         }
+        &-back{
+            margin-top: 0 !important;
+            display: flex;
+            padding-left: 12px;
+            flex-direction: row !important;
+        }
     }
     &-header>div{
         margin-top: 16px;

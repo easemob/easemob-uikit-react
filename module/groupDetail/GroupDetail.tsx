@@ -28,6 +28,7 @@ import Modal from '../../component/modal';
 import { useGroupMembersAttributes, useGroupMembers } from '../hooks/useAddress';
 import GroupMember, { GroupMemberProps } from '../groupMember';
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '../hooks/useScreen';
 export interface GroupDetailProps {
   prefix?: string;
   className?: string;
@@ -41,6 +42,7 @@ export interface GroupDetailProps {
   onLeaveGroup?: () => void;
   onDestroyGroup?: () => void;
   onGroupMemberVisibleChange?: (visible: boolean) => void;
+  onBack?: () => void;
 }
 
 const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
@@ -54,6 +56,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
     onLeaveGroup,
     onDestroyGroup,
     onGroupMemberVisibleChange,
+    onBack,
   } = props;
 
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -63,6 +66,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const { addressStore } = rootStore;
   const themeMode = theme?.mode || 'light';
   const componentsShape = theme?.componentsShape || 'round';
+  const isMobile = useIsMobile();
   const { t } = useTranslation();
   const classString = classNames(
     prefixCls,
@@ -239,13 +243,28 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
         style={{ ...style, display: memberVisible.open ? 'none' : 'flex' }}
       >
         <div className={`${prefixCls}-header`}>
+          {isMobile && (
+            <div className={`${prefixCls}-header-back`}>
+              <Icon
+                type="ARROW_LEFT"
+                width={24}
+                height={24}
+                onClick={() => {
+                  onBack?.();
+                }}
+              ></Icon>
+            </div>
+          )}
+
           <Avatar
             src={avatarUrl}
             size={100}
             shape={componentsShape === 'round' ? 'circle' : 'square'}
           >
+            {' '}
             {infoData?.name}
           </Avatar>
+
           <div>
             <div className={`${prefixCls}-header-name`}>{infoData?.name}</div>
 

@@ -146,7 +146,8 @@ const ThreadList = (props: ThreadListProps) => {
         <div
           className={`${prefixCls}-item`}
           key={index}
-          onClick={() => {
+          onClick={e => {
+            e?.stopPropagation();
             openThread(item);
           }}
         >

@@ -12,6 +12,7 @@ $contact-detail-prefix-cls: #{$cui-prefix}-contact-detail;
     overflow: hidden;
     color: $gray-1;
     background-color: $gray-98;
+    position: relative;
     &-content{
         width: 376px;
         display: flex;

@@ -33,6 +33,9 @@ $search-prefix-cls: #{$cui-prefix}-search;
         &::placeholder{
             color: #919BA1;
         }
+        @media screen and (max-width: 767.98px) {
+            font-size: 16px;
+        }
     }
     &-icon{
         position: absolute;

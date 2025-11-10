@@ -209,5 +209,6 @@
     "callkit.preview.preparing": "Preparing",
     "callkit.groupCall.groupCall": "Group call",
     "callkit.groupCall.groupCallInvitation": "Invites you to a group call",
-    "inCallDisabledRecorder": "In call disabled recorder"
+    "inCallDisabledRecorder": "In call disabled recorder",
+    "reaction": "Reaction"
 }

@@ -215,14 +215,14 @@ const ChatApp: FC<any> = () => {
                   visible: true,
                   icon: <Icon type="PLUS_IN_CIRCLE"></Icon>,
                   actions: [
-                    {
-                      content: 'Create Group',
-                      icon: <Icon type="PLUS_IN_CIRCLE"></Icon>,
-                      onClick: () => {
-                        console.log('create group');
-                        setUserSelectVisible(true);
-                      },
-                    },
+                    // {
+                    //   content: 'Create Group',
+                    //   icon: <Icon type="PLUS_IN_CIRCLE"></Icon>,
+                    //   onClick: () => {
+                    //     console.log('create group');
+                    //     setUserSelectVisible(true);
+                    //   },
+                    // },
                   ],
                 }}
               ></Header>
@@ -322,8 +322,9 @@ const ChatApp: FC<any> = () => {
                 headerProps={{
                   moreAction: {
                     visible: true,
-                    actions: [{ content: '' }],
+                    actions: [],
                   },
+                  suffixIcon: ['PIN', 'AUDIO'],
                   // suffixIcon: [
                   //   'THREAD',
                   //   'AUDIO',

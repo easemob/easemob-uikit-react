@@ -11,6 +11,7 @@ import Empty from '../empty';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
+import { useIsMobile } from '../hooks/useScreen';
 export interface ContactDetailProps {
   prefix?: string;
   style?: React.CSSProperties;
@@ -33,6 +34,9 @@ export interface ContactDetailProps {
   onAudioCall?: () => void | boolean;
   onVideoCall?: () => void | boolean;
   renderEmpty?: () => React.ReactNode;
+  // 左上角返回按钮（移动端默认显示，PC 默认不显示）
+  back?: boolean;
+  onClickBack?: () => void;
 }
 
 export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetailProps) => {
@@ -46,8 +50,10 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     onAudioCall,
     onVideoCall,
     renderEmpty,
+    back,
+    onClickBack,
   } = props;
-
+  const isMobile = useIsMobile();
   const { type, id, name } = data;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -141,6 +147,17 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
 
   return (
     <div className={classString} style={{ ...style }}>
+      {(back ?? isMobile) && (
+        <Button
+          type="text"
+          onClick={() => {
+            onClickBack?.();
+          }}
+          style={{ position: 'absolute', left: 12, top: 20 }}
+        >
+          <Icon type="ARROW_LEFT" width={24} height={24}></Icon>
+        </Button>
+      )}
       {data.id ? (
         <>
           <div className={`${prefixCls}-content`}>
@@ -152,7 +169,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                 presence={{
                   visible:
                     data.type !== 'group' &&
-                    features?.conversationList?.item?.presence &&
+                    Boolean(features?.conversationList?.item?.presence) &&
                     data.type !== 'request' &&
                     !id.includes('chatbot'),
                   icon:
@@ -203,7 +220,19 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                   {t('addContact')}
                 </Button>
               ) : (
-                <div className={`${prefixCls}-content-btn-container`}>
+                <div
+                  className={`${prefixCls}-content-btn-container`}
+                  style={
+                    isMobile
+                      ? {
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'flex-start',
+                          gap: 8,
+                        }
+                      : undefined
+                  }
+                >
                   <Button
                     type="text"
                     className={`${prefixCls}-content-btn`}
@@ -214,7 +243,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                   </Button>
                   {data.id.includes('chatbot_') ? null : (
                     <>
-                      |
+                      {!isMobile && '|'}
                       <Button
                         type="text"
                         className={`${prefixCls}-content-btn`}
@@ -223,7 +252,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                         <Icon type="PHONE_PICK" width={24} height={24}></Icon>
                         {t('audioCall')}
                       </Button>
-                      |
+                      {!isMobile && '|'}
                       <Button
                         type="text"
                         className={`${prefixCls}-content-btn`}

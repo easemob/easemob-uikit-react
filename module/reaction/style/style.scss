@@ -24,7 +24,7 @@ $status-prefix-cls: #{$cui-prefix}-reaction-box;
 }
 
 .#{$cui-prefix}-reaction-icon{
-    fill: $gray-6;
+    // fill: $gray-6;
     &:hover {
         fill: $blue-5;
         cursor: pointer;

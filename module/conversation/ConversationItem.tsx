@@ -1,4 +1,4 @@
-import React, { FC, useState, ReactNode, useContext, MouseEventHandler } from 'react';
+import React, { FC, useState, ReactNode, useContext, MouseEventHandler, useRef } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
@@ -22,6 +22,7 @@ import {
 } from '../utils/index';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
 import Ripple from '../../component/ripple/Ripple';
+import { useIsMobile } from '../hooks/useScreen';
 export interface ConversationItemProps {
   className?: string;
   prefix?: string;
@@ -88,6 +89,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const [active, setActive] = useState(isActive);
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
+  const isMobile = useIsMobile();
   const themeMode = theme?.mode || 'light';
   if (theme?.avatarShape) {
     avatarShape = theme?.avatarShape;
@@ -113,17 +115,54 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     );
   };
 
+  // 长按交互（移动端）
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
   const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {
+    if (isMobile && longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
     rootStore?.conversationStore.setAtType(data.chatType, data.conversationId, 'NONE');
     onClick && onClick(e);
   };
 
   const handleMouseOver = () => {
+    if (isMobile) return;
     moreAction.visible && setShowMore(true);
   };
   const handleMouseLeave = () => {
+    if (isMobile) return;
     if (!isPopoverOpen) {
       setShowMore(false);
+    }
+  };
+
+  const startLongPress = () => {
+    if (!isMobile) return;
+    longPressTriggeredRef.current = false;
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    longPressTimerRef.current = window.setTimeout(() => {
+      setShowMore(true);
+      setIsPopoverOpen(true);
+      longPressTriggeredRef.current = true;
+    }, 600);
+  };
+
+  const cancelLongPress = () => {
+    if (!isMobile) return;
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleContextMenu: React.MouseEventHandler<HTMLDivElement> = e => {
+    if (isMobile) {
+      e.preventDefault();
     }
   };
 
@@ -154,7 +193,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     setIsPopoverOpen(false);
   };
 
-  const pinCvs = () => {
+  const pinCvs: MouseEventHandler<HTMLLIElement> = e => {
+    e.stopPropagation();
     rootStore?.conversationStore.pinConversation(
       data.chatType,
       data.conversationId,
@@ -163,7 +203,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     setIsPopoverOpen(false);
   };
 
-  const setSilent = () => {
+  const setSilent = (e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
+    e.stopPropagation();
     if (data.silent) {
       rootStore?.conversationStore.clearRemindTypeForConversation({
         chatType: data.chatType,
@@ -220,7 +261,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
             <li
               className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               key={index}
-              onClick={() => {
+              onClick={e => {
+                e.stopPropagation();
                 item.onClick?.(data);
               }}
             >
@@ -239,7 +281,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       if (data.lastMessage?.msg == 'the combine message') {
         lastMsg = `/${t('chatHistory')}/`;
       } else {
-        lastMsg = renderTxt(data.lastMessage?.msg, false);
+        // 仅渲染文本，不解析链接点击
+        lastMsg = renderTxt(data.lastMessage?.msg as any, false, () => {});
       }
       break;
     case 'img':
@@ -303,6 +346,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       style={others.style}
       onMouseOver={handleMouseOver}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={startLongPress}
+      onTouchEnd={cancelLongPress}
+      onTouchMove={cancelLongPress}
+      onContextMenu={handleContextMenu}
     >
       {avatar ? (
         avatar
@@ -313,15 +360,19 @@ let ConversationItem: FC<ConversationItemProps> = props => {
         </Avatar>
       )}
 
-      <div className={`${prefixCls}-content`}>
+      <div className={`${prefixCls}-content`} onContextMenu={e => e.preventDefault()}>
         <span className={`${prefixCls}-nickname ${data.silent ? 'has-silent' : ''}`}>
           {data.name || data.conversationId}
           {data.silent && (
             <Icon type="BELL_SLASH" className={`${prefixCls}-nickname-silent`}></Icon>
           )}
         </span>
-        <span className={`${prefixCls}-message`}>
-          {<AtTag type={data?.atType} />}
+        <span
+          className={`${prefixCls}-message`}
+          // onSelectStart is not a valid React DOM prop on span. Use onMouseDown to prevent selection.
+          onMouseDown={e => e.preventDefault()}
+        >
+          <AtTag type={data?.atType} />
           {lastMsg}
         </span>
       </div>

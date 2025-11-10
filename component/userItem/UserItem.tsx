@@ -1,4 +1,4 @@
-import React, { FC, useState, ReactNode, useContext, MouseEventHandler } from 'react';
+import React, { FC, useState, ReactNode, useContext, MouseEventHandler, useRef } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
@@ -11,6 +11,7 @@ import { RootContext } from '../../module/store/rootContext';
 import Checkbox from '../../component/checkbox';
 import Ripple from '../../component/ripple/Ripple';
 import { set } from 'mobx';
+import { useIsMobile } from '../../module/hooks/useScreen';
 export interface UserInfoData {
   userId: string;
   nickname?: string;
@@ -74,6 +75,7 @@ let UserItem: FC<UserItemProps> = props => {
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
   const { theme } = useContext(RootContext);
+  const isMobile = useIsMobile();
   const themeMode = theme?.mode;
   const componentsShape = theme?.componentsShape || 'round';
   const themeRipple = theme?.ripple;
@@ -92,16 +94,49 @@ let UserItem: FC<UserItemProps> = props => {
     className,
   );
 
+  // 长按（移动端）
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
   const handleClick: React.MouseEventHandler<HTMLDivElement> = e => {
+    if (isMobile && longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
     onClick && onClick(e);
   };
 
   const handleMouseOver = () => {
+    if (isMobile) return;
     moreAction?.visible && setShowMore(true);
   };
   const handleMouseLeave = () => {
+    if (isMobile) return;
     if (!isPopoverOpen) {
       setShowMore(false);
+    }
+  };
+
+  const startLongPress = () => {
+    if (!isMobile) return;
+    longPressTriggeredRef.current = false;
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    if (moreAction?.actions?.length && moreAction.actions?.length > 0) {
+      longPressTimerRef.current = window.setTimeout(() => {
+        setShowMore(true);
+        setIsPopoverOpen(true);
+        longPressTriggeredRef.current = true;
+      }, 600);
+    }
+  };
+
+  const cancelLongPress = () => {
+    if (!isMobile) return;
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
   };
 
@@ -142,6 +177,12 @@ let UserItem: FC<UserItemProps> = props => {
       style={others.style}
       onMouseOver={handleMouseOver}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={startLongPress}
+      onTouchEnd={cancelLongPress}
+      onTouchMove={cancelLongPress}
+      onContextMenu={e => {
+        if (isMobile) e.preventDefault();
+      }}
     >
       {avatar ? (
         avatar

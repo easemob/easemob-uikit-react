@@ -81,7 +81,8 @@ const Header: FC<HeaderProps> = props => {
     className,
   );
 
-  const clickClose = () => {
+  const clickClose = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    e?.stopPropagation();
     onClickClose?.();
   };
 

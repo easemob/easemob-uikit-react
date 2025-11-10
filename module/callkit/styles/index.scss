@@ -198,6 +198,25 @@ $callkit-prefix-cls: #{$cui-prefix}-callkit;
         height: 100%;
       }
     }
+
+    // 4排布局
+    &.#{$callkit-prefix-cls}-rows-4 {
+      @include flex-column;
+      gap: $gap-small;
+      
+      .#{$callkit-prefix-cls}-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: inherit;
+      }
+      
+      .#{$callkit-prefix-cls}-video-wrapper {
+        // 使用 JavaScript 计算的固定尺寸，不依赖 CSS
+        flex-shrink: 0;
+        flex-grow: 0;
+      }
+    }
   }
   
   // 1v1布局样式
