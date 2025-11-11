@@ -12,6 +12,7 @@ export interface EmptyProps {
   text?: ReactNode;
   icon?: ReactNode;
   onClickBack?: () => void;
+  back?: boolean;
 }
 
 const Empty: FC<EmptyProps> = props => {
@@ -22,6 +23,7 @@ const Empty: FC<EmptyProps> = props => {
     style = {},
     className,
     onClickBack,
+    back = true,
   } = props;
   const isMobile = useIsMobile();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -31,7 +33,7 @@ const Empty: FC<EmptyProps> = props => {
 
   return (
     <div className={classString} style={{ ...style }}>
-      {isMobile ? (
+      {isMobile && back ? (
         <Button
           type="text"
           onClick={() => {

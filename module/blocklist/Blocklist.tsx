@@ -70,7 +70,7 @@ const Blocklist = (props: BlocklistProps) => {
           renderEmpty ? (
             renderEmpty()
           ) : (
-            <Empty text={i18next.t('no contact')}></Empty>
+            <Empty text={i18next.t('no contact')} back={false}></Empty>
           )
         ) : null}
         {renderItems

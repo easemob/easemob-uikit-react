@@ -2,10 +2,10 @@
 $blocklist-prefix-cls: #{$cui-prefix}-blocklist;
 .#{$blocklist-prefix-cls}{
     background-color: $chat-bg;;
-    height: 100%;
     display: flex;
     flex-direction: column;
-
+    height: 100%;
+    flex: 1;
     &-dark{
         background-color: $gray-1;
         color: $gray-98;
