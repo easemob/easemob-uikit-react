@@ -231,19 +231,20 @@ const ChatApp: FC<any> = () => {
             //   console.log('cvsItem', item);
             //   setCvsItem(item);
             // }}
-            // itemProps={{
-            //   moreAction: {
-            //     visible: true,
-            //     actions: [{ content: 'DELETE' }, { content: 'TOP' }],
-            //   },
-            //   formatDateTime: (time: number) => {
-            //     return new Date(time).toLocaleString();
-            //   },
-            //   renderMessageContent: (msg: any) => {
-            //     console.log('msg', msg);
-            //     return null;
-            //   },
-            // }}
+            itemProps={{
+              // moreAction: {
+              //   visible: true,
+              //   actions: [{ content: 'DELETE' }, { content: 'TOP' }],
+              // },
+              // formatDateTime: (time: number) => {
+              //   return new Date(time).toLocaleString();
+              // },
+              // renderMessageContent: (msg: any) => {
+              //   console.log('msg', msg);
+              //   return null;
+              // },
+              badgeColor: '#ff0000',
+            }}
             // className="conversation"
             // renderItem={csv => (
             //   <ConversationItem
@@ -432,9 +433,12 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
     <Provider
       initConfig={{
         appKey: appKey || 'easemob#easeim',
-        userId: 'db726e81cd',
+        // userId: 'db726e81cd',
+        userId: '61e1f0e2bd',
+        // token:
+        // 'YWMt5C7aqqskEfCEZjcKFtyjOVzzvlQ7sUrSpVuQGlyIzFRFFPmQglwR8Js9JYoO0rN6AwMAAAGZ8Oq32TeeSADSOACXRag9NaqiTmMU6gSyzBjYsi3o-rOhpaYetRD2NA',
         token:
-          'YWMt5C7aqqskEfCEZjcKFtyjOVzzvlQ7sUrSpVuQGlyIzFRFFPmQglwR8Js9JYoO0rN6AwMAAAGZ8Oq32TeeSADSOACXRag9NaqiTmMU6gSyzBjYsi3o-rOhpaYetRD2NA',
+          'YWMtPTh1OMUREfCiyUdZ7ib6u1zzvlQ7sUrSpVuQGlyIzFScrq8ggiUR8L9jT5DlYnL_AwMAAAGams6v5zeeSADpVErzW5B-AE7ZuL7tL2cZ7tVQj5irL_RChnupc-II9Q',
         // password: password || '1',
         useUserInfo: true,
         maxMessages: 100,
