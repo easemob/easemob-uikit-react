@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import { RootContext } from '../store/rootContext';
 import { parseChannel } from '../utils';
+import { eventHandler } from '../../eventHandler';
 
 const pageSize = 20;
 let pageNum = 1;

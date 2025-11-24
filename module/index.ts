@@ -15,7 +15,14 @@ import {
   UnsentRepliedMsgProps,
 } from './repliedMessage';
 
-import Chat, { MessageList, ChatProps, MsgListProps } from './chat';
+import Chat, {
+  MessageList,
+  ChatProps,
+  MsgListProps,
+  MessageRenderContext,
+  MessageRenderer,
+  MessageType,
+} from './chat';
 import {
   ConversationList,
   ConversationItem,
@@ -161,6 +168,9 @@ export type {
   CallInfo,
   CallErrorCode,
   CallError,
+  MessageRenderContext,
+  MessageRenderer,
+  MessageType,
 };
 const UIKitProvider = Provider;
 export {
