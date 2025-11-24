@@ -14,6 +14,10 @@ import { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import defaultImg from '../assets/img_xmark.png';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
+// @ts-ignore - react-photo-view 需要先安装: pnpm install react-photo-view
+import { PhotoSlider } from 'react-photo-view';
+// @ts-ignore
+import 'react-photo-view/dist/react-photo-view.css';
 export interface ImageMessageProps extends BaseMessageProps {
   imageMessage: ImageMessageType; // 从SDK收到的文件消息
   prefix?: string;
@@ -25,6 +29,13 @@ export interface ImageMessageProps extends BaseMessageProps {
   nickName?: string;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   imgProps?: React.ImgHTMLAttributes<HTMLImageElement>;
+  /** 自定义图片预览组件，用于替换默认的预览弹窗 */
+  renderImagePreview?: (props: {
+    visible: boolean;
+    imageUrl: string;
+    onClose: () => void;
+    message: ImageMessageType;
+  }) => React.ReactNode;
 }
 
 const ImageMessage = (props: ImageMessageProps) => {
@@ -41,6 +52,7 @@ const ImageMessage = (props: ImageMessageProps) => {
     bubbleClass,
     imgProps,
     onClick,
+    renderImagePreview,
     ...others
   } = props;
   let type = props.type;
@@ -388,15 +400,22 @@ const ImageMessage = (props: ImageMessageProps) => {
           />
         </div>
       </BaseMessage>
-      {previewVisible && (
-        <ImagePreview
-          visible={previewVisible}
-          previewImageUrl={message.url}
-          onCancel={() => {
-            setPreviewVisible(false);
-          }}
-        ></ImagePreview>
-      )}
+      {renderImagePreview
+        ? renderImagePreview({
+            visible: previewVisible,
+            imageUrl: message.url || previewImageUrl || '',
+            onClose: () => setPreviewVisible(false),
+            message: message,
+          })
+        : previewVisible && (
+            <ImagePreview
+              visible={previewVisible}
+              previewImageUrl={message.url || ''}
+              onCancel={() => {
+                setPreviewVisible(false);
+              }}
+            ></ImagePreview>
+          )}
     </div>
   );
 };
@@ -407,34 +426,82 @@ export interface ImagePreviewProps {
   alt?: string;
   onCancel?: () => void;
 }
+
 export const ImagePreview = (props: ImagePreviewProps) => {
   const { visible, previewImageUrl, alt, onCancel } = props;
 
   return (
-    <>
-      <Mask prefixCls="" visible={true}></Mask>
-      <Modal
-        open={visible}
-        closable={true}
-        footer=""
-        wrapClassName="message-image-preview-wrap"
-        width="70%"
-        style={{ overflow: 'hidden', height: '70%' }}
-        maskClosable={true}
-        onCancel={() => {
-          onCancel?.();
-        }}
-      >
-        <img
-          crossOrigin="anonymous"
-          className="message-image-big"
-          src={previewImageUrl}
-          alt={alt}
-          // onClick={() => handleClickImg(message?.file?.url)}
-        />
-      </Modal>
-    </>
+    // @ts-ignore - PhotoSlider 来自 react-photo-view
+    <PhotoSlider
+      images={[{ src: previewImageUrl, key: previewImageUrl }]}
+      visible={visible}
+      onClose={() => onCancel?.()}
+      index={0}
+      loop={false}
+      // 自定义工具栏，添加放大、缩小、旋转功能
+      toolbarRender={({ onScale, scale, rotate, onRotate }: any) => {
+        return (
+          <div
+            style={{
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center',
+            }}
+          >
+            {/* 放大按钮 */}
+            <button onClick={() => onScale(scale + 0.5)} style={toolbarButtonStyle} title="放大">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                <path d="M12 10h-2v2H9v-2H7V9h2V7h1v2h2v1z" />
+              </svg>
+            </button>
+
+            {/* 缩小按钮 */}
+            <button onClick={() => onScale(scale - 0.5)} style={toolbarButtonStyle} title="缩小">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                <path d="M7 9h5v1H7z" />
+              </svg>
+            </button>
+
+            {/* 旋转按钮 */}
+            <button onClick={() => onRotate(rotate + 90)} style={toolbarButtonStyle} title="旋转">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.55 5.55L11 1v3.07C7.06 4.56 4 7.92 4 12s3.05 7.44 7 7.93v-2.02c-2.84-.48-5-2.94-5-5.91s2.16-5.43 5-5.91V10l4.55-4.45zM19.93 11c-.17-1.39-.72-2.73-1.62-3.89l-1.42 1.42c.54.75.88 1.6 1.02 2.47h2.02zM13 17.9v2.02c1.39-.17 2.74-.71 3.9-1.61l-1.44-1.44c-.75.54-1.59.89-2.46 1.03zm3.89-2.42l1.42 1.41c.9-1.16 1.45-2.5 1.62-3.89h-2.02c-.14.87-.48 1.72-1.02 2.48z" />
+              </svg>
+            </button>
+
+            {/* 显示当前缩放比例 */}
+            <span
+              style={{
+                color: 'white',
+                fontSize: '14px',
+                minWidth: '60px',
+                textAlign: 'center',
+              }}
+            >
+              {Math.round(scale * 100)}%
+            </span>
+          </div>
+        );
+      }}
+    />
   );
+};
+
+// 工具栏按钮样式
+const toolbarButtonStyle: React.CSSProperties = {
+  background: 'rgba(255, 255, 255, 0.1)',
+  border: '1px solid rgba(255, 255, 255, 0.3)',
+  borderRadius: '4px',
+  color: 'white',
+  cursor: 'pointer',
+  padding: '8px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'all 0.2s',
+  outline: 'none',
 };
 
 export default observer(ImageMessage);

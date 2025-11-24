@@ -414,9 +414,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
               dot={data.silent}
               count={data.unreadCount || 0}
               color={
-                badgeColor || themeMode === 'dark'
-                  ? 'var(--cui-primary-color6)'
-                  : 'var(--cui-primary-color5)'
+                badgeColor ??
+                (themeMode === 'dark' ? 'var(--cui-primary-color6)' : 'var(--cui-primary-color5)')
               }
             ></Badge>
           </div>
