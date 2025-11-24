@@ -52,7 +52,8 @@ export type EventName =
   | 'addUsersToBlocklist'
   | 'removeUserFromBlocklist'
   | 'publishPresence'
-  | 'getBlockList';
+  | 'getBlockList'
+  | 'getConversationlist';
 
 export type EventHandlerData = {
   [key in EventName]?: {

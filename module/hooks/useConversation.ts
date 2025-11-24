@@ -42,9 +42,11 @@ const useConversations = () => {
         conversationStore.getSilentModeForConversations(conversation || []);
         //@ts-ignore
         conversationStore.setConversation(conversation);
+        eventHandler.dispatchSuccess('getConversationlist');
       })
       .catch(err => {
         console.warn('get conversation list failed', err);
+        eventHandler.dispatchError('getConversationlist', err);
       });
   };
 
