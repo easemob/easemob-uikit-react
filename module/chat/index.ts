@@ -1,7 +1,12 @@
 import { Chat } from './Chat';
 import { MessageList } from './MessageList';
 export type { ChatProps } from './Chat';
-export type { MsgListProps } from './MessageList';
+export type {
+  MsgListProps,
+  MessageRenderContext,
+  MessageRenderer,
+  MessageType,
+} from './MessageList';
 export { MessageList };
 Chat.displayName = 'Chat';
 export default Chat;

@@ -70,7 +70,6 @@ const ChatApp: FC<any> = () => {
     setCurrentConversation,
   } = useConversationContext();
   const { messages } = useChatContext();
-  console.log(11111, messages);
   const topConversation = () => {
     setCurrentConversation({
       chatType: 'groupChat',
@@ -348,6 +347,19 @@ const ChatApp: FC<any> = () => {
                   logLevel: 'debug',
                   enableLogging: true,
                 }}
+                messageListProps={{
+                  customRenderers: {
+                    txt: msg => {
+                      console.log('msg', msg);
+                      return <TextMessage style={msg.style} textMessage={msg.message} />;
+                    },
+                  },
+                  // renderMessage: msg => {
+                  //   console.log('msg', msg);
+                  //   return <div>renderMessage {msg.msg}</div>;
+                  // },
+                }}
+
                 // renderRepliedMessage={message => {
                 //   return <div>replied message {message.from}</div>;
                 // }}

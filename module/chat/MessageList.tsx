@@ -36,12 +36,43 @@ import Icon from '../../component/icon';
 import UserCardMessage from '../userCardMessage';
 import { CustomMessageType } from 'module/types/messageType';
 import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
+// 消息渲染器的参数类型
+export interface MessageRenderContext {
+  message: ChatSDK.MessageBody | NoticeMessageBody;
+  style: React.CSSProperties;
+  renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
+  isThread?: boolean;
+  messageProps?: BaseMessageProps;
+  onOpenThreadPanel?: (threadId: string) => void;
+  onRtcInviteMessageClick?: (message: ChatSDK.MessageBody) => void;
+  scrollToBottom?: () => void;
+}
+
+// 消息类型
+export type MessageType =
+  | 'txt'
+  | 'img'
+  | 'audio'
+  | 'video'
+  | 'file'
+  | 'loc'
+  | 'combine'
+  | 'custom'
+  | 'notice'
+  | 'recall';
+
+// 自定义渲染器类型
+export type MessageRenderer = (context: MessageRenderContext) => ReactNode;
+
 export interface MsgListProps {
   prefix?: string;
   className?: string;
   style?: React.CSSProperties;
   isThread?: boolean;
+  /** @deprecated 使用 customRenderers 替代，支持按类型自定义 */
   renderMessage?: (message: ChatSDK.MessageBody | NoticeMessageBody) => ReactNode;
+  /** 按消息类型自定义渲染器，只需要传入想自定义的类型即可，其他类型会使用默认渲染 */
+  customRenderers?: Partial<Record<MessageType, MessageRenderer>>;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
   messageProps?: BaseMessageProps;
@@ -59,6 +90,7 @@ let MessageList: FC<MsgListProps> = props => {
     prefix: customizePrefixCls,
     className,
     renderMessage,
+    customRenderers,
     renderUserProfile,
     conversation,
     isThread,
@@ -85,42 +117,38 @@ let MessageList: FC<MsgListProps> = props => {
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
   const messageData = messageStore.message[currentCVS.chatType]?.[currentCVS.conversationId] || [];
-  const renderMsg = (data: { index: number; style: React.CSSProperties }) => {
-    if (renderMessage) {
-      const element = renderMessage(messageData[data.index]);
-      cloneElement(element, oriProps => ({
-        style: {
-          ...data.style,
-          ...oriProps.style,
-        },
-      }));
-      return element;
-    }
-    if (messageData[data.index].type == 'audio') {
-      return (
+
+  const listRef = React.useRef<List>(null);
+
+  const scrollToBottom = () => {
+    (listRef?.current as any)?.scrollTo('bottom');
+  };
+
+  // 定义默认的消息渲染器
+  const defaultRenderers = useMemo<Record<MessageType, MessageRenderer>>(() => {
+    return {
+      audio: ctx => (
         <AudioMessage
-          key={messageData[data.index].id}
+          key={ctx.message.id}
           //@ts-ignore
-          audioMessage={messageData[data.index] as ChatSDK.AudioMsgBody}
-          style={data.style}
-          renderUserProfile={renderUserProfile}
-          thread={isThread}
-          {...messageProps}
-        ></AudioMessage>
-      );
-    } else if (messageData[data.index].type == 'img') {
-      return (
+          audioMessage={ctx.message as ChatSDK.AudioMsgBody}
+          style={ctx.style}
+          renderUserProfile={ctx.renderUserProfile}
+          thread={ctx.isThread}
+          {...ctx.messageProps}
+        />
+      ),
+      img: ctx => (
         <ImageMessage
-          key={messageData[data.index].id}
+          key={ctx.message.id}
           //@ts-ignore
-          imageMessage={messageData[data.index]}
-          style={data.style}
-          renderUserProfile={renderUserProfile}
-          thread={isThread}
+          imageMessage={ctx.message}
+          style={ctx.style}
+          renderUserProfile={ctx.renderUserProfile}
+          thread={ctx.isThread}
           imgProps={{
             onLoad: () => {
               if (messageStore.unreadMessageCount <= 0) {
-                // 加载更多消息时保持当前位置，不要加载到图片又回到底部
                 //@ts-ignore
                 if (
                   //@ts-ignore
@@ -128,113 +156,101 @@ let MessageList: FC<MsgListProps> = props => {
                   //@ts-ignore
                   msgContainerRef.current?.clientHeight
                 ) {
-                  scrollToBottom();
+                  ctx.scrollToBottom?.();
                 }
               }
             },
           }}
-          {...messageProps}
-        ></ImageMessage>
-      );
-    } else if (messageData[data.index].type == 'file') {
-      return (
+          {...ctx.messageProps}
+        />
+      ),
+      file: ctx => (
         <FileMessage
-          key={messageData[data.index].id}
+          key={ctx.message.id}
           //@ts-ignore
-          fileMessage={messageData[data.index]}
-          style={data.style}
-          renderUserProfile={renderUserProfile}
-          thread={isThread}
-          {...messageProps}
-        ></FileMessage>
-      );
-    } else if (
-      messageData[data.index].type == 'notice' ||
-      messageData[data.index].type == 'recall'
-    ) {
-      return (
-        <NoticeMessage noticeMessage={messageData[data.index] as NoticeMessageBody}></NoticeMessage>
-      );
-    } else if (messageData[data.index].type == 'txt') {
-      if ((messageData[data.index] as ChatSDK.TextMsgBody)?.chatType === 'groupChat') {
-        const isRtcInviteMessage =
-          (messageData[data.index] as ChatSDK.TextMsgBody)?.ext?.msgType === 'rtcCallWithAgora';
-        if (isRtcInviteMessage) {
-          let msg = '';
-          if (
-            // @ts-ignore
-            messageData[data.index].ext.rtcIsEnd ||
-            // @ts-ignore
-            (!messageData[data.index].mid && messageData[data.index].ext.rtcIsEnd == undefined)
-          ) {
-            msg = '通话已结束';
-          } else {
-            // @ts-ignore
-            msg = messageData[data.index].msg;
+          fileMessage={ctx.message}
+          style={ctx.style}
+          renderUserProfile={ctx.renderUserProfile}
+          thread={ctx.isThread}
+          {...ctx.messageProps}
+        />
+      ),
+      notice: ctx => <NoticeMessage noticeMessage={ctx.message as NoticeMessageBody} />,
+      recall: ctx => <NoticeMessage noticeMessage={ctx.message as NoticeMessageBody} />,
+      txt: ctx => {
+        const message = ctx.message as ChatSDK.TextMsgBody;
+        // 处理 RTC 邀请消息
+        if (message?.chatType === 'groupChat') {
+          const isRtcInviteMessage = message?.ext?.msgType === 'rtcCallWithAgora';
+          if (isRtcInviteMessage) {
+            let msg = '';
+            if (
+              // @ts-ignore
+              message.ext.rtcIsEnd ||
+              // @ts-ignore
+              (!message.mid && message.ext.rtcIsEnd == undefined)
+            ) {
+              msg = '通话已结束';
+            } else {
+              // @ts-ignore
+              msg = message.msg;
+            }
+            return (
+              <NoticeMessage
+                noticeMessage={
+                  {
+                    id: message.id,
+                    type: 'notice',
+                    message: msg,
+                    time: message.time,
+                    noticeType: 'notice',
+                  } as NoticeMessageBody
+                }
+              />
+            );
           }
-          return (
-            <NoticeMessage
-              noticeMessage={
-                {
-                  id: messageData[data.index].id,
-                  type: 'notice',
-
-                  message: msg,
-                  time: (messageData[data.index] as ChatSDK.TextMsgBody).time,
-                  noticeType: 'notice',
-                } as NoticeMessageBody
-              }
-            ></NoticeMessage>
-          );
         }
-      }
-      return (
-        <TextMessage
-          key={messageData[data.index].id}
-          // style={data.style}
-          //@ts-ignore
-          status={messageData[data.index].status}
-          //@ts-ignore
-          textMessage={messageData[data.index]}
-          renderUserProfile={renderUserProfile}
-          thread={isThread}
-          onOpenThreadPanel={props.onOpenThreadPanel || (() => {})}
-          {...memoProps.messageProps}
-          onClick={(message: ChatSDK.MessageBody) => {
-            const isRtcInviteMessage =
-              (messageData[data.index] as ChatSDK.TextMsgBody)?.ext?.msgType === 'rtcCallWithAgora';
-            isRtcInviteMessage &&
-              onRtcInviteMessageClick?.(messageData[data.index] as ChatSDK.MessageBody);
-            memoProps.messageProps?.onClick?.(message);
-            return true;
-          }}
-        >
-          {/* {(messageData[data.index] as ChatSDK.TextMsgBody).msg} */}
-        </TextMessage>
-      );
-    } else if (messageData[data.index].type == 'combine') {
-      return (
+        return (
+          <TextMessage
+            key={message.id}
+            //@ts-ignore
+            status={message.status}
+            //@ts-ignore
+            textMessage={message}
+            renderUserProfile={ctx.renderUserProfile}
+            thread={ctx.isThread}
+            onOpenThreadPanel={ctx.onOpenThreadPanel || (() => {})}
+            {...memoProps.messageProps}
+            onClick={(msg: ChatSDK.MessageBody) => {
+              const isRtcInviteMessage = message?.ext?.msgType === 'rtcCallWithAgora';
+              isRtcInviteMessage && ctx.onRtcInviteMessageClick?.(message);
+              memoProps.messageProps?.onClick?.(msg);
+              return true;
+            }}
+          />
+        );
+      },
+      combine: ctx => (
         <CombinedMessage
-          key={messageData[data.index].id}
-          style={data.style}
+          key={ctx.message.id}
+          style={ctx.style}
           //@ts-ignore
-          status={messageData[data.index].status}
+          status={ctx.message.status}
           //@ts-ignore
-          combinedMessage={messageData[data.index]}
-          renderUserProfile={renderUserProfile}
-          thread={isThread}
-          {...messageProps}
-        ></CombinedMessage>
-      );
-    } else if (messageData[data.index].type == 'video') {
-      return (
+          combinedMessage={ctx.message}
+          renderUserProfile={ctx.renderUserProfile}
+          thread={ctx.isThread}
+          {...ctx.messageProps}
+        />
+      ),
+      video: ctx => (
         <VideoMessage
-          key={messageData[data.index].id}
+          key={ctx.message.id}
           //@ts-ignore
-          videoMessage={messageData[data.index]}
-          style={data.style}
-          renderUserProfile={renderUserProfile}
-          thread={isThread}
+          videoMessage={ctx.message}
+          style={ctx.style}
+          renderUserProfile={ctx.renderUserProfile}
+          thread={ctx.isThread}
           videoProps={{
             onLoadedMetadata: () => {
               if (messageStore.unreadMessageCount <= 0) {
@@ -245,47 +261,105 @@ let MessageList: FC<MsgListProps> = props => {
                   //@ts-ignore
                   msgContainerRef.current?.clientHeight
                 ) {
-                  scrollToBottom();
+                  ctx.scrollToBottom?.();
                 }
               }
             },
           }}
-          {...messageProps}
-        ></VideoMessage>
-      );
-    } else if (messageData[data.index].type == 'loc') {
-      return (
+          {...ctx.messageProps}
+        />
+      ),
+      loc: ctx => (
         <RecalledMessage
-          key={messageData[data.index].id}
-          style={data.style}
+          key={ctx.message.id}
+          style={ctx.style}
           //@ts-ignore
-          status={messageData[data.index].status}
+          status={ctx.message.status}
           //@ts-ignore
-          message={messageData[data.index]}
+          message={ctx.message}
         >
-          {(messageData[data.index] as ChatSDK.TextMsgBody).msg}
+          {(ctx.message as ChatSDK.TextMsgBody).msg}
         </RecalledMessage>
-      );
-    } else if (
-      messageData[data.index].type == 'custom' &&
-      (messageData[data.index] as CustomMessageType).customEvent == 'userCard'
-    ) {
-      return (
-        <UserCardMessage
-          renderUserProfile={renderUserProfile}
-          style={data.style}
-          key={messageData[data.index].id}
-          thread={isThread}
-          customMessage={messageData[data.index] as any}
-          {...messageProps}
-        ></UserCardMessage>
-      );
+      ),
+      custom: ctx => {
+        const message = ctx.message as CustomMessageType;
+        if (message.customEvent === 'userCard') {
+          return (
+            <UserCardMessage
+              renderUserProfile={ctx.renderUserProfile}
+              style={ctx.style}
+              key={message.id}
+              thread={ctx.isThread}
+              customMessage={message as any}
+              {...ctx.messageProps}
+            />
+          );
+        }
+        return null;
+      },
+    };
+  }, [isThread, messageProps, renderUserProfile, onRtcInviteMessageClick]);
+
+  // 合并默认渲染器和自定义渲染器
+  const mergedRenderers = useMemo(() => {
+    return { ...defaultRenderers, ...customRenderers };
+  }, [defaultRenderers, customRenderers]);
+
+  const renderMsg = (data: { index: number; style: React.CSSProperties }) => {
+    const message = messageData[data.index];
+
+    // 兼容旧的 renderMessage API
+    if (renderMessage) {
+      const element = renderMessage(message);
+      cloneElement(element, oriProps => ({
+        style: {
+          ...data.style,
+          ...oriProps.style,
+        },
+      }));
+      return element;
     }
+
+    // 创建渲染上下文
+    const renderContext: MessageRenderContext = {
+      message,
+      style: data.style,
+      renderUserProfile,
+      isThread,
+      messageProps,
+      onOpenThreadPanel: props.onOpenThreadPanel,
+      onRtcInviteMessageClick,
+      scrollToBottom,
+    };
+
+    // 获取消息类型
+    let messageType = message.type as MessageType;
+
+    // 特殊处理：notice 和 recall 类型
+    if (message.type === 'notice' || message.type === 'recall') {
+      messageType = message.type;
+    }
+
+    // 特殊处理：custom 消息根据 customEvent 判断
+    if (message.type === 'custom') {
+      const customMessage = message as CustomMessageType;
+      if (customMessage.customEvent === 'userCard') {
+        messageType = 'custom';
+      }
+    }
+
+    // 使用对应的渲染器
+    const renderer = mergedRenderers[messageType];
+    if (renderer) {
+      return renderer(renderContext);
+    }
+
+    // 如果没有找到对应的渲染器，返回 null
+    return null;
   };
   const lastMessage = messageData[messageData.length - 1];
   const lastMsgId = lastMessage?.id || '';
   // 每次发消息滚动到最新的一条
-  const listRef = React.useRef<List>(null);
   useEffect(() => {
     // lastMessage?.type === 'notice' ||
     if (lastMessage?.type === 'recall') {
@@ -339,9 +413,6 @@ let MessageList: FC<MsgListProps> = props => {
     }
   };
 
-  const scrollToBottom = () => {
-    (listRef?.current as any)?.scrollTo('bottom');
-  };
   return (
     <div className={classString} style={{ ...style }} ref={msgContainerRef} id="listContainer">
       <MessageScrollList
