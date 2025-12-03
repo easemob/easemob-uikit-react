@@ -8,7 +8,7 @@ import { getConversationTime, getGroupItemFromGroupsById, getMsgSenderNickname }
 import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Icon from '../../component/icon';
-import { RepliedMsg } from '../repliedMessage';
+import { RepliedMsg, CustomMessageQuoteRenderer } from '../repliedMessage';
 import { ChatSDK } from '../SDK';
 import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard, EmojiKeyBoardRef } from '../reaction';
@@ -90,6 +90,8 @@ export interface BaseMessageProps {
   reactionConfig?: ReactionMessageProps['reactionConfig'];
   formatDateTime?: (time: number) => string;
   onClick?: (message: ChatSDK.MessageBody) => boolean; // 点击时是否阻止默认事件
+  /** 自定义消息被引用时的渲染器 */
+  renderCustomMessageQuote?: CustomMessageQuoteRenderer;
 }
 
 const msgSenderIsCurrentUser = (message: BaseMessageType) => {
@@ -136,6 +138,36 @@ const getRtcMsgIcon = (message: BaseMessageType) => {
     }
   } else {
     return 'PHONE_PICK';
+  }
+};
+
+// 全局状态：当前打开的菜单
+let currentOpenMenuId: string | null = null;
+const menuOpenCallbacks = new Map<string, (shouldClose: boolean) => void>();
+
+// 注册菜单
+const registerMenu = (menuId: string, callback: (shouldClose: boolean) => void) => {
+  menuOpenCallbacks.set(menuId, callback);
+};
+
+// 注销菜单
+const unregisterMenu = (menuId: string) => {
+  menuOpenCallbacks.delete(menuId);
+};
+
+// 打开菜单时，关闭其他所有菜单
+const openMenu = (menuId: string) => {
+  if (currentOpenMenuId && currentOpenMenuId !== menuId) {
+    const closeCallback = menuOpenCallbacks.get(currentOpenMenuId);
+    closeCallback?.(true);
+  }
+  currentOpenMenuId = menuId;
+};
+
+// 关闭菜单
+const closeMenu = (menuId: string) => {
+  if (currentOpenMenuId === menuId) {
+    currentOpenMenuId = null;
   }
 };
 
@@ -188,6 +220,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     reactionConfig,
     formatDateTime,
     onClick,
+    renderCustomMessageQuote,
   } = props;
   const { t } = useTranslation();
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -246,12 +279,43 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   const CustomProfile = renderUserProfile?.({ userId: message?.from || '' });
 
+  // 生成唯一的菜单 ID
+  const menuId = useRef(`menu-${message?.id || Math.random()}`).current;
+
   const [isButtonVisible, setIsButtonVisible] = useState(false); // 控制操作按钮的显示
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isReactionVisible, setIsReactionVisible] = useState(false); // 标记表情键盘的显示，显示时鼠标离开不会隐藏操作按钮
   const longPressTimerRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
   const [forceInlineActionsOnMobile, setForceInlineActionsOnMobile] = useState(false);
+
+  // 注册和注销菜单
+  useEffect(() => {
+    registerMenu(menuId, shouldClose => {
+      if (shouldClose) {
+        setIsPopoverOpen(false);
+        setIsButtonVisible(false);
+        setIsReactionVisible(false);
+        setForceInlineActionsOnMobile(false);
+      }
+    });
+
+    return () => {
+      unregisterMenu(menuId);
+      closeMenu(menuId);
+    };
+  }, [menuId]);
+
+  // 处理菜单打开
+  const handleMenuOpen = (open: boolean) => {
+    if (open) {
+      openMenu(menuId);
+    } else {
+      closeMenu(menuId);
+    }
+    setIsPopoverOpen(open);
+    setIsButtonVisible(open);
+  };
 
   const clickThreadTitle = () => {
     onClickThreadTitle?.();
@@ -446,49 +510,49 @@ let BaseMessage = (props: BaseMessageProps) => {
   const isAdmin = message && isGroupAdmin(message);
 
   const replyMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onReplyMessage && onReplyMessage();
   };
   const deleteMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onDeleteMessage && onDeleteMessage(message as BaseMessageType);
   };
   const recallMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onRecallMessage && onRecallMessage(message as BaseMessageType);
   };
   const translateMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onTranslateMessage && onTranslateMessage();
   };
 
   const modifyMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onModifyMessage && onModifyMessage();
   };
 
   const selectMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onSelectMessage && onSelectMessage();
   };
 
   const resendMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onResendMessage && onResendMessage();
   };
 
   const forwardMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onForwardMessage && onForwardMessage(message as BaseMessageType);
   };
 
   const reportMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onReportMessage && onReportMessage(message as BaseMessageType);
   };
 
   const pinMessage = () => {
-    setIsPopoverOpen(false);
+    handleMenuOpen(false);
     onPinMessage && onPinMessage();
   };
 
@@ -530,28 +594,33 @@ let BaseMessage = (props: BaseMessageProps) => {
             key="__mobile_reaction__"
             className={themeMode == 'dark' ? 'cui-li-dark' : ''}
             onClick={e => {
-              setIsPopoverOpen(false);
-              setIsButtonVisible(true);
+              handleMenuOpen(false); // 使用统一的关闭方法
               setForceInlineActionsOnMobile(true);
               reactionRef.current?.open?.();
             }}
           >
-            <EmojiKeyBoard
-              ref={reactionRef}
-              // @ts-ignore
-              reactionConfig={reactionConfig}
-              onSelected={handleClickEmoji}
-              selectedList={selectedList}
-              onDelete={handleDeleteReactionEmoji}
-              placement={isCurrentUser ? 'bottomRight' : 'bottomLeft'}
+            <div
               onClick={e => {
-                setIsReactionVisible(true);
+                e.stopPropagation(); // 阻止冒泡到 li
               }}
-              onOpenChange={open => {
-                setIsReactionVisible(open);
-                setIsButtonVisible(open);
-              }}
-            ></EmojiKeyBoard>
+            >
+              <EmojiKeyBoard
+                ref={reactionRef}
+                // @ts-ignore
+                reactionConfig={reactionConfig}
+                onSelected={handleClickEmoji}
+                selectedList={selectedList}
+                onDelete={handleDeleteReactionEmoji}
+                placement={isCurrentUser ? 'bottomRight' : 'bottomLeft'}
+                onClick={e => {
+                  setIsReactionVisible(true);
+                }}
+                onOpenChange={open => {
+                  setIsReactionVisible(open);
+                  setIsButtonVisible(open);
+                }}
+              ></EmojiKeyBoard>
+            </div>
             {t('reaction')}
           </li>,
         );
@@ -562,7 +631,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             key="__mobile_thread__"
             className={themeMode == 'dark' ? 'cui-li-dark' : ''}
             onClick={() => {
-              setIsPopoverOpen(false);
+              handleMenuOpen(false); // 使用统一的关闭方法
               handleClickThreadIcon();
             }}
           >
@@ -780,8 +849,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               clearTimeout(longPressTimerRef.current);
             }
             longPressTimerRef.current = window.setTimeout(() => {
-              setIsPopoverOpen(true);
-              setIsButtonVisible(true);
+              handleMenuOpen(true); // 使用统一的打开方法
               longPressTriggeredRef.current = true;
             }, 600);
           }}
@@ -829,6 +897,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                     message={repliedMessage as BaseMessageType}
                     shape={bubbleShape}
                     direction={direction}
+                    renderCustomMessageQuote={renderCustomMessageQuote}
                   ></RepliedMsg>
                 ) : (
                   <div className={`${prefixCls}-info`}>
@@ -855,8 +924,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                     <Tooltip
                       open={isPopoverOpen}
                       onOpenChange={value => {
-                        setIsPopoverOpen(value);
-                        setIsButtonVisible(value);
+                        handleMenuOpen(value);
                       }}
                       title={menuNode}
                       trigger="click"

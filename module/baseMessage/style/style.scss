@@ -16,7 +16,12 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
     // margin: $msg-base-margin;
     box-sizing: border-box;
     padding: $msg-base-padding;
-
+    user-select: none;
+    -webkit-user-select: none; /* Safari */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* IE10+/Edge */
+    -webkit-touch-callout: none; /* iOS Safari - 禁用长按弹出菜单 */
+    -webkit-tap-highlight-color: transparent; /* 移除点击高亮 */
     &-arrow {
         &.#{$status-prefix-cls}-left {
             .#{$status-prefix-cls}-content {
@@ -147,7 +152,13 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         align-items: flex-end;
         gap: 8px;
         margin: 0 12px;
-
+        user-select: none;
+        -webkit-user-select: none; /* Safari */
+        -moz-user-select: none; /* Firefox */
+        -ms-user-select: none; /* IE10+/Edge */
+        -webkit-touch-callout: none; /* iOS Safari - 禁用长按弹出菜单 */
+        -webkit-tap-highlight-color: transparent; /* 移除点击高亮 */
+        
         &-action {
             fill: $gray-6;
 
@@ -172,6 +183,12 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         background: $msg-bubble-color-primary;
         color: $msg-bubble-font-color-primary;
         // overflow: hidden; // TODO: 加会遮挡住 arrow, 不加url preview 下面圆角会被覆盖
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
 
         .rtc-invite-message-container{
             display: flex;
