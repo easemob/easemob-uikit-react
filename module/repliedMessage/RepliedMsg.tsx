@@ -17,6 +17,22 @@ import UserCardMessage from '../userCardMessage';
 import { RootContext } from '../store/rootContext';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
+
+// 自定义消息引用渲染器的上下文
+export interface CustomMessageQuoteContext {
+  message: ChatSDK.CustomMsgBody;
+  msgQuote?: {
+    msgID: string;
+    msgPreview: string;
+    msgSender: string;
+    msgType: ChatSDK.MessageBody['type'];
+  };
+  prefixCls: string;
+}
+
+// 自定义消息引用渲染器类型
+export type CustomMessageQuoteRenderer = (context: CustomMessageQuoteContext) => ReactNode;
+
 export interface RepliedMsgProps {
   prefixCls?: string;
   className?: string;
@@ -24,6 +40,27 @@ export interface RepliedMsgProps {
   shape?: 'round' | 'square'; // 气泡形状
   direction?: 'ltr' | 'rtl';
   message: BaseMessageType;
+  /**
+   * 自定义消息被引用时的渲染器
+   * 用于渲染用户自定义的 custom 消息在被引用时的展示内容
+   *
+   * @example
+   * ```tsx
+   * renderCustomMessageQuote={(context) => {
+   *   const { message, prefixCls } = context;
+   *   if (message.customEvent === 'myCustomType') {
+   *     return (
+   *       <div className={`${prefixCls}-content-text`}>
+   *         <Icon type="CUSTOM_ICON" />
+   *         <span>我的自定义消息: {message.customExts?.title}</span>
+   *       </div>
+   *     );
+   *   }
+   *   return null; // 返回 null 使用默认渲染
+   * }}
+   * ```
+   */
+  renderCustomMessageQuote?: CustomMessageQuoteRenderer;
 }
 
 const RepliedMsg = (props: RepliedMsgProps) => {
@@ -35,6 +72,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
     direction = 'ltr',
     message,
     style = {},
+    renderCustomMessageQuote,
   } = props;
   if (!message) {
     return null;
@@ -253,11 +291,33 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         );
         break;
       case 'custom':
+        // 优先使用用户自定义的渲染器
+        if (renderCustomMessageQuote) {
+          const customContent = renderCustomMessageQuote({
+            message: repliedMsg as ChatSDK.CustomMsgBody,
+            msgQuote,
+            prefixCls,
+          });
+          if (customContent) {
+            content = customContent;
+            break;
+          }
+        }
+
+        // 内置的 userCard 类型处理
         if ((repliedMsg as ChatSDK.CustomMsgBody).customEvent === 'userCard') {
           content = (
             <div className={`${prefixCls}-content-text`}>
               <Icon type="PERSON_SINGLE_FILL" color="#75828A" width={20} height={20}></Icon>
               <span>Contact:</span> {(repliedMsg as ChatSDK.CustomMsgBody).customExts?.nickname}
+            </div>
+          );
+        } else {
+          // 未知的 custom 类型，显示默认提示
+          content = (
+            <div className={`${prefixCls}-content-text`}>
+              <Icon type="BUBBLE_FILL" color="#75828A" width={20} height={20}></Icon>
+              <span>{t('customMessage')}</span>
             </div>
           );
         }

@@ -189,7 +189,7 @@ const ChatApp: FC<any> = () => {
       </div>
       <div
         style={{
-          width: '350px',
+          width: '50px',
           background: '#fff',
         }}
       >
@@ -297,6 +297,7 @@ const ChatApp: FC<any> = () => {
             flex: 1,
             borderLeft: '1px solid transparent',
             overflow: 'hidden',
+            userSelect: 'none',
           }}
         >
           {tab == 'chat' && (
@@ -347,18 +348,20 @@ const ChatApp: FC<any> = () => {
                   logLevel: 'debug',
                   enableLogging: true,
                 }}
-                messageListProps={{
-                  customRenderers: {
-                    txt: msg => {
-                      console.log('msg', msg);
-                      return <TextMessage style={msg.style} textMessage={msg.message} />;
-                    },
-                  },
-                  // renderMessage: msg => {
-                  //   console.log('msg', msg);
-                  //   return <div>renderMessage {msg.msg}</div>;
-                  // },
-                }}
+                messageListProps={
+                  {
+                    // customRenderers: {
+                    //   txt: msg => {
+                    //     console.log('msg', msg);
+                    //     return <TextMessage style={msg.style} textMessage={msg.message} />;
+                    //   },
+                    // },
+                    // renderMessage: msg => {
+                    //   console.log('msg', msg);
+                    //   return <div>renderMessage {msg.msg}</div>;
+                    // },
+                  }
+                }
 
                 // renderRepliedMessage={message => {
                 //   return <div>replied message {message.from}</div>;
