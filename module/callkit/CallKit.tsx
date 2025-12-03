@@ -73,6 +73,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     // 通话相关配置
     chatClient,
 
+    // RTC Token 配置
+    useRTCToken = true,
+
     // 铃声相关配置
     outgoingRingtoneSrc,
     incomingRingtoneSrc,
@@ -710,6 +713,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         onRemoteUserLeft,
         onRtcEngineCreated,
         encoderConfig,
+        // RTC Token 配置
+        useRTCToken,
       };
 
       callServiceRef.current = new CallService(config);

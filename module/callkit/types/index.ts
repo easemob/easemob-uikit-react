@@ -203,6 +203,7 @@ export interface CallKitProps {
   // 真实通话相关配置
   chatClient?: ChatSDK.Connection; // 环信 IM 连接
   enableRealCall?: boolean; // 是否启用真实通话功能
+  useRTCToken?: boolean; // 是否使用 RTC Token 校验，默认 true；设置为 false 时 join channel 不校验 token
 
   // 🔧 新增：铃声相关配置
   outgoingRingtoneSrc?: string; // 拨打电话铃声音频文件路径

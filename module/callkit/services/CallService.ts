@@ -109,6 +109,8 @@ export interface CallServiceConfig {
   // Ringtone callbacks
   onRingtoneStart?: (type: 'outgoing' | 'incoming') => void;
   onRingtoneEnd?: (type: 'outgoing' | 'incoming') => void;
+  // RTC Token configuration
+  useRTCToken?: boolean; // Whether to use RTC Token for validation, default true; when false, token will be null in join channel
 }
 
 export class CallService {
@@ -212,6 +214,9 @@ export class CallService {
 
   private enableMic: boolean = true;
 
+  // RTC Token configuration
+  private useRTCToken: boolean = true; // Default to true, use token validation
+
   constructor(config: CallServiceConfig) {
     this.connection = config.connection;
     this.onCallStart = config.onCallStart;
@@ -242,6 +247,8 @@ export class CallService {
     this.enableRingtone = config.enableRingtone ?? true;
     this.ringtoneVolume = config.ringtoneVolume ?? 0.8;
     this.ringtoneLoop = config.ringtoneLoop ?? true;
+    // Initialize RTC token configuration
+    this.useRTCToken = config.useRTCToken ?? true;
 
     // Get necessary information from WebIM connection
     this.agoraUid = 0;
@@ -806,10 +813,13 @@ export class CallService {
       return;
     }
 
-    if (!this.accessToken) {
+    if (!this.accessToken && this.appId && this.useRTCToken) {
       // 如果没有token，重新获取
       this.accessToken = await this.getAccessToken();
     }
+
+    // Determine the token to use based on useRTCToken configuration
+    const tokenToUse = this.useRTCToken ? this.accessToken : null;
 
     // 🔧 强制移除旧的监听器（避免重复监听）
     if (this.client) {
@@ -820,7 +830,7 @@ export class CallService {
       }
     }
 
-    // 🔧 重新添加事件监听器
+    // 重新添加事件监听器
     this.addAgoraRTCListeners();
 
     // 🔧 检查客户端连接状态 - 修复：同时检查CONNECTING和CONNECTED状态
@@ -837,7 +847,7 @@ export class CallService {
           uid = await this.client.join(
             this.appId,
             this.currentCallInfo.channel,
-            this.accessToken,
+            tokenToUse,
             this.agoraUid,
           );
         } catch (error) {
