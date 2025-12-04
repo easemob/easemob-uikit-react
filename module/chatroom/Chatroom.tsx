@@ -11,7 +11,7 @@ import { RootContext } from '../store/rootContext';
 import Empty from '../empty';
 import { useTranslation } from 'react-i18next';
 import { chatSDK, ChatSDK } from '../SDK';
-import ChatroomMessage from '../chatroomMessage';
+import ChatroomMessage, { ChatroomMessageActionConfig } from '../chatroomMessage';
 import { GiftKeyboard } from '../messageInput/gift';
 import Broadcast, { BroadcastProps } from '../../component/broadcast';
 import { getUsersInfo } from '../utils/index';
@@ -55,6 +55,7 @@ export interface ChatroomProps {
   broadcastProps?: BroadcastProps;
   chatroomId: string;
   reportType?: Record<string, string>; // 自定义举报内容 {'举报类型': "举报原因"}
+  messageActionConfig?: ChatroomMessageActionConfig; // 消息操作菜单配置
 }
 
 let Chatroom = (props: ChatroomProps) => {
@@ -74,6 +75,7 @@ let Chatroom = (props: ChatroomProps) => {
     className,
     style,
     reportType: reportTypeProps,
+    messageActionConfig,
   } = props;
   if (reportTypeProps) {
     reportType = reportTypeProps;
@@ -250,7 +252,14 @@ let Chatroom = (props: ChatroomProps) => {
   };
   const renderChatroomMessage = (msg: any) => {
     if (msg.type == 'txt' || msg.type == 'custom') {
-      return <ChatroomMessage message={msg} key={msg.mid || msg.id} onReport={handleReport} />;
+      return (
+        <ChatroomMessage
+          message={msg}
+          key={msg.mid || msg.id}
+          onReport={handleReport}
+          actionConfig={messageActionConfig}
+        />
+      );
     }
   };
 

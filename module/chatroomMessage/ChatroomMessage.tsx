@@ -13,6 +13,22 @@ import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { eventHandler } from '../../eventHandler';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
+export interface ChatroomMessageActionConfig {
+  // 内置功能开关
+  recall?: boolean; // 撤回消息，默认 true
+  translate?: boolean; // 翻译消息，默认 true
+  mute?: boolean; // 禁言（仅群主可见），默认 true
+  report?: boolean; // 举报消息，默认 true
+  pin?: boolean; // 置顶消息（仅群主可见），默认 true
+  // 自定义菜单项
+  customActions?: Array<{
+    content: string | ReactNode; // 菜单项文本或自定义内容
+    icon?: ReactNode; // 菜单项图标
+    onClick: (message: ChatSDK.MessageBody) => void; // 点击回调
+    visible?: (message: ChatSDK.MessageBody) => boolean; // 是否显示该菜单项（可选）
+  }>;
+}
+
 export interface ChatroomMessageProps {
   prefix?: string;
   className?: string;
@@ -20,6 +36,7 @@ export interface ChatroomMessageProps {
   message: ChatSDK.MessageBody;
   targetLanguage?: string;
   onReport?: (message: ChatSDK.MessageBody) => void;
+  actionConfig?: ChatroomMessageActionConfig; // 操作菜单配置
 }
 interface CustomAction {
   visible: boolean;
@@ -31,7 +48,15 @@ interface CustomAction {
   }[];
 }
 const ChatroomMessage = (props: ChatroomMessageProps) => {
-  const { prefix: customizePrefixCls, className, style, message, targetLanguage, onReport } = props;
+  const {
+    prefix: customizePrefixCls,
+    className,
+    style,
+    message,
+    targetLanguage,
+    onReport,
+    actionConfig,
+  } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-chatroom', customizePrefixCls);
   const classString = classNames(prefixCls, className);
@@ -60,41 +85,85 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   const isMuted = muteList.includes(message.from as string);
   const owner = chatroomData.owner || '';
 
+  // 合并默认配置和用户配置
+  const finalActionConfig: ChatroomMessageActionConfig = {
+    recall: actionConfig?.recall ?? true,
+    translate: actionConfig?.translate ?? true,
+    mute: actionConfig?.mute ?? true,
+    report: actionConfig?.report ?? true,
+    pin: actionConfig?.pin ?? true,
+    customActions: actionConfig?.customActions || [],
+  };
+
   if (customAction) {
     moreAction = customAction;
   } else {
-    moreAction = {
-      visible: true,
-      icon: null,
-      actions: [
-        {
-          content: 'TRANSLATE',
-          onClick: () => {},
-        },
-        {
-          content: 'REPORT',
-          onClick: () => {},
-        },
-      ],
-    };
-  }
-  if (owner === rootStore.client.user) {
-    moreAction.actions?.unshift({
-      content: 'PIN',
-      onClick: () => {},
-    });
-    message.from != rootStore.client.user &&
-      moreAction.actions?.unshift({
+    const actions: Array<{ content: string; onClick: () => void }> = [];
+
+    // 根据配置添加内置功能
+    // 1. 撤回（仅自己的消息）
+    if (finalActionConfig.recall && message.from === rootStore.client.user) {
+      actions.push({
+        content: 'RECALL',
+        onClick: () => {},
+      });
+    }
+
+    // 2. 禁言（仅群主且不是自己）
+    if (
+      finalActionConfig.mute &&
+      owner === rootStore.client.user &&
+      message.from !== rootStore.client.user
+    ) {
+      actions.push({
         content: 'MUTE',
         onClick: () => {},
       });
-  }
+    }
 
-  if (message.from == rootStore.client.user) {
-    moreAction.actions?.unshift({
-      content: 'RECALL',
-      onClick: () => {},
-    });
+    // 3. 置顶（仅群主）
+    if (finalActionConfig.pin && owner === rootStore.client.user) {
+      actions.push({
+        content: 'PIN',
+        onClick: () => {},
+      });
+    }
+
+    // 4. 翻译
+    if (finalActionConfig.translate) {
+      actions.push({
+        content: 'TRANSLATE',
+        onClick: () => {},
+      });
+    }
+
+    // 5. 举报（不能举报自己的消息）
+    if (finalActionConfig.report && message.from !== rootStore.client.user) {
+      actions.push({
+        content: 'REPORT',
+        onClick: () => {},
+      });
+    }
+
+    // 6. 添加自定义菜单项
+    if (finalActionConfig.customActions) {
+      finalActionConfig.customActions.forEach((customAction, index) => {
+        // 检查是否应该显示该菜单项
+        const shouldShow = customAction.visible ? customAction.visible(message) : true;
+        if (shouldShow) {
+          actions.push({
+            content: `CUSTOM_${index}`,
+            onClick: () => customAction.onClick(message),
+          });
+        }
+      });
+    }
+
+    moreAction = {
+      visible: actions.length > 0,
+      icon: null,
+      actions,
+    };
   }
 
   const translateMessage = () => {
@@ -201,6 +270,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
     menuNode = (
       <ul className={moreClassString}>
         {moreAction?.actions?.map((item, index) => {
+          // 处理内置菜单项
           if (item.content === 'RECALL') {
             return (
               <li key={index} onClick={recallMessage}>
@@ -241,11 +311,32 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
                 {t('Pin')}
               </li>
             );
+          } else if (typeof item.content === 'string' && item.content.startsWith('CUSTOM_')) {
+            // 处理自定义菜单项
+            const customIndex = parseInt(item.content.replace('CUSTOM_', ''));
+            const customAction = finalActionConfig.customActions?.[customIndex];
+            if (customAction) {
+              return (
+                <li
+                  key={index}
+                  onClick={() => {
+                    setIsPopoverOpen(false);
+                    customAction.onClick(message);
+                  }}
+                >
+                  {customAction.icon && customAction.icon}
+                  {customAction.content}
+                </li>
+              );
+            }
           }
+
+          // 兼容旧的自定义方式
           return (
             <li
               key={index}
               onClick={() => {
+                setIsPopoverOpen(false);
                 item.onClick?.(message);
               }}
             >
@@ -259,7 +350,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
   }
 
   const renderText = (text: string) => {
-    return <div className={`${prefixCls}-text-box`}>{renderTxt(text)}</div>;
+    return <div className={`${prefixCls}-text-box`}>{renderTxt(text, true, () => {})}</div>;
   };
 
   const renderGift = () => {

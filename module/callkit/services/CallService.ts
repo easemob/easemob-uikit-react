@@ -813,7 +813,7 @@ export class CallService {
       return;
     }
 
-    if (!this.accessToken && this.appId && this.useRTCToken) {
+    if (!this.accessToken) {
       // 如果没有token，重新获取
       this.accessToken = await this.getAccessToken();
     }

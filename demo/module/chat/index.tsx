@@ -316,6 +316,9 @@ const ChatApp: FC<any> = () => {
                       return false; // preventDefault: false, Do not block default behavior
                     },
                   },
+                  renderUserProfile: (props: renderUserProfileProps) => {
+                    return null;
+                  },
                 }}
                 messageInputProps={{
                   enabledTyping: true,
@@ -348,20 +351,20 @@ const ChatApp: FC<any> = () => {
                   logLevel: 'debug',
                   enableLogging: true,
                 }}
-                messageListProps={
-                  {
-                    // customRenderers: {
-                    //   txt: msg => {
-                    //     console.log('msg', msg);
-                    //     return <TextMessage style={msg.style} textMessage={msg.message} />;
-                    //   },
-                    // },
-                    // renderMessage: msg => {
-                    //   console.log('msg', msg);
-                    //   return <div>renderMessage {msg.msg}</div>;
-                    // },
-                  }
-                }
+                //messageListProps={
+                // {
+                // customRenderers: {
+                //   txt: msg => {
+                //     console.log('msg', msg);
+                //     return <TextMessage style={msg.style} textMessage={msg.message} />;
+                //   },
+                // },
+                // renderMessage: msg => {
+                //   console.log('msg', msg);
+                //   return <div>renderMessage {msg.msg}</div>;
+                // },
+                //}
+                //  }
 
                 // renderRepliedMessage={message => {
                 //   return <div>replied message {message.from}</div>;

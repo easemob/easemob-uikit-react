@@ -138,6 +138,22 @@ const ChatApp = observer(() => {
                 },
               },
             }}
+            messageActionConfig={{
+              recall: true, // 保留撤回
+              translate: false, // 保留翻译
+              mute: false, // 禁用禁言
+              report: false, // 禁用举报
+              pin: false, // 禁用置顶
+              customActions: [
+                // 添加自定义项
+                {
+                  content: '@提及',
+                  onClick: message => {
+                    /* ... */
+                  },
+                },
+              ],
+            }}
           ></Chatroom>
         </div>
         <div style={{ width: '350px' }}>
