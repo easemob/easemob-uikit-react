@@ -115,6 +115,11 @@ import { ReactComponent as PersonSlashFill } from '../svgs/icons/person_slash_fi
 import { ReactComponent as Boxes } from '../svgs/icons/boxes.svg';
 import { ReactComponent as Chevron4AllAround } from '../svgs/icons/chevron_4_all_around.svg';
 import { ReactComponent as Chevron4Cluster } from '../svgs/icons/chevron_4_cluster.svg';
+import { ReactComponent as ThreeChart } from '../svgs/icons/3chart.svg';
+import { ReactComponent as Person3LinesFill } from '../svgs/icons/person_3lines_fill.svg';
+import { ReactComponent as BarSquareFill } from '../svgs/icons/bar_square_fill.svg';
+import { ReactComponent as DocLock } from '../svgs/icons/doc_lock.svg';
+import { ReactComponent as BoxUpArrow } from '../svgs/icons/box_up_arrow.svg';
 
 export interface IconProps {
   children?: ReactNode;
@@ -451,6 +456,21 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'BOXES':
       return <Boxes></Boxes>;
+      break;
+    case 'THREE_CHART':
+      return <ThreeChart></ThreeChart>;
+      break;
+    case 'PERSON_3LINES_FILL':
+      return <Person3LinesFill></Person3LinesFill>;
+      break;
+    case 'BAR_SQUARE_FILL':
+      return <BarSquareFill></BarSquareFill>;
+      break;
+    case 'DOC_LOCK':
+      return <DocLock></DocLock>;
+      break;
+    case 'BOX_UP_ARROW':
+      return <BoxUpArrow></BoxUpArrow>;
       break;
     default:
       return null;
