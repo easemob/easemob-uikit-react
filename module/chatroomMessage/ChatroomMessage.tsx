@@ -418,7 +418,7 @@ const ChatroomMessage = (props: ChatroomMessageProps) => {
         <Tooltip
           title={menuNode}
           trigger="click"
-          placement="bottom"
+          placement="bottomRight"
           align={{ offset: [5] }}
           open={isPopoverOpen}
           onOpenChange={open => {

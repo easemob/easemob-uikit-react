@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState, useContext, ReactNode } from 'react';
+import React, { FC, useEffect, useRef, useState, useContext, ReactNode, useMemo } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
@@ -22,6 +22,7 @@ import type { TextMessageType } from '../types/messageType';
 import { eventHandler } from '../../eventHandler';
 import PinnedTextMessage from '../pinnedTextMessage';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
+import { MessageRenderer, MessageRenderContext } from '../chat/MessageList';
 
 export let reportType: Record<string, string> = {
   tag1: 'Unwelcome commercial content',
@@ -56,6 +57,10 @@ export interface ChatroomProps {
   chatroomId: string;
   reportType?: Record<string, string>; // 自定义举报内容 {'举报类型': "举报原因"}
   messageActionConfig?: ChatroomMessageActionConfig; // 消息操作菜单配置
+  customMessageRenderers?: {
+    txt?: MessageRenderer; // 自定义文本消息渲染
+    custom?: MessageRenderer; // 自定义 custom 消息渲染（包括加入消息和礼物消息）
+  };
 }
 
 let Chatroom = (props: ChatroomProps) => {
@@ -76,6 +81,7 @@ let Chatroom = (props: ChatroomProps) => {
     style,
     reportType: reportTypeProps,
     messageActionConfig,
+    customMessageRenderers,
   } = props;
   if (reportTypeProps) {
     reportType = reportTypeProps;
@@ -250,18 +256,47 @@ let Chatroom = (props: ChatroomProps) => {
     setReportOpen(true);
     setReportMessageId(message.mid || message.id);
   };
-  const renderChatroomMessage = (msg: any) => {
-    if (msg.type == 'txt' || msg.type == 'custom') {
-      return (
-        <ChatroomMessage
-          message={msg}
-          key={msg.mid || msg.id}
-          onReport={handleReport}
-          actionConfig={messageActionConfig}
-        />
-      );
-    }
-  };
+
+  // 使用 useMemo 创建默认的聊天室消息渲染器
+  const defaultChatroomRenderers = useMemo<{
+    txt?: MessageRenderer;
+    custom?: MessageRenderer;
+  }>(() => {
+    return {
+      txt: (ctx: MessageRenderContext) => {
+        const msg = ctx.message as ChatSDK.TextMsgBody;
+        return (
+          <ChatroomMessage
+            message={msg}
+            // @ts-ignore
+            key={msg.mid || msg.id}
+            onReport={handleReport}
+            actionConfig={messageActionConfig}
+          />
+        );
+      },
+      custom: (ctx: MessageRenderContext) => {
+        const msg = ctx.message as ChatSDK.CustomMsgBody;
+        return (
+          <ChatroomMessage
+            message={msg}
+            // @ts-ignore
+            key={msg.mid || msg.id}
+            onReport={handleReport}
+            actionConfig={messageActionConfig}
+          />
+        );
+      },
+    };
+  }, [messageActionConfig]);
+
+  // 合并默认渲染器和用户自定义渲染器
+  const finalChatroomRenderers = useMemo(() => {
+    return {
+      ...defaultChatroomRenderers,
+      ...customMessageRenderers,
+    };
+  }, [defaultChatroomRenderers, customMessageRenderers]);
 
   const [reportOpen, setReportOpen] = useState(false);
   const [checkedType, setCheckedType] = useState('');
@@ -383,7 +418,7 @@ let Chatroom = (props: ChatroomProps) => {
               renderMessageList()
             ) : (
               <MessageList
-                renderMessage={renderChatroomMessage}
+                customRenderers={finalChatroomRenderers}
                 conversation={{
                   chatType: 'chatRoom',
                   conversationId: chatroomId,
