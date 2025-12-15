@@ -24,7 +24,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
       console.warn('Invalid conversationId:', cvs);
       return;
     }
-
+    if (!rootStore.loginState) return;
     const currentChatMsgs = messageStore.message[cvs.chatType][cvs.conversationId] || [];
     // 第一次加载过的缓存和加载更多之后的缓存
     if (
@@ -95,7 +95,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
           console.warn('get history messages failed', err);
           setLoading(false);
         });
-  }, [cvs.conversationId, cursor]);
+  }, [cvs.conversationId, cursor, rootStore.loginState]);
 
   const loadMore = () => {
     const currentChatMsgs = messageStore.message[cvs.chatType][cvs.conversationId] || [];
