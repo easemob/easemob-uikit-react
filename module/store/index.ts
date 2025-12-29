@@ -12,7 +12,7 @@ import AddressStore, { MemberRole, MemberItem, GroupItem, AppUserInfo } from './
 import ThreadStore, { ThreadData, CurrentThread } from './ThreadStore';
 import PinnedMessagesStore from './PinnedMessagesStore';
 import { ChatSDK } from 'module/SDK';
-import { clearPageNum } from '../hooks/useConversation';
+import { clearCursor } from '../hooks/useConversation';
 import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
 import { ProviderProps } from '../store/Provider';
 type InitConfig = {
@@ -63,7 +63,7 @@ class RootStore {
     this.conversationStore.clear();
     this.threadStore.clear();
     this.pinnedMessagesStore.clear();
-    clearPageNum();
+    clearCursor();
     chatroomClearPageNum();
   }
 }

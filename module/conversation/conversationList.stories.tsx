@@ -25,6 +25,7 @@ const description = {
     renderHeader: 'Render header',
     renderSearch: 'Render search',
     renderItem: 'Render item',
+    includeEmptyConversations: 'Whether to include empty conversations',
   },
   zh: {
     conversationList:
@@ -42,6 +43,7 @@ const description = {
     renderHeader: '自定义渲染 header',
     renderSearch: '自定义渲染 search',
     renderItem: '自定义渲染 item',
+    includeEmptyConversations: '是否包含空会话',
   },
 };
 
@@ -118,6 +120,12 @@ export default {
       type: 'function',
       description: description[lang].renderItem,
     },
+    includeEmptyConversations: {
+      control: {
+        type: 'boolean',
+      },
+      description: description[lang].includeEmptyConversations,
+    },
   },
 } as Meta<typeof ConversationList>;
 
@@ -125,7 +133,7 @@ export default {
 const Template: StoryFn<typeof ConversationList> = args => (
   <Provider initConfig={{ appKey: 'a#b' }}>
     {' '}
-    <ConversationList {...args} />
+    <ConversationList {...args} includeEmptyConversations={true} />
   </Provider>
 );
 
@@ -137,7 +145,7 @@ const DarkTemplate: StoryFn<typeof ConversationList> = args => (
     }}
   >
     {' '}
-    <ConversationList {...args} />
+    <ConversationList {...args} includeEmptyConversations={true} />
   </Provider>
 );
 
@@ -152,7 +160,7 @@ const SquareTemplate: StoryFn<typeof ConversationList> = args => (
     }}
   >
     {' '}
-    <ConversationList {...args} />
+    <ConversationList {...args} includeEmptyConversations={true} />
   </Provider>
 );
 

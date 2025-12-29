@@ -120,7 +120,7 @@ import { ReactComponent as Person3LinesFill } from '../svgs/icons/person_3lines_
 import { ReactComponent as BarSquareFill } from '../svgs/icons/bar_square_fill.svg';
 import { ReactComponent as DocLock } from '../svgs/icons/doc_lock.svg';
 import { ReactComponent as BoxUpArrow } from '../svgs/icons/box_up_arrow.svg';
-
+import { ReactComponent as ShieldStar } from '../svgs/icons/shield-star.svg';
 export interface IconProps {
   children?: ReactNode;
   className?: string;
@@ -471,6 +471,9 @@ const getIconNode = (type: keyof typeof ICON_TYPES): ReactNode => {
       break;
     case 'BOX_UP_ARROW':
       return <BoxUpArrow></BoxUpArrow>;
+      break;
+    case 'SHIELD_STAR':
+      return <ShieldStar></ShieldStar>;
       break;
     default:
       return null;

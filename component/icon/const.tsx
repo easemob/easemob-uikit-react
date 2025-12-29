@@ -120,6 +120,7 @@ enum ICON_TYPES {
   BAR_SQUARE_FILL = 'BAR_SQUARE_FILL',
   DOC_LOCK = 'DOC_LOCK',
   BOX_UP_ARROW = 'BOX_UP_ARROW',
+  SHIELD_STAR = 'SHIELD_STAR',
 }
 // chevron_down
 export { ICON_TYPES };

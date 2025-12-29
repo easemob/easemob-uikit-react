@@ -189,8 +189,9 @@ const ChatApp: FC<any> = () => {
       </div>
       <div
         style={{
-          width: '50px',
+          width: '350px',
           background: '#fff',
+          height: '50%',
         }}
       >
         {tab == 'chat' && (
@@ -450,14 +451,15 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: appKey || 'easemob#easeim',
+        appKey: appKey || 'easemob-demo#support',
         // userId: 'db726e81cd',
-        userId: '61e1f0e2bd',
+        // userId: '61e1f0e2bd',
+        userId: 'ccc',
         // token:
         // 'YWMt5C7aqqskEfCEZjcKFtyjOVzzvlQ7sUrSpVuQGlyIzFRFFPmQglwR8Js9JYoO0rN6AwMAAAGZ8Oq32TeeSADSOACXRag9NaqiTmMU6gSyzBjYsi3o-rOhpaYetRD2NA',
-        token:
-          'YWMtPTh1OMUREfCiyUdZ7ib6u1zzvlQ7sUrSpVuQGlyIzFScrq8ggiUR8L9jT5DlYnL_AwMAAAGams6v5zeeSADpVErzW5B-AE7ZuL7tL2cZ7tVQj5irL_RChnupc-II9Q',
-        // password: password || '1',
+        // token:
+        // 'YWMtPTh1OMUREfCiyUdZ7ib6u1zzvlQ7sUrSpVuQGlyIzFScrq8ggiUR8L9jT5DlYnL_AwMAAAGams6v5zeeSADpVErzW5B-AE7ZuL7tL2cZ7tVQj5irL_RChnupc-II9Q',
+        password: password || '1',
         useUserInfo: true,
         maxMessages: 100,
       }}

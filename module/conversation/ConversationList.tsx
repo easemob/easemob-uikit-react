@@ -38,6 +38,7 @@ export interface ConversationListProps {
   itemProps?: Partial<ConversationItemProps>; //Omit<ConversationItemProps, 'data'>;
   presence?: boolean; // 是否显示在线状态
   showSearchList?: boolean; // 是否显示搜索列表, 当使用renderHeader时，可以用这个参数来控制是否显示搜索列表
+  includeEmptyConversations?: boolean; // 是否包含空会话
 }
 
 const ConversationScrollList = ScrollList<Conversation>();
@@ -56,6 +57,7 @@ const Conversations: FC<ConversationListProps> = props => {
     style = {},
     presence,
     showSearchList,
+    includeEmptyConversations = false,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('conversationList', customizePrefixCls);
@@ -80,7 +82,7 @@ const Conversations: FC<ConversationListProps> = props => {
   const cvsStore = rootStore.conversationStore;
   const { appUsersInfo, contacts } = rootStore.addressStore;
   const { t } = useTranslation();
-  const { getConversationList, hasConversationNext } = useConversations();
+  const { getConversationList, hasConversationNext } = useConversations(includeEmptyConversations);
   const globalConfig = features?.conversationList || {};
 
   const withPresence = presence || globalConfig?.item?.presence != false;
@@ -191,13 +193,20 @@ const Conversations: FC<ConversationListProps> = props => {
     reject: () => void;
   }>();
 
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     if (rootStore.loginState) {
-      getConversationList().then(() => {
-        if (globalConfig?.item?.pinConversation != false) {
-          rootStore.conversationStore.getServerPinnedConversations();
-        }
-      });
+      setLoading(true);
+      getConversationList()
+        .then(() => {
+          setLoading(false);
+          if (globalConfig?.item?.pinConversation != false) {
+            rootStore.conversationStore.getServerPinnedConversations();
+          }
+        })
+        .catch(() => {
+          setLoading(false);
+        });
       getJoinedGroupList();
       if (useUserInfoConfig) {
         getUsersInfo({
@@ -276,7 +285,7 @@ const Conversations: FC<ConversationListProps> = props => {
         hasMore={hasConversationNext}
         data={renderData}
         scrollDirection="down"
-        loading={false}
+        loading={loading}
         loadMoreItems={getConversationList}
         renderItem={(cvs, index) => {
           return renderItem ? (

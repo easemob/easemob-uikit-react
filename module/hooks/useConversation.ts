@@ -4,25 +4,26 @@ import { parseChannel } from '../utils';
 import { eventHandler } from '../../eventHandler';
 
 const pageSize = 20;
-let pageNum = 1;
-const useConversations = () => {
+let cursor = '';
+const useConversations = (includeEmptyConversations: boolean = false) => {
   const rootStore = useContext(RootContext).rootStore;
   const { client, conversationStore } = rootStore;
   const { hasConversationNext } = conversationStore;
   const getConversationList = () => {
     return client
-      .getConversationlist({
+      .getServerConversations({
         pageSize,
-        pageNum: pageNum,
+        cursor: cursor,
+        includeEmptyConversations: includeEmptyConversations,
       })
       .then(res => {
-        if ((res.data?.channel_infos?.length || 0) < pageSize) {
+        if ((res.data?.conversations?.length || 0) < pageSize) {
           conversationStore.setHasConversationNext(false);
         } else {
           conversationStore.setHasConversationNext(true);
-          pageNum++;
+          cursor = res.data?.cursor || '';
         }
-        const conversation = res.data?.channel_infos
+        const conversation = res.data?.conversations
           ?.filter(cvs => {
             const { lastMessage } = cvs;
             // @ts-ignore
@@ -32,11 +33,10 @@ const useConversations = () => {
             return true;
           })
           ?.map(cvs => {
-            const { chatType, conversationId } = parseChannel(cvs.channel_id);
             return {
-              chatType,
-              conversationId,
-              unreadCount: cvs.unread_num,
+              chatType: cvs.conversationType,
+              conversationId: cvs.conversationId,
+              unreadCount: cvs.unReadCount,
               lastMessage: cvs.lastMessage,
             };
           });
@@ -54,7 +54,7 @@ const useConversations = () => {
   return { getConversationList, hasConversationNext };
 };
 
-const clearPageNum = () => {
-  pageNum = 1;
+const clearCursor = () => {
+  cursor = '';
 };
-export { useConversations, clearPageNum };
+export { useConversations, clearCursor };
