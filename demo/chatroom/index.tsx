@@ -15,7 +15,7 @@ import { MessageList } from '../../module/chat/MessageList';
 import './index.css';
 import { observer } from 'mobx-react-lite';
 import { set } from 'mobx';
-
+window.rootStore = rootStore;
 const ChatApp = observer(() => {
   const client = useClient();
   useEffect(() => {
@@ -154,6 +154,7 @@ const ChatApp = observer(() => {
                 },
               ],
             }}
+            showUnreadCount={true}
           ></Chatroom>
         </div>
         <div style={{ width: '350px' }}>

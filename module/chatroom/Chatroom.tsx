@@ -61,6 +61,7 @@ export interface ChatroomProps {
     txt?: MessageRenderer; // 自定义文本消息渲染
     custom?: MessageRenderer; // 自定义 custom 消息渲染（包括加入消息和礼物消息）
   };
+  showUnreadCount?: boolean; // 消息列表不在最下面时，是否显示未读数 默认不显示
 }
 
 let Chatroom = (props: ChatroomProps) => {
@@ -82,6 +83,7 @@ let Chatroom = (props: ChatroomProps) => {
     reportType: reportTypeProps,
     messageActionConfig,
     customMessageRenderers,
+    showUnreadCount,
   } = props;
   if (reportTypeProps) {
     reportType = reportTypeProps;
@@ -189,6 +191,13 @@ let Chatroom = (props: ChatroomProps) => {
       .catch((err: ChatSDK.ErrorEvent) => {
         eventHandler.dispatchError('joinChatRoom', err);
       });
+
+    if (showUnreadCount) {
+      rootStore.messageStore.setCurrentCVS({
+        chatType: 'chatRoom',
+        conversationId: chatroomId,
+      });
+    }
 
     return () => {
       rootStore.client

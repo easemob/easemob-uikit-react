@@ -191,7 +191,7 @@ const ChatApp: FC<any> = () => {
         style={{
           width: '350px',
           background: '#fff',
-          height: '50%',
+          height: '100%',
         }}
       >
         {tab == 'chat' && (
@@ -451,10 +451,10 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: appKey || 'easemob-demo#support',
+        appKey: appKey || 'easemob-demo#chatdemoui',
         // userId: 'db726e81cd',
         // userId: '61e1f0e2bd',
-        userId: 'ccc',
+        userId: userId || 'ccc',
         // token:
         // 'YWMt5C7aqqskEfCEZjcKFtyjOVzzvlQ7sUrSpVuQGlyIzFRFFPmQglwR8Js9JYoO0rN6AwMAAAGZ8Oq32TeeSADSOACXRag9NaqiTmMU6gSyzBjYsi3o-rOhpaYetRD2NA',
         // token:

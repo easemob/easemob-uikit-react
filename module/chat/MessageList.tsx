@@ -112,7 +112,9 @@ let MessageList: FC<MsgListProps> = props => {
     };
   }, []);
 
-  const currentCVS = conversation ? conversation : messageStore.currentCVS || {};
+  const currentCVS = React.useMemo(() => {
+    return conversation ? conversation : messageStore.currentCVS || {};
+  }, [conversation?.conversationId, messageStore.currentCVS.conversationId]);
 
   const { loadMore, isLoading } = useHistoryMessages(currentCVS);
 
@@ -371,7 +373,6 @@ let MessageList: FC<MsgListProps> = props => {
         return;
       }
     }
-
     setTimeout(() => {
       (listRef?.current as any)?.scrollTo('bottom');
     }, 10);
@@ -391,7 +392,7 @@ let MessageList: FC<MsgListProps> = props => {
         getGroupMemberList?.();
       }
     }
-  }, [currentCVS]);
+  }, [currentCVS?.conversationId]);
 
   // const showUnreadCount = messageStore.unreadMessageCount[currentCVS.chatType]?.[
   //   currentCVS.conversationId

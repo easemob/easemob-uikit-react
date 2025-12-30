@@ -17,7 +17,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
 
   const [cursor, setCursor] = useState<number | string>(-1);
   const [isLoading, setLoading] = useState(false);
-  const pageSize = 25;
+  const pageSize = 40;
 
   useEffect(() => {
     if (!cvs.conversationId) {
@@ -100,14 +100,18 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
   const loadMore = () => {
     const currentChatMsgs = messageStore.message[cvs.chatType][cvs.conversationId] || [];
     // @ts-ignore
-    let nextCursor = currentChatMsgs[0]?.mid || currentChatMsgs[0]?.id || -1;
+    let nextCursor = currentChatMsgs[0]?.mid || currentChatMsgs[0]?.id || '';
     // let nextCursor = historyMsgs[0]?.mid || historyMsgs[0]?.id || -1;
-    const msg = currentChatMsgs[0] || {};
+    const msg: any = currentChatMsgs[0] || {};
     const userId = rootStore.client.context.userId;
-    // @ts-ignore
-    const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
+    const cvsId =
+      msg.chatType == 'groupChat' || msg.chatType == 'chatRoom'
+        ? msg.to
+        : msg.from == userId
+        ? msg.to
+        : msg.from;
     if (cvs.conversationId != cvsId) {
-      nextCursor = -1;
+      nextCursor = '';
     }
     setCursor(nextCursor);
   };
