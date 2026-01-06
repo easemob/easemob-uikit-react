@@ -463,8 +463,17 @@ class MessageStore {
       }
       this.message[message.chatType][conversationId].push(message);
     }
-    // 是当前会话的消息，并且是holding状态， unreadMessageCount +1
-    if (this.holding && this.currentCVS.conversationId == conversationId) {
+    // 是当前会话的消息，并且是holding状态， unreadMessageCount +1；
+    // 如果是聊天室人员加入的提示消息，根据 initConfig的配置决定是否计入未读数
+    const isNotCountMemberJoinToUnread =
+      message.type === 'custom' &&
+      message.customEvent === 'CHATROOMUIKITUSERJOIN' &&
+      !(this.rootStore.initConfig.countMemberJoinToUnread !== false);
+    if (
+      this.holding &&
+      this.currentCVS.conversationId == conversationId &&
+      !isNotCountMemberJoinToUnread
+    ) {
       this.unreadMessageCount += 1;
     }
 

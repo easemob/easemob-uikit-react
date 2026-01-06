@@ -34,6 +34,7 @@ export interface ProviderProps {
     maxMessages?: number; // 单个会话显示最大消息数，超出后会自动清除，默认200，清除的消息可通过拉取更多消息获取
     isFixedDeviceId?: boolean;
     useOwnUploadFun?: boolean;
+    countMemberJoinToUnread?: boolean;
   };
   local?: {
     fallbackLng?: string;
