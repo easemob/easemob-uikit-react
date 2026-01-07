@@ -271,6 +271,7 @@ export interface CallKitProps {
   onMuteToggle?: (muted: boolean) => void;
   onCameraToggle?: (enabled: boolean) => void;
   onSpeakerToggle?: (enabled: boolean) => void;
+  onCameraFlip?: (deviceId: string, success: boolean) => void;
   onScreenShareToggle?: (sharing: boolean) => void;
   onHangup?: () => void;
   onAddParticipant?: (event: React.MouseEvent) => void;
@@ -325,6 +326,7 @@ export interface CallControlsIconMap {
   micOff?: CustomIconComponent;
   cameraOn?: CustomIconComponent;
   cameraOff?: CustomIconComponent;
+  cameraFlip?: CustomIconComponent;
   speakerOn?: CustomIconComponent;
   speakerOff?: CustomIconComponent;
   hangup?: CustomIconComponent;

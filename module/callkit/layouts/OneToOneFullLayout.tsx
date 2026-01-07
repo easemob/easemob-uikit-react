@@ -45,6 +45,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
   onMuteToggle,
   onCameraToggle,
   onSpeakerToggle,
+  onCameraFlip,
   onScreenShareToggle,
   onHangup,
   onAddParticipant,
@@ -401,6 +402,7 @@ export const OneToOneFullLayout: React.FC<FullLayoutProps> = ({
             onMuteToggle={onMuteToggle}
             onCameraToggle={onCameraToggle}
             onSpeakerToggle={onSpeakerToggle}
+            onCameraFlip={onCameraFlip}
             onScreenShareToggle={onScreenShareToggle}
             onHangup={onHangup}
             onPreviewAccept={onPreviewAccept}

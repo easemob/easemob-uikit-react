@@ -130,6 +130,7 @@ export class CallService {
   private invitedMembers: string[] = [];
   private userInfos: { [key: string]: any } = {};
   private localVideoStream: MediaStream | null = null; // Cache local video stream to avoid duplicate creation
+  private currentCameraDeviceId: string | null = null; // 🔧 保存当前使用的摄像头设备ID
 
   // Track if user has entered preview stage (to distinguish direct answer vs post-preview answer)
   private hasEnteredPreview: boolean = false;
@@ -2756,8 +2757,39 @@ export class CallService {
     if (!this.rtc.localVideoTrack) {
       logDebug('Local video track does not exist, creating new video track...');
       try {
-        const localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+        // 🔧 修复：安卓设备需要等待设备资源完全释放，特别是切换摄像头后关闭再打开的情况
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        if (isAndroid && this.currentCameraDeviceId) {
+          // 如果之前切换过摄像头，等待设备资源释放
+          const waitTime = 200;
+          logDebug(`toggleCamera: waiting ${waitTime}ms for Android device resource release`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+
+        // 🔧 修复：如果之前切换过摄像头，使用保存的设备ID创建轨道（安卓设备需要）
+        const trackConfig: any = this.encoderConfig ? { encoderConfig: this.encoderConfig } : {};
+        if (this.currentCameraDeviceId) {
+          trackConfig.cameraId = this.currentCameraDeviceId;
+          logDebug('toggleCamera: using saved device ID:', this.currentCameraDeviceId.slice(0, 8));
+        }
+        const localVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
         this.rtc.localVideoTrack = localVideoTrack;
+
+        // 🔧 修复：保存当前使用的设备ID（如果之前没有保存过）
+        if (!this.currentCameraDeviceId) {
+          try {
+            const mediaStreamTrack = localVideoTrack.getMediaStreamTrack();
+            if (mediaStreamTrack) {
+              const settings = mediaStreamTrack.getSettings();
+              if (settings.deviceId) {
+                this.currentCameraDeviceId = settings.deviceId;
+                logDebug('toggleCamera: saved initial device ID:', settings.deviceId.slice(0, 8));
+              }
+            }
+          } catch (e) {
+            logWarn('toggleCamera: failed to get device ID:', e);
+          }
+        }
 
         // 确保新创建的轨道是启用状态
         if (!localVideoTrack.enabled) {
@@ -2843,11 +2875,62 @@ export class CallService {
             logWarn('Failed to close old track:', e);
           }
 
-          // 创建新的视频轨道
-          const newVideoTrack = await AgoraRTC.createCameraVideoTrack(
-            this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
+          // 🔧 修复：安卓设备需要等待设备资源完全释放，特别是切换摄像头后关闭再打开的情况
+          // 等待时间根据平台调整：安卓需要更长时间，iOS可以短一些
+          const isAndroid = /Android/i.test(navigator.userAgent);
+          const waitTime = isAndroid ? 300 : 100;
+          logDebug(
+            `toggleCamera: waiting ${waitTime}ms for device resource release (Android: ${isAndroid})`,
           );
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+
+          // 创建新的视频轨道
+          // 🔧 修复：如果之前切换过摄像头，使用保存的设备ID创建轨道（安卓设备需要）
+          const trackConfig: any = this.encoderConfig ? { encoderConfig: this.encoderConfig } : {};
+          if (this.currentCameraDeviceId) {
+            trackConfig.cameraId = this.currentCameraDeviceId;
+            logDebug(
+              'toggleCamera: recreating track with saved device ID:',
+              this.currentCameraDeviceId.slice(0, 8),
+            );
+          }
+          let newVideoTrack;
+          try {
+            newVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
+          } catch (error) {
+            // 🔧 修复：如果使用保存的设备ID创建失败，尝试不使用设备ID（可能是设备已移除）
+            if (this.currentCameraDeviceId && trackConfig.cameraId) {
+              logWarn(
+                'toggleCamera: failed to create track with saved device ID, trying without device ID:',
+                error,
+              );
+              delete trackConfig.cameraId;
+              newVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
+              // 清除无效的设备ID
+              this.currentCameraDeviceId = null;
+            } else {
+              throw error;
+            }
+          }
           this.rtc.localVideoTrack = newVideoTrack;
+
+          // 🔧 修复：保存当前使用的设备ID
+          try {
+            const mediaStreamTrack = newVideoTrack.getMediaStreamTrack();
+            if (mediaStreamTrack) {
+              const settings = mediaStreamTrack.getSettings();
+              if (settings.deviceId) {
+                this.currentCameraDeviceId = settings.deviceId;
+                logDebug(
+                  'toggleCamera: saved device ID after recreation:',
+                  settings.deviceId.slice(0, 8),
+                );
+              }
+            }
+          } catch (e) {
+            logWarn('toggleCamera: failed to get device ID:', e);
+          }
+
           // 如果新轨道也没启用，强制启用
           if (!newVideoTrack.enabled && typeof newVideoTrack.setEnabled === 'function') {
             newVideoTrack.setEnabled(true);
@@ -2920,6 +3003,12 @@ export class CallService {
 
         // 4. 清空引用
         this.rtc.localVideoTrack = null;
+
+        // 🔧 修复：清除缓存的视频流
+        this.localVideoStream = null;
+
+        // 🔧 修复：安卓设备需要等待设备资源完全释放，延迟后再允许重新打开
+        // 注意：这里不等待，而是在重新打开时处理，避免阻塞UI
       } catch (error) {
         logError('close local video track failed:', error);
         // 即使出错也要清空引用，防止状态不一致
@@ -2953,8 +3042,30 @@ export class CallService {
     if (!this.rtc.localVideoTrack) {
       logDebug('Preview mode: create new video track');
       try {
-        const localVideoTrack = await AgoraRTC.createCameraVideoTrack();
+        // 🔧 修复：如果之前切换过摄像头，使用保存的设备ID创建轨道（安卓设备需要）
+        const trackConfig: any = this.encoderConfig ? { encoderConfig: this.encoderConfig } : {};
+        if (this.currentCameraDeviceId) {
+          trackConfig.cameraId = this.currentCameraDeviceId;
+          logDebug('Preview mode: using saved device ID:', this.currentCameraDeviceId.slice(0, 8));
+        }
+        const localVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
         this.rtc.localVideoTrack = localVideoTrack;
+
+        // 🔧 修复：保存当前使用的设备ID（如果之前没有保存过）
+        if (!this.currentCameraDeviceId) {
+          try {
+            const mediaStreamTrack = localVideoTrack.getMediaStreamTrack();
+            if (mediaStreamTrack) {
+              const settings = mediaStreamTrack.getSettings();
+              if (settings.deviceId) {
+                this.currentCameraDeviceId = settings.deviceId;
+                logDebug('Preview mode: saved initial device ID:', settings.deviceId.slice(0, 8));
+              }
+            }
+          } catch (e) {
+            logWarn('Preview mode: failed to get device ID:', e);
+          }
+        }
 
         // 🔧 增加延迟时间，确保UI完全渲染完成后再播放视频
         setTimeout(() => {
@@ -3084,6 +3195,63 @@ export class CallService {
   // 获取当前摄像头状态
   isCameraEnabled(): boolean {
     return this.rtc.localVideoTrack ? this.rtc.localVideoTrack.enabled : false;
+  }
+
+  // 切换摄像头设备
+  async flipCamera(deviceId: string): Promise<boolean> {
+    if (!deviceId) {
+      logWarn('flipCamera: deviceId is required');
+      return false;
+    }
+
+    if (!this.rtc.localVideoTrack) {
+      logWarn('flipCamera: no local video track available');
+      return false;
+    }
+
+    if (!this.rtc.localVideoTrack.enabled) {
+      logWarn('flipCamera: camera is not enabled');
+      return false;
+    }
+
+    try {
+      logDebug('flipCamera: switching camera to device:', deviceId.slice(0, 8));
+
+      // 使用声网 SDK 的 setDevice 方法切换摄像头
+      // 该方法支持在发布后调用
+      await this.rtc.localVideoTrack.setDevice(deviceId);
+
+      logDebug('flipCamera: camera switched successfully');
+
+      // 🔧 修复：保存当前使用的设备ID，以便重新打开摄像头时使用
+      this.currentCameraDeviceId = deviceId;
+
+      // 🔧 修复：切换摄像头后，清除缓存的视频流，强制下次获取时创建新流
+      this.localVideoStream = null;
+
+      // 🔧 修复：重新通知 UI 更新本地视频信息，确保 stream 是新的
+      const localVideoInfo: VideoWindowProps = {
+        id: 'local',
+        isLocalVideo: true,
+        muted: this.isMuted(),
+        cameraEnabled: true,
+        nickname: this.userInfos[this.userId]?.nickname || 'Me',
+        avatar: this.userInfos[this.userId]?.avatarUrl || undefined,
+        stream: this.getOrCreateLocalVideoStream(),
+      };
+      this.onRemoteVideoReady?.(localVideoInfo);
+
+      logDebug('flipCamera: notified UI with new video stream');
+
+      return true;
+    } catch (error) {
+      logError('flipCamera: failed to switch camera:', error);
+      this.onCallError?.({
+        errorType: CallErrorType.RTC,
+        ...(error as IAgoraRTCError),
+      });
+      return false;
+    }
   }
 
   // 获取加入的成员列表

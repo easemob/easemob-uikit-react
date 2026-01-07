@@ -132,6 +132,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     onMuteToggle,
     onCameraToggle,
     onSpeakerToggle,
+    onCameraFlip,
     onScreenShareToggle,
     onHangup, // 去掉
     onAddParticipant,
@@ -2383,6 +2384,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     [hasInitialized, onSpeakerToggle],
   );
 
+  const handleCameraFlip = React.useCallback(
+    async (deviceId: string) => {
+      if (hasInitialized && callServiceRef.current) {
+        callServiceRef.current.flipCamera(deviceId);
+        const success = await callServiceRef.current?.flipCamera(deviceId);
+        onCameraFlip?.(deviceId, success);
+      }
+    },
+    [hasInitialized, onCameraFlip],
+  );
+
   const handleScreenShareToggle = React.useCallback(
     (newScreenSharing: boolean) => {
       // 屏幕共享控制目前使用外部回调
@@ -2567,6 +2579,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       onMuteToggle: handleMuteToggle,
       onCameraToggle: handleCameraToggle,
       onSpeakerToggle: handleSpeakerToggle,
+      onCameraFlip: handleCameraFlip,
       onScreenShareToggle: handleScreenShareToggle,
       onHangup: handleHangup,
       onAddParticipant: handleAddParticipant,

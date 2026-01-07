@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { CallControlsIconMap } from '../types/index';
 import './CallControls.scss';
 import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
+import { useCameraDevices } from '../hooks/useCameraDevices';
 
 export interface CallControlsProps {
   className?: string;
@@ -37,6 +38,7 @@ export interface CallControlsProps {
   onCameraToggle?: (enabled: boolean) => void;
   onSpeakerToggle?: (enabled: boolean) => void;
   onScreenShareToggle?: (sharing: boolean) => void;
+  onCameraFlip?: (deviceId: string) => void;
   onHangup?: () => void;
 
   // 预览模式回调
@@ -78,6 +80,7 @@ const CallControls: React.FC<CallControlsProps> = ({
   onCameraToggle,
   onSpeakerToggle,
   onScreenShareToggle,
+  onCameraFlip,
   onHangup,
   onPreviewAccept,
   onPreviewReject,
@@ -94,10 +97,21 @@ const CallControls: React.FC<CallControlsProps> = ({
   const prefixCls = getPrefixCls('call-controls');
   const { t } = useTranslation();
 
+  // 🔧 摄像头设备管理
+  const {
+    hasMultipleCameras,
+    hasPermission,
+    flipCamera,
+    isLoading: isCameraLoading,
+  } = useCameraDevices();
+
   // 🔧 新增：操作状态管理，防止并发操作
   const [isTogglingCamera, setIsTogglingCamera] = React.useState(false);
   const [isTogglingMic, setIsTogglingMic] = React.useState(false);
   const [isTogglingSpeaker, setIsTogglingSpeaker] = React.useState(false);
+
+  // 🔧 摄像头翻转状态（用于切换按钮颜色）
+  const [isFlipped, setIsFlipped] = React.useState(false);
 
   // 🔧 新增：防抖控制
   const debounceTimeRef = React.useRef<{
@@ -423,6 +437,26 @@ const CallControls: React.FC<CallControlsProps> = ({
     onScreenShareToggle?.(newScreenSharing);
   };
 
+  // 🔧 摄像头翻转处理
+  const handleCameraFlipClick = React.useCallback(() => {
+    if (!hasMultipleCameras || !hasPermission || !cameraEnabled) {
+      logDebug('🔧 CallControls: 无法翻转摄像头', {
+        hasMultipleCameras,
+        hasPermission,
+        cameraEnabled,
+      });
+      return;
+    }
+
+    const newDeviceId = flipCamera();
+    if (newDeviceId) {
+      logDebug('🔧 CallControls: 触发摄像头翻转回调', { newDeviceId: newDeviceId.slice(0, 8) });
+      // 切换翻转状态，用于按钮颜色反馈
+      setIsFlipped(prev => !prev);
+      onCameraFlip?.(newDeviceId);
+    }
+  }, [hasMultipleCameras, hasPermission, cameraEnabled, flipCamera, onCameraFlip]);
+
   const handleHangupClick = () => {
     onHangup?.();
   };
@@ -456,6 +490,38 @@ const CallControls: React.FC<CallControlsProps> = ({
             </button>
             <div className={classNames(`${prefixCls}-button-text`)}>
               {isCaller ? t('callkit.callcontrols.end') : t('callkit.callcontrols.reject')}
+            </div>
+          </div>
+        )}
+
+        {/* 摄像头翻转 - 只有多于2个摄像头时才显示 */}
+        {callMode === 'video' && hasMultipleCameras && (
+          <div className={classNames(`${prefixCls}-button-group`)}>
+            <button
+              className={classNames(`${prefixCls}-button`, {
+                [`${prefixCls}-button-disabled`]: !cameraEnabled || !hasPermission || isFlipped,
+                [`${prefixCls}-button-active`]: !isFlipped,
+                [`${prefixCls}-button-loading`]: isCameraLoading,
+              })}
+              onClick={handleCameraFlipClick}
+              title={
+                !hasPermission
+                  ? (t('callkit.callcontrols.cameraNoPermission') as string)
+                  : !cameraEnabled
+                  ? (t('callkit.callcontrols.cameraOffCannotFlip') as string)
+                  : (t('callkit.callcontrols.flip') as string)
+              }
+              disabled={!cameraEnabled || !hasPermission}
+            >
+              {renderIcon('cameraFlip', 'CAMERA_FILL_ARROWS', {
+                width: 24,
+                height: 24,
+                color:
+                  !cameraEnabled || !hasPermission ? '#F9FAFA' : isFlipped ? '#F9FAFA' : '#171A1C',
+              })}
+            </button>
+            <div className={classNames(`${prefixCls}-button-text`)}>
+              {t('callkit.callcontrols.flip')}
             </div>
           </div>
         )}
@@ -572,6 +638,38 @@ const CallControls: React.FC<CallControlsProps> = ({
   // 正常通话模式下的按钮布局
   return (
     <div className={rootClass} style={style}>
+      {/* 摄像头翻转 - 只有多于2个摄像头且视频通话时才显示 */}
+      {callMode !== 'audio' && hasMultipleCameras && (
+        <div className={classNames(`${prefixCls}-button-group`)}>
+          <button
+            className={classNames(`${prefixCls}-button`, {
+              [`${prefixCls}-button-disabled`]: !cameraEnabled || !hasPermission || isFlipped,
+              [`${prefixCls}-button-active`]: !isFlipped,
+              [`${prefixCls}-button-loading`]: isCameraLoading,
+            })}
+            onClick={handleCameraFlipClick}
+            title={
+              !hasPermission
+                ? (t('callkit.callcontrols.cameraNoPermission') as string)
+                : !cameraEnabled
+                ? (t('callkit.callcontrols.cameraOffCannotFlip') as string)
+                : (t('callkit.callcontrols.flip') as string)
+            }
+            disabled={!cameraEnabled || !hasPermission}
+          >
+            {renderIcon('cameraFlip', 'CAMERA_FILL_ARROWS', {
+              width: 24,
+              height: 24,
+              color:
+                !cameraEnabled || !hasPermission ? '#F9FAFA' : isFlipped ? '#F9FAFA' : '#171A1C',
+            })}
+          </button>
+          <div className={classNames(`${prefixCls}-button-text`)}>
+            {t('callkit.callcontrols.flip')}
+          </div>
+        </div>
+      )}
+
       {/* 麦克风按钮 */}
       <div className={classNames(`${prefixCls}-button-group`)}>
         <button

@@ -64,6 +64,7 @@ export interface FullLayoutProps extends BaseLayoutProps {
   onMuteToggle?: (muted: boolean) => void;
   onCameraToggle?: (enabled: boolean) => void;
   onSpeakerToggle?: (enabled: boolean) => void;
+  onCameraFlip?: (deviceId: string) => void;
   onScreenShareToggle?: (sharing: boolean) => void;
   onHangup?: () => void;
   onAddParticipant?: (event: React.MouseEvent) => void;

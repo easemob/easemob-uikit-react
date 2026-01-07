@@ -70,6 +70,7 @@ const ChatApp = observer(() => {
           mode: 'light',
         }}
         initConfig={{
+          countMemberJoinToUnread: false,
           appKey: 'easemob-demo#sdk111',
         }}
         local={{
