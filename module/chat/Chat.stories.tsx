@@ -33,16 +33,16 @@ const description = {
     renderMessageInput: 'Render message input',
     renderRepliedMessage: 'Render replied message',
     renderEmpty: 'The content displayed when rendering an empty conversation',
-    rtcConfig_appId: 'Agora appId',
-    rtcConfig_agoraUid: 'rtc user ID',
-    rtcConfig_onInvite: `In the group, when starting an audio and video call, clicking the call button will trigger this callback function. This function needs to return a promise containing the information of the invited person, id is the Chat user ID, name is the user nickname to be displayed`,
-    rtcConfig_onAddPerson:
+    'rtcConfig.appId': 'Agora appId',
+    'rtcConfig.agoraUid': 'rtc user ID',
+    'rtcConfig.onInvite': `In the group, when starting an audio and video call, clicking the call button will trigger this callback function. This function needs to return a promise containing the information of the invited person, id is the Chat user ID, name is the user nickname to be displayed`,
+    'rtcConfig.onAddPerson':
       'Invite other people to join the audio and video call in the group chat, and return a promise containing the information of the invited person, id is the Chat user ID',
-    rtcConfig_getIdMap: `Provide a function to get the mapping of current channel rtc user ID and Chat user ID, this function needs to return {[rtcUserId]: chatUserId}`,
-    rtcConfig_onStateChange: 'Callback function for audio and video call status change',
-    rtcConfig_onRing: 'Callback when being called, you can play a ringtone',
-    rtcConfig_getRTCToken: `Provide a function, receive channel and chatUserId, and return the Agora user ID and the token to join the channel`,
-    rtcConfig_groupAvatar: 'Avatar for group audio and video calls',
+    'rtcConfig.getIdMap': `Provide a function to get the mapping of current channel rtc user ID and Chat user ID, this function needs to return {[rtcUserId]: chatUserId}`,
+    'rtcConfig.onStateChange': 'Callback function for audio and video call status change',
+    'rtcConfig.onRing': 'Callback when being called, you can play a ringtone',
+    'rtcConfig.getRTCToken': `Provide a function, receive channel and chatUserId, and return the Agora user ID and the token to join the channel`,
+    'rtcConfig.groupAvatar': 'Avatar for group audio and video calls',
     useCallkit: 'Whether to use Callkit',
     callkitProps: 'Callkit props',
   },
@@ -68,18 +68,18 @@ const description = {
     renderMessageInput: '渲染消息输入框',
     renderRepliedMessage: '渲染回复消息',
     renderEmpty: '渲染空会话时展示的内容',
-    rtcConfig_appId: '声网 appId',
-    rtcConfig_agoraUid: 'rtc 用户 ID',
-    rtcConfig_onInvite:
+    'rtcConfig.appId': '声网 appId',
+    'rtcConfig.agoraUid': 'rtc 用户 ID',
+    'rtcConfig.onInvite':
       '群组中发起音视频通话, 点击呼叫按钮时触发这个回调函数，这个函数需要返回一个promise 包含被邀请人信息，id 为Chat用户 ID，name 为要显示的用户昵称',
-    rtcConfig_onAddPerson:
+    'rtcConfig.onAddPerson':
       '群聊音视频过程中邀请其他人加入音视频通话, 需要返回一个promise 包含被邀请人信息， id 为Chat用户 ID',
-    rtcConfig_getIdMap:
+    'rtcConfig.getIdMap':
       '提供一个函数获取当前channel rtc 用户 ID 和Chat用户 ID 的映射，这个函数需要返回{[rtcUserId]: chatUserId}',
-    rtcConfig_onStateChange: '音视频通话状态变化的回调函数',
-    rtcConfig_onRing: '被呼叫时的回调 可以播放铃声',
-    rtcConfig_getRTCToken: `提供一个函数，接收 channel和chatUserId, 能返回声网用户 ID 和 加入channel的token`,
-    rtcConfig_groupAvatar: '群聊音视频通话时的头像',
+    'rtcConfig.onStateChange': '音视频通话状态变化的回调函数',
+    'rtcConfig.onRing': '被呼叫时的回调 可以播放铃声',
+    'rtcConfig.getRTCToken': `提供一个函数，接收 channel和chatUserId, 能返回声网用户 ID 和 加入channel的token`,
+    'rtcConfig.groupAvatar': '群聊音视频通话时的头像',
     useCallkit: '是否使用 Callkit',
     callkitProps: 'Callkit 参数',
   },
@@ -182,7 +182,7 @@ const DefaultTemplate: StoryFn<React.FC<ChatProps>> = args => (
         mode: 'light',
       }}
     >
-      <Chat {...args} />
+      <Chat {...(args as ChatProps)} />
     </Provider>
   </div>
 );
@@ -197,7 +197,7 @@ const DarkTemplate: StoryFn<React.FC<ChatProps>> = args => (
         mode: 'dark',
       }}
     >
-      <Chat {...args} />
+      <Chat {...(args as ChatProps)} />
     </Provider>
   </div>
 );
@@ -215,7 +215,7 @@ const SquareTemplate: StoryFn<React.FC<ChatProps>> = args => (
         componentsShape: 'square',
       }}
     >
-      <Chat {...args} />
+      <Chat {...(args as ChatProps)} />
     </Provider>
   </div>
 );

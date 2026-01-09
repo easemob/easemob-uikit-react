@@ -3,8 +3,8 @@ import { StoryFn, Meta } from '@storybook/react';
 import { renderTxt } from '../textMessage/TextMessage';
 import ChatroomMessage from './index';
 import Provider from '../store/Provider';
+import { ChatroomMessageProps } from './ChatroomMessage';
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
-
 const description = {
   en: {
     chatroomMessage: 'Chatroom message component',
@@ -15,6 +15,8 @@ const description = {
     targetLanguage: 'The target language of translation',
     onReport:
       'The callback function for reporting, the parameter is the message object, you need to implement the pop-up report dialog by yourself',
+    actionConfig:
+      'Action config, example: { recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "Custom menu item", onClick: () => {}, visible: true }] }',
   },
   zh: {
     chatroomMessage: '聊天室消息组件',
@@ -24,6 +26,8 @@ const description = {
     message: '消息对象',
     targetLanguage: '翻译的目标语言',
     onReport: '举报的回调函数, 参数为消息对象, 需要自己实现弹出举报的弹框',
+    actionConfig:
+      '操作菜单配置, 示例：{ recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "自定义菜单项", onClick: () => {}, visible: true }] }',
   },
 };
 
@@ -57,10 +61,14 @@ export default {
       action: 'report',
       description: description[lang].onReport,
     },
+    actionConfig: {
+      control: 'object',
+      description: description[lang].actionConfig,
+    },
   },
 } as Meta<typeof ChatroomMessage>;
 
-const Template: StoryFn<typeof ChatroomMessage> = args => (
+const Template: StoryFn<ChatroomMessageProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',

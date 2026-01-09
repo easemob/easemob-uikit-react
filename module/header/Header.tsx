@@ -165,7 +165,8 @@ const Header: FC<HeaderProps> = props => {
               <Tooltip
                 title={menuNode}
                 trigger="click"
-                placement="bottom"
+                placement="bottomLeft"
+                autoAdjustOverflow={true}
                 open={menuOpen}
                 onOpenChange={c => {
                   setMenuOpen(c);

@@ -4,7 +4,7 @@ import { StoryFn, Meta } from '@storybook/react';
 import Chatroom from './index';
 import rootStore from '../store';
 import Provider from '../store/Provider';
-
+import { ChatroomProps } from './Chatroom';
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 
 const description = {
@@ -25,6 +25,11 @@ const description = {
     renderMessageInput: 'Render message input',
     renderBroadcast: 'Render broadcast',
     renderEmpty: 'Render empty',
+    messageActionConfig:
+      'Message action config, example: { recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "Custom menu item", onClick: () => {}, visible: true }] }',
+    customMessageRenderers:
+      'Custom message renderers, example: { txt: ctx => <ChatroomMessage message={ctx.message} /> }',
+    showUnreadCount: 'Show unread count, default is false when message list is not at the bottom',
   },
   zh: {
     chatroom: '聊天室组件包含了文本，表情，礼物消息，旨在满足大多数用户对泛娱乐场景的聊天室需求。',
@@ -42,6 +47,11 @@ const description = {
     renderMessageInput: '渲染消息输入框',
     renderBroadcast: '渲染广播',
     renderEmpty: '渲染空',
+    messageActionConfig:
+      '消息操作菜单配置, 示例：{ recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "自定义菜单项", onClick: () => {}, visible: true }] }',
+    customMessageRenderers:
+      '自定义消息渲染器，示例：{ txt: ctx => <ChatroomMessage message={ctx.message} /> }',
+    showUnreadCount: '消息列表不在最下面时，是否显示未读数, 默认不显示',
   },
 };
 
@@ -115,6 +125,20 @@ export default {
       type: 'function',
       description: description[lang].renderEmpty,
     },
+    messageActionConfig: {
+      control: 'object',
+      description: description[lang].messageActionConfig,
+    },
+    customMessageRenderers: {
+      control: 'object',
+      description: description[lang].customMessageRenderers,
+    },
+    showUnreadCount: {
+      control: 'boolean',
+      description: description[lang].showUnreadCount,
+      type: 'boolean',
+      default: false,
+    },
   },
 } as Meta<typeof Chatroom>;
 
@@ -126,7 +150,7 @@ rootStore.conversationStore.setCurrentCvs({
   name: 'Henry',
 });
 
-const DefaultTemplate: StoryFn<typeof Chatroom> = args => (
+const DefaultTemplate: StoryFn<ChatroomProps> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -138,7 +162,7 @@ const DefaultTemplate: StoryFn<typeof Chatroom> = args => (
   </div>
 );
 
-const DarkTemplate: StoryFn<typeof Chatroom> = args => (
+const DarkTemplate: StoryFn<ChatroomProps> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{
@@ -153,7 +177,7 @@ const DarkTemplate: StoryFn<typeof Chatroom> = args => (
   </div>
 );
 
-const SquareTemplate: StoryFn<typeof Chatroom> = args => (
+const SquareTemplate: StoryFn<ChatroomProps> = args => (
   <div style={{ height: '500px' }}>
     <Provider
       initConfig={{

@@ -254,6 +254,7 @@ const ChatApp: FC<any> = () => {
             //     // isActive
             //   />
             // )}
+            includeEmptyConversations={true}
           ></ConversationList>
         )}
 
@@ -329,7 +330,7 @@ const ChatApp: FC<any> = () => {
                     visible: true,
                     actions: [],
                   },
-                  suffixIcon: ['PIN', 'AUDIO'],
+                  suffixIcon: ['PIN', 'AUDIO', 'VIDEO'],
                   // suffixIcon: [
                   //   'THREAD',
                   //   'AUDIO',
@@ -451,7 +452,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
   >
     <Provider
       initConfig={{
-        appKey: appKey || 'easemob-demo#chatdemoui',
+        appKey: appKey || 'easemob-demo#support',
         // userId: 'db726e81cd',
         // userId: '61e1f0e2bd',
         userId: userId || 'ccc',
@@ -499,6 +500,7 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
             clearMessage: true,
             deleteConversation: true,
             audioCall: true,
+            videoCall: true,
             pinMessage: true,
           },
           message: {

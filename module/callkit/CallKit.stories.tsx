@@ -247,6 +247,11 @@ const meta = {
       description: '日志前缀',
     },
 
+    useRTCToken: {
+      control: 'boolean',
+      description: '是否使用RTC Token,默认true,测试环境可以设置为false',
+    },
+
     // 音量阈值配置
     speakingVolumeThreshold: {
       control: { type: 'range', min: 1, max: 100, step: 1 },

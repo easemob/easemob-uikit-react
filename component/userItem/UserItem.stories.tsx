@@ -1,6 +1,6 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { UserItem } from './UserItem';
+import { UserItem, UserItemProps } from './UserItem';
 
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 
@@ -23,6 +23,8 @@ const description = {
     disabled: 'The disabled of the user item',
     onClose: 'The close event of the user item',
     ripple: 'The ripple of the user item',
+    moreAction:
+      'The more action of the user item, example: { visible: true, icon: <Icon type="ELLIPSIS" width={20} height={20} />, actions: [{ icon: <Icon type="DELETE" width={20} height={20} />, content: "delete", onClick: data => { console.log("delete", data); } }] }',
   },
   zh: {
     className: '用户项的类名',
@@ -42,6 +44,8 @@ const description = {
     disabled: '用户项的禁用状态',
     onClose: '用户项的关闭事件',
     ripple: '用户项的涟漪效果',
+    moreAction:
+      '用户项的更多操作, 示例：{ visible: true, icon: <Icon type="ELLIPSIS" width={20} height={20} />, actions: [{ icon: <Icon type="DELETE" width={20} height={20} />, content: "删除", onClick: data => { console.log("delete", data); } }] }',
   },
 };
 
@@ -115,10 +119,14 @@ export default {
       control: 'boolean',
       description: description[lang].ripple,
     },
+    moreAction: {
+      control: 'object',
+      description: description[lang].moreAction,
+    },
   },
-} as Meta<typeof UserItem>;
+} as Meta<UserItemProps>;
 
-const Template: StoryFn<typeof UserItem> = args => <UserItem {...args} />;
+const Template: StoryFn<UserItemProps> = args => <UserItem {...args} />;
 
 export const Default = Template.bind({});
 
