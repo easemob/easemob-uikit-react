@@ -17,7 +17,7 @@ const useConversations = (includeEmptyConversations: boolean = false) => {
         includeEmptyConversations: includeEmptyConversations,
       })
       .then(res => {
-        if ((res.data?.conversations?.length || 0) < pageSize) {
+        if (!res.data?.cursor) {
           conversationStore.setHasConversationNext(false);
         } else {
           conversationStore.setHasConversationNext(true);
@@ -25,9 +25,9 @@ const useConversations = (includeEmptyConversations: boolean = false) => {
         }
         const conversation = res.data?.conversations
           ?.filter(cvs => {
-            const { lastMessage } = cvs;
+            const { lastMessage = {} } = cvs;
             // @ts-ignore
-            if (lastMessage.chatThread) {
+            if (lastMessage?.chatThread) {
               return false;
             }
             return true;
@@ -37,7 +37,7 @@ const useConversations = (includeEmptyConversations: boolean = false) => {
               chatType: cvs.conversationType,
               conversationId: cvs.conversationId,
               unreadCount: cvs.unReadCount,
-              lastMessage: cvs.lastMessage,
+              lastMessage: cvs.lastMessage || {},
             };
           });
         conversationStore.getSilentModeForConversations(conversation || []);
