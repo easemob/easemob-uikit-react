@@ -32,6 +32,7 @@ const description = {
     reaction: 'Show emoji reply function',
     select: 'Show message selection box',
     messageStatus: 'Show message status',
+    messageStatusType: 'Message status type',
     message: 'Message received from SDK',
     onReplyMessage: 'Reply message callback function',
     onDeleteMessage: 'Delete message callback function',
@@ -85,6 +86,7 @@ const description = {
     reaction: '是否显示表情回复功能',
     select: '是否显示消息选择框',
     messageStatus: '是否显示消息状态',
+    messageStatusType: '消息状态类型',
     message: '从SDK收到的消息',
     onReplyMessage: '点击回复消息的回调函数',
     onDeleteMessage: '点击删除消息的回调函数',
@@ -217,6 +219,11 @@ export default {
     messageStatus: {
       control: 'boolean',
       description: description[lang].messageStatus,
+    },
+    messageStatusType: {
+      control: 'select',
+      options: ['icon', 'text'],
+      description: description[lang].messageStatusType,
     },
     message: {
       control: 'object',
