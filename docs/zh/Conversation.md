@@ -104,7 +104,7 @@ const Conversation = () => {
 | `className` | `string` | 组件的类名 |
 | `style` | `React.CSSProperties` | 组件的内联样式 |
 | `renderHeader` | `() => React.ReactNode` | 自定义渲染 Header 组件的方法 |
-| `renderSearch` | `() => React.ReactNode` | 自定义渲染 Search 组件的方法 |
+| `renderSearch` | `(props: { onSearch: (e: ChangeEvent<HTMLInputElement>) => void }) => React.ReactNode` | 自定义渲染搜索栏；参数中的 `onSearch` 需绑定到输入框的 `onChange` 以触发搜索并更新列表 |
 | `renderItem` | `(cvs: Conversation, index: number) => React.ReactNode` | 自定义渲染会话条目的方法 |
 | `headerProps` | `HeaderProps` | Header 组件的参数 |
 | `itemProps` | `Partial<ConversationItemProps>` | ConversationItem 组件的参数 |
@@ -304,6 +304,17 @@ const CustomConversationItem = ({ cvs }) => {
 .cui-conversationItem {
   height: 74px;
   min-height: 74px;
+}
+```
+
+### 设置会话标题文字大小、颜色等
+
+通过 CSS 设置会话标题样式
+
+```css
+.cui-conversationItem-nickname {
+  font-size: 16px;
+  color: #171a1c;
 }
 ```
 
@@ -553,44 +564,122 @@ const features = {
 
 ### 自定义搜索栏
 
-你可以通过 `renderSearch` 方法自定义搜索栏：
+你可以通过 `renderSearch` 方法自定义搜索栏的 UI。`renderSearch` 会收到一个参数对象，包含 **`onSearch`** 方法：在自定义输入框的 `onChange` 中调用 `onSearch(e)`，即可触发组件内部的搜索逻辑并更新下方会话列表的展示结果。
+
+**实现方式：**
+
+- 使用 `renderSearch` 提供的 `onSearch`：将 `onSearch(e)` 绑定到你的 input 的 `onChange`，列表会按「会话 ID」和「会话名称」做默认过滤并更新。
+- 若需要完全自定义过滤逻辑（例如按备注、拼音等），可同时使用 `onSearch` 属性：在回调里返回 `false` 并自行从 `RootContext` 获取 `conversationStore`，调用 `setSearchList(filteredList)` 设置搜索结果（详见下方「自定义搜索逻辑」）。
+
+**示例：自定义搜索栏 UI，使用内置搜索行为**
 
 ```jsx
 <ConversationList
-  renderSearch={() => {
-    return (
-      <div className="custom-search">
-        <input
-          type="text"
-          placeholder="搜索会话"
-          onChange={e => {
-            // 自定义搜索逻辑
-            handleSearch(e.target.value);
-          }}
-        />
-      </div>
-    );
-  }}
+  renderSearch={({ onSearch }) => (
+    <div className="custom-search">
+      <input
+        type="text"
+        placeholder="搜索会话"
+        onChange={e => onSearch(e)}
+      />
+    </div>
+  )}
 />
+```
+
+**示例：自定义搜索栏 UI + 自定义搜索逻辑（自己设置搜索结果）**
+
+在父组件中通过 `useContext(RootContext)` 获取 `rootStore`，再在 `onSearch` 回调中使用（不可在回调内部调用 `useContext`）：
+
+```jsx
+import { useContext } from 'react';
+import { RootContext } from 'module/store/rootContext';
+
+function MyConversationList() {
+  const { rootStore } = useContext(RootContext);
+  const { conversationStore } = rootStore;
+
+  return (
+    <ConversationList
+      renderSearch={({ onSearch }) => (
+        <div className="custom-search">
+          <input
+            type="text"
+            placeholder="按名称或 ID 搜索"
+            onChange={e => onSearch(e)}
+          />
+        </div>
+      )}
+      onSearch={e => {
+        const value = e.target.value.trim();
+        const list = conversationStore.conversationList;
+        const filteredList = list.filter(cvs => {
+          const name = cvs.name ?? '';
+          return name.includes(value) || cvs.conversationId.includes(value);
+        });
+        conversationStore.setSearchList(filteredList);
+        return false; // 阻止默认搜索，使用上面设置的结果
+      }}
+    />
+  );
+}
 ```
 
 ### 自定义搜索逻辑
 
-你可以通过 `onSearch` 属性自定义搜索逻辑：
+通过 `onSearch` 可以接管搜索逻辑。`onSearch` 签名为 `(e: React.ChangeEvent<HTMLInputElement>) => boolean`：
+
+- **不返回或返回非 `false`**：组件会使用默认逻辑（按会话 ID、会话名称过滤），并自动更新展示的会话列表。
+- **返回 `false`**：表示由你完全自定义搜索；组件不会更新列表，你需要**自己设置搜索结果**，否则列表不会变化。
+
+**如何设置搜索结果**
+
+当 `onSearch` 返回 `false` 时，必须由你在回调内更新「搜索列表」：
+
+1. 使用 `RootContext` 获取 `rootStore`，再取 `rootStore.conversationStore`。
+2. 会话数据来源：`conversationStore.conversationList`（类型为 `Conversation[]`）。
+3. 根据输入关键字过滤得到 `filteredList`（保持为 `Conversation[]`）。
+4. 调用 **`conversationStore.setSearchList(filteredList)`**，列表会展示你传入的会话数组；清空输入时建议传入空数组或完整列表。
+
+**示例：仅自定义过滤条件，自己设置搜索结果**
+
+在父组件中获取 `rootStore`，在 `onSearch` 中过滤并调用 `setSearchList`：
+
+```jsx
+import { useContext } from 'react';
+import { RootContext } from 'module/store/rootContext';
+
+function MyConversationList() {
+  const { rootStore } = useContext(RootContext);
+
+  return (
+    <ConversationList
+      onSearch={e => {
+        const value = e.target.value;
+        const list = rootStore.conversationStore.conversationList;
+        const filteredList = list.filter(cvs => {
+          return (
+            (cvs.name && cvs.name.includes(value)) ||
+            cvs.conversationId.includes(value)
+          );
+        });
+        rootStore.conversationStore.setSearchList(filteredList);
+        return false; // 使用上面设置的结果
+      }}
+    />
+  );
+}
+```
+
+**示例：使用默认搜索栏，仅扩展过滤条件（不接管）**
+
+若不返回 `false`，可以不设置 `setSearchList`，仅用 `onSearch` 做额外逻辑（如埋点），列表仍由组件默认更新：
 
 ```jsx
 <ConversationList
   onSearch={e => {
-    const value = e.target.value;
-    // 自定义搜索逻辑
-    const filteredList = conversationList.filter(cvs => {
-      // 自定义搜索条件
-      return cvs.name.includes(value) || cvs.conversationId.includes(value);
-    });
-    // 更新显示列表
-    setFilteredConversations(filteredList);
-    // 返回 false 阻止默认搜索行为
-    return false;
+    console.log('用户搜索:', e.target.value);
+    // 不 return false，使用默认搜索与结果
   }}
 />
 ```
@@ -711,7 +800,7 @@ ConversationList 提供了以下主要的 CSS 类名，你可以通过覆盖这�
 | `headerProps` | `HeaderProps` | Header 组件的参数 |
 | `itemProps` | `Partial<ConversationItemProps>` | ConversationItem 组件的参数 |
 | `renderHeader` | `() => React.ReactNode` | 自定义渲染 Header 组件的方法 |
-| `renderSearch` | `() => React.ReactNode` | 自定义渲染 Search 组件的方法 |
+| `renderSearch` | `(props: { onSearch: (e: ChangeEvent<HTMLInputElement>) => void }) => React.ReactNode` | 自定义渲染搜索栏；参数中的 `onSearch` 需绑定到输入框的 `onChange` 以触发搜索并更新列表 |
 | `renderItem` | `(cvs: Conversation, index: number) => React.ReactNode` | 自定义渲染会话条目的方法 |
 | `onItemClick` | `(data: Conversation) => void` | 点击会话列表中每个会话的回调事件 |
 | `onSearch` | `(e: React.ChangeEvent<HTMLInputElement>) => boolean` | 搜索输入框的 change 事件，当函数返回 false 时，会阻止默认的搜索行为 |

@@ -32,7 +32,9 @@ export interface ConversationListProps {
   onItemClick?: (data: Conversation) => void; // 点击会话事件
   onSearch?: (e: React.ChangeEvent<HTMLInputElement>) => boolean; // search 组件 change 事件，默认根据 会话 Id和name搜索， 如果返回 false， 会阻止默认行为
   renderHeader?: () => React.ReactNode; // 自定义渲染 header
-  renderSearch?: () => React.ReactNode; // 自定义渲染 search
+  renderSearch?: (props: {
+    onSearch: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  }) => React.ReactNode; // 自定义渲染 search，会传入 onSearch 供自定义 input 触发搜索
   renderItem?: (cvs: Conversation, index: number) => React.ReactNode; // 自定义渲染 item
   headerProps?: HeaderProps;
   itemProps?: Partial<ConversationItemProps>; //Omit<ConversationItemProps, 'data'>;
@@ -274,7 +276,7 @@ const Conversations: FC<ConversationListProps> = props => {
       )}
 
       {renderSearch
-        ? renderSearch()
+        ? renderSearch({ onSearch: handleSearch })
         : showSearch && (
             <div className={`${prefixCls}-search`}>
               <Search onChange={handleSearch}></Search>
