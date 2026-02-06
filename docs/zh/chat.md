@@ -259,6 +259,32 @@ import { TextMessage } from 'easemob-chat-uikit';
 }
 ```
 
+#### 设置消息状态
+
+**设置隐藏消息状态**
+```jsx
+<Chat
+  messageListProps={{
+    messageProps: {
+      messageStatus: false
+    },
+  }}
+/>
+```
+
+**设置消息状态是文本还是图标**
+
+```jsx
+<Chat
+  messageListProps={{
+    messageProps: {
+      messageStatusType: 'icon' // icon 或者 text
+    },
+  }}
+/>
+```
+
+
 ### 设置消息菜单
 
 在消息列表中长按任意消息，即可弹出操作菜单，支持复制、回复、转发、置顶、多选、翻译、创建话题等丰富功能。
@@ -579,6 +605,8 @@ import { Chat, MessageInput, Icon } from 'easemob-chat-uikit';
     content: '聊天标题',
     // 副标题
     subtitle: '在线',
+    // 设置头像
+    avatar: <img src="https://example.com/avatar.jpg" />, 
     // 头像地址
     avatarSrc: 'https://example.com/avatar.jpg',
     // 头像形状：'circle' | 'square'
@@ -613,6 +641,12 @@ import { Chat, MessageInput, Icon } from 'easemob-chat-uikit';
     renderContent: () => {
       return <div>自定义标题内容</div>;
     },
+    onClickAvatar: () => {
+      // 点击头像事件
+    },
+    style={{
+      background: '#ccc' // 设置背景颜色
+    }}
   }}
 />
 ```

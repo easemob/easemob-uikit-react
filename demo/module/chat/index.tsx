@@ -317,6 +317,8 @@ const ChatApp: FC<any> = () => {
                       console.log('msg', msg);
                       return false; // preventDefault: false, Do not block default behavior
                     },
+                    messageStatusType: 'text',
+                    messageStatus: false,
                   },
                   renderUserProfile: (props: renderUserProfileProps) => {
                     return null;

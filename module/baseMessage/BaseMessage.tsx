@@ -66,6 +66,7 @@ export interface BaseMessageProps {
   reaction?: boolean; // whether show reaction
   select?: boolean; // whether show message checkbox
   messageStatus?: boolean; // whether show message status
+  messageStatusType?: 'icon' | 'text';
   message?: BaseMessageType;
   onReplyMessage?: () => void;
   onDeleteMessage?: (message: BaseMessageType) => void;
@@ -214,6 +215,7 @@ let BaseMessage = (props: BaseMessageProps) => {
     select = false,
     thread = true,
     messageStatus = true,
+    messageStatusType = 'icon',
     showNicknamesForAllMessages = false,
     chatThreadOverview,
     onClickThreadTitle,
@@ -971,7 +973,7 @@ let BaseMessage = (props: BaseMessageProps) => {
               ) : showMessageInfo ? (
                 <div className={`${prefixCls}-time-and-status-box`}>
                   {messageStatus && !isRtcInviteMessage && (
-                    <MessageStatus status={status} type="icon"></MessageStatus>
+                    <MessageStatus status={status} type={messageStatusType}></MessageStatus>
                   )}
                   <span className={`${prefixCls}-time`}>
                     {formatDateTime?.(time as number) || getConversationTime(time as number)}
