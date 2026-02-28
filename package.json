@@ -89,7 +89,7 @@
     "ahooks": "^3.7.5",
     "classnames": "^2.3.2",
     "core-js": "3",
-    "easemob-websdk": "^4.19.0",
+    "easemob-websdk": "^4.19.1",
     "i18next": "^22.4.14",
     "js-audio-recorder": "^1.0.7",
     "link-preview-js": "^3.0.4",

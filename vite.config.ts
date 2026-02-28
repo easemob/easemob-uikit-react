@@ -60,8 +60,8 @@ export default defineConfig({
       output: {
         // 在 UMD 构建模式下为这些外部化的依赖提供一个全局变量
         globals: {
-          react: 'react',
-          'react-dom': 'react-dom',
+          react: 'React', // UMD 格式中 React 通常作为全局变量 React（大写）暴露
+          'react-dom': 'ReactDOM',
           mobx: 'mobx',
           'mobx-react-lite': 'mobxReactLite',
         },
