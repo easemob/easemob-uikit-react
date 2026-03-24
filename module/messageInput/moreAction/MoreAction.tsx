@@ -208,6 +208,7 @@ let MoreAction = (props: MoreActionProps) => {
             }}
             key={item.content || index}
           >
+            {item.icon || <Icon type="PLUS_CIRCLE" width={18} height={18}></Icon>}
             {item.content}
           </li>
         );
