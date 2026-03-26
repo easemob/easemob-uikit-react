@@ -1,4 +1,12 @@
-import React, { useState, ReactNode, useRef, useContext } from 'react';
+import React, {
+  useState,
+  ReactNode,
+  useRef,
+  useContext,
+  ReactElement,
+  cloneElement,
+  isValidElement,
+} from 'react';
 import classNames from 'classnames';
 import './style/style.scss';
 import { ConfigContext } from '../../../component/config/index';
@@ -22,6 +30,7 @@ export interface MoreActionProps {
     content: string;
     onClick?: () => void;
     icon?: ReactNode;
+    iconSize?: number; // 图标尺寸，默认 18
   }>;
   conversation?: CurrentConversation;
   isChatThread?: boolean;
@@ -199,6 +208,16 @@ let MoreAction = (props: MoreActionProps) => {
             </li>
           );
         }
+        // 渲染自定义图标，支持 iconSize
+        const renderCustomIcon = (icon: ReactNode, iconSize: number = 18) => {
+          if (!isValidElement(icon)) return icon;
+          // 尝试注入 width 和 height 属性
+          return cloneElement(icon as ReactElement<any>, {
+            width: iconSize,
+            height: iconSize,
+          });
+        };
+
         return (
           <li
             className={themeMode == 'dark' ? 'cui-li-dark' : ''}
@@ -208,7 +227,15 @@ let MoreAction = (props: MoreActionProps) => {
             }}
             key={item.content || index}
           >
-            {item.icon || <Icon type="PLUS_CIRCLE" width={18} height={18}></Icon>}
+            {item.icon ? (
+              <span className={`${prefixCls}-custom-icon`}>
+                {renderCustomIcon(item.icon, item.iconSize)}
+              </span>
+            ) : (
+              <span className={`${prefixCls}-default-icon`}>
+                <Icon type="PLUS_CIRCLE" width={18} height={18}></Icon>
+              </span>
+            )}
             {item.content}
           </li>
         );
