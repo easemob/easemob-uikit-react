@@ -1,4 +1,4 @@
-import React, { useRef, useState, memo, useEffect, useContext } from 'react';
+import React, { useRef, useState, memo, useEffect, useContext, useCallback } from 'react';
 import classNames from 'classnames';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
@@ -8,18 +8,26 @@ import Avatar from '../../component/avatar';
 import Mask from '../../component/modal/Mast';
 import Modal from '../../component/modal';
 import rootStore from '../store/index';
-import { getCvsIdFromMessage } from '../utils';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getMessageChatType,
+  getMessageId,
+  getMessageTime,
+  getThreadId,
+} from '../utils';
 import { observer } from 'mobx-react-lite';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import defaultImg from '../assets/img_xmark.png';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
+import { getCachedImageUrl, fetchAndCacheImage } from './imageCache';
 // @ts-ignore - react-photo-view 需要先安装: pnpm install react-photo-view
 import { PhotoSlider } from 'react-photo-view';
 // @ts-ignore
 import 'react-photo-view/dist/react-photo-view.css';
 export interface ImageMessageProps extends BaseMessageProps {
-  imageMessage: ImageMessageType; // 从SDK收到的文件消息
+  imageMessage: ImageMessageType | ChatSDK.Message; // 从SDK收到的图片消息
   prefix?: string;
   style?: React.CSSProperties;
   className?: string;
@@ -34,7 +42,7 @@ export interface ImageMessageProps extends BaseMessageProps {
     visible: boolean;
     imageUrl: string;
     onClose: () => void;
-    message: ImageMessageType;
+    message: ChatSDK.Message;
   }) => React.ReactNode;
 }
 
@@ -55,17 +63,36 @@ const ImageMessage = (props: ImageMessageProps) => {
     renderImagePreview,
     ...others
   } = props;
+  const sdkMessage = message as ChatSDK.Message;
+  const uiMessage = message as ImageMessageType & Record<string, any>;
+  const body = sdkMessage.body as Record<string, any>;
+  const conversationType = getMessageChatType(sdkMessage);
+  if (!conversationType) return null;
+  const messageId = getMessageId(sdkMessage);
+  const messageTime = getMessageTime(sdkMessage);
+  const originalImageUrl =
+    body.originalImageUrl ||
+    body.bigImageUrl ||
+    body.url ||
+    uiMessage.url ||
+    uiMessage.file?.url ||
+    body.localUrl ||
+    '';
+  const thumbnailUrl = body.thumbnailUrl || uiMessage.thumb || originalImageUrl;
+  const imageWidth = body.width ?? uiMessage.width ?? 0;
+  const imageHeight = body.height ?? uiMessage.height ?? 0;
+  const filename = body.filename || uiMessage.file?.filename || '';
   let type = props.type;
-  let { bySelf, from, reactions, status } = message;
+  let { bySelf, from, reactions, status } = uiMessage;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-img', prefix);
   const context = useContext(RootContext);
-  const conversationId = getCvsIdFromMessage(message);
+  const conversationId = getCvsIdFromMessage(sdkMessage);
   const { theme } = context;
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: message.chatType,
+      conversationType,
     },
   });
   let bubbleShape = shape;
@@ -81,15 +108,12 @@ const ImageMessage = (props: ImageMessageProps) => {
     className,
   );
 
-  const [previewImageUrl, setPreviewImageUrl] = useState(
-    message.url || message?.file?.url || message.thumb,
-  );
+  const [previewImageUrl, setPreviewImageUrl] = useState(originalImageUrl || thumbnailUrl);
   const [previewVisible, setPreviewVisible] = useState(false);
 
   const canvasDataURL = (path: string, obj: { quality: number }, callback?: () => void) => {
     const img = new Image();
-    img.src = path;
-    img.setAttribute('crossOrigin', 'Anonymous');
+    img.src = getCachedImageUrl(path) || path;
     img.onload = function () {
       const that: HTMLImageElement = this as any as HTMLImageElement;
       // 默认按比例压缩
@@ -125,18 +149,36 @@ const ImageMessage = (props: ImageMessageProps) => {
   };
   const handleClickImg = (url: string) => {
     if (onClick) {
-      const preventDefault = onClick(message);
+      const preventDefault = onClick(sdkMessage);
       if (preventDefault === true) return;
     }
     setPreviewVisible(true);
     canvasDataURL(url, { quality: 1 });
     onClickImage?.(url);
   };
-  const renderImgUrl = bySelf
-    ? message.url || message?.file?.url
-    : (message.thumb as string) || message.url;
+  const renderImgUrl = bySelf ? originalImageUrl || thumbnailUrl : thumbnailUrl || originalImageUrl;
 
-  const [imgUrl, setImgUrl] = useState(renderImgUrl);
+  const [imgUrl, setImgUrl] = useState(getCachedImageUrl(renderImgUrl) || renderImgUrl);
+
+  useEffect(() => {
+    if (!renderImgUrl) return;
+    const cached = getCachedImageUrl(renderImgUrl);
+    if (cached) {
+      setImgUrl(cached);
+      return;
+    }
+    let cancelled = false;
+    fetchAndCacheImage(renderImgUrl)
+      .then(blobUrl => {
+        if (!cancelled) setImgUrl(blobUrl);
+      })
+      .catch(() => {
+        // fetch 失败时保留原始 URL，让浏览器正常加载
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [renderImgUrl]);
   // const img = useRef(
   //   <img
   //     // width={75}
@@ -151,80 +193,76 @@ const ImageMessage = (props: ImageMessageProps) => {
   //   />,
   // );
   if (typeof bySelf == 'undefined') {
-    bySelf = message.from === rootStore.client.context.userId;
+    bySelf = sdkMessage.from === getCurrentUserId(rootStore.client);
   }
 
   const handleReplyMsg = () => {
-    rootStore.messageStore.setRepliedMessage(message);
+    rootStore.messageStore.setRepliedMessage(sdkMessage);
   };
 
   const handleDeleteMsg = () => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.deleteMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
+      messageId,
     );
   };
 
   const handlePinMessage = () => {
-    //@ts-ignore
-    pinMessage(message.mid || message.id);
+    pinMessage(messageId);
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
 
     rootStore.messageStore.addReaction(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.deleteReaction(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
           rootStore.messageStore.getReactionUserList(
             {
-              chatType: message.chatType,
+              chatType: conversationType,
               conversationId: conversationId,
             },
-            // @ts-ignore
-            textMessage.mid || textMessage.id,
+            messageId,
             emojiString,
           );
         }
 
         if (item.isAddedBySelf) {
-          const index = item.userList.indexOf(rootStore.client.user);
+          const currentUserId = getCurrentUserId(rootStore.client);
+          const index = item.userList.indexOf(currentUserId);
           if (index > -1) {
             const findItem = item.userList.splice(index, 1)[0];
             item.userList.unshift(findItem);
           } else {
-            item.userList.unshift(rootStore.client.user);
+            item.userList.unshift(currentUserId);
           }
         }
       }
@@ -232,29 +270,28 @@ const ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.recallMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
-      message.isChatThread,
+      messageId,
+      uiMessage.isChatThread,
       true,
     );
   };
 
   const handleSelectMessage = () => {
     const selectable =
-      rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -265,32 +302,31 @@ const ImageMessage = (props: ImageMessageProps) => {
   };
 
   const handleResendMessage = () => {
-    rootStore.messageStore.sendMessage(message);
+    rootStore.messageStore.sendMessage(sdkMessage);
   };
 
   const select =
-    rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+    rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
       conversationId
     ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
-      changedList.push(message);
+      changedList.push(sdkMessage);
     } else {
       changedList = checkedMessages.filter(item => {
-        // @ts-ignore
-        return !(item.id == message.id || item.mid == message.id);
+        return getMessageId(item) !== messageId;
       });
     }
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -300,37 +336,32 @@ const ImageMessage = (props: ImageMessageProps) => {
     );
   };
 
-  // @ts-ignore
   const _thread =
-    // @ts-ignore
-    message.chatType == 'groupChat' &&
-    thread &&
-    // @ts-ignore
-    !message.chatThread &&
-    !message.isChatThread;
+    conversationType == 'groupChat' && thread && !uiMessage.chatThread && !uiMessage.isChatThread;
 
   // open thread panel to create thread
   const handleCreateThread = () => {
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: true,
-      originalMessage: message,
+      originalMessage: sdkMessage,
     });
     rootStore.threadStore.setThreadVisible(true);
   };
 
   // join the thread
   const handleClickThreadTitle = () => {
-    rootStore.threadStore.joinChatThread(message.chatThreadOverview?.id || '');
+    const chatThreadId = getThreadId(uiMessage.chatThreadOverview);
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: false,
-      originalMessage: message,
-      info: message.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
+      originalMessage: sdkMessage,
+      info: uiMessage.chatThreadOverview as any,
     });
     rootStore.threadStore.setThreadVisible(true);
 
-    rootStore.threadStore.getChatThreadDetail(message?.chatThreadOverview?.id || '');
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
   };
   if (!type) {
     type = bySelf ? 'primary' : 'secondly';
@@ -338,17 +369,17 @@ const ImageMessage = (props: ImageMessageProps) => {
 
   // const classSting = classNames('message-image-content', className);
   const imgRef = useRef<HTMLImageElement>(null);
-  let msgHeight = message.height;
-  if (message.width && message.height && message.width > 300) {
-    msgHeight = (message.height * 300) / message.width;
+  let msgHeight = imageHeight;
+  if (imageWidth && imageHeight && imageWidth > 300) {
+    msgHeight = (imageHeight * 300) / imageWidth;
   }
   return (
     <div>
       <BaseMessage
-        id={message.id}
+        id={messageId}
         className={bubbleClass}
-        message={message}
-        time={message.time}
+        message={sdkMessage}
+        time={messageTime}
         bubbleType={type}
         direction={bySelf ? 'rtl' : 'ltr'}
         nickName={nickName}
@@ -367,11 +398,11 @@ const ImageMessage = (props: ImageMessageProps) => {
         renderUserProfile={renderUserProfile}
         onCreateThread={handleCreateThread}
         thread={_thread}
-        chatThreadOverview={message.chatThreadOverview}
+        chatThreadOverview={uiMessage.chatThreadOverview as any}
         onClickThreadTitle={handleClickThreadTitle}
         bubbleStyle={{
           padding: 0,
-          background: message.chatThreadOverview ? undefined : 'transparent',
+          background: uiMessage.chatThreadOverview ? undefined : 'transparent',
         }}
         shape={shape}
         status={status}
@@ -381,7 +412,7 @@ const ImageMessage = (props: ImageMessageProps) => {
           {/* {img.current} */}
           <img
             ref={imgRef}
-            width={message.width == 0 ? '' : message.width}
+            width={imageWidth == 0 ? '' : imageWidth}
             height={msgHeight == 0 ? '' : msgHeight}
             onError={function () {
               //@ts-ignore
@@ -393,9 +424,8 @@ const ImageMessage = (props: ImageMessageProps) => {
               }
             }}
             src={imgUrl}
-            alt={message.file?.filename}
-            onClick={() => handleClickImg(message.url || renderImgUrl)}
-            crossOrigin="anonymous"
+            alt={filename}
+            onClick={() => handleClickImg(originalImageUrl || renderImgUrl)}
             {...imgProps}
           />
         </div>
@@ -403,14 +433,14 @@ const ImageMessage = (props: ImageMessageProps) => {
       {renderImagePreview
         ? renderImagePreview({
             visible: previewVisible,
-            imageUrl: message.url || previewImageUrl || '',
+            imageUrl: originalImageUrl || previewImageUrl || '',
             onClose: () => setPreviewVisible(false),
-            message: message,
+            message: sdkMessage,
           })
         : previewVisible && (
             <ImagePreview
               visible={previewVisible}
-              previewImageUrl={message.url || ''}
+              previewImageUrl={originalImageUrl || ''}
               onCancel={() => {
                 setPreviewVisible(false);
               }}
