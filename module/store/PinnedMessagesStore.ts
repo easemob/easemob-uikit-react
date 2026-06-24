@@ -1,10 +1,11 @@
 import { observable, action, makeObservable } from 'mobx';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { ChatType } from 'module/types/messageType';
 import { getStore } from './index';
 import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
+import { getCurrentUserId, getMessageId } from '../utils';
 
-export type PinnedMessage = ChatSDK.PinnedMessageInfo;
+export type PinnedMessage = ChatSDK.PinnedMessageSummary;
 
 export interface PinnedMessageInfo {
   list: PinnedMessage[];
@@ -83,10 +84,7 @@ class PinnedMessagesStore {
       };
       return;
     }
-    const idx = pinnedMessages.list.findIndex(
-      // @ts-ignore
-      msg => msg.message.id === messageId || msg.message.mid === messageId,
-    );
+    const idx = pinnedMessages.list.findIndex(msg => getMessageId(msg.message) === messageId);
     if (idx > -1) {
       pinnedMessages.list.splice(idx, 1);
       this.messages[conversationType][conversationId] = {
@@ -118,8 +116,7 @@ class PinnedMessagesStore {
   ) {
     const { messageStore, client } = getStore();
     const message = messageStore.message[conversationType][conversationId]?.find(msg => {
-      //@ts-ignore
-      return (msg.mid || msg.id) === messageId;
+      return getMessageId(msg) === messageId;
     });
     const list = this.messages[conversationType][conversationId]?.list || [];
     if (message && list.length > 0) {
@@ -127,10 +124,12 @@ class PinnedMessagesStore {
       this.deletePinnedMessage(conversationType, conversationId, messageId);
       // unshift the pinned message to the top
       this.unshiftPinnedMessage(conversationType, conversationId, {
-        //@ts-ignore
-        message: { ...message, id: message.mid || message.id },
-        operatorId: operatorId || client.user,
-        pinTime: pinnedTime,
+        message: message as ChatSDK.Message,
+        messageId,
+        conversationId,
+        conversationType,
+        operatorId: operatorId || getCurrentUserId(client),
+        pinnedAt: pinnedTime,
       });
     } else {
       this.clearPinnedMessages(conversationType, conversationId);
@@ -139,18 +138,23 @@ class PinnedMessagesStore {
   modifyPinnedMessage(
     conversationType: ChatType,
     conversationId: string,
-    message: ChatSDK.ModifiedEventMessage,
+    message: ChatSDK.Message,
   ) {
     const pinnedMessages = this.messages[conversationType][conversationId] || {
       list: [],
       cursor: '',
     };
-    const idx = pinnedMessages.list.findIndex(msg => msg.message.id === message.id);
+    const idx = pinnedMessages.list.findIndex(
+      msg => getMessageId(msg.message) === getMessageId(message),
+    );
     const list = pinnedMessages.list;
     if (idx > -1 && list.length > 0) {
-      list[idx].message = {
-        ...list[idx].message,
-        ...message,
+      list[idx] = {
+        ...list[idx],
+        message: {
+          ...list[idx].message,
+          ...message,
+        },
       };
     }
   }

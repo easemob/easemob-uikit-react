@@ -10,20 +10,13 @@ const useConversations = (includeEmptyConversations: boolean = false) => {
   const { client, conversationStore } = rootStore;
   const { hasConversationNext } = conversationStore;
   const getConversationList = () => {
-    return client
-      .getServerConversations({
-        pageSize,
-        cursor: cursor,
-        includeEmptyConversations: includeEmptyConversations,
+    return client.chatManager
+      .refreshSessionList({
+        needEmptySession: includeEmptyConversations,
       })
       .then(res => {
-        if (!res.data?.cursor) {
-          conversationStore.setHasConversationNext(false);
-        } else {
-          conversationStore.setHasConversationNext(true);
-          cursor = res.data?.cursor || '';
-        }
-        const conversation = res.data?.conversations
+        conversationStore.setHasConversationNext(false);
+        const conversation = res
           ?.filter(cvs => {
             const { lastMessage = {} } = cvs;
             // @ts-ignore
@@ -36,7 +29,7 @@ const useConversations = (includeEmptyConversations: boolean = false) => {
             return {
               chatType: cvs.conversationType,
               conversationId: cvs.conversationId,
-              unreadCount: cvs.unReadCount,
+              unreadCount: cvs.unreadCount,
               lastMessage: cvs.lastMessage || {},
             };
           });

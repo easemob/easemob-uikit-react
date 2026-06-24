@@ -2,6 +2,7 @@ import { useEffect, useContext, useState } from 'react';
 import { RootContext } from '../store/rootContext';
 import { CurrentConversation } from '../store/ConversationStore';
 import { ChatType } from '../types/messageType';
+import { getCurrentUserId, getMessageConversationId, getMessageId } from '../utils';
 
 const cache: { [key: string]: boolean } = {};
 
@@ -29,16 +30,16 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
     // 第一次加载过的缓存和加载更多之后的缓存
     if (
       currentChatMsgs.length > 0 &&
-      (cursor === -1 || cursor != currentChatMsgs[0].id) &&
+      (cursor === -1 || cursor != getMessageId(currentChatMsgs[0])) &&
       cache[`${cvs.chatType}${cvs.conversationId}`]
     ) {
       return setHistoryMsgs(currentChatMsgs);
     }
 
-    const userId = rootStore.client?.context?.userId;
+    const userId = getCurrentUserId(rootStore.client);
     if (!userId) return;
     const msg = historyMsgs[0] || {};
-    const cvsId = msg.chatType == 'groupChat' ? msg.to : msg.from == userId ? msg.to : msg.from;
+    const cvsId = getMessageConversationId(msg, userId);
     let useCursor = cursor;
     if (cvs.conversationId != cvsId) {
       useCursor = -1;
@@ -50,30 +51,30 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
       });
       if (message) {
         //@ts-ignore
-        useCursor = message.mid || message.id;
+        useCursor = getMessageId(message);
       }
     }
 
     setLoading(true);
     rootStore.loginState &&
-      client
+      client.chatManager
         .getHistoryMessages({
-          targetId: cvs.conversationId,
-          cursor: useCursor,
+          conversationId: cvs.conversationId,
+          cursor: useCursor === -1 ? undefined : String(useCursor),
           pageSize: pageSize,
-          chatType: cvs.chatType as 'singleChat' | 'groupChat',
+          conversationType: cvs.chatType as 'singleChat' | 'groupChat',
           searchDirection: 'up',
         })
         .then(res => {
           cache[`${cvs.chatType}${cvs.conversationId}`] = true;
-          let msgs = res.messages.reverse();
+          let msgs = [...res.items].reverse();
 
           // 连续调用，第一次没返回又调用第二次，两次结果是一样的
           if (msgs.length > 0) {
             let hasMsg = false;
             const currentChatMsgs = messageStore.message[cvs.chatType][cvs.conversationId] || [];
             currentChatMsgs.forEach(msg => {
-              if (msg.id == msgs[0].id) {
+              if (getMessageId(msg) == getMessageId(msgs[0])) {
                 hasMsg = true;
               }
             });
@@ -83,8 +84,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
             // 去重，防止接口慢，新发的消息也拉回来，导致重复
             msgs = msgs.filter((msg: any) => {
               return !currentChatMsgs?.find?.(item => {
-                //@ts-ignore
-                return item.id === msg.id || item.mid === msg.id;
+                return getMessageId(item) === getMessageId(msg);
               });
             });
             messageStore.addHistoryMsgs(cvs, msgs);
@@ -100,16 +100,11 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
   const loadMore = () => {
     const currentChatMsgs = messageStore.message[cvs.chatType][cvs.conversationId] || [];
     // @ts-ignore
-    let nextCursor = currentChatMsgs[0]?.mid || currentChatMsgs[0]?.id || '';
+    let nextCursor = getMessageId(currentChatMsgs[0]);
     // let nextCursor = historyMsgs[0]?.mid || historyMsgs[0]?.id || -1;
     const msg: any = currentChatMsgs[0] || {};
-    const userId = rootStore.client.context.userId;
-    const cvsId =
-      msg.chatType == 'groupChat' || msg.chatType == 'chatRoom'
-        ? msg.to
-        : msg.from == userId
-        ? msg.to
-        : msg.from;
+    const userId = getCurrentUserId(rootStore.client);
+    const cvsId = getMessageConversationId(msg, userId);
     if (cvs.conversationId != cvsId) {
       nextCursor = '';
     }

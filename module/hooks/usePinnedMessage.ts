@@ -2,6 +2,7 @@ import { useContext } from 'react';
 import { RootContext } from '../store/rootContext';
 import { eventHandler } from '../../eventHandler';
 import { ChatType } from '../../module/types/messageType';
+import { getCurrentUserId } from '../utils';
 
 const usePinnedMessage = (params?: {
   conversation?: {
@@ -18,18 +19,16 @@ const usePinnedMessage = (params?: {
   const { list = [], cursor = '' } = pinStore?.messages[conversationType][conversationId] || {};
   const { visible = false } = pinStore || {};
   const getPinnedMessages = () => {
-    client
-      .getServerPinnedMessages({
+    client.chatManager
+      .getPinnedMessageList({
         conversationId,
         conversationType,
-        pageSize,
-        cursor: cursor as string,
       })
       .then(res => {
-        res.data?.list.forEach(message => {
+        res.items?.forEach(message => {
           pinStore.pushPinnedMessage(conversationType, conversationId, message);
         });
-        pinStore.setPinnedMessageCursor(conversationType, conversationId, res.data?.cursor || null);
+        pinStore.setPinnedMessageCursor(conversationType, conversationId, null);
         eventHandler.dispatchSuccess('getPinnedMessages');
       })
       .catch((err: any) => {
@@ -38,7 +37,7 @@ const usePinnedMessage = (params?: {
   };
 
   const pinMessage = (messageId: string) => {
-    return client
+    return client.chatManager
       .pinMessage({
         conversationId,
         conversationType,
@@ -50,7 +49,7 @@ const usePinnedMessage = (params?: {
         pinStore.pushPinNoticeMessage({
           conversationId,
           conversationType,
-          operatorId: client.user,
+          operatorId: getCurrentUserId(client),
           noticeType: 'pin',
           time,
         });
@@ -62,7 +61,7 @@ const usePinnedMessage = (params?: {
   };
 
   const unpinMessage = (messageId: string) => {
-    return client
+    return client.chatManager
       .unpinMessage({
         conversationId,
         conversationType,
@@ -73,7 +72,7 @@ const usePinnedMessage = (params?: {
         pinStore.pushPinNoticeMessage({
           conversationId,
           conversationType,
-          operatorId: client.user,
+          operatorId: getCurrentUserId(client),
           noticeType: 'unpin',
           time: Date.now(),
         });

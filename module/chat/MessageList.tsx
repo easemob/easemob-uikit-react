@@ -22,7 +22,7 @@ import FileMessage from '../fileMessage';
 import ImageMessage, { ImagePreview } from '../imageMessage';
 import VideoMessage from '../videoMessage';
 import { RootContext } from '../store/rootContext';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { cloneElement } from '../../component/_utils/reactNode';
 import { useHistoryMessages } from '../hooks/useHistoryMsg';
 import RecalledMessage from '../recalledMessage';
@@ -36,28 +36,42 @@ import Icon from '../../component/icon';
 import UserCardMessage from '../userCardMessage';
 import { CustomMessageType } from 'module/types/messageType';
 import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
+import {
+  getCurrentUserId,
+  getCustomEvent,
+  getMessageId,
+  getMessageTime,
+  getTextContent,
+} from '../utils';
 // 消息渲染器的参数类型
+export type MessageListItem = ChatSDK.Message | NoticeMessageBody;
+
 export interface MessageRenderContext {
-  message: ChatSDK.MessageBody | NoticeMessageBody;
+  message: MessageListItem;
   style: React.CSSProperties;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   isThread?: boolean;
   messageProps?: BaseMessageProps;
   onOpenThreadPanel?: (threadId: string) => void;
-  onRtcInviteMessageClick?: (message: ChatSDK.MessageBody) => void;
+  onRtcInviteMessageClick?: (message: ChatSDK.Message) => void;
   scrollToBottom?: () => void;
 }
 
-// 消息类型
+// 消息类型 (支持 SDK4 旧名称和 SDK5 新名称)
 export type MessageType =
   | 'txt'
+  | 'text'
   | 'img'
+  | 'image'
   | 'audio'
+  | 'voice'
   | 'video'
   | 'file'
   | 'loc'
+  | 'location'
   | 'combine'
   | 'custom'
+  | 'cmd'
   | 'notice'
   | 'recall';
 
@@ -70,17 +84,17 @@ export interface MsgListProps {
   style?: React.CSSProperties;
   isThread?: boolean;
   /** @deprecated 使用 customRenderers 替代，支持按类型自定义 */
-  renderMessage?: (message: ChatSDK.MessageBody | NoticeMessageBody) => ReactNode;
+  renderMessage?: (message: MessageListItem) => ReactNode;
   /** 按消息类型自定义渲染器，只需要传入想自定义的类型即可，其他类型会使用默认渲染 */
   customRenderers?: Partial<Record<MessageType, MessageRenderer>>;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   conversation?: CurrentConversation;
   messageProps?: BaseMessageProps;
   onOpenThreadPanel?: (threadId: string) => void;
-  onRtcInviteMessageClick?: (message: ChatSDK.MessageBody) => void;
+  onRtcInviteMessageClick?: (message: ChatSDK.Message) => void;
 }
 
-const MessageScrollList = ScrollList<ChatSDK.MessageBody | NoticeMessageBody>();
+const MessageScrollList = ScrollList<MessageListItem>();
 
 let MessageList: FC<MsgListProps> = props => {
   const rootStore = useContext(RootContext).rootStore;
@@ -105,6 +119,7 @@ let MessageList: FC<MsgListProps> = props => {
   const context = useContext(RootContext);
   const { initConfig } = context;
   const { useUserInfo } = initConfig;
+  const currentUserId = getCurrentUserId(rootStore.client);
   const msgContainerRef = useRef<HTMLDivElement>(null);
   const memoProps = React.useMemo(() => {
     return {
@@ -127,11 +142,11 @@ let MessageList: FC<MsgListProps> = props => {
   };
 
   // 定义默认的消息渲染器
-  const defaultRenderers = useMemo<Record<MessageType, MessageRenderer>>(() => {
+  const defaultRenderers = useMemo<Partial<Record<MessageType, MessageRenderer>>>(() => {
     return {
       audio: ctx => (
         <AudioMessage
-          key={ctx.message.id}
+          key={getMessageId(ctx.message)}
           //@ts-ignore
           audioMessage={ctx.message as ChatSDK.AudioMsgBody}
           style={ctx.style}
@@ -142,7 +157,7 @@ let MessageList: FC<MsgListProps> = props => {
       ),
       img: ctx => (
         <ImageMessage
-          key={ctx.message.id}
+          key={getMessageId(ctx.message)}
           //@ts-ignore
           imageMessage={ctx.message}
           style={ctx.style}
@@ -168,7 +183,7 @@ let MessageList: FC<MsgListProps> = props => {
       ),
       file: ctx => (
         <FileMessage
-          key={ctx.message.id}
+          key={getMessageId(ctx.message)}
           //@ts-ignore
           fileMessage={ctx.message}
           style={ctx.style}
@@ -180,31 +195,28 @@ let MessageList: FC<MsgListProps> = props => {
       notice: ctx => <NoticeMessage noticeMessage={ctx.message as NoticeMessageBody} />,
       recall: ctx => <NoticeMessage noticeMessage={ctx.message as NoticeMessageBody} />,
       txt: ctx => {
-        const message = ctx.message as ChatSDK.TextMsgBody;
+        const message = ctx.message as ChatSDK.Message;
         // 处理 RTC 邀请消息
-        if (message?.chatType === 'groupChat') {
+        if (message?.conversationType === 'groupChat') {
           const isRtcInviteMessage = message?.ext?.msgType === 'rtcCallWithAgora';
           if (isRtcInviteMessage) {
             let msg = '';
             if (
-              // @ts-ignore
               message.ext.rtcIsEnd ||
-              // @ts-ignore
-              (!message.mid && message.ext.rtcIsEnd == undefined)
+              (!message.msgServerId && message.ext.rtcIsEnd == undefined)
             ) {
               msg = '通话已结束';
             } else {
-              // @ts-ignore
-              msg = message.msg;
+              msg = getTextContent(message);
             }
             return (
               <NoticeMessage
                 noticeMessage={
                   {
-                    id: message.id,
+                    id: getMessageId(message),
                     type: 'notice',
                     message: msg,
-                    time: message.time,
+                    time: getMessageTime(message),
                     noticeType: 'notice',
                   } as NoticeMessageBody
                 }
@@ -214,7 +226,7 @@ let MessageList: FC<MsgListProps> = props => {
         }
         return (
           <TextMessage
-            key={message.id}
+            key={getMessageId(message)}
             //@ts-ignore
             status={message.status}
             //@ts-ignore
@@ -223,7 +235,7 @@ let MessageList: FC<MsgListProps> = props => {
             thread={ctx.isThread}
             onOpenThreadPanel={ctx.onOpenThreadPanel || (() => {})}
             {...memoProps.messageProps}
-            onClick={(msg: ChatSDK.MessageBody) => {
+            onClick={msg => {
               const isRtcInviteMessage = message?.ext?.msgType === 'rtcCallWithAgora';
               isRtcInviteMessage && ctx.onRtcInviteMessageClick?.(message);
               memoProps.messageProps?.onClick?.(msg);
@@ -234,7 +246,7 @@ let MessageList: FC<MsgListProps> = props => {
       },
       combine: ctx => (
         <CombinedMessage
-          key={ctx.message.id}
+          key={getMessageId(ctx.message)}
           style={ctx.style}
           //@ts-ignore
           status={ctx.message.status}
@@ -247,7 +259,7 @@ let MessageList: FC<MsgListProps> = props => {
       ),
       video: ctx => (
         <VideoMessage
-          key={ctx.message.id}
+          key={getMessageId(ctx.message)}
           //@ts-ignore
           videoMessage={ctx.message}
           style={ctx.style}
@@ -273,24 +285,25 @@ let MessageList: FC<MsgListProps> = props => {
       ),
       loc: ctx => (
         <RecalledMessage
-          key={ctx.message.id}
+          key={getMessageId(ctx.message)}
           style={ctx.style}
           //@ts-ignore
           status={ctx.message.status}
           //@ts-ignore
           message={ctx.message}
+          textMessage={ctx.message as any}
         >
-          {(ctx.message as ChatSDK.TextMsgBody).msg}
+          {getTextContent(ctx.message)}
         </RecalledMessage>
       ),
       custom: ctx => {
         const message = ctx.message as CustomMessageType;
-        if (message.customEvent === 'userCard') {
+        if (getCustomEvent(message) === 'userCard') {
           return (
             <UserCardMessage
               renderUserProfile={ctx.renderUserProfile}
               style={ctx.style}
-              key={message.id}
+              key={getMessageId(message)}
               thread={ctx.isThread}
               customMessage={message as any}
               {...ctx.messageProps}
@@ -334,8 +347,13 @@ let MessageList: FC<MsgListProps> = props => {
       scrollToBottom,
     };
 
-    // 获取消息类型
+    // 获取消息类型，SDK5 类型名映射到渲染器 key
     let messageType = message.type as MessageType;
+    // SDK5 -> renderer key mapping
+    if (messageType === 'text') messageType = 'txt';
+    else if (messageType === 'image') messageType = 'img';
+    else if (messageType === 'voice') messageType = 'audio';
+    else if (messageType === 'location') messageType = 'loc';
 
     // 特殊处理：notice 和 recall 类型
     if (message.type === 'notice' || message.type === 'recall') {
@@ -344,8 +362,7 @@ let MessageList: FC<MsgListProps> = props => {
 
     // 特殊处理：custom 消息根据 customEvent 判断
     if (message.type === 'custom') {
-      const customMessage = message as CustomMessageType;
-      if (customMessage.customEvent === 'userCard') {
+      if (getCustomEvent(message) === 'userCard') {
         messageType = 'custom';
       }
     }
@@ -360,16 +377,16 @@ let MessageList: FC<MsgListProps> = props => {
     return null;
   };
   const lastMessage = messageData[messageData.length - 1];
-  const lastMsgId = lastMessage?.id || '';
+  const lastMsgId = getMessageId(lastMessage);
   // 每次发消息滚动到最新的一条
   useEffect(() => {
     // lastMessage?.type === 'notice' ||
     if (lastMessage?.type === 'recall') {
       return;
     }
-    const from = (lastMessage as ChatSDK.MessageBody)?.from;
+    const from = (lastMessage as ChatSDK.Message)?.from;
     if (lastMessage?.type != 'notice') {
-      if (messageStore.holding && from != '' && from != rootStore.client.user) {
+      if (messageStore.holding && from != '' && from != currentUserId) {
         return;
       }
     }
@@ -425,7 +442,7 @@ let MessageList: FC<MsgListProps> = props => {
         onScroll={handleScroll}
         renderItem={(itemData, index) => {
           return (
-            <div key={itemData.id} className={`${classString}-msgItem`}>
+            <div key={getMessageId(itemData)} className={`${classString}-msgItem`}>
               {renderMsg({ index, style: {} })}
             </div>
           );

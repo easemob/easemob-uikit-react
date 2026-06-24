@@ -1,10 +1,11 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import rootStore from '../store';
-import { TextMessage } from './index';
+import { TextMessage, TextMessageProps } from './index';
 import Icon, { IconProps } from '../../component/icon';
 import { FileObj } from '../types/messageType';
 import Provider from '../store/Provider';
+import type { ChatSDK } from '../SDK';
 
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 const description = {
@@ -124,7 +125,7 @@ export default {
 } as Meta<typeof TextMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: StoryFn<typeof TextMessage> = args => (
+const Template: StoryFn<TextMessageProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -139,21 +140,27 @@ export const Primary = {
 
   args: {
     textMessage: {
-      type: 'txt',
-      msg: 'hello',
-      id: '1234567890',
+      msgLocalId: 'text-story-local-1',
+      msgServerId: '1234567890',
+      type: 'text',
+      body: {
+        content: 'hello',
+      },
       to: 'userId',
-      chatType: 'singleChat',
+      conversationId: 'userId',
+      conversationType: 'singleChat',
       bySelf: true,
       from: 'myUserId',
-      time: Date.now(),
+      sender: { userId: 'myUserId' },
+      timestamp: Date.now(),
+      direct: 'SEND',
       status: 'sent',
       modifiedInfo: {
         operatorId: '',
         operationCount: 0,
         operationTime: 0,
       },
-    },
+    } as unknown as ChatSDK.Message,
   },
 };
 
@@ -162,12 +169,17 @@ export const TextMessageWithReply = {
 
   args: {
     textMessage: {
-      id: '1189528432543795984',
-      type: 'txt',
-      chatType: 'singleChat',
-      msg: 'asd',
+      msgLocalId: 'text-story-local-2',
+      msgServerId: '1189528432543795984',
+      type: 'text',
+      conversationType: 'singleChat',
+      conversationId: 'zd4',
+      body: {
+        content: 'asd',
+      },
       to: 'zd4',
       from: 'zd2',
+      sender: { userId: 'zd2' },
       ext: {
         em_at_list: [],
         msgQuote: {
@@ -177,15 +189,16 @@ export const TextMessageWithReply = {
           msgType: 'txt',
         },
       },
-      time: 1694523470608,
+      timestamp: 1694523470608,
       onlineState: 3,
       status: 'sent',
+      direct: 'RECEIVE',
       modifiedInfo: {
         operatorId: '',
         operationCount: 0,
         operationTime: 0,
       },
       bySelf: false,
-    },
+    } as unknown as ChatSDK.Message,
   },
 };

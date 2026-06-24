@@ -15,7 +15,6 @@ const description = {
     className: 'Class name',
     style: 'Style',
     chatroomId: 'Chatroom id',
-    reportType: 'Customize report content, such as {"reportType": "report reason"}',
     headerProps: 'props for Header',
     messageListProps: 'props for MessageList',
     messageInputProps: 'props for MessageInput',
@@ -26,7 +25,7 @@ const description = {
     renderBroadcast: 'Render broadcast',
     renderEmpty: 'Render empty',
     messageActionConfig:
-      'Message action config, example: { recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "Custom menu item", onClick: () => {}, visible: true }] }',
+      'Message action config, example: { recall: true, translate: true, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "Custom menu item", onClick: () => {}, visible: true }] }',
     customMessageRenderers:
       'Custom message renderers, example: { txt: ctx => <ChatroomMessage message={ctx.message} /> }',
     showUnreadCount: 'Show unread count, default is false when message list is not at the bottom',
@@ -37,7 +36,6 @@ const description = {
     className: '组件类名',
     style: '组件样式',
     chatroomId: '聊天室 id',
-    reportType: '自定义举报内容, 如 {"reportType": "举报原因"}',
     headerProps: 'Header 组件的参数',
     messageListProps: 'MessageList 组件的参数',
     messageInputProps: 'MessageInput 组件的参数',
@@ -48,7 +46,7 @@ const description = {
     renderBroadcast: '渲染广播',
     renderEmpty: '渲染空',
     messageActionConfig:
-      '消息操作菜单配置, 示例：{ recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "自定义菜单项", onClick: () => {}, visible: true }] }',
+      '消息操作菜单配置, 示例：{ recall: true, translate: true, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "自定义菜单项", onClick: () => {}, visible: true }] }',
     customMessageRenderers:
       '自定义消息渲染器，示例：{ txt: ctx => <ChatroomMessage message={ctx.message} /> }',
     showUnreadCount: '消息列表不在最下面时，是否显示未读数, 默认不显示',
@@ -84,10 +82,6 @@ export default {
       control: 'text',
       description: description[lang].chatroomId,
       type: 'string',
-    },
-    reportType: {
-      control: 'object',
-      description: description[lang].reportType,
     },
     headerProps: {
       control: 'object',

@@ -6,10 +6,9 @@ exports[`ui/Checkbox > should do a snapshot test of the checked Checkbox DOM 1`]
     class="cui-checkbox-wrapper"
   >
     <span
-      class="cui-checkbox"
+      class="cui-checkbox cui-checkbox-round"
     >
       <input
-        checked=""
         type="checkbox"
       />
       <span
@@ -26,7 +25,7 @@ exports[`ui/Checkbox > should do a snapshot test of the default Checkbox DOM 1`]
     class="cui-checkbox-wrapper"
   >
     <span
-      class="cui-checkbox"
+      class="cui-checkbox cui-checkbox-round"
     >
       <input
         type="checkbox"

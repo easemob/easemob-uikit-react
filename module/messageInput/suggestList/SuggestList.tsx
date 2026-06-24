@@ -4,7 +4,12 @@ import { ConfigContext } from '../../../component/config/index';
 import { getStore } from '../../store';
 import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';
-import { getGroupItemFromGroupsById, getGroupMemberNickName, getAppUserInfo } from '../../utils';
+import {
+  getCurrentUserId,
+  getGroupItemFromGroupsById,
+  getGroupMemberNickName,
+  getAppUserInfo,
+} from '../../utils';
 import Avatar from '../../../component/avatar';
 import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
@@ -79,12 +84,13 @@ const SuggestList: FC<SuggestListProps> = props => {
     },
   } as any;
 
+  const currentUserId = getCurrentUserId(client);
   const filteredUsers = useMemo(() => {
     return searchUser(
-      [AT_ALL_ITEM, ...memberList].filter(user => user.userId !== client.user),
+      [AT_ALL_ITEM, ...memberList].filter(user => user.userId !== currentUserId),
       props.queryString,
     );
-  }, [memberList, props.queryString]);
+  }, [memberList, props.queryString, currentUserId]);
   usersRef.current = filteredUsers;
 
   useEffect(() => {

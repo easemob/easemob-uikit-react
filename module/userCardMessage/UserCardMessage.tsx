@@ -9,15 +9,23 @@ import Mask from '../../component/modal/Mast';
 import Modal from '../../component/modal';
 import Icon from '../../component/icon';
 import rootStore from '../store/index';
-import { getCvsIdFromMessage } from '../utils';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getCustomParams,
+  getMessageChatType,
+  getMessageId,
+  getMessageTime,
+  getThreadId,
+} from '../utils';
 import { observer } from 'mobx-react-lite';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import Button from '../../component/button';
 import { useTranslation } from 'react-i18next';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface UserCardMessageProps extends BaseMessageProps {
-  customMessage: CustomMessageType; // 从SDK收到的文件消息
+  customMessage: CustomMessageType | ChatSDK.Message; // 从SDK收到的自定义名片消息
   prefix?: string;
   style?: React.CSSProperties;
   className?: string;
@@ -42,23 +50,29 @@ let UserCardMessage = (props: UserCardMessageProps) => {
     onUserIdCopied,
     ...others
   } = props;
-  let { bySelf, from, reactions, status } = message;
+  const sdkMessage = message as ChatSDK.Message;
+  const uiMessage = message as CustomMessageType & Record<string, any>;
+  const conversationType = getMessageChatType(sdkMessage);
+  if (!conversationType) return null;
+  const messageId = getMessageId(sdkMessage);
+  const messageTime = getMessageTime(sdkMessage);
+  let { bySelf, from, reactions, status } = uiMessage;
 
   const { conversationStore, addressStore } = rootStore;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-card', prefix);
   const { t } = useTranslation();
-  const userInfo = message.customExts;
+  const userInfo = getCustomParams(sdkMessage) as Record<string, any>;
   const { nickname, uid: userId, avatar } = userInfo;
   const { pinMessage } = usePinnedMessage({
     conversation: {
-      conversationId: getCvsIdFromMessage(message),
-      conversationType: message.chatType,
+      conversationId: getCvsIdFromMessage(sdkMessage),
+      conversationType,
     },
   });
 
   if (typeof bySelf == 'undefined') {
-    bySelf = from === rootStore.client.context.userId;
+    bySelf = from === getCurrentUserId(rootStore.client);
   }
   let type = props.type;
   if (!type) {
@@ -74,102 +88,97 @@ let UserCardMessage = (props: UserCardMessageProps) => {
   );
 
   const handleReplyMsg = () => {
-    rootStore.messageStore.setRepliedMessage(message);
+    rootStore.messageStore.setRepliedMessage(sdkMessage);
   };
   const handleDeleteMsg = () => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
 
     rootStore.messageStore.deleteMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
+      messageId,
     );
   };
   const handlePinMessage = () => {
-    //@ts-ignore
-    pinMessage(message.mid || message.id);
+    pinMessage(messageId);
   };
   const handleClickEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
 
     rootStore.messageStore.addReaction(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
+      messageId,
       emojiString,
     );
   };
   const handleDeleteEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.deleteReaction(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
+      messageId,
       emojiString,
     );
   };
   const handleShowReactionUserList = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
           rootStore.messageStore.getReactionUserList(
             {
-              chatType: message.chatType,
+              chatType: conversationType,
               conversationId: conversationId,
             },
-            // @ts-ignore
-            message.mid || message.id,
+            messageId,
             emojiString,
           );
         }
 
         if (item.isAddedBySelf) {
-          const index = item.userList.indexOf(rootStore.client.user);
+          const currentUserId = getCurrentUserId(rootStore.client);
+          const index = item.userList.indexOf(currentUserId);
           if (index > -1) {
             const findItem = item.userList.splice(index, 1)[0];
             item.userList.unshift(findItem);
           } else {
-            item.userList.unshift(rootStore.client.user);
+            item.userList.unshift(currentUserId);
           }
         }
       }
     });
   };
   const handleRecallMessage = () => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.recallMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      message.mid || message.id,
-      message.isChatThread,
+      messageId,
+      uiMessage.isChatThread,
       true,
     );
   };
 
   const handleSelectMessage = () => {
-    const conversationId = getCvsIdFromMessage(message);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     const selectable =
-      rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -179,33 +188,32 @@ let UserCardMessage = (props: UserCardMessageProps) => {
     );
   };
   const handleResendMessage = () => {
-    rootStore.messageStore.sendMessage(message);
+    rootStore.messageStore.sendMessage(sdkMessage);
   };
 
-  const conversationId = getCvsIdFromMessage(message);
+  const conversationId = getCvsIdFromMessage(sdkMessage);
   const select =
-    rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+    rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
       conversationId
     ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[message.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
-      changedList.push(message);
+      changedList.push(sdkMessage);
     } else {
       changedList = checkedMessages.filter(item => {
-        // @ts-ignore
-        return !(item.id == message.id || item.mid == message.id);
+        return getMessageId(item) !== messageId;
       });
     }
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: message.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -218,30 +226,25 @@ let UserCardMessage = (props: UserCardMessageProps) => {
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: true,
-      originalMessage: message,
+      originalMessage: sdkMessage,
     });
     rootStore.threadStore.setThreadVisible(true);
   };
-  // @ts-ignore
   const _thread =
-    // @ts-ignore
-    message.chatType == 'groupChat' &&
-    thread &&
-    // @ts-ignore
-    !message.chatThread &&
-    !message.isChatThread;
+    conversationType == 'groupChat' && thread && !uiMessage.chatThread && !uiMessage.isChatThread;
 
   const handleClickThreadTitle = () => {
-    rootStore.threadStore.joinChatThread(message.chatThreadOverview?.id || '');
+    const chatThreadId = getThreadId(uiMessage.chatThreadOverview);
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: false,
-      originalMessage: message,
-      info: message.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
+      originalMessage: sdkMessage,
+      info: uiMessage.chatThreadOverview as any,
     });
     rootStore.threadStore.setThreadVisible(true);
 
-    rootStore.threadStore.getChatThreadDetail(message?.chatThreadOverview?.id || '');
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
   };
   const handleCopy = () => {
     const textArea = document.createElement('textarea');
@@ -270,12 +273,10 @@ let UserCardMessage = (props: UserCardMessageProps) => {
       conversationId: userId,
       name: nickname,
       lastMessage: {
-        time: Date.now(),
-        type: 'txt',
-        msg: '',
-        id: '',
-        chatType: 'singleChat',
-        to: userId,
+        msgId: '',
+        type: 'text',
+        body: { content: '' },
+        timestamp: Date.now(),
       },
       unreadCount: 0,
     });
@@ -294,10 +295,10 @@ let UserCardMessage = (props: UserCardMessageProps) => {
   return (
     <div>
       <BaseMessage
-        time={message.time}
-        id={message.id}
+        time={messageTime}
+        id={messageId}
         className={bubbleClass}
-        message={message}
+        message={sdkMessage}
         bubbleType={type}
         direction={bySelf ? 'rtl' : 'ltr'}
         nickName={nickName}
@@ -316,7 +317,7 @@ let UserCardMessage = (props: UserCardMessageProps) => {
         renderUserProfile={renderUserProfile}
         onCreateThread={handleCreateThread}
         thread={_thread}
-        chatThreadOverview={message.chatThreadOverview}
+        chatThreadOverview={uiMessage.chatThreadOverview as any}
         onClickThreadTitle={handleClickThreadTitle}
         // bubbleStyle={{ padding: '0' }}
         status={status}
@@ -371,7 +372,7 @@ let UserCardMessage = (props: UserCardMessageProps) => {
               <Icon type="BUBBLE_FILL" width={24} height={24}></Icon>
               {t('message')}
             </Button>
-          ) : userId == rootStore.client.user ? null : (
+          ) : userId == getCurrentUserId(rootStore.client) ? null : (
             <Button
               type="primary"
               className={`${prefixCls}-content-btn`}

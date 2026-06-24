@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
-import { getConversationTime, getMsgSenderNickname } from '../utils';
+import { getConversationTime, getCurrentUserId, getMsgSenderNickname } from '../utils';
 import './style/style.scss';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
@@ -48,7 +48,7 @@ const NoticeMessage = (props: NoticeMessageProps) => {
   const { noticeMessage, style = {} } = props;
   let { message, time } = noticeMessage;
   const classString = classNames(prefixCls, className);
-  const myUserId = rootStore.client.user;
+  const myUserId = getCurrentUserId(rootStore.client);
   switch (noticeMessage.noticeType) {
     case 'recall':
       if (myUserId == noticeMessage.ext?.from) {

@@ -14,23 +14,14 @@ import Avatar from '../../component/avatar';
 import Icon from '../../component/icon';
 import { MessageList } from '../../module/chat/MessageList';
 import MessageEditor from '../../module/messageInput';
-import TextMessage from '../../module/textMessage';
+import { TextMessage } from '../../module/textMessage';
 import './index.css';
-import { useSDK } from '../../module/hooks/useSDK';
+import type { ChatSDK } from '../../module/SDK';
 
 const ChatApp = () => {
   const client = useClient();
-  const { ChatSDK } = useSDK();
   useEffect(() => {
-    client &&
-      client
-        .open({
-          user: '13681272809',
-          pwd: '272809',
-        })
-        .then(res => {
-          console.log('获取token成功', res, rootStore.client);
-        });
+    console.log('SDK5 client ready', client);
   }, [client]);
 
   // create a conversation
@@ -38,12 +29,12 @@ const ChatApp = () => {
     rootStore.conversationStore.setCurrentCvs({
       chatType: 'singleChat',
       conversationId: '13681272808',
-      lastMessage: {},
+      unreadCount: 0,
     });
   };
 
   // render custom text message
-  const renderTxtMsg = msg => {
+  const renderTxtMsg = (msg: ChatSDK.Message) => {
     return (
       <TextMessage
         bubbleStyle={{ background: 'hsl(135.79deg 88.79% 36.46%)' }}
@@ -54,8 +45,8 @@ const ChatApp = () => {
       ></TextMessage>
     );
   };
-  const renderMessage = msg => {
-    if (msg.type === 'txt') {
+  const renderMessage = (msg: ChatSDK.Message) => {
+    if (msg.type === 'text') {
       return renderTxtMsg(msg);
     } else if (msg.type === 'custom') {
       return renderCustomMsg(msg);
@@ -80,12 +71,11 @@ const ChatApp = () => {
   // Implement Sending Custom Messages
 
   const sendCustomMessage = () => {
-    const customMsg = ChatSDK.message.create({
-      type: 'custom',
-      to: '13681272808', // Need to be the user ID of the current conversation
-      chatType: 'singleChat',
-      customEvent: 'CARD',
-      customExts: {
+    const customMsg = client.chatManager.createCustomMessage({
+      conversationId: '13681272808',
+      conversationType: 'singleChat',
+      event: 'CARD',
+      params: {
         id: 'userId3',
       },
     });
@@ -94,11 +84,12 @@ const ChatApp = () => {
     });
   };
 
-  const renderCustomMsg = msg => {
+  const renderCustomMsg = (msg: ChatSDK.Message) => {
+    const params = msg.type === 'custom' ? msg.body.params || {} : {};
     return (
       <div>
         <h1>Business Card </h1>
-        <div>{msg.customExts.id}</div>
+        <div>{params.id}</div>
       </div>
     );
   };

@@ -12,8 +12,13 @@ import { RootContext } from '../store/rootContext';
 
 import ScrollList from '../../component/scrollList';
 import { useTranslation } from 'react-i18next';
-import { ChatSDK } from 'module/SDK';
-import { getConversationTime, getMsgSenderNickname } from '../utils/index';
+import type { ChatSDK } from 'module/SDK';
+import {
+  getConversationTime,
+  getMsgSenderNickname,
+  getSnippetText,
+  getThreadId,
+} from '../utils/index';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { observer } from 'mobx-react-lite';
 import i18next from 'i18next';
@@ -26,7 +31,7 @@ export interface ThreadListProps {
   onClear?: () => void;
   headerContent?: React.ReactNode;
   onClose?: () => void;
-  onClickItem?: (data: ChatSDK.ChatThreadOverview) => void;
+  onClickItem?: (data: ChatSDK.ChatThreadSummary) => void;
   renderHeader?: () => React.ReactNode;
 }
 const ThreadList = (props: ThreadListProps) => {
@@ -46,7 +51,7 @@ const ThreadList = (props: ThreadListProps) => {
     },
     className,
   );
-  const ThreadScrollList = ScrollList<ChatSDK.ChatThreadOverview>();
+  const ThreadScrollList = ScrollList<ChatSDK.ChatThreadSummary>();
   const [search, setSearch] = useState(false);
   const handleClose = () => {
     props.onClose?.();
@@ -93,12 +98,13 @@ const ThreadList = (props: ThreadListProps) => {
   const threadList = rootStore.threadStore.threadList[CVS.conversationId] || [];
   const [renderThreadList, setRenderThreadList] = useState(threadList);
 
-  const openThread = (item: ChatSDK.ChatThreadOverview) => {
+  const openThread = (item: ChatSDK.ChatThreadSummary) => {
     onClickItem?.(item);
     // close thread list modal
-    rootStore.threadStore.joinChatThread(item.id || '');
+    const chatThreadId = getThreadId(item);
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setThreadVisible(true);
-    rootStore.threadStore.getChatThreadDetail(item.id);
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
   };
   const pagingGetThreadList = () => {
     if (cursor === null) return;
@@ -111,13 +117,12 @@ const ThreadList = (props: ThreadListProps) => {
     });
   };
   const threadListContent = () => {
-    const renderItem = (item: ChatSDK.ChatThreadOverview, index: number) => {
+    const renderItem = (item: ChatSDK.ChatThreadSummary, index: number) => {
       let lastMsg = '';
-      // @ts-ignore
       switch (item.lastMessage?.type) {
+        case 'text':
         case 'txt':
-          // @ts-ignore
-          lastMsg = item.lastMessage?.msg;
+          lastMsg = getSnippetText(item.lastMessage);
           break;
         case 'img':
           lastMsg = `/${t('image')}/`;
@@ -138,7 +143,6 @@ const ThreadList = (props: ThreadListProps) => {
           lastMsg = `/${t('combine')}/`;
           break;
         default:
-          // @ts-ignore
           console.warn('unexpected message type:', item.lastMessage?.type);
           break;
       }
@@ -152,11 +156,9 @@ const ThreadList = (props: ThreadListProps) => {
           }}
         >
           <span className={`${prefixCls}-item-name`}> {item.name}</span>
-          {(item.lastMessage as any)?.type && (
+          {item.lastMessage?.type && (
             <div className={`${prefixCls}-item-msgBox`}>
-              <Avatar size={12} src={appUsersInfo?.[item.lastMessage?.from]?.avatarurl}>
-                {appUsersInfo?.[item.lastMessage?.from]?.nickname || item.lastMessage?.from}
-              </Avatar>
+              <Avatar size={12}>{item.lastMessage.msgId}</Avatar>
               <div className={`${prefixCls}-item-msgBox-name`}>
                 {getMsgSenderNickname(
                   item.lastMessage as unknown as BaseMessageType,
@@ -164,7 +166,7 @@ const ThreadList = (props: ThreadListProps) => {
                 )}
               </div>
               <div>{lastMsg}</div>
-              <div>{getConversationTime((item.lastMessage as any)?.time)}</div>
+              <div>{getConversationTime(item.lastMessage.timestamp)}</div>
             </div>
           )}
         </div>

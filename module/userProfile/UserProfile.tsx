@@ -5,7 +5,7 @@ import { ConfigContext } from '../../component/config/index';
 import Avatar from '../../component/avatar';
 import { getStore } from '../store/index';
 import { observer } from 'mobx-react-lite';
-import { getUsersInfo } from '../utils/index';
+import { getCurrentUserId, getUsersInfo } from '../utils/index';
 import Button from '../../component/button';
 import Icon from '../../component/icon';
 import rootStore from '../store/index';
@@ -48,12 +48,10 @@ const UserProfile = (props: UserProfileProps) => {
       conversationId: userId,
       name: nickname,
       lastMessage: {
-        time: Date.now(),
-        type: 'txt',
-        msg: '',
-        id: '',
-        chatType: 'singleChat',
-        to: userId,
+        msgId: '',
+        type: 'text',
+        body: { content: '' },
+        timestamp: Date.now(),
       },
       unreadCount: 0,
     });
@@ -87,7 +85,7 @@ const UserProfile = (props: UserProfileProps) => {
             {t('message')}
           </div>
         </Button>
-      ) : userId == rootStore.client.user ? null : (
+      ) : userId == getCurrentUserId(rootStore.client) ? null : (
         <Button
           type="primary"
           className={`${prefixCls}-action-btn`}

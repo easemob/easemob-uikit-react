@@ -14,7 +14,7 @@ import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { observer } from 'mobx-react-lite';
 import UserItem, { UserInfoData, UserItemProps } from '../../component/userItem';
 import rootStore from '../store/index';
-import { checkCharacter } from '../utils/index';
+import { checkCharacter, getCurrentUserId } from '../utils/index';
 import UserSelect, { UserSelectInfo } from '../userSelect';
 import Button from '../../component/button';
 import { useTranslation } from 'react-i18next';
@@ -77,7 +77,8 @@ const GroupMember: FC<GroupMemberProps> = props => {
     className,
   );
 
-  const groupData = rootStore.addressStore.groups.find(item => item.groupid == groupId);
+  const currentUserId = getCurrentUserId(rootStore.client);
+  const groupData = rootStore.addressStore.groups.find(item => item.groupId == groupId);
   const chatbotIds = groupMembers.filter((item: any) => {
     if (item.userId.indexOf('chatbot_') > -1) {
       return {
@@ -94,12 +95,10 @@ const GroupMember: FC<GroupMemberProps> = props => {
       conversationId: userId,
       name: name,
       lastMessage: {
-        time: Date.now(),
-        type: 'txt',
-        msg: '',
-        id: '',
-        chatType: 'singleChat',
-        to: userId,
+        msgId: '',
+        type: 'text',
+        body: { content: '' },
+        timestamp: Date.now(),
       },
       unreadCount: 0,
     });
@@ -295,7 +294,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
               onCheckboxChange={handleSelect}
               moreAction={
                 moreAction ||
-                (item.userId == rootStore.client.user
+                (item.userId == currentUserId
                   ? undefined
                   : {
                       visible: true,
@@ -391,7 +390,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
             ? groupMembers
             : [
                 {
-                  userId: rootStore.client.user,
+                  userId: currentUserId,
                 },
                 ...chatbotIds,
               ]

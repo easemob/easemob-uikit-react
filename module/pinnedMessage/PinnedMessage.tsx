@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { useTranslation } from 'react-i18next';
 import Header from '../header';
 import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
@@ -28,7 +28,12 @@ import type {
   VideoMessageType,
   ChatType,
 } from '../types/messageType';
-import { getConversationTime, getMsgSenderNickname } from '../utils/index';
+import {
+  getConversationTime,
+  getCustomEvent,
+  getMessageId,
+  getMsgSenderNickname,
+} from '../utils/index';
 export interface PinnedMessageProps {
   prefix?: string;
   className?: string;
@@ -43,7 +48,7 @@ const RenderMessage = (props: {
   const { message, bubbleClass } = props;
   const msg = {
     ...message,
-    id: `pin-${message.id}`,
+    id: `pin-${getMessageId(message)}`,
   };
   msg.bySelf = false;
   let content = null;
@@ -63,7 +68,7 @@ const RenderMessage = (props: {
           messageStatus={false}
           key={msg.id}
           bubbleType="none"
-          textMessage={msg as TextMessageType}
+          textMessage={msg as unknown as TextMessageType}
           direction="ltr"
           style={{ display: 'block' }}
           thread={false}
@@ -78,7 +83,7 @@ const RenderMessage = (props: {
           bubbleClass={bubbleClass}
           select={false}
           status="default"
-          imageMessage={msg as ImageMessageType}
+          imageMessage={msg as unknown as ImageMessageType}
           direction="ltr"
           bubbleStyle={{ padding: 0 }}
           key={msg.id}
@@ -97,7 +102,7 @@ const RenderMessage = (props: {
           select={false}
           status="default"
           key={msg.id}
-          fileMessage={msg as FileMessageType}
+          fileMessage={msg as unknown as FileMessageType}
           direction="ltr"
           type="secondly"
           reaction={false}
@@ -115,7 +120,7 @@ const RenderMessage = (props: {
           select={false}
           status="default"
           key={msg.id}
-          audioMessage={msg as AudioMessageType}
+          audioMessage={msg as unknown as AudioMessageType}
           type="secondly"
           reaction={false}
           customAction={{ visible: false }}
@@ -133,7 +138,7 @@ const RenderMessage = (props: {
           select={false}
           key={msg.id}
           status="default"
-          videoMessage={msg as VideoMessageType & ChatSDK.VideoMsgBody}
+          videoMessage={msg as unknown as VideoMessageType}
           direction="ltr"
           type="secondly"
           reaction={false}
@@ -143,7 +148,7 @@ const RenderMessage = (props: {
       );
       break;
     case 'custom':
-      if (msg.customEvent == 'userCard') {
+      if (getCustomEvent(msg) == 'userCard') {
         content = (
           <UserCardMessage
             showAvatar={false}
@@ -152,7 +157,7 @@ const RenderMessage = (props: {
             select={false}
             status="default"
             key={msg.id}
-            customMessage={msg as CustomMessageType}
+            customMessage={msg as unknown as CustomMessageType}
             direction="ltr"
             type="secondly"
             reaction={false}
@@ -240,7 +245,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
 
   const scrollToMsg = (messageId: string) => {
     const localMsg = rootStore.messageStore.message.byId.get(messageId);
-    if (localMsg) messageId = localMsg.id;
+    if (localMsg) messageId = getMessageId(localMsg);
     const anchorElement = document.getElementById(messageId);
     if (!anchorElement) {
       const MESSAGE_NOT_FOUND = 51;
@@ -277,7 +282,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
         {list.length > 0 ? (
           list.map(item => {
             return (
-              <div className={`${prefixCls}-item-wrap`} key={item.message.id}>
+              <div className={`${prefixCls}-item-wrap`} key={getMessageId(item.message)}>
                 <div className={`${prefixCls}-info-wrap`}>
                   <div className={`${prefixCls}-info`}>{`${getMsgSenderNickname({
                     ...item.message,
@@ -285,7 +290,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
                   } as BaseMessageType)} ${t('pinned')} ${getMsgSenderNickname(
                     item.message as BaseMessageType,
                   )}${t("'s message")}`}</div>
-                  <div className={`${prefixCls}-time`}>{getConversationTime(item.pinTime)}</div>
+                  <div className={`${prefixCls}-time`}>{getConversationTime(item.pinnedAt)}</div>
                 </div>
                 <div className={`${prefixCls}-opt-wrap`}>
                   <RenderMessage
@@ -299,7 +304,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
                         className={`${prefixCls}-opt-icon`}
                         style={{ marginRight: '4px' }}
                         onClick={() => {
-                          scrollToMsg(item.message.id);
+                          scrollToMsg(getMessageId(item.message));
                         }}
                       ></Icon>
                     </span>
@@ -307,7 +312,7 @@ const PinnedMessage = (props: PinnedMessageProps) => {
                       <Icon
                         type="UNPIN"
                         onClick={() => {
-                          setUnpinMessageId(item.message.id);
+                          setUnpinMessageId(getMessageId(item.message));
                           setVisible(true);
                         }}
                         className={`${prefixCls}-opt-icon`}

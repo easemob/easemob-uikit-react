@@ -134,7 +134,7 @@ export default {
   },
 } as Meta<typeof Header>;
 
-const Template: StoryFn<typeof Header> = args => <Header {...args} />;
+const Template: StoryFn<HeaderProps> = args => <Header {...args} />;
 
 export const Default = {
   render: Template,

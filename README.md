@@ -163,15 +163,15 @@ const ChatApp = () => {
   useEffect(() => {
     client &&
       client
-        .open({
-          user: '',
-          accessToken: '',
+        .login({
+          userId: '',
+          token: '',
         })
         .then(res => {
-          console.log('get token success', res);
+          console.log('login success', res);
           // create a conversation
           rootStore.conversationStore.addConversation({
-            chatType: '', // 'singleChat' || 'groupChat'
+            chatType: 'singleChat', // 'singleChat' || 'groupChat'
             conversationId: '', // target user id or group id
             name: '', // target user nickname or group name
           });

@@ -1,7 +1,37 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
-import AudioMessage from './index';
+import AudioMessage, { AudioMessageProps } from './index';
+
+const audioMessage = {
+  msgLocalId: 'audio-local-1',
+  msgServerId: 'audio-server-1',
+  type: 'voice',
+  body: {
+    url: 'https://example.com/audio.wav',
+    filename: 'audio.wav',
+    filetype: 'audio',
+    duration: 3,
+    fileLength: 1024,
+  },
+  conversationId: 'userId',
+  conversationType: 'singleChat',
+  timestamp: Date.now(),
+  status: 'read',
+  direct: 'SEND',
+  from: 'myId',
+  to: 'userId',
+  sender: { userId: 'myId' },
+  bySelf: true,
+  file: {
+    url: 'https://example.com/audio.wav',
+    filename: 'audio.wav',
+    filetype: 'audio',
+    data: {} as File,
+    length: 3,
+    duration: 3,
+  },
+} as AudioMessageProps['audioMessage'];
 
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 
@@ -74,7 +104,7 @@ export default {
 } as Meta<typeof AudioMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: StoryFn<typeof AudioMessage> = args => (
+const Template: StoryFn<AudioMessageProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -84,7 +114,7 @@ const Template: StoryFn<typeof AudioMessage> = args => (
   </Provider>
 );
 
-const DarkTemplate: StoryFn<typeof AudioMessage> = args => (
+const DarkTemplate: StoryFn<AudioMessageProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -102,27 +132,7 @@ export const Primary = {
 
   args: {
     type: 'primary',
-    audioMessage: {
-      type: 'audio',
-      filename: 'audio.wav',
-      length: 3,
-      file_length: 1024,
-      chatType: 'singleChat',
-      time: Date.now(),
-      status: 'read',
-      bySelf: true,
-      file: {
-        url: 'hppt://example',
-        filename: 'string',
-        filetype: 'audio',
-        data: {} as unknown as File,
-        length: 3,
-        duration: 3,
-      },
-      id: '12345678901',
-      to: 'userId',
-      from: 'myId',
-    },
+    audioMessage,
   },
 };
 
@@ -133,25 +143,9 @@ export const Secondly = {
     type: 'secondly',
     direction: 'ltr',
     audioMessage: {
-      type: 'audio',
-      filename: 'audio.wav',
-      length: 3,
-      file_length: 1024,
-      chatType: 'singleChat',
-      time: Date.now(),
-      status: 'read',
+      ...audioMessage,
+      direct: 'RECEIVE',
       bySelf: false,
-      file: {
-        url: 'hppt://example',
-        filename: 'string',
-        filetype: 'audio',
-        data: {} as unknown as File,
-        length: 3,
-        duration: 3,
-      },
-      id: '12345678901',
-      to: 'userId',
-      from: 'myId',
     },
   },
 };

@@ -4,12 +4,19 @@ import { ConfigContext } from '../../component/config/index';
 import MessageStatus, { MessageStatusProps } from '../messageStatus';
 import './style/style.scss';
 import { cloneElement } from '../../component/_utils/reactNode';
-import { getConversationTime, getGroupItemFromGroupsById, getMsgSenderNickname } from '../utils';
+import {
+  getConversationTime,
+  getCurrentUserId,
+  getGroupItemFromGroupsById,
+  getMessageId,
+  getMessageTime,
+  getMsgSenderNickname,
+} from '../utils';
 import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
 import Icon from '../../component/icon';
 import { RepliedMsg, CustomMessageQuoteRenderer } from '../repliedMessage';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { useTranslation } from 'react-i18next';
 import { EmojiKeyBoard, EmojiKeyBoardRef } from '../reaction';
 import { ReactionMessage, ReactionData, ReactionMessageProps } from '../reaction';
@@ -32,10 +39,32 @@ interface CustomAction {
   }[];
 }
 
-export type BaseMessageType = Exclude<
-  ChatSDK.MessageBody,
-  ChatSDK.DeliveryMsgBody | ChatSDK.ReadMsgBody | ChatSDK.ChannelMsgBody
->;
+type BaseSdkMessageFields = Omit<Partial<ChatSDK.Message>, 'body' | 'status' | 'type'>;
+
+export type BaseMessageType = BaseSdkMessageFields & {
+  msgLocalId?: string;
+  msgServerId?: string;
+  from?: string;
+  to?: string;
+  sender?: ChatSDK.Sender;
+  conversationId?: string;
+  conversationType?: ChatSDK.ChatConversationType;
+  type?: string;
+  body?: Record<string, any>;
+  ext?: Record<string, any>;
+  status?: string;
+  timestamp?: number;
+  bySelf?: boolean;
+  isChatThread?: boolean;
+  chatThread?: {
+    parentId?: string;
+  };
+  chatThreadOverview?: ChatSDK.ChatThreadSummary | Record<string, any>;
+  chatType?: ChatSDK.ChatConversationType;
+  id?: string;
+  mid?: string;
+  msg?: string;
+};
 
 export interface renderUserProfileProps {
   userId: string;
@@ -61,7 +90,7 @@ export interface BaseMessageProps {
   style?: React.CSSProperties;
   time?: number;
   hasRepliedMsg?: boolean;
-  repliedMessage?: ChatSDK.MessageBody;
+  repliedMessage?: BaseMessageType;
   customAction?: CustomAction; // whether show more
   reaction?: boolean; // whether show reaction
   select?: boolean; // whether show message checkbox
@@ -79,41 +108,41 @@ export interface BaseMessageProps {
   onSelectMessage?: () => void; // message select action handler
   onResendMessage?: () => void;
   onForwardMessage?: (message: BaseMessageType) => void;
-  onReportMessage?: (message: BaseMessageType) => void;
   onPinMessage?: () => void;
   onMessageCheckChange?: (checked: boolean) => void;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
   thread?: boolean; // whether show thread
-  chatThreadOverview?: ChatSDK.ChatThreadOverview;
+  chatThreadOverview?: ChatSDK.ChatThreadSummary;
   showNicknamesForAllMessages?: boolean; //是否所有的消息都展示昵称，默认false, 自己发的消息不展示昵称，单聊消息不展示昵称，群聊其他人的消息展示昵称
   onClickThreadTitle?: () => void;
   reactionConfig?: ReactionMessageProps['reactionConfig'];
   formatDateTime?: (time: number) => string;
-  onClick?: (message: ChatSDK.MessageBody) => boolean; // 点击时是否阻止默认事件
+  onClick?: (message: BaseMessageType) => boolean; // 点击时是否阻止默认事件
   /** 自定义消息被引用时的渲染器 */
   renderCustomMessageQuote?: CustomMessageQuoteRenderer;
 }
 
 const msgSenderIsCurrentUser = (message: BaseMessageType) => {
-  return message?.from === getStore().client.user || message?.from === '';
+  return message?.from === getCurrentUserId(getStore().client) || message?.from === '';
 };
 
 const isGroupAdmin = (message: BaseMessageType) => {
-  if (message.chatType === 'groupChat') {
-    const group = getGroupItemFromGroupsById(message.to);
+  if (message.conversationType === 'groupChat' && message.conversationId) {
+    const group = getGroupItemFromGroupsById(message.conversationId);
     if (group) {
-      return group.admins?.includes(getStore().client.user);
+      return group.admins?.includes(getCurrentUserId(getStore().client));
     }
   }
 };
 
 const isGroupOwner = (message: BaseMessageType) => {
-  if (message.chatType === 'groupChat') {
-    const group = getGroupItemFromGroupsById(message.to);
+  if (message.conversationType === 'groupChat' && message.conversationId) {
+    const group = getGroupItemFromGroupsById(message.conversationId);
     if (group) {
       return (
-        group.members?.find(member => member.role === 'owner')?.userId === getStore().client.user
+        group.members?.find(member => member.role === 'owner')?.userId ===
+        getCurrentUserId(getStore().client)
       );
     }
   }
@@ -121,17 +150,16 @@ const isGroupOwner = (message: BaseMessageType) => {
 
 // if can modify the message
 const canModifyMessage = (message: BaseMessageType) => {
-  const { chatType } = message;
-  if (chatType === 'singleChat') {
+  const { conversationType } = message;
+  if (conversationType === 'singleChat') {
     return msgSenderIsCurrentUser(message);
-  } else if (chatType === 'groupChat') {
+  } else if (conversationType === 'groupChat') {
     return true;
   }
 };
 
 const getRtcMsgIcon = (message: BaseMessageType) => {
-  // @ts-ignore
-  if (message?.ext?.rtcIsEnd || !message?.mid) {
+  if (message?.ext?.rtcIsEnd || !message?.msgServerId) {
     if (message?.ext?.type === 0) {
       return 'PHONE_HANG';
     } else {
@@ -207,7 +235,6 @@ let BaseMessage = (props: BaseMessageProps) => {
     onSelectMessage,
     onResendMessage,
     onForwardMessage,
-    onReportMessage,
     onPinMessage,
     onMessageCheckChange,
     renderUserProfile,
@@ -257,7 +284,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   if (bubbleShape == 'square' && typeof arrow == 'undefined') {
     bubbleArrow = true;
   }
-  if (message?.type == 'video' || message?.type == 'img') {
+  if (message?.type == 'video' || message?.type == 'image') {
     bubbleArrow = false;
   }
   const showRepliedMsg =
@@ -282,7 +309,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   const CustomProfile = renderUserProfile?.({ userId: message?.from || '' });
 
   // 生成唯一的菜单 ID
-  const menuId = useRef(`menu-${message?.id || Math.random()}`).current;
+  const menuId = useRef(`menu-${getMessageId(message) || Math.random()}`).current;
 
   const [isButtonVisible, setIsButtonVisible] = useState(false); // 控制操作按钮的显示
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -325,19 +352,20 @@ let BaseMessage = (props: BaseMessageProps) => {
   const threadNode = () => {
     const { name, messageCount = 0, lastMessage = {} } = chatThreadOverview || {};
 
-    const { from, type, time } = lastMessage || ({} as any);
+    const { from, type } = lastMessage || ({} as any);
+    const time = getMessageTime(lastMessage as any);
     let msgContent = '';
     switch (type) {
-      case 'txt':
-        msgContent = (lastMessage as any).msg;
+      case 'text':
+        msgContent = ((lastMessage as any).body?.content || '') as string;
         break;
-      case 'img':
+      case 'image':
         msgContent = '[图片]';
         break;
       case 'file':
         msgContent = '[文件]';
         break;
-      case 'audio':
+      case 'voice':
         msgContent = '[语音]';
         break;
       case 'video':
@@ -391,7 +419,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
 
   let isRtcInviteMessage = false;
-  if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
+  if (message?.type === 'text' && message?.ext?.msgType === 'rtcCallWithAgora') {
     isRtcInviteMessage = true;
   }
   const contentNode = hasBubble ? (
@@ -399,7 +427,7 @@ let BaseMessage = (props: BaseMessageProps) => {
       className={`${prefixCls}-content`}
       style={bubbleStyle}
       onClick={() => {
-        onClick?.(message as ChatSDK.MessageBody);
+        message && onClick?.(message);
       }}
     >
       {isRtcInviteMessage ? (
@@ -476,10 +504,6 @@ let BaseMessage = (props: BaseMessageProps) => {
           onClick: () => {},
         },
         {
-          content: 'REPORT',
-          onClick: () => {},
-        },
-        {
           content: 'PIN',
           onClick: () => {},
         },
@@ -507,7 +531,7 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   const morePrefixCls = getPrefixCls('moreAction', customizePrefixCls);
 
-  const isCurrentUser = message && msgSenderIsCurrentUser(message);
+  const isCurrentUser = Boolean(message && msgSenderIsCurrentUser(message));
   const isOwner = message && isGroupOwner(message);
   const isAdmin = message && isGroupAdmin(message);
 
@@ -548,11 +572,6 @@ let BaseMessage = (props: BaseMessageProps) => {
     onForwardMessage && onForwardMessage(message as BaseMessageType);
   };
 
-  const reportMessage = () => {
-    handleMenuOpen(false);
-    onReportMessage && onReportMessage(message as BaseMessageType);
-  };
-
   const pinMessage = () => {
     handleMenuOpen(false);
     onPinMessage && onPinMessage();
@@ -560,7 +579,7 @@ let BaseMessage = (props: BaseMessageProps) => {
 
   // 音视频邀请消息去掉更多操作
   // let isRtcInviteMessage = false;
-  // if (message?.type === 'txt' && message?.ext?.msgType === 'rtcCallWithAgora') {
+  // if (message?.type === 'text' && message?.ext?.msgType === 'rtcCallWithAgora') {
   //   isRtcInviteMessage = true;
   // }
 
@@ -691,7 +710,7 @@ let BaseMessage = (props: BaseMessageProps) => {
             );
           } else if (item.content === 'TRANSLATE' && item.visible !== false) {
             return (
-              message?.type === 'txt' && (
+              message?.type === 'text' && (
                 <li
                   key={index}
                   onClick={translateMessage}
@@ -705,7 +724,7 @@ let BaseMessage = (props: BaseMessageProps) => {
           } else if (item.content === 'Modify' && item.visible !== false) {
             return (
               isCurrentUser &&
-              message?.type === 'txt' && (
+              message?.type === 'text' && (
                 <li
                   key={index}
                   onClick={modifyMessage}
@@ -755,17 +774,6 @@ let BaseMessage = (props: BaseMessageProps) => {
                   <Icon type="ARROW_TURN_RIGHT" width={16} height={16}></Icon>
                 )}
                 {t('forward')}
-              </li>
-            );
-          } else if (item.content === 'REPORT' && item.visible !== false) {
-            return (
-              <li
-                key={index}
-                onClick={reportMessage}
-                className={themeMode == 'dark' ? 'cui-li-dark' : ''}
-              >
-                {item.icon ? item.icon : <Icon type="ENVELOPE" width={16} height={16}></Icon>}
-                {t('report')}
               </li>
             );
           } else if (item.content === 'PIN') {
@@ -903,7 +911,7 @@ let BaseMessage = (props: BaseMessageProps) => {
                   ></RepliedMsg>
                 ) : (
                   <div className={`${prefixCls}-info`}>
-                    {((message?.chatType !== 'singleChat' && !isCurrentUser) ||
+                    {((message?.conversationType !== 'singleChat' && !isCurrentUser) ||
                       showNicknamesForAllMessages) && (
                       <span className={`${prefixCls}-nickname`}>{msgSenderNickname}</span>
                     )}

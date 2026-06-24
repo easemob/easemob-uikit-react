@@ -7,7 +7,7 @@ import React, {
   useImperativeHandle,
   useCallback,
 } from 'react';
-import { chatSDK, ChatSDK } from '../../SDK';
+import type { ChatSDK } from '../../SDK';
 import classNames from 'classnames';
 import { ConfigContext } from '../../../component/config/index';
 import { convertToMessage } from './util';
@@ -21,6 +21,8 @@ import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';
 import { CurrentConversation } from '../../store/ConversationStore';
 import { useTranslation } from 'react-i18next';
+import type { BeforeSendMessage } from '../sendTypes';
+import { resolveBeforeSendRoute, toSendMessageRoute } from '../sendTypes';
 export interface TextareaProps {
   prefix?: string;
   className?: string;
@@ -32,9 +34,9 @@ export interface TextareaProps {
   enabledMention?: boolean;
   enabledTyping?: boolean;
   isChatThread?: boolean;
-  onSendMessage?: (message: ChatSDK.TextMsgBody) => void;
+  onSendMessage?: (message: ChatSDK.Message) => void;
   conversation?: CurrentConversation;
-  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: BeforeSendMessage;
   onChange?: (value: string) => void;
   onFocus?: () => void;
 }
@@ -155,7 +157,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     }
   };
 
-  const _sendMessage = (message: ChatSDK.TextMsgBody) => {
+  const _sendMessage = (message: ChatSDK.Message) => {
     messageStore.sendMessage(message).then(() => {
       onSendMessage && onSendMessage(message);
     });
@@ -195,28 +197,28 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     });
     if (atUserIds.includes(AT_ALL)) isAtAll = true;
 
-    const message = chatSDK.message.create({
-      to: usedCvs.conversationId,
-      chatType: usedCvs.chatType,
-      type: 'txt',
-      msg: textValue,
+    const ext = {
+      em_at_list: isAtAll ? AT_ALL : atUserIds,
+    };
+    const body = {
+      content: textValue,
+    };
+    const context = {
+      kind: 'text' as const,
+      route: toSendMessageRoute(usedCvs),
+      body,
+      ext,
       isChatThread,
-      ext: {
-        em_at_list: isAtAll ? AT_ALL : atUserIds,
-      },
-    }) as ChatSDK.TextMsgBody;
-    if (onBeforeSendMessage) {
-      onBeforeSendMessage(message).then(cvs => {
-        if (cvs) {
-          message.to = cvs.conversationId;
-          message.chatType = cvs.chatType;
-        }
+    };
 
-        _sendMessage(message);
+    resolveBeforeSendRoute(onBeforeSendMessage, context).then(route => {
+      const message = client.chatManager.createTextMessage({
+        ...route,
+        content: textValue,
+        ext,
       });
-    } else {
       _sendMessage(message);
-    }
+    });
   };
 
   // Send Button
@@ -280,7 +282,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
   return (
     <div className={classString} style={{ ...style }}>
       <div
-        placeholder={placeholder || (t('say something') as string)}
+        data-placeholder={placeholder || (t('say something') as string)}
         ref={divRef}
         className={classNames(`${prefixCls}-input`, {
           [`${prefixCls}-input-square`]: componentsShape == 'square',

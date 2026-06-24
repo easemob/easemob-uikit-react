@@ -1,7 +1,7 @@
 import CallError from '../services/CallError';
 import { IAgoraRTCError, VideoEncoderConfigurationPreset } from 'agora-rtc-sdk-ng';
 import { CallInfo } from '../services/CallService';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK, UIKitChatClient } from 'module/SDK';
 // 视频窗口属性
 export interface VideoWindowProps {
   id: string;
@@ -147,14 +147,14 @@ export interface CallKitRef {
     // callType: 'video' | 'audio';
     msg: string;
     ext?: Record<string, any>;
-  }) => Promise<ChatSDK.TextMsgBody | null>; // 发起多人通话，先显示用户选择界面
+  }) => Promise<ChatSDK.Message | null>; // 发起多人通话，先显示用户选择界面
 
   // 一对一通话方法
   startSingleCall: (options: {
     to: string;
     callType: 'video' | 'audio';
     msg: string;
-  }) => Promise<ChatSDK.TextMsgBody | null>; // 发起真实通话
+  }) => Promise<ChatSDK.Message | null>; // 发起真实通话
   answerCall: (result: boolean) => void; // 接听真实通话
   exitCall: (reason?: string) => void; // 挂断真实通话
   setUserInfo: (userInfo: { [key: string]: any }) => void; // 设置用户信息
@@ -201,7 +201,7 @@ export interface CallKitProps {
   screenSharing?: boolean;
 
   // 真实通话相关配置
-  chatClient?: ChatSDK.Connection; // 环信 IM 连接
+  chatClient?: UIKitChatClient; // 环信 IM 连接
   enableRealCall?: boolean; // 是否启用真实通话功能
   useRTCToken?: boolean; // 是否使用 RTC Token 校验，默认 true；设置为 false 时 join channel 不校验 token
 

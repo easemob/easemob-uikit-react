@@ -1,6 +1,6 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import PinnedMessage from './index';
+import PinnedMessage, { PinnedMessageProps } from './index';
 import rootStore from '../store';
 import Provider from '../store/Provider';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
@@ -38,15 +38,25 @@ rootStore.pinnedMessagesStore.messages = {
     '20292712912182': {
       list: [
         {
-          pinTime: Date.now(),
+          pinnedAt: Date.now(),
           operatorId: 'test',
+          messageId: '1189201674950937348',
+          conversationId: '20292712912182',
+          conversationType: 'groupChat',
           message: {
-            id: '1189201674950937348',
-            type: 'txt',
-            chatType: 'groupChat',
-            msg: 'Start a audio call',
+            msgLocalId: 'pin-local-1',
+            msgServerId: '1189201674950937348',
+            type: 'text',
+            conversationType: 'groupChat',
+            conversationId: '20292712912182',
+            body: {
+              content: 'Start a audio call',
+            },
             to: '182614118957057',
             from: 'zd3',
+            sender: { userId: 'zd3' },
+            status: 'sent',
+            direct: 'RECEIVE',
             ext: {
               action: 'invite',
               type: 3,
@@ -56,7 +66,7 @@ rootStore.pinnedMessagesStore.messages = {
               callerDevId: 'webim_random_1694446193223',
               ts: 1694447390825,
             },
-            time: 1694447391423,
+            timestamp: 1694447391423,
           },
         },
       ],
@@ -67,7 +77,7 @@ rootStore.pinnedMessagesStore.messages = {
   chatRoom: {},
 };
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: StoryFn<typeof PinnedMessage> = args => {
+const Template: StoryFn<PinnedMessageProps> = args => {
   rootStore.conversationStore.setCurrentCvs({
     chatType: 'groupChat',
     conversationId: '20292712912182',
@@ -87,7 +97,7 @@ const Template: StoryFn<typeof PinnedMessage> = args => {
   );
 };
 
-const DarkTemplate: StoryFn<typeof PinnedMessage> = args => {
+const DarkTemplate: StoryFn<PinnedMessageProps> = args => {
   rootStore.conversationStore.setCurrentCvs({
     chatType: 'groupChat',
     conversationId: '20292712912182',

@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode, useContext } from 'react';
+import React, { ReactNode, useContext } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import Icon from '../../component/icon';
@@ -6,7 +6,17 @@ import './style/style.scss';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
 import { RootContext } from '../store/rootContext';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK } from 'module/SDK';
+import {
+  getAttachmentUrl,
+  getCurrentUserId,
+  getCustomEvent,
+  getCustomParams,
+  getTextContent,
+} from '../utils';
+type FileMessageBodyLike = { filename?: string };
+type ImageMessageBodyLike = { thumbnailUrl?: string };
+type MessageQuoteLike = { msgSender?: string };
 export interface UnsentRepliedMsgProps {
   prefixCls?: string;
   className?: string;
@@ -34,10 +44,11 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
   const renderMsgContent = (msg: any) => {
     let content: ReactNode;
     switch (msg.type) {
+      case 'text':
       case 'txt':
         content = (
           <div className={`${prefixCls}-summary-desc`}>
-            {renderTxt(msg.msg, '' as unknown as false)}
+            {renderTxt(getTextContent(msg), false, () => {})}
           </div>
         );
         break;
@@ -46,26 +57,31 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
           <div className={`${prefixCls}-summary-desc`}>
             <Icon type="DOC" color="#75828A" width={16} height={16}></Icon>
             <span>{t('file')}:</span>
-            {msg.filename}
+            {(msg.body as FileMessageBodyLike).filename}
           </div>
         );
         break;
+      case 'voice':
       case 'audio':
         content = (
           <div className={`${prefixCls}-summary-desc`}>
             <Icon type="WAVE3" color="#75828A" width={16} height={16}></Icon>
             <span>{t('audio')}:</span>
-            {msg.length}&quot;
+            {(msg.body as ChatSDK.VoiceMessageBody).duration}&quot;
           </div>
         );
         break;
+      case 'image':
       case 'img':
         content = (
           <div className={`${prefixCls}-summary-desc`}>
             <span>{t('image')}</span>
             <div className={`${prefixCls}-summary-desc-img`}>
               {/* <Icon type="IMG" color="#75828A" width={24} height={24}></Icon> */}
-              <img src={msg.thumb || msg.url} crossOrigin="anonymous"></img>
+              <img
+                src={(msg.body as ImageMessageBodyLike).thumbnailUrl || getAttachmentUrl(msg)}
+                crossOrigin="anonymous"
+              ></img>
             </div>
           </div>
         );
@@ -79,12 +95,12 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
         );
         break;
       case 'custom':
-        if (msg.customEvent === 'userCard') {
+        if (getCustomEvent(msg) === 'userCard') {
           content = (
             <div className={`${prefixCls}-summary-desc`}>
               <Icon type="PERSON_SINGLE_FILL" color="#75828A" width={16} height={16}></Icon>
               <span>{t('Contact')}:</span>
-              {msg.customExts?.nickname}
+              {(getCustomParams(msg) as Record<string, string>)?.nickname}
             </div>
           );
         }
@@ -112,18 +128,19 @@ const UnsentRepliedMsg = (props: UnsentRepliedMsgProps) => {
     rootStore.messageStore.setRepliedMessage(null);
   };
 
-  const myUserId = rootStore.client.user;
+  const myUserId = getCurrentUserId(rootStore.client);
   const from = repliedMessage?.from === myUserId ? t('yourself') : repliedMessage?.from;
 
-  let msgQuote = (repliedMessage as ChatSDK.TextMsgBody)?.ext?.msgQuote;
+  let msgQuote = repliedMessage?.ext?.msgQuote;
   if (typeof msgQuote === 'string') {
     msgQuote = JSON.parse(msgQuote);
   }
+  const quote = (msgQuote || {}) as MessageQuoteLike;
   const to =
     repliedMessage?.from === myUserId
       ? t('yourself')
       : rootStore.addressStore.appUsersInfo?.[repliedMessage?.from as string]?.nickname ||
-        msgQuote?.msgSender;
+        quote.msgSender;
 
   return (
     <div className={classString}>

@@ -1,38 +1,30 @@
-import { useContext } from 'react';
+import { useContext, useRef } from 'react';
 import { RootContext } from '../store/rootContext';
 import { getUsersInfo } from '../utils';
 import { runInAction } from 'mobx';
 const pageSize = 20;
-let pageNum = 1;
 const useChatroomMember = (chatroomId: string) => {
   const rootStore = useContext(RootContext).rootStore;
   const { client } = rootStore;
-  let next = true;
+  const nextRef = useRef(true);
+  const cursorRef = useRef('');
   const getChatroomMembers = () => {
-    client
-      .listChatRoomMembers({
+    client.chatRoomManager
+      .getMemberList({
         chatRoomId: chatroomId,
         pageSize,
-        pageNum: pageNum,
+        cursor: cursorRef.current,
       })
       .then(res => {
-        if ((res.data?.length || 0) < pageSize) {
-          next = false;
-        } else {
-          next = true;
-          pageNum++;
-        }
-        const members =
-          res.data?.map(item => {
-            // @ts-ignore
-            return item.member || item.owner;
-          }) || [];
+        nextRef.current = Boolean(res.hasMore);
+        cursorRef.current = res.cursor || '';
+        const members = res.items?.map(item => item.user.userId).filter(Boolean) || [];
         const appUserInfo = rootStore.addressStore.appUsersInfo;
         const getInfoMembers = members.filter(user => {
           return !(user in appUserInfo);
         });
         rootStore.addressStore.setChatroomMemberIds(chatroomId, members);
-        rootStore.addressStore.updateChatroomMemberCount(chatroomId, res.count);
+        rootStore.addressStore.updateChatroomMemberCount(chatroomId, members.length);
 
         if (getInfoMembers.length > 0) {
           getUsersInfo({ userIdList: getInfoMembers, withPresence: false }).catch(err => {
@@ -45,10 +37,8 @@ const useChatroomMember = (chatroomId: string) => {
       });
   };
 
-  return { getChatroomMembers, next };
+  return { getChatroomMembers, next: nextRef.current };
 };
 
-const clearPageNum = () => {
-  pageNum = 1;
-};
+const clearPageNum = () => {};
 export { useChatroomMember, clearPageNum };

@@ -5,16 +5,25 @@ import MessageStatus, { MessageStatusProps } from '../messageStatus';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import { emoji } from '../messageInput/emoji/emojiConfig';
-import { getConversationTime } from '../utils';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
 import rootStore from '../store/index';
 import type { TextMessageType } from '../types/messageType';
 import { getLinkPreview, getPreviewFromContent } from 'link-preview-js';
 import { UrlMessage } from './UrlMessage';
 import reactStringReplace from 'react-string-replace';
-import { chatSDK, ChatSDK } from '../SDK';
 import Modal from '../../component/modal';
-import { getCvsIdFromMessage, renderHtml, formatHtmlString } from '../utils';
+import type { ChatSDK } from '../SDK';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getMessageChatType,
+  getMessageId,
+  getMessageTime,
+  getThreadId,
+  getTextContent,
+  renderHtml,
+  formatHtmlString,
+} from '../utils';
 import { convertToMessage } from '../messageInput/textarea/util';
 import Icon from '../../component/icon';
 import { useTranslation } from 'react-i18next';
@@ -24,7 +33,7 @@ import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface TextMessageProps extends BaseMessageProps {
-  textMessage: TextMessageType;
+  textMessage: TextMessageType | ChatSDK.Message;
   // color?: string; // 字体颜色
   // backgroundColor?: string; // 气泡背景颜色
   type?: 'primary' | 'secondly';
@@ -36,7 +45,7 @@ export interface TextMessageProps extends BaseMessageProps {
   style?: React.CSSProperties;
   renderUserProfile?: (props: renderUserProfileProps) => React.ReactNode;
   onCreateThread?: () => void;
-  onTranslateTextMessage?: (textMessage: ChatSDK.TextMsgBody) => boolean;
+  onTranslateTextMessage?: (textMessage: ChatSDK.Message) => boolean;
   targetLanguage?: string;
   showTranslation?: boolean; // 是否展示翻译后的消息
   onlyContent?: boolean;
@@ -167,14 +176,20 @@ let TextMessage = (props: TextMessageProps) => {
     onClick,
     ...others
   } = props;
-  if (!textMessage.chatType) return null;
+  const sdkMessage = textMessage as ChatSDK.Message;
+  const uiMessage = textMessage as TextMessageType & Record<string, any>;
+  const conversationType = getMessageChatType(sdkMessage);
+  if (!conversationType) return null;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-text', customizePrefixCls);
   const { t } = useTranslation();
   const [urlData, setUrlData] = useState<any>(null);
   const [isFetching, setFetching] = useState(false);
-  const conversationId = getCvsIdFromMessage(textMessage);
-  let { bySelf, time, from, msg, reactions } = textMessage;
+  const conversationId = getCvsIdFromMessage(sdkMessage);
+  const messageId = getMessageId(sdkMessage);
+  const messageTime = getMessageTime(sdkMessage);
+  let { bySelf, from, reactions } = uiMessage;
+  let msg = getTextContent(sdkMessage);
   const classString = classNames(prefixCls, className);
   const textareaRef = useRef<ForwardRefProps>(null);
   const context = React.useContext(RootContext);
@@ -185,10 +200,11 @@ let TextMessage = (props: TextMessageProps) => {
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: textMessage.chatType,
+      conversationType,
     },
   });
   const [text, setText] = useState<string>('');
+  const translations = (sdkMessage.body as any)?.translations;
   let urlTxtClass = '';
   if (urlData?.images?.length > 0) {
     urlTxtClass = 'message-text-hasImage';
@@ -206,7 +222,7 @@ let TextMessage = (props: TextMessageProps) => {
   const modifyPrefix = getPrefixCls('modify-textarea', customizePrefixCls);
 
   if (typeof bySelf == 'undefined') {
-    bySelf = from == rootStore.client.context?.userId;
+    bySelf = from == getCurrentUserId(rootStore.client);
   }
   const translationClass = classNames(transPrefix, {
     [`${transPrefix}-left`]: !bySelf,
@@ -222,7 +238,7 @@ let TextMessage = (props: TextMessageProps) => {
   const detectedUrl = msg
     ?.replace(/\n/g, ' ')
     .split(' ')
-    .find(function (token) {
+    .find(function (token: string) {
       return REGEX_VALID_URL.test(token);
     });
   if (detectedUrl) {
@@ -245,80 +261,76 @@ let TextMessage = (props: TextMessageProps) => {
   }, [detectedUrl]);
 
   const handleReplyMsg = () => {
-    rootStore.messageStore.setRepliedMessage(textMessage);
+    rootStore.messageStore.setRepliedMessage(sdkMessage);
   };
 
   const handleDeleteMsg = () => {
-    const conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.deleteMessage(
       {
-        chatType: textMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      textMessage.mid || textMessage.id,
+      messageId,
     );
   };
 
   const handlePinMessage = () => {
-    //@ts-ignore
-    pinMessage(textMessage.mid || textMessage.id);
+    pinMessage(messageId);
   };
 
-  let repliedMsg: undefined | ChatSDK.MessageBody;
-  if (textMessage.ext?.msgQuote) {
-    repliedMsg = textMessage;
+  let repliedMsg: undefined | ChatSDK.Message;
+  if (sdkMessage.ext?.msgQuote) {
+    repliedMsg = sdkMessage;
   }
 
   const handleClickEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.addReaction(
       {
-        chatType: textMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      textMessage.mid || textMessage.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.deleteReaction(
       {
-        chatType: textMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      textMessage.mid || textMessage.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
           rootStore.messageStore.getReactionUserList(
             {
-              chatType: textMessage.chatType,
+              chatType: conversationType,
               conversationId: conversationId,
             },
-            // @ts-ignore
-            textMessage.mid || textMessage.id,
+            messageId,
             emojiString,
           );
         }
 
         if (item.isAddedBySelf) {
-          const index = item.userList.indexOf(rootStore.client.user);
+          const currentUserId = getCurrentUserId(rootStore.client);
+          const index = item.userList.indexOf(currentUserId);
           if (index > -1) {
             const findItem = item.userList.splice(index, 1)[0];
             item.userList.unshift(findItem);
           } else {
-            item.userList.unshift(rootStore.client.user);
+            item.userList.unshift(currentUserId);
           }
         }
       }
@@ -326,15 +338,14 @@ let TextMessage = (props: TextMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    const conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.recallMessage(
       {
-        chatType: textMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      textMessage.mid || textMessage.id,
-      textMessage.isChatThread,
+      messageId,
+      uiMessage.isChatThread,
       true,
     );
   };
@@ -347,20 +358,19 @@ let TextMessage = (props: TextMessageProps) => {
   };
 
   const handleTranslateMessage = () => {
-    const result = onTranslateTextMessage?.(textMessage);
+    const result = onTranslateTextMessage?.(sdkMessage);
     if (result == false) {
       return;
     }
     setTransStatus('translating');
-    const conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore
       .translateMessage(
         {
-          chatType: textMessage.chatType,
+          chatType: conversationType,
           conversationId: conversationId,
         },
-        // @ts-ignore
-        textMessage.mid || textMessage.id,
+        messageId,
         targetLng,
       )
       ?.then(() => {
@@ -373,16 +383,16 @@ let TextMessage = (props: TextMessageProps) => {
   };
 
   const handleSelectMessage = () => {
-    const conversationId = getCvsIdFromMessage(textMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     const selectable =
-      rootStore.messageStore.selectedMessage[textMessage.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: textMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -393,32 +403,31 @@ let TextMessage = (props: TextMessageProps) => {
   };
 
   const handleResendMessage = () => {
-    rootStore.messageStore.sendMessage(textMessage);
+    rootStore.messageStore.sendMessage(textMessage as ChatSDK.Message);
   };
 
   const select =
-    rootStore.messageStore.selectedMessage[textMessage.chatType as 'singleChat' | 'groupChat'][
+    rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
       conversationId
     ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[textMessage.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
-      changedList.push(textMessage);
+      changedList.push(textMessage as ChatSDK.Message);
     } else {
       changedList = checkedMessages.filter(item => {
-        // @ts-ignore
-        return !(item.id == textMessage.id || item.mid == textMessage.id);
+        return getMessageId(item) !== messageId;
       });
     }
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: textMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -440,17 +449,14 @@ let TextMessage = (props: TextMessageProps) => {
     setModifyMessageVisible(false);
     const currentCVS = rootStore.conversationStore.currentCvs;
     const msg = convertToMessage(textareaRef?.current?.divRef?.current?.innerHTML || '').trim();
-    const { isChatThread, to, chatThread } = textMessage as ChatSDK.TextMsgBody;
+    const { isChatThread, to, chatThread } = textMessage as any;
     const isThread = !!(isChatThread || chatThread);
-    const message = chatSDK.message.create({
-      to: isThread ? to : currentCVS.conversationId,
-      chatType: currentCVS.chatType,
-      type: 'txt',
-      isChatThread: isThread,
-      msg: msg,
-    }) as ChatSDK.TextMsgBody;
-    // @ts-ignore
-    rootStore.messageStore.modifyServerMessage(textMessage?.mid || textMessage?.id, message);
+    const message = rootStore.client.chatManager.createTextMessage({
+      conversationId: isThread ? to : currentCVS.conversationId,
+      conversationType: currentCVS.chatType as ChatSDK.ChatConversationType,
+      content: msg,
+    });
+    rootStore.messageStore.modifyServerMessage(messageId, message);
   };
 
   useEffect(() => {
@@ -458,7 +464,7 @@ let TextMessage = (props: TextMessageProps) => {
       setTimeout(() => {
         if (textareaRef?.current?.divRef.current) {
           textareaRef.current.divRef.current.innerHTML = renderHtml(
-            formatHtmlString(textMessage.msg),
+            formatHtmlString(getTextContent(textMessage)),
           );
         }
       }, 200);
@@ -470,41 +476,36 @@ let TextMessage = (props: TextMessageProps) => {
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: true,
-      originalMessage: textMessage,
+      originalMessage: sdkMessage,
     });
     rootStore.threadStore.setThreadVisible(true);
   };
 
-  // @ts-ignore
   const _thread =
-    // @ts-ignore
-    textMessage.chatType == 'groupChat' &&
-    thread &&
-    // @ts-ignore
-    !textMessage.chatThread &&
-    !textMessage.isChatThread;
+    conversationType == 'groupChat' && thread && !uiMessage.chatThread && !uiMessage.isChatThread;
   const handleClickThreadTitle = () => {
-    rootStore.threadStore.joinChatThread(textMessage.chatThreadOverview?.id || '');
+    const chatThreadId = getThreadId(uiMessage.chatThreadOverview);
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: false,
-      originalMessage: textMessage,
-      info: textMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
+      originalMessage: sdkMessage,
+      info: uiMessage.chatThreadOverview as any,
     });
     rootStore.threadStore.setThreadVisible(true);
 
-    rootStore.threadStore.getChatThreadDetail(textMessage?.chatThreadOverview?.id || '');
-    onOpenThreadPanel?.(textMessage.chatThreadOverview?.id || '');
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
+    onOpenThreadPanel?.(chatThreadId);
   };
   const [currentIndex, setCurrentIndex] = useState(0);
   const handleClickUrl = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
-    const preventDefault = onClick?.(textMessage);
+    const preventDefault = onClick?.(sdkMessage);
     if (preventDefault === true) {
       e.preventDefault();
     }
   };
   useEffect(() => {
-    if ((textMessage as any).printed != false) {
+    if (uiMessage.printed != false) {
       return;
     }
     const msgArr = renderTxt(msg, true, handleClickUrl);
@@ -517,8 +518,7 @@ let TextMessage = (props: TextMessageProps) => {
       setCurrentIndex(prevIndex => prevIndex + 1);
       if (currentIndex >= message.length - 1) {
         clearInterval(typingInterval);
-        // @ts-ignore
-        textMessage.printed = true;
+        uiMessage.printed = true;
       }
     }, 30);
 
@@ -528,10 +528,9 @@ let TextMessage = (props: TextMessageProps) => {
   }, [msg, currentIndex]);
 
   if (
-    textMessage?.ext?.msgType === 'rtcCallWithAgora' &&
-    // @ts-ignore
-    !textMessage.mid &&
-    textMessage.ext.rtcIsEnd == undefined
+    sdkMessage.ext?.msgType === 'rtcCallWithAgora' &&
+    !sdkMessage.msgServerId &&
+    sdkMessage.ext.rtcIsEnd == undefined
   ) {
     msg = '通话已结束';
   }
@@ -544,20 +543,26 @@ let TextMessage = (props: TextMessageProps) => {
             <UrlMessage {...urlData} isLoading={isFetching}></UrlMessage>
           )}
 
-          {showEditedTag && textMessage?.modifiedInfo ? (
+          {showEditedTag && uiMessage.modifiedInfo ? (
             <div className={`${classString}-edit-tag`}>{t('edited')}</div>
           ) : (
             ''
           )}
           {
             // @ts-ignore
-            (textMessage.translations || transStatus == 'translating') && showTranslation && (
+            (translations || transStatus == 'translating') && showTranslation && (
               <div className={translationClass}>
                 <div className={`${transPrefix}-line`}></div>
                 <span className={`${transPrefix}-text`}>
                   {
                     // @ts-ignore
-                    renderTxt(textMessage.translations?.[0]?.text, true, handleClickUrl)
+                    renderTxt(
+                      Array.isArray(translations)
+                        ? translations?.[0]?.text
+                        : translations?.[targetLng],
+                      true,
+                      handleClickUrl,
+                    )
                   }
                 </span>
                 <div className={`${transPrefix}-action`}>
@@ -572,10 +577,10 @@ let TextMessage = (props: TextMessageProps) => {
       ) : (
         <>
           <BaseMessage
-            id={textMessage.id}
+            id={messageId}
             direction={bySelf ? 'rtl' : 'ltr'}
-            time={time}
-            message={textMessage}
+            time={messageTime}
+            message={sdkMessage}
             nickName={nickName}
             bubbleType={type}
             className={bubbleClassName}
@@ -597,7 +602,7 @@ let TextMessage = (props: TextMessageProps) => {
             renderUserProfile={renderUserProfile}
             onCreateThread={handleCreateThread}
             thread={_thread}
-            chatThreadOverview={textMessage.chatThreadOverview}
+            chatThreadOverview={uiMessage.chatThreadOverview as any}
             onClickThreadTitle={handleClickThreadTitle}
             onClick={onClick}
             {...others}
@@ -620,13 +625,19 @@ let TextMessage = (props: TextMessageProps) => {
               )}
               {
                 // @ts-ignore
-                (textMessage.translations || transStatus == 'translating') && showTranslation && (
+                (translations || transStatus == 'translating') && showTranslation && (
                   <div className={translationClass}>
                     <div className={`${transPrefix}-line`}></div>
                     <span className={`${transPrefix}-text`}>
                       {
                         // @ts-ignore
-                        renderTxt(textMessage.translations?.[0]?.text, true, handleClickUrl)
+                        renderTxt(
+                          Array.isArray(translations)
+                            ? translations?.[0]?.text
+                            : translations?.[targetLng],
+                          true,
+                          handleClickUrl,
+                        )
                       }
                     </span>
                     <div className={`${transPrefix}-action`}>

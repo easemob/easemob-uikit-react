@@ -28,12 +28,12 @@ const ChatApp = () => {
   useEffect(() => {
     client &&
       client
-        .open({
-          user: '13681272809',
-          pwd: '272809',
+        .login({
+          userId: '13681272809',
+          token: 'replace-with-token',
         })
-        .then(res => {
-          console.log('获取token成功', res, rootStore.client);
+        .then(() => {
+          console.log('登录成功', rootStore.client);
         });
   }, [client]);
 
@@ -42,7 +42,7 @@ const ChatApp = () => {
     rootStore.conversationStore.topConversation({
       chatType: 'singleChat',
       conversationId: '9a0dac930f', // Enter a conversation ID from your conversation list.
-      lastMessage: {},
+      unreadCount: 0,
     });
   };
 

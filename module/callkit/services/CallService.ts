@@ -3,10 +3,9 @@ import AgoraRTC, {
   IAgoraRTCRemoteUser,
   VideoEncoderConfigurationPreset,
 } from 'agora-rtc-sdk-ng';
-import WebIM from 'easemob-websdk';
 import { VideoWindowProps } from '../types/index';
 import CallError from './CallError';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK } from 'module/SDK';
 import { CallErrorType, CallErrorCode } from './CallError';
 import { e } from 'vitest/dist/index-5aad25c1';
 import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
@@ -254,7 +253,7 @@ export class CallService {
     // Get necessary information from WebIM connection
     this.agoraUid = 0;
     this.appId = '';
-    this.userId = this.connection.user;
+    this.userId = this.getCurrentUserId();
 
     // Initialize Agora RTC client
     AgoraRTC.setLogLevel(4);
@@ -272,9 +271,6 @@ export class CallService {
       timer: null,
     };
 
-    // Set global references
-    (WebIM as any).rtc = this.rtc;
-    (WebIM as any).conn = this.connection;
     // Add message listener
     this.addMessageListener();
 
@@ -288,15 +284,36 @@ export class CallService {
     this.UIdToUserIdMap.set(uid, userId);
   }
 
+  private getCurrentUserId(): string {
+    return this.connection.getCurrentUserId?.() || this.connection.user || '';
+  }
+
+  private getClientResource(): string {
+    return this.connection.getClientResource?.() || 'web';
+  }
+
+  private createCallCmdMessage(to: string, ext: Record<string, unknown>) {
+    return this.connection.chatManager.createCmdMessage({
+      conversationId: to,
+      conversationType: 'singleChat',
+      action: 'rtcCall',
+      ext,
+    });
+  }
+
+  private sendCallMessage(message: ChatSDK.Message) {
+    return this.connection.chatManager.sendMessage(message);
+  }
+
   // Remove setAccessToken method, get from connection instead
   async getAccessToken(): Promise<string | null> {
     try {
-      const res = await this.connection.getRTCToken('*');
-      this.appId = res.data.appId;
-      const uid = res.data.RTCUId;
-      this.UIdToUserIdMap.set(uid, this.connection.user);
+      const tokenInfo = await this.connection.getRTCTokenInfo({ channelName: '*' });
+      this.appId = tokenInfo.appId;
+      const uid = tokenInfo.rtcUid;
+      this.UIdToUserIdMap.set(String(uid), this.getCurrentUserId());
       this.agoraUid = uid;
-      return res.data.RTCToken;
+      return tokenInfo.rtcToken;
     } catch (error: any) {
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
@@ -387,9 +404,9 @@ export class CallService {
       callId,
       channel,
       type: callType,
-      callerDevId: this.connection.context.jid.clientResource || 'web',
+      callerDevId: this.getClientResource() || 'web',
       calleeDevId: '',
-      callerUserId: this.connection.user, // Use agoraUid as IM name
+      callerUserId: this.getCurrentUserId(), // Use agoraUid as IM name
       calleeUserId: callType === CALL_TYPE.VIDEO_MULTI ? groupId : (to as string),
       groupId,
       groupName,
@@ -537,11 +554,11 @@ export class CallService {
       action: 'invite',
       channelName: callInfo.channel,
       type: callInfo.type,
-      callerDevId: this.connection.context.jid.clientResource || 'web',
+      callerDevId: this.getClientResource() || 'web',
       callId: callInfo.callId,
       ts: Date.now(),
       msgType: 'rtcCallWithAgora',
-      callerIMName: this.connection.user,
+      callerIMName: this.getCurrentUserId(),
       calleeIMName: callInfo.type === CALL_TYPE.VIDEO_MULTI ? callInfo.groupId : to,
       chatType: callInfo.type,
       em_push_ext: {
@@ -550,13 +567,13 @@ export class CallService {
           action: 'invite',
           channelName: callInfo.channel,
           type: callInfo.type,
-          callerDevId: this.connection.context.jid.clientResource || 'web',
+          callerDevId: this.getClientResource() || 'web',
           callId: callInfo.callId,
           ts: Date.now(),
           msgType: 'rtcCallWithAgora',
-          callerIMName: this.connection.user,
+          callerIMName: this.getCurrentUserId(),
           calleeIMName: callInfo.type === CALL_TYPE.VIDEO_MULTI ? callInfo.groupId : to,
-          callerNickname: this.userInfos[this.userId]?.nickname || this.connection.user,
+          callerNickname: this.userInfos[this.userId]?.nickname || this.getCurrentUserId(),
           chatType: callInfo.type,
           ext: ext,
         },
@@ -642,15 +659,13 @@ export class CallService {
 
     // 发送文本消息
     const option: any = {
-      chatType: callInfo.type === CALL_TYPE.VIDEO_MULTI ? 'groupChat' : 'singleChat',
-      type: 'txt',
-      to: to,
-      msg:
+      conversationId: callInfo.type === CALL_TYPE.VIDEO_MULTI ? callInfo.groupId : (to as string),
+      conversationType: callInfo.type === CALL_TYPE.VIDEO_MULTI ? 'groupChat' : 'singleChat',
+      content:
         text || (callInfo.type === CALL_TYPE.VIDEO_MULTI ? '邀请您进行群组通话' : '邀请您进行通话'),
       ext: inviteExt,
     };
     if (callInfo.type === CALL_TYPE.VIDEO_MULTI) {
-      option.to = callInfo.groupId;
       option.receiverList = to;
     }
     if (callInfo.type !== CALL_TYPE.VIDEO_MULTI) {
@@ -662,16 +677,13 @@ export class CallService {
 
     // TODO: 加状态判断
     try {
-      const msg = WebIM.message.create(option);
-      const res = await this.connection.send(msg);
-      logDebug('Sending invitation message:', msg, res);
-      (msg as any).mid = res.serverMsgId;
-      this.currentCallInfo!.inviteMessageId = res.serverMsgId;
-      this.currentCallInfo!.callerUserId = this.connection.user;
+      const msg = this.connection.chatManager.createTextMessage(option);
+      const sentMessage = await this.sendCallMessage(msg);
+      logDebug('Sending invitation message:', sentMessage);
+      this.currentCallInfo!.inviteMessageId = sentMessage.msgServerId;
+      this.currentCallInfo!.callerUserId = this.getCurrentUserId();
       this.currentCallInfo!.callId = inviteExt.callId;
-
-      msg.from = this.connection.user;
-      return msg as ChatSDK.TextMsgBody;
+      return sentMessage;
     } catch (error: any) {
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
@@ -730,22 +742,16 @@ export class CallService {
   private sendAlertingMessage() {
     if (!this.currentCallInfo) return;
 
-    const msg = WebIM.message.create({
-      type: 'cmd',
-      chatType: 'singleChat',
-      to: this.currentCallInfo.callerUserId,
-      action: 'rtcCall',
-      ext: {
-        action: 'alert',
-        calleeDevId: this.connection.context.jid.clientResource,
-        callerDevId: this.currentCallInfo.callerDevId,
-        callId: this.currentCallInfo.callId,
-        ts: Date.now(),
-        msgType: 'rtcCallWithAgora',
-      },
+    const msg = this.createCallCmdMessage(this.currentCallInfo.callerUserId, {
+      action: 'alert',
+      calleeDevId: this.getClientResource(),
+      callerDevId: this.currentCallInfo.callerDevId,
+      callId: this.currentCallInfo.callId,
+      ts: Date.now(),
+      msgType: 'rtcCallWithAgora',
     });
     try {
-      this.connection.send(msg);
+      this.sendCallMessage(msg);
     } catch (error: any) {
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
@@ -775,24 +781,18 @@ export class CallService {
       return;
     }
 
-    const msg = WebIM.message.create({
-      type: 'cmd',
-      chatType: 'singleChat',
-      to: callInfo.callerUserId,
-      action: 'rtcCall',
-      ext: {
-        action: 'answerCall',
-        result: result,
-        callerDevId: callInfo.callerDevId,
-        calleeDevId: this.connection.context.jid.clientResource,
-        callId: callInfo.callId,
-        ts: Date.now(),
-        msgType: 'rtcCallWithAgora',
-      },
+    const msg = this.createCallCmdMessage(callInfo.callerUserId, {
+      action: 'answerCall',
+      result: result,
+      callerDevId: callInfo.callerDevId,
+      calleeDevId: this.getClientResource(),
+      callId: callInfo.callId,
+      ts: Date.now(),
+      msgType: 'rtcCallWithAgora',
     });
     logDebug('sendAnswerCallMessage msg -->', msg);
     try {
-      this.connection.send(msg);
+      this.sendCallMessage(msg);
     } catch (error: any) {
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
@@ -1692,10 +1692,9 @@ export class CallService {
     if (!this.currentCallInfo || !to) return;
     // 改成群通话发送群定向消息
 
-    const msg = WebIM.message.create({
-      type: 'cmd',
-      chatType: chatType,
-      to: to,
+    const msg = this.connection.chatManager.createCmdMessage({
+      conversationId: to,
+      conversationType: chatType,
       action: 'rtcCall',
       ext: {
         action: 'cancelCall',
@@ -1706,10 +1705,10 @@ export class CallService {
       },
     });
     if (receiverList) {
-      (msg as any).receiverList = receiverList;
+      msg.receiverList = receiverList;
     }
     try {
-      this.connection.send(msg);
+      this.sendCallMessage(msg);
     } catch (error: any) {
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
@@ -1737,9 +1736,9 @@ export class CallService {
     }
     if (!to) return logWarn('---->sendHangupMessage to is empty');
     const options: any = {
-      type: 'cmd',
-      chatType: this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ? 'groupChat' : 'singleChat',
-      to: to,
+      conversationId: to,
+      conversationType:
+        this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ? 'groupChat' : 'singleChat',
       action: 'rtcCall',
       ext: {
         action: 'leaveCall',
@@ -1759,9 +1758,8 @@ export class CallService {
         )
         .map(member => this.UIdToUserIdMap.get(member.uid));
     }
-    const msg = WebIM.message.create(options);
-    this.connection
-      .send(msg)
+    const msg = this.connection.chatManager.createCmdMessage(options);
+    this.sendCallMessage(msg)
       .then(() => {
         logDebug('---->sendHangupMessage success');
       })
@@ -2225,17 +2223,18 @@ export class CallService {
   // 添加消息监听器
   private addMessageListener() {
     this.connection?.addEventHandler?.('callkit', {
-      onTextMessage: (message: any) => {
-        logDebug('onTextMessage message -->', message);
-        if (message.ext && message.ext.action === 'invite') {
-          this.handleInvitationMessage(message);
-        }
-      },
-
-      onCmdMessage: (message: any) => {
-        logDebug('onCmdMessage message -->', message);
-        if (message.action === 'rtcCall') {
-          this.handleSignalMessage(message);
+      onMessage: (message: any) => {
+        if (message.type === 'text' || message.type === 'txt') {
+          logDebug('onMessage (text) message -->', message);
+          if (message.ext && message.ext.action === 'invite') {
+            this.handleInvitationMessage(message);
+          }
+        } else if (message.type === 'cmd') {
+          logDebug('onMessage (cmd) message -->', message);
+          const action = message.body?.action || message.action;
+          if (action === 'rtcCall') {
+            this.handleSignalMessage(message);
+          }
         }
       },
 
@@ -2256,7 +2255,7 @@ export class CallService {
   // 处理邀请消息
   private async handleInvitationMessage(message: any) {
     logDebug('---->handleInvitationMessage message', message);
-    if (message.from === this.connection.context.jid.name) {
+    if (message.from === this.getCurrentUserId()) {
       return; // 忽略自己发送的消息
     }
 
@@ -2406,28 +2405,22 @@ export class CallService {
       }
     }
 
-    if (callerDevId !== this.connection.context.jid.clientResource) {
+    if (callerDevId !== this.getClientResource()) {
       return;
     }
 
-    const msg = WebIM.message.create({
-      type: 'cmd',
-      chatType: 'singleChat',
-      to: to,
-      action: 'rtcCall',
-      ext: {
-        action: 'confirmRing',
-        status: status,
-        callerDevId: this.connection.context.jid.clientResource,
-        calleeDevId: calleeDevId,
-        callId: callId,
-        ts: Date.now(),
-        msgType: 'rtcCallWithAgora',
-      },
+    const msg = this.createCallCmdMessage(to, {
+      action: 'confirmRing',
+      status: status,
+      callerDevId: this.getClientResource(),
+      calleeDevId: calleeDevId,
+      callId: callId,
+      ts: Date.now(),
+      msgType: 'rtcCallWithAgora',
     });
     logDebug('---->sendConfirmRingMessage', msg);
     try {
-      this.connection.send(msg);
+      this.sendCallMessage(msg);
 
       // 对方弹出邀请后，如果30秒内没有响应，则自动挂断
       if (this.currentCallInfo?.type !== CALL_TYPE.VIDEO_MULTI) {
@@ -2450,7 +2443,7 @@ export class CallService {
     logDebug('---->handleConfirmRingMessage', message);
     const ext = message.ext;
 
-    if (ext.calleeDevId !== this.connection.context.jid.clientResource) {
+    if (ext.calleeDevId !== this.getClientResource()) {
       return; // 多端情况下的其他设备消息
     }
     if (ext.callerDevId !== this.currentCallInfo?.callerDevId) {
@@ -2527,8 +2520,8 @@ export class CallService {
       return;
     }
 
-    if (ext.callerDevId !== this.connection.context.jid.clientResource) {
-      if (message.from === this.connection.context.jid.name) {
+    if (ext.callerDevId !== this.getClientResource()) {
+      if (message.from === this.getCurrentUserId()) {
         // 其他设备处理了
         const reason =
           ext.result === 'accept' ? 'accepted on other devices' : 'refused on other devices';
@@ -2571,24 +2564,18 @@ export class CallService {
   private sendConfirmCalleeMessage(to: string, calleeDevId: string, result: string) {
     if (!this.currentCallInfo) return;
 
-    const msg = WebIM.message.create({
-      type: 'cmd',
-      chatType: 'singleChat',
-      to: to,
-      action: 'rtcCall',
-      ext: {
-        action: 'confirmCallee',
-        result: result,
-        callerDevId: this.connection.context.jid.clientResource,
-        calleeDevId: calleeDevId,
-        callId: this.currentCallInfo.callId,
-        ts: Date.now(),
-        msgType: 'rtcCallWithAgora',
-      },
+    const msg = this.createCallCmdMessage(to, {
+      action: 'confirmCallee',
+      result: result,
+      callerDevId: this.getClientResource(),
+      calleeDevId: calleeDevId,
+      callId: this.currentCallInfo.callId,
+      ts: Date.now(),
+      msgType: 'rtcCallWithAgora',
     });
 
     try {
-      this.connection.send(msg);
+      this.sendCallMessage(msg);
     } catch (error: any) {
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
@@ -2630,7 +2617,7 @@ export class CallService {
     }
 
     // 收到其他设备的 confirmCallee 消息，挂断当前通话
-    if (ext.calleeDevId !== this.connection.context.jid.clientResource) {
+    if (ext.calleeDevId !== this.getClientResource()) {
       logDebug('---->handleConfirmCalleeMessage 2');
       this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
       return;
@@ -2652,7 +2639,7 @@ export class CallService {
 
   // 处理取消消息
   private handleCancelCallMessage(message: any) {
-    if (message.from === this.connection.context.jid.name) {
+    if (message.from === this.getCurrentUserId()) {
       return; // 忽略自己发送的消息
     }
 

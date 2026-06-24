@@ -8,13 +8,20 @@ import type { FileMessageType } from '../types/messageType';
 import Avatar from '../../component/avatar';
 import download from '../utils/download';
 import rootStore from '../store/index';
-import { getCvsIdFromMessage } from '../utils';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getMessageChatType,
+  getMessageId,
+  getMessageTime,
+  getThreadId,
+} from '../utils';
 import { observer } from 'mobx-react-lite';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { RootContext } from '../store/rootContext';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface FileMessageProps extends BaseMessageProps {
-  fileMessage: FileMessageType; // 从SDK收到的文件消息
+  fileMessage: FileMessageType | ChatSDK.Message; // 从SDK收到的文件消息
   iconType?: IconProps['type'];
   prefix?: string;
   className?: string;
@@ -42,22 +49,32 @@ const FileMessage = (props: FileMessageProps) => {
     ...baseMsgProps
   } = props;
 
-  const { filename, file_length, from, reactions, status } = fileMessage;
+  const sdkMessage = fileMessage as ChatSDK.Message;
+  const uiMessage = fileMessage as FileMessageType & Record<string, any>;
+  const body = sdkMessage.body as Record<string, any>;
+  const conversationType = getMessageChatType(sdkMessage);
+  if (!conversationType) return null;
+  const filename = body.filename || uiMessage.filename || '';
+  const fileLength = body.fileLength || body.fileSize || uiMessage.file_length || 0;
+  const fileUrl = body.url || uiMessage.url || '';
+  const { from, reactions, status } = uiMessage;
+  const messageId = getMessageId(sdkMessage);
+  const messageTime = getMessageTime(sdkMessage);
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-file', customizePrefixCls);
-  let { bySelf } = fileMessage;
-  const conversationId = getCvsIdFromMessage(fileMessage);
+  let { bySelf } = uiMessage;
+  const conversationId = getCvsIdFromMessage(sdkMessage);
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: fileMessage.chatType,
+      conversationType,
     },
   });
   if (typeof bySelf == 'undefined') {
-    bySelf = fileMessage.from === rootStore.client.context.userId;
+    bySelf = fileMessage.from === getCurrentUserId(rootStore.client);
   }
   if (!type) {
     type = bySelf ? 'primary' : 'secondly';
@@ -73,9 +90,9 @@ const FileMessage = (props: FileMessageProps) => {
   );
 
   const handleClick = () => {
-    const preventDefault = onClick && onClick(fileMessage);
+    const preventDefault = onClick && onClick(sdkMessage);
     if (preventDefault === true) return;
-    fetch(fileMessage.url)
+    fetch(fileUrl)
       .then(res => {
         return res.blob();
       })
@@ -84,14 +101,13 @@ const FileMessage = (props: FileMessageProps) => {
 
         // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
         if (
-          fileMessage.chatType == 'singleChat' &&
-          fileMessage.from != rootStore.client.context.userId &&
-          // @ts-ignore
-          fileMessage.status != 'read' &&
-          !fileMessage.isChatThread &&
-          fileMessage.to == rootStore.client.context.userId
+          conversationType == 'singleChat' &&
+          sdkMessage.from != getCurrentUserId(rootStore.client) &&
+          uiMessage.status != 'read' &&
+          !uiMessage.isChatThread &&
+          sdkMessage.to == getCurrentUserId(rootStore.client)
         ) {
-          rootStore.messageStore.sendReadAck(fileMessage.id, fileMessage.from || '');
+          rootStore.messageStore.sendReadAck(messageId, sdkMessage.from || '');
         }
       })
       .catch(err => {
@@ -99,77 +115,73 @@ const FileMessage = (props: FileMessageProps) => {
       });
   };
   const handleReplyMsg = () => {
-    rootStore.messageStore.setRepliedMessage(fileMessage);
+    rootStore.messageStore.setRepliedMessage(sdkMessage);
   };
 
   const handleDeleteMsg = () => {
-    const conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
 
     rootStore.messageStore.deleteMessage(
       {
-        chatType: fileMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      fileMessage.mid || fileMessage.id,
+      messageId,
     );
   };
 
   const handlePinMessage = () => {
-    //@ts-ignore
-    pinMessage(fileMessage.mid || fileMessage.id);
+    pinMessage(messageId);
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
 
     rootStore.messageStore.addReaction(
       {
-        chatType: fileMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      fileMessage.mid || fileMessage.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.deleteReaction(
       {
-        chatType: fileMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      fileMessage.mid || fileMessage.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
           rootStore.messageStore.getReactionUserList(
             {
-              chatType: fileMessage.chatType,
+              chatType: conversationType,
               conversationId: conversationId,
             },
-            // @ts-ignore
-            fileMessage.mid || fileMessage.id,
+            messageId,
             emojiString,
           );
         }
 
         if (item.isAddedBySelf) {
-          const index = item.userList.indexOf(rootStore.client.user);
+          const currentUserId = getCurrentUserId(rootStore.client);
+          const index = item.userList.indexOf(currentUserId);
           if (index > -1) {
             const findItem = item.userList.splice(index, 1)[0];
             item.userList.unshift(findItem);
           } else {
-            item.userList.unshift(rootStore.client.user);
+            item.userList.unshift(currentUserId);
           }
         }
       }
@@ -177,29 +189,28 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    const conversationId = getCvsIdFromMessage(fileMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.recallMessage(
       {
-        chatType: fileMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      fileMessage.mid || fileMessage.id,
-      fileMessage.isChatThread,
+      messageId,
+      uiMessage.isChatThread,
       true,
     );
   };
 
   const handleSelectMessage = () => {
     const selectable =
-      rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: fileMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -210,33 +221,32 @@ const FileMessage = (props: FileMessageProps) => {
   };
 
   const handleResendMessage = () => {
-    rootStore.messageStore.sendMessage(fileMessage);
+    rootStore.messageStore.sendMessage(sdkMessage);
   };
 
   const select =
     rootStore.messageStore &&
-    rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
+    rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
       conversationId
     ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[fileMessage.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
-      changedList.push(fileMessage);
+      changedList.push(sdkMessage);
     } else {
       changedList = checkedMessages.filter(item => {
-        // @ts-ignore
-        return !(item.id == fileMessage.id || item.mid == fileMessage.id);
+        return getMessageId(item) !== messageId;
       });
     }
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: fileMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -246,48 +256,43 @@ const FileMessage = (props: FileMessageProps) => {
     );
   };
 
-  // @ts-ignore
   const _thread =
-    // @ts-ignore
-    fileMessage.chatType == 'groupChat' &&
-    thread &&
-    // @ts-ignore
-    !fileMessage.chatThread &&
-    !fileMessage.isChatThread;
+    conversationType == 'groupChat' && thread && !uiMessage.chatThread && !uiMessage.isChatThread;
 
   // open thread panel to create thread
   const handleCreateThread = () => {
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: true,
-      originalMessage: fileMessage,
+      originalMessage: sdkMessage,
     });
     rootStore.threadStore.setThreadVisible(true);
   };
 
   // join the thread
   const handleClickThreadTitle = () => {
-    rootStore.threadStore.joinChatThread(fileMessage.chatThreadOverview?.id || '');
+    const chatThreadId = getThreadId(uiMessage.chatThreadOverview);
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: false,
-      originalMessage: fileMessage,
-      info: fileMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
+      originalMessage: sdkMessage,
+      info: uiMessage.chatThreadOverview as any,
     });
     rootStore.threadStore.setThreadVisible(true);
 
-    rootStore.threadStore.getChatThreadDetail(fileMessage?.chatThreadOverview?.id || '');
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
   };
 
   return (
     <BaseMessage
-      id={fileMessage.id}
+      id={messageId}
       className={bubbleClass}
-      message={fileMessage}
+      message={sdkMessage}
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
-      time={fileMessage.time}
+      time={messageTime}
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
@@ -304,7 +309,7 @@ const FileMessage = (props: FileMessageProps) => {
       onMessageCheckChange={handleMsgCheckChange}
       onCreateThread={handleCreateThread}
       thread={_thread}
-      chatThreadOverview={fileMessage.chatThreadOverview}
+      chatThreadOverview={uiMessage.chatThreadOverview as any}
       onClickThreadTitle={handleClickThreadTitle}
       status={status}
       {...baseMsgProps}
@@ -312,7 +317,7 @@ const FileMessage = (props: FileMessageProps) => {
       <div className={classString} style={style}>
         <div className={`${prefixCls}-info`}>
           <span onClick={handleClick}>{filename}</span>
-          <span>{(file_length / 1024).toFixed(2)}kb</span>
+          <span>{(fileLength / 1024).toFixed(2)}kb</span>
         </div>
         <div className={`${prefixCls}-icon`}>
           <Icon type={iconType} height="32px" width="32px" color="#ACB4B9"></Icon>

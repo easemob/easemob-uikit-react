@@ -29,7 +29,7 @@ $lineHeight: 24px;
     }
 
     &-input:empty::before {
-        content: attr(placeholder);
+        content: attr(data-placeholder);
         color: #919BA1;
     }
 

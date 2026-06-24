@@ -1,8 +1,16 @@
 import React, { ReactNode, useState, useContext } from 'react';
 import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import rootStore from '../store/index';
-import { getCvsIdFromMessage } from '../utils';
+import {
+  getCurrentUserId,
+  getCustomEvent,
+  getCvsIdFromMessage,
+  getMessageChatType,
+  getMessageId,
+  getMessageTime,
+  getThreadId,
+} from '../utils';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
@@ -64,16 +72,18 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     ...others
   } = props;
   //   combinedMessage = comMsg;
-  let { bySelf, time, from, reactions, title, summary } = combinedMessage;
+  let { bySelf, from, reactions, title, summary } = combinedMessage;
+  const messageTime = getMessageTime(combinedMessage);
   const conversationId = getCvsIdFromMessage(combinedMessage);
+  const conversationType = getMessageChatType(combinedMessage) || 'singleChat';
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: conversationId,
-      conversationType: combinedMessage.chatType,
+      conversationType,
     },
   });
   if (typeof bySelf == 'undefined') {
-    bySelf = from == rootStore.client.context.userId;
+    bySelf = from == getCurrentUserId(rootStore.client);
   }
   let type = props.type;
   if (!type) {
@@ -89,28 +99,26 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.deleteMessage(
       {
-        chatType: combinedMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      combinedMessage.mid || combinedMessage.id,
+      getMessageId(combinedMessage),
     );
   };
 
-  let repliedMsg: undefined | ChatSDK.MessageBody;
+  let repliedMsg: undefined | BaseMessageType;
   if (combinedMessage.ext?.msgQuote) {
-    repliedMsg = combinedMessage;
+    repliedMsg = combinedMessage as BaseMessageType;
   }
 
   const handleClickEmoji = (emojiString: string) => {
     const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.addReaction(
       {
-        chatType: combinedMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      combinedMessage.mid || combinedMessage.id,
+      getMessageId(combinedMessage),
       emojiString,
     );
   };
@@ -119,11 +127,10 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.deleteReaction(
       {
-        chatType: combinedMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      combinedMessage.mid || combinedMessage.id,
+      getMessageId(combinedMessage),
       emojiString,
     );
   };
@@ -136,22 +143,22 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           if (item.count > 3 && item.userList.length <= 3) {
             rootStore.messageStore.getReactionUserList(
               {
-                chatType: combinedMessage.chatType,
+                chatType: conversationType,
                 conversationId: conversationId,
               },
-              // @ts-ignore
-              combinedMessage.mid || combinedMessage.id,
+              getMessageId(combinedMessage),
               emojiString,
             );
           }
 
           if (item.isAddedBySelf) {
-            const index = item.userList.indexOf(rootStore.client.user);
+            const currentUserId = getCurrentUserId(rootStore.client);
+            const index = item.userList.indexOf(currentUserId);
             if (index > -1) {
               const findItem = item.userList.splice(index, 1)[0];
               item.userList.unshift(findItem);
             } else {
-              item.userList.unshift(rootStore.client.user);
+              item.userList.unshift(currentUserId);
             }
           }
         }
@@ -163,11 +170,10 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     const conversationId = getCvsIdFromMessage(combinedMessage);
     rootStore.messageStore.recallMessage(
       {
-        chatType: combinedMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      combinedMessage.mid || combinedMessage.id,
+      getMessageId(combinedMessage),
       combinedMessage.isChatThread,
       true,
     );
@@ -202,7 +208,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               select={false}
               customAction={{ visible: false }}
               reaction={false}
-              key={msg.id}
+              key={getMessageId(msg)}
               bubbleType="none"
               textMessage={msg as TextMessageType}
               direction="ltr"
@@ -218,7 +224,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
               select={false}
               imageMessage={msg as ImageMessageType}
               direction="ltr"
-              key={msg.id}
+              key={getMessageId(msg)}
               reaction={false}
               customAction={{ visible: false }}
               thread={false}
@@ -231,7 +237,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           content = (
             <FileMessage
               select={false}
-              key={msg.id}
+              key={getMessageId(msg)}
               fileMessage={msg as FileMessageType}
               direction="ltr"
               type="secondly"
@@ -247,7 +253,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           content = (
             <AudioMessage
               select={false}
-              key={msg.id}
+              key={getMessageId(msg)}
               audioMessage={msg as AudioMessageType}
               type="secondly"
               reaction={false}
@@ -263,8 +269,8 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           content = (
             <VideoMessage
               select={false}
-              key={msg.id}
-              videoMessage={msg as VideoMessageType & ChatSDK.VideoMsgBody}
+              key={getMessageId(msg)}
+              videoMessage={msg as unknown as VideoMessageType}
               direction="ltr"
               type="secondly"
               reaction={false}
@@ -276,11 +282,11 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           );
           break;
         case 'custom':
-          if (msg.customEvent == 'userCard') {
+          if (getCustomEvent(msg) == 'userCard') {
             content = (
               <UserCardMessage
                 select={false}
-                key={msg.id}
+                key={getMessageId(msg)}
                 customMessage={msg as CustomMessageType}
                 direction="ltr"
                 type="secondly"
@@ -295,7 +301,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
             content = (
               <TextMessage
                 select={false}
-                key={msg.id}
+                key={getMessageId(msg)}
                 bubbleType="none"
                 textMessage={msg as unknown as TextMessageType}
                 direction="ltr"
@@ -312,7 +318,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
           content = (
             <CombinedMessage
               select={false}
-              key={msg.id}
+              key={getMessageId(msg)}
               combinedMessage={msg as CombinedMessageProps['combinedMessage']}
               direction="ltr"
               type="secondly"
@@ -341,33 +347,18 @@ const CombinedMessage = (props: CombinedMessageProps) => {
       return;
     }
     setModalOpen(true);
-    if (combinedMessage.messages) {
-      createDetailContent(combinedMessage.messages);
+    if (combinedMessage.messages || combinedMessage.messageList) {
+      createDetailContent(combinedMessage.messages || combinedMessage.messageList || []);
       return;
     }
-    rootStore.client
-      .downloadAndParseCombineMessage({
-        url: combinedMessage.url || '',
-        secret: combinedMessage.secret || '',
-      })
-      .then((data: any) => {
-        combinedMessage.messages = data;
-        createDetailContent(data);
-
-        // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
-        if (
-          combinedMessage.chatType == 'singleChat' &&
-          combinedMessage.from != rootStore.client.context.userId &&
-          // @ts-ignore
-          combinedMessage.status != 'read' &&
-          !combinedMessage.isChatThread &&
-          combinedMessage.to == rootStore.client.context.userId
-        ) {
-          rootStore.messageStore.sendReadAck(combinedMessage.id, combinedMessage.from || '');
-        }
+    // 从服务器下载并解析合并消息
+    rootStore.client.chatManager
+      .downloadAndParseCombineMessage({ message: combinedMessage as unknown as ChatSDK.Message })
+      .then((msgs: readonly any[]) => {
+        createDetailContent(msgs as any);
       })
       .catch(() => {
-        setDetailContent(<div>download message failed</div>);
+        setDetailContent(<div style={{ padding: 20, textAlign: 'center' }}>Failed to load</div>);
       });
   };
   const [modalOpen, setModalOpen] = useState(false);
@@ -375,12 +366,12 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   const handleSelectMessage = () => {
     const selectable =
       // @ts-ignore
-      rootStore.messageStore.selectedMessage[combinedMessage.chatType][conversationId]?.selectable;
+      rootStore.messageStore.selectedMessage[conversationType][conversationId]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: combinedMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -396,13 +387,12 @@ const CombinedMessage = (props: CombinedMessageProps) => {
 
   const select =
     // @ts-ignore
-    rootStore.messageStore.selectedMessage[combinedMessage.chatType][conversationId]?.selectable;
+    rootStore.messageStore.selectedMessage[conversationType][conversationId]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
       // @ts-ignore
-      rootStore.messageStore.selectedMessage[combinedMessage.chatType][conversationId]
-        ?.selectedMessage;
+      rootStore.messageStore.selectedMessage[conversationType][conversationId]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
@@ -416,7 +406,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
     }
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: combinedMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -429,7 +419,7 @@ const CombinedMessage = (props: CombinedMessageProps) => {
   // @ts-ignore
   const _thread =
     // @ts-ignore
-    combinedMessage.chatType == 'groupChat' &&
+    conversationType == 'groupChat' &&
     thread &&
     // @ts-ignore
     !combinedMessage.chatThread &&
@@ -447,31 +437,32 @@ const CombinedMessage = (props: CombinedMessageProps) => {
 
   // join the thread
   const handleClickThreadTitle = () => {
-    rootStore.threadStore.joinChatThread(combinedMessage.chatThreadOverview?.id || '');
+    const chatThreadId = getThreadId(combinedMessage.chatThreadOverview);
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: false,
       originalMessage: combinedMessage,
-      info: combinedMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
+      info: combinedMessage.chatThreadOverview as any,
     });
     rootStore.threadStore.setThreadVisible(true);
 
-    rootStore.threadStore.getChatThreadDetail(combinedMessage?.chatThreadOverview?.id || '');
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
   };
 
   const handlePinMessage = () => {
     //@ts-ignore
-    pinMessage(combinedMessage.mid || combinedMessage.id);
+    pinMessage(getMessageId(combinedMessage));
   };
 
   return (
     <>
       {!onlyContent ? (
         <BaseMessage
-          id={combinedMessage.id}
+          id={getMessageId(combinedMessage)}
           message={combinedMessage}
           direction={bySelf ? 'rtl' : 'ltr'}
-          time={time}
+          time={messageTime}
           nickName={nickName}
           bubbleType={type}
           className={bubbleClass}

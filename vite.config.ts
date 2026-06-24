@@ -46,6 +46,7 @@ export default defineConfig({
   ],
   build: {
     // rollupOptions,
+    target: 'esnext',
     minify: true,
     lib: {
       entry: './index.ts',

@@ -31,15 +31,20 @@ import { CurrentConversation } from 'module/store/ConversationStore';
 import Typing from '../typing';
 import Thread, { ThreadListExpandableIcon } from '../thread';
 import ScrollList from '../../component/scrollList';
-import { ChatSDK } from 'module/SDK';
-import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
+import type { ChatSDK } from 'module/SDK';
+import {
+  getConversationTime,
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getMessageId,
+  getMsgSenderNickname,
+  getUsersInfo,
+} from '../utils/index';
 import CallKit, { CallKitRef, CallKitProps } from '../callkit';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
-import { reportType } from '../chatroom/Chatroom';
 import { eventHandler } from '../../eventHandler';
 import Modal from '../../component/modal';
-import Checkbox from '../../component/checkbox';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './拨打电话.mp3';
@@ -72,7 +77,7 @@ export interface ChatProps {
   renderMessageList?: () => ReactNode; // 自定义渲染 MessageList
   renderMessageInput?: () => ReactNode; // 自定义渲染 MessageInput
   renderEmpty?: () => ReactNode; // 自定义渲染没有会话时的内容
-  renderRepliedMessage?: (repliedMessage: ChatSDK.MessageBody | null) => ReactNode; // 自定义渲染Input上面的被回复的消息
+  renderRepliedMessage?: (repliedMessage: ChatSDK.Message | null) => ReactNode; // 自定义渲染Input上面的被回复的消息
   // Header 的 props
   headerProps?: Omit<HeaderProps, 'suffixIcon'> & {
     suffixIcon?: ('PIN' | 'THREAD' | 'AUDIO' | 'VIDEO' | ReactNode)[];
@@ -91,7 +96,7 @@ const getChatAvatarUrl = (cvs: CurrentConversation) => {
   if (cvs.chatType === 'singleChat') {
     return getStore().addressStore.appUsersInfo[cvs.conversationId]?.avatarurl;
   } else if (cvs.chatType === 'groupChat') {
-    const group = getStore().addressStore.groups.find(item => item.groupid === cvs.conversationId);
+    const group = getStore().addressStore.groups.find(item => item.groupId === cvs.conversationId);
     return group?.avatarUrl;
   }
 };
@@ -123,6 +128,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
 
   const context = useContext(RootContext);
   const { rootStore, features, theme, presenceMap, initConfig } = context;
+  const currentUserId = getCurrentUserId(rootStore.client);
   const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
@@ -188,10 +194,10 @@ let Chat = forwardRef((props: ChatProps, ref) => {
             content: t('clearMsgs') as React.ReactNode,
             onClick: () => {
               rootStore.messageStore.clearMessage(rootStore.conversationStore.currentCvs);
-              rootStore.client.removeHistoryMessages({
-                targetId: CVS.conversationId,
-                chatType: CVS.chatType as 'singleChat' | 'groupChat',
-                beforeTimeStamp: Date.now(),
+              rootStore.client.chatManager.removeHistoryMessages({
+                conversationId: CVS.conversationId,
+                conversationType: CVS.chatType as ChatSDK.ChatConversationType,
+                beforeTimestamp: Date.now(),
               });
             },
           },
@@ -202,10 +208,10 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 rootStore.conversationStore.currentCvs,
               );
 
-              rootStore.client.deleteConversation({
-                channel: CVS.conversationId,
-                chatType: CVS.chatType as 'singleChat' | 'groupChat',
-                deleteRoam: true,
+              rootStore.client.chatManager.deleteConversation({
+                conversationId: CVS.conversationId,
+                conversationType: CVS.chatType as ChatSDK.ChatConversationType,
+                deleteRoamingMessages: true,
               });
             },
           },
@@ -232,11 +238,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
 
   // 移动端：将原先 header 右侧的快捷按钮（PIN/THREAD/AUDIO/VIDEO）收纳到更多菜单中
   // 注意：必须在相关开关（showPinMessage/showAudioCall/showVideoCall）初始化之后执行
-
-  const handleReport = (message: any) => {
-    setReportOpen(true);
-    setReportMessageId(message.mid || message.id);
-  };
 
   // delete message
   const [deleteMessageModalOpen, setDeleteMessageModalOpen] = useState(false);
@@ -283,17 +284,11 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         },
 
         {
-          content: 'REPORT',
-          onClick: () => {},
-        },
-
-        {
           content: 'DELETE',
           onClick: () => {},
         },
       ],
     },
-    onReportMessage: handleReport,
     onDeleteMessage: handleDeleteMessage,
   };
 
@@ -333,9 +328,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         return false;
       }
       if (globalConfig?.message?.forward == false && item.content == 'FORWARD') {
-        return false;
-      }
-      if (globalConfig?.message?.report == false && item.content == 'REPORT') {
         return false;
       }
       if (globalConfig?.message?.pin == false && item.content == 'PIN') {
@@ -429,7 +421,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         msg: t('callkit.invitation.groupCallDescription'),
       });
       if (msg) {
-        rootStore.messageStore.addMessage(msg as ChatSDK.MessageBody, 'groupChat', msg.to!);
+        rootStore.messageStore.addMessage(msg as ChatSDK.Message, 'groupChat', msg.to!);
       }
       return;
     }
@@ -443,7 +435,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         ),
       });
       if (msg) {
-        rootStore.messageStore.addMessage(msg as ChatSDK.MessageBody, 'singleChat', msg.to!);
+        rootStore.messageStore.addMessage(msg as ChatSDK.Message, 'singleChat', msg.to!);
       }
     } catch (e) {
       console.error(e);
@@ -563,30 +555,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
     }
   }
 
-  // --- report ---
-  const [reportMessageId, setReportMessageId] = useState('');
-  const [reportOpen, setReportOpen] = useState(false);
-  const [checkedType, setCheckedType] = useState('');
-  const handleCheckChange = (type: string) => {
-    setCheckedType(type);
-  };
-
-  const handleReportMessage = () => {
-    rootStore.client
-      .reportMessage({
-        reportType: checkedType,
-        reportReason: reportType[checkedType],
-        messageId: reportMessageId,
-      })
-      .then(() => {
-        eventHandler.dispatchSuccess('reportMessage');
-        setReportOpen(false);
-        setCheckedType('');
-      })
-      .catch(err => {
-        eventHandler.dispatchError('reportMessage', err);
-      });
-  };
   const renderHeaderSuffixIcon = () => {
     if (isMobile) return null;
     let suffixIcon = headerProps?.suffixIcon;
@@ -771,14 +739,12 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 if (!callKitRef.current) return;
                 try {
                   const msg = await callKitRef.current?.startSingleCall({
-                    to: message.from === rootStore.client.user ? message.to! : message.from!,
-                    callType: (message as ChatSDK.TextMsgBody).ext?.type == 1 ? 'video' : 'audio',
-                    msg: `邀请你进行${
-                      (message as ChatSDK.TextMsgBody).ext?.type == 1 ? '视频' : '语音'
-                    }通话`,
+                    to: message.from === currentUserId ? message.to! : message.from!,
+                    callType: message.ext?.type == 1 ? 'video' : 'audio',
+                    msg: `邀请你进行${message.ext?.type == 1 ? '视频' : '语音'}通话`,
                   });
                   rootStore.messageStore.addMessage(
-                    msg as ChatSDK.MessageBody,
+                    msg as ChatSDK.Message,
                     'singleChat',
                     msg?.to || '',
                   );
@@ -819,7 +785,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
         </>
       )}
 
-      {rootStore.client.user &&
+      {currentUserId &&
         useCallkit &&
         callkitContainer &&
         createPortal(
@@ -881,7 +847,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                   messageId: callInfo.inviteMessageId,
                   chatType: 'singleChat',
                   to:
-                    callInfo.calleeUserId === rootStore.client.user
+                    callInfo.calleeUserId === currentUserId
                       ? callInfo.callerUserId!
                       : callInfo.calleeUserId!,
                   msg: msg,
@@ -910,34 +876,22 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 return {
                   groupId: groupId,
                   groupName:
-                    rootStore.addressStore.groups.find(item => item.groupid === groupId)
-                      ?.groupname || groupId,
+                    rootStore.addressStore.groups.find(item => item.groupId === groupId)?.name ||
+                    groupId,
                   groupAvatar:
-                    rootStore.addressStore.groups.find(item => item.groupid === groupId)
+                    rootStore.addressStore.groups.find(item => item.groupId === groupId)
                       ?.avatarUrl || '',
                 };
               });
             }}
             userInfoProvider={async userIds => {
+              if (initConfig.useUserInfo) {
+                await getUsersInfo({ userIdList: userIds, withPresence: false }).catch(err => {
+                  console.warn('get user info failed', err);
+                });
+              }
               return Promise.all(
                 userIds.map(async userId => {
-                  if (!rootStore.addressStore.appUsersInfo[userId] && initConfig.useUserInfo) {
-                    const userInfo = await rootStore.client.fetchUserInfoById(userIds, [
-                      'nickname',
-                      'avatarurl',
-                    ]);
-                    console.log('🚀 userInfo', userInfo);
-                    if (userInfo) {
-                      userInfo.data &&
-                        Object.keys(userInfo.data).forEach(item => {
-                          rootStore.addressStore.appUsersInfo[item] = {
-                            userId: item,
-                            nickname: userInfo.data?.[item]?.nickname || '',
-                            avatarurl: userInfo.data?.[item]?.avatarurl || '',
-                          };
-                        });
-                    }
-                  }
                   return {
                     userId: userId,
                     nickname: rootStore.addressStore.appUsersInfo[userId]?.nickname,
@@ -961,50 +915,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           callkitContainer,
         )}
       <Modal
-        open={reportOpen}
-        title={t('report')}
-        okText={t('report')}
-        cancelText={t('cancel')}
-        okButtonProps={{
-          disabled: checkedType == '',
-        }}
-        onOk={handleReportMessage}
-        onCancel={() => {
-          setReportOpen(false);
-        }}
-      >
-        <div>
-          <div
-            className={classNames('report-title', {
-              'report-title-dark': themeMode == 'dark',
-            })}
-          >
-            {t('Violation')}
-          </div>
-          {Object.keys(reportType).map((item, index) => {
-            return (
-              <div
-                className={classNames('report-item', {
-                  'report-item-dark': themeMode == 'dark',
-                })}
-                key={index}
-                onClick={() => {
-                  setCheckedType(item);
-                }}
-              >
-                <div>{t(reportType[item] as string)}</div>
-                <Checkbox
-                  checked={checkedType === item}
-                  // onChange={() => {
-                  //   handleCheckChange(item);
-                  // }}
-                ></Checkbox>
-              </div>
-            );
-          })}
-        </div>
-      </Modal>
-      <Modal
         open={deleteMessageModalOpen}
         title={t('deleteMessage')}
         onCancel={() => {
@@ -1017,11 +927,10 @@ let Chat = forwardRef((props: ChatProps, ref) => {
 
           rootStore.messageStore.deleteMessage(
             {
-              chatType: deleteMessage.chatType,
+              chatType: deleteMessage.conversationType || deleteMessage.chatType || 'singleChat',
               conversationId: conversationId,
             },
-            // @ts-ignore
-            deleteMessage.mid || deleteMessage.id,
+            getMessageId(deleteMessage),
           );
           setDeleteMessageModalOpen(false);
           setDeleteMessage(null);

@@ -4,13 +4,15 @@ import Button, { ButtonProps } from '../../../component/button';
 import Icon from '../../../component/icon';
 import './style/style.scss';
 import { useTranslation } from 'react-i18next';
-import { chatSDK, ChatSDK } from '../../SDK';
+import type { ChatSDK } from '../../SDK';
 import { Gift } from './Gift';
 import { RootContext } from '../../store/rootContext';
 import { CurrentConversation } from '../../store/ConversationStore';
 import giftConfig from './giftConfig';
 import { ConfigContext } from '../../../component/config/index';
 import classNames from 'classnames';
+import type { BeforeSendMessage } from '../sendTypes';
+import { resolveBeforeSendRoute, toSendMessageRoute } from '../sendTypes';
 export interface GiftKeyboardProps {
   prefix?: string;
   className?: string;
@@ -21,10 +23,8 @@ export interface GiftKeyboardProps {
   onClick?: (e: React.MouseEvent<Element, MouseEvent>) => void;
   conversation?: CurrentConversation;
   gifts?: ReactNode[];
-  onSendMessage?: (message: ChatSDK.CustomMsgBody) => void;
-  onBeforeSendMessage?: (
-    message: ChatSDK.MessageBody,
-  ) => Promise<{ chatType: 'chatRoom'; conversationId: string } | void>;
+  onSendMessage?: (message: ChatSDK.Message) => void;
+  onBeforeSendMessage?: BeforeSendMessage;
   giftConfig?: typeof giftConfig;
   closeAfterClick?: boolean; // 点击发送之后是否关闭
 }
@@ -45,7 +45,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   const { t } = useTranslation();
   const context = useContext(RootContext);
   const { rootStore } = context;
-  const { messageStore, conversationStore } = rootStore;
+  const { client, messageStore, conversationStore } = rootStore;
   const currentSvc = conversationStore.currentCvs;
   const currentConversation = conversation || currentSvc;
 
@@ -85,19 +85,25 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     if (!currentConversation) {
       throw new Error('currentConversation is null');
     }
-    const options = {
-      type: 'custom',
-      to: currentConversation.conversationId,
-      chatType: currentConversation.chatType,
-      customEvent: 'CHATROOMUIKITGIFT',
-      customExts: {
-        chatroom_uikit_gift: JSON.stringify(giftData),
+    const params = {
+      chatroom_uikit_gift: JSON.stringify(giftData),
+    };
+    resolveBeforeSendRoute(onBeforeSendMessage, {
+      kind: 'custom',
+      route: toSendMessageRoute(currentConversation),
+      body: {
+        event: 'CHATROOMUIKITGIFT',
+        params,
       },
-      ext: {},
-    } as ChatSDK.CreateCustomMsgParameters;
-    const customMsg = chatSDK.message.create(options);
-    messageStore.sendMessage(customMsg).then(() => {
-      onSendMessage && onSendMessage(customMsg as ChatSDK.CustomMsgBody);
+    }).then(route => {
+      const customMsg = client.chatManager.createCustomMessage({
+        ...route,
+        event: 'CHATROOMUIKITGIFT',
+        params,
+      });
+      messageStore.sendMessage(customMsg).then(() => {
+        onSendMessage?.(customMsg);
+      });
     });
   };
 

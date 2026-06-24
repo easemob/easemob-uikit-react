@@ -1,6 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import CombinedMessage from './index';
+import CombinedMessage, { CombinedMessageProps } from './index';
+import type { ChatSDK } from '../SDK';
 
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 
@@ -28,6 +29,7 @@ const description = {
     onlyContent: '只显示内容, 不显示气泡',
   },
 };
+
 export default {
   title: 'Module/CombinedMessage',
   component: CombinedMessage,
@@ -74,203 +76,110 @@ export default {
   },
 } as Meta<typeof CombinedMessage>;
 
+const combinedMessage = {
+  msgLocalId: 'combine-local-1',
+  msgServerId: '1190206342359419660',
+  type: 'combine',
+  conversationId: 'zd2',
+  conversationType: 'singleChat',
+  to: 'zd2',
+  from: 'zd4',
+  sender: { userId: 'zd4' },
+  timestamp: 1694681306249,
+  direct: 'SEND',
+  status: 'sent',
+  body: {
+    compatibleText: 'the combine message',
+    title: 'Chat History',
+    summary: 'zd4: /Audio message/\nzd2: Start a audio call\nzd2: asd\n',
+    url: 'https://example.com/combined-message.json',
+    secret: 'example-secret',
+    messages: [
+      {
+        msgLocalId: 'combine-voice-local-1',
+        msgServerId: '1185022473184217860',
+        type: 'voice',
+        conversationId: 'zd2',
+        conversationType: 'singleChat',
+        from: 'zd4',
+        to: 'zd2',
+        sender: { userId: 'zd4' },
+        timestamp: 1693474345180,
+        direct: 'RECEIVE',
+        status: 'sent',
+        body: {
+          url: 'https://example.com/audio-message.wav',
+          filename: 'audio-message.wav',
+          filetype: 'audio',
+          duration: 2,
+          fileLength: 65580,
+        },
+      },
+      {
+        msgLocalId: 'combine-text-local-1',
+        msgServerId: '1189366073632230160',
+        type: 'text',
+        conversationId: 'zd4',
+        conversationType: 'singleChat',
+        to: 'zd4',
+        from: 'zd2',
+        sender: { userId: 'zd2' },
+        timestamp: 1694485668475,
+        direct: 'SEND',
+        status: 'sent',
+        body: {
+          content: 'Start a audio call',
+        },
+      },
+      {
+        msgLocalId: 'combine-text-local-2',
+        msgServerId: '1189528432543795984',
+        type: 'text',
+        conversationId: 'zd4',
+        conversationType: 'singleChat',
+        to: 'zd4',
+        from: 'zd2',
+        sender: { userId: 'zd2' },
+        timestamp: 1694523470608,
+        direct: 'SEND',
+        status: 'sent',
+        body: {
+          content: 'asd',
+        },
+        ext: {
+          em_at_list: [],
+          msgQuote: {
+            msgID: '1187658028808145668',
+            msgPreview: 'Start a video call',
+            msgSender: 'zd4',
+            msgType: 'text',
+          },
+        },
+      },
+    ],
+  },
+  bySelf: true,
+} as unknown as ChatSDK.Message;
+
+const Template: StoryFn<CombinedMessageProps> = args => <CombinedMessage {...args} />;
+
 export const Primary = {
+  render: Template,
   args: {
     bubbleType: 'primary',
-    combinedMessage: {
-      type: 'combine',
-      id: '429727706260',
-      to: 'zd2',
-      from: 'zd4',
-      chatType: 'singleChat',
-      time: 1694681306249,
-      deliverOnlineOnly: false,
-      compatibleText: 'the combine message',
-      title: 'Chat History',
-      summary: 'zd4: /Audio message/\nzd2: Start a audio call\nzd2: asd\n',
-      messageList: [
-        {
-          id: '1185022473184217860',
-          type: 'audio',
-          chatType: 'singleChat',
-          from: 'zd4',
-          to: 'zd2',
-          url: 'http://a41-cn.easemob.com/41117440/383391/chatfiles/4b24f130-47e1-11ee-80af-fd4b8c914321?em-redirect=true&share-secret=SyTxOkfhEe6hCBG7YnsUau8y8s0rEj4_Y-mO5YhT8K1WjzqL',
-          secret: 'SyTxOkfhEe6hCBG7YnsUau8y8s0rEj4_Y-mO5YhT8K1WjzqL',
-          file: {
-            filename: 'audio-message.wav',
-            filetype: '',
-            url: '',
-            data: new File([], 'audio-message.wav'),
-          },
-          filename: 'audio-message.wav',
-          length: 2,
-          file_length: 65580,
-          filetype: '',
-          accessToken:
-            'YWMtjZekBWi_SRybmYhR2X5krihYwv00w0hrtpGKy_Jc3V3vkp5QYk0R7KtpLQBDs1-jAwMAAAGKkojGGwABUKlE7-wNXfHnQsCya6iFhgJV9CFGmweyTtPqZqy5MuCunw==',
-          ext: {},
-          time: 1693474345180,
-          onlineState: 3,
-        },
-        {
-          id: '1189366073632230160',
-          type: 'txt',
-          chatType: 'singleChat',
-          msg: 'Start a audio call',
-          to: 'zd4',
-          from: 'zd2',
-          ext: {
-            action: 'invite',
-            channelName: '91512613',
-            type: 0,
-            callerDevId: 'webim_random_1694485650366',
-            callId: '429532068298',
-            ts: 1694485668297,
-            msgType: 'rtcCallWithAgora',
-            callerIMName: 'zd2',
-            chatType: 0,
-            em_push_ext: {
-              type: 'call',
-              custom: {
-                callId: '429532068298',
-              },
-            },
-            em_apns_ext: {
-              em_push_type: 'voip',
-            },
-          },
-          time: 1694485668475,
-          onlineState: 3,
-        },
-        {
-          id: '1189528432543795984',
-          type: 'txt',
-          chatType: 'singleChat',
-          msg: 'asd',
-          to: 'zd4',
-          from: 'zd2',
-          ext: {
-            em_at_list: [],
-            msgQuote: {
-              msgID: '1187658028808145668',
-              msgPreview: 'Start a video call',
-              msgSender: 'zd4',
-              msgType: 'txt',
-            },
-          },
-          time: 1694523470608,
-          onlineState: 3,
-        },
-      ],
-      bySelf: true,
-      // @ts-ignore
-      mid: '1190206342359419660',
-      status: 'received',
-      url: 'http://a41-cn.easemob.com/41117440/383391/chatfiles/797cedd0-52db-11ee-ae18-afa6d37eb8f8?em-redirect=true&share-secret=eX0U4FLbEe6m6Lsrhtl9i9BZ3XW5qTmB_rQZsili0q_RnvMo',
-      secret: 'eX0U4FLbEe6m6Lsrhtl9i9BZ3XW5qTmB_rQZsili0q_RnvMo',
-      combineLevel: 1,
-    },
+    combinedMessage,
   },
 };
 
 export const Secondly = {
+  render: Template,
   args: {
     bubbleType: 'secondly',
     direction: 'ltr',
     combinedMessage: {
-      type: 'combine',
-      id: '429727706260',
-      to: 'zd2',
-      from: 'zd4',
-      chatType: 'singleChat',
-      time: 1694681306249,
-      deliverOnlineOnly: false,
-      compatibleText: 'the combine message',
-      title: 'Chat History',
-      summary: 'zd4: /Audio message/\nzd2: Start a audio call\nzd2: asd\n',
-      messageList: [
-        {
-          id: '1185022473184217860',
-          type: 'audio',
-          chatType: 'singleChat',
-          from: 'zd4',
-          to: 'zd2',
-          url: 'http://a41-cn.easemob.com/41117440/383391/chatfiles/4b24f130-47e1-11ee-80af-fd4b8c914321?em-redirect=true&share-secret=SyTxOkfhEe6hCBG7YnsUau8y8s0rEj4_Y-mO5YhT8K1WjzqL',
-          secret: 'SyTxOkfhEe6hCBG7YnsUau8y8s0rEj4_Y-mO5YhT8K1WjzqL',
-          file: {
-            filename: 'audio-message.wav',
-            filetype: '',
-            url: '',
-            data: new File([], 'audio-message.wav'),
-          },
-          filename: 'audio-message.wav',
-          length: 2,
-          file_length: 65580,
-          filetype: '',
-          accessToken:
-            'YWMtjZekBWi_SRybmYhR2X5krihYwv00w0hrtpGKy_Jc3V3vkp5QYk0R7KtpLQBDs1-jAwMAAAGKkojGGwABUKlE7-wNXfHnQsCya6iFhgJV9CFGmweyTtPqZqy5MuCunw==',
-          ext: {},
-          time: 1693474345180,
-          onlineState: 3,
-        },
-        {
-          id: '1189366073632230160',
-          type: 'txt',
-          chatType: 'singleChat',
-          msg: 'Start a audio call',
-          to: 'zd4',
-          from: 'zd2',
-          ext: {
-            action: 'invite',
-            channelName: '91512613',
-            type: 0,
-            callerDevId: 'webim_random_1694485650366',
-            callId: '429532068298',
-            ts: 1694485668297,
-            msgType: 'rtcCallWithAgora',
-            callerIMName: 'zd2',
-            chatType: 0,
-            em_push_ext: {
-              type: 'call',
-              custom: {
-                callId: '429532068298',
-              },
-            },
-            em_apns_ext: {
-              em_push_type: 'voip',
-            },
-          },
-          time: 1694485668475,
-          onlineState: 3,
-        },
-        {
-          id: '1189528432543795984',
-          type: 'txt',
-          chatType: 'singleChat',
-          msg: 'asd',
-          to: 'zd4',
-          from: 'zd2',
-          ext: {
-            em_at_list: [],
-            msgQuote: {
-              msgID: '1187658028808145668',
-              msgPreview: 'Start a video call',
-              msgSender: 'zd4',
-              msgType: 'txt',
-            },
-          },
-          time: 1694523470608,
-          onlineState: 3,
-        },
-      ],
-      bySelf: true,
-      // @ts-ignore
-      mid: '1190206342359419660',
-      status: 'received',
-      url: 'http://a41-cn.easemob.com/41117440/383391/chatfiles/797cedd0-52db-11ee-ae18-afa6d37eb8f8?em-redirect=true&share-secret=eX0U4FLbEe6m6Lsrhtl9i9BZ3XW5qTmB_rQZsili0q_RnvMo',
-      secret: 'eX0U4FLbEe6m6Lsrhtl9i9BZ3XW5qTmB_rQZsili0q_RnvMo',
-      combineLevel: 1,
+      ...combinedMessage,
+      direct: 'RECEIVE',
+      bySelf: false,
     },
   },
 };

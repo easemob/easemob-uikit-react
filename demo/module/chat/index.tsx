@@ -96,13 +96,19 @@ const ChatApp: FC<any> = () => {
       arrow={false}
       avatar={<Avatar style={{ background: 'pink' }}>zd</Avatar>}
       textMessage={{
-        msg: msg.msg || 'hello',
-        type: 'txt',
-        id: '1234',
+        msgLocalId: 'demo-text-local',
+        msgServerId: 'demo-text-server',
+        type: 'text',
+        body: {
+          content: msg.body?.content || 'hello',
+        },
         to: 'zd5',
         from: 'zd2',
-        chatType: 'singleChat',
-        time: Date.now(),
+        sender: { userId: 'zd2' },
+        conversationId: 'zd5',
+        conversationType: 'singleChat',
+        timestamp: Date.now(),
+        direct: 'SEND',
         status: 'read',
         bySelf: true,
       }}
@@ -457,12 +463,12 @@ ReactDOM.createRoot(document.getElementById('chatRoot') as Element).render(
         appKey: appKey || 'easemob-demo#support',
         // userId: 'db726e81cd',
         // userId: '61e1f0e2bd',
-        userId: userId || 'ccc',
-        // token:
-        // 'YWMt5C7aqqskEfCEZjcKFtyjOVzzvlQ7sUrSpVuQGlyIzFRFFPmQglwR8Js9JYoO0rN6AwMAAAGZ8Oq32TeeSADSOACXRag9NaqiTmMU6gSyzBjYsi3o-rOhpaYetRD2NA',
+        userId: userId || 'zd1',
+        token:
+          'YWMtOa79Vm96EfGv4C1r0h6yeg1mN7fFQUJHtJstEOESXXkI8lQgpJcR7rYIgeOX5s6nAwMAAAGe95tlhTeeSADyK3PbEVK9dee5u4a1CZLY1sfGTB31cBXQW0TxJdx21g',
         // token:
         // 'YWMtPTh1OMUREfCiyUdZ7ib6u1zzvlQ7sUrSpVuQGlyIzFScrq8ggiUR8L9jT5DlYnL_AwMAAAGams6v5zeeSADpVErzW5B-AE7ZuL7tL2cZ7tVQj5irL_RChnupc-II9Q',
-        password: password || '1',
+        // password: password || '1',
         useUserInfo: true,
         maxMessages: 100,
       }}

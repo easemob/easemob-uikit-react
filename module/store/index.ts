@@ -11,7 +11,7 @@ import ConversationStore, {
 import AddressStore, { MemberRole, MemberItem, GroupItem, AppUserInfo } from './AddressStore';
 import ThreadStore, { ThreadData, CurrentThread } from './ThreadStore';
 import PinnedMessagesStore from './PinnedMessagesStore';
-import { ChatSDK } from 'module/SDK';
+import type { UIKitChatClient } from 'module/SDK';
 import { clearCursor } from '../hooks/useConversation';
 import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
 import { ProviderProps } from '../store/Provider';
@@ -25,11 +25,11 @@ class RootStore {
   addressStore;
   threadStore;
   pinnedMessagesStore;
-  client: ChatSDK.Connection;
+  client: UIKitChatClient;
   loginState = false;
   initConfig: ProviderProps['initConfig'] = { appKey: '' };
   constructor() {
-    this.client = {} as ChatSDK.Connection;
+    this.client = {} as UIKitChatClient;
     this.messageStore = new MessageStore(this);
     this.conversationStore = new ConversationStore(this);
     this.addressStore = new AddressStore();
@@ -46,7 +46,7 @@ class RootStore {
     });
   }
 
-  setClient(client: ChatSDK.Connection) {
+  setClient(client: UIKitChatClient) {
     this.client = client;
   }
 

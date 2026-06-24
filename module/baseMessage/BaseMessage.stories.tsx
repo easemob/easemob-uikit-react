@@ -45,7 +45,6 @@ const description = {
     onSelectMessage: 'Select message callback function',
     onResendMessage: 'Resend message callback function',
     onForwardMessage: 'Forward message callback function',
-    onReportMessage: 'Report message callback function',
     onPinMessage: 'Pin message callback function',
     onMessageCheckChange: 'Select message callback function',
     renderUserProfile:
@@ -99,7 +98,6 @@ const description = {
     onSelectMessage: '点击选择消息的回调函数',
     onResendMessage: '点击重发消息的回调函数',
     onForwardMessage: '点击转发消息的回调函数',
-    onReportMessage: '点击举报消息的回调函数',
     onPinMessage: '点击置顶消息的回调函数',
     onMessageCheckChange: '点击选择消息的回调函数',
     renderUserProfile: '点击用户头像显示用户信息的回调函数，传入参数为用户信息，返回一个ReactNode',
@@ -272,10 +270,6 @@ export default {
     onForwardMessage: {
       action: 'forward message',
       description: description[lang].onForwardMessage,
-    },
-    onReportMessage: {
-      action: 'report message',
-      description: description[lang].onReportMessage,
     },
     onPinMessage: {
       action: 'pin message',

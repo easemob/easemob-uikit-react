@@ -7,6 +7,7 @@ import { Tooltip } from '../../component/tooltip/Tooltip';
 import Avatar from '../../component/avatar';
 import Icon from '../../component/icon';
 import { RootContext } from '../store/rootContext';
+import { getCurrentUserId } from '../utils';
 import './style/style.scss';
 let timeoutId: string | number | NodeJS.Timeout | undefined;
 
@@ -47,7 +48,7 @@ const ReactionButton = (props: ReactionButtonProps) => {
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const themeMode = theme?.mode || 'light';
-  const myUserId = rootStore.client.user;
+  const myUserId = getCurrentUserId(rootStore.client);
   const { appUsersInfo } = rootStore.addressStore;
   const path = emoji.oldMap[reaction as keyof typeof emoji.oldMap];
 

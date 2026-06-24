@@ -1,5 +1,5 @@
 import { ChatType } from '../types/messageType';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import rootStore, { getStore } from '../store/index';
 import { GroupItem, MemberItem } from '../store/AddressStore';
 import { emoji } from '../messageInput/emoji/emojiConfig';
@@ -7,6 +7,14 @@ import { AppUserInfo } from '../store/AddressStore';
 import { CurrentConversation } from '../store/ConversationStore';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
 import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
+import {
+  getCurrentUserId,
+  getMessageConversationId,
+  getMessageId,
+  getMessageTime,
+} from './message';
+
+export * from './message';
 
 export function getConversationTime(time: number) {
   if (!time) return '';
@@ -48,21 +56,10 @@ export function parseChannel(channelId: string): {
   };
 }
 
-export function getCvsIdFromMessage(message: BaseMessageType | NoticeMessageBody) {
-  let conversationId = '';
-  if (message?.type !== 'notice' && message?.type !== 'recall') {
-    message = message as BaseMessageType;
-    if (message.chatType == 'groupChat' || message.chatType == 'chatRoom') {
-      conversationId = message.to;
-    } else if (message.from == rootStore.client.user) {
-      // self message
-      conversationId = message.to;
-    } else {
-      // target message
-      conversationId = message.from || '';
-    }
-  }
-  return conversationId;
+export function getCvsIdFromMessage(
+  message: Partial<ChatSDK.Message> | BaseMessageType | NoticeMessageBody,
+) {
+  return getMessageConversationId(message, getCurrentUserId(rootStore.client));
 }
 
 export function getEmojiHtml({ src = '', dataKey = '', alt = '' }) {
@@ -102,15 +99,16 @@ export const renderHtml = (txt: string): string => {
 export function getUsersInfo(props: { userIdList: string[]; withPresence?: boolean }) {
   const { userIdList, withPresence = true } = props;
   const { client, addressStore, conversationStore } = getStore();
-  if (!client.context) return Promise.reject('client is not initialized');
-  const findIndex = userIdList.indexOf(client.user);
+  const currentUserId = getCurrentUserId(client);
+  if (!currentUserId) return Promise.reject('client is not initialized');
+  const findIndex = userIdList.indexOf(currentUserId);
   const subList = [...userIdList];
   const result = {};
   if (findIndex > -1) {
     subList.splice(findIndex, 1);
   }
   if (subList.length > 0 && withPresence) {
-    client.subscribePresence({ usernames: subList, expiry: 2592000 }).catch(err => {
+    client.presenceManager.subscribePresence({ userIds: subList, expiry: 2592000 }).catch(err => {
       console.warn('subscribePresence failed', err);
     });
   }
@@ -118,14 +116,14 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
   return new Promise((resolve, reject) => {
     const type = [
       'nickname',
-      'avatarurl',
+      'avatarUrl',
       'mail',
       'phone',
       'gender',
       'sign',
       'birth',
       'ext',
-    ] as ChatSDK.ConfigurableKey[];
+    ] as ChatSDK.UserInfoAttribute[];
     const reUserInfo: Record<string, AppUserInfo> = {};
     userIdList.forEach(item => {
       reUserInfo[item] = {
@@ -136,31 +134,38 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
     if (userIdList.length === 0) {
       resolve(Object.assign({}, reUserInfo));
     } else {
-      client
-        .fetchUserInfoById(userIdList, type)
+      client.userInfoManager
+        .getUserInfoByAttribute({ userIds: userIdList, attributes: type })
         .then(res => {
-          res.data &&
-            Object.keys(res.data).forEach(item => {
-              type.forEach(key => {
-                reUserInfo[item][key] = res?.data?.[item][key] ? res.data[item][key] : '';
-              });
-            });
+          res.forEach(item => {
+            const userInfo = reUserInfo[item.userId];
+            if (userInfo) {
+              userInfo.nickname = item.nickname || '';
+              userInfo.avatarurl = item.avatarUrl || '';
+              userInfo.mail = item.mail || '';
+              userInfo.phone = item.phone || '';
+              userInfo.gender = String(item.gender || '');
+              userInfo.sign = item.sign || '';
+              userInfo.birth = item.birth || '';
+              userInfo.ext = item.ext ? JSON.parse(item.ext) : '';
+            }
+          });
           if (withPresence) {
-            client
-              .getPresenceStatus({ usernames: userIdList })
+            client.presenceManager
+              .getPresenceStatus({ userIds: userIdList })
               .then(res => {
-                res?.data?.result.forEach((item: ChatSDK.SubscribePresence) => {
-                  if (reUserInfo[item.uid]) {
-                    reUserInfo[item.uid].presenceExt = item.ext;
+                res.forEach(item => {
+                  if (reUserInfo[item.publisher]) {
+                    reUserInfo[item.publisher].presenceExt = item.ext;
                     if (
-                      Object.prototype.toString.call(item.status) === '[object Object]' &&
-                      Object.values(item.status).indexOf('1') > -1
+                      Object.prototype.toString.call(item.statusList) === '[object Object]' &&
+                      Object.values(item.statusList).indexOf(1) > -1
                     ) {
-                      reUserInfo[item.uid].isOnline = true;
+                      reUserInfo[item.publisher].isOnline = true;
                     }
                   }
                 });
-                conversationStore.setOnlineStatus(res.data?.result as ChatSDK.SubscribePresence[]);
+                conversationStore.setOnlineStatus(res);
                 const list = addressStore.appUsersInfo;
                 addressStore.setAppUserInfo(Object.assign({}, reUserInfo, list));
                 resolve(Object.assign({}, result, reUserInfo));
@@ -188,12 +193,12 @@ export const formatHtmlString = (str: string) =>
 
 export function getGroupItemFromGroupsById(groupId: string) {
   const { addressStore } = rootStore;
-  return addressStore.groups.find(item => groupId === item.groupid);
+  return addressStore.groups.find(item => item.groupId === groupId);
 }
 
 export function getGroupItemIndexFromGroupsById(groupId: string) {
   const { addressStore } = rootStore;
-  return addressStore.groups.findIndex(item => groupId === item.groupid);
+  return addressStore.groups.findIndex(item => item.groupId === groupId);
 }
 
 export function getGroupMemberIndexByUserId(group: GroupItem, userId: string) {
@@ -216,31 +221,39 @@ export function getMessages(cvs: CurrentConversation) {
 }
 
 export function getMessageIndex(
-  messages: (ChatSDK.MessageBody | NoticeMessageBody)[],
+  messages: (ChatSDK.Message | NoticeMessageBody)[],
   messageId: string,
 ) {
   if (!messages) return -1;
-  //@ts-ignore
-  return messages.findIndex(msg => msg.id === messageId || msg.mid === messageId);
+  return messages.findIndex(msg => getMessageId(msg) === messageId);
 }
 
-export function getReactionByEmoji(
-  message: ChatSDK.MessageBody | NoticeMessageBody,
-  emoji: string,
-) {
+export function getReactionByEmoji(message: ChatSDK.Message | NoticeMessageBody, emoji: string) {
   // @ts-ignore
   return message.reactions?.find(reaction => reaction.reaction === emoji);
 }
 
-export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) => {
-  let { chatType, from = '', to, chatThread } = msg;
+export const getMsgSenderNickname = (
+  msg: {
+    from?: string;
+    to?: string;
+    conversationId?: string;
+    conversationType?: ChatType;
+    chatType?: ChatType;
+    chatThread?: { parentId?: string };
+  },
+  parentId?: string,
+) => {
+  let chatType = msg.chatType || msg.conversationType;
+  let { from = '', to, chatThread } = msg;
   const id = parentId || chatThread?.parentId;
   if (id) {
     to = id;
   }
+  to = to || msg.conversationId;
   const { appUsersInfo, contacts } = getStore().addressStore;
   if (chatType === 'groupChat') {
-    const group = getGroupItemFromGroupsById(to);
+    const group = getGroupItemFromGroupsById(to || '');
 
     const contactData = contacts.find((contact: any) => {
       return contact.userId === from;
@@ -271,10 +284,12 @@ export function sortByPinned(a: any, b: any) {
   } else if (!a.isPinned && b.isPinned) {
     return 1; // b排在a前面
   } else if ((!a.isPinned && !b.isPinned) || (a.isPinned && b.isPinned)) {
-    if (!a.lastMessage?.time) {
+    const aTime = getMessageTime(a.lastMessage);
+    const bTime = getMessageTime(b.lastMessage);
+    if (!aTime) {
       return 0;
     }
-    return a.lastMessage?.time > b.lastMessage?.time ? -1 : 1; // 保持原有顺序
+    return aTime > bTime ? -1 : 1; // 保持原有顺序
   } else {
     return 0; // 保持原有顺序
   }

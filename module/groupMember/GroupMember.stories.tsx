@@ -125,7 +125,7 @@ export default {
   },
 } as Meta<typeof GroupMember>;
 
-const Template: StoryFn<typeof GroupMember> = args => (
+const Template: StoryFn<GroupMemberProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',

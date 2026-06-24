@@ -1,7 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import rootStore from '../store';
-import VideoMessage from './index';
+import VideoMessage, { VideoMessageProps } from './index';
 import Icon, { IconProps } from '../../component/icon';
 import { FileObj } from '../types/messageType';
 import Provider from '../store/Provider';
@@ -80,7 +80,7 @@ export default {
 } as Meta<typeof VideoMessage>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: StoryFn<typeof VideoMessage> = args => (
+const Template: StoryFn<VideoMessageProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',

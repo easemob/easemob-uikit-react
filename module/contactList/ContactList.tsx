@@ -17,7 +17,10 @@ import { pinyin } from 'pinyin-pro';
 import rootStore from '../store/index';
 import { checkCharacter } from '../utils/index';
 import { useTranslation } from 'react-i18next';
+import type { GroupItem } from '../store/AddressStore';
 // pinyin('汉语拼音', { toneType: 'none' }); // "han yu pin yin"
+type ContactListGroupItem = Pick<GroupItem, 'groupId' | 'name' | 'groupName' | 'avatarUrl'>;
+
 export interface ContactListProps {
   style?: React.CSSProperties;
   className?: string;
@@ -30,7 +33,7 @@ export interface ContactListProps {
     | 'requests'
     | {
         title: string;
-        data: ({ remark?: string; userId: string } | { groupname: string; groupid: string })[];
+        data: ({ remark?: string; userId: string } | ContactListGroupItem)[];
       }
   )[];
   hasMenu?: boolean; // 是否显示分类的menu, 默认值true, 只有menu中只有一个条目时才能设置false
@@ -50,9 +53,12 @@ function getBrands(members: any) {
   innerMembers.forEach((item: any) => {
     item.name = item.userId
       ? item.remark || rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
-      : item.groupname;
+      : item.groupName || item.name || item.groupId || '';
     item.userId && (item.nickname = item.name);
-    // item.avatarUrl = item.avatarUrl; //群组有avatarUrl
+    if (!item.name) {
+      item.initial = '#';
+      return;
+    }
     if (checkCharacter(item.name.substring(0, 1)) == 'en') {
       item.initial = item.name.substring(0, 1).toUpperCase();
     } else if (checkCharacter(item.name.substring(0, 1)) == 'zh') {
@@ -78,7 +84,7 @@ function getBrands(members: any) {
 
   for (let i = 0; i < innerMembers.length; i++) {
     const newBrands = {
-      brandId: innerMembers[i].userId || innerMembers[i].groupid,
+      brandId: innerMembers[i].userId || innerMembers[i].groupId,
       name: innerMembers[i].name,
       avatarUrl:
         innerMembers[i].avatarUrl ||
@@ -162,10 +168,8 @@ let ContactList: FC<ContactListProps> = props => {
 
   // 获取联系人列表
   useContacts();
-  if (useUserInfoConfig) {
-    const withPresence = features?.conversationList?.item?.presence != false;
-    useUserInfo('contacts', withPresence);
-  }
+  const withPresenceContacts = features?.conversationList?.item?.presence != false;
+  useUserInfo(useUserInfoConfig ? 'contacts' : null, withPresenceContacts);
 
   const { getJoinedGroupList } = useGroups();
 
@@ -328,14 +332,12 @@ let ContactList: FC<ContactListProps> = props => {
 
     const groupSearchList =
       (menu.includes('groups') &&
-        addressStore.groups.filter(
-          (group: { groupid: string | string[]; groupname: string | string[] }) => {
-            if (group.groupname.includes(value)) {
-              return true;
-            }
-            return false;
-          },
-        )) ||
+        addressStore.groups.filter(group => {
+          if ((group.groupName || group.name || '').includes(value)) {
+            return true;
+          }
+          return false;
+        })) ||
       [];
 
     setIsSearch(value.length > 0 ? true : false);
@@ -350,13 +352,14 @@ let ContactList: FC<ContactListProps> = props => {
     const searchList = addressStore.searchList.map(
       (item: {
         userId: string;
-        groupid: string;
+        groupId: string;
         nickname: string;
-        groupname: string;
+        groupName?: string;
+        name?: string;
         avatarUrl: string;
       }) => {
-        const id = item.userId || item.groupid;
-        const name = item.nickname || item.groupname;
+        const id = item.userId || item.groupId;
+        const name = item.nickname || item.groupName || item.name || id;
         const data = {
           userId: id,
           nickname: name,
@@ -399,8 +402,8 @@ let ContactList: FC<ContactListProps> = props => {
       type = 'contact';
     } else {
       addressStore.groups.forEach(item => {
-        if (item.groupid == id) {
-          name = item.groupname;
+        if (item.groupId == id) {
+          name = item.groupName || item.name;
           type = 'group';
         }
       });

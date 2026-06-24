@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useContext, useImperativeHandle } from 'react';
 import classNames from 'classnames';
-import { chatSDK, ChatSDK } from '../../SDK';
+import type { ChatSDK } from '../../SDK';
 import './style/style.scss';
 import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
@@ -9,6 +9,8 @@ import { RootContext } from '../../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
 import Button from '../../../component/button';
+import type { BeforeSendMessage } from '../sendTypes';
+import { resolveBeforeSendRoute, toSendMessageRoute } from '../sendTypes';
 export interface RecorderProps {
   prefix?: string;
   className?: string;
@@ -18,9 +20,9 @@ export interface RecorderProps {
   cancelBtnShape?: 'circle' | 'square';
   onShow?: () => void;
   onHide?: () => void;
-  onSend?: (message: ChatSDK.MessageBody) => void;
+  onSend?: (message: ChatSDK.Message) => void;
   conversation?: CurrentConversation;
-  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: BeforeSendMessage;
   isChatThread?: boolean;
   disabled?: boolean;
   disabledTitle?: string; // 已国际化
@@ -142,7 +144,7 @@ const Recorder = React.forwardRef<RecorderRef, RecorderProps>((props: RecorderPr
     clearInterval(timer);
   }, [currentCVS]);
 
-  const _sendMessage = (message: ChatSDK.MessageBody) => {
+  const _sendMessage = (message: ChatSDK.Message) => {
     messageStore.sendMessage(message);
 
     stopRecording();
@@ -160,39 +162,31 @@ const Recorder = React.forwardRef<RecorderRef, RecorderProps>((props: RecorderPr
       (recorder as any).stop();
       // 获取语音二进制文件
       const blob = (recorder as any).getBlob();
-      const uri = {
-        url: chatSDK.utils.parseDownloadResponse.call(client, blob),
-        filename: 'audio-message.wav',
-        filetype: 'audio',
-        data: blob,
-        length: duration < 1 ? 1 : duration,
-        duration: duration < 1 ? 1 : duration,
-      };
+      const voiceFile = new File([blob], 'audio-message.wav', { type: 'audio/wav' });
+      const voiceDuration = duration < 1 ? 1 : duration;
       MediaStream.getTracks()[0].stop();
 
-      const message = chatSDK.message.create({
-        type: 'audio',
-        to: currentCVS.conversationId,
-        chatType: currentCVS.chatType,
-        file: uri,
-        filename: '',
-        length: duration < 1 ? 1 : duration,
+      resolveBeforeSendRoute(onBeforeSendMessage, {
+        kind: 'voice',
+        route: toSendMessageRoute(currentCVS),
+        body: {
+          filename: voiceFile.name,
+          filetype: voiceFile.type,
+          duration: voiceDuration,
+          fileLength: voiceFile.size,
+        },
         isChatThread,
-      });
-
-      if (onBeforeSendMessage) {
-        onBeforeSendMessage(message).then(cvs => {
-          if (cvs) {
-            message.to = cvs.conversationId;
-            // @ts-ignore
-            message.chatType = cvs.chatType;
-          }
-
-          _sendMessage(message);
+      }).then(route => {
+        const message = client.chatManager.createVoiceMessage({
+          ...route,
+          data: voiceFile,
+          filename: voiceFile.name,
+          filetype: voiceFile.type,
+          duration: voiceDuration,
+          fileLength: voiceFile.size,
         });
-      } else {
         _sendMessage(message);
-      }
+      });
     }
   };
 

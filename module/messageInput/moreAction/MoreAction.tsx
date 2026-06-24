@@ -4,14 +4,15 @@ import './style/style.scss';
 import { ConfigContext } from '../../../component/config/index';
 import { Tooltip } from '../../../component/tooltip/Tooltip';
 import Icon from '../../../component/icon';
-import { chatSDK, ChatSDK } from '../../SDK';
+import type { ChatSDK } from '../../SDK';
 import { RootContext } from '../../store/rootContext';
 import { observer } from 'mobx-react-lite';
 import { useTranslation } from 'react-i18next';
 import { CurrentConversation } from '../../store/ConversationStore';
-import { FileMessageType, ImageMessageType } from 'module/types/messageType';
 import UserSelect, { UserSelectInfo } from '../../userSelect';
 import Button from '../../../component/button';
+import type { BeforeSendMessage } from '../sendTypes';
+import { resolveBeforeSendRoute, toSendMessageRoute } from '../sendTypes';
 export interface MoreActionProps {
   style?: React.CSSProperties;
   className?: string;
@@ -25,7 +26,11 @@ export interface MoreActionProps {
   }>;
   conversation?: CurrentConversation;
   isChatThread?: boolean;
-  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: BeforeSendMessage;
+}
+
+function getInputFile(target: HTMLInputElement): File | undefined {
+  return target.files?.[0];
 }
 let MoreAction = (props: MoreActionProps) => {
   const {
@@ -86,35 +91,34 @@ let MoreAction = (props: MoreActionProps) => {
       return;
     }
     const userInfo = selectedUsers[0];
-    const customEvent = 'userCard'; // 创建自定义事件
-    const customExts = {
+    const event = 'userCard';
+    const params = {
       uid: userInfo.userId || '',
       nickname:
         rootStore.addressStore.appUsersInfo[userInfo.userId]?.nickname || userInfo.nickname || '',
       avatar: userInfo.avatarUrl || '',
     };
 
-    const option = {
-      type: 'custom' as const,
-      customEvent,
-      customExts,
-      to: currentCVS.conversationId,
-      chatType: currentCVS.chatType,
-      isChatThread,
+    const body = {
+      event,
+      params: Object.fromEntries(
+        Object.entries(params).map(([key, value]) => [key, String(value)]),
+      ),
     };
-    const customMessage = chatSDK.message.create(option);
 
-    if (onBeforeSendMessage) {
-      onBeforeSendMessage(customMessage).then(cvs => {
-        if (cvs) {
-          customMessage.to = cvs.conversationId;
-          (customMessage as ImageMessageType).chatType = cvs.chatType;
-        }
-        messageStore.sendMessage(customMessage);
+    resolveBeforeSendRoute(onBeforeSendMessage, {
+      kind: 'custom',
+      route: toSendMessageRoute(currentCVS),
+      body,
+      isChatThread,
+    }).then(route => {
+      const customMessage = client.chatManager.createCustomMessage({
+        ...route,
+        event: body.event,
+        params: body.params,
       });
-    } else {
       messageStore.sendMessage(customMessage);
-    }
+    });
   };
   const sendVideo = () => {
     videoEl.current?.focus();
@@ -216,8 +220,8 @@ let MoreAction = (props: MoreActionProps) => {
   );
   const currentCVS = conversation ? conversation : messageStore.currentCVS;
   const handleImageChange: React.ChangeEventHandler<HTMLInputElement> = e => {
-    const file = chatSDK.utils.getFileUrl(e.target);
-    if (!file.filename) {
+    const file = getInputFile(e.target);
+    if (!file) {
       return false;
     }
     if (!currentCVS.conversationId) {
@@ -228,34 +232,25 @@ let MoreAction = (props: MoreActionProps) => {
     img.src = URL.createObjectURL(e.target.files?.[0] as unknown as MediaSource);
     img.onload = () => {
       const option = {
-        type: 'img',
-        to: currentCVS.conversationId,
-        chatType: currentCVS.chatType,
-        file: file,
-        isChatThread,
+        data: file,
         width: img.width,
         height: img.height,
-        onFileUploadComplete: data => {
-          const sendMsg = messageStore.message.byId.get(imageMessage.id) as ChatSDK.MessageBody;
-          (sendMsg as any).thumb = data.thumb;
-          (sendMsg as any).url = data.url;
-          messageStore.modifyMessage(imageMessage.id, sendMsg);
-        },
-        isGif: file.filename.endsWith('.gif'),
-      } as ChatSDK.CreateImgMsgParameters;
-      const imageMessage = chatSDK.message.create(option);
-      if (onBeforeSendMessage) {
-        onBeforeSendMessage(imageMessage).then(cvs => {
-          if (cvs) {
-            imageMessage.to = cvs.conversationId;
-            (imageMessage as ImageMessageType).chatType = cvs.chatType;
-          }
-
-          messageStore.sendMessage(imageMessage);
+        filetype: file.type,
+        fileLength: file.size,
+        isGif: file.name.endsWith('.gif'),
+      };
+      resolveBeforeSendRoute(onBeforeSendMessage, {
+        kind: 'image',
+        route: toSendMessageRoute(currentCVS),
+        body: option,
+        isChatThread,
+      }).then(route => {
+        const imageMessage = client.chatManager.createImageMessage({
+          ...route,
+          ...option,
         });
-      } else {
         messageStore.sendMessage(imageMessage);
-      }
+      });
       imageEl!.current!.value = '';
 
       // 释放 URL 对象以避免内存泄漏
@@ -267,8 +262,8 @@ let MoreAction = (props: MoreActionProps) => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'file' | 'video') => {
-    const file = chatSDK.utils.getFileUrl(e.target);
-    if (!file.filename) {
+    const file = getInputFile(e.target);
+    if (!file) {
       return false;
     }
     if (!currentCVS.conversationId) {
@@ -277,34 +272,30 @@ let MoreAction = (props: MoreActionProps) => {
     }
 
     const option = {
-      type: type,
-      to: currentCVS.conversationId,
-      chatType: currentCVS.chatType,
-      file: file,
-      filename: file.filename,
-      file_length: file.data.size,
-      url: file.url,
+      data: file,
+      filename: file.name,
+      filetype: file.type,
+      fileLength: file.size,
+    };
+    resolveBeforeSendRoute(onBeforeSendMessage, {
+      kind: type === 'video' ? 'video' : 'file',
+      route: toSendMessageRoute(currentCVS),
+      body: option,
       isChatThread,
-      onFileUploadComplete(data) {
-        if (type === 'video') {
-          (fileMessage as ChatSDK.VideoMsgBody).thumb = data.thumb;
-        }
-      },
-    } as ChatSDK.CreateFileMsgParameters;
-    const fileMessage = chatSDK.message.create(option);
-
-    if (onBeforeSendMessage) {
-      onBeforeSendMessage(fileMessage).then(cvs => {
-        if (cvs) {
-          fileMessage.to = cvs.conversationId;
-          (fileMessage as FileMessageType).chatType = cvs.chatType;
-        }
-
-        messageStore.sendMessage(fileMessage);
-      });
-    } else {
+    }).then(route => {
+      const fileMessage =
+        type === 'video'
+          ? client.chatManager.createVideoMessage({
+              ...route,
+              ...option,
+              duration: 0,
+            })
+          : client.chatManager.createFileMessage({
+              ...route,
+              ...option,
+            });
       messageStore.sendMessage(fileMessage);
-    }
+    });
     if (type === 'file') {
       fileEl!.current!.value = '';
     } else {

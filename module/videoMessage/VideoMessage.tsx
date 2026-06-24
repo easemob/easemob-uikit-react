@@ -8,14 +8,20 @@ import Avatar from '../../component/avatar';
 import Mask from '../../component/modal/Mast';
 import Modal from '../../component/modal';
 import rootStore from '../store/index';
-// @ts-ignore
-import { ChatSDK } from '../SDK';
-import { getCvsIdFromMessage } from '../utils';
+import type { ChatSDK } from '../SDK';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getMessageChatType,
+  getMessageId,
+  getMessageTime,
+  getThreadId,
+} from '../utils';
 import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 export interface VideoMessageProps extends BaseMessageProps {
-  videoMessage: ChatSDK.VideoMsgBody & VideoMessageType; // 从SDK收到的视频消息
+  videoMessage: VideoMessageType | ChatSDK.Message; // 从SDK收到的视频消息
   prefix?: string;
   style?: React.CSSProperties;
   nickName?: string;
@@ -42,11 +48,22 @@ const VideoMessage = (props: VideoMessageProps) => {
     ...baseMsgProps
   } = props;
 
-  let { bySelf, from, reactions, status } = videoMessage;
+  const sdkMessage = videoMessage as ChatSDK.Message;
+  const uiMessage = videoMessage as VideoMessageType & Record<string, any>;
+  const body = sdkMessage.body as Record<string, any>;
+  const conversationType = getMessageChatType(sdkMessage);
+  if (!conversationType) return null;
+  const conversationId = getCvsIdFromMessage(sdkMessage);
+  const messageId = getMessageId(sdkMessage);
+  const messageTime = getMessageTime(sdkMessage);
+  const localFile = uiMessage.file as Record<string, any> | undefined;
+  const videoUrl = body.url || uiMessage.url || localFile?.url || '';
+  const thumbUrl = body.thumbnailUrl || uiMessage.thumb || '';
+  let { bySelf, from, reactions, status } = uiMessage;
   const { pinMessage } = usePinnedMessage({
     conversation: {
-      conversationId: getCvsIdFromMessage(videoMessage),
-      conversationType: videoMessage.chatType,
+      conversationId,
+      conversationType,
     },
   });
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -66,81 +83,77 @@ const VideoMessage = (props: VideoMessageProps) => {
   );
 
   if (typeof bySelf == 'undefined') {
-    bySelf = from == rootStore.client.context.userId;
+    bySelf = from == getCurrentUserId(rootStore.client);
   }
 
   const handleReplyMsg = () => {
-    rootStore.messageStore.setRepliedMessage(videoMessage);
+    rootStore.messageStore.setRepliedMessage(sdkMessage);
   };
 
   const handleDeleteMsg = () => {
-    const conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
 
     rootStore.messageStore.deleteMessage(
       {
-        chatType: videoMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      videoMessage.mid || videoMessage.id,
+      messageId,
     );
   };
 
   const handlePinMessage = () => {
-    //@ts-ignore
-    pinMessage(videoMessage.mid || videoMessage.id);
+    pinMessage(messageId);
   };
 
   const handleClickEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
 
     rootStore.messageStore.addReaction(
       {
-        chatType: videoMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      videoMessage.mid || videoMessage.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleDeleteEmoji = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.deleteReaction(
       {
-        chatType: videoMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      videoMessage.mid || videoMessage.id,
+      messageId,
       emojiString,
     );
   };
 
   const handleShowReactionUserList = (emojiString: string) => {
-    const conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     reactions?.forEach(item => {
       if (item.reaction === emojiString) {
         if (item.count > 3 && item.userList.length <= 3) {
           rootStore.messageStore.getReactionUserList(
             {
-              chatType: videoMessage.chatType,
+              chatType: conversationType,
               conversationId: conversationId,
             },
-            // @ts-ignore
-            videoMessage.mid || videoMessage.id,
+            messageId,
             emojiString,
           );
         }
 
         if (item.isAddedBySelf) {
-          const index = item.userList.indexOf(rootStore.client.user);
+          const currentUserId = getCurrentUserId(rootStore.client);
+          const index = item.userList.indexOf(currentUserId);
           if (index > -1) {
             const findItem = item.userList.splice(index, 1)[0];
             item.userList.unshift(findItem);
           } else {
-            item.userList.unshift(rootStore.client.user);
+            item.userList.unshift(currentUserId);
           }
         }
       }
@@ -148,29 +161,27 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handleRecallMessage = () => {
-    const conversationId = getCvsIdFromMessage(videoMessage);
+    const conversationId = getCvsIdFromMessage(sdkMessage);
     rootStore.messageStore.recallMessage(
       {
-        chatType: videoMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      videoMessage.mid || videoMessage.id,
-      videoMessage.isChatThread,
+      messageId,
+      uiMessage.isChatThread,
       true,
     );
   };
-  const conversationId = getCvsIdFromMessage(videoMessage);
   const handleSelectMessage = () => {
     const selectable =
-      rootStore.messageStore.selectedMessage[videoMessage.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: videoMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -181,32 +192,31 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handleResendMessage = () => {
-    rootStore.messageStore.sendMessage(videoMessage);
+    rootStore.messageStore.sendMessage(sdkMessage);
   };
 
   const select =
-    rootStore.messageStore.selectedMessage[videoMessage.chatType as 'singleChat' | 'groupChat'][
+    rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
       conversationId
     ]?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
-      rootStore.messageStore.selectedMessage[videoMessage.chatType as 'singleChat' | 'groupChat'][
+      rootStore.messageStore.selectedMessage[conversationType as 'singleChat' | 'groupChat'][
         conversationId
       ]?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
-      changedList.push(videoMessage);
+      changedList.push(sdkMessage);
     } else {
       changedList = checkedMessages.filter(item => {
-        // @ts-ignore
-        return !(item.id == videoMessage.id || item.mid == videoMessage.id);
+        return getMessageId(item) !== messageId;
       });
     }
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: videoMessage.chatType,
+        chatType: conversationType,
         conversationId: conversationId,
       },
       {
@@ -216,72 +226,66 @@ const VideoMessage = (props: VideoMessageProps) => {
     );
   };
 
-  // @ts-ignore
   const _thread =
-    // @ts-ignore
-    videoMessage.chatType == 'groupChat' &&
-    thread &&
-    // @ts-ignore
-    !videoMessage.chatThread &&
-    !videoMessage.isChatThread;
+    conversationType == 'groupChat' && thread && !uiMessage.chatThread && !uiMessage.isChatThread;
 
   // open thread panel to create thread
   const handleCreateThread = () => {
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: true,
-      originalMessage: videoMessage,
+      originalMessage: sdkMessage,
     });
     rootStore.threadStore.setThreadVisible(true);
   };
 
   // join the thread
   const handleClickThreadTitle = () => {
-    rootStore.threadStore.joinChatThread(videoMessage.chatThreadOverview?.id || '');
+    const chatThreadId = getThreadId(uiMessage.chatThreadOverview);
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: false,
-      originalMessage: videoMessage,
-      info: videoMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
+      originalMessage: sdkMessage,
+      info: uiMessage.chatThreadOverview as any,
     });
     rootStore.threadStore.setThreadVisible(true);
 
-    rootStore.threadStore.getChatThreadDetail(videoMessage?.chatThreadOverview?.id || '');
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
   };
 
   const handlePlayVideo = () => {
     // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
     if (
-      videoMessage.chatType == 'singleChat' &&
-      videoMessage.from != rootStore.client.context.userId &&
-      // @ts-ignore
-      videoMessage.status != 'read' &&
-      !videoMessage.isChatThread &&
-      videoMessage.to == rootStore.client.context.userId
+      conversationType == 'singleChat' &&
+      sdkMessage.from != getCurrentUserId(rootStore.client) &&
+      uiMessage.status != 'read' &&
+      !uiMessage.isChatThread &&
+      sdkMessage.to == getCurrentUserId(rootStore.client)
     ) {
-      rootStore.messageStore.sendReadAck(videoMessage.id, videoMessage.from || '');
+      rootStore.messageStore.sendReadAck(messageId, sdkMessage.from || '');
     }
   };
   const handleClickVideo = (e: React.MouseEvent<HTMLVideoElement>) => {
-    const preventDefault = onClick?.(videoMessage);
+    const preventDefault = onClick?.(sdkMessage);
     if (preventDefault === true) {
       e.preventDefault();
     }
   };
   return (
     <BaseMessage
-      id={videoMessage.id}
+      id={messageId}
       className={bubbleClass}
-      message={videoMessage}
+      message={sdkMessage}
       bubbleType={type}
       direction={bySelf ? 'rtl' : 'ltr'}
       shape={shape}
       // shape="round"
       bubbleStyle={{
         padding: 0,
-        background: videoMessage.chatThreadOverview ? undefined : 'transparent',
+        background: uiMessage.chatThreadOverview ? undefined : 'transparent',
       }}
-      time={videoMessage.time}
+      time={messageTime}
       nickName={nickName}
       onReplyMessage={handleReplyMsg}
       onDeleteMessage={handleDeleteMsg}
@@ -298,7 +302,7 @@ const VideoMessage = (props: VideoMessageProps) => {
       onMessageCheckChange={handleMsgCheckChange}
       onCreateThread={handleCreateThread}
       thread={_thread}
-      chatThreadOverview={videoMessage.chatThreadOverview}
+      chatThreadOverview={uiMessage.chatThreadOverview as any}
       onClickThreadTitle={handleClickThreadTitle}
       status={status}
       // bubbleStyle={{ padding: '0' }}
@@ -313,11 +317,9 @@ const VideoMessage = (props: VideoMessageProps) => {
           crossOrigin="anonymous"
           preload="metadata"
           onPlay={handlePlayVideo}
-          poster={videoMessage.thumb}
-          src={`${videoMessage.url}${
-            videoMessage?.url?.includes('?')
-              ? '&origin-file=true'
-              : '?em-redirect=true&origin-file=true'
+          poster={thumbUrl}
+          src={`${videoUrl}${
+            videoUrl?.includes('?') ? '&origin-file=true' : '?em-redirect=true&origin-file=true'
           }`}
           onClick={handleClickVideo}
           {...videoProps}

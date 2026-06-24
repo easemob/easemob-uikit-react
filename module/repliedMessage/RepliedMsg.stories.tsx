@@ -1,7 +1,8 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
-import { RepliedMsg } from './index';
+import { RepliedMsg, RepliedMsgProps } from './index';
+import type { ChatSDK } from '../SDK';
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 const description = {
   en: {
@@ -55,7 +56,7 @@ export default {
         type: { summary: 'BaseMessageType' },
         details: {
           summary:
-            'new BaseMessageType({ id: "1189528432543795984", type: "txt", chatType: "singleChat", msg: "asd", to: "zd4", from: "zd2", ext: { em_at_list: [], msgQuote: { msgID: "1187658028808145668", msgPreview: "Start a video call", msgSender: "zd4", msgType: "txt" }, }, time: 1694523470608, onlineState: 3, })',
+            'SDK5 Message: { msgServerId, type: "text", conversationType: "singleChat", body: { content: "asd" }, ext: { msgQuote } }',
         },
       },
     },
@@ -63,7 +64,7 @@ export default {
 } as Meta<typeof RepliedMsg>;
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: StoryFn<typeof RepliedMsg> = args => (
+const Template: StoryFn<RepliedMsgProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -78,12 +79,15 @@ export const Primary = {
 
   args: {
     message: {
-      id: '1189528432543795984',
-      type: 'txt',
-      chatType: 'singleChat',
-      msg: 'asd',
+      msgLocalId: 'reply-story-local-1',
+      msgServerId: '1189528432543795984',
+      type: 'text',
+      conversationType: 'singleChat',
+      conversationId: 'zd4',
+      body: { content: 'asd' },
       to: 'zd4',
       from: 'zd2',
+      sender: { userId: 'zd2' },
       ext: {
         em_at_list: [],
         msgQuote: {
@@ -93,8 +97,10 @@ export const Primary = {
           msgType: 'txt',
         },
       },
-      time: 1694523470608,
+      timestamp: 1694523470608,
       onlineState: 3,
-    },
+      status: 'sent',
+      direct: 'RECEIVE',
+    } as ChatSDK.Message,
   },
 };

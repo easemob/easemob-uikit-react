@@ -18,12 +18,13 @@ import rootStore from '../store/index';
 import SelectedControls from './selectedControls';
 import { observer } from 'mobx-react-lite';
 import { ConfigContext } from '../../component/config/index';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { CurrentConversation } from '../store/ConversationStore';
 import { GiftKeyboard, GiftKeyboardProps } from './gift/GiftKeyboard';
 import { RootContext } from '../store/rootContext';
 import Icon from '../../component/icon';
 import { useTranslation } from 'react-i18next';
+import type { BeforeSendMessage } from './sendTypes';
 export type Actions = {
   name: string;
   visible: boolean;
@@ -46,10 +47,10 @@ export interface MessageInputProps {
   disabled?: boolean; // 是否禁用
   isChatThread?: boolean; // 是否是子区聊天
   enabledMention?: boolean; // 是否开启@功能
-  onSendMessage?: (message: ChatSDK.MessageBody) => void;
+  onSendMessage?: (message: ChatSDK.Message) => void;
   conversation?: CurrentConversation;
   // 加一个发送消息前的回调，这个回调返回promise，如果返回的promise resolve了，就发送消息，如果reject了，就不发送消息
-  onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
+  onBeforeSendMessage?: BeforeSendMessage;
   giftKeyboardProps?: GiftKeyboardProps;
   onChange?: (value: string) => void;
   onFocus?: () => void;
@@ -422,6 +423,7 @@ const MessageInput = React.forwardRef<MessageInputRef, MessageInputProps>((props
                   isChatThread={isChatThread}
                   onBeforeSendMessage={onBeforeSendMessage}
                   customActions={customActions}
+                  conversation={conversation}
                 ></MoreAction>
               );
             } else if (item.name === 'GIFT' && item.visible) {

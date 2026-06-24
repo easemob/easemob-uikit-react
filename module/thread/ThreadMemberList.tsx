@@ -12,8 +12,8 @@ import { RootContext } from '../store/rootContext';
 
 import ScrollList from '../../component/scrollList';
 import { useTranslation } from 'react-i18next';
-import { ChatSDK } from 'module/SDK';
-import { getConversationTime, getCvsIdFromMessage, getMsgSenderNickname } from '../utils/index';
+import type { ChatSDK } from 'module/SDK';
+import { getCurrentUserId, getThreadId } from '../utils/index';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { observer } from 'mobx-react-lite';
 export interface ThreadMemberListProps {
@@ -82,7 +82,7 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
       onClick: (item: string) => {
         threadStore.removeChatThreadMember(
           threadStore.currentThread.info?.parentId || '',
-          threadStore.currentThread.info?.id || '',
+          getThreadId(threadStore.currentThread.info),
           item,
         );
       },
@@ -94,7 +94,7 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
     threadStore
       .getThreadMembers(
         threadStore.currentThread.info?.parentId || '',
-        threadStore.currentThread.info?.id || '',
+        getThreadId(threadStore.currentThread.info),
         cursor,
       )
       .then((data: any) => {
@@ -102,12 +102,14 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
         setModalName(`${t('threadMembers')}(${data.length})`);
         setTimeout(() => {
           // @ts-ignore
-          threadScrollRef?.current?.scrollTo?.(threadStore.currentThread.info?.members * 64);
+          threadScrollRef?.current?.scrollTo?.(
+            (threadStore.currentThread.info?.members?.length || 0) * 64,
+          );
         }, 100);
       });
   };
   const showMoreAction = role != 'member';
-  const myId = rootStore.client.user;
+  const myId = getCurrentUserId(rootStore.client);
   const renderItem = (member: string) => {
     const name = rootStore.addressStore.appUsersInfo?.[member]?.nickname;
     const avatarUrl = rootStore.addressStore.appUsersInfo?.[member]?.avatarurl;
@@ -170,10 +172,10 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
   const currentThread = rootStore.threadStore.currentThread;
   useEffect(() => {
     const groups = rootStore.addressStore.groups || [];
-    const myId = rootStore.client.user;
+    const myId = getCurrentUserId(rootStore.client);
     if (currentThread?.info?.parentId) {
       groups.forEach(item => {
-        if (item.groupid == currentThread?.info?.parentId) {
+        if (item.groupId == currentThread?.info?.parentId) {
           const members = item.members || [];
           if (members.length > 0) {
             for (let index = 0; index < members.length; index++) {
@@ -181,7 +183,10 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
                 if (members[index].role == 'member')
                   if (item.admins?.includes(myId)) {
                     setRole('admin');
-                  } else if (currentThread?.info?.owner == myId) {
+                  } else if (
+                    currentThread?.info?.ownerId == myId ||
+                    currentThread?.info?.owner == myId
+                  ) {
                     setRole('threadOwner');
                   }
                 setRole(members[index].role);
@@ -192,13 +197,13 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
         }
       });
     }
-  }, [currentThread?.info?.id]);
+  }, [getThreadId(currentThread?.info)]);
 
   useEffect(() => {
     threadStore
       .getThreadMembers(
         threadStore.currentThread.info?.parentId || '',
-        threadStore.currentThread.info?.id || '',
+        getThreadId(threadStore.currentThread.info),
       )
       .then((data: any) => {
         setCursor(data?.cursor || '');

@@ -12,7 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import ScrollList from '../../component/scrollList';
-import { getUsersInfo } from '../utils/index';
+import { getCurrentUserId, getUsersInfo } from '../utils/index';
 import { AT_TYPE, Conversation } from '../store/ConversationStore';
 import Modal from '../../component/modal';
 
@@ -83,14 +83,13 @@ const Conversations: FC<ConversationListProps> = props => {
   );
   const cvsStore = rootStore.conversationStore;
   const { appUsersInfo, contacts } = rootStore.addressStore;
+  const currentUserId = getCurrentUserId(rootStore.client);
   const { t } = useTranslation();
   const { getConversationList, hasConversationNext } = useConversations(includeEmptyConversations);
   const globalConfig = features?.conversationList || {};
 
   const withPresence = presence || globalConfig?.item?.presence != false;
-  if (useUserInfoConfig) {
-    useUserInfo('conversation', withPresence);
-  }
+  useUserInfo(useUserInfoConfig ? 'conversation' : null, withPresence);
 
   const groupData = rootStore.addressStore.groups;
   // 获取加入群组，把群组名放在 conversationList
@@ -128,8 +127,8 @@ const Conversations: FC<ConversationListProps> = props => {
         const renderItem = { ...item };
         if (item.chatType == 'groupChat') {
           groupData.forEach(group => {
-            if (item.conversationId == group.groupid) {
-              renderItem.name = renderItem.name || group.groupname;
+            if (item.conversationId == group.groupId) {
+              renderItem.name = renderItem.name || group.groupName || group.name;
               renderItem.avatarUrl = group.avatarUrl;
             }
           });
@@ -160,7 +159,7 @@ const Conversations: FC<ConversationListProps> = props => {
     cvsStore.conversationList?.forEach(cvs => {
       if (!cvs.name && cvs.chatType == 'groupChat' && rootStore.addressStore.groups.length > 0) {
         const result = rootStore.addressStore.groups.find(item => {
-          return item.groupid === cvs.conversationId;
+          return item.groupId === cvs.conversationId;
         });
         if (!result) {
           cvsStore.updateConversationName(cvs.chatType, cvs.conversationId);
@@ -212,7 +211,7 @@ const Conversations: FC<ConversationListProps> = props => {
       getJoinedGroupList();
       if (useUserInfoConfig) {
         getUsersInfo({
-          userIdList: [rootStore.client.user],
+          userIdList: [currentUserId],
         }).catch(e => {
           console.warn('getUsersInfo error', e);
         });

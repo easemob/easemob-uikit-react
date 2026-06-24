@@ -1,6 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import ImageMessage from './index';
+import type { ChatSDK } from '../SDK';
 
 // 添加中文和英文的描述
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
@@ -86,23 +87,30 @@ export default {
 export const Primary = {
   args: {
     imageMessage: {
-      type: 'img',
-      file_length: 1024,
-      file: {
-        url: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
-        filename: 'test.txt',
-        filetype: 'txt',
-        data: {} as File,
+      msgLocalId: 'image-story-local-1',
+      msgServerId: '1234567890',
+      type: 'image',
+      body: {
+        localUrl: '',
+        originalImageUrl: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+        bigImageUrl: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+        thumbnailUrl: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+        filename: 'test.jpg',
+        filetype: 'jpg',
+        fileLength: 1024,
+        isGif: false,
+        isOriginalImage: true,
       },
-      url: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
-      id: '1234567890',
       to: 'userId',
-      chatType: 'singleChat',
+      conversationId: 'userId',
+      conversationType: 'singleChat',
       bySelf: true,
       from: 'myUserId',
-      time: Date.now(),
+      sender: { userId: 'myUserId' },
+      timestamp: Date.now(),
+      direct: 'SEND',
       status: 'sent',
-    },
+    } as unknown as ChatSDK.Message,
     className: 'custom-class',
     bubbleClass: 'bubble-class',
     nickName: 'John Doe',
@@ -114,23 +122,30 @@ export const Secondly = {
     type: 'secondly',
     direction: 'ltr',
     imageMessage: {
-      type: 'img',
-      file_length: 1024,
-      file: {
-        url: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
-        filename: 'test.txt',
-        filetype: 'txt',
-        data: {} as File,
+      msgLocalId: 'image-story-local-2',
+      msgServerId: '1234567891',
+      type: 'image',
+      body: {
+        localUrl: '',
+        originalImageUrl: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+        bigImageUrl: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+        thumbnailUrl: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
+        filename: 'test.jpg',
+        filetype: 'jpg',
+        fileLength: 1024,
+        isGif: false,
+        isOriginalImage: true,
       },
-      url: 'https://t7.baidu.com/it/u=848096684,3883475370&fm=193&f=GIF',
-      id: '1234567890',
       to: 'userId',
-      chatType: 'singleChat',
+      conversationId: 'userId',
+      conversationType: 'singleChat',
       bySelf: true,
       from: 'myUserId',
-      time: Date.now(),
+      sender: { userId: 'myUserId' },
+      timestamp: Date.now(),
+      direct: 'SEND',
       status: 'sent',
-    },
+    } as unknown as ChatSDK.Message,
     className: 'custom-class',
     bubbleClass: 'bubble-class',
     nickName: 'Jane Doe',

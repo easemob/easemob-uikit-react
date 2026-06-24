@@ -77,7 +77,7 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
   if (data.type === 'contact' || data.type === 'request') {
     contactData = addressStore.contacts.find((item: any) => item.userId === data.id);
   } else {
-    contactData = addressStore.groups.find((item: any) => item.groupid === data.id);
+    contactData = addressStore.groups.find(item => item.groupId === data.id);
     avatarUrl = contactData?.avatarUrl;
   }
 
@@ -123,12 +123,10 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
         conversationId: data.id,
         name: userInfo?.nickname || data.name || id,
         lastMessage: {
-          time: Date.now(),
-          type: 'txt',
-          msg: '',
-          id: '',
-          chatType: data.type == 'contact' || data.type == 'request' ? 'singleChat' : 'groupChat',
-          to: data.id,
+          msgId: '',
+          type: 'text',
+          body: { content: '' },
+          timestamp: Date.now(),
         },
         unreadCount: 0,
       });

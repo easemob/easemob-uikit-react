@@ -8,13 +8,14 @@ import Button from '../../component/button';
 import './style/style.scss';
 import Avatar from '../../component/avatar';
 import { useTranslation } from 'react-i18next';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
+import { getCurrentUserId, getMessageId, getTextContent } from '../utils';
 export interface PinnedTextMessageProps {
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
-  message: ChatSDK.PinnedMessageInfo;
+  message: ChatSDK.PinnedMessageSummary;
 }
 
 const PinnedTextMessage = (props: PinnedTextMessageProps) => {
@@ -75,19 +76,19 @@ const PinnedTextMessage = (props: PinnedTextMessageProps) => {
     usePinnedMessage({
       conversation: {
         conversationType: 'chatRoom',
-        conversationId: props.message.message?.to,
+        conversationId: props.message.conversationId,
       },
     });
 
   const handleUnpinMessage = () => {
     console.log('unpin message', props.message);
-    // @ts-ignore
-    unpinMessage(props.message.message.mid || props.message.message.id);
+    unpinMessage(props.message.messageId || getMessageId(props.message.message));
     clearPinnedMessages();
   };
 
-  const pinedMsg = props.message.message as ChatSDK.TextMsgBody;
-  const userInfo = pinedMsg?.ext?.chatroom_uikit_userInfo || {};
+  const pinedMsg = props.message.message;
+  const userInfo = (pinedMsg as any)?.ext?.chatroom_uikit_userInfo || {};
+  const pinnedText = getTextContent(pinedMsg);
   return (
     <div className={classString} style={style}>
       <div className={`${prefixCls}-text`} ref={textRef}>
@@ -103,7 +104,7 @@ const PinnedTextMessage = (props: PinnedTextMessageProps) => {
           </Avatar>
           <div className={`${prefixCls}-text-name`}>{userInfo.nickname}</div>
         </div>
-        <div>{pinedMsg.msg}</div>
+        <div>{pinnedText}</div>
         {
           //超出后显示省略号
           isEllipsis && <span className={`${prefixCls}-ellipsis`}>...</span>
@@ -122,7 +123,7 @@ const PinnedTextMessage = (props: PinnedTextMessageProps) => {
           trigger="click"
           placement="bottomRight"
         >
-          {props.message.operatorId === rootStore.client.user && (
+          {props.message.operatorId === getCurrentUserId(rootStore.client) && (
             <Icon type="ELLIPSIS" width={16} height={16} className={`${prefixCls}-button`} />
           )}
         </Tooltip>

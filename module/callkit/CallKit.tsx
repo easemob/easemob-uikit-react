@@ -16,7 +16,7 @@ import { useInvitationTimers } from './hooks/useInvitationTimers';
 import { FullLayoutManager } from './layouts/FullLayoutManager';
 import InvitationContent from './components/InvitationContent';
 import UserSelect from '../userSelect/UserSelect';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK } from 'module/SDK';
 import {
   CallService,
   CALL_STATUS,
@@ -33,11 +33,12 @@ import type {
 } from './types/index';
 import type { FullLayoutProps } from './types/layout';
 import { LayoutMode } from './types/index';
-import { generateRandomChannel, getUserAvatar, calculateSafePosition } from './utils/callUtils';
+import { generateRandomChannel } from './utils/callUtils';
 import { logger, LogLevel } from './utils/logger';
 import './styles/index.scss';
 import CallError, { CallErrorCode } from './services/CallError';
 import { useIsMobile } from '../hooks/useScreen';
+import { getCurrentUserId } from '../utils';
 /**
  * 优化的 FullLayoutManager 组件
  * 使用 React.memo 进行性能优化
@@ -167,6 +168,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const prefixCls = getPrefixCls('callkit', prefix);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const localUserId = React.useMemo(() => getCurrentUserId(chatClient), [chatClient]);
   // 设置标题的默认值，支持用户自定义
   const finalUserSelectTitle = userSelectTitle || t('callkit.userselect.addParticipants');
   const finalInitiateGroupCallTitle =
@@ -289,7 +291,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const [isLoadingGroupMembers, setIsLoadingGroupMembers] = React.useState(false);
 
   const groupCallPromiseRef = useRef<{
-    resolve: (msg: ChatSDK.TextMsgBody | null) => void;
+    resolve: (msg: ChatSDK.Message | null) => void;
     reject: (error: any) => void;
   } | null>(null);
 
@@ -465,31 +467,27 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       try {
         const allMemberUserIds: string[] = [];
-        let pageNum = 1;
+        let cursor: string | undefined;
         const pageSize = 50;
         let hasMoreData = true;
 
         while (hasMoreData) {
           try {
-            const response = await chatClient.listGroupMembers({
+            const response = await chatClient.groupManager.getGroupMemberList({
               groupId: groupId,
-              pageNum: pageNum,
               pageSize: pageSize,
+              cursor,
             });
 
-            if (response?.data && Array.isArray(response.data)) {
-              const pageUserIds = response.data
-                .map((item: any) => item.owner || item.member)
-                .filter(Boolean);
+            if (response?.items && Array.isArray(response.items)) {
+              const pageUserIds = response.items.map(item => item.user.userId).filter(Boolean);
 
               allMemberUserIds.push(...pageUserIds);
 
-              if (response.isLast === true) {
-                hasMoreData = false;
-              } else if (pageUserIds.length < pageSize) {
+              if (!response.hasMore || !response.cursor) {
                 hasMoreData = false;
               } else {
-                pageNum++;
+                cursor = response.cursor;
               }
             } else {
               hasMoreData = false;
@@ -722,10 +720,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       (window as any).callService = callServiceRef.current;
 
-      if (chatClient?.user) {
+      if (localUserId) {
         getLocalUserAvatar().then(avatarUrl => {
           const localUserInfo = {
-            [chatClient.user]: {
+            [localUserId]: {
               nickname: t('callkit.localUser.me') as string,
               avatarUrl: avatarUrl,
             },
@@ -876,7 +874,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         groupId: string;
         msg: string;
         ext?: Record<string, any>;
-      }): Promise<ChatSDK.TextMsgBody | null> => {
+      }): Promise<ChatSDK.Message | null> => {
         if (isInCall || callStatus !== 'idle') {
           onCallError?.(
             CallError.create(CallErrorCode.CALL_STATE_ERROR, 'is in call', {
@@ -896,7 +894,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
         groupCallInviteMsg = options.msg;
 
-        return new Promise<ChatSDK.TextMsgBody | null>((resolve, reject) => {
+        return new Promise<ChatSDK.Message | null>((resolve, reject) => {
           groupCallPromiseRef.current = { resolve, reject };
 
           setIsInitiatingGroupCall(true);
@@ -1011,7 +1009,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             to: options.to,
             ext: options.ext,
           });
-          return msg as ChatSDK.TextMsgBody;
+          return msg;
         } else {
           onCallError?.(CallError.create(CallErrorCode.CALL_PARAM_ERROR, 'chatClient is required'));
           return null;
@@ -1882,7 +1880,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                 )}
                 {(video.muted ||
                   talkingUsers.includes(video.id.replace('remote-', '')) ||
-                  talkingUsers.includes(chatClient?.user)) && (
+                  talkingUsers.includes(localUserId)) && (
                   <div className={`${prefixCls}-indicators`}>
                     {video.muted && <Icon type="MIC_OFF" width={14} height={14} color="#F9FAFA" />}
                     {callMode === 'group' &&
@@ -1900,8 +1898,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
                       !video.muted &&
                       video.isLocalVideo &&
                       (() => {
-                        const localUserId = chatClient?.user || 'local';
-                        const isLocalTalking = talkingUsers.includes(localUserId);
+                        const resolvedLocalUserId = localUserId || 'local';
+                        const isLocalTalking = talkingUsers.includes(resolvedLocalUserId);
 
                         return isLocalTalking ? (
                           <Icon type="SPEAKER_WAVE_2" width={14} height={14} color="#4CAF50" />
@@ -1916,7 +1914,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               shouldShowIndicator &&
               (() => {
                 const currentUserId = video.isLocalVideo
-                  ? chatClient?.user || 'local'
+                  ? localUserId || 'local'
                   : video.id.replace('remote-', '');
                 const userNetworkQuality = networkQuality?.[currentUserId];
 
@@ -2125,9 +2123,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             };
           });
 
-          if (chatClient?.user) {
+          if (localUserId) {
             getLocalUserAvatar().then(avatarUrl => {
-              userInfoMap[chatClient.user] = {
+              userInfoMap[localUserId] = {
                 nickname: t('callkit.localUser.me') as string,
                 avatarUrl: avatarUrl,
               };
@@ -2246,7 +2244,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       const currentParticipantIds = displayVideos.map(video => {
         // 使用与currentParticipants相同的逻辑提取userId
         if (video.isLocalVideo) {
-          return chatClient?.user || 'local';
+          return localUserId || 'local';
         } else if (video.id.startsWith('remote-')) {
           return video.id.replace('remote-', '');
         }
@@ -2315,12 +2313,12 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   // 获取本地用户头像的辅助函数
   const getLocalUserAvatar = React.useCallback(async (): Promise<string | undefined> => {
-    if (!chatClient?.user) {
+    if (!localUserId) {
       return undefined; // 不使用假数据，让组件显示默认图标
     }
 
-    return await getUserAvatar(chatClient.user);
-  }, [chatClient?.user, getUserAvatar]);
+    return await getUserAvatar(localUserId);
+  }, [localUserId, getUserAvatar]);
 
   // 处理用户选择变化
   const [userSelectDisabled, setUserSelectDisabled] = React.useState(false);
@@ -2651,15 +2649,15 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   );
 
   const currentParticipants = React.useMemo(() => {
-    if (isInitiatingGroupCall && chatClient?.user) {
-      const currentUser = effectiveGroupMembers.find(member => member.userId === chatClient.user);
+    if (isInitiatingGroupCall && localUserId) {
+      const currentUser = effectiveGroupMembers.find(member => member.userId === localUserId);
       return currentUser ? [currentUser] : [];
     }
 
     const result = displayVideos.map(video => {
       let userId = video.id;
       if (video.isLocalVideo) {
-        userId = chatClient?.user || 'local';
+        userId = localUserId || 'local';
       } else if (video.id.startsWith('remote-')) {
         userId = video.id.replace('remote-', '');
       }
@@ -2677,7 +2675,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     });
 
     return result;
-  }, [displayVideos, chatClient?.user, effectiveGroupMembers, isInitiatingGroupCall]);
+  }, [displayVideos, localUserId, effectiveGroupMembers, isInitiatingGroupCall]);
 
   return (
     <>

@@ -1,13 +1,13 @@
 import { makeAutoObservable, observable, action, makeObservable, runInAction } from 'mobx';
 import { ChatType } from '../types/messageType';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { sortByPinned } from '../utils';
 import { eventHandler } from '../../eventHandler';
 export type AT_TYPE = 'NONE' | 'ALL' | 'ME';
 export interface Conversation {
   chatType: ChatType;
   conversationId: string;
-  lastMessage: Exclude<ChatSDK.MessageBody, ChatSDK.ReadMsgBody | ChatSDK.DeliveryMsgBody>;
+  lastMessage: ChatSDK.Message | Record<string, unknown>;
   unreadCount: number;
   name?: string;
   atType?: AT_TYPE;
@@ -216,12 +216,12 @@ class ConversationStore {
   }
 
   updateConversationName(chatType: ChatType, cvsId: string) {
-    this.rootStore.client
+    this.rootStore.client.groupManager
       .getGroupInfo({ groupId: cvsId })
-      .then((res: ChatSDK.AsyncResult<ChatSDK.GroupDetailInfo[]>) => {
+      .then((res: ChatSDK.GroupDetail) => {
         this.conversationList?.forEach(cvs => {
           if (cvs.conversationId === cvsId) {
-            cvs.name = res?.data?.[0]?.name;
+            cvs.name = res?.name;
           }
         });
 
@@ -230,7 +230,7 @@ class ConversationStore {
         });
         eventHandler.dispatchSuccess('getGroupInfo');
       })
-      .catch((error: ChatSDK.ErrorEvent) => {
+      .catch((error: unknown) => {
         eventHandler.dispatchError('getGroupInfo', error);
       });
   }
@@ -240,9 +240,13 @@ class ConversationStore {
   }
 
   pinConversation(chatType: ChatType, cvsId: string, isPinned: boolean) {
-    this.rootStore.client
-      .pinConversation({ conversationType: chatType, conversationId: cvsId, isPinned })
-      .then((res: ChatSDK.AsyncResult<ChatSDK.PinConversation>) => {
+    this.rootStore.client.chatManager
+      .setConversationPinned({
+        conversationType: chatType,
+        conversationId: cvsId,
+        pinned: isPinned,
+      })
+      .then(() => {
         this.conversationList?.forEach(cvs => {
           if (cvs.conversationId === cvsId) {
             cvs.isPinned = isPinned;
@@ -255,20 +259,19 @@ class ConversationStore {
 
         eventHandler.dispatchSuccess('pinConversation');
       })
-      .catch((error: ChatSDK.ErrorEvent) => {
+      .catch((error: unknown) => {
         eventHandler.dispatchError('pinConversation', error);
       });
   }
 
   getServerPinnedConversations() {
-    this.rootStore.client
-      .getServerPinnedConversations({ pageSize: 50 })
-      .then((res: ChatSDK.AsyncResult<ChatSDK.ServerConversations>) => {
-        const conversations = (res.data?.conversations ||
-          []) as unknown as ChatSDK.ServerConversations['conversations'];
+    this.rootStore.client.chatManager
+      .refreshSessionList({ needEmptySession: true })
+      .then((conversations: readonly ChatSDK.ConversationItem[]) => {
+        const pinnedConversations = conversations.filter(item => item.isPinned);
 
         const mergedList = [...this.conversationList];
-        conversations.forEach(item => {
+        pinnedConversations.forEach(item => {
           const idx = this.conversationList.findIndex(
             cvs => cvs.conversationId === item.conversationId,
           );
@@ -276,15 +279,11 @@ class ConversationStore {
             const newCvs = {
               ...item,
               chatType: item.conversationType,
-              unreadCount: 0,
+              unreadCount: item.unreadCount || 0,
             };
             // @ts-ignore
             delete newCvs.conversationType;
-            // @ts-ignore
-            delete newCvs.unReadCount;
-            // @ts-ignore
-            delete newCvs.pinnedTime;
-            mergedList.push(newCvs as Conversation);
+            mergedList.push(newCvs as unknown as Conversation);
           } else {
             this.conversationList[idx].isPinned = true;
           }
@@ -296,7 +295,7 @@ class ConversationStore {
 
         eventHandler.dispatchSuccess('getServerPinnedConversations');
       })
-      .catch((error: ChatSDK.ErrorEvent) => {
+      .catch((error: unknown) => {
         eventHandler.dispatchError('getServerPinnedConversations', error);
       });
   }
@@ -310,12 +309,12 @@ class ConversationStore {
     this.conversationList = [...this.conversationList];
   }
   setSilentModeForConversation(cvs: CurrentConversation) {
-    this.rootStore.client
-      .setSilentModeForConversation({
+    this.rootStore.client.pushManager
+      .setConversationSilentMode({
         conversationId: cvs.conversationId,
-        type: cvs.chatType,
-        options: {
-          paramType: 0,
+        conversationType: cvs.chatType,
+        rule: {
+          mode: 'REMIND_TYPE',
           remindType: cvs.chatType == 'groupChat' ? 'AT' : 'NONE',
         },
       })
@@ -324,23 +323,23 @@ class ConversationStore {
         this.rootStore.addressStore.setSilentModeForConversationSync(cvs, true);
         eventHandler.dispatchSuccess('setSilentModeForConversation');
       })
-      .catch((error: ChatSDK.ErrorEvent) => {
+      .catch((error: unknown) => {
         eventHandler.dispatchError('setSilentModeForConversation', error);
       });
   }
 
   clearRemindTypeForConversation(cvs: CurrentConversation) {
-    this.rootStore.client
-      .clearRemindTypeForConversation({
+    this.rootStore.client.pushManager
+      .clearConversationRemindType({
         conversationId: cvs.conversationId,
-        type: cvs.chatType,
+        conversationType: cvs.chatType,
       })
       .then((res: any) => {
         this.setSilentModeForConversationSync(cvs, false);
         this.rootStore.addressStore.setSilentModeForConversationSync(cvs, false);
         eventHandler.dispatchSuccess('clearRemindTypeForConversation');
       })
-      .catch((error: ChatSDK.ErrorEvent) => {
+      .catch((error: unknown) => {
         eventHandler.dispatchError('clearRemindTypeForConversation', error);
       });
   }
@@ -351,55 +350,46 @@ class ConversationStore {
     }
     const cvsList = cvs.map(item => {
       return {
-        id: item.conversationId,
-        type: item.chatType,
+        conversationId: item.conversationId,
+        conversationType: item.chatType,
       };
     });
-    this.rootStore.client
-      .getSilentModeForConversations({
+    this.rootStore.client.pushManager
+      .getConversationSilentModes({
         conversationList: cvsList,
       })
-      .then((res: any) => {
-        const userSetting = res.data.user;
-        const groupSetting = res.data.group;
-        this.conversationList?.forEach(item => {
-          if (item.chatType === 'singleChat') {
-            if (
-              userSetting[item.conversationId] &&
-              userSetting[item.conversationId]?.type == 'NONE'
-            ) {
-              item.silent = true;
-            }
-          } else if (
-            item.chatType === 'groupChat' &&
-            groupSetting[item.conversationId]?.type == 'AT'
-          ) {
-            if (groupSetting[item.conversationId]) {
-              item.silent = true;
-            }
+      .then((res: ChatSDK.BatchConversationSilentModeResponse) => {
+        res.conversations.forEach(setting => {
+          const item = this.conversationList.find(
+            cvs =>
+              cvs.conversationId === setting.conversationId &&
+              cvs.chatType === setting.conversationType,
+          );
+          if (item) {
+            item.silent = setting.rule.remindType === 'NONE' || setting.rule.remindType === 'AT';
           }
         });
         eventHandler.dispatchSuccess('getSilentModeForConversations');
       })
-      .catch((error: ChatSDK.ErrorEvent) => {
+      .catch((error: unknown) => {
         eventHandler.dispatchError('getSilentModeForConversations', error);
       });
   }
 
-  setOnlineStatus(result: ChatSDK.SubscribePresence[]) {
+  setOnlineStatus(result: readonly ChatSDK.PresenceInfo[]) {
     result.forEach(item => {
       if (
-        Object.prototype.toString.call(item.status) === '[object Object]' &&
-        Object.values(item.status).indexOf('1') > -1
+        Object.prototype.toString.call(item.statusList) === '[object Object]' &&
+        Object.values(item.statusList).indexOf(1) > -1
       ) {
         this.conversationList?.forEach(cvsItem => {
-          if (cvsItem.conversationId === item.uid) {
+          if (cvsItem.conversationId === item.publisher) {
             cvsItem.isOnline = true;
           }
         });
       } else {
         this.conversationList?.forEach(cvsItem => {
-          if (cvsItem.conversationId === item.uid) {
+          if (cvsItem.conversationId === item.publisher) {
             cvsItem.isOnline = false;
           }
         });

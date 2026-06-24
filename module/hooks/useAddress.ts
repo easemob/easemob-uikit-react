@@ -3,7 +3,6 @@ import { RootContext } from '../store/rootContext';
 import { getStore } from '../store/index';
 import { getGroupItemFromGroupsById } from '../../module/utils';
 import { getUsersInfo } from '../utils';
-import { ChatSDK } from 'module/SDK';
 import { eventHandler } from '../../eventHandler';
 const useContacts = () => {
   const rootStore = useContext(RootContext).rootStore;
@@ -19,12 +18,11 @@ const useContacts = () => {
       return;
     }
     rootStore.loginState &&
-      client
-        .getAllContacts()
-        .then((res: ChatSDK.AsyncResult<ChatSDK.ContactItem[]>) => {
-          const contacts = res.data?.map(userItem => ({
+      Promise.resolve(client.contactManager.getContacts())
+        .then(res => {
+          const contacts = res?.map(userItem => ({
             userId: userItem.userId,
-            nickname: '',
+            nickname: userItem.remark || '',
             remark: userItem.remark,
           }));
           setContacts(contacts || []);
@@ -40,11 +38,12 @@ const useContacts = () => {
 };
 
 const useUserInfo = (
-  userList: 'conversation' | 'contacts' | 'blocklist',
+  userList: 'conversation' | 'contacts' | 'blocklist' | null,
   withPresence?: boolean,
 ) => {
   const rootStore = useContext(RootContext).rootStore;
   useEffect(() => {
+    if (!userList) return;
     if (!rootStore.loginState) return;
     const keys = Object.keys(rootStore.addressStore.appUsersInfo);
     const cvsUserIds = rootStore.conversationStore.conversationList
@@ -88,19 +87,15 @@ const useGroups = () => {
 
   const getJoinedGroupList = () => {
     if (!hasNext) return;
-    client
-      .getJoinedGroups({
-        pageNum: pageNum,
-        pageSize,
-      })
+    Promise.resolve(client.groupManager.getJoinedGroupList())
       .then(res => {
-        res?.data && addressStore.setGroups(res.data as any);
-        if ((res.data?.length || 0) === pageSize) {
-          pageNum++;
-          getJoinedGroupList();
-        } else {
-          addressStore.setHasGroupsNext(false);
-        }
+        addressStore.setGroups(
+          res.map(group => ({
+            ...group,
+            groupName: group.name,
+          })),
+        );
+        addressStore.setHasGroupsNext(false);
         eventHandler.dispatchSuccess('getJoinedGroups');
       })
       .catch(error => {
@@ -116,7 +111,7 @@ const useGroups = () => {
 const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
   if (!groupId) return {};
   const pageSize = 20;
-  let pageNum = 1;
+  let cursor: string | undefined;
   const { client, addressStore } = getStore();
   const groupItem = getGroupItemFromGroupsById(groupId);
   let hasNext = groupItem?.hasMembersNext;
@@ -124,18 +119,17 @@ const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
 
   const getGroupMemberList = () => {
     if (!hasNext) return;
-    return client
-      .listGroupMembers({
+    return client.groupManager
+      .getGroupMemberList({
         groupId,
-        pageNum: pageNum,
         pageSize,
+        cursor,
       })
       .then(res => {
-        res?.data && addressStore.setGroupMembers(groupId, res.data);
+        res?.items && addressStore.setGroupMembers(groupId, res.items as any);
         let userIds =
-          res.data?.map(item => {
-            // @ts-ignore
-            return item.owner || item.member;
+          res.items?.map(item => {
+            return item.user.userId || '';
           }) || [];
 
         userIds.length && useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
@@ -151,8 +145,8 @@ const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
           });
         }
 
-        if ((res.data?.length || 0) === pageSize) {
-          pageNum++;
+        if (res.hasMore && res.cursor) {
+          cursor = res.cursor;
           getGroupMemberList();
         } else {
           addressStore.setGroupItemHasMembersNext(groupId, false);
@@ -184,16 +178,16 @@ const useGroupMembersAttributes = (
     }
 
     groupUserIds.forEach(item => {
-      client
+      client.groupManager
         .getGroupMembersAttributes({
           groupId,
           userIds: item,
           keys: attributesKeys,
         })
         .then(res => {
-          if (res.data) {
-            Object.keys(res.data).forEach(key => {
-              res?.data && addressStore.setGroupMemberAttributes(groupId, key, res.data[key]);
+          if (res.items) {
+            Object.keys(res.items).forEach(key => {
+              addressStore.setGroupMemberAttributes(groupId, key, res.items[key]);
             });
           }
         });
@@ -223,15 +217,16 @@ const useGroupAdmins = (groupId: string) => {
   const groupItem = getGroupItemFromGroupsById(groupId);
   const getGroupAdmins = () => {
     if (!groupItem?.admins) {
-      client
-        .getGroupAdmin({
+      client.groupManager
+        .getGroupAdminList({
           groupId,
         })
         .then(res => {
-          addressStore.setGroupAdmins(groupId, res.data || []);
+          const admins = res.map(item => item.userId);
+          addressStore.setGroupAdmins(groupId, admins);
           addressStore.setGroupMembers(
             groupId,
-            (res.data || []).map(item => {
+            admins.map(item => {
               return {
                 member: item,
               };

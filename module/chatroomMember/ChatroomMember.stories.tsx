@@ -159,7 +159,7 @@ export default {
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 
-rootStore.client.user = 'zd2';
+rootStore.client.getCurrentUserId = () => 'zd2';
 rootStore.addressStore.chatroom = [
   {
     id: '123456',

@@ -1,14 +1,33 @@
 import { useCallback, useEffect, MutableRefObject, useContext } from 'react';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK } from 'module/SDK';
 import { RootContext } from '../store/rootContext';
 import { useClient } from './useClient';
 import { getStore } from '../store';
-import { getCvsIdFromMessage, getGroupItemFromGroupsById } from '../utils';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getGroupItemFromGroupsById,
+  getMessageId,
+} from '../utils';
 import { useGroupMembersAttributes } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import ts from 'typescript';
 import { ProviderProps } from '../store/Provider';
 import { runInAction } from 'mobx';
+
+type ConversationLocator = {
+  conversationType?: ChatSDK.ChatConversationType;
+  conversationId?: string;
+  chatType?: ChatSDK.ChatConversationType;
+};
+
+type PinnedMessageChangedPayload = ConversationLocator & {
+  messageId: string;
+  operation: 'pin' | 'unpin';
+  pinTime?: number;
+  operatorId?: string;
+  timestamp?: number;
+};
 
 const useEventHandler = (props: ProviderProps) => {
   const { initConfig, features } = props;
@@ -16,36 +35,22 @@ const useEventHandler = (props: ProviderProps) => {
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
   const client = rootStore.client;
   const { useUserInfo } = initConfig;
+  const currentUserId = getCurrentUserId(client);
 
   useEffect(() => {
     client?.addEventHandler?.('UIKitMessage', {
-      onTextMessage: message => {
-        console.log('onTextMessage', message);
-        messageStore.receiveMessage(message);
-      },
-      onImageMessage: message => {
-        messageStore.receiveMessage(message);
-      },
-      onFileMessage: message => {
-        messageStore.receiveMessage(message);
-      },
-      onAudioMessage: message => {
-        messageStore.receiveMessage(message);
-      },
-      onVideoMessage: message => {
-        messageStore.receiveMessage(message);
-      },
-      onLocationMessage: message => {
-        messageStore.receiveMessage(message);
-      },
-      onCmdMessage: message => {
+      onMessage: (message: ChatSDK.Message) => {
+        if (message.type !== 'cmd') {
+          messageStore.receiveMessage(message);
+          return;
+        }
         const conversationId = getCvsIdFromMessage(message as BaseMessageType);
 
         const cvs = {
-          chatType: message.chatType,
+          chatType: message.conversationType,
           conversationId: conversationId,
         };
-        const { action } = message;
+        const action = (message.body as Record<string, any>)?.action;
         switch (action) {
           case 'TypingBegin':
             messageStore.setTyping(cvs, true);
@@ -58,57 +63,47 @@ const useEventHandler = (props: ProviderProps) => {
             break;
         }
       },
-      onCustomMessage: message => {
-        messageStore.receiveMessage(message);
-      },
 
-      onReceivedMessage: message => {
-        messageStore.updateMessageStatus(message.mid, 'sent');
-        // messageStore.receiveMessage(message);
+      '__internal:onMessageSent': (message: ChatSDK.Message) => {
+        messageStore.updateMessageStatus(getMessageId(message), 'sent');
       },
-      onDeliveredMessage: message => {
-        messageStore.updateMessageStatus(message.mid as string, 'received');
-        // messageStore.receiveMessage(message);
-        // messageStore.updateMessageStatus();
+      onMessageDelivered: (message: { messageId: string }) => {
+        messageStore.updateMessageStatus(message.messageId, 'received');
       },
-      onReadMessage: message => {
-        messageStore.updateMessageStatus(message.mid as string, 'read');
+      onMessageRead: (message: { messageId: string }) => {
+        messageStore.updateMessageStatus(message.messageId, 'read');
       },
-      onChannelMessage: message => {
-        const { chatType, from = '' } = message;
+      onConversationRead: (message: ConversationLocator) => {
+        const chatType = message.conversationType || message.chatType;
+        const conversationId = message.conversationId || '';
         if (chatType === 'singleChat') {
           setTimeout(() => {
-            rootStore.messageStore.message?.[chatType]?.[from]
-              ?.filter(message => {
+            rootStore.messageStore.message?.[chatType]?.[conversationId]
+              ?.filter((message: BaseMessageType) => {
                 return (
-                  //@ts-ignore
                   message.status === 'received' &&
+                  message.type != 'voice' &&
                   message.type != 'audio' &&
                   message.type != 'video' &&
                   message.type != 'file' &&
                   message.type != 'combine'
                 );
               })
-              .forEach(receivedMessage => {
-                // @ts-ignore
-                messageStore.updateMessageStatus(receivedMessage.mid || receivedMessage.id, 'read');
+              .forEach((receivedMessage: BaseMessageType) => {
+                messageStore.updateMessageStatus(getMessageId(receivedMessage), 'read');
               });
           }, 10);
         }
       },
-      onRecallMessage: message => {
-        let chatType: 'singleChat' | 'groupChat' | 'chatRoom' = 'singleChat';
-        let conversationId = message.from == rootStore.client.user ? message.to : message.from;
-        if (message.to.length == 15 && Number(message.to) > 0) {
-          chatType = 'groupChat';
-          conversationId = message.to;
-        }
+      onMessageRecalled: (message: ConversationLocator & { messageId: string }) => {
+        const chatType = message.conversationType || message.chatType || 'singleChat';
+        const conversationId = message.conversationId || '';
         messageStore.recallMessage(
           {
-            chatType, // TODO: 'singleChat' | 'groupChat'
+            chatType,
             conversationId,
           },
-          message.mid,
+          message.messageId,
         );
       },
 
@@ -119,21 +114,27 @@ const useEventHandler = (props: ProviderProps) => {
         rootStore.setLoginState(false);
       },
 
-      onReactionChange: data => {
+      onReactionChanged: (data: any) => {
         const conversationId = getCvsIdFromMessage(data as unknown as BaseMessageType);
 
         const cvs = {
-          chatType: data.chatType,
+          chatType: data.conversationType || data.chatType,
           conversationId: conversationId,
         };
         rootStore.messageStore.updateReactions(cvs, data.messageId, data.reactions);
       },
-      onModifiedMessage: message => {
-        getStore().messageStore.modifyLocalMessage(message.id, message, true);
+      onMessageUpdated: (message: { messageId: string; message: Partial<ChatSDK.Message> }) => {
+        getStore().messageStore.modifyLocalMessage(
+          message.messageId,
+          { ...message.message, msgServerId: message.messageId } as ChatSDK.Message,
+          true,
+        );
       },
-      onMessagePinEvent: message => {
-        const { messageId, conversationType, conversationId, operation, time, operatorId } =
-          message;
+      onPinnedMessageChanged: (message: PinnedMessageChangedPayload) => {
+        const { messageId, operation, operatorId } = message;
+        const conversationType = message.conversationType || message.chatType || 'singleChat';
+        const conversationId = message.conversationId || '';
+        const time = message.pinTime || message.timestamp || Date.now();
         switch (operation) {
           case 'pin':
             getStore().pinnedMessagesStore.updatePinnedMessage(
@@ -141,12 +142,12 @@ const useEventHandler = (props: ProviderProps) => {
               conversationId,
               messageId,
               time,
-              operatorId,
+              operatorId || '',
             );
             getStore().pinnedMessagesStore.pushPinNoticeMessage({
               conversationId,
               conversationType,
-              operatorId,
+              operatorId: operatorId || '',
               noticeType: 'pin',
               time,
             });
@@ -155,16 +156,19 @@ const useEventHandler = (props: ProviderProps) => {
               const pinedMsg = getStore().messageStore.message[conversationType][
                 conversationId
                 //@ts-ignore
-              ].find(item => (item.mid === messageId || item.id === messageId) && item);
+              ].find(item => getMessageId(item) === messageId);
               if (pinedMsg) {
                 getStore().pinnedMessagesStore.clearPinnedMessages(
                   conversationType,
                   conversationId,
                 );
                 getStore().pinnedMessagesStore.pushPinnedMessage(conversationType, conversationId, {
-                  operatorId: operatorId,
-                  pinTime: time,
-                  message: pinedMsg as ChatSDK.TextMsgBody,
+                  operatorId: operatorId || '',
+                  pinnedAt: time,
+                  messageId,
+                  conversationId,
+                  conversationType,
+                  message: pinedMsg as ChatSDK.Message,
                 });
               }
             }
@@ -178,7 +182,7 @@ const useEventHandler = (props: ProviderProps) => {
             getStore().pinnedMessagesStore.pushPinNoticeMessage({
               conversationId,
               conversationType,
-              operatorId,
+              operatorId: operatorId || '',
               noticeType: 'unpin',
               time,
             });
@@ -187,78 +191,64 @@ const useEventHandler = (props: ProviderProps) => {
             break;
         }
       },
-      onGroupEvent: message => {
-        const { operation, id } = message;
-        const { addressStore, client } = rootStore;
-        const groupItem = getGroupItemFromGroupsById(id);
-        switch (operation) {
-          case 'memberAttributesUpdate':
-            // @ts-ignore
-            addressStore.setGroupMemberAttributes(id, message.userId, message.attributes);
-            break;
-          case 'setAdmin':
-            if (groupItem) {
-              addressStore.setGroupAdmins(id, [...(groupItem?.admins || []), client.user]);
-            }
-            break;
-          case 'removeAdmin':
-            if (groupItem) {
-              const admins = [...(groupItem?.admins || [])];
-              admins.splice(admins.indexOf(client.user), 1);
-              addressStore.setGroupAdmins(id, [...admins]);
-            }
-            break;
-          case 'memberPresence':
-            if (groupItem) {
-              if (groupItem.members) {
-                addressStore.setGroupMembers(id, [{ member: message.from }]);
-                useGroupMembersAttributes(id, [message.from]);
-              }
-            }
-            break;
-          case 'memberAbsence':
-            if (groupItem) {
-              if (groupItem.members) {
-                addressStore.removeGroupMember(id, message.from);
-              }
-              if (groupItem.admins) {
-                groupItem.admins.includes(message.from) &&
-                  addressStore.setGroupAdmins(
-                    id,
-                    groupItem.admins.filter(item => item !== message.from),
-                  );
-              }
-            }
-            break;
-          case 'directJoined':
-            addressStore.setGroups([
-              {
-                groupid: id,
-                groupname: message.name || '',
-              },
-            ]);
-            break;
-          case 'destroy':
-            addressStore.removeGroupFromContactList(id);
-            break;
-          default:
+      onGroupMemberAttributeChanged: (message: any) => {
+        addressStore.setGroupMemberAttributes(
+          message.groupId,
+          message.user?.userId || message.userId || message.from,
+          message.attribute || {},
+        );
+      },
+      onAdminAdded: (message: any) => {
+        const groupItem = getGroupItemFromGroupsById(message.groupId);
+        const adminId = message.administrator?.userId;
+        if (groupItem && adminId) {
+          addressStore.setGroupAdmins(message.groupId, [...(groupItem.admins || []), adminId]);
         }
       },
-      onGroupChange: message => {
-        const { type, gid } = message;
-        const { addressStore } = rootStore;
-        switch (type) {
-          case 'changeOwner':
-            addressStore.setGroupOwner(gid, message.to);
-            break;
-          case 'removedFromGroup':
-            if (message.kicked == rootStore.client.user) {
-              addressStore.removeGroupFromContactList(gid);
-            }
-            break;
-          default:
-            break;
+      onAdminRemoved: (message: any) => {
+        const groupItem = getGroupItemFromGroupsById(message.groupId);
+        const adminId = message.administrator?.userId;
+        if (groupItem && adminId) {
+          addressStore.setGroupAdmins(
+            message.groupId,
+            (groupItem.admins || []).filter(item => item !== adminId),
+          );
         }
+      },
+      onMembersJoined: (message: any) => {
+        const members = (message.members || []).map((member: any) => ({
+          member: member.userId,
+        }));
+        addressStore.setGroupMembers(message.groupId, members);
+        useGroupMembersAttributes(
+          message.groupId,
+          members.map((member: any) => member.member),
+        );
+      },
+      onMembersExited: (message: any) => {
+        (message.members || []).forEach((member: any) => {
+          if (member.userId) {
+            addressStore.removeGroupMember(message.groupId, member.userId);
+            const groupItem = getGroupItemFromGroupsById(message.groupId);
+            if (groupItem?.admins?.includes(member.userId)) {
+              addressStore.setGroupAdmins(
+                message.groupId,
+                groupItem.admins.filter(item => item !== member.userId),
+              );
+            }
+          }
+        });
+      },
+      onOwnerChanged: (message: any) => {
+        if (message.newOwner?.userId) {
+          addressStore.setGroupOwner(message.groupId, message.newOwner.userId);
+        }
+      },
+      onUserRemoved: (message: any) => {
+        addressStore.removeGroupFromContactList(message.groupId);
+      },
+      onGroupDestroyed: (message: any) => {
+        addressStore.removeGroupFromContactList(message.groupId);
       },
       onPresenceStatusChange: message => {
         if (features?.conversationList?.item?.presence == false) return;
@@ -296,24 +286,53 @@ const useEventHandler = (props: ProviderProps) => {
             presenceExt: item.ext,
           };
         });
-        conversationStore.setOnlineStatus(changeList);
+        conversationStore.setOnlineStatus(changeList as any);
       },
       // @ts-ignore
       onCombineMessage: (message: BaseMessageType) => {
         messageStore.receiveMessage(message);
       },
 
-      onChatThreadChange: (message: ChatSDK.ThreadChangeInfo) => {
-        if (message.operation == 'userRemove') {
-          if (
-            message.userName == rootStore.client.user &&
-            threadStore.currentThread?.info?.id == message.id
-          ) {
-            threadStore.setThreadVisible(false);
-          }
-        } else {
-          threadStore.updateThreadInfo(message);
+      onChatThreadCreated: (message: any) => {
+        threadStore.updateThreadInfo({
+          ...message,
+          operation: 'create',
+          id: message.chatThreadId,
+          name: message.chatThreadName,
+          operator: message.operatorId,
+        });
+      },
+      onChatThreadUpdated: (message: any) => {
+        threadStore.updateThreadInfo({
+          ...message,
+          operation: 'update',
+          id: message.chatThreadId,
+          name: message.chatThreadName,
+          operator: message.operatorId,
+        });
+      },
+      onChatThreadDestroyed: (message: any) => {
+        threadStore.updateThreadInfo({
+          ...message,
+          operation: 'destroy',
+          id: message.chatThreadId,
+          operator: message.operatorId,
+        });
+      },
+      onChatThreadUserRemoved: (message: any) => {
+        if (
+          message.memberId === currentUserId &&
+          threadStore.currentThread?.info?.id === message.chatThreadId
+        ) {
+          threadStore.setThreadVisible(false);
         }
+        threadStore.updateThreadInfo({
+          ...message,
+          operation: 'userRemove',
+          id: message.chatThreadId,
+          operator: message.operatorId,
+          userName: message.memberId,
+        });
       },
 
       onContactInvited: message => {
@@ -345,44 +364,74 @@ const useEventHandler = (props: ProviderProps) => {
         const presence = features?.conversationList?.item?.presence ?? false;
         addressStore.addContactToContactList(message.from, presence);
       },
-      onMultiDeviceEvent: message => {
+      onMultiDeviceConversation: (message: any) => {
         console.log('onMultiDeviceEvent', message);
         if (message.operation === 'setSilentModeForConversation') {
           rootStore.conversationStore.setSilentModeForConversationSync(
             {
-              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
-              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+              chatType: (message as any).type,
+              conversationId: (message as any).conversationId,
             },
             true,
           );
           rootStore.addressStore.setSilentModeForConversationSync(
             {
-              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
-              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+              chatType: (message as any).type,
+              conversationId: (message as any).conversationId,
             },
             true,
           );
         } else if (message.operation === 'removeSilentModeForConversation') {
           rootStore.conversationStore.setSilentModeForConversationSync(
             {
-              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
-              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+              chatType: (message as any).type,
+              conversationId: (message as any).conversationId,
             },
             false,
           );
           rootStore.addressStore.setSilentModeForConversationSync(
             {
-              chatType: (message as ChatSDK.NotificationConMultiDeviceInfo).type,
-              conversationId: (message as ChatSDK.NotificationConMultiDeviceInfo).conversationId,
+              chatType: (message as any).type,
+              conversationId: (message as any).conversationId,
             },
             false,
           );
         }
       },
-      onChatroomEvent: message => {
-        if (message.operation === 'memberPresence') {
-          const count = message.memberCount as number;
-          typeof count === 'number' && addressStore.updateChatroomMemberCount(message.id, count);
+      // Chatroom events (via ChatRoomManager dispatch)
+      '__chatroom:onRemovedFromChatRoom': (message: any) => {
+        const chatRoomId = message?.chatRoomId;
+        if (chatRoomId) {
+          // Clear chatroom messages when user is removed
+          messageStore.message.chatRoom[chatRoomId] = [];
+        }
+      },
+      '__chatroom:onChatRoomDestroyed': (message: any) => {
+        const chatRoomId = message?.chatRoomId;
+        if (chatRoomId) {
+          messageStore.message.chatRoom[chatRoomId] = [];
+        }
+      },
+      '__chatroom:onMuteListAdded': (message: any) => {
+        const chatRoomId = message?.chatRoomId;
+        const userIds = message?.userIds || [];
+        if (chatRoomId && userIds.includes(currentUserId)) {
+          addressStore.chatroom.forEach(item => {
+            if (item.id === chatRoomId) {
+              (item as any).muted = true;
+            }
+          });
+        }
+      },
+      '__chatroom:onMuteListRemoved': (message: any) => {
+        const chatRoomId = message?.chatRoomId;
+        const userIds = message?.userIds || [];
+        if (chatRoomId && userIds.includes(currentUserId)) {
+          addressStore.chatroom.forEach(item => {
+            if (item.id === chatRoomId) {
+              (item as any).muted = false;
+            }
+          });
         }
       },
     });

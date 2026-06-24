@@ -4,6 +4,7 @@ import { renderTxt } from '../textMessage/TextMessage';
 import ChatroomMessage from './index';
 import Provider from '../store/Provider';
 import { ChatroomMessageProps } from './ChatroomMessage';
+import type { ChatSDK } from '../SDK';
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 const description = {
   en: {
@@ -13,10 +14,8 @@ const description = {
     style: 'Style',
     message: 'The message object',
     targetLanguage: 'The target language of translation',
-    onReport:
-      'The callback function for reporting, the parameter is the message object, you need to implement the pop-up report dialog by yourself',
     actionConfig:
-      'Action config, example: { recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "Custom menu item", onClick: () => {}, visible: true }] }',
+      'Action config, example: { recall: true, translate: true, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "Custom menu item", onClick: () => {}, visible: true }] }',
   },
   zh: {
     chatroomMessage: '聊天室消息组件',
@@ -25,9 +24,8 @@ const description = {
     style: '组件样式',
     message: '消息对象',
     targetLanguage: '翻译的目标语言',
-    onReport: '举报的回调函数, 参数为消息对象, 需要自己实现弹出举报的弹框',
     actionConfig:
-      '操作菜单配置, 示例：{ recall: true, translate: true, report: false, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "自定义菜单项", onClick: () => {}, visible: true }] }',
+      '操作菜单配置, 示例：{ recall: true, translate: true, mute: true, pin: true, customActions: [{ icon: <Icon type="COPY" width={16} height={16} />, content: "自定义菜单项", onClick: () => {}, visible: true }] }',
   },
 };
 
@@ -57,10 +55,6 @@ export default {
       control: 'text',
       description: description[lang].targetLanguage,
     },
-    onReport: {
-      action: 'report',
-      description: description[lang].onReport,
-    },
     actionConfig: {
       control: 'object',
       description: description[lang].actionConfig,
@@ -82,16 +76,21 @@ export const textMessage = {
   render: Template,
   args: {
     message: {
-      type: 'txt',
-      msg: 'hello',
-      id: '1234567890',
+      msgLocalId: 'chatroom-text-local-1',
+      msgServerId: '1234567890',
+      type: 'text',
+      body: { content: 'hello' },
       to: 'chatroomId',
-      chatType: 'chatRoom',
+      conversationId: 'chatroomId',
+      conversationType: 'chatRoom',
       // bySelf: true,
       from: 'Leo',
-      time: Date.now(),
+      sender: { userId: 'Leo' },
+      timestamp: Date.now(),
+      direct: 'RECEIVE',
       // status: 'sent',
-    },
+      status: 'sent',
+    } as ChatSDK.Message,
   },
 };
 
@@ -99,16 +98,20 @@ export const giftMessage = {
   render: Template,
   args: {
     message: {
-      id: '1231026004235920980',
+      msgLocalId: 'chatroom-custom-local-1',
+      msgServerId: '1231026004235920980',
       type: 'custom',
-      chatType: 'chatRoom',
+      conversationType: 'chatRoom',
+      conversationId: '230164666580997',
       from: 'pev4pyzbwnutbp7a',
       to: '230164666580997',
-      customEvent: 'CHATROOMUIKITGIFT',
-      params: {},
-      customExts: {
-        chatroom_uikit_gift:
-          '{"giftId":"2665752a-e273-427c-ac5a-4b2a9c82b255","giftIcon":"https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift1.png","giftName":"Heart","giftPrice":"1"}',
+      sender: { userId: 'pev4pyzbwnutbp7a' },
+      body: {
+        event: 'CHATROOMUIKITGIFT',
+        params: {
+          chatroom_uikit_gift:
+            '{"giftId":"2665752a-e273-427c-ac5a-4b2a9c82b255","giftIcon":"https://fullapp.oss-cn-beijing.aliyuncs.com/uikit/pictures/gift/AUIKitGift1.png","giftName":"Heart","giftPrice":"1"}',
+        },
       },
       ext: {
         chatroom_uikit_userInfo: {
@@ -119,11 +122,13 @@ export const giftMessage = {
           gender: 1,
         },
       },
-      time: 1704185376943,
+      timestamp: 1704185376943,
       onlineState: 1,
+      direct: 'RECEIVE',
+      status: 'sent',
       priority: 'normal',
       broadcast: false,
       // bySelf: false,
-    },
+    } as ChatSDK.Message,
   },
 };

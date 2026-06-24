@@ -5,7 +5,13 @@ import './style/style.scss';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import Badge from '../../component/badge';
-import { getConversationTime } from '../utils/index';
+import {
+  getConversationTime,
+  getCurrentUserId,
+  getCustomEvent,
+  getMessageTime,
+  getTextContent,
+} from '../utils/index';
 import type { ConversationData } from './ConversationList';
 import { RenderFunction, Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
@@ -96,6 +102,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   }
   const themeRipple = theme?.ripple;
   const cvsStore = rootStore.conversationStore;
+  const currentUserId = getCurrentUserId(rootStore.client);
 
   const classString = classNames(
     prefixCls,
@@ -178,11 +185,11 @@ let ConversationItem: FC<ConversationItemProps> = props => {
     }
     cvsStore.deleteConversation(data);
 
-    rootStore.client
+    rootStore.client.chatManager
       .deleteConversation({
-        channel: data.conversationId,
-        chatType: data.chatType as 'singleChat' | 'groupChat',
-        deleteRoam: true,
+        conversationId: data.conversationId,
+        conversationType: data.chatType,
+        deleteRoamingMessages: true,
       })
       .then(() => {
         eventHandler.dispatchSuccess('deleteConversation');
@@ -278,17 +285,20 @@ let ConversationItem: FC<ConversationItemProps> = props => {
 
   switch (data.lastMessage?.type) {
     case 'txt':
-      if (data.lastMessage?.msg == 'the combine message') {
+    case 'text':
+      if (getTextContent(data.lastMessage) == 'the combine message') {
         lastMsg = `/${t('chatHistory')}/`;
       } else {
         // 仅渲染文本，不解析链接点击
-        lastMsg = renderTxt(data.lastMessage?.msg as any, false, () => {});
+        lastMsg = renderTxt(getTextContent(data.lastMessage), false, () => {});
       }
       break;
     case 'img':
+    case 'image':
       lastMsg = `[${t('image')}]`;
       break;
     case 'audio':
+    case 'voice':
       lastMsg = `[${t('audio')}]`;
       break;
     case 'file':
@@ -298,7 +308,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       lastMsg = `[${t('video')}]`;
       break;
     case 'custom':
-      if (data.lastMessage.customEvent == 'userCard') {
+      if (getCustomEvent(data.lastMessage) == 'userCard') {
         lastMsg = `[${t('contact')}]`;
       } else {
         lastMsg = `[${t('custom')}]`;
@@ -319,10 +329,10 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   lastMsg = renderMessageContent?.(data.lastMessage as BaseMessageType) ?? lastMsg;
   if (data.chatType == 'groupChat') {
     const msgFrom = data.lastMessage?.from || '';
-    let from = msgFrom && msgFrom !== rootStore.client.context.userId ? `${msgFrom}: ` : '';
+    let from = msgFrom && msgFrom !== currentUserId ? `${msgFrom}: ` : '';
     const groupItem = getGroupItemFromGroupsById(data.conversationId);
     if (groupItem) {
-      const memberIdx = getGroupMemberIndexByUserId(groupItem, msgFrom) ?? -1;
+      const memberIdx = getGroupMemberIndexByUserId(groupItem, String(msgFrom)) ?? -1;
       // @ts-ignore
       const ease_chat_uikit_user_info = data.lastMessage?.ext?.ease_chat_uikit_user_info;
       if (ease_chat_uikit_user_info && ease_chat_uikit_user_info.nickname) {
@@ -378,7 +388,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       </div>
       <div className={`${prefixCls}-info`}>
         <span className={`${prefixCls}-time`}>
-          {formatDateTime?.(data.lastMessage?.time) || getConversationTime(data.lastMessage?.time)}
+          {formatDateTime?.(getMessageTime(data.lastMessage)) ||
+            getConversationTime(getMessageTime(data.lastMessage))}
         </span>
         {showMore ? (
           <Tooltip

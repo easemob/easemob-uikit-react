@@ -1,8 +1,8 @@
 import { observable, action, makeObservable, runInAction } from 'mobx';
 import { getStore } from './index';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { getGroupItemIndexFromGroupsById, getGroupMemberIndexByUserId } from '../../module/utils';
-import { getUsersInfo, checkCharacter } from '../utils';
+import { getCurrentUserId, getUsersInfo, checkCharacter } from '../utils';
 import { pinyin } from 'pinyin-pro';
 import { eventHandler } from '../../eventHandler';
 
@@ -17,34 +17,43 @@ export interface ContactRequest {
 }
 
 export interface MemberItem {
-  userId: ChatSDK.UserId;
+  userId: string;
   role: MemberRole;
-  // @ts-ignore
-  attributes?: ChatSDK.MemberAttributes;
+  attributes?: Record<string, string>;
   silent?: boolean;
   initial?: string;
   name?: string;
 }
 
-export interface GroupItem extends ChatSDK.BaseGroupInfo {
+export interface GroupItem {
+  groupId: string;
+  name: string;
+  groupName?: string;
+  description?: string;
+  memberCount?: number;
+  public?: boolean;
+  joinApprovalRequired?: boolean;
+  allowInvites?: boolean;
+  maxMembers?: number;
+  role?: MemberRole;
   disabled?: boolean;
-  info?: ChatSDK.GroupDetailInfo;
+  info?: Record<string, any>;
   members?: MemberItem[];
   hasMembersNext?: boolean;
-  admins?: ChatSDK.UserId[];
+  admins?: string[];
   silent?: boolean;
   initial?: string;
-  name?: string;
   avatarUrl?: string;
 }
 
-export type AppUserInfo = Partial<Record<ChatSDK.ConfigurableKey, any>> & {
+export type AppUserInfo = Record<string, any> & {
   userId: string;
   isOnline?: boolean;
   presenceExt?: string;
 };
 
-export type ChatroomInfo = ChatSDK.GetChatRoomDetailsResult & {
+export type ChatroomInfo = Record<string, any> & {
+  id: string;
   membersId?: string[];
   admins?: string[];
   muteList?: string[];
@@ -59,7 +68,7 @@ class AddressStore {
   searchList: any;
   requests: ContactRequest[];
   thread: {
-    [key: string]: ChatSDK.ThreadChangeInfo[];
+    [key: string]: any[];
   };
   blockList: string[];
   constructor() {
@@ -131,7 +140,7 @@ class AddressStore {
   }
   setContactRemark(userId: string, remark: string) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.contactManager
       .setContactRemark({
         userId,
         remark,
@@ -156,8 +165,8 @@ class AddressStore {
   }
   deleteContact(userId: string) {
     const rootStore = getStore();
-    rootStore.client
-      .deleteContact(userId)
+    rootStore.client.contactManager
+      .deleteContact({ userId })
       .then(() => {
         this.deleteContactFromContactList(userId);
         eventHandler.dispatchSuccess('deleteContact');
@@ -206,20 +215,16 @@ class AddressStore {
       this.contacts.push({
         userId,
         nickname: userInfo.nickname,
-        // @ts-ignore
-        name: userInfo.nickname,
         remark: '',
-        avatar: userInfo.avatarurl,
-        initial: initial,
-      });
+      } as any);
       this.contacts = [...this.contacts];
     });
   }
 
   setGroups(groups: GroupItem[]) {
-    const currentGroupsId = this.groups.map(item => item.groupid);
+    const currentGroupsId = this.groups.map(item => item.groupId);
     const filteredGroups = groups.filter(
-      ({ groupid }) => !currentGroupsId.find(id => id === groupid),
+      ({ groupId }) => !currentGroupsId.find(id => id === groupId),
     );
     this.groups = [...this.groups, ...filteredGroups];
   }
@@ -244,7 +249,8 @@ class AddressStore {
   updateGroupName(groupId: string, groupName: string) {
     const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
-      this.groups[idx].groupname = groupName;
+      this.groups[idx].name = groupName;
+      this.groups[idx].groupName = groupName;
       this.groups = [...this.groups];
     }
   }
@@ -253,25 +259,25 @@ class AddressStore {
     this.hasGroupsNext = hasNext;
   }
 
-  setGroupMembers(groupId: string, membersList: ChatSDK.GroupMember[]) {
+  setGroupMembers(
+    groupId: string,
+    membersList: { userId?: string; member?: string; owner?: string }[],
+  ) {
     const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
       const currentMembers = this.groups[idx]?.members?.map(item => item.userId);
       const filteredMembers = membersList
         .filter(
-          //@ts-ignore
-          item => !currentMembers?.find(id => id === (item.owner || item.member)),
+          item => !currentMembers?.find(id => id === ((item as any).owner || (item as any).member)),
         )
         .map<MemberItem>(member => {
           return {
-            //@ts-ignore
-            userId: member.owner || member.member,
-            //@ts-ignore
-
-            role: this.groups[idx].admins?.includes(member.owner || member.member)
+            userId: (member as any).userId || (member as any).owner || (member as any).member || '',
+            role: this.groups[idx].admins?.includes(
+              (member as any).userId || (member as any).owner || (member as any).member || '',
+            )
               ? 'admin'
-              : //@ts-ignore
-              member?.owner
+              : (member as any)?.owner
               ? 'owner'
               : 'member',
           };
@@ -300,10 +306,10 @@ class AddressStore {
   setGroupMemberAttributesAsync = (
     groupId: string,
     userId: string,
-    attributes: ChatSDK.MemberAttributes,
+    attributes: Record<string, string>,
   ) => {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.groupManager
       .setGroupMemberAttributes({
         groupId,
         userId,
@@ -317,12 +323,7 @@ class AddressStore {
         eventHandler.dispatchError('setGroupMemberAttributes', error);
       });
   };
-  setGroupMemberAttributes(
-    groupId: string,
-    userId: string,
-    // @ts-ignore
-    attributes: ChatSDK.MemberAttributes,
-  ) {
+  setGroupMemberAttributes(groupId: string, userId: string, attributes: Record<string, string>) {
     const groupIdx = getGroupItemIndexFromGroupsById(groupId);
     const idx = getGroupMemberIndexByUserId(this.groups[groupIdx], userId) ?? -1;
     if (idx > -1) {
@@ -364,7 +365,7 @@ class AddressStore {
 
   setChatroom(chatroom: any) {
     this.chatroom = chatroom;
-    // let currentGroupsId = this.groups.map(item => item.groupid);
+    // let currentGroupsId = this.groups.map(item => item.groupId);
     // let filteredGroups = groups.filter(
     //   ({ groupid }) => !currentGroupsId.find(id => id === groupid),
     // );
@@ -408,11 +409,11 @@ class AddressStore {
       const muteList = this.chatroom[idx].muteList || [];
       if (muteList.includes(userId)) return Promise.resolve();
     }
-    return rootStore.client
-      .muteChatRoomMember({
+    return rootStore.client.chatRoomManager
+      .muteMembers({
         chatRoomId: chatroomId,
-        username: userId, //message.from as string,
-        muteDuration: muteDuration || 60 * 60 * 24 * 30,
+        userIds: [userId],
+        duration: muteDuration || 60 * 60 * 24 * 30,
       })
       .then(res => {
         this.addUserToMuteList(chatroomId, userId);
@@ -426,10 +427,10 @@ class AddressStore {
   getChatroomMuteList = (chatroomId: string) => {
     if (!chatroomId) throw 'chatroomId is empty';
     const rootStore = getStore();
-    return rootStore.client
-      .getChatRoomMutelist({ chatRoomId: chatroomId })
+    return rootStore.client.chatRoomManager
+      .getMuteList({ chatRoomId: chatroomId })
       .then(res => {
-        const muteList = res.data?.map(item => item.user) || [];
+        const muteList = res?.map((item: any) => item.userId || item.user || item) || [];
         this.setChatroomMuteList(chatroomId, muteList);
         eventHandler.dispatchSuccess('getChatRoomMutelist');
       })
@@ -441,10 +442,10 @@ class AddressStore {
   unmuteChatRoomMember = (chatroomId: string, userId: string) => {
     if (!chatroomId || !userId) throw 'chatroomId or userId is empty';
     const rootStore = getStore();
-    return rootStore.client
-      .unmuteChatRoomMember({
+    return rootStore.client.chatRoomManager
+      .unmuteMembers({
         chatRoomId: chatroomId,
-        username: userId, //message.from as string,
+        userIds: [userId],
       })
       .then(res => {
         this.removeUserFromMuteList(chatroomId, userId);
@@ -475,10 +476,10 @@ class AddressStore {
 
   removerChatroomMember = (chatroomId: string, userId: string) => {
     const rootStore = getStore();
-    rootStore.client
-      .removeChatRoomMember({
+    rootStore.client.chatRoomManager
+      .removeMembers({
         chatRoomId: chatroomId,
-        username: userId,
+        userIds: [userId],
       })
       .then(() => {
         const idx = this.chatroom.findIndex(item => item.id === chatroomId);
@@ -505,32 +506,29 @@ class AddressStore {
     }
     const cvsList = cvs.map(item => {
       return {
-        id: item.conversationId,
-        type: item.chatType,
+        conversationId: item.conversationId,
+        conversationType: item.chatType,
       };
     });
     const rootStore = getStore();
-    rootStore.client
-      .getSilentModeForConversations({
+    rootStore.client.pushManager
+      .getConversationSilentModes({
         conversationList: cvsList,
       })
       .then((res: any) => {
-        const userSetting = res.data.user;
-        const groupSetting = res.data.group;
+        const conversations = res.conversations || [];
         runInAction(() => {
           this.contacts.forEach(item => {
-            if (userSetting[item.userId] && userSetting[item.userId]?.type == 'NONE') {
-              item.silent = true;
-            } else if (userSetting[item.userId]) {
-              item.silent = false;
-            }
+            const setting = conversations.find(
+              (conversation: any) => conversation.conversationId === item.userId,
+            );
+            if (setting?.rule?.remindType) item.silent = setting.rule.remindType === 'NONE';
           });
           this.groups.forEach(item => {
-            if (groupSetting[item.groupid] && groupSetting[item.groupid]?.type == 'AT') {
-              item.silent = true;
-            } else if (groupSetting[item.groupid]) {
-              item.silent = false;
-            }
+            const setting = conversations.find(
+              (conversation: any) => conversation.conversationId === item.groupId,
+            );
+            if (setting?.rule?.remindType) item.silent = setting.rule.remindType === 'AT';
           });
         });
 
@@ -553,7 +551,7 @@ class AddressStore {
       });
     } else if (cvs.chatType === 'groupChat') {
       this.groups.forEach(item => {
-        if (item.groupid === cvs.conversationId) {
+        if (item.groupId === cvs.conversationId) {
           item.silent = silent;
         }
       });
@@ -565,13 +563,13 @@ class AddressStore {
   ) {
     const rootStore = getStore();
     if (silent) {
-      rootStore.client
-        .setSilentModeForConversation({
+      rootStore.client.pushManager
+        .setConversationSilentMode({
           conversationId: cvs.conversationId,
-          type: cvs.chatType as ChatSDK.CONVERSATIONTYPE,
-          options: {
-            paramType: 0,
-            remindType: (cvs.chatType == 'groupChat' ? 'AT' : 'NONE') as ChatSDK.SILENTMODETYPE,
+          conversationType: cvs.chatType,
+          rule: {
+            mode: 'REMIND_TYPE',
+            remindType: cvs.chatType == 'groupChat' ? 'AT' : 'NONE',
           },
         })
         .then((res: any) => {
@@ -583,10 +581,10 @@ class AddressStore {
           eventHandler.dispatchError('setSilentModeForConversation', error);
         });
     } else {
-      rootStore.client
-        .clearRemindTypeForConversation({
+      rootStore.client.pushManager
+        .clearConversationRemindType({
           conversationId: cvs.conversationId,
-          type: cvs.chatType as ChatSDK.CONVERSATIONTYPE,
+          conversationType: cvs.chatType,
         })
         .then((res: any) => {
           rootStore.conversationStore.setSilentModeForConversationSync(cvs, false);
@@ -602,21 +600,25 @@ class AddressStore {
 
   getGroupInfo(groupId: string) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.groupManager
       .getGroupInfo({
         groupId: groupId,
       })
-      .then(res => {
+      .then(group => {
         runInAction(() => {
-          const found = this.groups.filter(item => item.groupid === groupId);
+          const found = this.groups.filter(item => item.groupId === groupId);
           if (found.length === 0) {
             this.groups.push({
-              info: res.data?.[0],
-              groupid: groupId,
-              groupname: res.data?.[0].name || '',
+              ...group,
+              info: group,
+              groupId,
+              name: group.name || '',
+              groupName: group.name || '',
             });
           } else {
-            found[0].info = res.data?.[0];
+            found[0].info = group;
+            found[0].name = group.name || found[0].name;
+            found[0].groupName = group.name || found[0].groupName;
           }
         });
 
@@ -629,17 +631,17 @@ class AddressStore {
 
   modifyGroup(groupId: string, groupName: string, description: string) {
     const rootStore = getStore();
-    rootStore.client
-      .modifyGroup({
+    rootStore.client.groupManager
+      .updateGroupInfo({
         groupId,
-        groupName,
+        name: groupName,
         description,
       })
       .then(() => {
         this.groups.forEach(item => {
-          if (item.groupid === groupId) {
+          if (item.groupId === groupId) {
             runInAction(() => {
-              item.groupname = groupName;
+              item.name = groupName;
 
               if (item.info) {
                 item.info.description = description;
@@ -670,13 +672,13 @@ class AddressStore {
 
   destroyGroup(groupId: string) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.groupManager
       .destroyGroup({
         groupId,
       })
       .then(() => {
         runInAction(() => {
-          this.groups = this.groups.filter(item => item.groupid !== groupId);
+          this.groups = this.groups.filter(item => item.groupId !== groupId);
         });
 
         rootStore.conversationStore.deleteConversation({
@@ -692,13 +694,13 @@ class AddressStore {
 
   leaveGroup(groupId: string) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.groupManager
       .leaveGroup({
         groupId,
       })
       .then(() => {
         runInAction(() => {
-          this.groups = this.groups.filter(item => item.groupid !== groupId);
+          this.groups = this.groups.filter(item => item.groupId !== groupId);
           rootStore.messageStore.message.groupChat[groupId] = [];
         });
 
@@ -715,8 +717,8 @@ class AddressStore {
 
   addContact(userId: string) {
     const rootStore = getStore();
-    rootStore.client
-      .addContact(userId, '')
+    rootStore.client.contactManager
+      .addContact({ userId, message: '' })
       .then(() => {
         eventHandler.dispatchSuccess('addContact');
       })
@@ -739,7 +741,7 @@ class AddressStore {
 
   acceptContactInvite(userId: string) {
     const rootStore = getStore();
-    rootStore.client.acceptContactInvite(userId);
+    rootStore.client.contactManager.acceptContactInvite({ userId });
     this.requests.forEach(item => {
       if (item.from === userId) {
         item.requestStatus = 'accepted';
@@ -759,30 +761,28 @@ class AddressStore {
   // TODO: 增加群名称，群头像等参数，传头像的话，创建会话时增加avatarUrl字段
   createGroup(members: string[]) {
     const rootStore = getStore();
+    const currentUserId = getCurrentUserId(rootStore.client);
     // groupname 是前三个用户的昵称， 其中第一个用户是自己
     const groupnameArr = members.slice(0, 2).map(item => {
       return rootStore.addressStore.appUsersInfo?.[item]?.nickname || item;
     });
     groupnameArr.unshift(
-      rootStore.addressStore.appUsersInfo?.[rootStore.client.user]?.nickname ||
-        rootStore.client.user,
+      rootStore.addressStore.appUsersInfo?.[currentUserId]?.nickname || currentUserId,
     );
     const groupName = groupnameArr.join('、');
 
-    rootStore.client
+    rootStore.client.groupManager
       .createGroup({
-        data: {
-          groupname: groupName,
-          members,
-          desc: groupName,
-          public: false,
-          approval: false,
-          allowinvites: true,
-          inviteNeedConfirm: false,
-          maxusers: 1000,
-        },
+        name: groupName,
+        description: groupName,
+        memberIds: members,
+        public: false,
+        joinApprovalRequired: false,
+        allowInvites: true,
+        inviteNeedConfirm: false,
+        maxMembers: 1000,
       })
-      .then((res: ChatSDK.AsyncResult<ChatSDK.CreateGroupResult>) => {
+      .then((res: { groupId: string }) => {
         runInAction(() => {
           const groupMembers = members.map(item => {
             return {
@@ -791,7 +791,7 @@ class AddressStore {
             };
           });
           groupMembers.push({
-            userId: rootStore.client.user,
+            userId: currentUserId,
             role: 'owner',
           });
           let initial = '#';
@@ -803,17 +803,17 @@ class AddressStore {
 
           this.groups.push({
             disabled: false,
-            groupid: res.data?.groupid || '',
+            groupId: res.groupId || '',
             initial: initial,
             name: groupName,
-            groupname: groupName,
+            groupName: groupName,
             members: groupMembers,
           });
         });
 
         rootStore.conversationStore.addConversation({
           chatType: 'groupChat',
-          conversationId: res.data?.groupid || '',
+          conversationId: res.groupId || '',
           name: groupName,
           lastMessage: {} as any,
           unreadCount: 0,
@@ -821,7 +821,7 @@ class AddressStore {
         });
         rootStore.conversationStore.setCurrentCvs({
           chatType: 'groupChat',
-          conversationId: res.data?.groupid || '',
+          conversationId: res.groupId || '',
           name: groupName,
         });
         eventHandler.dispatchSuccess('createGroup');
@@ -833,15 +833,15 @@ class AddressStore {
 
   inviteToGroup(groupId: string, userIds: string[]) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.groupManager
       .inviteUsersToGroup({
         groupId: groupId,
-        users: userIds,
+        userIds,
       })
       .then(res => {
         // 直接将用户加入群组， 然后在群组成员列表添加这个用户
         this.groups.forEach(item => {
-          if (item.groupid === groupId) {
+          if (item.groupId === groupId) {
             const groupMembers = userIds.map(item => {
               return {
                 userId: item,
@@ -859,10 +859,10 @@ class AddressStore {
   }
   removeGroupMembers(groupId: string, userIds: string[]) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.groupManager
       .removeGroupMembers({
         groupId: groupId,
-        users: userIds,
+        userIds,
       })
       .then(res => {
         // 直接移除成员，然后在成员列表删除这个user
@@ -878,7 +878,7 @@ class AddressStore {
   }
   setGroupOwner(groupId: string, userId: string) {
     this.groups.forEach(item => {
-      if (item.groupid === groupId) {
+      if (item.groupId === groupId) {
         item.members?.forEach(member => {
           if (member.userId === userId) {
             member.role = 'owner';
@@ -895,7 +895,7 @@ class AddressStore {
   }
   changeGroupOwner(groupId: string, newOwner: string) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.groupManager
       .changeGroupOwner({
         groupId: groupId,
         newOwner: newOwner,
@@ -909,18 +909,16 @@ class AddressStore {
       });
   }
   removeGroupFromContactList(groupId: string) {
-    this.groups = this.groups.filter(item => item.groupid !== groupId);
+    this.groups = this.groups.filter(item => item.groupId !== groupId);
   }
 
   getBlockList() {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.contactManager
       .getBlocklist()
       .then(res => {
         runInAction(() => {
-          if (res.data) {
-            this.blockList = res.data;
-          }
+          this.blockList = res.map((item: any) => item.userId || item.user || item);
         });
         eventHandler.dispatchSuccess('getBlockList');
       })
@@ -931,9 +929,9 @@ class AddressStore {
 
   addUsersToBlocklist(userIdList: string[]) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.contactManager
       .addUsersToBlocklist({
-        name: userIdList,
+        userIds: userIdList,
       })
       .then(res => {
         runInAction(() => {
@@ -949,9 +947,9 @@ class AddressStore {
 
   removeUserFromBlocklist(userIdList: string[]) {
     const rootStore = getStore();
-    rootStore.client
+    rootStore.client.contactManager
       .removeUserFromBlocklist({
-        name: userIdList,
+        userIds: userIdList,
       })
       .then(res => {
         runInAction(() => {
@@ -966,14 +964,15 @@ class AddressStore {
 
   publishPresence(description: string) {
     const rootStore = getStore();
-    rootStore.client
+    const currentUserId = getCurrentUserId(rootStore.client);
+    rootStore.client.presenceManager
       .publishPresence({
-        description,
+        customStatus: description,
       })
       .then(res => {
         runInAction(() => {
-          this.appUsersInfo[rootStore.client.user] = {
-            ...this.appUsersInfo[rootStore.client.user],
+          this.appUsersInfo[currentUserId] = {
+            ...this.appUsersInfo[currentUserId],
             presenceExt: description,
           };
         });

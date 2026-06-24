@@ -1,5 +1,49 @@
-import { ChatSDK } from '../SDK';
-export type ChatType = 'singleChat' | 'groupChat' | 'chatRoom';
+import type { ChatSDK } from '../SDK';
+export type ChatType = ChatSDK.ChatConversationType;
+type TextBody = {
+  content: string;
+  targetLanguages?: string[];
+  translations?: Record<string, string>;
+};
+type ImageBody = {
+  localUrl?: string;
+  filename?: string;
+  filetype?: string;
+  width?: number;
+  height?: number;
+  isGif?: boolean;
+  isOriginalImage?: boolean;
+  originalImageUrl?: string;
+  bigImageUrl?: string;
+  secret?: string;
+  fileLength?: number;
+  thumbnailUrl?: string;
+};
+type FileBody = {
+  url?: string;
+  filename?: string;
+  filetype?: string;
+  fileSize?: number;
+  fileLength?: number;
+  secret?: string;
+};
+type VoiceBody = FileBody & { duration: number };
+type VideoBody = VoiceBody & {
+  width?: number;
+  height?: number;
+  thumbnailUrl?: string;
+};
+type CustomBody = { event: string; params?: Record<string, string> };
+type LocalMessageType =
+  | 'text'
+  | 'image'
+  | 'file'
+  | 'voice'
+  | 'video'
+  | 'location'
+  | 'cmd'
+  | 'custom'
+  | 'combine';
 
 export type MessageStatus =
   | 'received'
@@ -77,11 +121,16 @@ enum ONLINESTATETYPE {
 }
 
 interface BaseMessage {
-  id: string;
+  msgLocalId: string;
+  msgServerId: string;
   to: string;
   from: string;
-  chatType: ChatType;
-  time: number;
+  sender: ChatSDK.Sender;
+  conversationId: string;
+  conversationType: ChatType;
+  timestamp: number;
+  type: LocalMessageType;
+  body: ChatSDK.MessageBody;
   ext?: { [key: string]: any };
   msgConfig?: {
     allowGroupAck: boolean;
@@ -93,66 +142,46 @@ interface BaseMessage {
   chatThreadOverview?: ChatThreadOverview;
   onlineState?: ONLINESTATETYPE;
   status: MessageStatus;
-  bySelf: boolean;
+  bySelf?: boolean;
+  chatThread?: {
+    parentId?: string;
+  };
 }
 
 export interface FileMessageType extends BaseMessage {
   type: 'file';
-  file: FileObj;
-  filename: string;
-  file_length: number;
-  url: string;
-  body?: {
-    url: string;
-    type: string;
-    filename: string;
-  };
+  body: FileBody;
+  file?: FileObj;
 }
 
 export interface TextMessageType extends BaseMessage {
-  type: 'txt';
-  msg: string;
-  modifiedInfo: ChatSDK.ModifiedMsgInfo;
+  type: 'text';
+  body: TextBody;
+  modifiedInfo?: {
+    operationTime?: number;
+    operatorId?: string;
+    operationCount?: number;
+  };
 }
 
 export interface CustomMessageType extends BaseMessage {
   type: 'custom';
-  customEvent: string;
-  customExts: { [key: string]: any };
+  body: CustomBody;
 }
 
 export interface ImageMessageType extends BaseMessage {
-  type: 'img';
-  file: FileObj;
+  type: 'image';
+  body: ImageBody;
+  file?: FileObj;
   width?: number;
   height?: number;
-  file_length?: number;
   fileInputId?: string;
-  thumb?: string;
-  thumb_secret?: string;
-  secret?: string;
-  url: string;
-  body?: {
-    url: string;
-    type: string;
-    filename: string;
-  };
 }
 
 export interface AudioMessageType extends BaseMessage {
-  type: 'audio';
-  filename: string;
-  length: number;
-  file_length: number;
-  url?: string;
-  secret?: string;
-  filetype?: string;
-  body?: {
-    url: string;
-    type: string;
-    filename: string;
-  };
-  file: {
+  type: 'voice';
+  body: VoiceBody;
+  file?: {
     url: string;
     filename: string;
     filetype: 'audio';
@@ -164,16 +193,6 @@ export interface AudioMessageType extends BaseMessage {
 
 export interface VideoMessageType extends BaseMessage {
   type: 'video';
-  file: object;
-  filename: string;
-  length: number;
-  file_length: number;
-  url?: string;
-  secret?: string;
-  filetype?: string;
-  body?: {
-    url: string;
-    type: string;
-    filename: string;
-  };
+  body: VideoBody;
+  file?: object;
 }

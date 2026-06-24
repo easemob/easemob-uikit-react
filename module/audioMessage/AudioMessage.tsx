@@ -1,6 +1,10 @@
 import React, { useContext, useRef, useState, useEffect } from 'react';
 import classNames from 'classnames';
-import BaseMessage, { BaseMessageProps, renderUserProfileProps } from '../baseMessage';
+import BaseMessage, {
+  BaseMessageProps,
+  BaseMessageType,
+  renderUserProfileProps,
+} from '../baseMessage';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 import type { AudioMessageType } from '../types/messageType';
@@ -8,8 +12,8 @@ import Avatar from '../../component/avatar';
 import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
 import { observer } from 'mobx-react-lite';
-import { getCvsIdFromMessage } from '../utils';
-import { chatSDK, ChatSDK } from '../SDK';
+import { getCurrentUserId, getCvsIdFromMessage, getMessageId } from '../utils';
+import type { ChatSDK } from '../SDK';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 import { RootContext } from '../store/rootContext';
 
@@ -43,16 +47,9 @@ const AudioMessage = (props: AudioMessageProps) => {
   } = props;
 
   const audioRef = useRef(null);
-  const {
-    url,
-    file_length,
-    length,
-    file,
-    time: messageTime,
-    from,
-    status,
-    reactions,
-  } = audioMessage;
+  const { body, file, from, status, reactions } = audioMessage;
+  const messageTime = audioMessage.timestamp;
+  const audioUrl = body.url;
   // const duration = body.length
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-audio', customizePrefixCls);
@@ -62,14 +59,14 @@ const AudioMessage = (props: AudioMessageProps) => {
 
   let { bySelf } = audioMessage;
   if (typeof bySelf == 'undefined') {
-    bySelf = from == rootStore.client.context.userId;
+    bySelf = from == getCurrentUserId(rootStore.client);
   }
   const bubbleType = type ? type : bySelf ? 'primary' : 'secondly';
 
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId: getCvsIdFromMessage(audioMessage),
-      conversationType: audioMessage.chatType,
+      conversationType: audioMessage.conversationType,
     },
   });
   const classString = classNames(
@@ -83,20 +80,24 @@ const AudioMessage = (props: AudioMessageProps) => {
 
   const [sourceUrl, setUrl] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (!audioMessage.url) return;
-    const options = {
-      url: audioMessage.url as string,
-      headers: {
-        Accept: 'audio/mp3',
-      },
-      onFileDownloadComplete: function (response: any) {
-        const objectUrl = chatSDK.utils.parseDownloadResponse.call(rootStore.client, response);
+    if (!audioUrl) return;
+    let objectUrl = '';
+    rootStore.client.chatManager
+      .downloadAttachment({ message: audioMessage as unknown as ChatSDK.Message })
+      .then((result: ChatSDK.MessageAttachmentDownloadResult) => {
+        const blob = new Blob([result.data], { type: result.mimeType || 'audio/mp3' });
+        objectUrl = URL.createObjectURL(blob);
         setUrl(objectUrl);
-      },
-      onFileDownloadError: function () {},
+      })
+      .catch(() => {
+        setUrl(audioUrl);
+      });
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
-    chatSDK.utils.download.call(rootStore.client, options);
-  }, [audioMessage.url]);
+  }, [audioMessage, audioUrl]);
   const playAudio = () => {
     const preventDefault = onClick && onClick(audioMessage);
     if (preventDefault === true) return;
@@ -117,45 +118,45 @@ const AudioMessage = (props: AudioMessageProps) => {
     }, 10);
 
     // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+    const currentUserId = getCurrentUserId(rootStore.client);
     if (
-      audioMessage.chatType == 'singleChat' &&
-      audioMessage.from != rootStore.client.context.userId &&
+      audioMessage.conversationType == 'singleChat' &&
+      audioMessage.from != currentUserId &&
       audioMessage.status != 'read' &&
       !audioMessage.isChatThread &&
-      audioMessage.to == rootStore.client.context.userId
+      audioMessage.to == currentUserId
     ) {
-      rootStore.messageStore.sendReadAck(audioMessage.id, audioMessage.from);
+      rootStore.messageStore.sendReadAck(getMessageId(audioMessage), audioMessage.from);
     }
   };
   const handlePlayEnd = () => {
     setPlayStatus(false);
   };
 
-  const duration = Number.isInteger(length) ? length : file.duration || 0;
+  const duration = Number.isInteger(body.duration) ? body.duration : file?.duration || 0;
   const style = {
     width: `calc(${duration}% + 40px)`,
     maxWidth: `calc(100% - 128px)`,
   };
 
   const handleReplyMsg = () => {
-    rootStore.messageStore.setRepliedMessage(audioMessage);
+    rootStore.messageStore.setRepliedMessage(audioMessage as unknown as ChatSDK.Message);
   };
 
   const handleDeleteMsg = () => {
     const conversationId = getCvsIdFromMessage(audioMessage);
     rootStore.messageStore.deleteMessage(
       {
-        chatType: audioMessage.chatType,
+        chatType: audioMessage.conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      audioMessage.mid || audioMessage.id,
+      getMessageId(audioMessage),
     );
   };
 
   const handlePinMessage = () => {
     //@ts-ignore
-    pinMessage(audioMessage.mid || audioMessage.id);
+    pinMessage(getMessageId(audioMessage));
   };
 
   const handleClickEmoji = (emojiString: string) => {
@@ -163,11 +164,10 @@ const AudioMessage = (props: AudioMessageProps) => {
 
     rootStore.messageStore.addReaction(
       {
-        chatType: audioMessage.chatType,
+        chatType: audioMessage.conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      audioMessage.mid || audioMessage.id,
+      getMessageId(audioMessage),
       emojiString,
     );
   };
@@ -176,11 +176,10 @@ const AudioMessage = (props: AudioMessageProps) => {
     const conversationId = getCvsIdFromMessage(audioMessage);
     rootStore.messageStore.deleteReaction(
       {
-        chatType: audioMessage.chatType,
+        chatType: audioMessage.conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      audioMessage.mid || audioMessage.id,
+      getMessageId(audioMessage),
       emojiString,
     );
   };
@@ -192,22 +191,22 @@ const AudioMessage = (props: AudioMessageProps) => {
         if (item.count > 3 && item.userList.length <= 3) {
           rootStore.messageStore.getReactionUserList(
             {
-              chatType: audioMessage.chatType,
+              chatType: audioMessage.conversationType,
               conversationId: conversationId,
             },
-            // @ts-ignore
-            textMessage.mid || textMessage.id,
+            getMessageId(audioMessage),
             emojiString,
           );
         }
 
         if (item.isAddedBySelf) {
-          const index = item.userList.indexOf(rootStore.client.user);
+          const currentUserId = getCurrentUserId(rootStore.client);
+          const index = item.userList.indexOf(currentUserId);
           if (index > -1) {
             const findItem = item.userList.splice(index, 1)[0];
             item.userList.unshift(findItem);
           } else {
-            item.userList.unshift(rootStore.client.user);
+            item.userList.unshift(currentUserId);
           }
         }
       }
@@ -218,11 +217,10 @@ const AudioMessage = (props: AudioMessageProps) => {
     const conversationId = getCvsIdFromMessage(audioMessage);
     rootStore.messageStore.recallMessage(
       {
-        chatType: audioMessage.chatType,
+        chatType: audioMessage.conversationType,
         conversationId: conversationId,
       },
-      // @ts-ignore
-      audioMessage.mid || audioMessage.id,
+      getMessageId(audioMessage),
       audioMessage.isChatThread,
       true,
     );
@@ -232,12 +230,13 @@ const AudioMessage = (props: AudioMessageProps) => {
   const handleSelectMessage = () => {
     const selectable =
       // @ts-ignore
-      rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]?.selectable;
+      rootStore.messageStore.selectedMessage[audioMessage.conversationType][conversationId]
+        ?.selectable;
     if (selectable) return; // has shown checkbox
 
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: audioMessage.chatType,
+        chatType: audioMessage.conversationType,
         conversationId: conversationId,
       },
       {
@@ -248,31 +247,31 @@ const AudioMessage = (props: AudioMessageProps) => {
   };
 
   const handleResendMessage = () => {
-    rootStore.messageStore.sendMessage(audioMessage);
+    rootStore.messageStore.sendMessage(audioMessage as unknown as ChatSDK.Message);
   };
 
   const select =
     // @ts-ignore
-    rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]?.selectable;
+    rootStore.messageStore.selectedMessage[audioMessage.conversationType][conversationId]
+      ?.selectable;
 
   const handleMsgCheckChange = (checked: boolean) => {
     const checkedMessages =
       // @ts-ignore
-      rootStore.messageStore.selectedMessage[audioMessage.chatType][conversationId]
+      rootStore.messageStore.selectedMessage[audioMessage.conversationType][conversationId]
         ?.selectedMessage;
 
     let changedList = checkedMessages;
     if (checked) {
       changedList.push(audioMessage);
     } else {
-      changedList = checkedMessages.filter((item: { id: string }) => {
-        // @ts-ignore
-        return !(item.id == audioMessage.id || item.mid == audioMessage.id);
+      changedList = checkedMessages.filter((item: ChatSDK.Message) => {
+        return getMessageId(item) !== getMessageId(audioMessage);
       });
     }
     rootStore.messageStore.setSelectedMessage(
       {
-        chatType: audioMessage.chatType,
+        chatType: audioMessage.conversationType,
         conversationId: conversationId,
       },
       {
@@ -285,7 +284,7 @@ const AudioMessage = (props: AudioMessageProps) => {
   // @ts-ignore
   const _thread =
     // @ts-ignore
-    audioMessage.chatType == 'groupChat' &&
+    audioMessage.conversationType == 'groupChat' &&
     thread &&
     // @ts-ignore
     !audioMessage.chatThread &&
@@ -296,23 +295,27 @@ const AudioMessage = (props: AudioMessageProps) => {
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: true,
-      originalMessage: audioMessage,
+      originalMessage: audioMessage as unknown as ChatSDK.Message,
     });
     rootStore.threadStore.setThreadVisible(true);
   };
 
   // join the thread
   const handleClickThreadTitle = () => {
-    rootStore.threadStore.joinChatThread(audioMessage.chatThreadOverview?.id || '');
+    const chatThreadId =
+      (audioMessage.chatThreadOverview as Record<string, any> | undefined)?.chatThreadId ||
+      (audioMessage.chatThreadOverview as Record<string, any> | undefined)?.id ||
+      '';
+    rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setCurrentThread({
       visible: true,
       creating: false,
-      originalMessage: audioMessage,
-      info: audioMessage.chatThreadOverview as unknown as ChatSDK.ThreadChangeInfo,
+      originalMessage: audioMessage as unknown as ChatSDK.Message,
+      info: audioMessage.chatThreadOverview as unknown as ChatSDK.ChatThreadSummary,
     });
     rootStore.threadStore.setThreadVisible(true);
 
-    rootStore.threadStore.getChatThreadDetail(audioMessage?.chatThreadOverview?.id || '');
+    rootStore.threadStore.getChatThreadDetail(chatThreadId);
   };
   const handlePauseAudio = () => {
     console.log('handlePauseAudio');
@@ -350,10 +353,10 @@ const AudioMessage = (props: AudioMessageProps) => {
         </div>
       ) : (
         <BaseMessage
-          id={audioMessage.id}
+          id={getMessageId(audioMessage)}
           className={bubbleClass}
           direction={bySelf ? 'rtl' : 'ltr'}
-          message={audioMessage}
+          message={audioMessage as BaseMessageType}
           time={messageTime}
           // nickName={nickName}
           status={status}
@@ -373,7 +376,9 @@ const AudioMessage = (props: AudioMessageProps) => {
           // renderUserProfile={renderUserProfile}
           onCreateThread={handleCreateThread}
           thread={_thread}
-          chatThreadOverview={audioMessage.chatThreadOverview}
+          chatThreadOverview={
+            audioMessage.chatThreadOverview as unknown as ChatSDK.ChatThreadSummary
+          }
           onClickThreadTitle={handleClickThreadTitle}
           bubbleStyle={style}
           {...others}
@@ -383,7 +388,7 @@ const AudioMessage = (props: AudioMessageProps) => {
             <span className={`${prefixCls}-duration`}>{duration + '"' || 0}</span>
             <audio
               // src={typeof file.url == 'string' ? file.url : sourceUrl}
-              src={sourceUrl ?? file.url}
+              src={sourceUrl ?? file?.url}
               ref={audioRef}
               onEnded={handlePlayEnd}
               onError={handlePlayEnd}

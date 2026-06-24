@@ -5,6 +5,7 @@ import FileMessage from './index';
 import Icon, { IconProps } from '../../component/icon';
 import { ICON_TYPES } from '../../component/icon/const';
 import { FileObj } from '../types/messageType';
+import type { ChatSDK } from '../SDK';
 // 添加中文和英文的描述
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 
@@ -92,24 +93,25 @@ export default {
 export const Primary = {
   args: {
     fileMessage: {
+      msgLocalId: 'file-story-local-1',
+      msgServerId: '1234567890',
       type: 'file',
-      filename: 'test.txt',
-      file_length: 1024,
-      file: {
-        url: 'http:example.com',
+      body: {
+        url: 'https://example.com/test.txt',
         filename: 'test.txt',
-        filetype: 'txt',
-        data: {} as File,
+        filetype: 'text/plain',
+        fileSize: 1024,
       },
-      url: 'http:example.com',
-      id: '1234567890',
       to: 'userId',
-      chatType: 'singleChat',
+      conversationId: 'userId',
+      conversationType: 'singleChat',
       bySelf: true,
       from: 'myUserId',
-      time: Date.now(),
+      sender: { userId: 'myUserId' },
+      timestamp: Date.now(),
+      direct: 'SEND',
       status: 'sent',
-    },
+    } as unknown as ChatSDK.Message,
   },
 };
 
@@ -118,23 +120,24 @@ export const Secondly = {
     type: 'secondly',
     direction: 'ltr',
     fileMessage: {
+      msgLocalId: 'file-story-local-2',
+      msgServerId: '1234567891',
       type: 'file',
-      filename: 'test.txt',
-      file_length: 1024,
-      file: {
-        url: 'http:example.com',
+      body: {
+        url: 'https://example.com/test.txt',
         filename: 'test.txt',
-        filetype: 'txt',
-        data: {} as File,
+        filetype: 'text/plain',
+        fileSize: 1024,
       },
-      url: 'http:example.com',
-      id: '1234567890',
       to: 'userId',
-      chatType: 'singleChat',
+      conversationId: 'userId',
+      conversationType: 'singleChat',
       bySelf: false,
       from: 'myUserId',
-      time: Date.now(),
+      sender: { userId: 'myUserId' },
+      timestamp: Date.now(),
+      direct: 'RECEIVE',
       status: 'sent',
-    },
+    } as unknown as ChatSDK.Message,
   },
 };

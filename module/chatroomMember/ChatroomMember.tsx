@@ -17,7 +17,8 @@ import Icon from '../../component/icon';
 import Modal from '../../component/modal';
 import { useTranslation } from 'react-i18next';
 import { eventHandler } from '../../eventHandler';
-import { ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
+import { getCurrentUserId } from '../utils';
 export interface ChatroomMemberProps {
   prefix?: string;
   className?: string;
@@ -79,8 +80,8 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     if (!rootStore.loginState || !chatroomId) return;
     const chatroomData = addressStore.chatroom.filter(item => item.id === chatroomId)[0];
     if (!chatroomData) {
-      rootStore.client
-        .getChatRoomDetails({ chatRoomId: chatroomId })
+      rootStore.client.chatRoomManager
+        .getChatRoomInfo({ chatRoomId: chatroomId })
         .then(res => {
           // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
           rootStore.addressStore.setChatroom(res.data as ChatSDK.GetChatRoomDetailsResult);
@@ -97,17 +98,18 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
 
   const chatroomData = addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
   const owner = chatroomData.owner || '';
+  const currentUserId = getCurrentUserId(rootStore.client);
   const appUsersInfo = addressStore.appUsersInfo;
   const membersId = chatroomData.membersId || [];
 
   const [modalOpen, setModalOpen] = React.useState(false);
   useEffect(() => {
-    if (rootStore.loginState && owner == rootStore.client.user && chatroomId) {
+    if (rootStore.loginState && owner == currentUserId && chatroomId) {
       rootStore.addressStore.getChatroomMuteList(chatroomId);
     }
   }, [rootStore.loginState, owner, chatroomId]);
 
-  const membersData = membersId.map(userId => {
+  const membersData: AppUserInfo[] = membersId.map(userId => {
     return {
       ...appUsersInfo[userId],
       userId,
@@ -126,7 +128,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     setModalOpen(false);
   };
   const allMoreAction = {
-    visible: owner == rootStore.client.user,
+    visible: owner == currentUserId,
     actions: [
       {
         content: 'mute',
@@ -155,7 +157,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
     addressStore.unmuteChatRoomMember(chatroomId, data.userId);
   };
   const mutedMoreAction = {
-    visible: owner == rootStore.client.user,
+    visible: owner == currentUserId,
     actions: [
       {
         content: t('unmute'),
@@ -211,7 +213,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
                   let actionConfig = allMoreAction;
                   if (muteDataToRender?.includes(item.userId)) {
                     actionConfig = {
-                      visible: owner == rootStore.client.user,
+                      visible: owner == currentUserId,
                       actions: [
                         {
                           content: 'remove',
@@ -319,7 +321,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
       )}
 
       <div className="chatroom-member-line"></div>
-      {owner == rootStore.client.user && globalConfig?.mute != false ? (
+      {owner == currentUserId && globalConfig?.mute != false ? (
         <Tabs
           tabs={[
             {

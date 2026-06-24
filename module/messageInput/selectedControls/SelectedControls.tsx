@@ -4,10 +4,11 @@ import Icon from '../../../component/icon';
 import { ConfigContext } from '../../../component/config/index';
 import './style/style.scss';
 import { RootContext } from '../../store/rootContext';
-import { chatSDK, ChatSDK } from '../../SDK';
+import type { ChatSDK } from '../../SDK';
 import { useTranslation } from 'react-i18next';
 import Modal from '../../../component/modal';
 import { CurrentConversation } from '../../store/ConversationStore';
+import { getMessageId, getMessageTime, getTextContent } from '../../utils';
 
 export interface SelectedControlsProps {
   prefix?: string;
@@ -15,7 +16,7 @@ export interface SelectedControlsProps {
   className?: string;
   onHide?: () => void;
   conversation?: CurrentConversation;
-  onSendMessage?: (message: ChatSDK.CombineMsgBody) => void;
+  onSendMessage?: (message: ChatSDK.Message) => void;
 }
 
 const SelectedControls = (props: SelectedControlsProps) => {
@@ -32,7 +33,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
   const prefixCls = getPrefixCls('selected-controls', customizePrefixCls);
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
-  const { addressStore } = rootStore;
+  const { addressStore, client } = rootStore;
   const themeMode = theme?.mode || 'light';
 
   const classString = classNames(
@@ -77,29 +78,31 @@ const SelectedControls = (props: SelectedControlsProps) => {
       return;
     }
     //@ts-ignore
-    selectedMessages = selectedMessages.sort((a: { time: number }, b: { time: number }) => {
-      // @ts-ignore
-      return a.time - b.time;
+    selectedMessages = selectedMessages.sort((a: ChatSDK.Message, b: ChatSDK.Message) => {
+      return getMessageTime(a) - getMessageTime(b);
     });
-    const summaryMsgs = selectedMessages.slice(0, 3);
+    const summaryMsgs = selectedMessages.slice(0, 3) as ChatSDK.Message[];
     let summary = '';
-    //@ts-ignore
-    summaryMsgs.forEach((msg: { type: any; from: string | number; msg: string }) => {
-      switch (msg.type) {
+    summaryMsgs.forEach(msg => {
+      const type = msg.type as string;
+      switch (type) {
         case 'txt':
+        case 'text':
           summary =
             summary +
             (addressStore.appUsersInfo[msg.from]?.nickname || msg.from) +
             ': ' +
-            msg.msg +
+            getTextContent(msg) +
             '\n';
           break;
         case 'img':
+        case 'image':
           summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
             'image',
           )}/\n`;
           break;
         case 'audio':
+        case 'voice':
           summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
             'audio',
           )}/\n`;
@@ -119,9 +122,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
             'custom',
           )}/\n`;
           break;
-        // @ts-ignore
         case 'combine':
-          // @ts-ignore
           summary = `${summary}${addressStore.appUsersInfo[msg.from]?.nickname || msg.from}: /${t(
             'chatHistory',
           )}/\n`;
@@ -130,26 +131,15 @@ const SelectedControls = (props: SelectedControlsProps) => {
           break;
       }
     });
-    //发送合并消息
-    const option = {
-      chatType: currentCVS.chatType,
-      type: 'combine',
-      to: currentCVS.conversationId,
-      deliverOnlineOnly: false,
+    const msg = client.chatManager.createCombineMessage({
+      conversationId: currentCVS.conversationId,
+      conversationType: currentCVS.chatType as ChatSDK.ChatConversationType,
       compatibleText: 'the combine message',
       title: t('chatHistory'),
       summary: summary,
-      messageList: selectedMessages,
-
-      onFileUploadComplete: (data: any) => {
-        (rootStore.messageStore.message.byId.get(msg.id) as ChatSDK.FileMsgBody).url = data.url;
-        (rootStore.messageStore.message.byId.get(msg.id) as ChatSDK.FileMsgBody).secret =
-          data.secret;
-      },
-    };
-    // @ts-ignore
-    const msg = chatSDK.message.create(option);
-    onSendMessage?.(msg as ChatSDK.CombineMsgBody);
+      messageList: selectedMessages as ChatSDK.Message[],
+    });
+    onSendMessage?.(msg);
     return;
   };
 
@@ -162,8 +152,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
       return;
     }
     // TODO: limit msgIds length
-    // @ts-ignore
-    const msgIds = selectedMessages.map(msg => msg.mid || msg.id);
+    const msgIds = selectedMessages.map(msg => getMessageId(msg));
 
     rootStore.messageStore.deleteMessage(currentCVS, msgIds);
     setModalOpen(false);

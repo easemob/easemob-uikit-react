@@ -1,9 +1,6 @@
-// import { AgoraChat } from 'agora-chat';
-import { ChatSDK } from '../module/SDK';
 export type EventName =
   | 'joinChatRoom'
   | 'leaveChatRoom'
-  | 'reportMessage'
   | 'getChatRoomDetails'
   | 'sendMessage'
   | 'fetchUserInfoById'
@@ -58,9 +55,9 @@ export type EventName =
 export type EventHandlerData = {
   [key in EventName]?: {
     success?: () => void;
-    error?: (err: ChatSDK.ErrorEvent) => void;
+    error?: (err: unknown) => void;
   };
-} & { onError: (err: ChatSDK.ErrorEvent) => void };
+} & { onError: (err: unknown) => void };
 
 export class EventHandler {
   handlerData: { [key: string]: EventHandlerData } = {};
@@ -92,7 +89,7 @@ export class EventHandler {
     });
   }
 
-  dispatchError(eventName: EventName, error: ChatSDK.ErrorEvent) {
+  dispatchError(eventName: EventName, error: unknown) {
     Object.keys(this.handlerData).forEach(key => {
       if (this.handlerData[key]?.[eventName] && this.handlerData[key][eventName]?.error) {
         this.handlerData[key][eventName]?.error?.(error);

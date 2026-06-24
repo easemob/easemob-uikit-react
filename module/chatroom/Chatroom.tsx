@@ -10,31 +10,17 @@ import { MessageList, MsgListProps } from '../chat/MessageList';
 import { RootContext } from '../store/rootContext';
 import Empty from '../empty';
 import { useTranslation } from 'react-i18next';
-import { chatSDK, ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import ChatroomMessage, { ChatroomMessageActionConfig } from '../chatroomMessage';
 import { GiftKeyboard } from '../messageInput/gift';
 import Broadcast, { BroadcastProps } from '../../component/broadcast';
-import { getUsersInfo } from '../utils/index';
-import Modal from '../../component/modal';
-import Checkbox from '../../component/checkbox';
+import { getCurrentUserId, getMessageId, getTextContent, getUsersInfo } from '../utils/index';
 import { ChatroomInfo } from '../store/AddressStore';
 import type { TextMessageType } from '../types/messageType';
 import { eventHandler } from '../../eventHandler';
 import PinnedTextMessage from '../pinnedTextMessage';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 import { MessageRenderer, MessageRenderContext } from '../chat/MessageList';
-
-export let reportType: Record<string, string> = {
-  tag1: 'Unwelcome commercial content',
-  tag2: 'Pornographic or explicit content',
-  tag3: 'Child abuse',
-  tag4: 'Hate speech or graphic violence',
-  tag5: 'Promote terrorism',
-  tag6: 'Harassment or bullying',
-  tag7: 'Suicide or self harm',
-  tag8: 'False information',
-  tag9: 'Others',
-};
 
 export interface ChatroomProps {
   prefix?: string;
@@ -55,10 +41,11 @@ export interface ChatroomProps {
   renderBroadcast?: () => ReactNode;
   broadcastProps?: BroadcastProps;
   chatroomId: string;
-  reportType?: Record<string, string>; // 自定义举报内容 {'举报类型': "举报原因"}
   messageActionConfig?: ChatroomMessageActionConfig; // 消息操作菜单配置
   customMessageRenderers?: {
-    txt?: MessageRenderer; // 自定义文本消息渲染
+    text?: MessageRenderer; // 自定义文本消息渲染
+    /** @deprecated SDK5 文本消息类型为 text */
+    txt?: MessageRenderer;
     custom?: MessageRenderer; // 自定义 custom 消息渲染（包括加入消息和礼物消息）
   };
   showUnreadCount?: boolean; // 消息列表不在最下面时，是否显示未读数 默认不显示
@@ -80,16 +67,13 @@ let Chatroom = (props: ChatroomProps) => {
     prefix,
     className,
     style,
-    reportType: reportTypeProps,
     messageActionConfig,
     customMessageRenderers,
     showUnreadCount,
   } = props;
-  if (reportTypeProps) {
-    reportType = reportTypeProps;
-  }
   const context = useContext(RootContext);
   const { rootStore, features, theme } = context;
+  const currentUserId = getCurrentUserId(rootStore.client);
   const globalConfig = features?.chatroom;
   const themeMode = theme?.mode || 'light';
 
@@ -115,7 +99,7 @@ let Chatroom = (props: ChatroomProps) => {
     });
 
   const sendJoinedNoticeMessage = () => {
-    const myInfo = rootStore.addressStore.appUsersInfo[rootStore.client.user] || {};
+    const myInfo = rootStore.addressStore.appUsersInfo[currentUserId] || {};
     const chatroom_uikit_userInfo = {
       userId: myInfo?.userId,
       nickname: myInfo?.nickname,
@@ -124,17 +108,15 @@ let Chatroom = (props: ChatroomProps) => {
       identify: myInfo?.ext?.identify,
     };
 
-    const options = {
-      type: 'custom',
-      to: chatroomId,
-      chatType: 'chatRoom',
-      customEvent: 'CHATROOMUIKITUSERJOIN',
-      customExts: {},
+    const customMsg = rootStore.client.chatManager.createCustomMessage({
+      conversationId: chatroomId,
+      conversationType: 'chatRoom',
+      event: 'CHATROOMUIKITUSERJOIN',
+      params: {},
       ext: {
         chatroom_uikit_userInfo,
       },
-    } as ChatSDK.CreateCustomMsgParameters;
-    const customMsg = chatSDK.message.create(options);
+    });
     rootStore.messageStore.sendMessage(customMsg);
   };
 
@@ -147,12 +129,12 @@ let Chatroom = (props: ChatroomProps) => {
     setIsEmpty(false);
 
     //   rootStore.conversationStore.setCurrentCvs(chatroomId);
-    rootStore.client
-      .joinChatRoom({ roomId: chatroomId })
+    rootStore.client.chatRoomManager
+      .joinChatRoom({ chatRoomId: chatroomId })
       .then(() => {
         eventHandler.dispatchSuccess('joinChatRoom');
         getUsersInfo({
-          userIdList: [rootStore.client.user],
+          userIdList: [currentUserId],
           withPresence: false,
         })
           ?.then(() => {
@@ -170,14 +152,16 @@ let Chatroom = (props: ChatroomProps) => {
         //     rootStore.addressStore.setChatroomAdmins(chatroomId, res.data || []);
         //   })
         // 加入之后再获取详情， 防止获取到的人数没有包含自己
-        rootStore.client
-          .getChatRoomDetails({ chatRoomId: chatroomId })
+        rootStore.client.chatRoomManager
+          .getChatRoomInfo({ chatRoomId: chatroomId })
           .then(res => {
             // @ts-ignore TODO: getChatRoomDetails 类型错误 data 是数组
-            rootStore.addressStore.setChatroom(res.data as ChatSDK.GetChatRoomDetailsResult);
-            // @ts-ignore
-            const owner = res.data?.[0]?.owner;
-            if (owner == rootStore.client.user) {
+            const roomInfo = Array.isArray((res as any).data) ? (res as any).data[0] : res;
+            rootStore.addressStore.setChatroom([
+              { ...roomInfo, id: roomInfo.id || roomInfo.chatRoomId || chatroomId },
+            ]);
+            const owner = roomInfo?.owner?.userId || roomInfo?.owner;
+            if (owner == currentUserId) {
               rootStore.addressStore.getChatroomMuteList(chatroomId);
             }
             eventHandler.dispatchSuccess('getChatRoomDetails');
@@ -188,7 +172,7 @@ let Chatroom = (props: ChatroomProps) => {
 
         getPinnedMessages();
       })
-      .catch((err: ChatSDK.ErrorEvent) => {
+      .catch((err: unknown) => {
         eventHandler.dispatchError('joinChatRoom', err);
       });
 
@@ -200,9 +184,9 @@ let Chatroom = (props: ChatroomProps) => {
     }
 
     return () => {
-      rootStore.client
+      rootStore.client.chatRoomManager
         .leaveChatRoom({
-          roomId: chatroomId,
+          chatRoomId: chatroomId,
         })
         .then(() => {
           eventHandler.dispatchSuccess('leaveChatRoom');
@@ -260,38 +244,29 @@ let Chatroom = (props: ChatroomProps) => {
     rootStore.addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
   const appUsersInfo = rootStore.addressStore.appUsersInfo;
   const broadcast = rootStore.messageStore.message.broadcast;
-  const [reportMessageId, setReportMessageId] = useState('');
-  const handleReport = (message: any) => {
-    setReportOpen(true);
-    setReportMessageId(message.mid || message.id);
-  };
-
   // 使用 useMemo 创建默认的聊天室消息渲染器
   const defaultChatroomRenderers = useMemo<{
+    text?: MessageRenderer;
     txt?: MessageRenderer;
     custom?: MessageRenderer;
   }>(() => {
     return {
-      txt: (ctx: MessageRenderContext) => {
-        const msg = ctx.message as ChatSDK.TextMsgBody;
+      text: (ctx: MessageRenderContext) => {
+        const msg = ctx.message as ChatSDK.Message;
         return (
           <ChatroomMessage
             message={msg}
-            // @ts-ignore
-            key={msg.mid || msg.id}
-            onReport={handleReport}
+            key={getMessageId(msg)}
             actionConfig={messageActionConfig}
           />
         );
       },
       custom: (ctx: MessageRenderContext) => {
-        const msg = ctx.message as ChatSDK.CustomMsgBody;
+        const msg = ctx.message as ChatSDK.Message;
         return (
           <ChatroomMessage
             message={msg}
-            // @ts-ignore
-            key={msg.mid || msg.id}
-            onReport={handleReport}
+            key={getMessageId(msg)}
             actionConfig={messageActionConfig}
           />
         );
@@ -304,30 +279,12 @@ let Chatroom = (props: ChatroomProps) => {
     return {
       ...defaultChatroomRenderers,
       ...customMessageRenderers,
+      text:
+        customMessageRenderers?.text ||
+        customMessageRenderers?.txt ||
+        defaultChatroomRenderers.text,
     };
   }, [defaultChatroomRenderers, customMessageRenderers]);
-
-  const [reportOpen, setReportOpen] = useState(false);
-  const [checkedType, setCheckedType] = useState('');
-  const handleCheckChange = (type: string) => {
-    setCheckedType(type);
-  };
-  const handleReportMessage = () => {
-    rootStore.client
-      .reportMessage({
-        reportType: checkedType,
-        reportReason: reportType[checkedType],
-        messageId: reportMessageId,
-      })
-      .then(() => {
-        eventHandler.dispatchSuccess('reportMessage');
-        setReportOpen(false);
-        setCheckedType('');
-      })
-      .catch(err => {
-        eventHandler.dispatchError('reportMessage', err);
-      });
-  };
 
   const handleBroadcastFinish = () => {
     rootStore.messageStore.shiftBroadcastMessage();
@@ -419,7 +376,7 @@ let Chatroom = (props: ChatroomProps) => {
                       }}
                       {...broadcastProps}
                     >
-                      <div>{(broadcast[0] as TextMessageType)?.msg || ''}</div>
+                      <div>{getTextContent(broadcast[0])}</div>
                     </Broadcast>
                   )}
             </div>
@@ -452,40 +409,6 @@ let Chatroom = (props: ChatroomProps) => {
           )}
         </>
       )}
-      <Modal
-        open={reportOpen}
-        title={t('report')}
-        okText={t('report')}
-        cancelText={t('cancel')}
-        onOk={handleReportMessage}
-        onCancel={() => {
-          setReportOpen(false);
-        }}
-      >
-        <div>
-          {Object.keys(reportType).map((item, index) => {
-            return (
-              <div
-                className={classNames('report-item', {
-                  'report-item-dark': themeMode == 'dark',
-                })}
-                key={index}
-                onClick={() => {
-                  handleCheckChange(item);
-                }}
-              >
-                <div>{t(reportType[item] as string)}</div>
-                <Checkbox
-                  checked={checkedType === item}
-                  // onChange={() => {
-                  //   handleCheckChange(item);
-                  // }}
-                ></Checkbox>
-              </div>
-            );
-          })}
-        </div>
-      </Modal>
     </div>
   );
 };

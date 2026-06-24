@@ -5,7 +5,7 @@ import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
 // @ts-ignore
-import { ChatSDK } from '../../SDK';
+import type { ChatSDK } from '../../SDK';
 import { useTranslation } from 'react-i18next';
 import Header from '../header';
 import MessageInput, { MessageInputProps } from '../messageInput';
@@ -28,7 +28,13 @@ import ThreadModal from './ThreadListExpandableIcon';
 import Button from '../../component/button';
 import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
 // import rootStore from '../store/index';
-import { getMsgSenderNickname } from '../utils/index';
+import {
+  getCurrentUserId,
+  getCustomEvent,
+  getMessageId,
+  getMsgSenderNickname,
+  getThreadId,
+} from '../utils/index';
 import { RootContext } from '../store/rootContext';
 import { eventHandler } from '../../eventHandler';
 import ThreadMemberList from './ThreadMemberList';
@@ -153,7 +159,7 @@ const Thread = (props: ThreadProps) => {
         );
         break;
       case 'custom':
-        if (msg.customEvent == 'userCard') {
+        if (getCustomEvent(msg) == 'userCard') {
           content = (
             <UserCardMessage
               renderUserProfile={() => null}
@@ -205,7 +211,10 @@ const Thread = (props: ThreadProps) => {
             {getMsgSenderNickname({
               chatType: 'groupChat',
               to: threadStore.currentThread.info?.parentId || '',
-              from: threadStore.currentThread.info?.owner || '',
+              from:
+                threadStore.currentThread.info?.ownerId ||
+                threadStore.currentThread.info?.owner ||
+                '',
             } as any)}
           </span>
         </div>
@@ -255,31 +264,36 @@ const Thread = (props: ThreadProps) => {
       // 创建thread
       const options = {
         name: threadName?.replace(/(^\s*)|(\s*$)/g, '') || (t('aThread') as string),
-        // @ts-ignore
-        messageId: originalMessage.mid || originalMessage.id,
-        parentId: originalMessage.to,
+        messageId: getMessageId(originalMessage),
+        parentId: originalMessage.to || originalMessage.conversationId || '',
       };
       return new Promise((resolve, reject) => {
-        rootStore.client
+        rootStore.client.chatThreadManager
           .createChatThread(options)
-          .then(res => {
+          .then((res: ChatSDK.CreateChatThreadResult) => {
             setConversation({
               chatType: 'groupChat',
-              conversationId: res.data?.chatThreadId || '',
+              conversationId: res.chatThreadId || '',
             });
             rootStore.threadStore.setCurrentThread({
               ...currentThread,
-              info: { owner: rootStore.client.user } as unknown as ChatSDK.ThreadChangeInfo,
+              info: {
+                chatThreadId: res.chatThreadId,
+                parentId: options.parentId,
+                messageId: options.messageId,
+                name: options.name,
+                ownerId: getCurrentUserId(rootStore.client),
+              },
               creating: false,
             });
             // onOpenThreadModal && onOpenThreadModal({ id: threadId })
             eventHandler.dispatchSuccess('createChatThread');
             resolve({
               chatType: 'groupChat',
-              conversationId: res.data?.chatThreadId || '',
+              conversationId: res.chatThreadId || '',
             });
           })
-          .catch(err => {
+          .catch((err: unknown) => {
             eventHandler.dispatchError('createChatThread', err);
             reject(err);
           });
@@ -287,7 +301,7 @@ const Thread = (props: ThreadProps) => {
     }
     const cvs: CurrentConversation = {
       chatType: 'groupChat',
-      conversationId: currentThread.info?.id || '',
+      conversationId: getThreadId(currentThread.info),
     };
     return Promise.resolve(cvs);
   };
@@ -302,13 +316,13 @@ const Thread = (props: ThreadProps) => {
     const currentThread = rootStore.threadStore.currentThread;
     setConversation({
       chatType: 'groupChat',
-      conversationId: currentThread?.info?.id || '',
+      conversationId: getThreadId(currentThread?.info),
     });
     // setThreadNameValue(currentThread?.info?.name || '');
-    const myId = rootStore.client.user;
+    const myId = getCurrentUserId(rootStore.client);
     if (currentThread?.info?.parentId) {
       groups.forEach(item => {
-        if (item.groupid == currentThread?.info?.parentId) {
+        if (item.groupId == currentThread?.info?.parentId) {
           const members = item.members || [];
           if (members.length > 0) {
             for (let index = 0; index < members.length; index++) {
@@ -316,7 +330,10 @@ const Thread = (props: ThreadProps) => {
                 if (members[index].role == 'member')
                   if (item.admins?.includes(myId)) {
                     setRole('admin');
-                  } else if (currentThread?.info?.owner == myId) {
+                  } else if (
+                    currentThread?.info?.ownerId == myId ||
+                    currentThread?.info?.owner == myId
+                  ) {
                     setRole('threadOwner');
                   }
                 setRole(members[index].role);
@@ -335,7 +352,7 @@ const Thread = (props: ThreadProps) => {
       selectable: false,
       selectedMessage: [],
     });
-  }, [currentThread?.info?.id]);
+  }, [getThreadId(currentThread?.info)]);
 
   useEffect(() => {
     if (conversation.conversationId) {
@@ -388,11 +405,11 @@ const Thread = (props: ThreadProps) => {
       okText: t('destroy'),
       cancelText: t('cancel'),
       onOk: () => {
-        rootStore.client
+        rootStore.client.chatThreadManager
           .destroyChatThread({
-            chatThreadId: threadStore.currentThread.info?.id || '',
+            chatThreadId: getThreadId(threadStore.currentThread.info),
           })
-          .then(res => {
+          .then(() => {
             setModalData({
               ...modalData,
               open: false,
@@ -400,7 +417,7 @@ const Thread = (props: ThreadProps) => {
             handleClickClose();
             eventHandler.dispatchSuccess('destroyChatThread');
           })
-          .catch(err => {
+          .catch((err: unknown) => {
             eventHandler.dispatchError('destroyChatThread', err);
             console.error(err);
           });
@@ -417,11 +434,11 @@ const Thread = (props: ThreadProps) => {
       okText: t('leave'),
       cancelText: t('cancel'),
       onOk: () => {
-        rootStore.client
+        rootStore.client.chatThreadManager
           .leaveChatThread({
-            chatThreadId: threadStore.currentThread.info?.id || '',
+            chatThreadId: getThreadId(threadStore.currentThread.info),
           })
-          .then(res => {
+          .then(() => {
             setModalData({
               ...modalData,
               open: false,
@@ -429,7 +446,7 @@ const Thread = (props: ThreadProps) => {
             handleClickClose();
             eventHandler.dispatchSuccess('leaveChatThread');
           })
-          .catch(err => {
+          .catch((err: unknown) => {
             eventHandler.dispatchError('leaveChatThread', err);
           });
       },
@@ -455,18 +472,18 @@ const Thread = (props: ThreadProps) => {
       okText: t('save'),
       cancelText: t('cancel'),
       onOk: () => {
-        rootStore.client
-          .changeChatThreadName({
-            chatThreadId: threadStore.currentThread.info?.id || '',
+        rootStore.client.chatThreadManager
+          .updateChatThreadName({
+            chatThreadId: getThreadId(threadStore.currentThread.info),
             name: threadNameValue,
           })
-          .then(res => {
+          .then(() => {
             setModalData({
               ...modalData,
               open: false,
             });
           })
-          .catch(err => {
+          .catch((err: unknown) => {
             console.error(err);
           });
       },

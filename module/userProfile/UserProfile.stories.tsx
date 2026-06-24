@@ -1,7 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
-import UserProfile from './index';
+import UserProfile, { UserProfileProps } from './index';
 
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 const description = {
@@ -52,7 +52,7 @@ export default {
   },
 } as Meta<typeof UserProfile>;
 
-const DarkTemplate: StoryFn<typeof UserProfile> = args => (
+const DarkTemplate: StoryFn<UserProfileProps> = args => (
   <Provider initConfig={{ appKey: 'z#b' }} theme={{ mode: 'dark' }}>
     <div style={{ background: '#171a1c' }}>
       <UserProfile {...args} />

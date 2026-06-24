@@ -11,11 +11,11 @@ const ChatApp = () => {
   const client = useClient();
   useEffect(() => {
     console.log('client', client);
-    client.open &&
+    client.login &&
       client
-        .open({
-          user: 'd92756589b',
-          accessToken:
+        .login({
+          userId: 'd92756589b',
+          token:
             'YWMt-WBasCPqEe-IXM2GHQhJCFzzvlQ7sUrSpVuQGlyIzFR5kKjQpcQR7azFEyxvxOtOAwMAAAGP7PoBnTeeSAD_mh9JiYmD2Oy5RUwu_mUpM26s8zpGyWhLalGRGd2ewA',
         })
         .then(() => {

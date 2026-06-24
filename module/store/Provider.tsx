@@ -2,7 +2,8 @@ import React, { useEffect, ReactNode, memo, useMemo } from 'react';
 import { RootProvider } from './rootContext';
 import rootStore from './index';
 
-import { chatSDK, ChatSDK } from '../SDK';
+import { ChatClient, UIKitManagers } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { useEventHandler } from '../hooks/chat';
 
 import { initReactI18next } from 'react-i18next';
@@ -71,7 +72,6 @@ export interface ProviderProps {
         edit?: boolean;
         select?: boolean;
         forward?: boolean;
-        report?: boolean;
         pin?: boolean;
       };
       messageInput?: {
@@ -120,60 +120,87 @@ const Provider: React.FC<ProviderProps> = props => {
     appKey,
     msyncUrl,
     restUrl,
-    isHttpDNS = true,
     useReplacedMessageContents,
     deviceId,
     isFixedDeviceId = true,
     useOwnUploadFun = false,
   } = initConfig;
 
-  //@ts-ignore
-  const initOptions: ChatSDK.ConnectionParameters = {
-    delivery: true,
-    url: msyncUrl,
-    apiUrl: restUrl,
-    isHttpDNS,
-    deviceId,
-    useReplacedMessageContents,
-    isFixedDeviceId,
-    useOwnUploadFun,
-    //@ts-ignore
-    uikitVersion: '1.6.0',
-  };
+  const initOptions = useMemo<
+    Omit<ChatSDK.InitConfig, 'managers'> & { managers: typeof UIKitManagers }
+  >(() => {
+    if (!appKey) {
+      throw new Error('Provider initConfig.appKey is required for SDK 5 initialization.');
+    }
 
-  if (appKey) {
-    initOptions.appKey = appKey;
-  }
+    const serviceConfig: ChatSDK.ServiceConfig | undefined =
+      restUrl || msyncUrl
+        ? {
+            serverUrls: {
+              restApiUrl: restUrl,
+              wsUrl: msyncUrl,
+            },
+          }
+        : undefined;
+
+    return {
+      appKey,
+      enableDeliveryReceipt: true,
+      serviceConfig,
+      deviceId,
+      useReplacedMessageContents,
+      useFixedDeviceId: isFixedDeviceId,
+      useCustomAttachmentUpload: useOwnUploadFun,
+      uiKitVersion: '1.6.0',
+      managers: UIKitManagers,
+    };
+  }, [
+    appKey,
+    deviceId,
+    isFixedDeviceId,
+    msyncUrl,
+    restUrl,
+    useOwnUploadFun,
+    useReplacedMessageContents,
+  ]);
 
   const client = useMemo(() => {
-    return new chatSDK.connection(initOptions);
-  }, [appKey]);
+    return ChatClient.init(initOptions);
+  }, [initOptions]);
 
-  rootStore.setClient(client);
-  rootStore.setInitConfig(initConfig);
+  useEffect(() => {
+    rootStore.setClient(client);
+    rootStore.setInitConfig(initConfig);
+  }, [client, initConfig]);
+
   // console.log('Provider is run...');
   useEventHandler(props);
-  let localConfig: any = {
-    fallbackLng: 'en',
-    lng: 'en',
-    resources: resource,
-  };
-  if (local) {
-    localConfig = {
-      lng: local.lng,
-      fallbackLng: local.fallbackLng || 'en',
-      resources: local.resources || resource,
-    };
-  }
-  i18n.use(initReactI18next).init(localConfig);
+
+  const localConfig = useMemo(
+    () => ({
+      fallbackLng: local?.fallbackLng || 'en',
+      lng: local?.lng || 'en',
+      resources: local?.resources || resource,
+    }),
+    [local],
+  );
+
+  useMemo(() => {
+    if (!i18n.isInitialized) {
+      i18n.use(initReactI18next).init(localConfig);
+    } else {
+      i18n.changeLanguage(localConfig.lng);
+    }
+  }, [localConfig]);
+
   // i18n.changeLanguage('zh');
 
   useEffect(() => {
     if (initConfig.userId && initConfig.token) {
       client
-        .open({
-          user: initConfig.userId.toLowerCase(),
-          agoraToken: initConfig.token,
+        .login({
+          userId: initConfig.userId.toLowerCase(),
+          token: initConfig.token,
         })
         .then(() => {
           eventHandler.dispatchSuccess('open');
@@ -182,31 +209,25 @@ const Provider: React.FC<ProviderProps> = props => {
           eventHandler.dispatchError('open', err);
         });
     } else if (initConfig.userId && initConfig.password) {
-      client
-        .open({
-          user: initConfig.userId,
-          pwd: initConfig.password,
-        })
-        .then(() => {
-          eventHandler.dispatchSuccess('open');
-        })
-        .catch(err => {
-          eventHandler.dispatchError('open', err);
-        });
+      eventHandler.dispatchError(
+        'open',
+        new Error('Password login is not supported by SDK 5. Use userId and token.') as never,
+      );
     }
-  }, [initConfig.userId, initConfig.token]);
+  }, [client, initConfig.password, initConfig.token, initConfig.userId]);
 
-  // rootStore.setTheme(theme);
-  if (isHexColor(theme?.primaryColor as string)) {
-    const color = hexToHsla(theme?.primaryColor as string);
-    if (color) {
-      generateColors(color);
+  useEffect(() => {
+    if (isHexColor(theme?.primaryColor as string)) {
+      const color = hexToHsla(theme?.primaryColor as string);
+      if (color) {
+        generateColors(color);
+      }
+    } else if (isHueValue(theme?.primaryColor as number)) {
+      generateColors(`hsla(${theme?.primaryColor}, 100%, 60%, 1)`);
+    } else {
+      generateColors('hsla(203, 100%, 60%, 1)');
     }
-  } else if (isHueValue(theme?.primaryColor as number)) {
-    generateColors(`hsla(${theme?.primaryColor}, 100%, 60%, 1)`);
-  } else {
-    generateColors('hsla(203, 100%, 60%, 1)');
-  }
+  }, [theme?.primaryColor]);
 
   const defaultPresenceMap = {
     Online,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
+import type { ProviderProps } from '../store/Provider';
 
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
 
@@ -355,7 +356,7 @@ chat?: { // ${description[lang].features_chat}
   },
 } as Meta<typeof Provider>;
 
-const Template: StoryFn<typeof Provider> = args => (
+const Template: StoryFn<ProviderProps> = args => (
   <Provider {...args}>
     <div>UIKitProvider</div>
   </Provider>

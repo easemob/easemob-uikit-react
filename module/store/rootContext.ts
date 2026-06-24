@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
-import { ChatSDK } from 'module/SDK';
+import React from 'react';
+import type { UIKitChatClient } from 'module/SDK';
 import rootStore, { RootStore } from './index';
 // import client from './agoraChatConfig';
 
 export interface RootConsumerProps {
   rootStore: RootStore;
-  client: ChatSDK.Connection;
+  client: UIKitChatClient;
 }
 
 export interface ContextProps {
@@ -21,7 +21,7 @@ export interface ContextProps {
     isFixedDeviceId?: boolean;
     useOwnUploadFun?: boolean;
   };
-  client: ChatSDK.Connection;
+  client: UIKitChatClient;
   features?: {
     chat?: {
       header?: {
@@ -45,7 +45,6 @@ export interface ContextProps {
         edit?: boolean;
         select?: boolean;
         forward?: boolean;
-        report?: boolean;
         pin?: boolean;
       };
       messageInput?: {
@@ -75,7 +74,6 @@ export interface ContextProps {
         moreAction?: boolean;
         delete?: boolean;
         translate?: boolean;
-        report?: boolean;
       };
       messageInput?: {
         emoji?: boolean;
@@ -108,7 +106,7 @@ export interface ContextProps {
 export const RootContext = React.createContext<ContextProps>({
   rootStore: {} as RootStore,
   initConfig: {} as { appKey?: string; appId?: string },
-  client: {} as ChatSDK.Connection,
+  client: {} as UIKitChatClient,
   reactionConfig: { map: {} },
   theme: {},
   presenceMap: {},

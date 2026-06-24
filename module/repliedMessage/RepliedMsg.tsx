@@ -1,31 +1,65 @@
-import React, { ReactElement, ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import Icon from '../../component/icon';
 import './style/style.scss';
-import { ChatSDK } from '../SDK';
-import rootStore from '../store/index';
+import type { ChatSDK } from '../SDK';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
-import { getCvsIdFromMessage, getMsgSenderNickname } from '../utils';
+import {
+  getAttachmentUrl,
+  getCurrentUserId,
+  getCustomEvent,
+  getCustomParams,
+  getCvsIdFromMessage,
+  getMessageId,
+  getMsgSenderNickname,
+} from '../utils';
 import download from '../utils/download';
 import { ImagePreview } from '../imageMessage';
 import CombinedMessage, { CombinedMessageProps } from '../combinedMessage';
 import AudioMessage, { AudioMessageProps } from '../audioMessage';
 import RecalledMessage from '../recalledMessage';
-import UserCardMessage from '../userCardMessage';
 import { RootContext } from '../store/rootContext';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
-const msgType = ['txt', 'file', 'img', 'audio', 'custom', 'video', 'recall'];
+const msgType = [
+  'text',
+  'txt',
+  'file',
+  'image',
+  'img',
+  'voice',
+  'audio',
+  'custom',
+  'video',
+  'combine',
+  'recall',
+];
+type QuoteMessageType =
+  | 'text'
+  | 'txt'
+  | 'file'
+  | 'image'
+  | 'img'
+  | 'voice'
+  | 'audio'
+  | 'custom'
+  | 'video'
+  | 'combine'
+  | 'loc'
+  | 'recall';
+type FileMessageBodyLike = { url?: string; filename?: string };
+type ImageMessageBodyLike = { thumbnailUrl?: string };
+type VideoMessageBodyLike = { url?: string };
 
 // 自定义消息引用渲染器的上下文
 export interface CustomMessageQuoteContext {
-  message: ChatSDK.CustomMsgBody;
+  message: ChatSDK.Message;
   msgQuote?: {
     msgID: string;
     msgPreview: string;
     msgSender: string;
-    msgType: ChatSDK.MessageBody['type'];
+    msgType: QuoteMessageType;
   };
   prefixCls: string;
 }
@@ -103,11 +137,11 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         msgID: string;
         msgPreview: string; //原消息的描述，用于显示在消息列表气泡中，超过字符限制将被截取,
         msgSender: string; //原消息的发送者，建议使用备注名或昵称,
-        msgType: ChatSDK.MessageBody['type']; //原消息类型,
+        msgType: QuoteMessageType; //原消息类型,
       }
     | undefined
   >();
-  const [repliedMsg, setRepliedMsg] = useState<ChatSDK.MessageBody | undefined>();
+  const [repliedMsg, setRepliedMsg] = useState<ChatSDK.Message | undefined>();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>();
   // 找到被引用的消息
   const cvsId = getCvsIdFromMessage(message);
@@ -115,19 +149,19 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   const messages = rootStore.messageStore.message[message.chatType]?.[cvsId] || [];
 
   useEffect(() => {
-    if (msgType.includes(message.type)) {
-      // @ts-ignore
-      let msgQuote = message.ext.msgQuote;
+    const messageType = (message as any).type || '';
+    if (msgType.includes(messageType)) {
+      let msgQuote = message.ext?.msgQuote;
       if (typeof msgQuote === 'string') {
         msgQuote = JSON.parse(msgQuote);
       }
+      if (!msgQuote) return;
       setMsgQuote(msgQuote);
 
       // const messages = rootStore.messageStore.currentCvsMsgs;
-      const findMsgs = messages.filter(msg => {
-        // @ts-ignore
-        return msg.mid === msgQuote.msgID || msg.id === msgQuote.msgID;
-      }) as ChatSDK.MessageBody[];
+      const findMsgs = messages.filter((msg: ChatSDK.Message) => {
+        return getMessageId(msg) === msgQuote.msgID;
+      }) as ChatSDK.Message[];
 
       if (findMsgs.length > 0) {
         setRepliedMsg(findMsgs[0]);
@@ -135,7 +169,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         setRepliedMsg(undefined);
       }
       if (findMsgs[0]) {
-        setAnchorElement(document.getElementById(findMsgs[0].id));
+        setAnchorElement(document.getElementById(getMessageId(findMsgs[0])));
       }
     }
   }, [messages.length]);
@@ -143,12 +177,13 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   const [imgPreviewVisible, setImgVisible] = useState(false);
   // download file
   const handleClick = (fileMessage: any) => {
-    fetch(fileMessage.url)
+    const body = fileMessage.body as FileMessageBodyLike;
+    fetch(body.url || '')
       .then(res => {
         return res.blob();
       })
       .then(blob => {
-        download(blob, fileMessage.filename);
+        download(blob, body.filename || '');
       })
       .catch(err => {
         return false;
@@ -176,10 +211,11 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       return (content = <div className={`${prefixCls}-content-text-not`}>{msg}</div>);
     }
     switch (msgQuote?.msgType) {
+      case 'text':
       case 'txt':
         content = (
           <div className={`${prefixCls}-content-text`}>
-            {renderTxt(msgQuote.msgPreview, '' as unknown as false)}
+            {renderTxt(msgQuote.msgPreview, false, () => {})}
           </div>
         );
         break;
@@ -193,10 +229,11 @@ const RepliedMsg = (props: RepliedMsgProps) => {
             }}
           >
             <Icon type="DOC" color="#75828A" width={20} height={20}></Icon>
-            <span>Attachment:</span> {(repliedMsg as ChatSDK.FileMsgBody).filename}
+            <span>Attachment:</span> {(repliedMsg.body as FileMessageBodyLike).filename}
           </div>
         );
         break;
+      case 'voice':
       case 'audio':
         // content = (
         //   <div className={`${prefixCls}-content-text`}>
@@ -206,7 +243,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         //   </div>
         // );
         (() => {
-          const bySelf = rootStore.client.user == message.from;
+          const bySelf = getCurrentUserId(rootStore.client) == message.from;
           const msg = { ...repliedMsg, bySelf: bySelf };
           content = (
             <AudioMessage
@@ -220,6 +257,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         })();
 
         break;
+      case 'image':
       case 'img':
         content = (
           <div className={`${prefixCls}-content-text`}>
@@ -230,14 +268,15 @@ const RepliedMsg = (props: RepliedMsgProps) => {
                 }}
                 height={75}
                 src={
-                  (repliedMsg as ChatSDK.ImgMsgBody).thumb || (repliedMsg as ChatSDK.ImgMsgBody).url
+                  (repliedMsg.body as ImageMessageBodyLike).thumbnailUrl ||
+                  getAttachmentUrl(repliedMsg)
                 }
                 crossOrigin="anonymous"
               ></img>
             </div>
             <ImagePreview
               visible={imgPreviewVisible}
-              previewImageUrl={(repliedMsg as ChatSDK.ImgMsgBody).url as string}
+              previewImageUrl={getAttachmentUrl(repliedMsg)}
               onCancel={() => {
                 setImgVisible(false);
               }}
@@ -255,8 +294,9 @@ const RepliedMsg = (props: RepliedMsgProps) => {
                 }}
                 height={75}
                 src={
-                  (repliedMsg as ChatSDK.VideoMsgBody).url ||
-                  (repliedMsg as ChatSDK.VideoMsgBody).file.url
+                  (repliedMsg.body as VideoMessageBodyLike).url ||
+                  (repliedMsg as any).file?.url ||
+                  ''
                 }
               ></video>
             </div>
@@ -294,7 +334,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         // 优先使用用户自定义的渲染器
         if (renderCustomMessageQuote) {
           const customContent = renderCustomMessageQuote({
-            message: repliedMsg as ChatSDK.CustomMsgBody,
+            message: repliedMsg,
             msgQuote,
             prefixCls,
           });
@@ -305,11 +345,12 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         }
 
         // 内置的 userCard 类型处理
-        if ((repliedMsg as ChatSDK.CustomMsgBody).customEvent === 'userCard') {
+        if (getCustomEvent(repliedMsg) === 'userCard') {
           content = (
             <div className={`${prefixCls}-content-text`}>
               <Icon type="PERSON_SINGLE_FILL" color="#75828A" width={20} height={20}></Icon>
-              <span>Contact:</span> {(repliedMsg as ChatSDK.CustomMsgBody).customExts?.nickname}
+              <span>Contact:</span>{' '}
+              {(getCustomParams(repliedMsg) as Record<string, string>)?.nickname}
             </div>
           );
         } else {
@@ -344,7 +385,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
       anchorElement?.classList.remove('reply-message-twinkle');
     }, 1500);
   };
-  const myUserId = rootStore.client.user;
+  const myUserId = getCurrentUserId(rootStore.client);
   const from =
     message.from === myUserId ? t('you') : getMsgSenderNickname(message as BaseMessageType);
 
@@ -378,7 +419,10 @@ const RepliedMsg = (props: RepliedMsgProps) => {
         <div
           className={`${prefixCls}-content`}
           style={{
-            width: repliedMsg?.type == 'audio' ? `calc(${repliedMsg.length || 0}% + 48px)` : 'auto',
+            width:
+              repliedMsg?.type == 'voice'
+                ? `calc(${(repliedMsg.body as ChatSDK.VoiceMessageBody).duration || 0}% + 48px)`
+                : 'auto',
           }}
           onClick={scrollToMsg}
         >

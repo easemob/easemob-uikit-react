@@ -29,6 +29,7 @@ import { useGroupMembersAttributes, useGroupMembers } from '../hooks/useAddress'
 import GroupMember, { GroupMemberProps } from '../groupMember';
 import { useTranslation } from 'react-i18next';
 import { useIsMobile } from '../hooks/useScreen';
+import { getCurrentUserId } from '../utils';
 export interface GroupDetailProps {
   prefix?: string;
   className?: string;
@@ -86,7 +87,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   }
 
   const groupData = rootStore.addressStore.groups.find(
-    item => item.groupid == conversation.conversationId,
+    item => item.groupId == conversation.conversationId,
   );
 
   useEffect(() => {
@@ -106,9 +107,10 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
 
   const infoData = groupData?.info;
   const owner = infoData?.owner;
-  const isOwner = owner == rootStore.client.user;
+  const currentUserId = getCurrentUserId(rootStore.client);
+  const isOwner = owner == currentUserId;
   const groupMembers = groupData?.members;
-  const myInfo = groupMembers?.filter(item => item.userId === rootStore.client.user)[0];
+  const myInfo = groupMembers?.filter(item => item.userId === currentUserId)[0];
   const avatarUrl = groupData?.avatarUrl;
   const handleCopy = () => {
     const textArea = document.createElement('textarea');
@@ -139,7 +141,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const editNicknameInGroup = () => {
     rootStore.addressStore.setGroupMemberAttributesAsync(
       conversation.conversationId,
-      rootStore.client.user,
+      currentUserId,
       {
         nickName: nicknameInGroup,
       },
@@ -515,7 +517,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
             memberVisible.type == 'transferOwner'
               ? [
                   {
-                    userId: rootStore.client.user,
+                    userId: currentUserId,
                   },
                 ]
               : []

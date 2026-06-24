@@ -33,8 +33,8 @@ const ChatApp = observer(() => {
   const [roomId, setRoomId] = useState('');
   const joinRoom = () => {
     client
-      .joinChatRoom({
-        roomId: roomId,
+      .chatRoomManager.joinChatRoom({
+        chatRoomId: roomId,
       })
       .then(() => {
         console.log('joinChatRoom success');
@@ -42,24 +42,23 @@ const ChatApp = observer(() => {
   };
   const login = () => {
     client
-      .open({
-        user: userId,
-        pwd: password,
-        //accessToken: '',
+      .login({
+        userId,
+        token: password,
       })
-      .then(res => {
+      .then(() => {
         console.log('获取token成功');
 
-        client.getChatRooms({ pagenum: 1, pagesize: 20 }).then(res => {
-          console.log('getChatRooms', res);
+        client.chatRoomManager.getChatRoomList({ pageNum: 1, pageSize: 20 }).then(res => {
+          console.log('getChatRoomList', res);
         });
       });
   };
   const renderMessage = message => {
     console.log('msg-', message);
     switch (message.type) {
-      case 'txt':
-        return <div>{message.msg}</div>;
+      case 'text':
+        return <div>{message.body?.content}</div>;
     }
   };
 
@@ -70,8 +69,8 @@ const ChatApp = observer(() => {
           mode: 'light',
         }}
         initConfig={{
-          countMemberJoinToUnread: false,
-          appKey: 'easemob-demo#sdk111',
+          countMemberJoinToUnread: true,
+          appKey: 'easemob-demo#support',
         }}
         local={{
           fallbackLng: 'en',

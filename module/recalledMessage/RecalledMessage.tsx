@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChatSDK } from 'module/SDK';
+import type { ChatSDK } from 'module/SDK';
 import { TextMessage, TextMessageProps } from '../textMessage';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';

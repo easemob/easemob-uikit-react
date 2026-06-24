@@ -1,7 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
-import { GroupDetail } from './index';
+import { GroupDetail, GroupDetailProps } from './index';
 
 // 添加中文和英文的描述
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
@@ -77,7 +77,7 @@ export default {
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
 
-const Template: StoryFn<typeof GroupDetail> = args => (
+const Template: StoryFn<GroupDetailProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',
@@ -87,7 +87,7 @@ const Template: StoryFn<typeof GroupDetail> = args => (
   </Provider>
 );
 
-const DarkTemplate: StoryFn<typeof GroupDetail> = args => (
+const DarkTemplate: StoryFn<GroupDetailProps> = args => (
   <Provider
     initConfig={{
       appKey: 'a#b',

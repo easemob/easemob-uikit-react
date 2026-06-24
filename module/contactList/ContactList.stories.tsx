@@ -1,7 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Provider from '../store/Provider';
-import { ContactList } from './index';
+import { ContactList, ContactListProps } from './index';
 import rootStore from '../store';
 
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
@@ -137,10 +137,9 @@ rootStore.addressStore.setContacts([
 ]);
 rootStore.addressStore.setGroups([
   {
-    groupid: '252198136119298',
-    groupname: 'Ally、Alan、Henry',
+    groupId: '252198136119298',
+    name: 'Ally、Alan、Henry',
     avatarUrl: '',
-    name: '艾神zd2、阿兰zd1、lxm',
     initial: 'A',
   },
 ]);
@@ -157,14 +156,14 @@ rootStore.addressStore.setAppUserInfo({
 });
 
 // More on component templates: https://storybook.js.org/docs/react/writing-stories/introduction#using-args
-const Template: StoryFn<typeof ContactList> = args => (
+const Template: StoryFn<ContactListProps> = args => (
   <Provider initConfig={{ appKey: 'a#b' }}>
     {' '}
     <ContactList {...args} />
   </Provider>
 );
 
-const DarkTemplate: StoryFn<typeof ContactList> = args => (
+const DarkTemplate: StoryFn<ContactListProps> = args => (
   <Provider
     initConfig={{ appKey: 'a#b' }}
     theme={{
@@ -176,7 +175,7 @@ const DarkTemplate: StoryFn<typeof ContactList> = args => (
   </Provider>
 );
 
-const SquareTemplate: StoryFn<typeof ContactList> = args => (
+const SquareTemplate: StoryFn<ContactListProps> = args => (
   <Provider
     initConfig={{ appKey: 'a#b' }}
     theme={{

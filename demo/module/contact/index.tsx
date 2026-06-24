@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import TextMessage from '../../../module/textMessage';
+import { TextMessage } from '../../../module/textMessage';
 
 import Header from '../../../module/header';
 import { ContactItem, ContactList } from '../../../module/contactList';
@@ -39,22 +39,24 @@ const mockCSData: ConversationData = [
     chatType: 'singleChat',
     conversationId: 'zd2',
     name: '张东2', // 昵称/群组名称
-    time: Date.now(), // 时间
     unreadCount: 3, // 会话未读数
     lastMessage: {
-      type: 'txt',
-      msg: 'hello 张东',
+      msgId: 'contact-message-1',
+      type: 'text',
+      body: { content: 'hello 张东' },
+      timestamp: Date.now(),
     }, // 会话最后一条消息
   },
   {
     chatType: 'singleChat',
     conversationId: 'zd3',
     name: '张东3', // 昵称/群组名称
-    time: Date.now(), // 时间
     unreadCount: 3, // 会话未读数
     lastMessage: {
-      type: 'txt',
-      msg: 'hello 张东3',
+      msgId: 'contact-message-2',
+      type: 'text',
+      body: { content: 'hello 张东3' },
+      timestamp: Date.now(),
     }, // 会话最后一条消息
   },
 ];
@@ -86,7 +88,7 @@ ReactDOM.createRoot(document.getElementById('contactRoot') as Element).render(
 
     {/* <ConversationItem></ConversationItem> */}
     <div style={{ height: '500px', background: '#fff' }}>
-      <ContactList data={mockCSData}></ContactList>
+      <ContactList></ContactList>
     </div>
   </div>,
 );

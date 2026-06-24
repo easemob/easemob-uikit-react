@@ -1,9 +1,21 @@
 // import client from './agoraChatConfig';
-import { chatSDK, ChatSDK } from '../SDK';
+import type { ChatSDK } from '../SDK';
 import { observable, action, computed, makeObservable, autorun, runInAction } from 'mobx';
 import { CurrentConversation, Conversation } from './ConversationStore';
 import type { ReactionData } from '../reaction/ReactionMessage';
-import { getCvsIdFromMessage, getMessages, getMessageIndex, getReactionByEmoji } from '../utils';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getMessages,
+  getMessageIndex,
+  getMessageChatType,
+  getMessageTime,
+  getMessageId,
+  getCustomEvent,
+  isMessageFromCurrentUser,
+  getReactionByEmoji,
+  getTextContent,
+} from '../utils';
 import { RootStore } from './index';
 import { AT_ALL } from '../messageInput/suggestList/SuggestList';
 import type { TextMessageType } from '../types/messageType';
@@ -20,24 +32,24 @@ import {
 import { resetCache } from '../hooks/useHistoryMsg';
 let debounceTimer: any = null;
 export interface Message {
-  singleChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
-  groupChat: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
-  chatRoom: { [key: string]: (ChatSDK.MessageBody | NoticeMessageBody)[] };
-  byId: Map<string, ChatSDK.MessageBody | NoticeMessageBody>;
-  broadcast: ChatSDK.MessageBody[];
+  singleChat: { [key: string]: (ChatSDK.Message | NoticeMessageBody)[] };
+  groupChat: { [key: string]: (ChatSDK.Message | NoticeMessageBody)[] };
+  chatRoom: { [key: string]: (ChatSDK.Message | NoticeMessageBody)[] };
+  byId: Map<string, ChatSDK.Message | NoticeMessageBody>;
+  broadcast: ChatSDK.Message[];
 }
 
 export interface SelectedMessage {
   singleChat: {
     [key: string]: {
       selectable: boolean;
-      selectedMessage: (ChatSDK.MessageBody | NoticeMessageBody)[];
+      selectedMessage: (ChatSDK.Message | NoticeMessageBody)[];
     };
   };
   groupChat: {
     [key: string]: {
       selectable: boolean;
-      selectedMessage: (ChatSDK.MessageBody | NoticeMessageBody)[];
+      selectedMessage: (ChatSDK.Message | NoticeMessageBody)[];
     };
   };
 }
@@ -50,7 +62,7 @@ class MessageStore {
   message: Message;
   selectedMessage: SelectedMessage;
   currentCVS: CurrentConversation;
-  repliedMessage: ChatSDK.MessageBody | null;
+  repliedMessage: ChatSDK.Message | null;
   typing: Typing;
   holding: boolean;
   unreadMessageCount: number;
@@ -123,7 +135,7 @@ class MessageStore {
     return this.message[chatType][conversationId] || [];
   }
 
-  setKeyValue(key: string, value: ChatSDK.MessageBody | NoticeMessageBody) {
+  setKeyValue(key: string, value: ChatSDK.Message | NoticeMessageBody) {
     const MAX_LENGTH = this.rootStore.initConfig.maxMessages || 200;
     if (this.message.byId.size >= MAX_LENGTH) {
       // 删除最早添加的键值
@@ -137,8 +149,8 @@ class MessageStore {
     this.currentCVS = currentCVS;
   }
 
-  addMessage(message: ChatSDK.MessageBody, chatType: 'singleChat' | 'groupChat', to: string) {
-    this.message.byId.set(message.id, message);
+  addMessage(message: ChatSDK.Message, chatType: 'singleChat' | 'groupChat', to: string) {
+    this.message.byId.set(message.msgLocalId || message.msgServerId, message);
     if (!this.message[chatType][to]) {
       this.message[chatType][to] = [message];
     } else {
@@ -154,102 +166,71 @@ class MessageStore {
     msg: string;
   }) {
     const { messageId, chatType, to, msg } = params;
-    const message = this.message.byId.get(messageId) as ChatSDK.TextMsgBody;
+    const message = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
     if (message) {
       this.message.byId.set(messageId, message);
     }
 
     const msgList = this.message[chatType][to] || [];
     console.log('msgList', msgList);
-    const index = msgList.findIndex(
-      item => item.id === messageId || (item as any).mid === messageId,
-    );
+    const index = msgList.findIndex(item => getMessageId(item) === messageId);
     if (index !== -1) {
       // 🔧 使用 runInAction 和对象替换确保 MobX 能够跟踪变化
-      (msgList[index] as ChatSDK.TextMsgBody).ext!.rtcIsEnd = true;
+      (msgList[index] as ChatSDK.Message).ext = {
+        ...((msgList[index] as ChatSDK.Message).ext || {}),
+        rtcIsEnd: true,
+      };
       runInAction(() => {
-        msgList[index] = { ...msgList[index], msg } as ChatSDK.TextMsgBody;
+        msgList[index] = {
+          ...msgList[index],
+          body: {
+            ...((msgList[index] as ChatSDK.Message).body || {}),
+            content: msg,
+          },
+        } as ChatSDK.Message;
       });
     }
   }
 
-  sendMessage(
-    message:
-      | ChatSDK.MessageBody
-      | ChatSDK.ReadMsgBody
-      | ChatSDK.DeliveryMsgBody
-      | ChatSDK.ChannelMsgBody,
-  ) {
+  sendMessage(message: ChatSDK.Message) {
     if (!message) {
       throw new Error('no message');
     }
-    // @ts-ignore
-    const { to, chatType } = message;
-    // @ts-ignore
-    message.bySelf = true;
-    // @ts-ignore
-    message.mid = '';
-    message.from = this.rootStore.client?.context?.userId;
-    // @ts-ignore
-    if (this.message.byId.get(message.id)?.status !== 'failed') {
-      // @ts-ignore
-      message.status = 'sending';
+    if ('msgLocalId' in message && 'conversationId' in message && 'conversationType' in message) {
+      return this.sendSdk5Message(message);
     }
-    // 添加引用消息
-    if (
-      this.repliedMessage != null &&
-      message.type != 'read' &&
-      message.type != 'delivery' &&
-      message.type != 'channel'
-    ) {
+    throw new Error('MessageStore.sendMessage only accepts SDK5 Message objects');
+  }
+
+  private getSdkConversationType(message: BaseMessageType): ChatSDK.ChatConversationType {
+    return (getMessageChatType(message) || 'singleChat') as ChatSDK.ChatConversationType;
+  }
+
+  private sendSdk5Message(message: ChatSDK.Message) {
+    const { conversationId, conversationType, msgLocalId } = message;
+    message.status = message.status === 'failed' ? message.status : 'sending';
+    message.direct = 'SEND';
+
+    if (this.repliedMessage != null) {
       const ext = message.ext || {};
-      let msgPreview = '';
-      switch (this.repliedMessage.type) {
-        case 'txt':
-          msgPreview = this.repliedMessage.msg;
-          break;
-        case 'img':
-          msgPreview = '[Image]';
-          break;
-        case 'audio':
-          msgPreview = '[Voice]';
-          break;
-        case 'video':
-          msgPreview = '[Video]';
-          break;
-        case 'file':
-          msgPreview = '[File]';
-          break;
-        case 'custom':
-          msgPreview = '[Custom]';
-          break;
-        default:
-          msgPreview = '[unknown]';
-          break;
-      }
       ext.msgQuote = {
-        // @ts-ignore
-        msgID: this.repliedMessage.mid || this.repliedMessage.id,
-        msgPreview: msgPreview,
+        msgID: getMessageId(this.repliedMessage),
+        msgPreview: getTextContent(this.repliedMessage) || `[${this.repliedMessage.type}]`,
         msgSender:
           getMsgSenderNickname(this.repliedMessage as BaseMessageType) ||
-          this.rootStore?.client?.user,
+          this.rootStore.client.getCurrentUserId() ||
+          '',
         msgType: this.repliedMessage.type,
       };
       message.ext = ext;
     }
-    if (message.isChatThread) {
-      const { currentThread } = this.rootStore.threadStore;
-      // @ts-ignore
-      message.chatThread = {
-        parentId: currentThread.info?.parentId || currentThread.originalMessage.to,
-      };
-    }
-    const myInfo = this.rootStore.addressStore.appUsersInfo[this.rootStore.client.user] || {};
-    //聊天室消息，在消息的ext里添加自己的信息
-    if (chatType === 'chatRoom') {
-      (message as TextMessageType).ext = {
-        ...(message as TextMessageType).ext,
+
+    const myInfo =
+      this.rootStore.addressStore.appUsersInfo[this.rootStore.client.getCurrentUserId() || ''] ||
+      {};
+    if (conversationType === 'chatRoom') {
+      message.ext = {
+        ...message.ext,
         chatroom_uikit_userInfo: {
           userId: myInfo?.userId,
           nickname: myInfo?.nickname,
@@ -259,167 +240,100 @@ class MessageStore {
         },
       };
     } else {
-      if (chatType == 'groupChat') {
-        const groupItem = getGroupItemFromGroupsById(to);
-        if (groupItem) {
-          const memberIdx =
-            getGroupMemberIndexByUserId(groupItem, this.rootStore.client.user) ?? -1;
-          if (memberIdx > -1) {
-            const memberItem = groupItem?.members?.[memberIdx] || { userId: '', role: 'member' };
-            myInfo.nickname = getGroupMemberNickName(memberItem);
-          }
-        }
-      }
-      (message as TextMessageType).ext = {
-        ...(message as TextMessageType).ext,
+      message.ext = {
+        ...message.ext,
         ease_chat_uikit_user_info: {
           nickname: myInfo?.nickname,
           avatarURL: myInfo?.avatarurl,
         },
       };
     }
-    let msgWithById = this.message.byId.get(message.id);
-    // @ts-ignore
-    if (message.type != 'read' && message.type != 'delivery' && message.type != 'channel') {
-      if (!msgWithById) {
-        this.setKeyValue(message.id, message);
-        msgWithById = message;
+
+    this.setKeyValue(msgLocalId, message);
+    if (conversationType !== 'chatRoom') {
+      const list = this.message[conversationType][conversationId] || [];
+      if (message.status !== 'failed') {
+        list.push(message);
       }
-    }
-    if (chatType !== 'chatRoom') {
-      // @ts-ignore
-      if (!this.message[chatType][to]) {
-        // @ts-ignore
-        this.message[chatType][to] = [msgWithById];
-      } else {
-        // 处理重发的消息，重发的消息不push
-        // @ts-ignore
-        if (msgWithById.status !== 'failed') {
-          // @ts-ignore
-          this.message[chatType][to].push(msgWithById);
-        }
-      }
+      this.message[conversationType][conversationId] = list;
     }
     if (this.repliedMessage != null) {
       this.setRepliedMessage(null);
     }
-    return this.rootStore.client
-      .send(message as unknown as ChatSDK.MessageBody)
-      .then((data: { serverMsgId: string }) => {
-        const msgWithById = this.message.byId.get(message.id);
-        if (chatType == 'chatRoom') {
-          // @ts-ignore
-          if (!this.message[chatType][to]) {
-            runInAction(() => {
-              // @ts-ignore
-              this.message[chatType][to] = [msgWithById];
-            });
-          } else {
-            // 处理重发的消息，重发的消息不push
-            // @ts-ignore
-            if (this.message.byId.get(message.id).status !== 'failed') {
-              runInAction(() => {
-                // @ts-ignore
-                this.message[chatType][to].push(msgWithById);
-              });
-            }
-          }
-        }
-        // message.status = 'sent';
-        const msg = msgWithById || {};
-        // @ts-ignore
-        msg.status = 'sent';
-        // @ts-ignore
-        msg.mid = data.serverMsgId;
-        // this.message.byId[data.serverMsgId] = { ...msg };
 
-        if (message.type == 'combine') {
-          let level = 0;
-          //@ts-ignore
-          message.messageList.forEach(item => {
-            if (item.combineLevel > level) {
-              level = item.combineLevel;
-            }
-          });
-          //@ts-ignore
-          msg.combineLevel = level + 1;
-        }
-        if ((message as ChatSDK.ImgMsgBody).url) {
-          if (message.type === 'video') {
-            (msg as ChatSDK.VideoMsgBody).thumb = (message as ChatSDK.VideoMsgBody).thumb;
-          }
-          (msg as ChatSDK.ImgMsgBody).url = (message as ChatSDK.ImgMsgBody).url;
-          if (msg && (msg as ChatSDK.ImgMsgBody).file) {
-            // @ts-ignore
-            msg.file.url = (message as ChatSDK.ImgMsgBody).url || '';
-          }
-        }
-
+    return this.rootStore.client.chatManager
+      .sendMessage(message)
+      .then(sentMessage => {
         runInAction(() => {
-          const msgWithById = this.message.byId.get(message.id) as ChatSDK.MessageBody;
-          this.setKeyValue(data.serverMsgId, msgWithById);
-          const newMsg = this.message.byId.get(message.id) as ChatSDK.MessageBody;
-          // @ts-ignore
-          newMsg.status = 'sent';
-          // @ts-ignore
-          newMsg.mid = data.serverMsgId;
-          // @ts-ignore
-          // const i = this.message[chatType][to].indexOf(this.message.byId[message.id]);
-          // @ts-ignore
-          const i = this.message[chatType][to]?.findIndex(item => {
-            if (item.id === data.serverMsgId || message.id === item.id) {
-              return true;
-            }
+          const serverId = sentMessage.msgServerId;
+          sentMessage.status = 'sent';
+          this.setKeyValue(sentMessage.msgLocalId, sentMessage);
+          if (serverId) {
+            this.setKeyValue(serverId, sentMessage);
+          }
+
+          const list = this.message[conversationType][conversationId] || [];
+          const index = list.findIndex(item => {
+            const current = item as ChatSDK.Message;
+            return current.msgLocalId === msgLocalId || current.msgServerId === serverId;
           });
-          // @ts-ignore
-          this.message[chatType][to].splice(i, 1, msg);
-          // this.message[chatType][to][i] = msg;
+          if (index > -1) {
+            list.splice(index, 1, sentMessage);
+          } else if (conversationType === 'chatRoom') {
+            list.push(sentMessage);
+          }
+          this.message[conversationType][conversationId] = list;
+
+          let cvs = this.rootStore.conversationStore.getConversation(
+            conversationType,
+            conversationId,
+          ) as unknown as Conversation | undefined;
+          if (!cvs) {
+            cvs = {
+              chatType: conversationType,
+              conversationId,
+              unreadCount: 0,
+              lastMessage: sentMessage as never,
+            };
+            this.rootStore.conversationStore.addConversation(cvs);
+          } else {
+            cvs.lastMessage = sentMessage as never;
+            this.rootStore.conversationStore.topConversation({ ...cvs });
+          }
         });
-        // 更新会话last message
-        let cvs: Conversation = this.rootStore.conversationStore.getConversation(
-          // @ts-ignore
-          message.chatType,
-          to,
-        ) as unknown as Conversation;
-        // 没有会话时创建会话, thread 不创建会话
-        if (message.isChatThread) {
-          return;
-        }
-        if (!cvs) {
-          cvs = {
-            // @ts-ignore
-            chatType: message.chatType,
-            conversationId: message.to,
-            lastMessage: message as unknown as Conversation['lastMessage'],
-            unreadCount: 0,
-          };
-          this.rootStore.conversationStore.addConversation(cvs);
-          return;
-        }
-        cvs.lastMessage = message as unknown as Conversation['lastMessage'];
-        this.rootStore.conversationStore.modifyConversation({ ...cvs });
-        eventHandler.dispatchSuccess('sendMessage');
       })
-      .catch((error: ChatSDK.ErrorEvent) => {
-        this.updateMessageStatus(message.id, 'failed');
-        eventHandler.dispatchError('sendMessage', error);
-        // throw error;
+      .catch(() => {
+        runInAction(() => {
+          message.status = 'failed' as any;
+          const list = this.message[conversationType][conversationId] || [];
+          const index = list.findIndex(item => {
+            return (item as ChatSDK.Message).msgLocalId === msgLocalId;
+          });
+          if (index > -1) {
+            list.splice(index, 1, message);
+          }
+        });
       });
   }
 
   receiveMessage(message: BaseMessageType) {
     const curCvs = this.rootStore.conversationStore.currentCvs;
     const conversationId = getCvsIdFromMessage(message);
+    const conversationType = this.getSdkConversationType(message);
+    const currentUserId = getCurrentUserId(this.rootStore.client);
+    const messageId = getMessageId(message);
     // rtc invite message
-    if (message.type === 'txt' && message.ext?.msgType === 'rtcCallWithAgora') {
+    if (
+      (message.type === 'txt' || message.type === 'text') &&
+      message.ext?.msgType === 'rtcCallWithAgora'
+    ) {
       message.ext.rtcIsEnd = false;
     }
-    //@ts-ignore
     if (
       curCvs &&
-      curCvs.chatType === message.chatType &&
+      curCvs.chatType === conversationType &&
       curCvs.conversationId === conversationId &&
-      message.chatType != 'chatRoom'
+      conversationType != 'chatRoom'
     ) {
       if (debounceTimer) {
         clearTimeout(debounceTimer);
@@ -430,44 +344,37 @@ class MessageStore {
     }
     const isChatbot = message.from?.includes?.('chatbot_');
     if (isChatbot) {
-      //@ts-ignore
-      message.printed = false;
+      (message as any).printed = false;
     }
-    this.setKeyValue(message.id, message);
-    if (message.from !== this.rootStore.client.user) {
-      // @ts-ignore
-      message.bySelf = false;
-    } else {
-      // @ts-ignore
-      message.bySelf = true;
+    if (messageId) {
+      this.setKeyValue(messageId, message as ChatSDK.Message);
     }
+    // SDK5: direction is determined by message.direct (SEND/RECEIVE)
+    // Components use isMessageFromCurrentUser() helper instead of bySelf
 
-    // @ts-ignore
-    if (message.broadcast) {
-      this.message.broadcast.push(message);
+    if ((message as any).broadcast) {
+      this.message.broadcast.push(message as ChatSDK.Message);
       return;
     }
-    // @ts-ignore
-    if (!this.message[message.chatType][conversationId]) {
-      // @ts-ignore
-      this.message[message.chatType][conversationId] = [message];
+    if (!this.message[conversationType][conversationId]) {
+      this.message[conversationType][conversationId] = [message as ChatSDK.Message];
     } else {
       const MAX_LENGTH = this.rootStore.initConfig.maxMessages || 200;
-      if (this.message[message.chatType][conversationId].length > MAX_LENGTH) {
-        this.message[message.chatType][conversationId].splice(
+      if (this.message[conversationType][conversationId].length > MAX_LENGTH) {
+        this.message[conversationType][conversationId].splice(
           0,
-          this.message[message.chatType][conversationId].length - MAX_LENGTH,
+          this.message[conversationType][conversationId].length - MAX_LENGTH,
         );
-        // this.message[message.chatType][conversationId].shift();
-        resetCache(message.chatType, conversationId);
+        // this.message[conversationType][conversationId].shift();
+        resetCache(conversationType, conversationId);
       }
-      this.message[message.chatType][conversationId].push(message);
+      this.message[conversationType][conversationId].push(message as ChatSDK.Message);
     }
     // 是当前会话的消息，并且是holding状态， unreadMessageCount +1；
     // 如果是聊天室人员加入的提示消息，根据 initConfig的配置决定是否计入未读数
     const isNotCountMemberJoinToUnread =
       message.type === 'custom' &&
-      message.customEvent === 'CHATROOMUIKITUSERJOIN' &&
+      getCustomEvent(message) === 'CHATROOMUIKITUSERJOIN' &&
       !(this.rootStore.initConfig.countMemberJoinToUnread !== false);
     if (
       this.holding &&
@@ -477,18 +384,15 @@ class MessageStore {
       this.unreadMessageCount += 1;
     }
 
-    // @ts-ignore
-    if (message.isChatThread || message.chatThread) {
+    if ((message as any).isChatThread || (message as any).chatThread) {
       return;
     }
 
     if (message.type === 'cmd') {
       return;
     }
-    // @ts-ignore
-    if (message.chatType == 'chatRoom') {
-      // @ts-ignore
-      const ext = message.ext || {};
+    if (conversationType == 'chatRoom') {
+      const ext = (message as any).ext || {};
       const senderInfo =
         typeof ext.chatroom_uikit_userInfo == 'string'
           ? JSON.parse(ext.chatroom_uikit_userInfo)
@@ -521,12 +425,10 @@ class MessageStore {
     }
 
     const isCurrentCvs =
-      // @ts-ignore
-      this.currentCVS.chatType == message.chatType &&
+      this.currentCVS.chatType == conversationType &&
       this.currentCVS.conversationId == conversationId;
     let cvs: Conversation = this.rootStore.conversationStore.getConversation(
-      // @ts-ignore
-      message.chatType,
+      conversationType as any,
       conversationId,
     ) as unknown as Conversation;
 
@@ -535,15 +437,14 @@ class MessageStore {
       let name = '';
       const groupData = this.rootStore.addressStore.groups;
       groupData.forEach(group => {
-        if (conversationId == group.groupid) {
-          name = group.groupname;
+        if (conversationId == group.groupId) {
+          name = group.groupName || group.name || '';
         }
       });
       cvs = {
-        // @ts-ignore
-        chatType: message.chatType,
+        chatType: conversationType as any,
         conversationId: conversationId,
-        lastMessage: message,
+        lastMessage: message as ChatSDK.Message,
         unreadCount: isCurrentCvs ? 0 : 1,
         name: name,
       };
@@ -552,18 +453,17 @@ class MessageStore {
     }
 
     // 更新最后一条消息，置顶
-    const lastTime = cvs.lastMessage?.time || 0;
-    // @ts-ignore
-    if (lastTime < message.time && !isCurrentCvs) {
+    const lastTime = getMessageTime(cvs.lastMessage);
+    if (lastTime < getMessageTime(message) && !isCurrentCvs) {
       cvs.unreadCount = cvs.unreadCount + 1;
     }
-    cvs.lastMessage = message;
+    cvs.lastMessage = message as ChatSDK.Message;
     this.rootStore.conversationStore.topConversation({ ...cvs });
     // show at tag
-    if (!isCurrentCvs && message.type === 'txt') {
+    if (!isCurrentCvs && (message.type === 'txt' || message.type === 'text')) {
       const mentionList = message?.ext?.em_at_list;
-      if (mentionList && message.from !== this.rootStore.client.user) {
-        if (mentionList === AT_ALL || mentionList.includes(this.rootStore.client.user)) {
+      if (mentionList && !isMessageFromCurrentUser(message, currentUserId)) {
+        if (mentionList === AT_ALL || mentionList.includes(currentUserId)) {
           this.rootStore.conversationStore.setAtType(
             cvs.chatType,
             cvs.conversationId,
@@ -574,17 +474,15 @@ class MessageStore {
     }
   }
 
-  modifyMessage(id: string, message: ChatSDK.MessageBody | NoticeMessageBody) {
+  modifyMessage(id: string, message: ChatSDK.Message | NoticeMessageBody) {
     this.setKeyValue(id, message);
   }
 
   sendChannelAck(cvs: CurrentConversation) {
-    const channelMsg = chatSDK.message.create({
-      type: 'channel',
-      chatType: cvs.chatType,
-      to: cvs.conversationId,
+    return this.rootStore.client.chatManager.markConversationRead({
+      conversationId: cvs.conversationId,
+      conversationType: cvs.chatType as ChatSDK.ChatConversationType,
     });
-    return this.rootStore.client.send(channelMsg);
   }
 
   updateMessageStatus(msgId: string, status: string) {
@@ -592,30 +490,17 @@ class MessageStore {
       runInAction(() => {
         const msg = this.message.byId.get(msgId);
         if (!msg) {
-          // ack message
-          return; // console.error('not found message:', msgId);
-        }
-        const conversationId = getCvsIdFromMessage(msg as BaseMessageType);
-        // @ts-ignore
-        msg.status = status;
-        let i: number;
-        // @ts-ignore
-        const hasMsg = this.message[msg.chatType][conversationId]?.find((item, index) => {
-          // @ts-ignore
-          if (item.id == msgId || item.mid == msgId) {
-            i = index;
-            return true;
-          }
-        });
-        if (!hasMsg) {
           return;
         }
-        // @ts-ignore
-        // const i = this.message[msg.chatType][conversationId]?.indexOf(msg); // 聊天室没发送成功的消息不会存，会找不到这个会话或消息
-        // if (typeof i === 'undefined' || i == -1) return;
-        // @ts-ignore
-        this.message[msg.chatType][conversationId].splice(i, 1, msg);
-        // this.message[chatType][to][i] = msg;
+        const conversationId = getCvsIdFromMessage(msg as BaseMessageType);
+        const conversationType = getMessageChatType(msg as BaseMessageType);
+        if (!conversationType) return;
+        (msg as ChatSDK.Message).status = status as any;
+        const list = this.message[conversationType][conversationId];
+        if (!list) return;
+        const i = list.findIndex(item => getMessageId(item) === msgId);
+        if (i === -1) return;
+        list.splice(i, 1, msg);
       });
     }, 10);
   }
@@ -633,15 +518,15 @@ class MessageStore {
 
   clearMessage(cvs: CurrentConversation) {
     if (!cvs) return;
-    this.rootStore.client.removeHistoryMessages({
-      targetId: cvs.conversationId,
-      chatType: cvs.chatType as 'singleChat' | 'groupChat',
-      beforeTimeStamp: Date.now(),
+    this.rootStore.client.chatManager.removeHistoryMessages({
+      conversationId: cvs.conversationId,
+      conversationType: cvs.chatType as ChatSDK.ChatConversationType,
+      beforeTimestamp: Date.now(),
     });
     this.message[cvs.chatType][cvs.conversationId] = [];
   }
 
-  setRepliedMessage(message: ChatSDK.MessageBody | null) {
+  setRepliedMessage(message: ChatSDK.Message | null) {
     if (typeof message === 'undefined') return;
     this.repliedMessage = message;
   }
@@ -669,9 +554,7 @@ class MessageStore {
     const _deleteMessage = (msgIds: string[]) => {
       const messages = this.message[cvs.chatType][cvs.conversationId];
       const filterMsgs = messages.filter(msg => {
-        // @ts-ignore
-        return !msgIds.includes(msg.id) && !msgIds.includes(msg.mid);
-        // return msg.id != messageId && msg.mid != messageId;
+        return !msgIds.includes(getMessageId(msg));
       });
       runInAction(() => {
         this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
@@ -683,22 +566,20 @@ class MessageStore {
       return _deleteMessage(localMsgIds);
     }
     // delete server message
-    return this.rootStore.client
+    return this.rootStore.client.chatManager
       .removeHistoryMessages({
-        targetId: cvs.conversationId,
-        chatType: cvs.chatType as 'singleChat' | 'groupChat',
+        conversationId: cvs.conversationId,
+        conversationType: cvs.chatType as ChatSDK.ChatConversationType,
         messageIds: msgIds,
       })
       .then(() => {
         // console.log('删服务器');
         _deleteMessage(msgIds);
         const conversation: Conversation = this.rootStore.conversationStore.getConversation(
-          // @ts-ignore
-          cvs.chatType,
+          cvs.chatType as any,
           cvs.conversationId,
         ) as unknown as Conversation;
-        // @ts-ignore
-        conversation.lastMessage = {};
+        conversation.lastMessage = {} as any;
         this.rootStore.conversationStore.modifyConversation(conversation);
         eventHandler.dispatchSuccess('removeHistoryMessages');
       })
@@ -717,15 +598,13 @@ class MessageStore {
       throw new Error('recallMessage params error');
     }
     let conversation: Conversation = this.rootStore.conversationStore.getConversation(
-      // @ts-ignore
-      cvs.chatType,
+      cvs.chatType as any,
       cvs.conversationId,
     ) as unknown as Conversation;
 
     if (!conversation && cvs.chatType == 'groupChat') {
       conversation = this.rootStore.conversationStore.getConversation(
-        // @ts-ignore
-        'chatRoom',
+        'chatRoom' as any,
         cvs.conversationId,
       ) as unknown as Conversation;
     }
@@ -746,8 +625,7 @@ class MessageStore {
         messages[msgIndex] = noticeMessage;
       }
       if (!conversation) return;
-      //@ts-ignore
-      conversation.lastMessage = messages[msgIndex];
+      conversation.lastMessage = messages[msgIndex] as any;
       if (conversation.unreadCount > 0) {
         conversation.unreadCount -= 1;
       }
@@ -762,12 +640,11 @@ class MessageStore {
     }
 
     // mySelf recall the message
-    return this.rootStore.client
+    return this.rootStore.client.chatManager
       .recallMessage({
-        chatType: cvs.chatType,
-        to: cvs.conversationId,
-        mid: messageId,
-        isChatThread,
+        conversationType: cvs.chatType,
+        conversationId: cvs.conversationId,
+        messageId,
       })
       .then(() => {
         const messages = getMessages(cvs);
@@ -782,8 +659,7 @@ class MessageStore {
           });
           messages[msgIndex] = noticeMessage;
           if (!conversation) return;
-          // @ts-ignore
-          conversation.lastMessage = messages[msgIndex];
+          conversation.lastMessage = messages[msgIndex] as any;
           this.rootStore.conversationStore.modifyConversation(conversation);
           // remove pinned message when recall message
           this.rootStore.pinnedMessagesStore.deletePinnedMessage(
@@ -801,7 +677,7 @@ class MessageStore {
 
   addReaction(cvs: CurrentConversation, messageId: string, emoji: string) {
     if (!cvs || !messageId || !emoji) return;
-    return this.rootStore.client
+    return this.rootStore.client.chatManager
       .addReaction({
         messageId,
         reaction: emoji,
@@ -816,20 +692,18 @@ class MessageStore {
             if (reaction) {
               reaction.count += 1;
               reaction.isAddedBySelf = true;
-              reaction.userList.unshift(this.rootStore.client.user);
+              reaction.userList.unshift(getCurrentUserId(this.rootStore.client));
             } else {
               const newAction = {
                 count: 1,
                 isAddedBySelf: true,
                 reaction: emoji,
-                userList: [this.rootStore.client.user],
+                userList: [getCurrentUserId(this.rootStore.client)],
               };
               if (Array.isArray((message as BaseMessageType).reactions)) {
-                // @ts-ignore
-                messages[messageIndex].reactions.push(newAction);
+                (messages[messageIndex] as any).reactions.push(newAction);
               } else {
-                // @ts-ignore
-                messages[messageIndex].reactions = [newAction];
+                (messages[messageIndex] as any).reactions = [newAction];
               }
             }
           });
@@ -841,7 +715,7 @@ class MessageStore {
         // this.message[cvs.chatType][cvs.conversationId] = filterMsgs;
         eventHandler.dispatchSuccess('addReaction');
       })
-      .catch((err: ChatSDK.ErrorEvent) => {
+      .catch((err: unknown) => {
         eventHandler.dispatchError('addReaction', err);
       });
   }
@@ -850,8 +724,8 @@ class MessageStore {
     if (!cvs || !messageId || !emoji) {
       throw new Error('deleteReaction params error');
     }
-    return this.rootStore.client
-      .deleteReaction({
+    return this.rootStore.client.chatManager
+      .removeReaction({
         messageId,
         reaction: encodeURIComponent(emoji),
       })
@@ -865,12 +739,11 @@ class MessageStore {
             reaction.count -= 1;
             if (reaction.count <= 0) {
               (message as BaseMessageType).reactions?.splice(
-                // @ts-ignore
-                message.reactions?.indexOf(reaction),
+                (message as any).reactions?.indexOf(reaction),
                 1,
               );
             }
-            const index = reaction.userList?.indexOf(this.rootStore.client.user);
+            const index = reaction.userList?.indexOf(getCurrentUserId(this.rootStore.client));
             if (index > -1) {
               reaction.userList.splice(index, 1);
             }
@@ -878,7 +751,7 @@ class MessageStore {
         }
         eventHandler.dispatchSuccess('deleteReaction');
       })
-      .catch((err: ChatSDK.ErrorEvent) => {
+      .catch((err: unknown) => {
         eventHandler.dispatchError('deleteReaction', err);
       });
   }
@@ -900,7 +773,9 @@ class MessageStore {
         reactions.forEach((item: ReactionData) => {
           if (item.op) {
             item.isAddedBySelf = !!item?.op?.find(
-              op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
+              op =>
+                op.operator === getCurrentUserId(this.rootStore.client) &&
+                op.reactionType === 'create',
             );
           }
         });
@@ -913,7 +788,7 @@ class MessageStore {
             reaction.userList = item.userList;
             reaction.op = item.op;
             item?.op?.forEach(op => {
-              if (op.operator === this.rootStore.client.user) {
+              if (op.operator === getCurrentUserId(this.rootStore.client)) {
                 if (op.reactionType === 'create') {
                   reaction.isAddedBySelf = true;
                 } else {
@@ -921,14 +796,14 @@ class MessageStore {
                 }
               }
             });
-            // @ts-ignore
-            (message as BaseMessageType).reactions = [...message.reactions];
+            (message as BaseMessageType).reactions = [...(message as any).reactions];
           } else {
             item.isAddedBySelf = !!item?.op?.find(
-              op => op.operator === this.rootStore.client.user && op.reactionType === 'create',
+              op =>
+                op.operator === getCurrentUserId(this.rootStore.client) &&
+                op.reactionType === 'create',
             );
-            // @ts-ignore
-            message.reactions.push(item);
+            (message as any).reactions.push(item);
           }
         });
       }
@@ -937,21 +812,22 @@ class MessageStore {
 
   getReactionUserList(cvs: CurrentConversation, messageId: string, reaction: string) {
     if (!cvs || !messageId) return;
-    return this.rootStore.client
+    return this.rootStore.client.chatManager
       .getReactionDetail({
         messageId,
         reaction,
         pageSize: 100,
       })
-      .then((data: ChatSDK.AsyncResult<ChatSDK.GetReactionDetailResult>) => {
-        const reactionData = data.data;
+      .then(data => {
+        const reactionData = data;
         const messages = getMessages(cvs);
         const messageIndex = getMessageIndex(messages, messageId);
         if (!reactionData) return;
         if (messageIndex > -1) {
           const message = messages[messageIndex];
-          // @ts-ignore
-          message.reactions.userList = reactionData.userList;
+          (message as any).reactions.userList = reactionData.reactionUsers?.map(
+            (user: any) => user.userId,
+          );
         }
         eventHandler.dispatchSuccess('getReactionDetail');
       })
@@ -968,23 +844,18 @@ class MessageStore {
     const messageIndex = getMessageIndex(messages, messageId);
     return new Promise((res, rej) => {
       if (messageIndex > -1) {
-        const currentMsg = messages[messageIndex];
-        if (currentMsg.type !== 'txt') {
+        const currentMsg = messages[messageIndex] as ChatSDK.Message;
+        if (currentMsg.type !== 'text') {
           rej(false);
-          return console.warn('message type is not txt');
+          return console.warn('message type is not text');
         }
-        this.rootStore.client
+        this.rootStore.client.chatManager
           .translateMessage({
-            text: currentMsg.msg,
-            languages: [language],
+            message: currentMsg,
+            targetLanguages: [language],
           })
           .then(data => {
-            if (data.type == 0) {
-              // @ts-ignore
-              const translations = data.data[0]?.translations;
-              // @ts-ignore
-              currentMsg.translations = translations;
-            }
+            (currentMsg.body as any).translations = data.translations;
             res(true);
             eventHandler.dispatchSuccess('translateMessage');
           })
@@ -996,53 +867,56 @@ class MessageStore {
     });
   }
 
-  modifyLocalMessage(
-    messageId: string,
-    msg: ChatSDK.ModifiedEventMessage,
-    isReceivedModify?: boolean,
-  ) {
-    if (msg.chatType !== 'chatRoom') {
+  modifyLocalMessage(messageId: string, msg: ChatSDK.Message, isReceivedModify?: boolean) {
+    const conversationType = this.getSdkConversationType(msg as BaseMessageType);
+    if (conversationType !== 'chatRoom') {
       let cvsId = '';
       if (isReceivedModify) {
-        cvsId = msg.chatType === 'groupChat' ? msg.to : msg.from || '';
+        cvsId = conversationType === 'groupChat' ? msg.to : msg.from || '';
       } else {
-        cvsId = msg.to;
+        cvsId = msg.conversationId || msg.to;
       }
-      this.rootStore.pinnedMessagesStore.modifyPinnedMessage(msg.chatType, cvsId, msg);
-      const msgIndex = this.message[msg.chatType][cvsId].findIndex(
-        //@ts-ignore
-        msgItem => msgItem.id === messageId || msgItem.mid === messageId,
+      this.rootStore.pinnedMessagesStore.modifyPinnedMessage(conversationType, cvsId, msg);
+      const msgIndex = (this.message[conversationType][cvsId] || []).findIndex(
+        msgItem => getMessageId(msgItem) === messageId,
       );
       if (msgIndex > -1) {
-        const msgItem = this.message[msg.chatType][cvsId][msgIndex];
-        if (msg.type === 'txt' && msgItem.type === 'txt') {
-          msgItem.msg = msg.msg;
-          msgItem.modifiedInfo = msg.modifiedInfo;
+        const msgItem = this.message[conversationType][cvsId][msgIndex] as ChatSDK.Message;
+        if (msg.type === 'text' && msgItem.type === 'text') {
+          msgItem.body = msg.body;
+          (msgItem as any).modifiedInfo = (msg as any).modifiedInfo;
           // delete translations when message was edited
-          msgItem.translations = undefined;
+          if (msgItem.body && 'translations' in msgItem.body) {
+            (msgItem.body as any).translations = undefined;
+          }
         }
         if (msg.type === 'custom' && msgItem.type === 'custom') {
-          msgItem.customEvent = msg.customEvent;
-          msgItem.modifiedInfo = msg.modifiedInfo;
-          msgItem.customExts = msg.customExts;
+          msgItem.body = msg.body;
+          (msgItem as any).modifiedInfo = (msg as any).modifiedInfo;
           msgItem.ext = msg.ext;
         }
       }
     }
   }
 
-  modifyServerMessage(messageId: string, msg: ChatSDK.ModifiedMsg) {
+  modifyServerMessage(messageId: string, msg: ChatSDK.Message) {
     if (!messageId || !msg) {
       throw new Error('modifyServerMessage params error');
     }
     const { client } = this.rootStore;
-    return client
+    return client.chatManager
       .modifyMessage({
+        conversationId: msg.conversationId,
+        conversationType: msg.conversationType,
         messageId,
-        modifiedMessage: msg,
+        message: {
+          type: msg.type,
+          body: msg.body,
+          ext: msg.ext,
+        },
       })
-      .then(res => {
-        this.modifyLocalMessage(messageId, res.message as ChatSDK.ExcludeAckMessageBody);
+      .then(message => {
+        this.modifyLocalMessage(messageId, message as never);
         eventHandler.dispatchSuccess('modifyMessage');
       })
       .catch(err => {
@@ -1054,7 +928,7 @@ class MessageStore {
     cvs: CurrentConversation,
     selectedData: {
       selectable: boolean;
-      selectedMessage: (ChatSDK.MessageBody | NoticeMessageBody)[];
+      selectedMessage: (ChatSDK.Message | NoticeMessageBody)[];
     },
   ) {
     this.selectedMessage[cvs.chatType as 'singleChat' | 'groupChat'][cvs.conversationId] =
@@ -1068,20 +942,17 @@ class MessageStore {
   }
 
   sendTypingCmd(cvs: CurrentConversation) {
-    const option = {
-      chatType: cvs.chatType,
-      to: cvs.conversationId,
-      type: 'cmd' as const,
-      isChatThread: false,
+    const msg = this.rootStore.client.chatManager.createCmdMessage({
+      conversationId: cvs.conversationId,
+      conversationType: cvs.chatType as ChatSDK.ChatConversationType,
       action: 'TypingBegin',
-    };
-    const msg = chatSDK.message.create(option);
-    this.rootStore.client
-      .send(msg)
+    });
+    this.rootStore.client.chatManager
+      .sendMessage(msg)
       .then(() => {
         // console.log('send cmd success');
       })
-      .catch((err: ChatSDK.ErrorEvent) => {
+      .catch((err: unknown) => {
         eventHandler.dispatchError('sendMessage', err);
       });
   }
@@ -1103,13 +974,11 @@ class MessageStore {
       return console.error(`Invalid parameter, messageId: ${messageId}, to: ${to}`);
     }
 
-    const readMsg = chatSDK.message.create({
-      type: 'read',
-      chatType: 'singleChat',
-      to: to,
-      id: messageId,
+    const message = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
+    if (!message) return;
+    this.rootStore.client.chatManager.markMessageRead({
+      message,
     });
-    this.rootStore.client.send(readMsg);
   }
 
   clear() {
