@@ -266,7 +266,7 @@ class ConversationStore {
 
   getServerPinnedConversations() {
     this.rootStore.client.chatManager
-      .refreshSessionList({ needEmptySession: true })
+      .refreshSessionList({ includeEmpty: true })
       .then((conversations: readonly ChatSDK.ConversationItem[]) => {
         const pinnedConversations = conversations.filter(item => item.isPinned);
 

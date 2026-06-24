@@ -12,7 +12,7 @@ const useConversations = (includeEmptyConversations: boolean = false) => {
   const getConversationList = () => {
     return client.chatManager
       .refreshSessionList({
-        needEmptySession: includeEmptyConversations,
+        includeEmpty: includeEmptyConversations,
       })
       .then(res => {
         conversationStore.setHasConversationNext(false);

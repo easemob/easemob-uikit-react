@@ -17,6 +17,8 @@ export interface ContextProps {
     userId?: string;
     translationTargetLanguage?: string;
     useUserInfo?: boolean;
+    enableSyncData?: readonly ('contact' | 'group' | 'conversation')[];
+    enableUserInfoSync?: boolean;
     maxMessages?: number;
     isFixedDeviceId?: boolean;
     useOwnUploadFun?: boolean;

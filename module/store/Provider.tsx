@@ -27,6 +27,10 @@ export interface ProviderProps {
     password?: string;
     translationTargetLanguage?: string;
     useUserInfo?: boolean;
+    /** 登录后自动同步的数据类型（对应 SDK enableSyncData），默认 ['contact', 'group', 'conversation'] */
+    enableSyncData?: readonly ('contact' | 'group' | 'conversation')[];
+    /** 是否启用用户资料同步增强（对应 SDK enableUserInfoSync），默认 false */
+    enableUserInfoSync?: boolean;
     msyncUrl?: string;
     restUrl?: string;
     isHttpDNS?: boolean;
@@ -124,6 +128,8 @@ const Provider: React.FC<ProviderProps> = props => {
     deviceId,
     isFixedDeviceId = true,
     useOwnUploadFun = false,
+    enableSyncData = ['contact', 'group', 'conversation'],
+    enableUserInfoSync = false,
   } = initConfig;
 
   const initOptions = useMemo<
@@ -146,6 +152,8 @@ const Provider: React.FC<ProviderProps> = props => {
     return {
       appKey,
       enableDeliveryReceipt: true,
+      enableSyncData,
+      enableUserInfoSync,
       serviceConfig,
       deviceId,
       useReplacedMessageContents,
@@ -157,6 +165,8 @@ const Provider: React.FC<ProviderProps> = props => {
   }, [
     appKey,
     deviceId,
+    enableSyncData,
+    enableUserInfoSync,
     isFixedDeviceId,
     msyncUrl,
     restUrl,

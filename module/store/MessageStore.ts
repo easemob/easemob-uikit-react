@@ -977,7 +977,7 @@ class MessageStore {
     const message = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
     if (!message) return;
     this.rootStore.client.chatManager.markMessageRead({
-      message,
+      messages: [{ message }],
     });
   }
 

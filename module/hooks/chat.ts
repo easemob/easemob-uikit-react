@@ -70,8 +70,8 @@ const useEventHandler = (props: ProviderProps) => {
       onMessageDelivered: (message: { messageId: string }) => {
         messageStore.updateMessageStatus(message.messageId, 'received');
       },
-      onMessageRead: (message: { messageId: string }) => {
-        messageStore.updateMessageStatus(message.messageId, 'read');
+      onMessageRead: (messages: readonly { messageId: string }[]) => {
+        messages.forEach(msg => messageStore.updateMessageStatus(msg.messageId, 'read'));
       },
       onConversationRead: (message: ConversationLocator) => {
         const chatType = message.conversationType || message.chatType;
