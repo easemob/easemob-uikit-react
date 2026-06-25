@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, action, makeObservable, runInAction } from 'mobx';
+import { observable, action, makeObservable, runInAction, computed } from 'mobx';
 import { ChatType } from '../types/messageType';
 import type { ChatSDK } from '../SDK';
 import { sortByPinned } from '../utils';
@@ -28,13 +28,20 @@ export interface ById {
   [key: string]: Conversation;
 }
 
+function makeKey(chatType: string, conversationId: string): string {
+  return `${chatType}_${conversationId}`;
+}
+
 class ConversationStore {
   rootStore;
   currentCvs: CurrentConversation;
-  conversationList: Conversation[];
+  /** Normalized map: source of truth */
+  byId: ById;
+  /** Ordered keys into byId, sorted by pinned + lastMessage time */
+  orderedIds: string[];
   searchList: Conversation[];
   hasConversationNext: boolean;
-  byId: ById;
+
   constructor(rootStore: any) {
     this.rootStore = rootStore;
 
@@ -43,16 +50,17 @@ class ConversationStore {
       chatType: '' as ChatType,
     };
 
-    this.conversationList = [];
+    this.byId = {};
+    this.orderedIds = [];
     this.searchList = [];
     this.hasConversationNext = true;
-    this.byId = {};
     makeObservable(this, {
       currentCvs: observable,
-      conversationList: observable,
+      byId: observable,
+      orderedIds: observable,
       searchList: observable,
       hasConversationNext: observable,
-      byId: observable,
+      conversationList: computed,
       setCurrentCvs: action,
       setConversation: action,
       setSearchList: action,
@@ -75,19 +83,25 @@ class ConversationStore {
     });
   }
 
+  /** Computed getter: backward-compatible array derived from byId + orderedIds */
+  get conversationList(): Conversation[] {
+    return this.orderedIds.map(id => this.byId[id]).filter(Boolean);
+  }
+
+  private resortIds() {
+    this.orderedIds = [...this.orderedIds].sort((a, b) => sortByPinned(this.byId[a], this.byId[b]));
+  }
+
   setCurrentCvs = (currentCvs: CurrentConversation) => {
     this.currentCvs = currentCvs;
     this.rootStore.messageStore.setCurrentCVS(currentCvs);
 
-    this.conversationList.forEach((cvs, index) => {
-      if (cvs.chatType == currentCvs.chatType && cvs.conversationId == currentCvs.conversationId) {
-        if (this.conversationList[index].unreadCount > 0) {
-          this.conversationList[index].unreadCount = 0;
-          this.rootStore.messageStore.sendChannelAck(currentCvs);
-        }
-      }
-      this.conversationList = [...this.conversationList];
-    });
+    const key = makeKey(currentCvs.chatType, currentCvs.conversationId);
+    const cvs = this.byId[key];
+    if (cvs && cvs.unreadCount > 0) {
+      cvs.unreadCount = 0;
+      this.rootStore.messageStore.sendChannelAck(currentCvs);
+    }
   };
 
   setConversation(conversations: Conversation[]) {
@@ -95,28 +109,25 @@ class ConversationStore {
       return console.error('Invalid parameter: conversations');
     }
 
-    const currentCvsId = this.conversationList.map(item => item.conversationId);
-    const filteredGroups = conversations.filter(
-      ({ conversationId }) => !currentCvsId.find(id => id === conversationId),
-    );
-
-    filteredGroups.forEach(cvs => {
-      this.byId[`${cvs.chatType}_${cvs.conversationId}`] = cvs;
+    conversations.forEach(cvs => {
+      const key = makeKey(cvs.chatType, cvs.conversationId);
+      if (!this.byId[key]) {
+        this.byId[key] = cvs;
+        this.orderedIds.push(key);
+      }
     });
-
-    this.conversationList = [...this.conversationList, ...filteredGroups];
+    this.resortIds();
   }
 
   addConversation(conversation: Conversation) {
     if (typeof conversation !== 'object') {
       return console.error('Invalid parameter: conversation');
     }
-    const exist = this.conversationList.find(item => {
-      return item.conversationId === conversation.conversationId;
-    });
-    if (exist) return;
-    this.conversationList = [conversation, ...this.conversationList].sort(sortByPinned);
-    this.byId[`${conversation.chatType}_${conversation.conversationId}`] = conversation;
+    const key = makeKey(conversation.chatType, conversation.conversationId);
+    if (this.byId[key]) return;
+    this.byId[key] = conversation;
+    this.orderedIds.push(key);
+    this.resortIds();
     this.getSilentModeForConversations([conversation]);
   }
 
@@ -131,83 +142,42 @@ class ConversationStore {
     if (typeof conversation != 'object') {
       return console.error('Invalid parameter: conversation');
     }
-    // TODO: 改造，把调api移到这里面，增加是否删除历史消息的参数
-    this.conversationList = this.conversationList?.filter(cvs => {
-      if (
-        cvs.chatType == conversation.chatType &&
-        cvs.conversationId == conversation.conversationId
-      ) {
-        return false;
-      }
-      return true;
-    });
-    this.searchList = this.searchList?.filter(cvs => {
-      if (
-        cvs.chatType == conversation.chatType &&
-        cvs.conversationId == conversation.conversationId
-      ) {
-        return false;
-      }
-      return true;
-    });
+    const key = makeKey(conversation.chatType, conversation.conversationId);
+    delete this.byId[key];
+    this.orderedIds = this.orderedIds.filter(id => id !== key);
+    this.searchList = this.searchList?.filter(
+      cvs =>
+        !(
+          cvs.chatType == conversation.chatType && cvs.conversationId == conversation.conversationId
+        ),
+    );
     this.setCurrentCvs({} as CurrentConversation);
   }
 
   modifyConversation(conversation: Conversation) {
-    this.conversationList?.forEach((cvs, index) => {
-      if (
-        cvs.chatType == conversation.chatType &&
-        cvs.conversationId == conversation.conversationId
-      ) {
-        // cvs = conversation;
-        this.conversationList[index] = conversation;
-      }
-    });
-    this.conversationList = [...this.conversationList].sort(sortByPinned);
+    const key = makeKey(conversation.chatType, conversation.conversationId);
+    if (this.byId[key]) {
+      this.byId[key] = conversation;
+      this.resortIds();
+    }
   }
 
   topConversation(conversation: Conversation) {
-    this.conversationList = [...this.conversationList.sort(sortByPinned)];
-
-    // let findCvs: Conversation = {} as Conversation;
-    // const filteredList = this.conversationList?.filter(cvs => {
-    //   if (
-    //     cvs.chatType == conversation.chatType &&
-    //     cvs.conversationId == conversation.conversationId
-    //   ) {
-    //     findCvs = cvs;
-    //     return false;
-    //   }
-    //   return true;
-    //   // return (
-    //   //   cvs.chatType !== conversation.chatType || cvs.conversationId !== conversation.conversationId
-    //   // );
-    // });
-    // if (JSON.stringify(findCvs) === '{}') {
-    //   console.warn('not find conversation');
-    //   return;
-    // }
-
-    // this.conversationList = [findCvs, ...filteredList];
+    const key = makeKey(conversation.chatType, conversation.conversationId);
+    if (this.byId[key]) {
+      this.byId[key] = conversation;
+    }
+    this.resortIds();
   }
 
   getConversation(chatType: ChatType, cvsId: string) {
-    let cvs;
-    this.conversationList?.forEach(item => {
-      if (item.chatType == chatType && item.conversationId == cvsId) {
-        cvs = item;
-      }
-    });
-
-    return cvs;
+    return this.byId[makeKey(chatType, cvsId)];
   }
 
   setAtType(chatType: ChatType, cvsId: string, atType: AT_TYPE) {
-    const idx = this.conversationList.findIndex(item => {
-      return item.chatType === chatType && item.conversationId === cvsId;
-    });
-    if (idx > -1 && this.conversationList[idx].atType !== atType) {
-      this.conversationList[idx].atType = atType;
+    const cvs = this.byId[makeKey(chatType, cvsId)];
+    if (cvs && cvs.atType !== atType) {
+      cvs.atType = atType;
     }
   }
 
@@ -219,15 +189,15 @@ class ConversationStore {
     this.rootStore.client.groupManager
       .getGroupInfo({ groupId: cvsId })
       .then((res: ChatSDK.GroupDetail) => {
-        this.conversationList?.forEach(cvs => {
-          if (cvs.conversationId === cvsId) {
+        const key = makeKey(chatType, cvsId);
+        const cvs = this.byId[key];
+        if (cvs) {
+          runInAction(() => {
             cvs.name = res?.name;
-          }
-        });
-
-        runInAction(() => {
-          this.conversationList = [...this.conversationList];
-        });
+            // trigger reactivity by replacing ref
+            this.byId[key] = { ...cvs };
+          });
+        }
         eventHandler.dispatchSuccess('getGroupInfo');
       })
       .catch((error: unknown) => {
@@ -236,7 +206,8 @@ class ConversationStore {
   }
 
   sortConversationList(sort: (cvsList: Conversation[]) => Conversation[]) {
-    this.conversationList = sort(this.conversationList);
+    const sorted = sort(this.conversationList);
+    this.orderedIds = sorted.map(cvs => makeKey(cvs.chatType, cvs.conversationId));
   }
 
   pinConversation(chatType: ChatType, cvsId: string, isPinned: boolean) {
@@ -247,16 +218,14 @@ class ConversationStore {
         pinned: isPinned,
       })
       .then(() => {
-        this.conversationList?.forEach(cvs => {
-          if (cvs.conversationId === cvsId) {
+        runInAction(() => {
+          const key = makeKey(chatType, cvsId);
+          const cvs = this.byId[key];
+          if (cvs) {
             cvs.isPinned = isPinned;
+            this.resortIds();
           }
         });
-
-        runInAction(() => {
-          this.conversationList = [...this.conversationList.sort(sortByPinned)];
-        });
-
         eventHandler.dispatchSuccess('pinConversation');
       })
       .catch((error: unknown) => {
@@ -271,27 +240,24 @@ class ConversationStore {
       }) as readonly ChatSDK.ConversationItem[];
       const pinnedConversations = conversations.filter(item => item.isPinned);
 
-      const mergedList = [...this.conversationList];
       pinnedConversations.forEach(item => {
-        const idx = this.conversationList.findIndex(
-          cvs => cvs.conversationId === item.conversationId,
-        );
-        if (idx === -1) {
+        const key = makeKey(item.conversationType, item.conversationId);
+        if (!this.byId[key]) {
           const newCvs = {
             ...item,
             chatType: item.conversationType,
             unreadCount: item.unreadCount || 0,
-          };
-          // @ts-ignore
-          delete newCvs.conversationType;
-          mergedList.push(newCvs as unknown as Conversation);
+            isPinned: true,
+          } as unknown as Conversation;
+          this.byId[key] = newCvs;
+          this.orderedIds.push(key);
         } else {
-          this.conversationList[idx].isPinned = true;
+          this.byId[key].isPinned = true;
         }
       });
 
       runInAction(() => {
-        this.conversationList = [...mergedList.sort(sortByPinned)];
+        this.resortIds();
       });
 
       eventHandler.dispatchSuccess('getServerPinnedConversations');
@@ -301,13 +267,13 @@ class ConversationStore {
   }
 
   setSilentModeForConversationSync(cvs: CurrentConversation, result: boolean) {
-    this.conversationList?.forEach(item => {
-      if (item.conversationId === cvs.conversationId) {
-        item.silent = result;
-      }
-    });
-    this.conversationList = [...this.conversationList];
+    const key = makeKey(cvs.chatType, cvs.conversationId);
+    const item = this.byId[key];
+    if (item) {
+      item.silent = result;
+    }
   }
+
   setSilentModeForConversation(cvs: CurrentConversation) {
     this.rootStore.client.pushManager
       .setConversationSilentMode({
@@ -348,23 +314,18 @@ class ConversationStore {
     if (!cvs || cvs.length == 0) {
       return;
     }
-    const cvsList = cvs.map(item => {
-      return {
-        conversationId: item.conversationId,
-        conversationType: item.chatType,
-      };
-    });
+    const cvsList = cvs.map(item => ({
+      conversationId: item.conversationId,
+      conversationType: item.chatType,
+    }));
     this.rootStore.client.pushManager
       .getConversationSilentModes({
         conversationList: cvsList,
       })
       .then((res: ChatSDK.BatchConversationSilentModeResponse) => {
         res.conversations.forEach(setting => {
-          const item = this.conversationList.find(
-            cvs =>
-              cvs.conversationId === setting.conversationId &&
-              cvs.chatType === setting.conversationType,
-          );
+          const key = makeKey(setting.conversationType, setting.conversationId);
+          const item = this.byId[key];
           if (item) {
             item.silent = setting.rule.remindType === 'NONE' || setting.rule.remindType === 'AT';
           }
@@ -378,25 +339,17 @@ class ConversationStore {
 
   setOnlineStatus(result: readonly ChatSDK.PresenceInfo[]) {
     result.forEach(item => {
-      if (
+      const isOnline =
         Object.prototype.toString.call(item.statusList) === '[object Object]' &&
-        Object.values(item.statusList).indexOf(1) > -1
-      ) {
-        this.conversationList?.forEach(cvsItem => {
-          if (cvsItem.conversationId === item.publisher) {
-            cvsItem.isOnline = true;
-          }
-        });
-      } else {
-        this.conversationList?.forEach(cvsItem => {
-          if (cvsItem.conversationId === item.publisher) {
-            cvsItem.isOnline = false;
-          }
-        });
-      }
+        Object.values(item.statusList).indexOf(1) > -1;
+      // Check all conversations matching this publisher
+      this.orderedIds.forEach(key => {
+        const cvs = this.byId[key];
+        if (cvs && cvs.conversationId === item.publisher) {
+          cvs.isOnline = isOnline;
+        }
+      });
     });
-
-    this.conversationList = [...this.conversationList];
   }
 
   clear() {
@@ -405,10 +358,10 @@ class ConversationStore {
       chatType: '' as ChatType,
     };
 
-    this.conversationList = [];
+    this.byId = {};
+    this.orderedIds = [];
     this.searchList = [];
     this.hasConversationNext = true;
-    this.byId = {};
   }
 }
 
