@@ -5,10 +5,12 @@ import AgoraRTC, {
 } from 'agora-rtc-sdk-ng';
 import { VideoWindowProps } from '../types/index';
 import CallError from './CallError';
+import { CallTimerService } from './CallTimerService';
 import type { ChatSDK } from 'module/SDK';
 import { CallErrorType, CallErrorCode } from './CallError';
 import { e } from 'vitest/dist/index-5aad25c1';
 import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
+import { RingtoneManager } from '../utils/ringtoneManager';
 
 // Call status enum
 export enum CALL_STATUS {
@@ -122,9 +124,8 @@ export class CallService {
   private accessToken?: string | null;
   private currentCallInfo: CallInfo | null = null;
   private callStatus: CALL_STATUS = CALL_STATUS.IDLE;
-  private callDuration: string = '00:00';
+  private callTimer = new CallTimerService();
   private timer: any = null;
-  private intervalTimer: any = null;
   private joinedMembers: any[] = [];
   private invitedMembers: string[] = [];
   private userInfos: { [key: string]: any } = {};
@@ -194,16 +195,8 @@ export class CallService {
   // Volume indicator threshold
   private speakingVolumeThreshold: number = 60; // Default threshold 60
 
-  // Ringtone related private variables
-  private outgoingRingtoneAudio: HTMLAudioElement | null = null; // Outgoing call ringtone audio object
-  private incomingRingtoneAudio: HTMLAudioElement | null = null; // Incoming call ringtone audio object
-  private outgoingRingtoneSrc?: string; // Outgoing call ringtone resource path
-  private incomingRingtoneSrc?: string; // Incoming call ringtone resource path
-  private enableRingtone: boolean = true; // Enable ringtone
-  private ringtoneVolume: number = 0.8; // Ringtone volume
-  private ringtoneLoop: boolean = true; // Loop ringtone
-  private isRingtonePlaying: boolean = false; // Ringtone playing status
-  private currentRingtoneType: 'outgoing' | 'incoming' | null = null; // Current playing ringtone type
+  // Ringtone manager
+  private ringtoneManager: RingtoneManager;
 
   // Track references being created, for handling race conditions
   private creatingVideoTrack: Promise<any> | null = null;
@@ -241,12 +234,16 @@ export class CallService {
     this.encoderConfig = config.encoderConfig ?? '720p';
     // Initialize volume threshold
     this.speakingVolumeThreshold = config.speakingVolumeThreshold ?? 60;
-    // Initialize ringtone configuration
-    this.outgoingRingtoneSrc = config.outgoingRingtoneSrc;
-    this.incomingRingtoneSrc = config.incomingRingtoneSrc;
-    this.enableRingtone = config.enableRingtone ?? true;
-    this.ringtoneVolume = config.ringtoneVolume ?? 0.8;
-    this.ringtoneLoop = config.ringtoneLoop ?? true;
+    // Initialize ringtone manager
+    this.ringtoneManager = new RingtoneManager({
+      outgoingRingtoneSrc: config.outgoingRingtoneSrc,
+      incomingRingtoneSrc: config.incomingRingtoneSrc,
+      enableRingtone: config.enableRingtone ?? true,
+      ringtoneVolume: config.ringtoneVolume ?? 0.8,
+      ringtoneLoop: config.ringtoneLoop ?? true,
+      onStart: config.onRingtoneStart,
+      onEnd: config.onRingtoneEnd,
+    });
     // Initialize RTC token configuration
     this.useRTCToken = config.useRTCToken ?? true;
 
@@ -273,11 +270,6 @@ export class CallService {
 
     // Add message listener
     this.addMessageListener();
-
-    // Delay ringtone initialization to ensure other resources are initialized
-    setTimeout(() => {
-      this.initRingtone();
-    }, 100);
   }
 
   setUIdToUserIdMap(uid: string, userId: string) {
@@ -420,7 +412,7 @@ export class CallService {
     this.invitedMembers = members;
 
     // Play outgoing call ringtone (when initiating call)
-    this.playRingtone('outgoing');
+    this.ringtoneManager.playRingtone('outgoing');
 
     // If 1v1 video call, create local video track for preview (caller)
     // Group video call initiator does not need preview mode, go directly to group video layout
@@ -714,7 +706,7 @@ export class CallService {
 
     try {
       // 🔧 停止铃声播放（接听或拒绝时）
-      this.stopRingtone();
+      this.ringtoneManager.stopRingtone();
 
       if (result) {
         // 接听通话 - 发送accept消息
@@ -1202,7 +1194,7 @@ export class CallService {
     logDebug('Join call:', this.currentCallInfo, this.userInfos);
     // 更新状态
     this.callStatus = CALL_STATUS.IN_CALL;
-    this.startCallTimer();
+    this.callTimer.start(this.onCallDurationUpdate);
 
     // 确保通话开始时扬声器状态为开启
     this.speakerEnabled = true;
@@ -1401,17 +1393,14 @@ export class CallService {
     }
 
     // 停止铃声播放（挂断时）
-    this.stopRingtone();
+    this.ringtoneManager.stopRingtone();
 
     // 清理定时器
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
     }
-    if (this.intervalTimer) {
-      clearInterval(this.intervalTimer);
-      this.intervalTimer = null;
-    }
+    this.callTimer.stop();
 
     // 先取消发布，再关闭音视频轨道
     if (this.client && this.callStatus === CALL_STATUS.IN_CALL) {
@@ -1628,7 +1617,7 @@ export class CallService {
 
     // 触发回调
     if (this.currentCallInfo) {
-      this.currentCallInfo!.duration = this.callDuration;
+      this.currentCallInfo!.duration = this.callTimer.duration;
       try {
         this.onCallEnd?.(reason, this.currentCallInfo as CallInfo);
       } catch (error) {
@@ -1639,7 +1628,7 @@ export class CallService {
     // 🔧 彻底重置所有状态
     this.callStatus = CALL_STATUS.IDLE;
     this.currentCallInfo = null;
-    this.callDuration = '00:00';
+    this.callTimer.reset();
     this.joinedMembers = [];
     this.invitedMembers = [];
     // 清理本地视频流缓存
@@ -1770,22 +1759,6 @@ export class CallService {
           message: error.message,
         });
       });
-  }
-
-  // 开始通话计时
-  private startCallTimer() {
-    let seconds = 0;
-    this.intervalTimer = setInterval(() => {
-      seconds++;
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-
-      this.callDuration = `${hours.toString().padStart(2, '0')}:${minutes
-        .toString()
-        .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-      this.onCallDurationUpdate?.(this.callDuration);
-    }, 1000);
   }
 
   // 添加 Agora RTC 事件监听器
@@ -2317,7 +2290,7 @@ export class CallService {
     this.onReceivedCall?.(ext.type, message.from, ext.ext);
 
     this.sendAlertingMessage();
-    this.playRingtone('incoming');
+    this.ringtoneManager.playRingtone('incoming');
 
     if (this.userInfoProvider) {
       // 被邀请方信息
@@ -2506,7 +2479,7 @@ export class CallService {
       return;
     }
 
-    this.stopRingtone();
+    this.ringtoneManager.stopRingtone();
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -4232,7 +4205,7 @@ export class CallService {
       // 重置状态
       this.callStatus = CALL_STATUS.IDLE;
       this.currentCallInfo = null;
-      this.callDuration = '00:00';
+      this.callTimer.reset();
       this.joinedMembers = [];
       this.invitedMembers = [];
 
@@ -4274,6 +4247,8 @@ export class CallService {
     this.localVideoStream = null;
     // 清理群组信息缓存
     this.cachedGroupInfos = {};
+    // 清理铃声
+    this.ringtoneManager.destroy();
   }
 
   // 🔧 新增：设置视频元素准备好回调
@@ -4324,106 +4299,6 @@ export class CallService {
     checkElement();
   }
 
-  // 初始化铃声
-  private initRingtone() {
-    if (!this.enableRingtone) {
-      logDebug('Ringtone feature not enabled');
-      return;
-    }
-
-    // 初始化拨打电话铃声
-    if (this.outgoingRingtoneSrc) {
-      try {
-        this.outgoingRingtoneAudio = new Audio(this.outgoingRingtoneSrc);
-        this.outgoingRingtoneAudio.volume = this.ringtoneVolume;
-        this.outgoingRingtoneAudio.loop = this.ringtoneLoop;
-        this.outgoingRingtoneAudio.preload = 'auto';
-        logDebug('Outgoing call ringtone initialized successfully:', this.outgoingRingtoneSrc);
-      } catch (error) {
-        logError('Initialize outgoing call ringtone failed:', error);
-        this.outgoingRingtoneAudio = null;
-      }
-    }
-
-    // 初始化接听电话铃声
-    if (this.incomingRingtoneSrc) {
-      try {
-        this.incomingRingtoneAudio = new Audio(this.incomingRingtoneSrc);
-        this.incomingRingtoneAudio.volume = this.ringtoneVolume;
-        this.incomingRingtoneAudio.loop = this.ringtoneLoop;
-        this.incomingRingtoneAudio.preload = 'auto';
-        logDebug('Incoming call ringtone initialized successfully:', this.incomingRingtoneSrc);
-      } catch (error) {
-        logError('Initialize incoming call ringtone failed:', error);
-        this.incomingRingtoneAudio = null;
-      }
-    }
-  }
-
-  // 播放铃声
-  private async playRingtone(type: 'outgoing' | 'incoming') {
-    if (!this.enableRingtone || this.isRingtonePlaying) {
-      return;
-    }
-
-    const audioElement =
-      type === 'outgoing' ? this.outgoingRingtoneAudio : this.incomingRingtoneAudio;
-
-    if (!audioElement) {
-      logDebug(
-        `${type === 'outgoing' ? 'Outgoing call' : 'Incoming call'} ringtone not configured`,
-      );
-      return;
-    }
-
-    const audioElements = document.getElementsByTagName('audio');
-    Array.from(audioElements).forEach(audio => {
-      if (!audio.paused) {
-        audio.pause();
-        audio.currentTime = 0; // 重置进度
-      }
-    });
-
-    try {
-      this.isRingtonePlaying = true;
-      this.currentRingtoneType = type;
-      this.onRingtoneStart?.(type);
-      audioElement.currentTime = 0; // 从头开始播放
-      await audioElement.play();
-    } catch (error) {
-      this.isRingtonePlaying = false;
-      this.currentRingtoneType = null;
-    }
-  }
-
-  // 停止铃声
-  private stopRingtone() {
-    if (!this.isRingtonePlaying || !this.currentRingtoneType) {
-      return;
-    }
-
-    try {
-      const audioElement =
-        this.currentRingtoneType === 'outgoing'
-          ? this.outgoingRingtoneAudio
-          : this.incomingRingtoneAudio;
-
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
-      }
-
-      const lastType = this.currentRingtoneType;
-      this.isRingtonePlaying = false;
-      this.currentRingtoneType = null;
-      if (lastType) {
-        this.onRingtoneEnd?.(lastType);
-      }
-    } catch (error) {
-      logError('Stop ringtone failed:', error);
-    }
-  }
-
   // 设置铃声配置
   setRingtoneConfig(config: {
     outgoingRingtoneSrc?: string;
@@ -4432,33 +4307,6 @@ export class CallService {
     ringtoneVolume?: number;
     ringtoneLoop?: boolean;
   }) {
-    if (config.outgoingRingtoneSrc !== undefined) {
-      this.outgoingRingtoneSrc = config.outgoingRingtoneSrc;
-    }
-    if (config.incomingRingtoneSrc !== undefined) {
-      this.incomingRingtoneSrc = config.incomingRingtoneSrc;
-    }
-    if (config.enableRingtone !== undefined) {
-      this.enableRingtone = config.enableRingtone;
-    }
-    if (config.ringtoneVolume !== undefined) {
-      this.ringtoneVolume = Math.max(0, Math.min(1, config.ringtoneVolume));
-    }
-    if (config.ringtoneLoop !== undefined) {
-      this.ringtoneLoop = config.ringtoneLoop;
-    }
-
-    // 重新初始化铃声
-    this.stopRingtone();
-
-    // 清理旧的音频对象
-    if (this.outgoingRingtoneAudio) {
-      this.outgoingRingtoneAudio = null;
-    }
-    if (this.incomingRingtoneAudio) {
-      this.incomingRingtoneAudio = null;
-    }
-
-    this.initRingtone();
+    this.ringtoneManager.setConfig(config);
   }
 }

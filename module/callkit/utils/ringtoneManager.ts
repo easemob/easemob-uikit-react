@@ -13,6 +13,8 @@ export class RingtoneManager {
   private ringtoneLoop: boolean = true;
   private isRingtonePlaying: boolean = false;
   private currentRingtoneType: 'outgoing' | 'incoming' | null = null;
+  private onStart?: (type: 'outgoing' | 'incoming') => void;
+  private onEnd?: (type: 'outgoing' | 'incoming') => void;
 
   constructor(config?: {
     outgoingRingtoneSrc?: string;
@@ -20,8 +22,12 @@ export class RingtoneManager {
     enableRingtone?: boolean;
     ringtoneVolume?: number;
     ringtoneLoop?: boolean;
+    onStart?: (type: 'outgoing' | 'incoming') => void;
+    onEnd?: (type: 'outgoing' | 'incoming') => void;
   }) {
     if (config) {
+      this.onStart = config.onStart;
+      this.onEnd = config.onEnd;
       this.setConfig(config);
     }
     this.init();
@@ -71,6 +77,7 @@ export class RingtoneManager {
       await audioElement.play();
       this.isRingtonePlaying = true;
       this.currentRingtoneType = type;
+      this.onStart?.(type);
     } catch (error) {
       logError(`播放${type === 'outgoing' ? '外呼' : '来电'}铃声失败:`, error);
     }
@@ -92,7 +99,11 @@ export class RingtoneManager {
     }
 
     this.isRingtonePlaying = false;
+    const lastType = this.currentRingtoneType;
     this.currentRingtoneType = null;
+    if (lastType) {
+      this.onEnd?.(lastType);
+    }
   }
 
   setConfig(config: {
