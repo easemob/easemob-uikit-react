@@ -9,15 +9,12 @@ import {
   getMessages,
   getMessageIndex,
   getMessageChatType,
-  getMessageTime,
   getMessageId,
   getCustomEvent,
-  isMessageFromCurrentUser,
   getReactionByEmoji,
   getTextContent,
 } from '../utils';
 import { RootStore } from './index';
-import { AT_ALL } from '../messageInput/suggestList/SuggestList';
 import type { TextMessageType } from '../types/messageType';
 import { eventHandler } from '../../eventHandler';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
@@ -384,94 +381,13 @@ class MessageStore {
       this.unreadMessageCount += 1;
     }
 
-    if ((message as any).isChatThread || (message as any).chatThread) {
-      return;
-    }
-
-    if (message.type === 'cmd') {
-      return;
-    }
-    if (conversationType == 'chatRoom') {
-      const ext = (message as any).ext || {};
-      const senderInfo =
-        typeof ext.chatroom_uikit_userInfo == 'string'
-          ? JSON.parse(ext.chatroom_uikit_userInfo)
-          : ext.chatroom_uikit_userInfo || {};
-      const appUsersInfo = this.rootStore.addressStore.appUsersInfo;
-      this.rootStore.addressStore.setAppUserInfo({
-        ...appUsersInfo,
-        [senderInfo.userId]: {
-          nickname: senderInfo.nickname,
-          userId: senderInfo.userId,
-          avatarurl: senderInfo.avatarURL,
-          gender: senderInfo.gender,
-        },
-      });
-      return;
-    }
-
-    if (message.ext && message.ext.ease_chat_uikit_user_info) {
-      const appUsersInfo = this.rootStore.addressStore.appUsersInfo;
-      message.from &&
-        appUsersInfo[message.from] == undefined &&
-        this.rootStore.addressStore.setAppUserInfo({
-          ...appUsersInfo,
-          [message.from]: {
-            nickname: message.ext.ease_chat_uikit_user_info.nickname,
-            userId: message.from,
-            avatarurl: message.ext.ease_chat_uikit_user_info.avatarURL,
-          },
-        });
-    }
-
-    const isCurrentCvs =
-      this.currentCVS.chatType == conversationType &&
-      this.currentCVS.conversationId == conversationId;
-    let cvs: Conversation = this.rootStore.conversationStore.getConversation(
-      conversationType as any,
+    this.rootStore.userInfoSyncService.syncOnMessageReceived(message, conversationType);
+    this.rootStore.conversationSyncService.syncOnMessageReceived(
+      message,
       conversationId,
-    ) as unknown as Conversation;
-
-    // 没有会话时创建会话
-    if (!cvs) {
-      let name = '';
-      const groupData = this.rootStore.addressStore.groups;
-      groupData.forEach(group => {
-        if (conversationId == group.groupId) {
-          name = group.groupName || group.name || '';
-        }
-      });
-      cvs = {
-        chatType: conversationType as any,
-        conversationId: conversationId,
-        lastMessage: message as ChatSDK.Message,
-        unreadCount: isCurrentCvs ? 0 : 1,
-        name: name,
-      };
-      this.rootStore.conversationStore.addConversation(cvs);
-      return;
-    }
-
-    // 更新最后一条消息，置顶
-    const lastTime = getMessageTime(cvs.lastMessage);
-    if (lastTime < getMessageTime(message) && !isCurrentCvs) {
-      cvs.unreadCount = cvs.unreadCount + 1;
-    }
-    cvs.lastMessage = message as ChatSDK.Message;
-    this.rootStore.conversationStore.topConversation({ ...cvs });
-    // show at tag
-    if (!isCurrentCvs && (message.type === 'txt' || message.type === 'text')) {
-      const mentionList = message?.ext?.em_at_list;
-      if (mentionList && !isMessageFromCurrentUser(message, currentUserId)) {
-        if (mentionList === AT_ALL || mentionList.includes(currentUserId)) {
-          this.rootStore.conversationStore.setAtType(
-            cvs.chatType,
-            cvs.conversationId,
-            mentionList === AT_ALL ? 'ALL' : 'ME',
-          );
-        }
-      }
-    }
+      conversationType,
+      currentUserId,
+    );
   }
 
   modifyMessage(id: string, message: ChatSDK.Message | NoticeMessageBody) {

@@ -11,6 +11,8 @@ import ConversationStore, {
 import AddressStore, { MemberRole, MemberItem, GroupItem, AppUserInfo } from './AddressStore';
 import ThreadStore, { ThreadData, CurrentThread } from './ThreadStore';
 import PinnedMessagesStore from './PinnedMessagesStore';
+import UserInfoSyncService from './UserInfoSyncService';
+import ConversationSyncService from './ConversationSyncService';
 import type { UIKitChatClient } from 'module/SDK';
 import { clearCursor } from '../hooks/useConversation';
 import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
@@ -25,6 +27,8 @@ class RootStore {
   addressStore;
   threadStore;
   pinnedMessagesStore;
+  userInfoSyncService;
+  conversationSyncService;
   client: UIKitChatClient;
   loginState = false;
   initConfig: ProviderProps['initConfig'] = { appKey: '' };
@@ -35,6 +39,8 @@ class RootStore {
     this.addressStore = new AddressStore();
     this.threadStore = new ThreadStore(this);
     this.pinnedMessagesStore = new PinnedMessagesStore();
+    this.userInfoSyncService = new UserInfoSyncService(this);
+    this.conversationSyncService = new ConversationSyncService(this);
     makeObservable(this, {
       client: observable,
       loginState: observable,
