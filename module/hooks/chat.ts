@@ -29,11 +29,10 @@ type PinnedMessageChangedPayload = ConversationLocator & {
   timestamp?: number;
 };
 
-const useEventHandler = (props: ProviderProps) => {
+const useEventHandler = (props: ProviderProps, client: any) => {
   const { initConfig, features } = props;
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
-  const client = rootStore.client;
   const { useUserInfo } = initConfig;
   const currentUserId = getCurrentUserId(client);
 
@@ -108,10 +107,66 @@ const useEventHandler = (props: ProviderProps) => {
       },
 
       onConnected: () => {
+        console.log('onConnected');
         rootStore.setLoginState(true);
+        // 延迟读取 sync 数据，确保 enableSyncData 同步完成后 store 有数据
+        setTimeout(() => {
+          if (addressStore.contacts?.length === 0) {
+            const res = client.contactManager.getContacts();
+            if (res?.length > 0) {
+              addressStore.setContacts(
+                res.map((item: any) => ({
+                  userId: item.userId,
+                  nickname: item.remark || '',
+                  remark: item.remark,
+                })),
+              );
+            }
+          }
+          if (addressStore.groups?.length === 0) {
+            const groups = client.groupManager.getJoinedGroupList();
+            if (groups?.length > 0) {
+              addressStore.setGroups(groups.map((g: any) => ({ ...g, groupName: g.name })));
+            }
+          }
+        }, 2000);
       },
       onDisconnected: () => {
         rootStore.setLoginState(false);
+      },
+
+      onSyncDataFinished: (payload: any) => {
+        console.log('onSyncDataFinished', payload);
+        const { dataType, status } = payload;
+        if (status !== 'success') return;
+        if (dataType === 'contact') {
+          const res = client.contactManager.getContacts();
+          const contacts = (res as any[])?.map((item: any) => ({
+            userId: item.userId,
+            nickname: item.remark || '',
+            remark: item.remark,
+          }));
+          addressStore.setContacts(contacts || []);
+        } else if (dataType === 'group') {
+          const res = client.groupManager.getJoinedGroupList();
+          addressStore.setGroups(
+            (res as any[]).map((group: any) => ({ ...group, groupName: group.name })),
+          );
+        } else if (dataType === 'conversation') {
+          const res = client.chatManager.getConversationList();
+          const conversations = res
+            ?.filter((cvs: any) => !cvs.lastMessage?.chatThread)
+            ?.map((cvs: any) => ({
+              chatType: cvs.conversationType,
+              conversationId: cvs.conversationId,
+              lastMessage: cvs.lastMessage || {},
+              unreadCount: cvs.unreadCount || 0,
+              isPinned: cvs.isPinned,
+              name: cvs.conversationName,
+              avatarUrl: cvs.conversationAvatar,
+            }));
+          conversationStore.setConversation(conversations);
+        }
       },
 
       onReactionChanged: (data: any) => {
@@ -250,16 +305,16 @@ const useEventHandler = (props: ProviderProps) => {
       onGroupDestroyed: (message: any) => {
         addressStore.removeGroupFromContactList(message.groupId);
       },
-      onPresenceStatusChange: message => {
+      onPresenceStatusChange: (message: any) => {
         if (features?.conversationList?.item?.presence == false) return;
         const { addressStore } = rootStore;
         message.length > 0 &&
-          message.forEach(presenceInfo => {
+          message.forEach((presenceInfo: any) => {
             const appUserInfo = addressStore.appUsersInfo;
             if (appUserInfo[presenceInfo.userId]) {
               const detailList = presenceInfo.statusDetails;
               let isOnline = false;
-              detailList.forEach(item => {
+              detailList.forEach((item: any) => {
                 if (item.status === 1) {
                   isOnline = true;
                 }
@@ -272,9 +327,9 @@ const useEventHandler = (props: ProviderProps) => {
               });
             }
           });
-        const changeList = message.map(item => {
+        const changeList = message.map((item: any) => {
           const status: Record<string, string> = {};
-          item.statusDetails.forEach(s => {
+          item.statusDetails.forEach((s: any) => {
             status[s.device] = String(s.status);
           });
           return {
@@ -335,7 +390,7 @@ const useEventHandler = (props: ProviderProps) => {
         });
       },
 
-      onContactInvited: message => {
+      onContactInvited: (message: any) => {
         addressStore.addContactRequest({
           ...message,
           type: 'subscribe',
@@ -345,21 +400,19 @@ const useEventHandler = (props: ProviderProps) => {
           addressStore.getUserInfo(message.from);
         }
       },
-      onContactDeleted: message => {
+      onContactDeleted: (message: any) => {
         console.log('onContactDeleted', message);
         const { addressStore } = rootStore;
         addressStore.deleteContactFromContactList(message.from);
-        // addressStore.removeContact(message.from);
       },
-      onContactAdded: message => {
+      onContactAdded: (message: any) => {
         console.log('onContactAdded', message);
 
         const { addressStore } = rootStore;
         const presence = features?.conversationList?.item?.presence ?? false;
         addressStore.addContactToContactList(message.from, presence);
-        // addressStore.addContact(message.from);
       },
-      onContactAgreed: message => {
+      onContactAgreed: (message: any) => {
         const { addressStore } = rootStore;
         const presence = features?.conversationList?.item?.presence ?? false;
         addressStore.addContactToContactList(message.from, presence);

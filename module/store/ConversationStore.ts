@@ -265,39 +265,39 @@ class ConversationStore {
   }
 
   getServerPinnedConversations() {
-    this.rootStore.client.chatManager
-      .refreshSessionList({ includeEmpty: true })
-      .then((conversations: readonly ChatSDK.ConversationItem[]) => {
-        const pinnedConversations = conversations.filter(item => item.isPinned);
+    try {
+      const conversations = this.rootStore.client.chatManager.getConversationList({
+        isPinned: true,
+      }) as readonly ChatSDK.ConversationItem[];
+      const pinnedConversations = conversations.filter(item => item.isPinned);
 
-        const mergedList = [...this.conversationList];
-        pinnedConversations.forEach(item => {
-          const idx = this.conversationList.findIndex(
-            cvs => cvs.conversationId === item.conversationId,
-          );
-          if (idx === -1) {
-            const newCvs = {
-              ...item,
-              chatType: item.conversationType,
-              unreadCount: item.unreadCount || 0,
-            };
-            // @ts-ignore
-            delete newCvs.conversationType;
-            mergedList.push(newCvs as unknown as Conversation);
-          } else {
-            this.conversationList[idx].isPinned = true;
-          }
-        });
-
-        runInAction(() => {
-          this.conversationList = [...mergedList.sort(sortByPinned)];
-        });
-
-        eventHandler.dispatchSuccess('getServerPinnedConversations');
-      })
-      .catch((error: unknown) => {
-        eventHandler.dispatchError('getServerPinnedConversations', error);
+      const mergedList = [...this.conversationList];
+      pinnedConversations.forEach(item => {
+        const idx = this.conversationList.findIndex(
+          cvs => cvs.conversationId === item.conversationId,
+        );
+        if (idx === -1) {
+          const newCvs = {
+            ...item,
+            chatType: item.conversationType,
+            unreadCount: item.unreadCount || 0,
+          };
+          // @ts-ignore
+          delete newCvs.conversationType;
+          mergedList.push(newCvs as unknown as Conversation);
+        } else {
+          this.conversationList[idx].isPinned = true;
+        }
       });
+
+      runInAction(() => {
+        this.conversationList = [...mergedList.sort(sortByPinned)];
+      });
+
+      eventHandler.dispatchSuccess('getServerPinnedConversations');
+    } catch (error) {
+      eventHandler.dispatchError('getServerPinnedConversations', error);
+    }
   }
 
   setSilentModeForConversationSync(cvs: CurrentConversation, result: boolean) {

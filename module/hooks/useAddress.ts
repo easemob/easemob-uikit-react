@@ -14,25 +14,23 @@ const useContacts = () => {
   );
 
   useEffect(() => {
-    if (rootStore.addressStore.contacts?.length > 0) {
-      return;
+    if (!rootStore.loginState) return;
+    try {
+      const res = client.contactManager.getContacts();
+      if (res?.length > 0) {
+        const contacts = res.map((userItem: any) => ({
+          userId: userItem.userId,
+          nickname: userItem.remark || '',
+          remark: userItem.remark,
+        }));
+        setContacts(contacts);
+        addressStore.setContacts(contacts);
+        eventHandler.dispatchSuccess('getAllContacts');
+      }
+    } catch (err) {
+      console.warn('get contacts failed', err);
+      eventHandler.dispatchError('getAllContacts', err);
     }
-    rootStore.loginState &&
-      Promise.resolve(client.contactManager.getContacts())
-        .then(res => {
-          const contacts = res?.map(userItem => ({
-            userId: userItem.userId,
-            nickname: userItem.remark || '',
-            remark: userItem.remark,
-          }));
-          setContacts(contacts || []);
-          addressStore.setContacts(contacts);
-          eventHandler.dispatchSuccess('getAllContacts');
-        })
-        .catch(err => {
-          console.warn('get contacts failed', err);
-          eventHandler.dispatchError('getAllContacts', err);
-        });
   }, [rootStore.loginState]);
   return contacts;
 };
@@ -87,20 +85,19 @@ const useGroups = () => {
 
   const getJoinedGroupList = () => {
     if (!hasNext) return;
-    Promise.resolve(client.groupManager.getJoinedGroupList())
-      .then(res => {
-        addressStore.setGroups(
-          res.map(group => ({
-            ...group,
-            groupName: group.name,
-          })),
-        );
-        addressStore.setHasGroupsNext(false);
-        eventHandler.dispatchSuccess('getJoinedGroups');
-      })
-      .catch(error => {
-        eventHandler.dispatchError('getJoinedGroups', error);
-      });
+    try {
+      const res = client.groupManager.getJoinedGroupList();
+      addressStore.setGroups(
+        res.map((group: any) => ({
+          ...group,
+          groupName: group.name,
+        })),
+      );
+      addressStore.setHasGroupsNext(false);
+      eventHandler.dispatchSuccess('getJoinedGroups');
+    } catch (error) {
+      eventHandler.dispatchError('getJoinedGroups', error);
+    }
   };
 
   return {
