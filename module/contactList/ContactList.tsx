@@ -52,7 +52,7 @@ function getBrands(members: any) {
   const innerMembers = members.concat();
   innerMembers.forEach((item: any) => {
     item.name = item.userId
-      ? item.remark || rootStore.addressStore.appUsersInfo[item.userId]?.nickname || item.userId
+      ? item.remark || rootStore.addressStore.resolveUserInfo(item.userId).nickname || item.userId
       : item.groupName || item.name || item.groupId || '';
     item.userId && (item.nickname = item.name);
     if (!item.name) {
@@ -88,7 +88,7 @@ function getBrands(members: any) {
       name: innerMembers[i].name,
       avatarUrl:
         innerMembers[i].avatarUrl ||
-        rootStore.addressStore.appUsersInfo[innerMembers[i].userId]?.avatarurl,
+        rootStore.addressStore.resolveUserInfo(innerMembers[i].userId).avatarUrl,
     };
 
     if (innerMembers[i].initial === '#') {
@@ -154,8 +154,7 @@ let ContactList: FC<ContactListProps> = props => {
   const [addressNode, setAddressNode] = useState<JSX.Element[]>([]);
   const { t } = useTranslation();
   const context = useContext(RootContext);
-  const { rootStore, theme, features, initConfig } = context;
-  const { useUserInfo: useUserInfoConfig } = initConfig;
+  const { rootStore, theme, features } = context;
   const themeMode = theme?.mode || 'light';
   const { addressStore } = rootStore;
   const classString = classNames(
@@ -169,7 +168,7 @@ let ContactList: FC<ContactListProps> = props => {
   // 获取联系人列表
   useContacts();
   const withPresenceContacts = features?.conversationList?.item?.presence != false;
-  useUserInfo(useUserInfoConfig ? 'contacts' : null, withPresenceContacts);
+  useUserInfo(rootStore.shouldAutoFetchUserInfo() ? 'contacts' : null, withPresenceContacts);
 
   const { getJoinedGroupList } = useGroups();
 
@@ -253,12 +252,13 @@ let ContactList: FC<ContactListProps> = props => {
           >
             <div>
               {addressStore.requests?.map((item, index: number) => {
-                const name = addressStore.appUsersInfo[item.from]?.nickname || item.from;
+                const userInfo = addressStore.resolveUserInfo(item.from);
+                const name = userInfo.nickname || item.from;
                 return (
                   <UserItem
                     key={item.from}
                     data={{
-                      avatarUrl: addressStore.appUsersInfo[item.from]?.avatarurl,
+                      avatarUrl: userInfo.avatarUrl,
                       nickname: name,
                       userId: item.from,
                       description: t('requestToAddContact') as string,
@@ -363,7 +363,7 @@ let ContactList: FC<ContactListProps> = props => {
         const data = {
           userId: id,
           nickname: name,
-          avatarUrl: item.avatarUrl || addressStore.appUsersInfo[id]?.avatarurl,
+          avatarUrl: item.avatarUrl || addressStore.resolveUserInfo(id).avatarUrl,
         };
         return (
           <UserItem
@@ -397,8 +397,8 @@ let ContactList: FC<ContactListProps> = props => {
     if (findUser && findUser.remark) {
       name = findUser.remark;
       type = 'contact';
-    } else if (addressStore.appUsersInfo[id]?.nickname) {
-      name = addressStore.appUsersInfo[id]?.nickname;
+    } else if (addressStore.resolveUserInfo(id).nickname) {
+      name = addressStore.resolveUserInfo(id).nickname;
       type = 'contact';
     } else {
       addressStore.groups.forEach(item => {

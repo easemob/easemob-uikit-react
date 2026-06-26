@@ -19,24 +19,28 @@ class UserInfoSyncService {
           ? JSON.parse(ext.chatroom_uikit_userInfo)
           : ext.chatroom_uikit_userInfo || {};
       if (!senderInfo.userId) return;
-      addressStore.setAppUserInfo({
-        ...addressStore.appUsersInfo,
+      addressStore.mergeAppUserInfo({
         [senderInfo.userId]: {
           nickname: senderInfo.nickname,
           userId: senderInfo.userId,
-          avatarurl: senderInfo.avatarURL,
+          avatarUrl: senderInfo.avatarUrl ?? senderInfo.avatarURL,
+          avatarurl: senderInfo.avatarurl ?? senderInfo.avatarURL,
           gender: senderInfo.gender,
         },
       });
     } else {
       if (message.ext && message.ext.ease_chat_uikit_user_info && message.from) {
         if (addressStore.appUsersInfo[message.from] === undefined) {
-          addressStore.setAppUserInfo({
-            ...addressStore.appUsersInfo,
+          addressStore.mergeAppUserInfo({
             [message.from]: {
               nickname: message.ext.ease_chat_uikit_user_info.nickname,
               userId: message.from,
-              avatarurl: message.ext.ease_chat_uikit_user_info.avatarURL,
+              avatarUrl:
+                message.ext.ease_chat_uikit_user_info.avatarUrl ??
+                message.ext.ease_chat_uikit_user_info.avatarURL,
+              avatarurl:
+                message.ext.ease_chat_uikit_user_info.avatarurl ??
+                message.ext.ease_chat_uikit_user_info.avatarURL,
             },
           });
         }

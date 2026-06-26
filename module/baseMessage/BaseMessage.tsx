@@ -259,9 +259,10 @@ let BaseMessage = (props: BaseMessageProps) => {
   const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('message-base', customizePrefixCls);
   let avatarToShow: ReactNode = avatar;
-  const { appUsersInfo, groups } = getStore().addressStore;
+  const { groups } = getStore().addressStore;
   const msgSenderNickname = nickName || (message && getMsgSenderNickname(message));
   const userId = message?.from || '';
+  const senderInfo = getStore().addressStore.resolveUserInfo(userId);
   if (avatar) {
     avatarToShow = avatar;
   } else {
@@ -270,8 +271,8 @@ let BaseMessage = (props: BaseMessageProps) => {
       shape = theme?.avatarShape;
     }
     avatarToShow = (
-      <Avatar src={appUsersInfo?.[userId]?.avatarurl} shape={shape} size={24}>
-        {appUsersInfo?.[userId]?.nickname || userId}
+      <Avatar src={senderInfo.avatarUrl} shape={shape} size={24}>
+        {senderInfo.nickname || userId}
       </Avatar>
     );
   }
@@ -406,11 +407,13 @@ let BaseMessage = (props: BaseMessageProps) => {
         </div>
         <div className={`${prefixCls}-thread-message`}>
           {msgContent && (
-            <Avatar size={16} src={appUsersInfo?.[from]?.avatarurl}>
-              {appUsersInfo?.[from]?.nickname || from}
+            <Avatar size={16} src={getStore().addressStore.resolveUserInfo(from).avatarUrl}>
+              {getStore().addressStore.resolveUserInfo(from).nickname || from}
             </Avatar>
           )}
-          <span>{(appUsersInfo[from]?.nickname || from) as unknown as string}</span>
+          <span>
+            {(getStore().addressStore.resolveUserInfo(from).nickname || from) as unknown as string}
+          </span>
           <span>{msgContent}</span>
           <span>{formatDateTime?.(time) || getConversationTime(time)}</span>
         </div>

@@ -89,7 +89,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
   const privateChat = (userId: string) => {
     const result = onPrivateChat?.(userId);
     if (result == false) return;
-    const name = addressStore.appUsersInfo?.[userId]?.nickname;
+    const name = addressStore.resolveUserInfo(userId).nickname;
     conversationStore.addConversation({
       chatType: 'singleChat',
       conversationId: userId,
@@ -134,8 +134,8 @@ const GroupMember: FC<GroupMemberProps> = props => {
     const users = groupMembers.map((item: any) => {
       return {
         userId: item.userId,
-        nickname: addressStore.appUsersInfo?.[item.userId]?.nickname,
-        avatarUrl: addressStore.appUsersInfo?.[item.userId]?.avatarurl,
+        nickname: addressStore.resolveUserInfo(item.userId).nickname,
+        avatarUrl: addressStore.resolveUserInfo(item.userId).avatarUrl,
       };
     });
     setAddMemberData({
@@ -266,8 +266,8 @@ const GroupMember: FC<GroupMemberProps> = props => {
       ></Header>
       <div className={`${prefixCls}-container`}>
         {renderData?.map((item: any) => {
-          let name = addressStore.appUsersInfo?.[item.userId]?.nickname;
-          const avatarUrl = addressStore.appUsersInfo?.[item.userId]?.avatarurl;
+          let name = addressStore.resolveUserInfo(item.userId).nickname;
+          const avatarUrl = addressStore.resolveUserInfo(item.userId).avatarUrl;
           if (item.attributes?.nickName) {
             name = item.attributes?.nickName;
           }

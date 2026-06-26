@@ -94,7 +94,7 @@ export interface ChatProps {
 }
 const getChatAvatarUrl = (cvs: CurrentConversation) => {
   if (cvs.chatType === 'singleChat') {
-    return getStore().addressStore.appUsersInfo[cvs.conversationId]?.avatarurl;
+    return getStore().addressStore.resolveUserInfo(cvs.conversationId).avatarUrl;
   } else if (cvs.chatType === 'groupChat') {
     const group = getStore().addressStore.groups.find(item => item.groupId === cvs.conversationId);
     return group?.avatarUrl;
@@ -697,8 +697,8 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                   !CVS.conversationId.includes('chatbot'),
                 icon:
                   presenceMap?.[
-                    rootStore.addressStore.appUsersInfo[CVS.conversationId]?.isOnline
-                      ? rootStore.addressStore.appUsersInfo[CVS.conversationId]?.presenceExt ??
+                    rootStore.addressStore.resolveUserInfo(CVS.conversationId).isOnline
+                      ? rootStore.addressStore.resolveUserInfo(CVS.conversationId).presenceExt ??
                         'Online'
                       : 'Offline'
                   ] || presenceMap?.Custom,
@@ -708,9 +708,10 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 CVS.chatType === 'singleChat' &&
                 typeof presenceMap !== 'undefined' &&
                 !CVS.conversationId.includes('chatbot') &&
-                (rootStore.addressStore.appUsersInfo[CVS.conversationId]?.isOnline
-                  ? t(rootStore.addressStore.appUsersInfo[CVS.conversationId]?.presenceExt ?? '') ??
-                    t('Online')
+                (rootStore.addressStore.resolveUserInfo(CVS.conversationId).isOnline
+                  ? t(
+                      rootStore.addressStore.resolveUserInfo(CVS.conversationId).presenceExt ?? '',
+                    ) ?? t('Online')
                   : t('Offline'))
               }
               // 使用suffixIcon 代替， 遍历 suffixIcon
@@ -885,7 +886,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
               });
             }}
             userInfoProvider={async userIds => {
-              if (initConfig.useUserInfo) {
+              if (rootStore.shouldAutoFetchUserInfo()) {
                 await getUsersInfo({ userIdList: userIds, withPresence: false }).catch(err => {
                   console.warn('get user info failed', err);
                 });
@@ -894,8 +895,8 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 userIds.map(async userId => {
                   return {
                     userId: userId,
-                    nickname: rootStore.addressStore.appUsersInfo[userId]?.nickname,
-                    avatarUrl: rootStore.addressStore.appUsersInfo[userId]?.avatarurl,
+                    nickname: rootStore.addressStore.resolveUserInfo(userId).nickname,
+                    avatarUrl: rootStore.addressStore.resolveUserInfo(userId).avatarUrl,
                   };
                 }),
               );

@@ -12,7 +12,7 @@ import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import ScrollList from '../../component/scrollList';
-import { getCurrentUserId, getUsersInfo } from '../utils/index';
+import { getCurrentUserId } from '../utils/index';
 import { AT_TYPE, Conversation } from '../store/ConversationStore';
 import Modal from '../../component/modal';
 
@@ -71,8 +71,8 @@ const Conversations: FC<ConversationListProps> = props => {
   const [renderData, setRenderData] = useState<ConversationData>([]);
   const [initRenderData, setInitRenderData] = useState<ConversationData>([]);
   const context = useContext(RootContext);
-  const { rootStore, features, theme, initConfig } = context;
-  const { useUserInfo: useUserInfoConfig } = initConfig;
+  const { rootStore, features, theme } = context;
+  const shouldAutoFetchUserInfo = rootStore.shouldAutoFetchUserInfo();
   const themeMode = theme?.mode || 'light';
   const classString = classNames(
     prefixCls,
@@ -89,7 +89,7 @@ const Conversations: FC<ConversationListProps> = props => {
   const globalConfig = features?.conversationList || {};
 
   const withPresence = presence || globalConfig?.item?.presence != false;
-  useUserInfo(useUserInfoConfig ? 'conversation' : null, withPresence);
+  useUserInfo(shouldAutoFetchUserInfo ? 'conversation' : null, withPresence);
 
   const groupData = rootStore.addressStore.groups;
   // 获取加入群组，把群组名放在 conversationList
@@ -133,9 +133,9 @@ const Conversations: FC<ConversationListProps> = props => {
             }
           });
         } else if (item.chatType == 'singleChat') {
-          renderItem.name =
-            renderItem.name || appUsersInfo?.[item.conversationId as string]?.nickname;
-          renderItem.avatarUrl = appUsersInfo?.[item.conversationId as string]?.avatarurl;
+          const userInfo = rootStore.addressStore.resolveUserInfo(item.conversationId as string);
+          renderItem.name = renderItem.name || userInfo.nickname;
+          renderItem.avatarUrl = userInfo.avatarUrl;
           // renderItem.isOnline = appUsersInfo?.[item.conversationId as string]?.isOnline;
           // 如果contacts里包含这个联系人，并且有remark 则 name = remark
           const contact = contacts?.find(contact => {
@@ -209,10 +209,8 @@ const Conversations: FC<ConversationListProps> = props => {
           setLoading(false);
         });
       getJoinedGroupList();
-      if (useUserInfoConfig) {
-        getUsersInfo({
-          userIdList: [currentUserId],
-        }).catch(e => {
+      if (shouldAutoFetchUserInfo && currentUserId) {
+        rootStore.addressStore.ensureUserInfos([currentUserId]).catch(e => {
           console.warn('getUsersInfo error', e);
         });
       }

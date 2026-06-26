@@ -33,7 +33,6 @@ const useEventHandler = (props: ProviderProps, client: any) => {
   const { initConfig, features } = props;
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
-  const { useUserInfo } = initConfig;
   const currentUserId = getCurrentUserId(client);
 
   useEffect(() => {
@@ -396,7 +395,7 @@ const useEventHandler = (props: ProviderProps, client: any) => {
           type: 'subscribe',
           requestStatus: 'pending',
         });
-        if (useUserInfo) {
+        if (rootStore.shouldAutoFetchUserInfo()) {
           addressStore.getUserInfo(message.from);
         }
       },

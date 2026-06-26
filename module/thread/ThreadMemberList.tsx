@@ -111,8 +111,9 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
   const showMoreAction = role != 'member';
   const myId = getCurrentUserId(rootStore.client);
   const renderItem = (member: string) => {
-    const name = rootStore.addressStore.appUsersInfo?.[member]?.nickname;
-    const avatarUrl = rootStore.addressStore.appUsersInfo?.[member]?.avatarurl;
+    const userInfo = rootStore.addressStore.resolveUserInfo(member);
+    const name = userInfo.nickname;
+    const avatarUrl = userInfo.avatarUrl;
     // if (item.attributes?.nickName) {
     //   name = item.attributes?.nickName;
     // }

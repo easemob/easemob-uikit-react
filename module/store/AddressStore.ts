@@ -48,9 +48,19 @@ export interface GroupItem {
 
 export type AppUserInfo = Record<string, any> & {
   userId: string;
+  nickname?: string;
+  avatarUrl?: string;
+  /** @deprecated Use avatarUrl instead. Kept for compatibility with older UIKit integrations. */
+  avatarurl?: string;
   isOnline?: boolean;
   presenceExt?: string;
 };
+
+export type AppUserInfoMap = Record<string, AppUserInfo>;
+export type AppUserInfoProviderResult = AppUserInfo[] | AppUserInfoMap;
+export type AppUserInfoProvider = (
+  userIds: string[],
+) => Promise<AppUserInfoProviderResult> | AppUserInfoProviderResult;
 
 export type ChatroomInfo = Record<string, any> & {
   id: string;
@@ -99,6 +109,7 @@ class AddressStore {
       setGroupMembers: action,
       setGroupMemberAttributes: action,
       setAppUserInfo: action,
+      mergeAppUserInfo: action,
       setChatroom: action,
       updateGroupName: action,
       removeGroupMember: action,
@@ -132,7 +143,52 @@ class AddressStore {
   }
 
   setAppUserInfo = (appUsersInfo: Record<string, AppUserInfo>) => {
-    this.appUsersInfo = appUsersInfo;
+    this.appUsersInfo = this.normalizeAppUsersInfoMap(appUsersInfo);
+  };
+
+  mergeAppUserInfo = (appUsersInfo: Record<string, AppUserInfo> | AppUserInfo[]) => {
+    const normalized = this.normalizeAppUsersInfo(appUsersInfo);
+    const merged = { ...this.appUsersInfo };
+    Object.keys(normalized).forEach(userId => {
+      merged[userId] = this.normalizeAppUserInfo(
+        {
+          ...merged[userId],
+          ...normalized[userId],
+        },
+        userId,
+      );
+    });
+    this.appUsersInfo = merged;
+  };
+
+  resolveUserInfo = (userId?: string): AppUserInfo => {
+    if (!userId) {
+      return { userId: '' };
+    }
+    return this.appUsersInfo[userId] || { userId };
+  };
+
+  hasUserInfo = (userId: string) => {
+    const userInfo = this.appUsersInfo[userId];
+    return Boolean(userInfo && (userInfo.nickname || userInfo.avatarUrl || userInfo.avatarurl));
+  };
+
+  ensureUserInfos = (
+    userIds: string[],
+    options: { withPresence?: boolean; force?: boolean } = {},
+  ) => {
+    const uniqueUserIds = Array.from(new Set(userIds.filter(Boolean)));
+    const requestUserIds = options.force
+      ? uniqueUserIds
+      : uniqueUserIds.filter(userId => !this.hasUserInfo(userId));
+    if (requestUserIds.length === 0) {
+      return Promise.resolve({});
+    }
+    return getUsersInfo({
+      userIdList: requestUserIds,
+      withPresence: options.withPresence,
+      force: options.force,
+    });
   };
 
   setContacts(contacts: any) {
@@ -342,11 +398,13 @@ class AddressStore {
   getUserInfo = (userId: string, withPresence: boolean = false, force = false) => {
     let userInfo = this.appUsersInfo?.[userId];
     if (!userInfo || force) {
-      return getUsersInfo({ userIdList: [userId], withPresence })
+      return getUsersInfo({ userIdList: [userId], withPresence, force })
         .then(() => {
           userInfo = this.appUsersInfo?.[userId];
           runInAction(() => {
-            this.appUsersInfo[userId] = userInfo;
+            if (userInfo) {
+              this.appUsersInfo[userId] = this.normalizeAppUserInfo(userInfo, userId);
+            }
           });
           return userInfo;
         })
@@ -358,9 +416,40 @@ class AddressStore {
   };
 
   getUserInfoWithPresence = (userIdList: string[]) => {
-    getUsersInfo({ userIdList }).catch(err => {
+    this.ensureUserInfos(userIdList).catch(err => {
       console.warn('get getUsersInfo failed', err);
     });
+  };
+
+  normalizeAppUsersInfo = (appUsersInfo: Record<string, AppUserInfo> | AppUserInfo[]) => {
+    return Array.isArray(appUsersInfo)
+      ? appUsersInfo.reduce<AppUserInfoMap>((result, item) => {
+          if (!item?.userId) return result;
+          result[item.userId] = this.normalizeAppUserInfo(item, item.userId);
+          return result;
+        }, {})
+      : this.normalizeAppUsersInfoMap(appUsersInfo);
+  };
+
+  normalizeAppUsersInfoMap = (appUsersInfo: Record<string, AppUserInfo>) => {
+    return Object.keys(appUsersInfo || {}).reduce<AppUserInfoMap>((result, userId) => {
+      const item = appUsersInfo[userId];
+      if (!item) return result;
+      const normalizedUserId = item.userId || userId;
+      result[normalizedUserId] = this.normalizeAppUserInfo(item, normalizedUserId);
+      return result;
+    }, {});
+  };
+
+  normalizeAppUserInfo = (userInfo: AppUserInfo, fallbackUserId?: string): AppUserInfo => {
+    const userId = userInfo.userId || fallbackUserId || '';
+    const avatarUrl = userInfo.avatarUrl ?? userInfo.avatarurl;
+    return {
+      ...userInfo,
+      userId,
+      avatarUrl,
+      avatarurl: userInfo.avatarurl ?? avatarUrl,
+    };
   };
 
   setChatroom(chatroom: any) {
@@ -764,10 +853,10 @@ class AddressStore {
     const currentUserId = getCurrentUserId(rootStore.client);
     // groupname 是前三个用户的昵称， 其中第一个用户是自己
     const groupnameArr = members.slice(0, 2).map(item => {
-      return rootStore.addressStore.appUsersInfo?.[item]?.nickname || item;
+      return rootStore.addressStore.resolveUserInfo(item).nickname || item;
     });
     groupnameArr.unshift(
-      rootStore.addressStore.appUsersInfo?.[currentUserId]?.nickname || currentUserId,
+      rootStore.addressStore.resolveUserInfo(currentUserId).nickname || currentUserId,
     );
     const groupName = groupnameArr.join('、');
 

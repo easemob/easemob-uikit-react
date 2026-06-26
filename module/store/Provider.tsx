@@ -4,6 +4,8 @@ import rootStore from './index';
 
 import { ChatClient, UIKitManagers } from '../SDK';
 import type { ChatSDK } from '../SDK';
+import type { UIKitChatClient } from '../SDK';
+import type { AppUserInfoProvider } from './AddressStore';
 import { useEventHandler } from '../hooks/chat';
 
 import { initReactI18next } from 'react-i18next';
@@ -41,6 +43,11 @@ export interface ProviderProps {
     useOwnUploadFun?: boolean;
     countMemberJoinToUnread?: boolean;
   };
+  /**
+   * 用户信息提供器。业务方只需要根据 userId 批量返回用户信息，UIKit 会自动按需调用并缓存。
+   * 返回值支持数组或以 userId 为 key 的对象；avatarurl 仍兼容，但推荐使用 avatarUrl。
+   */
+  userInfoProvider?: AppUserInfoProvider;
   local?: {
     fallbackLng?: string;
     lng?: string;
@@ -119,7 +126,8 @@ export interface ProviderProps {
   };
 }
 const Provider: React.FC<ProviderProps> = props => {
-  const { initConfig, local, features, reactionConfig, theme, presenceMap } = props;
+  const { initConfig, userInfoProvider, local, features, reactionConfig, theme, presenceMap } =
+    props;
   const {
     appKey,
     msyncUrl,
@@ -129,8 +137,17 @@ const Provider: React.FC<ProviderProps> = props => {
     isFixedDeviceId = true,
     useOwnUploadFun = false,
     enableSyncData = ['contact', 'group', 'conversation'],
-    enableUserInfoSync = false,
+    useUserInfo = true,
   } = initConfig;
+  const normalizedInitConfig = useMemo(
+    () => ({
+      ...initConfig,
+      useUserInfo,
+      enableUserInfoSync: initConfig.enableUserInfoSync ?? useUserInfo,
+    }),
+    [initConfig, useUserInfo],
+  );
+  const { enableUserInfoSync } = normalizedInitConfig;
 
   const initOptions = useMemo<
     Omit<ChatSDK.InitConfig, 'managers'> & { managers: typeof UIKitManagers }
@@ -182,16 +199,25 @@ const Provider: React.FC<ProviderProps> = props => {
   ]);
 
   const client = useMemo(() => {
-    return ChatClient.init(initOptions);
+    return ChatClient.init(initOptions) as UIKitChatClient;
   }, [initOptions]);
 
   useEffect(() => {
     rootStore.setClient(client);
-    rootStore.setInitConfig(initConfig);
-  }, [client, initConfig]);
+    rootStore.setInitConfig(normalizedInitConfig);
+    rootStore.setUserInfoProvider(userInfoProvider);
+  }, [client, normalizedInitConfig, userInfoProvider]);
+
+  const normalizedProps = useMemo(
+    () => ({
+      ...props,
+      initConfig: normalizedInitConfig,
+    }),
+    [props, normalizedInitConfig],
+  );
 
   // console.log('Provider is run...');
-  useEventHandler(props, client);
+  useEventHandler(normalizedProps, client);
 
   const localConfig = useMemo(
     () => ({
@@ -259,7 +285,7 @@ const Provider: React.FC<ProviderProps> = props => {
     <RootProvider
       value={{
         rootStore,
-        initConfig,
+        initConfig: normalizedInitConfig,
         features,
         client,
         reactionConfig,

@@ -222,16 +222,17 @@ class MessageStore {
       message.ext = ext;
     }
 
-    const myInfo =
-      this.rootStore.addressStore.appUsersInfo[this.rootStore.client.getCurrentUserId() || ''] ||
-      {};
+    const myInfo = this.rootStore.addressStore.resolveUserInfo(
+      this.rootStore.client.getCurrentUserId() || '',
+    );
     if (conversationType === 'chatRoom') {
       message.ext = {
         ...message.ext,
         chatroom_uikit_userInfo: {
           userId: myInfo?.userId,
           nickname: myInfo?.nickname,
-          avatarURL: myInfo?.avatarurl,
+          avatarUrl: myInfo?.avatarUrl,
+          avatarURL: myInfo?.avatarUrl || myInfo?.avatarurl,
           gender: Number(myInfo?.gender),
           identify: myInfo?.ext?.identify,
         },
@@ -241,7 +242,8 @@ class MessageStore {
         ...message.ext,
         ease_chat_uikit_user_info: {
           nickname: myInfo?.nickname,
-          avatarURL: myInfo?.avatarurl,
+          avatarUrl: myInfo?.avatarUrl,
+          avatarURL: myInfo?.avatarUrl || myInfo?.avatarurl,
         },
       };
     }

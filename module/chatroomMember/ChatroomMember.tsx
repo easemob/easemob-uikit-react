@@ -228,7 +228,7 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
                       data={{
                         userId: item.userId,
                         nickname: item.nickname,
-                        avatarUrl: item.avatarurl,
+                        avatarUrl: item.avatarUrl || item.avatarurl,
                         description: owner == item.userId ? (t('owner') as string) : '',
                       }}
                       moreAction={
@@ -267,14 +267,15 @@ const ChatroomMember = (props: ChatroomMemberProps) => {
         </div>
 
         {muteDataToRender?.map(userId => {
+          const userInfo = addressStore.resolveUserInfo(userId);
           return (
             <UserItem
               key={userId}
               moreAction={mutedMoreAction}
               data={{
                 userId: userId,
-                nickname: appUsersInfo[userId]?.nickname,
-                avatarUrl: appUsersInfo[userId]?.avatarurl,
+                nickname: userInfo.nickname,
+                avatarUrl: userInfo.avatarUrl,
               }}
             />
           );

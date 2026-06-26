@@ -116,9 +116,6 @@ let MessageList: FC<MsgListProps> = props => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('messageList', customizePrefixCls);
   const classString = classNames(prefixCls, className);
-  const context = useContext(RootContext);
-  const { initConfig } = context;
-  const { useUserInfo } = initConfig;
   const currentUserId = getCurrentUserId(rootStore.client);
   const msgContainerRef = useRef<HTMLDivElement>(null);
   const memoProps = React.useMemo(() => {
@@ -402,7 +399,7 @@ let MessageList: FC<MsgListProps> = props => {
         if (!currentCVS.conversationId) return;
         const { getGroupMemberList } = useGroupMembers(
           currentCVS.conversationId,
-          useUserInfo ?? true,
+          rootStore.shouldAutoFetchUserInfo(),
         );
         const { getGroupAdmins } = useGroupAdmins(currentCVS.conversationId);
         getGroupAdmins();

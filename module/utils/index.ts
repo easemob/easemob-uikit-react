@@ -96,63 +96,40 @@ export const renderHtml = (txt: string): string => {
   return rnTxt;
 };
 
-export function getUsersInfo(props: { userIdList: string[]; withPresence?: boolean }) {
-  const { userIdList, withPresence = true } = props;
+export function getUsersInfo(props: {
+  userIdList: string[];
+  withPresence?: boolean;
+  force?: boolean;
+}) {
+  const { userIdList, withPresence = true, force = false } = props;
   const { client, addressStore, conversationStore } = getStore();
   const currentUserId = getCurrentUserId(client);
   if (!currentUserId) return Promise.reject('client is not initialized');
-  const findIndex = userIdList.indexOf(currentUserId);
-  const subList = [...userIdList];
-  const result = {};
-  if (findIndex > -1) {
-    subList.splice(findIndex, 1);
-  }
-  if (subList.length > 0 && withPresence) {
-    client.presenceManager.subscribePresence({ userIds: subList, expiry: 2592000 }).catch(err => {
-      console.warn('subscribePresence failed', err);
-    });
+  const normalizedUserIds = Array.from(new Set(userIdList.filter(Boolean)));
+  const requestUserIds = force
+    ? normalizedUserIds
+    : normalizedUserIds.filter(userId => !addressStore.hasUserInfo(userId));
+  const presenceUserIds = normalizedUserIds.filter(userId => userId !== currentUserId);
+  if (presenceUserIds.length > 0 && withPresence) {
+    client.presenceManager
+      .subscribePresence({ userIds: presenceUserIds, expiry: 2592000 })
+      .catch(err => {
+        console.warn('subscribePresence failed', err);
+      });
   }
 
   return new Promise((resolve, reject) => {
-    const type = [
-      'nickname',
-      'avatarUrl',
-      'mail',
-      'phone',
-      'gender',
-      'sign',
-      'birth',
-      'ext',
-    ] as ChatSDK.UserInfoAttribute[];
-    const reUserInfo: Record<string, AppUserInfo> = {};
-    userIdList.forEach(item => {
-      reUserInfo[item] = {
-        userId: item,
-        isOnline: false,
-      };
-    });
-    if (userIdList.length === 0) {
-      resolve(Object.assign({}, reUserInfo));
-    } else {
-      client.userInfoManager
-        .getUserInfoByAttribute({ userIds: userIdList, attributes: type })
+    if (requestUserIds.length === 0) {
+      resolve({});
+      return;
+    }
+    if (rootStore.userInfoProvider) {
+      Promise.resolve(rootStore.userInfoProvider(requestUserIds))
         .then(res => {
-          res.forEach(item => {
-            const userInfo = reUserInfo[item.userId];
-            if (userInfo) {
-              userInfo.nickname = item.nickname || '';
-              userInfo.avatarurl = item.avatarUrl || '';
-              userInfo.mail = item.mail || '';
-              userInfo.phone = item.phone || '';
-              userInfo.gender = String(item.gender || '');
-              userInfo.sign = item.sign || '';
-              userInfo.birth = item.birth || '';
-              userInfo.ext = item.ext ? JSON.parse(item.ext) : '';
-            }
-          });
+          const reUserInfo = addressStore.normalizeAppUsersInfo(res);
           if (withPresence) {
             client.presenceManager
-              .getPresenceStatus({ userIds: userIdList })
+              .getPresenceStatus({ userIds: normalizedUserIds })
               .then(res => {
                 res.forEach(item => {
                   if (reUserInfo[item.publisher]) {
@@ -166,24 +143,90 @@ export function getUsersInfo(props: { userIdList: string[]; withPresence?: boole
                   }
                 });
                 conversationStore.setOnlineStatus(res);
-                const list = addressStore.appUsersInfo;
-                addressStore.setAppUserInfo(Object.assign({}, reUserInfo, list));
-                resolve(Object.assign({}, result, reUserInfo));
+                addressStore.mergeAppUserInfo(reUserInfo);
+                resolve(reUserInfo);
               })
               .catch(e => {
                 reject(e);
               });
-          } else {
-            const list = addressStore.appUsersInfo;
-            // 如果 appUserInfo 里已经有了 就不更新，（否则使用消息里携带的信息更细的appUserInfo，如果没有设置用户属性，在这里会清掉appUserInfo的信息）
-            addressStore.setAppUserInfo(Object.assign({}, reUserInfo, list));
-            resolve(Object.assign({}, result, reUserInfo));
+            return;
           }
+          addressStore.mergeAppUserInfo(reUserInfo);
+          resolve(reUserInfo);
         })
         .catch(e => {
           reject(e);
         });
+      return;
     }
+    if (rootStore.initConfig.useUserInfo === false) {
+      resolve({});
+      return;
+    }
+    const type = [
+      'nickname',
+      'avatarUrl',
+      'mail',
+      'phone',
+      'gender',
+      'sign',
+      'birth',
+      'ext',
+    ] as ChatSDK.UserInfoAttribute[];
+    const reUserInfo: Record<string, AppUserInfo> = {};
+    requestUserIds.forEach(item => {
+      reUserInfo[item] = {
+        userId: item,
+        isOnline: false,
+      };
+    });
+    client.userInfoManager
+      .getUserInfoByAttribute({ userIds: requestUserIds, attributes: type })
+      .then(res => {
+        res.forEach(item => {
+          const userInfo = reUserInfo[item.userId];
+          if (userInfo) {
+            userInfo.nickname = item.nickname || '';
+            userInfo.avatarUrl = item.avatarUrl || '';
+            userInfo.avatarurl = item.avatarUrl || '';
+            userInfo.mail = item.mail || '';
+            userInfo.phone = item.phone || '';
+            userInfo.gender = String(item.gender || '');
+            userInfo.sign = item.sign || '';
+            userInfo.birth = item.birth || '';
+            userInfo.ext = item.ext ? JSON.parse(item.ext) : '';
+          }
+        });
+        if (withPresence) {
+          client.presenceManager
+            .getPresenceStatus({ userIds: normalizedUserIds })
+            .then(res => {
+              res.forEach(item => {
+                if (reUserInfo[item.publisher]) {
+                  reUserInfo[item.publisher].presenceExt = item.ext;
+                  if (
+                    Object.prototype.toString.call(item.statusList) === '[object Object]' &&
+                    Object.values(item.statusList).indexOf(1) > -1
+                  ) {
+                    reUserInfo[item.publisher].isOnline = true;
+                  }
+                }
+              });
+              conversationStore.setOnlineStatus(res);
+              addressStore.mergeAppUserInfo(reUserInfo);
+              resolve(reUserInfo);
+            })
+            .catch(e => {
+              reject(e);
+            });
+        } else {
+          addressStore.mergeAppUserInfo(reUserInfo);
+          resolve(reUserInfo);
+        }
+      })
+      .catch(e => {
+        reject(e);
+      });
   });
 }
 
@@ -206,13 +249,15 @@ export function getGroupMemberIndexByUserId(group: GroupItem, userId: string) {
 }
 
 export function getGroupMemberNickName(member: MemberItem) {
-  const { appUsersInfo } = rootStore.addressStore;
-  return member.attributes?.nickName || appUsersInfo?.[member.userId]?.nickname || member.userId;
+  return (
+    member.attributes?.nickName ||
+    rootStore.addressStore.resolveUserInfo(member.userId).nickname ||
+    member.userId
+  );
 }
 
 export function getAppUserInfo(userId: string) {
-  const { appUsersInfo } = rootStore.addressStore;
-  return appUsersInfo?.[userId] || {};
+  return rootStore.addressStore.resolveUserInfo(userId);
 }
 
 export function getMessages(cvs: CurrentConversation) {

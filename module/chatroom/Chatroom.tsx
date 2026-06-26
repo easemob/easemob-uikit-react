@@ -99,11 +99,12 @@ let Chatroom = (props: ChatroomProps) => {
     });
 
   const sendJoinedNoticeMessage = () => {
-    const myInfo = rootStore.addressStore.appUsersInfo[currentUserId] || {};
+    const myInfo = rootStore.addressStore.resolveUserInfo(currentUserId);
     const chatroom_uikit_userInfo = {
       userId: myInfo?.userId,
       nickname: myInfo?.nickname,
-      avatarURL: myInfo?.avatarurl,
+      avatarUrl: myInfo?.avatarUrl,
+      avatarURL: myInfo?.avatarUrl || myInfo?.avatarurl,
       gender: Number(myInfo?.gender),
       identify: myInfo?.ext?.identify,
     };
@@ -243,6 +244,7 @@ let Chatroom = (props: ChatroomProps) => {
   const chatroomData =
     rootStore.addressStore.chatroom.filter(item => item.id === chatroomId)[0] || {};
   const appUsersInfo = rootStore.addressStore.appUsersInfo;
+  const ownerInfo = rootStore.addressStore.resolveUserInfo(chatroomData.owner);
   const broadcast = rootStore.messageStore.message.broadcast;
   // 使用 useMemo 创建默认的聊天室消息渲染器
   const defaultChatroomRenderers = useMemo<{
@@ -317,9 +319,9 @@ let Chatroom = (props: ChatroomProps) => {
             renderHeader(chatroomData)
           ) : (
             <Header
-              avatarSrc={appUsersInfo[chatroomData.owner]?.avatarurl}
+              avatarSrc={ownerInfo.avatarUrl}
               content={chatroomData.name || chatroomId}
-              subtitle={appUsersInfo[chatroomData.owner]?.nickname || chatroomData.owner}
+              subtitle={ownerInfo.nickname || chatroomData.owner}
               suffixIcon={
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <Icon

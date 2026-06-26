@@ -5,12 +5,11 @@ import { ConfigContext } from '../../component/config/index';
 import Avatar from '../../component/avatar';
 import { getStore } from '../store/index';
 import { observer } from 'mobx-react-lite';
-import { getCurrentUserId, getUsersInfo } from '../utils/index';
+import { getCurrentUserId } from '../utils/index';
 import Button from '../../component/button';
 import Icon from '../../component/icon';
 import rootStore from '../store/index';
 import { useTranslation } from 'react-i18next';
-import { RootContext } from '../store/rootContext';
 export interface UserProfileProps {
   prefix?: string;
   className?: string;
@@ -24,17 +23,12 @@ const UserProfile = (props: UserProfileProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('user-profile', customizePrefixCls);
   const classString = classNames(prefixCls, className);
-  const { avatarurl, nickname, isOnline } = addressStore.appUsersInfo?.[userId] || {};
+  const { avatarUrl, nickname, isOnline } = addressStore.resolveUserInfo(userId);
   const { t } = useTranslation();
   const { conversationStore } = rootStore;
-  const context = React.useContext(RootContext);
-  const { initConfig } = context;
-  const { useUserInfo } = initConfig;
   useEffect(() => {
-    if (!addressStore.appUsersInfo?.[userId] && useUserInfo) {
-      getUsersInfo({
-        userIdList: [userId],
-      }).catch(err => {
+    if (!addressStore.hasUserInfo(userId) && rootStore.shouldAutoFetchUserInfo()) {
+      addressStore.ensureUserInfos([userId]).catch(err => {
         console.warn('get getUsersInfo failed', err);
       });
     }
@@ -71,7 +65,7 @@ const UserProfile = (props: UserProfileProps) => {
   const [disabled, setDisabled] = useState(false);
   return (
     <div className={classString} style={style}>
-      <Avatar size={80} isOnline={isOnline} src={avatarurl}>
+      <Avatar size={80} isOnline={isOnline} src={avatarUrl}>
         {userId}
       </Avatar>
       <div className={`${prefixCls}-nick`}>{nickname}</div>

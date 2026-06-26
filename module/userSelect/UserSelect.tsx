@@ -98,7 +98,7 @@ const UserSelect: React.FC<UserSelectProps> = props => {
       remark?: string;
       avatarUrl?: string;
     }) => {
-      item.avatarUrl = addressStore.appUsersInfo[item.userId]?.avatarurl;
+      item.avatarUrl = addressStore.resolveUserInfo(item.userId).avatarUrl;
     },
   );
 
@@ -274,13 +274,13 @@ const UserSelect: React.FC<UserSelectProps> = props => {
                   handleSelect(false, {
                     userId: data.id,
                     nickname: data.name,
-                    avatarUrl: addressStore.appUsersInfo[data.id]?.avatarurl,
+                    avatarUrl: addressStore.resolveUserInfo(data.id).avatarUrl,
                   });
                 } else {
                   handleSelect(true, {
                     userId: data.id,
                     nickname: data.name,
-                    avatarUrl: addressStore.appUsersInfo[data.id]?.avatarurl,
+                    avatarUrl: addressStore.resolveUserInfo(data.id).avatarUrl,
                   });
                 }
               }}

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useContext, useState } from 'react';
 import { RootContext } from '../store/rootContext';
 import { getStore } from '../store/index';
 import { getGroupItemFromGroupsById } from '../../module/utils';
-import { getUsersInfo } from '../utils';
 import { eventHandler } from '../../eventHandler';
 const useContacts = () => {
   const rootStore = useContext(RootContext).rootStore;
@@ -43,32 +42,25 @@ const useUserInfo = (
   useEffect(() => {
     if (!userList) return;
     if (!rootStore.loginState) return;
-    const keys = Object.keys(rootStore.addressStore.appUsersInfo);
     const cvsUserIds = rootStore.conversationStore.conversationList
-      .filter(item => item.chatType === 'singleChat' && !keys.includes(item.conversationId))
+      .filter(item => item.chatType === 'singleChat')
       .map(cvs => cvs.conversationId);
-    const contactsUserIds = rootStore.addressStore.contacts
-      .filter(item => {
-        return !keys.includes(item.userId);
-      })
-      .map(item => item.userId);
-    const blockListUserIds = rootStore.addressStore.blockList.filter(item => !keys.includes(item));
+    const contactsUserIds = rootStore.addressStore.contacts.map(item => item.userId);
+    const blockListUserIds = rootStore.addressStore.blockList;
 
     if (userList === 'blocklist') {
-      getUsersInfo({
-        userIdList: blockListUserIds,
-        withPresence: false,
-      }).catch(err => {
-        console.warn('get getUsersInfo failed', err);
-      });
+      rootStore.addressStore
+        .ensureUserInfos(blockListUserIds, { withPresence: false })
+        .catch(err => {
+          console.warn('get getUsersInfo failed', err);
+        });
       return;
     }
-    getUsersInfo({
-      userIdList: userList == 'conversation' ? cvsUserIds : contactsUserIds,
-      withPresence,
-    }).catch(err => {
-      console.warn('get getUsersInfo failed', err);
-    });
+    rootStore.addressStore
+      .ensureUserInfos(userList == 'conversation' ? cvsUserIds : contactsUserIds, { withPresence })
+      .catch(err => {
+        console.warn('get getUsersInfo failed', err);
+      });
   }, [
     rootStore.conversationStore.conversationList.length,
     rootStore.addressStore.contacts.length,
@@ -131,13 +123,7 @@ const useGroupMembers = (groupId: string, withUserInfo: boolean) => {
 
         userIds.length && useGroupMembersAttributes(groupId, userIds).getMemberAttributes();
         if (withUserInfo == true) {
-          // appUsersInfo 里面有的用户信息不再去获取
-          const keys = Object.keys(addressStore.appUsersInfo);
-          userIds = userIds.filter(item => !keys.includes(item));
-          getUsersInfo({
-            userIdList: userIds,
-            withPresence: false,
-          }).catch(err => {
+          addressStore.ensureUserInfos(userIds, { withPresence: false }).catch(err => {
             console.warn('get getUsersInfo failed', err);
           });
         }

@@ -70,8 +70,8 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
     className,
   );
   const { addressStore, conversationStore } = rootStore;
-  const userInfo = addressStore.appUsersInfo[id];
-  let avatarUrl = userInfo?.avatarurl;
+  const userInfo = addressStore.resolveUserInfo(id);
+  let avatarUrl = userInfo.avatarUrl;
   let contactData: any;
 
   if (data.type === 'contact' || data.type === 'request') {
@@ -172,8 +172,8 @@ export const ContactDetail: React.FC<ContactDetailProps> = (props: ContactDetail
                     !id.includes('chatbot'),
                   icon:
                     presenceMap?.[
-                      rootStore.addressStore.appUsersInfo[id]?.isOnline
-                        ? rootStore.addressStore.appUsersInfo[id]?.presenceExt ?? 'Online'
+                      rootStore.addressStore.resolveUserInfo(id).isOnline
+                        ? rootStore.addressStore.resolveUserInfo(id).presenceExt ?? 'Online'
                         : 'Offline'
                     ] || presenceMap?.Custom,
                 }}

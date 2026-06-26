@@ -77,14 +77,13 @@ const ReactionButton = (props: ReactionButtonProps) => {
     return (
       <ul className={`${prefixCls}-userList`}>
         {userList.map(userId => {
+          const userInfo = rootStore.addressStore.resolveUserInfo(userId);
           return (
             <li key={userId} className={themeMode == 'dark' ? 'cui-li-dark' : ''}>
-              <Avatar src={appUsersInfo[userId]?.avatarurl} size={24}>
-                {appUsersInfo[userId]?.nickname || userId}
+              <Avatar src={userInfo.avatarUrl} size={24}>
+                {userInfo.nickname || userId}
               </Avatar>
-              <span className={`${prefixCls}-userList-name`}>
-                {appUsersInfo[userId]?.nickname || userId}
-              </span>
+              <span className={`${prefixCls}-userList-name`}>{userInfo.nickname || userId}</span>
               {myUserId == userId && (
                 <Icon
                   type="CROSS"

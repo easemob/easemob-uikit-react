@@ -164,7 +164,7 @@ const SuggestList: FC<SuggestListProps> = props => {
                   onClick={isSafariVersionGreaterThan17() ? () => {} : onClick}
                 >
                   <div className="avatar" style={{ userSelect: 'none' }}>
-                    <Avatar src={getAppUserInfo(user.userId).avatarurl} size="small">
+                    <Avatar src={getAppUserInfo(user.userId).avatarUrl} size="small">
                       {user.role === null && user.userId === AT_ALL ? (
                         <Icon
                           type="MEMBER_GROUP"

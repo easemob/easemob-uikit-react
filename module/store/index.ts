@@ -9,6 +9,7 @@ import ConversationStore, {
   ById,
 } from './ConversationStore';
 import AddressStore, { MemberRole, MemberItem, GroupItem, AppUserInfo } from './AddressStore';
+import type { AppUserInfoProvider } from './AddressStore';
 import ThreadStore, { ThreadData, CurrentThread } from './ThreadStore';
 import PinnedMessagesStore from './PinnedMessagesStore';
 import UserInfoSyncService from './UserInfoSyncService';
@@ -30,6 +31,7 @@ class RootStore {
   userInfoSyncService;
   conversationSyncService;
   client: UIKitChatClient;
+  userInfoProvider?: AppUserInfoProvider;
   loginState = false;
   initConfig: ProviderProps['initConfig'] = { appKey: '' };
   constructor() {
@@ -48,6 +50,7 @@ class RootStore {
       setClient: action,
       initConfig: observable,
       setInitConfig: action,
+      setUserInfoProvider: action,
       clear: action,
     });
   }
@@ -62,6 +65,14 @@ class RootStore {
 
   setInitConfig(initConfig: InitConfig) {
     this.initConfig = initConfig;
+  }
+
+  setUserInfoProvider(userInfoProvider?: AppUserInfoProvider) {
+    this.userInfoProvider = userInfoProvider;
+  }
+
+  shouldAutoFetchUserInfo() {
+    return this.initConfig.useUserInfo !== false || Boolean(this.userInfoProvider);
   }
   clear() {
     this.messageStore.clear();

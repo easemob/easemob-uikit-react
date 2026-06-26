@@ -46,8 +46,9 @@ let Typing = (props: TypingProps) => {
       hide();
     }
   }, [visibleOut]);
-  const avatarUrl = rootStore.addressStore.appUsersInfo[conversation.conversationId]?.avatarurl;
-  const nickName = rootStore.addressStore.appUsersInfo[conversation.conversationId]?.nickname;
+  const userInfo = rootStore.addressStore.resolveUserInfo(conversation.conversationId);
+  const avatarUrl = userInfo.avatarUrl;
+  const nickName = userInfo.nickname;
   return (
     <div className={classString} style={{ ...style, display: visible ? 'flex' : 'none' }}>
       <Avatar size={16} src={avatarUrl} style={{ fontSize: '12px' }}>

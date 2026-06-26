@@ -56,7 +56,6 @@ const Blocklist = (props: BlocklistProps) => {
 
   useUserInfo('blocklist');
 
-  const appUsersInfo = rootStore.addressStore.appUsersInfo;
   return (
     <div className={classString} style={{ ...style }}>
       {renderHeader ? (
@@ -75,30 +74,34 @@ const Blocklist = (props: BlocklistProps) => {
         ) : null}
         {renderItems
           ? rootStore.addressStore.blockList.map((item, index) => {
+              const userInfo = rootStore.addressStore.resolveUserInfo(item);
               const data = {
                 userId: item,
-                nickname: appUsersInfo[item]?.nickname || item,
-                avatarUrl: appUsersInfo[item]?.avatarurl,
+                nickname: userInfo.nickname || item,
+                avatarUrl: userInfo.avatarUrl,
               };
               return renderItems(data, index);
             })
-          : rootStore.addressStore.blockList.map(item => (
-              <UserItem
-                key={item}
-                data={{
-                  userId: item,
-                  nickname: appUsersInfo[item]?.nickname || item,
-                  avatarUrl: appUsersInfo[item]?.avatarurl,
-                }}
-                onClick={() => {
-                  onItemClick?.({
+          : rootStore.addressStore.blockList.map(item => {
+              const userInfo = rootStore.addressStore.resolveUserInfo(item);
+              return (
+                <UserItem
+                  key={item}
+                  data={{
                     userId: item,
-                    nickname: appUsersInfo[item]?.nickname || item,
-                    avatarUrl: appUsersInfo[item]?.avatarurl,
-                  });
-                }}
-              ></UserItem>
-            ))}
+                    nickname: userInfo.nickname || item,
+                    avatarUrl: userInfo.avatarUrl,
+                  }}
+                  onClick={() => {
+                    onItemClick?.({
+                      userId: item,
+                      nickname: userInfo.nickname || item,
+                      avatarUrl: userInfo.avatarUrl,
+                    });
+                  }}
+                ></UserItem>
+              );
+            })}
       </div>
     </div>
   );
