@@ -175,9 +175,10 @@ class ConversationStore {
   }
 
   setAtType(chatType: ChatType, cvsId: string, atType: AT_TYPE) {
-    const cvs = this.byId[makeKey(chatType, cvsId)];
+    const key = makeKey(chatType, cvsId);
+    const cvs = this.byId[key];
     if (cvs && cvs.atType !== atType) {
-      cvs.atType = atType;
+      this.byId[key] = { ...cvs, atType };
     }
   }
 
@@ -222,7 +223,7 @@ class ConversationStore {
           const key = makeKey(chatType, cvsId);
           const cvs = this.byId[key];
           if (cvs) {
-            cvs.isPinned = isPinned;
+            this.byId[key] = { ...cvs, isPinned };
             this.resortIds();
           }
         });
@@ -270,7 +271,7 @@ class ConversationStore {
     const key = makeKey(cvs.chatType, cvs.conversationId);
     const item = this.byId[key];
     if (item) {
-      item.silent = result;
+      this.byId[key] = { ...item, silent: result };
     }
   }
 
@@ -327,7 +328,8 @@ class ConversationStore {
           const key = makeKey(setting.conversationType, setting.conversationId);
           const item = this.byId[key];
           if (item) {
-            item.silent = setting.rule.remindType === 'NONE' || setting.rule.remindType === 'AT';
+            const silent = setting.rule.remindType === 'NONE' || setting.rule.remindType === 'AT';
+            this.byId[key] = { ...item, silent };
           }
         });
         eventHandler.dispatchSuccess('getSilentModeForConversations');
