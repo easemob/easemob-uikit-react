@@ -146,7 +146,8 @@ const RepliedMsg = (props: RepliedMsgProps) => {
   // 找到被引用的消息
   const cvsId = getCvsIdFromMessage(message);
   // @ts-ignore
-  const messages = rootStore.messageStore.message[message.chatType]?.[cvsId] || [];
+  const chatType = message.conversationType || (message as any).chatType;
+  const messages = (rootStore.messageStore.message as any)[chatType]?.[cvsId] || [];
 
   useEffect(() => {
     const messageType = (message as any).type || '';
