@@ -54,6 +54,7 @@ const RenderMessage = (props: {
   let content = null;
   switch (msg?.type) {
     case 'txt':
+    case 'text':
       content = (
         <TextMessage
           showAvatar={false}
@@ -76,6 +77,7 @@ const RenderMessage = (props: {
       );
       break;
     case 'img':
+    case 'image':
       content = (
         <ImageMessage
           showAvatar={false}
@@ -112,6 +114,7 @@ const RenderMessage = (props: {
       );
       break;
     case 'audio':
+    case 'voice':
       content = (
         <AudioMessage
           showAvatar={false}
