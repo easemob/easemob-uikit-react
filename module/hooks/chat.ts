@@ -169,6 +169,9 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       },
 
       onReactionChanged: (data: any) => {
+        if (!data?.reactions || !Array.isArray(data.reactions)) {
+          return;
+        }
         const conversationId = getCvsIdFromMessage(data as unknown as BaseMessageType);
 
         const cvs = {
@@ -186,6 +189,9 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       },
       onPinnedMessageChanged: (message: PinnedMessageChangedPayload) => {
         const { messageId, operation, operatorId } = message;
+        // Skip if operated by self — already handled locally in usePinnedMessage
+        const selfId = getCurrentUserId(client);
+        if (operatorId === selfId) return;
         const conversationType = message.conversationType || message.chatType || 'singleChat';
         const conversationId = message.conversationId || '';
         const time = message.pinTime || message.timestamp || Date.now();
