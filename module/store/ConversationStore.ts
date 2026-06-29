@@ -99,7 +99,7 @@ class ConversationStore {
     const key = makeKey(currentCvs.chatType, currentCvs.conversationId);
     const cvs = this.byId[key];
     if (cvs && cvs.unreadCount > 0) {
-      cvs.unreadCount = 0;
+      this.byId[key] = { ...cvs, unreadCount: 0 };
       this.rootStore.messageStore.sendChannelAck(currentCvs);
     }
   };
