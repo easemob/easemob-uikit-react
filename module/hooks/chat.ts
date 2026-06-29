@@ -33,7 +33,6 @@ const useEventHandler = (props: ProviderProps, client: any) => {
   const { initConfig, features } = props;
   const rootStore = getStore();
   const { messageStore, threadStore, conversationStore, addressStore } = rootStore;
-  const currentUserId = getCurrentUserId(client);
 
   useEffect(() => {
     client?.addEventHandler?.('UIKitMessage', {
@@ -381,7 +380,7 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       },
       onChatThreadUserRemoved: (message: any) => {
         if (
-          message.memberId === currentUserId &&
+          message.memberId === getCurrentUserId(client) &&
           threadStore.currentThread?.info?.id === message.chatThreadId
         ) {
           threadStore.setThreadVisible(false);
@@ -473,7 +472,7 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       '__chatroom:onMuteListAdded': (message: any) => {
         const chatRoomId = message?.chatRoomId;
         const userIds = message?.userIds || [];
-        if (chatRoomId && userIds.includes(currentUserId)) {
+        if (chatRoomId && userIds.includes(getCurrentUserId(client))) {
           addressStore.chatroom.forEach(item => {
             if (item.id === chatRoomId) {
               (item as any).muted = true;
@@ -484,7 +483,7 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       '__chatroom:onMuteListRemoved': (message: any) => {
         const chatRoomId = message?.chatRoomId;
         const userIds = message?.userIds || [];
-        if (chatRoomId && userIds.includes(currentUserId)) {
+        if (chatRoomId && userIds.includes(getCurrentUserId(client))) {
           addressStore.chatroom.forEach(item => {
             if (item.id === chatRoomId) {
               (item as any).muted = false;
