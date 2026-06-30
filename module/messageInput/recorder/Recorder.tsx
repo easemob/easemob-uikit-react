@@ -184,8 +184,8 @@ const Recorder = React.forwardRef<RecorderRef, RecorderProps>((props: RecorderPr
           filetype: voiceFile.type,
           duration: voiceDuration,
           fileLength: voiceFile.size,
+          isChatThread,
         });
-        if (isChatThread) (message as any).isChatThread = true;
         _sendMessage(message);
       });
     }

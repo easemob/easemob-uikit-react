@@ -116,8 +116,8 @@ let MoreAction = (props: MoreActionProps) => {
         ...route,
         event: body.event,
         params: body.params,
+        isChatThread,
       });
-      if (isChatThread) (customMessage as any).isChatThread = true;
       messageStore.sendMessage(customMessage);
     });
   };
@@ -249,8 +249,8 @@ let MoreAction = (props: MoreActionProps) => {
         const imageMessage = client.chatManager.createImageMessage({
           ...route,
           ...option,
+          isChatThread,
         });
-        if (isChatThread) (imageMessage as any).isChatThread = true;
         messageStore.sendMessage(imageMessage);
       });
       imageEl!.current!.value = '';
@@ -291,12 +291,13 @@ let MoreAction = (props: MoreActionProps) => {
               ...route,
               ...option,
               duration: 0,
+              isChatThread,
             })
           : client.chatManager.createFileMessage({
               ...route,
               ...option,
+              isChatThread,
             });
-      if (isChatThread) (fileMessage as any).isChatThread = true;
       messageStore.sendMessage(fileMessage);
     });
     if (type === 'file') {

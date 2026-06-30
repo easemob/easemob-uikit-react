@@ -216,8 +216,8 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
         ...route,
         content: textValue,
         ext,
+        isChatThread,
       });
-      if (isChatThread) (message as any).isChatThread = true;
       _sendMessage(message);
     });
   };
