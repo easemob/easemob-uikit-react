@@ -274,7 +274,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
 
             <div className={`${prefixCls}-header-id`}>
               <div>{t('group')} ID:</div>
-              {infoData?.id}
+              {infoData?.groupId || infoData?.id}
               <Icon type="DOC_ON_DOC" style={{ cursor: 'copy' }} onClick={handleCopy}></Icon>
             </div>
             <div className={`${prefixCls}-header-description`}>{infoData?.description}</div>

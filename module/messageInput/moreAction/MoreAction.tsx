@@ -117,6 +117,7 @@ let MoreAction = (props: MoreActionProps) => {
         event: body.event,
         params: body.params,
       });
+      if (isChatThread) (customMessage as any).isChatThread = true;
       messageStore.sendMessage(customMessage);
     });
   };
@@ -249,6 +250,7 @@ let MoreAction = (props: MoreActionProps) => {
           ...route,
           ...option,
         });
+        if (isChatThread) (imageMessage as any).isChatThread = true;
         messageStore.sendMessage(imageMessage);
       });
       imageEl!.current!.value = '';
@@ -294,6 +296,7 @@ let MoreAction = (props: MoreActionProps) => {
               ...route,
               ...option,
             });
+      if (isChatThread) (fileMessage as any).isChatThread = true;
       messageStore.sendMessage(fileMessage);
     });
     if (type === 'file') {

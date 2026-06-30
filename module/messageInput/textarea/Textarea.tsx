@@ -217,6 +217,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
         content: textValue,
         ext,
       });
+      if (isChatThread) (message as any).isChatThread = true;
       _sendMessage(message);
     });
   };
