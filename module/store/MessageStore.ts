@@ -283,6 +283,9 @@ class MessageStore {
           }
           this.message[conversationType][conversationId] = list;
 
+          // Don't create conversation for thread messages
+          if ((message as any).isChatThread) return;
+
           let cvs = this.rootStore.conversationStore.getConversation(
             conversationType,
             conversationId,
