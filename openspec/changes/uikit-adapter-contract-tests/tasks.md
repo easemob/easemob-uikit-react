@@ -17,4 +17,4 @@
 ## Follow-ups
 
 - [x] Add a dedicated validation entry such as `validate:adapter` once the contract-test surface expands beyond this first wave.
-- [ ] Extend contract coverage into pinned/replied message behavior and broader SDK event handling boundaries.
+- [x] Extend contract coverage into pinned/replied message behavior and broader SDK event handling boundaries.

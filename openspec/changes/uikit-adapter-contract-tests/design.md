@@ -9,6 +9,7 @@ The immediate need is not a full test architecture rewrite. It is a narrow, dura
 **Goals:**
 - Add focused Vitest coverage for normalized adapter helpers under `module/utils/`.
 - Add focused tests for `ConversationSyncService` behavior using lightweight store/client fakes.
+- Add focused tests for pinned-message store mutations and pinned SDK event handling boundaries.
 - Lock down the preview-derivation behavior introduced by the new message preview helper.
 - Keep the suite fast and low-maintenance so it can run in normal validation flows later.
 
@@ -44,6 +45,14 @@ Rationale: the service logic is small, and lightweight fakes are easier to reaso
 
 Alternative considered: instantiate the full root store and mock broad SDK state. Rejected because it increases setup cost and obscures the behavior being validated.
 
+### Extend coverage through narrow pinned-message boundaries instead of UI rendering
+
+Pinned-message follow-up coverage should target `PinnedMessagesStore` mutations and the pinned branches inside `useEventHandler`, using lightweight fake stores and a minimal hook harness.
+
+Rationale: these surfaces are shared behavior boundaries that carry more regression risk than a first-pass UI render test, while still staying cheap to maintain.
+
+Alternative considered: start with replied-message or pinned-message component rendering. Rejected because those paths add more DOM and provider setup without protecting as much cross-module behavior per test.
+
 ## Risks / Trade-offs
 
 - [Tests mirror current fallback behavior that may later need deliberate change] -> Mitigation: treat these as contract tests and update them only when the intended compatibility contract changes.
@@ -54,11 +63,11 @@ Alternative considered: instantiate the full root store and mock broad SDK state
 
 1. Add adapter helper contract tests for message, conversation, and thread normalization helpers.
 2. Add `ConversationSyncService` tests covering new conversation creation, unread changes, and `@mention` state logic.
-3. Run focused validation and keep the suite ready to expand in later changes.
+3. Extend coverage into pinned-message store behavior and pinned SDK event handling boundaries.
+4. Run focused validation and keep the suite ready to expand in later changes.
 
 Rollback is straightforward: the tests can be removed without changing runtime behavior if they prove too noisy, though that would reopen the regression gap this change is meant to close.
 
 ## Open Questions
 
-- Should a later wave promote these adapter contract tests into a dedicated `validate:adapter` script?
-- Which next shared boundary should receive similar tests after this wave: pinned/replied message logic, provider normalization, or SDK event handling?
+- Which next shared boundary should receive similar tests after this wave: replied-message rendering behavior, provider normalization, or additional SDK event handling?

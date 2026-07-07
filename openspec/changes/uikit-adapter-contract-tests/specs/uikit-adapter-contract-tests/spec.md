@@ -20,3 +20,10 @@ The first contract-test wave SHALL stay focused on reusable adapter and sync bou
 #### Scenario: Test scope is limited to adapter and sync contracts
 - **WHEN** the first adapter contract-test suite is introduced
 - **THEN** it covers reusable helper and sync behavior with lightweight fakes, while broader UI snapshots and end-to-end workflows remain follow-up work
+
+### Requirement: UIKit SHALL provide contract tests for pinned-message boundary behavior
+The UIKit SHALL verify pinned-message state updates and pinned SDK event handling through automated tests so store or hook refactors do not silently change pin/unpin behavior.
+
+#### Scenario: Pinned store and event boundaries are verified
+- **WHEN** pinned-message contract tests run against lightweight store and client fakes
+- **THEN** the tests assert pinned summary replacement, chatroom pin clearing rules, notice-message appends, remote pin skip behavior for self-operators, and remote pin/unpin event handling at the `useEventHandler` boundary
