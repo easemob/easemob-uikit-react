@@ -15,7 +15,7 @@ import { renderHtml, formatHtmlString } from '../../utils';
 import Icon from '../../../component/icon';
 import { RootContext } from '../../store/rootContext';
 import SuggestList from '../suggestList';
-import { AT_ALL } from '../suggestList/SuggestList';
+import { AT_ALL } from '../constants';
 import { getRangeRect, showAt, getAtUser, replaceAtUser } from '../suggestList/utils';
 import './style/style.scss';
 import { MemberItem } from '../../store/AddressStore';

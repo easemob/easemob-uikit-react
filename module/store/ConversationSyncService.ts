@@ -6,9 +6,9 @@ import {
   getConversationChatType,
   getConversationId,
   getConversationLastMessageTime,
-  isMessageFromCurrentUser,
-} from '../utils';
-import { AT_ALL } from '../messageInput/suggestList/SuggestList';
+} from '../utils/conversation';
+import { isMessageFromCurrentUser } from '../utils/message';
+import { AT_ALL } from '../messageInput/constants';
 
 class ConversationSyncService {
   private rootStore: RootStore;

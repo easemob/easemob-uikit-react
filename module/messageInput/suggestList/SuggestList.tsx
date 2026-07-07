@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { observer } from 'mobx-react-lite';
 import Icon from '../../../component/icon';
 import { RootContext } from '../../store/rootContext';
-export const AT_ALL = 'ALL';
+import { AT_ALL } from '../constants';
 import { isSafariVersionGreaterThan17 } from './utils';
 
 const searchUser = (memberList: MemberItem[], queryString?: string) => {
