@@ -6,14 +6,21 @@ import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import Badge from '../../component/badge';
 import {
+  getConversationId,
+  getConversationLastMessage,
+  getConversationLastMessageTime,
+  getConversationName,
+  getConversationUnreadCount,
   getConversationTime,
   getCurrentUserId,
   getCustomEvent,
-  getMessageTime,
+  getMessageType,
   getTextContent,
+  isConversationPinned,
+  isConversationSilent,
 } from '../utils/index';
 import type { ConversationData } from './ConversationList';
-import { RenderFunction, Tooltip } from '../../component/tooltip/Tooltip';
+import { Tooltip } from '../../component/tooltip/Tooltip';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import { renderTxt } from '../textMessage/TextMessage';
@@ -24,7 +31,6 @@ import {
   getGroupMemberIndexByUserId,
   getGroupItemFromGroupsById,
   getGroupMemberNickName,
-  getMsgSenderNickname,
 } from '../utils/index';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
 import Ripple from '../../component/ripple/Ripple';
@@ -92,7 +98,6 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const prefixCls = getPrefixCls('conversationItem', customizePrefixCls);
   const [showMore, setShowMore] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-  const [active, setActive] = useState(isActive);
   const context = useContext(RootContext);
   const { rootStore, theme } = context;
   const isMobile = useIsMobile();
@@ -103,13 +108,19 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   const themeRipple = theme?.ripple;
   const cvsStore = rootStore.conversationStore;
   const currentUserId = getCurrentUserId(rootStore.client);
+  const lastMessage = getConversationLastMessage(data);
+  const conversationId = getConversationId(data);
+  const conversationName = getConversationName(data) || conversationId;
+  const isPinned = isConversationPinned(data);
+  const isSilent = isConversationSilent(data);
+  const unreadCount = getConversationUnreadCount(data);
 
   const classString = classNames(
     prefixCls,
     {
       [`${prefixCls}-selected`]: !!isActive,
       [`${prefixCls}-${themeMode}`]: !!themeMode,
-      [`${prefixCls}-sticky`]: data.isPinned,
+      [`${prefixCls}-sticky`]: isPinned,
     },
     className,
   );
@@ -131,7 +142,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       longPressTriggeredRef.current = false;
       return;
     }
-    rootStore?.conversationStore.setAtType(data.chatType, data.conversationId, 'NONE');
+    rootStore?.conversationStore.setAtType(data.chatType, conversationId, 'NONE');
     onClick && onClick(e);
   };
 
@@ -187,7 +198,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
 
     rootStore.client.chatManager
       .deleteConversation({
-        conversationId: data.conversationId,
+        conversationId,
         conversationType: data.chatType,
         deleteRoamingMessages: true,
       })
@@ -202,25 +213,21 @@ let ConversationItem: FC<ConversationItemProps> = props => {
 
   const pinCvs: MouseEventHandler<HTMLLIElement> = e => {
     e.stopPropagation();
-    rootStore?.conversationStore.pinConversation(
-      data.chatType,
-      data.conversationId,
-      !data.isPinned,
-    );
+    rootStore?.conversationStore.pinConversation(data.chatType, conversationId, !isPinned);
     setIsPopoverOpen(false);
   };
 
   const setSilent = (e: React.MouseEvent<HTMLLIElement, MouseEvent>) => {
     e.stopPropagation();
-    if (data.silent) {
+    if (isSilent) {
       rootStore?.conversationStore.clearRemindTypeForConversation({
         chatType: data.chatType,
-        conversationId: data.conversationId,
+        conversationId,
       });
     } else {
       rootStore?.conversationStore.setSilentModeForConversation({
         chatType: data.chatType,
-        conversationId: data.conversationId,
+        conversationId,
       });
     }
     setIsPopoverOpen(false);
@@ -248,8 +255,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
           } else if (item.content === 'PIN') {
             return (
               <li key={index} onClick={pinCvs} className={themeMode == 'dark' ? 'cui-li-dark' : ''}>
-                <Icon type={data.isPinned ? 'ARROW_LINE' : 'LINE_ARROW'}></Icon>
-                {data.isPinned ? t('unSticky') : t('sticky')}
+                <Icon type={isPinned ? 'ARROW_LINE' : 'LINE_ARROW'}></Icon>
+                {isPinned ? t('unSticky') : t('sticky')}
               </li>
             );
           } else if (item.content === 'SILENT') {
@@ -259,8 +266,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
                 onClick={setSilent}
                 className={themeMode == 'dark' ? 'cui-li-dark' : ''}
               >
-                <Icon type={data.silent ? 'BELL_SLASH' : 'BELL'}></Icon>
-                {data.silent ? t('unmuteNotification') : t('muteNotification')}
+                <Icon type={isSilent ? 'BELL_SLASH' : 'BELL'}></Icon>
+                {isSilent ? t('unmuteNotification') : t('muteNotification')}
               </li>
             );
           }
@@ -283,14 +290,14 @@ let ConversationItem: FC<ConversationItemProps> = props => {
 
   let lastMsg: ReactNode | ReactNode[] = '';
 
-  switch (data.lastMessage?.type) {
+  switch (getMessageType(lastMessage)) {
     case 'txt':
     case 'text':
-      if (getTextContent(data.lastMessage) == 'the combine message') {
+      if (getTextContent(lastMessage) == 'the combine message') {
         lastMsg = `/${t('chatHistory')}/`;
       } else {
         // 仅渲染文本，不解析链接点击
-        lastMsg = renderTxt(getTextContent(data.lastMessage), false, () => {});
+        lastMsg = renderTxt(getTextContent(lastMessage), false, () => {});
       }
       break;
     case 'img':
@@ -308,7 +315,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       lastMsg = `[${t('video')}]`;
       break;
     case 'custom':
-      if (getCustomEvent(data.lastMessage) == 'userCard') {
+      if (getCustomEvent(lastMessage) == 'userCard') {
         lastMsg = `[${t('contact')}]`;
       } else {
         lastMsg = `[${t('custom')}]`;
@@ -326,15 +333,16 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       // console.warn('unexpected message type:', data.lastMessage?.type);
       break;
   }
-  lastMsg = renderMessageContent?.(data.lastMessage as BaseMessageType) ?? lastMsg;
+  lastMsg = renderMessageContent?.(lastMessage as BaseMessageType) ?? lastMsg;
   if (data.chatType == 'groupChat') {
-    const msgFrom = data.lastMessage?.from || '';
+    const msgFrom = (lastMessage as BaseMessageType)?.from || '';
     let from = msgFrom && msgFrom !== currentUserId ? `${msgFrom}: ` : '';
-    const groupItem = getGroupItemFromGroupsById(data.conversationId);
+    const groupItem = getGroupItemFromGroupsById(conversationId);
     if (groupItem) {
       const memberIdx = getGroupMemberIndexByUserId(groupItem, String(msgFrom)) ?? -1;
       // @ts-ignore
-      const ease_chat_uikit_user_info = data.lastMessage?.ext?.ease_chat_uikit_user_info;
+      const ease_chat_uikit_user_info = (lastMessage as BaseMessageType)?.ext
+        ?.ease_chat_uikit_user_info;
       if (ease_chat_uikit_user_info && ease_chat_uikit_user_info.nickname) {
         from = `${ease_chat_uikit_user_info.nickname}: `;
       } else if (memberIdx > -1) {
@@ -366,16 +374,14 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       ) : (
         // 在会话列表不显示在线状态 isOnline={data.isOnline}
         <Avatar src={data.avatarUrl} size={avatarSize} shape={avatarShape}>
-          {data.name || data.conversationId}
+          {conversationName}
         </Avatar>
       )}
 
       <div className={`${prefixCls}-content`} onContextMenu={e => e.preventDefault()}>
-        <span className={`${prefixCls}-nickname ${data.silent ? 'has-silent' : ''}`}>
-          {data.name || data.conversationId}
-          {data.silent && (
-            <Icon type="BELL_SLASH" className={`${prefixCls}-nickname-silent`}></Icon>
-          )}
+        <span className={`${prefixCls}-nickname ${isSilent ? 'has-silent' : ''}`}>
+          {conversationName}
+          {isSilent && <Icon type="BELL_SLASH" className={`${prefixCls}-nickname-silent`}></Icon>}
         </span>
         <span
           className={`${prefixCls}-message`}
@@ -388,8 +394,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       </div>
       <div className={`${prefixCls}-info`}>
         <span className={`${prefixCls}-time`}>
-          {formatDateTime?.(getMessageTime(data.lastMessage)) ||
-            getConversationTime(getMessageTime(data.lastMessage))}
+          {formatDateTime?.(getConversationLastMessageTime(data)) ||
+            getConversationTime(getConversationLastMessageTime(data))}
         </span>
         {showMore ? (
           <Tooltip
@@ -422,8 +428,8 @@ let ConversationItem: FC<ConversationItemProps> = props => {
             }}
           >
             <Badge
-              dot={data.silent}
-              count={data.unreadCount || 0}
+              dot={isSilent}
+              count={unreadCount}
               color={
                 badgeColor ??
                 (themeMode === 'dark' ? 'var(--cui-primary-color6)' : 'var(--cui-primary-color5)')

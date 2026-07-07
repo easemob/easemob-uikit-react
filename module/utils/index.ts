@@ -13,8 +13,11 @@ import {
   getMessageId,
   getMessageTime,
 } from './message';
+import { getConversationLastMessageTime, isConversationPinned } from './conversation';
 
 export * from './message';
+export * from './conversation';
+export * from './thread';
 
 export function getConversationTime(time: number) {
   if (!time) return '';
@@ -324,13 +327,15 @@ export const getMsgSenderNickname = (
 };
 
 export function sortByPinned(a: any, b: any) {
-  if (a.isPinned && !b.isPinned) {
+  const aPinned = isConversationPinned(a);
+  const bPinned = isConversationPinned(b);
+  if (aPinned && !bPinned) {
     return -1; // a排在b前面
-  } else if (!a.isPinned && b.isPinned) {
+  } else if (!aPinned && bPinned) {
     return 1; // b排在a前面
-  } else if ((!a.isPinned && !b.isPinned) || (a.isPinned && b.isPinned)) {
-    const aTime = getMessageTime(a.lastMessage);
-    const bTime = getMessageTime(b.lastMessage);
+  } else if ((!aPinned && !bPinned) || (aPinned && bPinned)) {
+    const aTime = getConversationLastMessageTime(a);
+    const bTime = getConversationLastMessageTime(b);
     if (!aTime) {
       return 0;
     }

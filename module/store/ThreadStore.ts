@@ -1,8 +1,15 @@
-import { makeAutoObservable, observable, action, makeObservable, runInAction } from 'mobx';
+import { observable, action, makeObservable, runInAction } from 'mobx';
 import type { ChatSDK } from '../SDK';
 import { eventHandler } from '../../eventHandler';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
-import { getCurrentUserId, getMessageId } from '../utils';
+import {
+  getCurrentUserId,
+  getMessageId,
+  getThreadLastMessage,
+  getThreadMessageId,
+  getThreadParentId,
+  getThreadSummaryId,
+} from '../utils';
 type ThreadChangeInfo = Partial<ChatSDK.ChatThreadSummary> & {
   id?: string;
   chatThreadId?: string;
@@ -80,8 +87,8 @@ class ThreadStore {
     let chatThreadOverview: ThreadChangeInfo | undefined;
 
     const { operation, messageId, operator } = threadInfo;
-    const parentId = threadInfo.parentId || '';
-    const id = threadInfo.id || threadInfo.chatThreadId || '';
+    const parentId = getThreadParentId(threadInfo);
+    const id = getThreadSummaryId(threadInfo);
     const currentThreadInfo = this.currentThread.info;
     const originalMessage = this.currentThread.originalMessage;
     const orgMsgId = getMessageId(originalMessage);
@@ -91,7 +98,7 @@ class ThreadStore {
     if (operation != 'create') {
       this.threadList[parentId]?.forEach(
         (item: ChatSDK.ChatThreadDetail & { members?: string[] }) => {
-          if ((item as any).id === id || item.chatThreadId === id) {
+          if (getThreadSummaryId(item) === id) {
             foundThread = item as any;
           }
         },
@@ -127,9 +134,9 @@ class ThreadStore {
         chatThreadOverview = {
           ...threadInfo,
           lastMessage:
-            threadInfo.lastMessage ||
-            (this.currentThread.originalMessage as any)?.chatThreadOverview?.lastMessage,
-        };
+            getThreadLastMessage(threadInfo) ||
+            getThreadLastMessage((this.currentThread.originalMessage as any)?.chatThreadOverview),
+        } as ThreadChangeInfo;
         if (!foundThread) return;
 
         // if (threadInfo.lastMessage) {
@@ -152,7 +159,7 @@ class ThreadStore {
       case 'destroy':
       case 'userRemove':
         chatThreadOverview = undefined;
-        if (id === currentThreadInfo?.id) {
+        if (id === getThreadSummaryId(currentThreadInfo)) {
           this.setCurrentThread({
             visible: false,
             creating: false,
@@ -188,7 +195,10 @@ class ThreadStore {
   //thread member received changed
   updateMultiDeviceEvent(msg: any) {
     const currentThreadInfo = this.currentThread.info;
-    if (msg.operation === 'chatThreadLeave' && currentThreadInfo?.id === msg.chatThreadId) {
+    if (
+      msg.operation === 'chatThreadLeave' &&
+      getThreadSummaryId(currentThreadInfo) === msg.chatThreadId
+    ) {
       this.setCurrentThread({
         ...this.currentThread,
         visible: false,
@@ -202,14 +212,15 @@ class ThreadStore {
     if (!threadId) {
       throw new Error('no threadId');
     }
-    const currentThreadInfo = this.currentThread.info;
     // if (currentThreadInfo) {
     return this.rootStore.client.chatThreadManager
       .getChatThreadInfo({ chatThreadId: threadId })
       .then((res: ChatSDK.ChatThreadDetail) => {
         // 找到原消息
         const message = this.rootStore.messageStore.message['groupChat'][res.parentId] || [];
-        const originalMessage = message.find((item: any) => getMessageId(item) === res.messageId);
+        const originalMessage = message.find(
+          (item: any) => getMessageId(item) === getThreadMessageId(res),
+        );
         this.setCurrentThread({
           ...this.currentThread,
           originalMessage: originalMessage || {},
@@ -256,15 +267,12 @@ class ThreadStore {
             ];
           }
           this.threadList[parentId]?.forEach(item => {
-            if ((item as any).id === threadId || item.chatThreadId === threadId) {
+            if (getThreadSummaryId(item) === threadId) {
               item.members = members;
             }
           });
 
-          if (
-            this.currentThread.info?.id === threadId ||
-            this.currentThread.info?.chatThreadId === threadId
-          ) {
+          if (this.currentThread.info && getThreadSummaryId(this.currentThread.info) === threadId) {
             this.currentThread.info.members = members;
           }
         });
@@ -319,9 +327,9 @@ class ThreadStore {
         if (!cursor) {
           list = [];
         }
-        const chatThreadIds = threads?.map((item: ChatSDK.ChatThreadSummary) => {
-          return item.chatThreadId;
-        });
+        const chatThreadIds = threads?.map((item: ChatSDK.ChatThreadSummary) =>
+          getThreadSummaryId(item),
+        );
         eventHandler.dispatchSuccess('getChatThreads');
         return this.rootStore.client.chatThreadManager
           .getChatThreadLastMessageList({
@@ -329,7 +337,9 @@ class ThreadStore {
           })
           .then((data: ChatSDK.ChatThreadLastMessageListResult) => {
             data.items?.forEach(item => {
-              const idx = threads?.findIndex(thread => item.chatThreadId === thread.chatThreadId);
+              const idx = threads?.findIndex(
+                thread => item.chatThreadId === getThreadSummaryId(thread),
+              );
               if (idx > -1) {
                 threads[idx] = {
                   ...threads[idx],

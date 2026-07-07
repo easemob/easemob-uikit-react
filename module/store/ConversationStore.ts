@@ -1,7 +1,13 @@
 import { observable, action, makeObservable, runInAction, computed } from 'mobx';
 import { ChatType } from '../types/messageType';
 import type { ChatSDK } from '../SDK';
-import { sortByPinned } from '../utils';
+import {
+  getConversationChatType,
+  getConversationId,
+  getConversationUnreadCount,
+  isConversationPinned,
+  sortByPinned,
+} from '../utils';
 import { eventHandler } from '../../eventHandler';
 export type AT_TYPE = 'NONE' | 'ALL' | 'ME';
 export interface Conversation {
@@ -239,15 +245,19 @@ class ConversationStore {
       const conversations = this.rootStore.client.chatManager.getConversationList({
         isPinned: true,
       }) as readonly ChatSDK.ConversationItem[];
-      const pinnedConversations = conversations.filter(item => item.isPinned);
+      const pinnedConversations = conversations.filter(item => isConversationPinned(item));
 
       pinnedConversations.forEach(item => {
-        const key = makeKey(item.conversationType, item.conversationId);
+        const conversationType = getConversationChatType(item);
+        const conversationId = getConversationId(item);
+        if (!conversationType || !conversationId) return;
+        const key = makeKey(conversationType, conversationId);
         if (!this.byId[key]) {
           const newCvs = {
             ...item,
-            chatType: item.conversationType,
-            unreadCount: item.unreadCount || 0,
+            chatType: conversationType,
+            conversationId,
+            unreadCount: getConversationUnreadCount(item),
             isPinned: true,
           } as unknown as Conversation;
           this.byId[key] = newCvs;
