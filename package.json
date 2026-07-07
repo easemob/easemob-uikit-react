@@ -6,9 +6,29 @@
   "type": "commonjs",
   "module": "",
   "types": "",
+  "exports": {
+    ".": {
+      "types": "./types/ChatUI.d.ts",
+      "import": "./ChatUI.esm.js",
+      "require": "./ChatUI.js"
+    },
+    "./module": {
+      "types": "./types/module/index.d.ts",
+      "import": "./ChatUI.esm.js",
+      "require": "./ChatUI.js"
+    },
+    "./component": {
+      "types": "./types/component/entry.d.ts",
+      "import": "./ChatUI.esm.js",
+      "require": "./ChatUI.js"
+    },
+    "./style.css": "./style.css",
+    "./style.scss": "./style.scss",
+    "./package.json": "./package.json"
+  },
   "scripts": {
     "dev": "vite --host",
-    "build": "pnpm build:components",
+    "build": "npm run validate:lib && pnpm build:components",
     "build:all": "vite build",
     "build:components": "esno ./scripts/build.ts",
     "build:demo": "vite build --config vite.demo.config.ts",
@@ -22,6 +42,9 @@
     "docs:build": "vitepress build docs",
     "docs:serve": "vitepress serve docs",
     "test": "vitest",
+    "typecheck:lib": "tsc -p tsconfig.lib.json --noEmit",
+    "validate:lib": "npm run typecheck:lib",
+    "validate:foundation": "vitest run component/button/__tests__/Button.spec.tsx component/checkbox/__tests__/Checkbox.spec.tsx component/switch/__tests__/Switch.spec.tsx",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "coverage": "vitest run --coverage",
@@ -89,7 +112,7 @@
     "ahooks": "^3.7.5",
     "classnames": "^2.3.2",
     "core-js": "3",
-    "easemob-websdk": "file:../websdk2/easemob-websdk-0.14.161.tgz",
+    "easemob-websdk": "file:../websdk2/easemob-websdk-0.14.171.tgz",
     "i18next": "^22.4.14",
     "js-audio-recorder": "^1.0.7",
     "link-preview-js": "^3.0.4",
