@@ -1,0 +1,32 @@
+# Easemob UIKit for React
+
+Primary public entry points:
+- `easemob-chat-uikit`
+- `easemob-chat-uikit/module`
+- `easemob-chat-uikit/component`
+- `easemob-chat-uikit/style.css`
+
+Recommended integration docs:
+- `README.md`
+- `docs/zh/foundation-quickstart.md`
+- `docs/zh/provider.md`
+- `docs/zh/userInfo.md`
+- `docs/en/provider.md`
+- `docs/en/quick_start.md`
+
+Key runtime files:
+- `module/store/Provider.tsx`
+- `module/store/rootContext.ts`
+- `module/store/index.ts`
+- `module/hooks/chat.ts`
+- `module/utils/message.ts`
+
+Validation commands:
+- `npm run validate:lib`
+- `npm run validate:foundation`
+- `npm run build`
+
+Notes:
+- Use SDK 5 native message fields and managers.
+- Avoid internal import paths like `module/store/*` in consumer code.
+- Prefer `Provider.providers.userInfo` and `Provider.providers.groupInfo` for business-owned display data.

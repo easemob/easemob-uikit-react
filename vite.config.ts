@@ -38,6 +38,7 @@ const resolvePath = (str: string) => path.resolve(__dirname, str);
 export default defineConfig({
   plugins: [
     dts({
+      tsConfigFilePath: './tsconfig.lib.json',
       outputDir: './build/types',
       insertTypesEntry: true, // 插入TS 入口
       copyDtsFiles: true, // 是否将源码里的 .d.ts 文件复制到 outputDir

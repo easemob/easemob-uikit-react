@@ -25,6 +25,8 @@ Use this file as the first stop before implementing features. Prefer existing pa
 - Install dependencies: `npm install`
 - Start local demos: `npm run dev`
 - Build library: `npm run build`
+- Validate library release surface: `npm run validate:lib`
+- Run foundation smoke validations: `npm run validate:foundation`
 - Build all with Vite config: `npm run build:all`
 - Run tests: `npm test`
 - Run docs locally: `npm run docs:dev`
@@ -66,7 +68,7 @@ The UIKit has three main layers:
 - Registers SDK event handling through `useEventHandler`.
 - Initializes i18n resources.
 - Applies theme color generation.
-- Provides `RootContext` values: `rootStore`, `client`, `initConfig`, `features`, `theme`, `reactionConfig`, and `presenceMap`.
+- Provides `RootContext` values: `rootStore`, `client`, `initConfig`, `providers`, `features`, `theme`, `reactionConfig`, and `presenceMap`.
 - Opens the SDK connection automatically when `initConfig.userId` plus `token` or `password` is provided.
 
 Most feature components read `RootContext` directly and are wrapped with `observer` when they need reactive MobX rendering.
@@ -138,6 +140,18 @@ When adding user-visible strings:
 - Avoid hard-coded display strings unless the nearby code already uses protocol-like action constants.
 
 ## Feature Flags And Customization
+
+## Provider Contract
+
+The preferred `Provider` configuration shape is:
+
+- `initConfig`: SDK/runtime settings
+- `providers.userInfo`: business-owned user display data
+- `providers.groupInfo`: business-owned group display data
+- `features`: built-in capability flags
+- `theme` / `local`: presentation and i18n
+
+`userInfoProvider` remains supported as a backward-compatible alias, but new code should prefer `providers.userInfo`.
 
 `ProviderProps.features` controls much of the built-in behavior for chat, conversation list, chatroom, and chatroom members.
 

@@ -21,33 +21,53 @@ import Busy from '../assets/presence/Busy2.png';
 import DoNotDisturb from '../assets/presence/Do_not_Disturb2.png';
 import Custom from '../assets/presence/custom2.png';
 
+export type GroupInfo = {
+  groupId: string;
+  groupName?: string;
+  groupAvatar?: string;
+};
+
+export type GroupInfoProviderResult = GroupInfo[] | Record<string, GroupInfo>;
+export type GroupInfoProvider = (
+  groupIds: string[],
+) => Promise<GroupInfoProviderResult> | GroupInfoProviderResult;
+
+export interface UIKitDataProviders {
+  userInfo?: AppUserInfoProvider;
+  groupInfo?: GroupInfoProvider;
+}
+
+export interface ProviderInitConfig {
+  appKey?: string;
+  userId?: string;
+  token?: string;
+  password?: string;
+  translationTargetLanguage?: string;
+  useUserInfo?: boolean;
+  /** 登录后自动同步的数据类型（对应 SDK enableSyncData），默认 ['contact', 'group', 'conversation'] */
+  enableSyncData?: readonly ('contact' | 'group' | 'conversation')[];
+  /** 是否启用用户资料同步增强（对应 SDK enableUserInfoSync），默认 false */
+  enableUserInfoSync?: boolean;
+  msyncUrl?: string;
+  restUrl?: string;
+  isHttpDNS?: boolean;
+  useReplacedMessageContents?: boolean;
+  deviceId?: string;
+  maxMessages?: number;
+  isFixedDeviceId?: boolean;
+  useOwnUploadFun?: boolean;
+  countMemberJoinToUnread?: boolean;
+}
+
 export interface ProviderProps {
-  initConfig: {
-    appKey?: string;
-    userId?: string;
-    token?: string;
-    password?: string;
-    translationTargetLanguage?: string;
-    useUserInfo?: boolean;
-    /** 登录后自动同步的数据类型（对应 SDK enableSyncData），默认 ['contact', 'group', 'conversation'] */
-    enableSyncData?: readonly ('contact' | 'group' | 'conversation')[];
-    /** 是否启用用户资料同步增强（对应 SDK enableUserInfoSync），默认 false */
-    enableUserInfoSync?: boolean;
-    msyncUrl?: string;
-    restUrl?: string;
-    isHttpDNS?: boolean;
-    useReplacedMessageContents?: boolean;
-    deviceId?: string;
-    maxMessages?: number; // 单个会话显示最大消息数，超出后会自动清除，默认200，清除的消息可通过拉取更多消息获取
-    isFixedDeviceId?: boolean;
-    useOwnUploadFun?: boolean;
-    countMemberJoinToUnread?: boolean;
-  };
+  initConfig: ProviderInitConfig;
   /**
    * 用户信息提供器。业务方只需要根据 userId 批量返回用户信息，UIKit 会自动按需调用并缓存。
    * 返回值支持数组或以 userId 为 key 的对象；avatarurl 仍兼容，但推荐使用 avatarUrl。
+   * @deprecated Prefer `providers.userInfo`.
    */
   userInfoProvider?: AppUserInfoProvider;
+  providers?: UIKitDataProviders;
   local?: {
     fallbackLng?: string;
     lng?: string;
@@ -126,8 +146,23 @@ export interface ProviderProps {
   };
 }
 const Provider: React.FC<ProviderProps> = props => {
-  const { initConfig, userInfoProvider, local, features, reactionConfig, theme, presenceMap } =
-    props;
+  const {
+    initConfig,
+    userInfoProvider,
+    providers,
+    local,
+    features,
+    reactionConfig,
+    theme,
+    presenceMap,
+  } = props;
+  const normalizedProviders = useMemo<UIKitDataProviders>(
+    () => ({
+      userInfo: providers?.userInfo ?? userInfoProvider,
+      groupInfo: providers?.groupInfo,
+    }),
+    [providers?.groupInfo, providers?.userInfo, userInfoProvider],
+  );
   const {
     appKey,
     msyncUrl,
@@ -205,15 +240,17 @@ const Provider: React.FC<ProviderProps> = props => {
   useEffect(() => {
     rootStore.setClient(client);
     rootStore.setInitConfig(normalizedInitConfig);
-    rootStore.setUserInfoProvider(userInfoProvider);
-  }, [client, normalizedInitConfig, userInfoProvider]);
+    rootStore.setUserInfoProvider(normalizedProviders.userInfo);
+  }, [client, normalizedInitConfig, normalizedProviders.userInfo]);
 
   const normalizedProps = useMemo(
     () => ({
       ...props,
       initConfig: normalizedInitConfig,
+      providers: normalizedProviders,
+      userInfoProvider: normalizedProviders.userInfo,
     }),
-    [props, normalizedInitConfig],
+    [props, normalizedInitConfig, normalizedProviders],
   );
 
   // console.log('Provider is run...');
@@ -287,6 +324,7 @@ const Provider: React.FC<ProviderProps> = props => {
         rootStore,
         initConfig: normalizedInitConfig,
         features,
+        providers: normalizedProviders,
         client,
         reactionConfig,
         theme,

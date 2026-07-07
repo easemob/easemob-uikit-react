@@ -17,7 +17,7 @@ import ConversationSyncService from './ConversationSyncService';
 import type { UIKitChatClient } from 'module/SDK';
 import { clearCursor } from '../hooks/useConversation';
 import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
-import { ProviderProps } from '../store/Provider';
+import { ProviderInitConfig } from '../store/Provider';
 type InitConfig = {
   appKey?: string;
   appId?: string;
@@ -33,7 +33,7 @@ class RootStore {
   client: UIKitChatClient;
   userInfoProvider?: AppUserInfoProvider;
   loginState = false;
-  initConfig: ProviderProps['initConfig'] = { appKey: '' };
+  initConfig: ProviderInitConfig = { appKey: '' };
   constructor() {
     this.client = {} as UIKitChatClient;
     this.messageStore = new MessageStore(this);

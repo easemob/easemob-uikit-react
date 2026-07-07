@@ -1,6 +1,7 @@
 import React from 'react';
 import type { UIKitChatClient } from 'module/SDK';
 import rootStore, { RootStore } from './index';
+import type { ProviderInitConfig, UIKitDataProviders } from './Provider';
 // import client from './agoraChatConfig';
 
 export interface RootConsumerProps {
@@ -10,20 +11,9 @@ export interface RootConsumerProps {
 
 export interface ContextProps {
   rootStore: RootStore;
-  initConfig: {
-    appKey?: string;
-    appId?: string;
-    token?: string;
-    userId?: string;
-    translationTargetLanguage?: string;
-    useUserInfo?: boolean;
-    enableSyncData?: readonly ('contact' | 'group' | 'conversation')[];
-    enableUserInfoSync?: boolean;
-    maxMessages?: number;
-    isFixedDeviceId?: boolean;
-    useOwnUploadFun?: boolean;
-  };
+  initConfig: ProviderInitConfig;
   client: UIKitChatClient;
+  providers?: UIKitDataProviders;
   features?: {
     chat?: {
       header?: {
@@ -107,8 +97,9 @@ export interface ContextProps {
 
 export const RootContext = React.createContext<ContextProps>({
   rootStore: {} as RootStore,
-  initConfig: {} as { appKey?: string; appId?: string },
+  initConfig: {} as ProviderInitConfig,
   client: {} as UIKitChatClient,
+  providers: {},
   reactionConfig: { map: {} },
   theme: {},
   presenceMap: {},

@@ -1,0 +1,24 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "index.ts",
+    "component",
+    "module",
+    "eventHandler",
+    "local",
+    "react-photo-view.d.ts",
+    "types"
+  ],
+  "exclude": [
+    "demo",
+    "docs",
+    "build",
+    "dist-demo",
+    "storybook-static",
+    "**/*.stories.tsx",
+    "**/__tests__/**"
+  ]
+}

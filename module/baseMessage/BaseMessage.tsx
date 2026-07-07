@@ -39,7 +39,10 @@ interface CustomAction {
   }[];
 }
 
-type BaseSdkMessageFields = Omit<Partial<ChatSDK.Message>, 'body' | 'status' | 'type'>;
+type BaseSdkMessageFields = Omit<
+  Partial<ChatSDK.Message>,
+  'body' | 'status' | 'type' | 'chatThreadOverview' | 'chatThread'
+>;
 
 export type BaseMessageType = BaseSdkMessageFields & {
   msgLocalId?: string;

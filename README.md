@@ -48,6 +48,17 @@ UIKIt 由三部分组成：UI 组件，管理数据的 mobx store, chat SDK。UI
 
 `easemob-chat-uikit` 目前提供容器组件、模块组件、纯 UI 组件三个级别的组件，组件详情可以查看[故事书](https://storybook.easemob.com/)
 
+### Supported Import Surfaces
+
+对外稳定支持的导入面如下：
+
+- `easemob-chat-uikit`: 完整公共 API，包含容器组件、模块组件、纯 UI 组件、hooks、types。
+- `easemob-chat-uikit/module`: 模块层与运行时相关公共 API 的窄入口。
+- `easemob-chat-uikit/component`: 纯 UI 组件公共 API 的窄入口。
+- `easemob-chat-uikit/style.css`: 发布产物样式入口。
+
+不建议依赖仓库内部路径，例如 `module/index`、`component/entry`、`module/store/*` 等实现细节路径。这些路径可在仓库内部演进，但不属于对外兼容承诺。
+
 ## 🖥 运行示例 App
 
 1. 安装依赖
@@ -148,6 +159,17 @@ npm install easemob-chat-uikit --save
 yarn add easemob-chat-uikit
 ```
 
+##### 发布级校验命令
+
+组件库发布前请至少运行以下命令：
+
+```bash
+npm run validate:lib
+npm run build
+```
+
+`validate:lib` 仅校验发布源码和声明文件生成相关类型，不会把 `demo` 和 Storybook 示例问题混入组件库发布结果。
+
 ##### 使用 easemob-chat-uikit 组件构建应用
 
 将 easemob-chat-uikit 库导入你的代码中：
@@ -197,6 +219,16 @@ class App extends Component {
         initConfig={{
           appKey: 'your app key',
         }}
+        providers={{
+          userInfo: async userIds => {
+            const users = await getUserInfoFromServer(userIds);
+            return users.map(user => ({
+              userId: user.id,
+              nickname: user.name,
+              avatarUrl: user.avatar,
+            }));
+          },
+        }}
       >
         <ChatApp />
       </Provider>
@@ -238,6 +270,31 @@ const ChatApp = () => {
     </div>
   );
 };
+```
+
+### Provider 能力分组
+
+`Provider` 的配置建议按以下几类理解：
+
+- `initConfig`: SDK 连接和 UIKit 运行时行为。
+- `providers`: 业务侧展示数据提供器，例如 `userInfo`、`groupInfo`。
+- `features`: 内置功能开关。
+- `theme` / `local`: 展示和国际化配置。
+
+兼容性说明：
+
+- 旧的 `userInfoProvider` 仍然可用。
+- 新接入推荐改用 `providers.userInfo`。
+- 需要群组展示信息的场景，推荐使用 `providers.groupInfo`。
+
+### 推荐验证路径
+
+基础治理相关改动建议按以下顺序验证：
+
+```bash
+npm run validate:lib
+npm run validate:foundation
+npm run build
 ```
 
 ### 使用自定义组件

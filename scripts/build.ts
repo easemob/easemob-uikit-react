@@ -22,7 +22,7 @@ async function buildComponent() {
 
   packageJson.main = 'ChatUI.umd.js';
   packageJson.module = 'ChatUI.esm.js';
-  packageJson.types = 'ChatUI.d.ts';
+  packageJson.types = 'types/ChatUI.d.ts';
   fs.outputFile(path.resolve(baseOutDir, `package.json`), JSON.stringify(packageJson, null, 2));
 
   const baseComponentsDir = fs.readdirSync(srcDir).filter(name => {

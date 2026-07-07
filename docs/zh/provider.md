@@ -19,6 +19,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       userId: 'user123',
       token: 'user_token', // 或使用 password: 'password'
     }}
+    providers={{
+      userInfo: async userIds => {
+        return userIds.map(userId => ({
+          userId,
+          nickname: userId,
+          avatarUrl: `https://example.com/avatar/${userId}.png`,
+        }));
+      },
+    }}
   >
     <ChatApp />
   </Provider>,
@@ -42,6 +51,22 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       useUserInfo: true, // 是否使用用户信息
       maxMessages: 200, // 单个会话显示最大消息数
       countMemberJoinToUnread: false, // 聊天室成员加入消息是否计入未读数
+    }}
+    providers={{
+      userInfo: async userIds => {
+        return userIds.map(userId => ({
+          userId,
+          nickname: userId,
+          avatarUrl: `https://example.com/avatar/${userId}.png`,
+        }));
+      },
+      groupInfo: async groupIds => {
+        return groupIds.map(groupId => ({
+          groupId,
+          groupName: groupId,
+          groupAvatar: `https://example.com/group/${groupId}.png`,
+        }));
+      },
     }}
     theme={{
       mode: 'light', // 'light' | 'dark'
@@ -180,6 +205,20 @@ const ChatApp = () => {
 ```
 
 ## UIKitProvider props 概览
+
+### providers
+
+业务数据提供器分组入口。新接入推荐优先使用该字段，而不是把展示数据能力散落在单独 props 上。
+
+| 参数 | 类型 | 描述 |
+| :-- | :-- | :-- |
+| `userInfo` | `(userIds: string[]) => Promise<AppUserInfo[] \| Record<string, AppUserInfo>>` | 批量提供用户昵称、头像等展示信息 |
+| `groupInfo` | `(groupIds: string[]) => Promise<GroupInfo[] \| Record<string, GroupInfo>>` | 批量提供群名称、群头像等展示信息 |
+
+兼容性说明：
+
+- `userInfoProvider` 仍然可用，但推荐迁移到 `providers.userInfo`
+- 现阶段 `groupInfo` 主要用于统一业务侧群展示信息和 CallKit 等场景
 
 ### initConfig
 
