@@ -2,7 +2,12 @@ import type { ChatSDK } from '../SDK';
 import type { BaseMessageType } from '../baseMessage/BaseMessage';
 import type { RootStore } from './index';
 import type { Conversation } from './ConversationStore';
-import { getMessageTime, isMessageFromCurrentUser } from '../utils';
+import {
+  getConversationChatType,
+  getConversationId,
+  getConversationLastMessageTime,
+  isMessageFromCurrentUser,
+} from '../utils';
 import { AT_ALL } from '../messageInput/suggestList/SuggestList';
 
 class ConversationSyncService {
@@ -51,8 +56,9 @@ class ConversationSyncService {
       return;
     }
 
-    const lastTime = getMessageTime(cvs.lastMessage);
-    if (lastTime < getMessageTime(message) && !isCurrentCvs) {
+    const lastTime = getConversationLastMessageTime(cvs);
+    const messageTime = message.timestamp || 0;
+    if (lastTime < messageTime && !isCurrentCvs) {
       cvs.unreadCount = cvs.unreadCount + 1;
     }
     cvs.lastMessage = message as ChatSDK.Message;
@@ -63,11 +69,10 @@ class ConversationSyncService {
       const mentionList = message?.ext?.em_at_list;
       if (mentionList && !isMessageFromCurrentUser(message, currentUserId)) {
         if (mentionList === AT_ALL || mentionList.includes(currentUserId)) {
-          conversationStore.setAtType(
-            cvs.chatType,
-            cvs.conversationId,
-            mentionList === AT_ALL ? 'ALL' : 'ME',
-          );
+          const chatType = getConversationChatType(cvs);
+          const cvsId = getConversationId(cvs);
+          if (!chatType || !cvsId) return;
+          conversationStore.setAtType(chatType, cvsId, mentionList === AT_ALL ? 'ALL' : 'ME');
         }
       }
     }

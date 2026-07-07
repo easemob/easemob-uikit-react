@@ -5,7 +5,6 @@ import './style/panel.scss';
 import Icon from '../../component/icon';
 import Avatar from '../../component/avatar';
 import Button from '../../component/button';
-import { Tooltip } from '../../component/tooltip/Tooltip';
 import Header from '../header';
 import Input from '../../component/input';
 import { RootContext } from '../store/rootContext';
@@ -15,9 +14,14 @@ import { useTranslation } from 'react-i18next';
 import type { ChatSDK } from 'module/SDK';
 import {
   getConversationTime,
+  getMessageTime,
+  getMessageType,
   getMsgSenderNickname,
   getSnippetText,
-  getThreadId,
+  getThreadLastMessage,
+  getThreadName,
+  getThreadParentId,
+  getThreadSummaryId,
 } from '../utils/index';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { observer } from 'mobx-react-lite';
@@ -40,7 +44,6 @@ const ThreadList = (props: ThreadListProps) => {
     props;
   const context = useContext(RootContext);
   const { theme, rootStore } = context;
-  const { appUsersInfo } = rootStore.addressStore || {};
   const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('thread-panel', prefix);
   const { t } = useTranslation();
@@ -62,7 +65,7 @@ const ThreadList = (props: ThreadListProps) => {
     const value = e.target.value;
 
     const filterList = threadList.filter(item => {
-      return item.name.includes(value);
+      return getThreadName(item).includes(value);
     });
     setRenderThreadList(filterList);
   };
@@ -101,7 +104,7 @@ const ThreadList = (props: ThreadListProps) => {
   const openThread = (item: ChatSDK.ChatThreadSummary) => {
     onClickItem?.(item);
     // close thread list modal
-    const chatThreadId = getThreadId(item);
+    const chatThreadId = getThreadSummaryId(item);
     rootStore.threadStore.joinChatThread(chatThreadId);
     rootStore.threadStore.setThreadVisible(true);
     rootStore.threadStore.getChatThreadDetail(chatThreadId);
@@ -118,11 +121,12 @@ const ThreadList = (props: ThreadListProps) => {
   };
   const threadListContent = () => {
     const renderItem = (item: ChatSDK.ChatThreadSummary, index: number) => {
+      const lastMessage = getThreadLastMessage(item);
       let lastMsg = '';
-      switch (item.lastMessage?.type) {
+      switch (getMessageType(lastMessage)) {
         case 'text':
         case 'txt':
-          lastMsg = getSnippetText(item.lastMessage);
+          lastMsg = getSnippetText(lastMessage);
           break;
         case 'img':
           lastMsg = `/${t('image')}/`;
@@ -143,7 +147,7 @@ const ThreadList = (props: ThreadListProps) => {
           lastMsg = `/${t('combine')}/`;
           break;
         default:
-          console.warn('unexpected message type:', item.lastMessage?.type);
+          console.warn('unexpected message type:', getMessageType(lastMessage));
           break;
       }
       return (
@@ -155,18 +159,18 @@ const ThreadList = (props: ThreadListProps) => {
             openThread(item);
           }}
         >
-          <span className={`${prefixCls}-item-name`}> {item.name}</span>
-          {item.lastMessage?.type && (
+          <span className={`${prefixCls}-item-name`}> {getThreadName(item)}</span>
+          {getMessageType(lastMessage) && (
             <div className={`${prefixCls}-item-msgBox`}>
-              <Avatar size={12}>{item.lastMessage.msgId}</Avatar>
+              <Avatar size={12}>{getThreadSummaryId(item)}</Avatar>
               <div className={`${prefixCls}-item-msgBox-name`}>
                 {getMsgSenderNickname(
-                  item.lastMessage as unknown as BaseMessageType,
-                  item.parentId,
+                  lastMessage as unknown as BaseMessageType,
+                  getThreadParentId(item),
                 )}
               </div>
               <div>{lastMsg}</div>
-              <div>{getConversationTime(item.lastMessage.timestamp)}</div>
+              <div>{getConversationTime(getMessageTime(lastMessage))}</div>
             </div>
           )}
         </div>

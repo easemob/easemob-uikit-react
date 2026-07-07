@@ -10,7 +10,6 @@ import { useTranslation } from 'react-i18next';
 import Header from '../header';
 import MessageInput, { MessageInputProps } from '../messageInput';
 import Icon from '../../component/icon';
-import Avatar from '../../component/avatar';
 import { TextMessage } from '../textMessage';
 import ImageMessage from '../imageMessage';
 import FileMessage from '../fileMessage';
@@ -23,9 +22,6 @@ import Input from '../../component/input';
 import { observer } from 'mobx-react-lite';
 import { CurrentConversation } from '../store/ConversationStore';
 import Modal from '../../component/modal';
-import Tooltip from '../../component/tooltip';
-import ThreadModal from './ThreadListExpandableIcon';
-import Button from '../../component/button';
 import { UnsentRepliedMsg } from '../repliedMessage/UnsentRepliedMsg';
 // import rootStore from '../store/index';
 import {
@@ -33,12 +29,14 @@ import {
   getCustomEvent,
   getMessageId,
   getMsgSenderNickname,
-  getThreadId,
+  getThreadName,
+  getThreadOwnerId,
+  getThreadParentId,
+  getThreadSummaryId,
 } from '../utils/index';
 import { RootContext } from '../store/rootContext';
 import { eventHandler } from '../../eventHandler';
 import ThreadMemberList from './ThreadMemberList';
-import { set } from 'mobx';
 export interface ThreadProps {
   prefix?: string;
   className?: string;
@@ -63,6 +61,9 @@ const Thread = (props: ThreadProps) => {
   const prefixCls = getPrefixCls('thread', prefix);
   const { t } = useTranslation();
   const threadOriginalMsg = rootStore.threadStore.currentThread.originalMessage;
+  const currentThreadInfo = rootStore.threadStore.currentThread.info;
+  const currentThreadId = getThreadSummaryId(currentThreadInfo);
+  const currentThreadParentId = getThreadParentId(currentThreadInfo);
   // 为什么 currentThread 不会自动更新？ 但是currentCVS会自动更新， 用一个变量能表示rootStore.threadStore.currentThread， 会自动更新
 
   const { threadStore } = rootStore;
@@ -210,11 +211,8 @@ const Thread = (props: ThreadProps) => {
           <span>
             {getMsgSenderNickname({
               chatType: 'groupChat',
-              to: threadStore.currentThread.info?.parentId || '',
-              from:
-                threadStore.currentThread.info?.ownerId ||
-                threadStore.currentThread.info?.owner ||
-                '',
+              to: currentThreadParentId,
+              from: getThreadOwnerId(currentThreadInfo),
             } as any)}
           </span>
         </div>
@@ -301,7 +299,7 @@ const Thread = (props: ThreadProps) => {
     }
     const cvs: CurrentConversation = {
       chatType: 'groupChat',
-      conversationId: getThreadId(currentThread.info),
+      conversationId: getThreadSummaryId(currentThread.info),
     };
     return Promise.resolve(cvs);
   };
@@ -316,13 +314,13 @@ const Thread = (props: ThreadProps) => {
     const currentThread = rootStore.threadStore.currentThread;
     setConversation({
       chatType: 'groupChat',
-      conversationId: getThreadId(currentThread?.info),
+      conversationId: getThreadSummaryId(currentThread?.info),
     });
     // setThreadNameValue(currentThread?.info?.name || '');
     const myId = getCurrentUserId(rootStore.client);
-    if (currentThread?.info?.parentId) {
+    if (getThreadParentId(currentThread?.info)) {
       groups.forEach(item => {
-        if (item.groupId == currentThread?.info?.parentId) {
+        if (item.groupId == getThreadParentId(currentThread?.info)) {
           const members = item.members || [];
           if (members.length > 0) {
             for (let index = 0; index < members.length; index++) {
@@ -330,10 +328,7 @@ const Thread = (props: ThreadProps) => {
                 if (members[index].role == 'member')
                   if (item.admins?.includes(myId)) {
                     setRole('admin');
-                  } else if (
-                    currentThread?.info?.ownerId == myId ||
-                    currentThread?.info?.owner == myId
-                  ) {
+                  } else if (getThreadOwnerId(currentThread?.info) == myId) {
                     setRole('threadOwner');
                   }
                 setRole(members[index].role);
@@ -352,7 +347,7 @@ const Thread = (props: ThreadProps) => {
       selectable: false,
       selectedMessage: [],
     });
-  }, [getThreadId(currentThread?.info)]);
+  }, [getThreadSummaryId(currentThread?.info)]);
 
   useEffect(() => {
     if (conversation.conversationId) {
@@ -407,7 +402,7 @@ const Thread = (props: ThreadProps) => {
       onOk: () => {
         rootStore.client.chatThreadManager
           .destroyChatThread({
-            chatThreadId: getThreadId(threadStore.currentThread.info),
+            chatThreadId: currentThreadId,
           })
           .then(() => {
             setModalData({
@@ -436,7 +431,7 @@ const Thread = (props: ThreadProps) => {
       onOk: () => {
         rootStore.client.chatThreadManager
           .leaveChatThread({
-            chatThreadId: getThreadId(threadStore.currentThread.info),
+            chatThreadId: currentThreadId,
           })
           .then(() => {
             setModalData({
@@ -463,7 +458,7 @@ const Thread = (props: ThreadProps) => {
       title: t('editThreadName'),
       content: (
         <Input
-          value={threadStore.currentThread.info?.name}
+          value={getThreadName(threadStore.currentThread.info)}
           onChange={e => {
             handleEditInput(e);
           }}
@@ -474,7 +469,7 @@ const Thread = (props: ThreadProps) => {
       onOk: () => {
         rootStore.client.chatThreadManager
           .updateChatThreadName({
-            chatThreadId: getThreadId(threadStore.currentThread.info),
+            chatThreadId: currentThreadId,
             name: threadNameValue,
           })
           .then(() => {
@@ -575,7 +570,7 @@ const Thread = (props: ThreadProps) => {
               style={{ marginRight: '12px' }}
             ></Icon>
           }
-          content={threadStore.currentThread.info?.name || t('aThread')}
+          content={getThreadName(threadStore.currentThread.info) || t('aThread')}
           close
           onClickClose={handleClickClose}
           moreAction={threadMoreAction}

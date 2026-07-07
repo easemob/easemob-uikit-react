@@ -1,4 +1,4 @@
-import React, { FC, useState, useContext, useEffect, ReactEventHandler } from 'react';
+import React, { FC, useState, useContext, useEffect } from 'react';
 import classNames from 'classnames';
 import { ConfigContext } from '../../component/config/index';
 import './style/style.scss';
@@ -12,8 +12,13 @@ import { observer } from 'mobx-react-lite';
 import { RootContext } from '../store/rootContext';
 import { useTranslation } from 'react-i18next';
 import ScrollList from '../../component/scrollList';
-import { getCurrentUserId } from '../utils/index';
-import { AT_TYPE, Conversation } from '../store/ConversationStore';
+import {
+  getConversationChatType,
+  getConversationId,
+  getConversationName,
+  getCurrentUserId,
+} from '../utils/index';
+import { Conversation } from '../store/ConversationStore';
 import Modal from '../../component/modal';
 
 export type ConversationData = Array<Conversation>;
@@ -82,7 +87,7 @@ const Conversations: FC<ConversationListProps> = props => {
     className,
   );
   const cvsStore = rootStore.conversationStore;
-  const { appUsersInfo, contacts } = rootStore.addressStore;
+  const { contacts } = rootStore.addressStore;
   const currentUserId = getCurrentUserId(rootStore.client);
   const { t } = useTranslation();
   const { getConversationList, hasConversationNext } = useConversations(includeEmptyConversations);
@@ -95,12 +100,14 @@ const Conversations: FC<ConversationListProps> = props => {
   // 获取加入群组，把群组名放在 conversationList
 
   const handleItemClick = (cvs: ConversationData[0], index: number) => () => {
-    setActiveCvsId(cvs.conversationId);
-    if (cvsStore.currentCvs.conversationId !== cvs.conversationId) {
+    const conversationId = getConversationId(cvs);
+    const chatType = getConversationChatType(cvs);
+    setActiveCvsId(conversationId);
+    if (chatType && cvsStore.currentCvs.conversationId !== conversationId) {
       cvsStore.setCurrentCvs({
-        chatType: cvs.chatType,
-        conversationId: cvs.conversationId,
-        name: cvs.name,
+        chatType,
+        conversationId,
+        name: getConversationName(cvs),
         unreadCount: 0,
       });
     }
@@ -125,21 +132,24 @@ const Conversations: FC<ConversationListProps> = props => {
     } else {
       const renderData = cvsStore.conversationList.map(item => {
         const renderItem = { ...item };
-        if (item.chatType == 'groupChat') {
+        const conversationId = getConversationId(item);
+        const chatType = getConversationChatType(item);
+        const conversationName = getConversationName(item);
+        if (chatType == 'groupChat') {
           groupData.forEach(group => {
-            if (item.conversationId == group.groupId) {
-              renderItem.name = renderItem.name || group.groupName || group.name;
+            if (conversationId == group.groupId) {
+              renderItem.name = conversationName || group.groupName || group.name;
               renderItem.avatarUrl = group.avatarUrl;
             }
           });
-        } else if (item.chatType == 'singleChat') {
-          const userInfo = rootStore.addressStore.resolveUserInfo(item.conversationId as string);
-          renderItem.name = renderItem.name || userInfo.nickname;
+        } else if (chatType == 'singleChat') {
+          const userInfo = rootStore.addressStore.resolveUserInfo(conversationId);
+          renderItem.name = conversationName || userInfo.nickname;
           renderItem.avatarUrl = userInfo.avatarUrl;
-          // renderItem.isOnline = appUsersInfo?.[item.conversationId as string]?.isOnline;
+          // renderItem.isOnline = appUsersInfo?.[conversationId]?.isOnline;
           // 如果contacts里包含这个联系人，并且有remark 则 name = remark
           const contact = contacts?.find(contact => {
-            return contact.userId == item.conversationId;
+            return contact.userId == conversationId;
           });
           if (contact?.remark) {
             renderItem.name = contact.remark;
@@ -153,16 +163,22 @@ const Conversations: FC<ConversationListProps> = props => {
       // @ts-ignore
       setInitRenderData(renderData);
     }
-  }, [cvsStore.conversationList, cvsStore.searchList, groupData.length, appUsersInfo, contacts]);
+  }, [cvsStore.conversationList, cvsStore.searchList, groupData.length, contacts]);
 
   useEffect(() => {
     cvsStore.conversationList?.forEach(cvs => {
-      if (!cvs.name && cvs.chatType == 'groupChat' && rootStore.addressStore.groups.length > 0) {
+      const conversationId = getConversationId(cvs);
+      const chatType = getConversationChatType(cvs);
+      if (
+        !getConversationName(cvs) &&
+        chatType == 'groupChat' &&
+        rootStore.addressStore.groups.length > 0
+      ) {
         const result = rootStore.addressStore.groups.find(item => {
-          return item.groupId === cvs.conversationId;
+          return item.groupId === conversationId;
         });
-        if (!result) {
-          cvsStore.updateConversationName(cvs.chatType, cvs.conversationId);
+        if (!result && chatType) {
+          cvsStore.updateConversationName(chatType, conversationId);
         }
       }
     });
@@ -176,7 +192,9 @@ const Conversations: FC<ConversationListProps> = props => {
       return;
     }
     const searchList = initRenderData.filter(cvs => {
-      if (cvs.conversationId.includes(value) || cvs.name?.includes(value)) {
+      const conversationId = getConversationId(cvs);
+      const conversationName = getConversationName(cvs);
+      if (conversationId.includes(value) || conversationName?.includes(value)) {
         return true;
       }
       return false;
@@ -294,8 +312,8 @@ const Conversations: FC<ConversationListProps> = props => {
               moreAction={itemMoreAction}
               {...itemProps}
               data={cvs}
-              key={cvs.conversationId}
-              isActive={cvs.conversationId === activeCvsId}
+              key={getConversationId(cvs)}
+              isActive={getConversationId(cvs) === activeCvsId}
               onClick={handleItemClick(cvs, index)}
             ></CVSItem>
           );

@@ -24,6 +24,12 @@ export const getThreadName = (thread?: ThreadLike) => {
   return anyThread.name || '';
 };
 
+export const getThreadOwnerId = (thread?: ThreadLike) => {
+  if (!thread) return '';
+  const anyThread = thread as AnyThread;
+  return anyThread.ownerId || anyThread.owner || '';
+};
+
 export const getThreadMessageId = (thread?: ThreadLike) => {
   if (!thread) return '';
   const anyThread = thread as AnyThread;
