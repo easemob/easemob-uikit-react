@@ -13,7 +13,12 @@ import { RootContext } from '../store/rootContext';
 import ScrollList from '../../component/scrollList';
 import { useTranslation } from 'react-i18next';
 import type { ChatSDK } from 'module/SDK';
-import { getCurrentUserId, getThreadId } from '../utils/index';
+import {
+  getCurrentUserId,
+  getThreadOwnerId,
+  getThreadParentId,
+  getThreadSummaryId,
+} from '../utils/index';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { observer } from 'mobx-react-lite';
 export interface ThreadMemberListProps {
@@ -31,11 +36,14 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
   const { getPrefixCls } = React.useContext(ConfigContext);
   const context = useContext(RootContext);
   const { theme, rootStore } = context;
-  const { appUsersInfo } = rootStore.addressStore || {};
   const themeMode = theme?.mode || 'light';
   const prefixCls = getPrefixCls('thread-panel', prefix);
   const { t } = useTranslation();
   const classString = classNames(prefixCls, className, `${prefixCls}-${themeMode}`);
+  const threadStore = rootStore.threadStore;
+  const currentThreadInfo = threadStore.currentThread.info;
+  const currentThreadId = getThreadSummaryId(currentThreadInfo);
+  const currentThreadParentId = getThreadParentId(currentThreadInfo);
 
   const [search, setSearch] = useState(false);
   const [modalName, setModalName] = useState<string>(`${t('thread')}${t('members')}`);
@@ -67,7 +75,6 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
       </div>
     );
   };
-  const threadStore = rootStore.threadStore;
   const [renderMembers, setRenderMembers] = useState<string[]>([]);
   const [role, setRole] = useState('member');
   useEffect(() => {
@@ -80,11 +87,7 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
     {
       content: t('remove'),
       onClick: (item: string) => {
-        threadStore.removeChatThreadMember(
-          threadStore.currentThread.info?.parentId || '',
-          getThreadId(threadStore.currentThread.info),
-          item,
-        );
+        threadStore.removeChatThreadMember(currentThreadParentId, currentThreadId, item);
       },
     },
   ];
@@ -92,11 +95,7 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
   const [cursor, setCursor] = useState('');
   const pagingGetThreadList = () => {
     threadStore
-      .getThreadMembers(
-        threadStore.currentThread.info?.parentId || '',
-        getThreadId(threadStore.currentThread.info),
-        cursor,
-      )
+      .getThreadMembers(currentThreadParentId, currentThreadId, cursor)
       .then((data: any) => {
         setCursor(data?.cursor || '');
         setModalName(`${t('threadMembers')}(${data.length})`);
@@ -174,9 +173,9 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
   useEffect(() => {
     const groups = rootStore.addressStore.groups || [];
     const myId = getCurrentUserId(rootStore.client);
-    if (currentThread?.info?.parentId) {
+    if (getThreadParentId(currentThread?.info)) {
       groups.forEach(item => {
-        if (item.groupId == currentThread?.info?.parentId) {
+        if (item.groupId == getThreadParentId(currentThread?.info)) {
           const members = item.members || [];
           if (members.length > 0) {
             for (let index = 0; index < members.length; index++) {
@@ -184,10 +183,7 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
                 if (members[index].role == 'member')
                   if (item.admins?.includes(myId)) {
                     setRole('admin');
-                  } else if (
-                    currentThread?.info?.ownerId == myId ||
-                    currentThread?.info?.owner == myId
-                  ) {
+                  } else if (getThreadOwnerId(currentThread?.info) == myId) {
                     setRole('threadOwner');
                   }
                 setRole(members[index].role);
@@ -198,18 +194,13 @@ const ThreadMemberList = observer((props: ThreadMemberListProps) => {
         }
       });
     }
-  }, [getThreadId(currentThread?.info)]);
+  }, [getThreadSummaryId(currentThread?.info)]);
 
   useEffect(() => {
-    threadStore
-      .getThreadMembers(
-        threadStore.currentThread.info?.parentId || '',
-        getThreadId(threadStore.currentThread.info),
-      )
-      .then((data: any) => {
-        setCursor(data?.cursor || '');
-        setModalName(`${t('threadMembers')}(${data.length})`);
-      });
+    threadStore.getThreadMembers(currentThreadParentId, currentThreadId).then((data: any) => {
+      setCursor(data?.cursor || '');
+      setModalName(`${t('threadMembers')}(${data.length})`);
+    });
   }, []);
 
   return (

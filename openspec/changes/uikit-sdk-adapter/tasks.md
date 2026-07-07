@@ -23,4 +23,4 @@
 ## Remaining Scope
 
 - [x] Unify conversation preview/snippet derivation behind a dedicated helper if more message surfaces need the same rendering rules.
-- [ ] Continue thread adapter adoption in pinned/replied/thread-adjacent modules that still read raw thread overview payloads opportunistically rather than through helpers.
+- [x] Continue thread adapter adoption in pinned/replied/thread-adjacent modules that still read raw thread overview payloads opportunistically rather than through helpers.

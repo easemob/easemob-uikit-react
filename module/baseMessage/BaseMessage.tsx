@@ -9,8 +9,12 @@ import {
   getCurrentUserId,
   getGroupItemFromGroupsById,
   getMessageId,
+  getMessagePreviewData,
   getMessageTime,
   getMsgSenderNickname,
+  getThreadLastMessage,
+  getThreadMessageCount,
+  getThreadName,
 } from '../utils';
 import Avatar from '../../component/avatar';
 import { Tooltip } from '../../component/tooltip/Tooltip';
@@ -354,37 +358,18 @@ let BaseMessage = (props: BaseMessageProps) => {
     onClickThreadTitle?.();
   };
   const threadNode = () => {
-    const { name, messageCount = 0, lastMessage = {} } = chatThreadOverview || {};
-
-    const { from, type } = lastMessage || ({} as any);
+    const name = getThreadName(chatThreadOverview);
+    const messageCount = getThreadMessageCount(chatThreadOverview);
+    const lastMessage = getThreadLastMessage(chatThreadOverview);
+    const from = (lastMessage as any)?.from || '';
     const time = getMessageTime(lastMessage as any);
-    let msgContent = '';
-    switch (type) {
-      case 'text':
-        msgContent = ((lastMessage as any).body?.content || '') as string;
-        break;
-      case 'image':
-        msgContent = '[图片]';
-        break;
-      case 'file':
-        msgContent = '[文件]';
-        break;
-      case 'voice':
-        msgContent = '[语音]';
-        break;
-      case 'video':
-        msgContent = '[视频]';
-        break;
-      case 'custom':
-        msgContent = '[自定义消息]';
-        break;
-      case 'combine':
-        msgContent = '[合并消息]';
-        break;
-      default:
-        msgContent = '';
-        break;
-    }
+    const preview = getMessagePreviewData(lastMessage, t, {
+      tokenStyle: 'bracket',
+      combineLabelKey: 'chatHistory',
+      mapUserCardToContact: false,
+      mapCombinedTextSentinel: false,
+    });
+    const msgContent = preview.text;
     return (
       <div className={`${prefixCls}-thread`}>
         <span className={`${prefixCls}-thread-line`}></span>
