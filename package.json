@@ -44,6 +44,7 @@
     "test": "vitest",
     "typecheck:lib": "tsc -p tsconfig.lib.json --noEmit",
     "validate:lib": "npm run typecheck:lib",
+    "validate:adapter": "vitest run module/utils/__tests__/adapter.spec.ts module/store/__tests__/ConversationSyncService.spec.ts",
     "validate:foundation": "vitest run component/button/__tests__/Button.spec.tsx component/checkbox/__tests__/Checkbox.spec.tsx component/switch/__tests__/Switch.spec.tsx",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
