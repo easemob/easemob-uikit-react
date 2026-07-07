@@ -140,3 +140,80 @@ export const getSnippetText = (message: MessageLike) => {
     ''
   );
 };
+
+export type MessagePreviewTokenStyle = 'slash' | 'bracket';
+export type MessagePreviewData = {
+  mode: 'renderText' | 'plainText' | 'empty';
+  text: string;
+};
+
+type MessagePreviewOptions = {
+  tokenStyle?: MessagePreviewTokenStyle;
+  combineLabelKey?: string;
+  mapUserCardToContact?: boolean;
+  mapCombinedTextSentinel?: boolean;
+};
+
+const formatPreviewToken = (label: string, style: MessagePreviewTokenStyle) => {
+  if (!label) return '';
+  return style === 'slash' ? `/${label}/` : `[${label}]`;
+};
+
+export const getMessagePreviewData = (
+  message: MessageLike,
+  t: (key: string) => string,
+  options: MessagePreviewOptions = {},
+): MessagePreviewData => {
+  if (!message) {
+    return { mode: 'empty', text: '' };
+  }
+
+  const {
+    tokenStyle = 'bracket',
+    combineLabelKey = 'chatHistory',
+    mapUserCardToContact = false,
+    mapCombinedTextSentinel = false,
+  } = options;
+
+  const type = getMessageType(message);
+  switch (type) {
+    case 'txt':
+    case 'text': {
+      const text = getTextContent(message);
+      if (mapCombinedTextSentinel && text === 'the combine message') {
+        return {
+          mode: 'plainText',
+          text: formatPreviewToken(t('chatHistory'), 'slash'),
+        };
+      }
+      return {
+        mode: text ? 'renderText' : 'empty',
+        text,
+      };
+    }
+    case 'img':
+    case 'image':
+      return { mode: 'plainText', text: formatPreviewToken(t('image'), tokenStyle) };
+    case 'audio':
+    case 'voice':
+      return { mode: 'plainText', text: formatPreviewToken(t('audio'), tokenStyle) };
+    case 'file':
+      return { mode: 'plainText', text: formatPreviewToken(t('file'), tokenStyle) };
+    case 'video':
+      return { mode: 'plainText', text: formatPreviewToken(t('video'), tokenStyle) };
+    case 'custom':
+      if (mapUserCardToContact && getCustomEvent(message) === 'userCard') {
+        return { mode: 'plainText', text: formatPreviewToken(t('contact'), tokenStyle) };
+      }
+      return { mode: 'plainText', text: formatPreviewToken(t('custom'), tokenStyle) };
+    case 'combine':
+      return {
+        mode: 'plainText',
+        text: formatPreviewToken(t(combineLabelKey), tokenStyle),
+      };
+    case 'recall':
+      return { mode: 'plainText', text: t('unsentAMessage') };
+    default:
+      return { mode: 'empty', text: '' };
+  }
+};

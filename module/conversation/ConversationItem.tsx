@@ -13,9 +13,7 @@ import {
   getConversationUnreadCount,
   getConversationTime,
   getCurrentUserId,
-  getCustomEvent,
-  getMessageType,
-  getTextContent,
+  getMessagePreviewData,
   isConversationPinned,
   isConversationSilent,
 } from '../utils/index';
@@ -290,49 +288,20 @@ let ConversationItem: FC<ConversationItemProps> = props => {
 
   let lastMsg: ReactNode | ReactNode[] = '';
 
-  switch (getMessageType(lastMessage)) {
-    case 'txt':
-    case 'text':
-      if (getTextContent(lastMessage) == 'the combine message') {
-        lastMsg = `/${t('chatHistory')}/`;
-      } else {
-        // 仅渲染文本，不解析链接点击
-        lastMsg = renderTxt(getTextContent(lastMessage), false, () => {});
-      }
-      break;
-    case 'img':
-    case 'image':
-      lastMsg = `[${t('image')}]`;
-      break;
-    case 'audio':
-    case 'voice':
-      lastMsg = `[${t('audio')}]`;
-      break;
-    case 'file':
-      lastMsg = `[${t('file')}]`;
-      break;
-    case 'video':
-      lastMsg = `[${t('video')}]`;
-      break;
-    case 'custom':
-      if (getCustomEvent(lastMessage) == 'userCard') {
-        lastMsg = `[${t('contact')}]`;
-      } else {
-        lastMsg = `[${t('custom')}]`;
-      }
-      break;
-    // @ts-ignore
-    case 'combine':
-      lastMsg = `[${t('chatHistory')}]`;
-      break;
-    // @ts-ignore
-    case 'recall':
-      lastMsg = t('unsentAMessage') as string;
-      break;
-    default:
-      // console.warn('unexpected message type:', data.lastMessage?.type);
-      break;
+  const preview = getMessagePreviewData(lastMessage, t, {
+    tokenStyle: 'bracket',
+    combineLabelKey: 'chatHistory',
+    mapUserCardToContact: true,
+    mapCombinedTextSentinel: true,
+  });
+
+  if (preview.mode === 'renderText') {
+    // 仅渲染文本，不解析链接点击
+    lastMsg = renderTxt(preview.text, false, () => {});
+  } else if (preview.mode === 'plainText') {
+    lastMsg = preview.text;
   }
+
   lastMsg = renderMessageContent?.(lastMessage as BaseMessageType) ?? lastMsg;
   if (data.chatType == 'groupChat') {
     const msgFrom = (lastMessage as BaseMessageType)?.from || '';

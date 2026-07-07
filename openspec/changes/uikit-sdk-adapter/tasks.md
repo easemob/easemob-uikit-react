@@ -18,9 +18,9 @@
 
 - [x] Migrate remaining conversation list and sync paths such as `ConversationList`, `ConversationSyncService`, and related search/filter helpers onto adapter reads where they still probe raw fields directly.
 - [x] Expand thread adapter adoption into thread UI modules and pinned/replied message surfaces that still compare `id`, `chatThreadId`, or overview payloads inline.
-- [ ] Decide whether conversation preview rendering should move into a dedicated adapter/presenter helper once more message surfaces converge on the same snippet rules.
+- [x] Decide whether conversation preview rendering should move into a dedicated adapter/presenter helper once more message surfaces converge on the same snippet rules.
 
 ## Remaining Scope
 
-- [ ] Unify conversation preview/snippet derivation behind a dedicated helper if more message surfaces need the same rendering rules.
+- [x] Unify conversation preview/snippet derivation behind a dedicated helper if more message surfaces need the same rendering rules.
 - [ ] Continue thread adapter adoption in pinned/replied/thread-adjacent modules that still read raw thread overview payloads opportunistically rather than through helpers.

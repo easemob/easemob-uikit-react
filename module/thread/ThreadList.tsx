@@ -15,9 +15,8 @@ import type { ChatSDK } from 'module/SDK';
 import {
   getConversationTime,
   getMessageTime,
-  getMessageType,
+  getMessagePreviewData,
   getMsgSenderNickname,
-  getSnippetText,
   getThreadLastMessage,
   getThreadName,
   getThreadParentId,
@@ -122,34 +121,13 @@ const ThreadList = (props: ThreadListProps) => {
   const threadListContent = () => {
     const renderItem = (item: ChatSDK.ChatThreadSummary, index: number) => {
       const lastMessage = getThreadLastMessage(item);
-      let lastMsg = '';
-      switch (getMessageType(lastMessage)) {
-        case 'text':
-        case 'txt':
-          lastMsg = getSnippetText(lastMessage);
-          break;
-        case 'img':
-          lastMsg = `/${t('image')}/`;
-          break;
-        case 'audio':
-          lastMsg = `/${t('audio')}/`;
-          break;
-        case 'file':
-          lastMsg = `/${t('file')}/`;
-          break;
-        case 'video':
-          lastMsg = `/${t('video')}/`;
-          break;
-        case 'custom':
-          lastMsg = `/${t('custom')}/`;
-          break;
-        case 'combine':
-          lastMsg = `/${t('combine')}/`;
-          break;
-        default:
-          console.warn('unexpected message type:', getMessageType(lastMessage));
-          break;
-      }
+      const preview = getMessagePreviewData(lastMessage, t, {
+        tokenStyle: 'slash',
+        combineLabelKey: 'combine',
+        mapUserCardToContact: false,
+        mapCombinedTextSentinel: false,
+      });
+      const lastMsg = preview.text;
       return (
         <div
           className={`${prefixCls}-item`}
@@ -160,7 +138,7 @@ const ThreadList = (props: ThreadListProps) => {
           }}
         >
           <span className={`${prefixCls}-item-name`}> {getThreadName(item)}</span>
-          {getMessageType(lastMessage) && (
+          {preview.mode !== 'empty' && (
             <div className={`${prefixCls}-item-msgBox`}>
               <Avatar size={12}>{getThreadSummaryId(item)}</Avatar>
               <div className={`${prefixCls}-item-msgBox-name`}>
