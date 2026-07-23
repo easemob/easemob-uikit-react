@@ -26,6 +26,7 @@ export interface MoreActionProps {
   conversation?: CurrentConversation;
   isChatThread?: boolean;
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
+  webhookEnv?: string; // 回调路由环境值
 }
 let MoreAction = (props: MoreActionProps) => {
   const {
@@ -38,6 +39,7 @@ let MoreAction = (props: MoreActionProps) => {
     style = {},
     itemContainerStyle = {},
     className,
+    webhookEnv,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -101,6 +103,7 @@ let MoreAction = (props: MoreActionProps) => {
       to: currentCVS.conversationId,
       chatType: currentCVS.chatType,
       isChatThread,
+      ...(webhookEnv ? { webhookEnv } : {}),
     };
     const customMessage = chatSDK.message.create(option);
 
@@ -228,21 +231,22 @@ let MoreAction = (props: MoreActionProps) => {
     img.src = URL.createObjectURL(e.target.files?.[0] as unknown as MediaSource);
     img.onload = () => {
       const option = {
-        type: 'img',
+        type: 'img' as const,
         to: currentCVS.conversationId,
         chatType: currentCVS.chatType,
         file: file,
         isChatThread,
         width: img.width,
         height: img.height,
-        onFileUploadComplete: data => {
+        onFileUploadComplete: (data: any) => {
           const sendMsg = messageStore.message.byId.get(imageMessage.id) as ChatSDK.MessageBody;
           (sendMsg as any).thumb = data.thumb;
           (sendMsg as any).url = data.url;
           messageStore.modifyMessage(imageMessage.id, sendMsg);
         },
         isGif: file.filename.endsWith('.gif'),
-      } as ChatSDK.CreateImgMsgParameters;
+        ...(webhookEnv ? { webhookEnv } : {}),
+      };
       const imageMessage = chatSDK.message.create(option);
       if (onBeforeSendMessage) {
         onBeforeSendMessage(imageMessage).then(cvs => {
@@ -277,7 +281,7 @@ let MoreAction = (props: MoreActionProps) => {
     }
 
     const option = {
-      type: type,
+      type: type as 'file' | 'video',
       to: currentCVS.conversationId,
       chatType: currentCVS.chatType,
       file: file,
@@ -285,12 +289,13 @@ let MoreAction = (props: MoreActionProps) => {
       file_length: file.data.size,
       url: file.url,
       isChatThread,
-      onFileUploadComplete(data) {
+      onFileUploadComplete(data: any) {
         if (type === 'video') {
           (fileMessage as ChatSDK.VideoMsgBody).thumb = data.thumb;
         }
       },
-    } as ChatSDK.CreateFileMsgParameters;
+      ...(webhookEnv ? { webhookEnv } : {}),
+    };
     const fileMessage = chatSDK.message.create(option);
 
     if (onBeforeSendMessage) {
