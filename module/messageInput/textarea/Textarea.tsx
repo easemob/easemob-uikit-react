@@ -37,6 +37,7 @@ export interface TextareaProps {
   onBeforeSendMessage?: (message: ChatSDK.MessageBody) => Promise<CurrentConversation | void>;
   onChange?: (value: string) => void;
   onFocus?: () => void;
+  webhookEnv?: string; // 回调路由环境值
 }
 
 export interface ForwardRefProps {
@@ -59,6 +60,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     style = {},
     onChange,
     onFocus,
+    webhookEnv,
   } = props;
   const { t } = useTranslation();
   const [textValue, setTextValue] = useState('');
@@ -204,6 +206,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
       ext: {
         em_at_list: isAtAll ? AT_ALL : atUserIds,
       },
+      ...(webhookEnv ? { webhookEnv } : {}),
     }) as ChatSDK.TextMsgBody;
     if (onBeforeSendMessage) {
       onBeforeSendMessage(message).then(cvs => {

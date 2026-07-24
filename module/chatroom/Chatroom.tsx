@@ -125,15 +125,16 @@ let Chatroom = (props: ChatroomProps) => {
     };
 
     const options = {
-      type: 'custom',
+      type: 'custom' as const,
       to: chatroomId,
-      chatType: 'chatRoom',
+      chatType: 'chatRoom' as const,
       customEvent: 'CHATROOMUIKITUSERJOIN',
       customExts: {},
       ext: {
         chatroom_uikit_userInfo,
       },
-    } as ChatSDK.CreateCustomMsgParameters;
+      ...(messageInputProps?.webhookEnv ? { webhookEnv: messageInputProps.webhookEnv } : {}),
+    };
     const customMsg = chatSDK.message.create(options);
     rootStore.messageStore.sendMessage(customMsg);
   };

@@ -27,6 +27,7 @@ export interface GiftKeyboardProps {
   ) => Promise<{ chatType: 'chatRoom'; conversationId: string } | void>;
   giftConfig?: typeof giftConfig;
   closeAfterClick?: boolean; // 点击发送之后是否关闭
+  webhookEnv?: string; // 回调路由环境值
 }
 
 const GiftKeyboard = (props: GiftKeyboardProps) => {
@@ -41,6 +42,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     prefix,
     className,
     closeAfterClick,
+    webhookEnv,
   } = props;
   const { t } = useTranslation();
   const context = useContext(RootContext);
@@ -86,7 +88,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
       throw new Error('currentConversation is null');
     }
     const options = {
-      type: 'custom',
+      type: 'custom' as const,
       to: currentConversation.conversationId,
       chatType: currentConversation.chatType,
       customEvent: 'CHATROOMUIKITGIFT',
@@ -94,7 +96,8 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
         chatroom_uikit_gift: JSON.stringify(giftData),
       },
       ext: {},
-    } as ChatSDK.CreateCustomMsgParameters;
+      ...(webhookEnv ? { webhookEnv } : {}),
+    };
     const customMsg = chatSDK.message.create(options);
     messageStore.sendMessage(customMsg).then(() => {
       onSendMessage && onSendMessage(customMsg as ChatSDK.CustomMsgBody);

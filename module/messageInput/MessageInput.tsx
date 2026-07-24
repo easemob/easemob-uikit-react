@@ -56,6 +56,7 @@ export interface MessageInputProps {
   // 通话中禁用录音
   disableRecorder?: boolean;
   disableRecorderTitle?: string; // 已国际化后的提示文案
+  webhookEnv?: string; // 回调路由环境值，用于消息发送时的回调路由匹配（如 dev、test、prod）
 }
 
 function converToMessage(e: string) {
@@ -290,6 +291,7 @@ const MessageInput = React.forwardRef<MessageInputRef, MessageInputProps>((props
     onFocus,
     disableRecorder,
     disableRecorderTitle,
+    webhookEnv,
   } = props;
 
   useEffect(() => {
@@ -371,6 +373,7 @@ const MessageInput = React.forwardRef<MessageInputRef, MessageInputProps>((props
           onSend={() => setTextareaShow(true)}
           disabled={Boolean(disableRecorder)}
           disabledTitle={disableRecorderTitle}
+          webhookEnv={webhookEnv}
         ></Recorder>
       )}
 
@@ -403,6 +406,7 @@ const MessageInput = React.forwardRef<MessageInputRef, MessageInputProps>((props
                   conversation={conversation}
                   enabledMention={props.enabledMention}
                   onBeforeSendMessage={onBeforeSendMessage}
+                  webhookEnv={webhookEnv}
                 ></Textarea>
               );
             } else if (item.name === 'EMOJI' && item.visible) {
@@ -422,11 +426,17 @@ const MessageInput = React.forwardRef<MessageInputRef, MessageInputProps>((props
                   isChatThread={isChatThread}
                   onBeforeSendMessage={onBeforeSendMessage}
                   customActions={customActions}
+                  webhookEnv={webhookEnv}
                 ></MoreAction>
               );
             } else if (item.name === 'GIFT' && item.visible) {
               return inputHaveValue ? null : (
-                <GiftKeyboard key={item.name} conversation={conversation} {...giftKeyboardProps} />
+                <GiftKeyboard
+                  key={item.name}
+                  conversation={conversation}
+                  webhookEnv={webhookEnv}
+                  {...giftKeyboardProps}
+                />
               );
             } else if (item.visible) {
               return (
@@ -467,6 +477,7 @@ const MessageInput = React.forwardRef<MessageInputRef, MessageInputProps>((props
         <SelectedControls
           onSendMessage={handleSendCombineMessage}
           conversation={conversation}
+          webhookEnv={webhookEnv}
           onHide={() => {
             setTextareaShow(true);
             setIsShowSelect(false);

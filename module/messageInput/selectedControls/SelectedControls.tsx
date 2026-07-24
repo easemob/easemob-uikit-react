@@ -16,6 +16,7 @@ export interface SelectedControlsProps {
   onHide?: () => void;
   conversation?: CurrentConversation;
   onSendMessage?: (message: ChatSDK.CombineMsgBody) => void;
+  webhookEnv?: string; // 回调路由环境值
 }
 
 const SelectedControls = (props: SelectedControlsProps) => {
@@ -28,6 +29,7 @@ const SelectedControls = (props: SelectedControlsProps) => {
     onSendMessage,
     style = {},
     className,
+    webhookEnv,
   } = props;
   const prefixCls = getPrefixCls('selected-controls', customizePrefixCls);
   const context = useContext(RootContext);
@@ -148,7 +150,10 @@ const SelectedControls = (props: SelectedControlsProps) => {
       },
     };
     // @ts-ignore
-    const msg = chatSDK.message.create(option);
+    const msg = chatSDK.message.create({
+      ...option,
+      ...(webhookEnv ? { webhookEnv } : {}),
+    });
     onSendMessage?.(msg as ChatSDK.CombineMsgBody);
     return;
   };
