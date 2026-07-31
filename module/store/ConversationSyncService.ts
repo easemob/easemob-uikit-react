@@ -29,7 +29,10 @@ class ConversationSyncService {
     if (message.type === 'cmd') return;
 
     const conversationStore = this.rootStore.conversationStore;
-    const currentCVS = this.rootStore.messageStore.currentCVS;
+    // Prefer conversationStore.currentCvs; keep messageStore.currentCVS as fallback.
+    const currentCVS = conversationStore.currentCvs?.conversationId
+      ? conversationStore.currentCvs
+      : this.rootStore.messageStore.currentCVS;
     const isCurrentCvs =
       currentCVS.chatType === conversationType && currentCVS.conversationId === conversationId;
 

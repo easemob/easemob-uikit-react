@@ -155,6 +155,56 @@ describe('ConversationSyncService contracts', () => {
     );
   });
 
+  it('prefers conversationStore.currentCvs over messageStore.currentCVS', () => {
+    const conversation = {
+      chatType: 'singleChat',
+      conversationId: 'bob',
+      unreadCount: 2,
+      lastMessage: {
+        timestamp: 100,
+      },
+    };
+    const topConversation = vi.fn();
+    const rootStore = {
+      conversationStore: {
+        addConversation: vi.fn(),
+        topConversation,
+        setAtType: vi.fn(),
+        getConversation: vi.fn(() => conversation),
+        currentCvs: {
+          chatType: 'singleChat',
+          conversationId: 'bob',
+        },
+      },
+      messageStore: {
+        currentCVS: {
+          chatType: 'singleChat',
+          conversationId: 'other',
+        },
+      },
+      addressStore: {
+        groups: [],
+      },
+    } as any;
+    const service = new ConversationSyncService(rootStore);
+
+    service.syncOnMessageReceived(
+      {
+        type: 'text',
+        timestamp: 200,
+      } as any,
+      'bob',
+      'singleChat',
+      'alice',
+    );
+
+    expect(topConversation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        unreadCount: 2,
+      }),
+    );
+  });
+
   it('sets mention state for matching text mentions from other users', () => {
     const conversation = {
       chatType: 'groupChat',

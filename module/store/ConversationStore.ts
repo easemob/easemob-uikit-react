@@ -98,9 +98,33 @@ class ConversationStore {
     this.orderedIds = [...this.orderedIds].sort((a, b) => sortByPinned(this.byId[a], this.byId[b]));
   }
 
+  private syncSdkCurrentConversation(currentCvs: CurrentConversation) {
+    const chatManager = this.rootStore.client?.chatManager;
+    if (!chatManager) return;
+
+    const canSetCurrent =
+      Boolean(currentCvs?.conversationId) &&
+      (currentCvs.chatType === 'singleChat' || currentCvs.chatType === 'groupChat');
+
+    try {
+      if (canSetCurrent) {
+        // Tell SDK which conversation is open so online messages do not increment unread.
+        chatManager.setCurrentConversation({
+          conversationId: currentCvs.conversationId,
+          conversationType: currentCvs.chatType,
+        });
+      } else if (typeof chatManager.resetCurrentConversation === 'function') {
+        chatManager.resetCurrentConversation();
+      }
+    } catch (error) {
+      console.warn('[UIKit] syncSdkCurrentConversation failed', error);
+    }
+  }
+
   setCurrentCvs = (currentCvs: CurrentConversation) => {
     this.currentCvs = currentCvs;
     this.rootStore.messageStore.setCurrentCVS(currentCvs);
+    this.syncSdkCurrentConversation(currentCvs);
 
     const key = makeKey(currentCvs.chatType, currentCvs.conversationId);
     const cvs = this.byId[key];
@@ -369,6 +393,7 @@ class ConversationStore {
       conversationId: '',
       chatType: '' as ChatType,
     };
+    this.syncSdkCurrentConversation(this.currentCvs);
 
     this.byId = {};
     this.orderedIds = [];
