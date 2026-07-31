@@ -24,6 +24,7 @@ describe('ConversationStore.setCurrentCvs SDK sync', () => {
       messageStore: {
         setCurrentCVS: vi.fn(),
         sendChannelAck: vi.fn(() => Promise.resolve(true)),
+        sendReadReceiptsForConversation: vi.fn(() => Promise.resolve()),
       },
       client: {
         chatManager: {
