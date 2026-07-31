@@ -318,6 +318,34 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     }
   }, [callMode]);
 
+  /** 被叫接听前把主叫信息落到 callerTargetInfo，避免 invitation 清空后 Header 丢昵称 */
+  const syncCallerTargetFromInvitation = React.useCallback(
+    (invitationData?: InvitationInfo | null) => {
+      if (!invitationData) return;
+      if (invitationData.type !== 'video' && invitationData.type !== 'audio') return;
+
+      const callerUserId = invitationData.callerUserId;
+      if (!callerUserId) return;
+
+      const callerNickname = invitationData.callerName || callerUserId;
+      const callerAvatar = invitationData.callerAvatar;
+
+      callServiceRef.current?.setUserInfo({
+        [callerUserId]: {
+          nickname: callerNickname,
+          avatarUrl: callerAvatar,
+        },
+      });
+
+      setCallerTargetInfo({
+        targetUserId: callerUserId,
+        targetUserNickname: callerNickname,
+        targetUserAvatar: callerAvatar,
+      });
+    },
+    [],
+  );
+
   const handleCallStart = React.useCallback(
     (videos: VideoWindowProps[]) => {
       setVideos(prevVideos => {
@@ -339,7 +367,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       setIsShowingPreview(false); // 结束预览模式, 由等待接听页面进入通话页面
       setCallStatus('connected');
       setLocalVideo(null); // 清除预览时的localVideo状态
-      setInvitation(null); // 清除邀请信息
+      // 接通前保留主叫信息，再清 invitation
+      setInvitation(prev => {
+        if (prev) {
+          syncCallerTargetFromInvitation(prev);
+        }
+        return null;
+      });
 
       // 同步 CallService 的初始状态
       if (hasInitialized && callServiceRef.current) {
@@ -351,7 +385,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       onCallStartRef.current?.(videos);
     },
-    [hasInitialized],
+    [hasInitialized, syncCallerTargetFromInvitation],
   );
 
   const handleCallEnd = React.useCallback(
@@ -1027,25 +1061,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         }
 
         if (callServiceRef.current && invitation) {
-          if (invitation.type === 'video' || invitation.type === 'audio') {
-            const callerUserId = invitation.callerUserId;
-            const callerNickname = invitation.callerName || callerUserId;
-            const callerAvatar = invitation.callerAvatar;
-
-            const callerUserInfo = {
-              [callerUserId || '']: {
-                nickname: callerNickname,
-                avatarUrl: callerAvatar,
-              },
-            };
-            callServiceRef.current.setUserInfo(callerUserInfo);
-
-            setCallerTargetInfo({
-              targetUserId: callerUserId,
-              targetUserNickname: callerNickname,
-              targetUserAvatar: callerAvatar,
-            });
-          }
+          syncCallerTargetFromInvitation(invitation);
 
           if (result && invitation?.type === 'group') {
             let groupId: string | undefined;
@@ -1179,6 +1195,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       userInfoProvider,
       groupInfoProvider,
       hasInitialized,
+      syncCallerTargetFromInvitation,
     ],
   );
 
@@ -1206,6 +1223,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         // 根据邀请类型设置正确的通话模式
         const currentCallMode = invitationData.type === 'group' ? 'group' : invitationData.type;
         setCallMode(currentCallMode);
+        syncCallerTargetFromInvitation(invitationData);
 
         if (currentCallMode === 'group' && invitationData.groupId) {
           if (chatClient && userInfoProvider) {
@@ -1340,6 +1358,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     showInvitationTimer,
     autoRejectTime,
     invitationNotificationKey,
+    syncCallerTargetFromInvitation,
+    hasInitialized,
+    chatClient,
+    userInfoProvider,
   ]);
 
   const [windowSize, setWindowSize] = React.useState({
@@ -1961,6 +1983,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
   const handlePreviewAccept = async () => {
     if (invitation) {
+      syncCallerTargetFromInvitation(invitation);
+
       if (hasInitialized && callServiceRef.current) {
         try {
           await callServiceRef.current.answerCall(true);
@@ -2500,7 +2524,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       let remoteUserNickname: string | undefined;
       let remoteUserAvatar: string | undefined;
 
-      // 1. 优先从主叫目标信息获取（主叫方）
+      // 1. 优先从主叫目标信息获取（主叫方 / 被叫接听后）
       if (callerTargetInfo?.targetUserId) {
         remoteUserId = callerTargetInfo.targetUserId;
         remoteUserNickname = callerTargetInfo.targetUserNickname;
@@ -2511,12 +2535,40 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         const remoteVideo = displayVideos.find(video => !video.isLocalVideo);
         // 从视频ID中提取userId（格式：'remote-userId' 或直接是userId）
         if (remoteVideo?.id) {
-          remoteUserId = remoteVideo.id.startsWith('remote-')
+          const extractedId = remoteVideo.id.startsWith('remote-')
             ? remoteVideo.id.replace('remote-', '')
             : remoteVideo.id;
+          remoteUserId = extractedId || undefined;
         }
-        remoteUserNickname = remoteVideo?.nickname;
+        remoteUserNickname = remoteVideo?.nickname || undefined;
         remoteUserAvatar = remoteVideo?.avatar;
+      }
+
+      // 3. 被叫侧 fallback：currentCallInfo + invitation
+      if (!remoteUserId || !remoteUserNickname) {
+        const currentCallInfo = callServiceRef.current?.getCurrentCallInfo?.();
+        const peerIdFromCall =
+          currentCallInfo?.callerUserId && currentCallInfo.callerUserId !== localUserId
+            ? currentCallInfo.callerUserId
+            : currentCallInfo?.calleeUserId && currentCallInfo.calleeUserId !== localUserId
+            ? currentCallInfo.calleeUserId
+            : undefined;
+        const peerId = peerIdFromCall || invitation?.callerUserId;
+        if (!remoteUserId && peerId) {
+          remoteUserId = peerId;
+        }
+        if (!remoteUserNickname) {
+          const cached = remoteUserId
+            ? callServiceRef.current?.getCachedUserInfo?.(remoteUserId)
+            : undefined;
+          remoteUserNickname = invitation?.callerName || cached?.nickname || remoteUserId;
+        }
+        if (!remoteUserAvatar) {
+          const cached = remoteUserId
+            ? callServiceRef.current?.getCachedUserInfo?.(remoteUserId)
+            : undefined;
+          remoteUserAvatar = invitation?.callerAvatar || cached?.avatarUrl;
+        }
       }
 
       return {
@@ -2525,7 +2577,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         remoteUserAvatar,
       };
     }
-  }, [callMode, invitation, callerTargetInfo, hasInitialized, displayVideos]);
+  }, [callMode, invitation, callerTargetInfo, hasInitialized, displayVideos, localUserId]);
 
   const groupCallStatus = React.useMemo(() => {
     const isGroupCall = callMode === 'group';

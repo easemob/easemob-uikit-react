@@ -273,7 +273,84 @@ export class CallService {
   }
 
   setUIdToUserIdMap(uid: string, userId: string) {
-    this.UIdToUserIdMap.set(uid, userId);
+    this.mapUidToUserId(uid, userId);
+  }
+
+  private toUidKey(uid: string | number): string {
+    return String(uid);
+  }
+
+  private getUserIdFromUid(uid: string | number): string {
+    return this.UIdToUserIdMap.get(this.toUidKey(uid)) || '';
+  }
+
+  private mapUidToUserId(uid: string | number, userId: string) {
+    this.UIdToUserIdMap.set(this.toUidKey(uid), userId);
+  }
+
+  /** 1v1 场景：映射失败时回退到通话对端 IM userId */
+  private get1v1PeerUserId(): string {
+    if (!this.currentCallInfo) return '';
+    const { type, callerUserId, calleeUserId } = this.currentCallInfo;
+    if (type === CALL_TYPE.VIDEO_MULTI || type === CALL_TYPE.AUDIO_MULTI) {
+      return '';
+    }
+    const selfId = this.getCurrentUserId();
+    if (callerUserId && callerUserId !== selfId) return callerUserId;
+    if (calleeUserId && calleeUserId !== selfId) return calleeUserId;
+    return '';
+  }
+
+  /**
+   * SDK5: connection.getUserIdsWithRTCUids → Record<uid, userId>
+   * 兼容旧 SDK: connection.getUserIdByRTCUIds → { data: Record<uid, userId> }
+   */
+  private async resolveUserIdByRtcUid(uid: string | number): Promise<string> {
+    const cached = this.getUserIdFromUid(uid);
+    if (cached) return cached;
+
+    const numericUid = typeof uid === 'number' ? uid : Number(uid);
+    if (!Number.isFinite(numericUid)) {
+      return this.get1v1PeerUserId();
+    }
+
+    try {
+      const client = this.connection as any;
+      if (typeof client.getUserIdsWithRTCUids === 'function') {
+        const map = await client.getUserIdsWithRTCUids([numericUid]);
+        const userId = map?.[numericUid] || map?.[String(numericUid)] || '';
+        if (userId) {
+          this.mapUidToUserId(uid, userId);
+          return userId;
+        }
+      } else if (typeof client.getUserIdByRTCUIds === 'function') {
+        const res = await client.getUserIdByRTCUIds([numericUid]);
+        const userId =
+          res?.data?.[numericUid] || res?.data?.[String(numericUid)] || res?.[numericUid] || '';
+        if (userId) {
+          this.mapUidToUserId(uid, userId);
+          return userId;
+        }
+      } else {
+        logWarn('RTC UID mapping API is not available on chat client');
+      }
+    } catch (error: any) {
+      this.onCallError?.({
+        errorType: CallErrorType.CHAT,
+        code: error.type,
+        message: error.message,
+      });
+    }
+
+    const fallbackUserId = this.get1v1PeerUserId();
+    if (fallbackUserId) {
+      logDebug('Fallback to 1v1 peer userId for RTC uid mapping:', {
+        uid,
+        fallbackUserId,
+      });
+      this.mapUidToUserId(uid, fallbackUserId);
+    }
+    return fallbackUserId;
   }
 
   private getCurrentUserId(): string {
@@ -303,7 +380,7 @@ export class CallService {
       const tokenInfo = await this.connection.getRTCTokenInfo({ channelName: '*' });
       this.appId = tokenInfo.appId;
       const uid = tokenInfo.rtcUid;
-      this.UIdToUserIdMap.set(String(uid), this.getCurrentUserId());
+      this.mapUidToUserId(uid, this.getCurrentUserId());
       this.agoraUid = uid;
       return tokenInfo.rtcToken;
     } catch (error: any) {
@@ -339,6 +416,10 @@ export class CallService {
       // Notify UI to update local video status
       this.onRemoteVideoReady?.(localVideoInfo);
     }
+  }
+
+  getCachedUserInfo(userId: string) {
+    return this.userInfos[userId];
   }
 
   // Get current call status
@@ -1560,7 +1641,7 @@ export class CallService {
         logDebug('Group call hangup debug info:', {
           已加入成员: this.joinedMembers.map(member => ({
             uid: member.uid,
-            userId: this.UIdToUserIdMap.get(member.uid),
+            userId: this.getUserIdFromUid(member.uid),
             nickname: member.nickname || '未知',
           })),
           已邀请成员: this.invitedMembers,
@@ -1569,7 +1650,7 @@ export class CallService {
 
         // 🔧 优化：只向未加入的成员发送取消消息
         const joinedUserIds = this.joinedMembers
-          .map(member => this.UIdToUserIdMap.get(member.uid))
+          .map(member => this.getUserIdFromUid(member.uid))
           .filter(Boolean);
 
         logDebug('Joined user ID list:', joinedUserIds);
@@ -1742,10 +1823,9 @@ export class CallService {
       options.receiverList = this.joinedMembers
         .filter(
           member =>
-            this.UIdToUserIdMap.get(member.uid) !== this.userId &&
-            this.UIdToUserIdMap.get(member.uid),
+            this.getUserIdFromUid(member.uid) !== this.userId && this.getUserIdFromUid(member.uid),
         )
-        .map(member => this.UIdToUserIdMap.get(member.uid));
+        .map(member => this.getUserIdFromUid(member.uid));
     }
     const msg = this.connection.chatManager.createCmdMessage(options);
     this.sendCallMessage(msg)
@@ -1769,28 +1849,15 @@ export class CallService {
       this.updateJoinedMember(user, '', true);
       // 触发回调, 清楚邀请定时器
 
-      // 获取用户ID映射
-      let userId = this.UIdToUserIdMap.get(user.uid.toString()) || '';
-      if (!userId) {
-        try {
-          const res = await this.connection.getUserIdByRTCUIds([user.uid]);
-          userId = res.data[user.uid];
-          this.UIdToUserIdMap.set(user.uid.toString(), userId || '');
-        } catch (error: any) {
-          this.onCallError?.({
-            errorType: CallErrorType.CHAT,
-            code: error.type,
-            message: error.message,
-          });
-        }
-      }
+      // 获取用户ID映射（SDK5 getUserIdsWithRTCUids + 1v1 fallback）
+      const userId = await this.resolveUserIdByRtcUid(user.uid);
       // 触发回调, 清楚邀请定时器
       this.onUserPublished?.(userId);
       this.onRemoteUserJoined?.(userId, 'group');
 
-      const hasAudioTrack = this.remoteAudioTracks.has(user.uid.toString());
-      const nickname = this.userInfos[userId]?.nickname;
-      if (!nickname && this.userInfoProvider) {
+      const hasAudioTrack = this.remoteAudioTracks.has(user.uid);
+      const nickname = userId ? this.userInfos[userId]?.nickname : undefined;
+      if (!nickname && userId && this.userInfoProvider) {
         const userInfo = await this.userInfoProvider([userId]);
         if (userInfo) {
           logDebug('Successfully retrieved user info:', userInfo);
@@ -1838,22 +1905,8 @@ export class CallService {
           throw error;
         }
 
-        // 获取用户ID映射
-
-        let userId = this.UIdToUserIdMap.get(user.uid) || '';
-        if (!userId) {
-          try {
-            const res = await this.connection.getUserIdByRTCUIds([user.uid]);
-            userId = res.data[user.uid];
-            this.UIdToUserIdMap.set(user.uid, userId || '');
-          } catch (error: any) {
-            this.onCallError?.({
-              errorType: CallErrorType.CHAT,
-              code: error.type,
-              message: error.message,
-            });
-          }
-        }
+        // 获取用户ID映射（SDK5 getUserIdsWithRTCUids + 1v1 fallback）
+        const userId = await this.resolveUserIdByRtcUid(user.uid);
         // this.onRemoteUserJoined?.(userId, mediaType as 'video' | 'audio' | 'group');
 
         // 触发回调, 清楚邀请定时器
@@ -1880,8 +1933,8 @@ export class CallService {
             // 创建远程视频信息
             // 🔧 修复：根据音频轨道状态判断静音状态，而不是依赖 joinedMembers
             const hasAudioTrack = this.remoteAudioTracks.has(user.uid);
-            const nickname = this.userInfos[userId]?.nickname;
-            if (!nickname && this.userInfoProvider) {
+            const nickname = userId ? this.userInfos[userId]?.nickname : undefined;
+            if (!nickname && userId && this.userInfoProvider) {
               const userInfo = await this.userInfoProvider([userId]);
               if (userInfo) {
                 logDebug('Successfully retrieved user info:', userInfo);
@@ -1953,8 +2006,8 @@ export class CallService {
             const cameraEnabled = hasVideoTrack || memberCameraStatus;
             logDebug('---->cameraEnabled', hasVideoTrack, memberCameraStatus, cameraEnabled);
             // 创建更新后的视频信息（音频发布时，用户取消静音了）
-            const nickname = this.userInfos[userId]?.nickname;
-            if (!nickname && this.userInfoProvider) {
+            const nickname = userId ? this.userInfos[userId]?.nickname : undefined;
+            if (!nickname && userId && this.userInfoProvider) {
               const userInfo = await this.userInfoProvider([userId]);
               if (userInfo) {
                 logDebug('Successfully retrieved user info:', userInfo);
@@ -1994,7 +2047,7 @@ export class CallService {
     // 监听远程用户离开
     this.client.on('user-left', (user: any, reason: string) => {
       logDebug('---->user-left', user, reason);
-      const userId = this.UIdToUserIdMap.get(user.uid) || '';
+      const userId = this.getUserIdFromUid(user.uid);
 
       // 🔧 清理离开用户的所有媒体轨道（使用 uid 作为 key）
       const videoTrack = this.remoteVideoTracks.get(user.uid);
@@ -2029,7 +2082,7 @@ export class CallService {
       // 触发回调
       this.onUserUnpublished?.(user, mediaType);
 
-      const userId = this.UIdToUserIdMap.get(user.uid) || '';
+      const userId = this.getUserIdFromUid(user.uid);
 
       if (mediaType === 'video') {
         // 停止视频播放
@@ -2122,7 +2175,7 @@ export class CallService {
     this.client.on('volume-indicator', (volumes: any[]) => {
       const talkingUsers = volumes
         .filter(volume => volume.level > this.speakingVolumeThreshold)
-        .map(volume => this.UIdToUserIdMap.get(volume.uid) || '');
+        .map(volume => this.getUserIdFromUid(volume.uid));
 
       const localTalkingUsers = [...talkingUsers];
       if (this.isMuted()) {
@@ -2142,8 +2195,7 @@ export class CallService {
       const others = this.client.getRemoteNetworkQuality(this.agoraUid);
       // others: {[uid]: {quality}} 转成 {[userId]: {quality}}
       const others2: any = Object.keys(others).reduce((acc: any, uid: string) => {
-        const numericUid = parseInt(uid, 10);
-        const userId = this.UIdToUserIdMap.get(numericUid as any);
+        const userId = this.getUserIdFromUid(uid);
         acc[userId || ''] = others[uid];
         return acc;
       }, {});
@@ -2259,10 +2311,12 @@ export class CallService {
       inviteMessageId: message.id,
     };
 
-    // 获取主叫方信息
+    // 获取主叫方信息：优先 ext（SDK4/UIKit），兼容 SDK5 message.sender
     const callerUserInfo = ext.ease_chat_uikit_user_info;
-    const callerName = callerUserInfo?.nickname || message.from;
-    const callerAvatar = callerUserInfo?.avatarURL;
+    const sender = message.sender;
+    const callerName = callerUserInfo?.nickname || sender?.nickname || message.from;
+    const callerAvatar =
+      callerUserInfo?.avatarURL || callerUserInfo?.avatarUrl || sender?.avatarUrl;
     if (callerName || callerAvatar) {
       const callerUserInfoMap = {
         [message.from]: {
@@ -2366,7 +2420,7 @@ export class CallService {
 
     // 判断这个人如果已经在群通话中，或者已经不在邀请列表中，则status为false
     if (this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI) {
-      const joinedUserIds = this.joinedMembers.map(member => this.UIdToUserIdMap.get(member.uid));
+      const joinedUserIds = this.joinedMembers.map(member => this.getUserIdFromUid(member.uid));
       if (joinedUserIds.includes(to)) {
         logDebug('user already in group call');
         status = false;
@@ -2447,7 +2501,7 @@ export class CallService {
       channel: ext.channelName,
       callerDevId: ext.callerDevId,
       callerUserId: message.from,
-      callerName: this.userInfos[message.from]?.nickname, // 邀请人昵称
+      callerName: this.userInfos[message.from]?.nickname || message.from, // 邀请人昵称
       callerAvatar: this.userInfos[message.from]?.avatarUrl, // 邀请人头像
       timestamp: ext.ts || Date.now(), // 邀请时间戳
     };
@@ -3691,7 +3745,7 @@ export class CallService {
     logDebug('cancelGroupCall debug info:', {
       已加入成员: this.joinedMembers.map(member => ({
         uid: member.uid,
-        userId: this.UIdToUserIdMap.get(member.uid),
+        userId: this.getUserIdFromUid(member.uid),
         nickname: member.nickname || '未知',
         videoEnabled: member.videoEnabled,
         audioEnabled: member.audioEnabled,
@@ -3705,7 +3759,7 @@ export class CallService {
     });
 
     // 🔧 优化：只向未加入的成员发送取消消息
-    const joinedUserIds = this.joinedMembers.map(member => this.UIdToUserIdMap.get(member.uid));
+    const joinedUserIds = this.joinedMembers.map(member => this.getUserIdFromUid(member.uid));
 
     logDebug('Joined user ID list:', joinedUserIds);
 
@@ -3901,7 +3955,7 @@ export class CallService {
     // 如果直接查找失败，通过 UIdToUserIdMap 反向查找对应的 uid
     for (const [uid, mappedUserId] of this.UIdToUserIdMap.entries()) {
       if (mappedUserId === userId) {
-        track = this.remoteVideoTracks.get(uid);
+        track = this.remoteVideoTracks.get(uid) || this.remoteVideoTracks.get(Number(uid) as any);
         if (track) {
           logDebug(`Found user ${userId} video track through mapping, uid: ${uid}`);
           return track;
@@ -3928,7 +3982,7 @@ export class CallService {
     // 如果直接查找失败，通过 UIdToUserIdMap 反向查找对应的 uid
     for (const [uid, mappedUserId] of this.UIdToUserIdMap.entries()) {
       if (mappedUserId === userId) {
-        track = this.remoteAudioTracks.get(uid);
+        track = this.remoteAudioTracks.get(uid) || this.remoteAudioTracks.get(Number(uid) as any);
         if (track) {
           logDebug(`Found user ${userId} audio track through mapping, uid: ${uid}`);
           return track;
