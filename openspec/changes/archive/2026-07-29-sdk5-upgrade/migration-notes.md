@@ -313,6 +313,29 @@ This file records migration issues found while upgrading the UIKit to SDK 5.0. I
 - **ConversationStore**: already fully converged to SDK5, no changes needed.
 - **All message operations**: already using SDK5 ChatManager APIs.
 
+### 2026-07-29 - Unread count and message read receipts (SDK 0.20.0)
+
+- **Area**: Conversation unread + message read receipts
+- **Old usage (0.14.x)**:
+  - `chatManager.markConversationRead(...)` clears unread and (for single chat) notified peer via `onConversationRead`
+  - `chatManager.markMessageRead({ messages })` sent message-level read ack
+  - Events: `onMessageRead`, `onConversationRead`
+  - Message field `status` mixed send / delivered / read
+- **SDK 0.20 usage**:
+  - Unread clear: `clearConversationUnreadMessageCount` / `clearAllConversationUnreadMessageCount`
+  - Message read receipts: `sendMessageReadReceipts({ conversationId, conversationType, messageIds })`
+  - Events: `onMessageReadReceipts`, `onConversationListUpdate` (local unread snapshot), `onMultiDeviceConversation` with `CONVERSATION_UNREAD_MESSAGE_COUNT_CLEARED` / `ALL_CONVERSATIONS_UNREAD_MESSAGE_COUNT_CLEARED`
+  - Message fields: `sendStatus`, `isPeerRead`, `groupReadCount`, `needReadReceipt`
+- **UIKit resolution**:
+  - Bump dependency to `file:../websdk2/easemob-websdk-0.20.0.tgz`
+  - `MessageStore.sendChannelAck` → `clearConversationUnreadMessageCount`
+  - `MessageStore.sendReadAck` → `sendMessageReadReceipts`
+  - Opening a conversation also batches `sendReadReceiptsForConversation`
+  - Listen `onMessageReadReceipts` / `onConversationListUpdate` / multi-device unread clear
+  - UI status via `getMessageDisplayStatus(sendStatus + isPeerRead/groupReadCount + isDelivered)`
+  - Create messages with `needReadReceipt: true` for single/group chat
+- **Skill update candidate**: yes
+
 ### Remaining work (not addressed this session)
 
 - 4.6: Audio/voice message full-chain (body.duration) audit
@@ -320,9 +343,9 @@ This file records migration issues found while upgrading the UIKit to SDK 5.0. I
 - 4.11: selected/typing/status audit
 - 3.5: Chatroom events migration
 - 3.7/3.8: eventHandler and SDK event callback audit
-- 6.4/6.5: markConversationRead/setConversationPinned (already in ConversationStore but tasks not verified)
 - 5.6: createCmdMessage (already used in sendTypingCmd but not all paths checked)
 - 7.x: Contact/Group/Presence long-tail API audit
 - 9.x: CallKit signaling
 - 10.x: Docs/demos
 - 11.3: Reduce remaining @ts-ignore
+- Manual E2E: unread badge clear across devices, single/group read checkmarks after open chat

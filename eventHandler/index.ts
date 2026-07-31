@@ -50,7 +50,8 @@ export type EventName =
   | 'removeUserFromBlocklist'
   | 'publishPresence'
   | 'getBlockList'
-  | 'getConversationlist';
+  | 'getConversationlist'
+  | 'clearConversationUnreadMessageCount';
 
 export type EventHandlerData = {
   [key in EventName]?: {

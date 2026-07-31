@@ -1,6 +1,51 @@
 # 故障排查
 
+构建、依赖和运行时报错看本文。业务接入场景问题（头像不一致、联系人为空、未读重登回来等）请先看 [场景 FAQ](./faq.md)。
+
 ## 常见错误及解决方案
+
+### 业务场景问题入口
+
+| 现象 | 文档 |
+|------|------|
+| 会话有头像、消息没有 | [FAQ - 头像](./faq.md#会话有头像但消息-sender-没有) |
+| 联系人为空 / 同步异常 | [FAQ - 联系人/同步](./faq.md#联系人为空) |
+| 未读点击后消失、重登又回来 | [FAQ - 未读](./faq.md#未读点击后消失重新登录又回来) |
+| 依赖了内部 import 路径 | [FAQ - 导入面](./faq.md#为什么不能-import--from-modulestorexxx) |
+
+### 错误：`rootStore.client.getCurrentUserId is not a function`
+
+**原因：** Provider 子组件首次 render 时直接访问了 `rootStore.client`。真实 client 要到
+Provider effect 执行后才写入 rootStore，此时初始空对象上没有该方法。
+
+**解决：**
+
+```tsx
+const { client } = React.useContext(RootContext);
+const userId = client.getCurrentUserId() || '';
+```
+
+`RootContext.client` 首次 render 即可用，但 `getCurrentUserId()` 在登录前返回 `null`。
+调用联网 API 前还需确认 `rootStore.loginState === true`。
+
+### 错误：`client.updateUserInfo is not a function`
+
+SDK 5 的用户资料能力位于 `userInfoManager`：
+
+```ts
+await client.userInfoManager.updateOwnInfo({ nickname: 'Alice' });
+```
+
+头像字段使用 `avatarUrl`。不要使用 SDK 4 的 `updateUserInfo`、`updateOwnUserInfo`
+或 `avatarurl` 参数名。
+
+### 错误：`client.close is not a function`
+
+SDK 5 退出登录使用：
+
+```ts
+await client.logout();
+```
 
 ### 错误：`Cannot read properties of undefined (reading 'forwardRef')`
 

@@ -14,6 +14,7 @@ import {
   getCvsIdFromMessage,
   getCustomParams,
   getMessageChatType,
+  getMessageDisplayStatus,
   getMessageId,
   getMessageTime,
   getThreadId,
@@ -56,7 +57,8 @@ let UserCardMessage = (props: UserCardMessageProps) => {
   if (!conversationType) return null;
   const messageId = getMessageId(sdkMessage);
   const messageTime = getMessageTime(sdkMessage);
-  let { bySelf, from, reactions, status } = uiMessage;
+  let { bySelf, from, reactions } = uiMessage;
+  const status = getMessageDisplayStatus(sdkMessage);
 
   const { conversationStore, addressStore } = rootStore;
   const { getPrefixCls } = React.useContext(ConfigContext);

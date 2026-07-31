@@ -99,6 +99,8 @@ class MessageStore {
       modifyMessage: action,
       sendChannelAck: action,
       updateMessageStatus: action,
+      applyMessageReadReceipts: action,
+      sendReadReceiptsForConversation: action,
       clearMessage: action,
       setRepliedMessage: action,
       addReaction: action,
@@ -205,7 +207,7 @@ class MessageStore {
 
   private sendSdk5Message(message: ChatSDK.Message) {
     const { conversationId, conversationType, msgLocalId } = message;
-    message.status = message.status === 'failed' ? message.status : 'sending';
+    message.sendStatus = message.sendStatus === 'failed' ? message.sendStatus : 'sending';
     message.direct = 'SEND';
 
     if (this.repliedMessage != null) {
@@ -251,7 +253,7 @@ class MessageStore {
     this.setKeyValue(msgLocalId, message);
     if (conversationType !== 'chatRoom') {
       const list = this.message[conversationType][conversationId] || [];
-      if (message.status !== 'failed') {
+      if (message.sendStatus !== 'failed') {
         list.push(message);
       }
       this.message[conversationType][conversationId] = list;
@@ -265,7 +267,7 @@ class MessageStore {
       .then(sentMessage => {
         runInAction(() => {
           const serverId = sentMessage.msgServerId;
-          sentMessage.status = 'sent';
+          sentMessage.sendStatus = 'sent';
           this.setKeyValue(sentMessage.msgLocalId, sentMessage);
           if (serverId) {
             this.setKeyValue(serverId, sentMessage);
@@ -306,7 +308,7 @@ class MessageStore {
       })
       .catch(() => {
         runInAction(() => {
-          message.status = 'failed' as any;
+          message.sendStatus = 'failed';
           const list = this.message[conversationType][conversationId] || [];
           const index = list.findIndex(item => {
             return (item as ChatSDK.Message).msgLocalId === msgLocalId;
@@ -342,6 +344,7 @@ class MessageStore {
       }
       debounceTimer = setTimeout(() => {
         this.sendChannelAck(curCvs);
+        this.sendReadAck(messageId);
       }, 1000);
     }
     const isChatbot = message.from?.includes?.('chatbot_');
@@ -399,31 +402,160 @@ class MessageStore {
     this.setKeyValue(id, message);
   }
 
-  sendChannelAck(cvs: CurrentConversation) {
-    return this.rootStore.client.chatManager.markConversationRead({
-      conversationId: cvs.conversationId,
-      conversationType: cvs.chatType as ChatSDK.ChatConversationType,
-    });
+  /**
+   * Clear unread count for a conversation (SDK 0.20+).
+   * Does not notify the peer; other devices receive onMultiDeviceConversation.
+   * Resolves true on success, false when skipped/failed.
+   */
+  sendChannelAck(cvs: CurrentConversation): Promise<boolean> {
+    if (!cvs?.conversationId || !cvs?.chatType) {
+      console.warn(
+        '[UIKit] clearConversationUnreadMessageCount skipped: missing conversationId/chatType',
+        cvs,
+      );
+      return Promise.resolve(false);
+    }
+    if (cvs.chatType === 'chatRoom') return Promise.resolve(false);
+    if (cvs.chatType !== 'singleChat' && cvs.chatType !== 'groupChat') {
+      console.warn(
+        '[UIKit] clearConversationUnreadMessageCount skipped: unsupported chatType',
+        cvs.chatType,
+      );
+      return Promise.resolve(false);
+    }
+
+    return this.rootStore.client.chatManager
+      .clearConversationUnreadMessageCount({
+        conversationId: cvs.conversationId,
+        conversationType: cvs.chatType,
+      })
+      .then(() => {
+        eventHandler.dispatchSuccess('clearConversationUnreadMessageCount');
+        return true;
+      })
+      .catch((error: unknown) => {
+        console.error(
+          '[UIKit] clearConversationUnreadMessageCount failed; unread will return after re-login if server was not updated',
+          {
+            conversationId: cvs.conversationId,
+            conversationType: cvs.chatType,
+            error,
+          },
+        );
+        eventHandler.dispatchError('clearConversationUnreadMessageCount', error);
+        return false;
+      });
   }
 
+  /**
+   * Update send lifecycle status. Prefer sendStatus; keep legacy status for UI overlay.
+   */
   updateMessageStatus(msgId: string, status: string) {
     setTimeout(() => {
       runInAction(() => {
-        const msg = this.message.byId.get(msgId);
+        const msg = this.message.byId.get(msgId) as ChatSDK.Message | undefined;
         if (!msg) {
           return;
         }
         const conversationId = getCvsIdFromMessage(msg as BaseMessageType);
         const conversationType = getMessageChatType(msg as BaseMessageType);
         if (!conversationType) return;
-        (msg as ChatSDK.Message).status = status as any;
+
+        if (status === 'sending' || status === 'sent' || status === 'failed') {
+          msg.sendStatus = status;
+        } else if (status === 'received') {
+          (msg as any).isDelivered = true;
+        } else if (status === 'read') {
+          if (conversationType === 'singleChat') {
+            msg.isPeerRead = true;
+          }
+        }
+
         const list = this.message[conversationType][conversationId];
         if (!list) return;
         const i = list.findIndex(item => getMessageId(item) === msgId);
         if (i === -1) return;
-        list.splice(i, 1, msg);
+        list.splice(i, 1, { ...msg });
       });
     }, 10);
+  }
+
+  /** Apply peer read receipts from onMessageReadReceipts. */
+  applyMessageReadReceipts(
+    events: ReadonlyArray<{
+      conversationId: string;
+      conversationType: 'singleChat' | 'groupChat';
+      messageIds: ReadonlyArray<string>;
+      receiptDetails?: ReadonlyArray<{ messageId: string; count: number }>;
+    }>,
+  ) {
+    runInAction(() => {
+      events.forEach(event => {
+        const { conversationId, conversationType, messageIds } = event;
+        if (conversationType === 'singleChat') {
+          messageIds.forEach(messageId => {
+            const msg = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
+            if (!msg) return;
+            msg.isPeerRead = true;
+            const list = this.message.singleChat[conversationId];
+            if (!list) return;
+            const i = list.findIndex(item => getMessageId(item) === messageId);
+            if (i > -1) list.splice(i, 1, { ...msg });
+          });
+          return;
+        }
+
+        const detailMap = new Map(
+          (event.receiptDetails || []).map(detail => [detail.messageId, detail.count]),
+        );
+        messageIds.forEach(messageId => {
+          const msg = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
+          if (!msg) return;
+          const count = detailMap.get(messageId);
+          if (typeof count === 'number') {
+            msg.groupReadCount = count;
+          } else {
+            msg.groupReadCount = (msg.groupReadCount || 0) + 1;
+          }
+          const list = this.message.groupChat[conversationId];
+          if (!list) return;
+          const i = list.findIndex(item => getMessageId(item) === messageId);
+          if (i > -1) list.splice(i, 1, { ...msg });
+        });
+      });
+    });
+  }
+
+  /**
+   * Send message read receipts for received messages in a conversation (batch, max 50).
+   * Used when opening a conversation so the peer can update isPeerRead / groupReadCount.
+   */
+  sendReadReceiptsForConversation(cvs: CurrentConversation) {
+    if (!cvs?.conversationId || !cvs?.chatType) return Promise.resolve();
+    if (cvs.chatType !== 'singleChat' && cvs.chatType !== 'groupChat') {
+      return Promise.resolve();
+    }
+    const currentUserId = getCurrentUserId(this.rootStore.client);
+    const list = this.message[cvs.chatType]?.[cvs.conversationId] || [];
+    const messageIds = list
+      .filter(item => {
+        const msg = item as ChatSDK.Message;
+        if (!msg?.msgServerId || msg.type === 'cmd') return false;
+        if ((msg as any).isChatThread || (msg as any).chatThread) return false;
+        if (msg.direct === 'SEND') return false;
+        if (msg.from === currentUserId) return false;
+        return true;
+      })
+      .map(item => (item as ChatSDK.Message).msgServerId)
+      .filter(Boolean)
+      .slice(-50);
+
+    if (messageIds.length === 0) return Promise.resolve();
+    return this.rootStore.client.chatManager.sendMessageReadReceipts({
+      conversationId: cvs.conversationId,
+      conversationType: cvs.chatType,
+      messageIds,
+    });
   }
 
   addHistoryMsgs(cvs: CurrentConversation, msgs: any) {
@@ -890,15 +1022,24 @@ class MessageStore {
     this.message.broadcast.shift();
   }
 
-  sendReadAck(messageId: string, to: string) {
-    if (!messageId || !to) {
-      return console.error(`Invalid parameter, messageId: ${messageId}, to: ${to}`);
+  /**
+   * Send a message-level read receipt (SDK 0.20+: sendMessageReadReceipts).
+   * `to` is kept for backward-compatible call sites and is unused.
+   */
+  sendReadAck(messageId: string, to?: string) {
+    if (!messageId) {
+      return console.error(`Invalid parameter, messageId: ${messageId}`);
     }
 
     const message = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
-    if (!message) return;
-    this.rootStore.client.chatManager.markMessageRead({
-      messages: [{ message }],
+    if (!message?.msgServerId) return;
+    const conversationType = message.conversationType;
+    if (conversationType !== 'singleChat' && conversationType !== 'groupChat') return;
+
+    return this.rootStore.client.chatManager.sendMessageReadReceipts({
+      conversationId: message.conversationId,
+      conversationType,
+      messageIds: [message.msgServerId],
     });
   }
 

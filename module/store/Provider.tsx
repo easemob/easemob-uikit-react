@@ -206,20 +206,20 @@ const Provider: React.FC<ProviderProps> = props => {
       enableDeliveryReceipt: true,
       enableSyncData,
       enableUserInfoSync,
-      // serviceConfig,
+      serviceConfig,
       deviceId,
       useReplacedMessageContents,
       useFixedDeviceId: isFixedDeviceId,
       useCustomAttachmentUpload: useOwnUploadFun,
       uiKitVersion: '1.6.0',
       managers: UIKitManagers,
-      serviceConfig: {
-        serverUrls: {
-          restApiUrl: 'https://tke-sdb-a1.easemob.com',
-          wsUrl: 'wss://tke-sdb-im-api-wechat.easemob.com/websocket',
-          syncWsUrl: 'wss://tke-sdb-fusion.easemob.com/ws',
-        },
-      },
+      // serviceConfig: {
+      //   serverUrls: {
+      //     restApiUrl: 'https://tke-sdb-a1.easemob.com',
+      //     wsUrl: 'wss://tke-sdb-im-api-wechat.easemob.com/websocket',
+      //     syncWsUrl: 'wss://tke-sdb-fusion.easemob.com/ws',
+      //   },
+      // },
     };
   }, [
     appKey,

@@ -9,7 +9,7 @@ UIKit 在不做任何设置直接使用时，默认展示的是用户的 userId�
 示例代码：
 
 ```javascript
-rootStore.client.updateUserInfo({
+await rootStore.client.userInfoManager.updateOwnInfo({
   nickname: 'nickname',
   avatarUrl: 'https://example.com/image',
 });

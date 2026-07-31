@@ -69,6 +69,9 @@ class ConversationStore {
       conversationList: computed,
       setCurrentCvs: action,
       setConversation: action,
+      syncUnreadFromSdkItems: action,
+      clearUnreadForConversation: action,
+      clearAllUnreadCounts: action,
       setSearchList: action,
       deleteConversation: action,
       getConversation: action,
@@ -129,10 +132,93 @@ class ConversationStore {
     const key = makeKey(currentCvs.chatType, currentCvs.conversationId);
     const cvs = this.byId[key];
     if (cvs && cvs.unreadCount > 0) {
+      const previousUnread = cvs.unreadCount;
+      // Optimistic UI clear; restore if SDK/server clear fails (otherwise re-login brings unread back)
       this.byId[key] = { ...cvs, unreadCount: 0 };
-      this.rootStore.messageStore.sendChannelAck(currentCvs);
+      this.rootStore.messageStore.sendChannelAck(currentCvs).then((success: boolean) => {
+        if (!success) {
+          runInAction(() => {
+            const latest = this.byId[key];
+            if (latest && latest.unreadCount === 0) {
+              this.byId[key] = { ...latest, unreadCount: previousUnread };
+            }
+          });
+        }
+      });
+    }
+    // Notify message senders via message-level read receipts (not via conversation unread clear)
+    if (currentCvs.chatType === 'singleChat' || currentCvs.chatType === 'groupChat') {
+      this.rootStore.messageStore
+        .sendReadReceiptsForConversation(currentCvs)
+        .catch((error: unknown) => {
+          console.error('[UIKit] sendReadReceiptsForConversation failed', error);
+        });
     }
   };
+
+  /** Sync unreadCount (and optional fields) from SDK conversation list updates. */
+  syncUnreadFromSdkItems(
+    items: ReadonlyArray<{
+      conversationId: string;
+      conversationType: ChatType | string;
+      unreadCount: number;
+      isPinned?: boolean;
+      conversationName?: string;
+      conversationAvatar?: string;
+      lastMessage?: any;
+    }>,
+  ) {
+    const current = this.currentCvs;
+    items.forEach(item => {
+      const chatType = item.conversationType as ChatType;
+      if (!chatType || !item.conversationId) return;
+      const key = makeKey(chatType, item.conversationId);
+      const isCurrentConversation =
+        current.chatType === chatType && current.conversationId === item.conversationId;
+      // SDK may briefly report unread=1 for the open conversation before clearConversationUnread
+      // finishes. Keep local unread at 0 so the conversation list does not flash a badge.
+      const unreadCount = isCurrentConversation ? 0 : item.unreadCount ?? 0;
+      const existing = this.byId[key];
+      if (!existing) {
+        this.addConversation({
+          chatType,
+          conversationId: item.conversationId,
+          unreadCount,
+          lastMessage: item.lastMessage || ({} as any),
+          isPinned: item.isPinned,
+          name: item.conversationName,
+          avatarUrl: item.conversationAvatar,
+        });
+        return;
+      }
+      this.byId[key] = {
+        ...existing,
+        unreadCount,
+        isPinned: item.isPinned ?? existing.isPinned,
+        name: item.conversationName || existing.name,
+        avatarUrl: item.conversationAvatar || existing.avatarUrl,
+        lastMessage: item.lastMessage || existing.lastMessage,
+      };
+    });
+    this.resortIds();
+  }
+
+  clearUnreadForConversation(chatType: ChatType, conversationId: string) {
+    const key = makeKey(chatType, conversationId);
+    const cvs = this.byId[key];
+    if (cvs && cvs.unreadCount !== 0) {
+      this.byId[key] = { ...cvs, unreadCount: 0 };
+    }
+  }
+
+  clearAllUnreadCounts() {
+    this.orderedIds.forEach(key => {
+      const cvs = this.byId[key];
+      if (cvs && cvs.unreadCount !== 0) {
+        this.byId[key] = { ...cvs, unreadCount: 0 };
+      }
+    });
+  }
 
   setConversation(conversations: Conversation[]) {
     if (!Array.isArray(conversations)) {

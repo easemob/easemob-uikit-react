@@ -12,6 +12,7 @@ import {
   getCurrentUserId,
   getCvsIdFromMessage,
   getMessageChatType,
+  getMessageDisplayStatus,
   getMessageId,
   getMessageTime,
   getThreadId,
@@ -83,7 +84,8 @@ const ImageMessage = (props: ImageMessageProps) => {
   const imageHeight = body.height ?? uiMessage.height ?? 0;
   const filename = body.filename || uiMessage.file?.filename || '';
   let type = props.type;
-  let { bySelf, from, reactions, status } = uiMessage;
+  let { bySelf, from, reactions } = uiMessage;
+  const status = getMessageDisplayStatus(sdkMessage);
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('message-img', prefix);
   const context = useContext(RootContext);

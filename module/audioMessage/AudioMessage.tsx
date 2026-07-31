@@ -12,7 +12,12 @@ import Avatar from '../../component/avatar';
 import { AudioPlayer } from './AudioPlayer';
 import rootStore from '../store/index';
 import { observer } from 'mobx-react-lite';
-import { getCurrentUserId, getCvsIdFromMessage, getMessageId } from '../utils';
+import {
+  getCurrentUserId,
+  getCvsIdFromMessage,
+  getMessageDisplayStatus,
+  getMessageId,
+} from '../utils';
 import type { ChatSDK } from '../SDK';
 import { usePinnedMessage } from '../hooks/usePinnedMessage';
 import { RootContext } from '../store/rootContext';
@@ -47,7 +52,8 @@ const AudioMessage = (props: AudioMessageProps) => {
   } = props;
 
   const audioRef = useRef(null);
-  const { body, file, from, status, reactions } = audioMessage;
+  const { body, file, from, reactions } = audioMessage;
+  const status = getMessageDisplayStatus(audioMessage);
   const messageTime = audioMessage.timestamp;
   const audioUrl = body.url;
   // const duration = body.length
@@ -117,16 +123,15 @@ const AudioMessage = (props: AudioMessageProps) => {
         });
     }, 10);
 
-    // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+    // 收到的单聊/群聊媒体消息播放时发送已读回执（SDK 0.20+: sendMessageReadReceipts）
     const currentUserId = getCurrentUserId(rootStore.client);
+    const conversationType = audioMessage.conversationType;
     if (
-      audioMessage.conversationType == 'singleChat' &&
+      (conversationType === 'singleChat' || conversationType === 'groupChat') &&
       audioMessage.from != currentUserId &&
-      audioMessage.status != 'read' &&
-      !audioMessage.isChatThread &&
-      audioMessage.to == currentUserId
+      !audioMessage.isChatThread
     ) {
-      rootStore.messageStore.sendReadAck(getMessageId(audioMessage), audioMessage.from);
+      rootStore.messageStore.sendReadAck(getMessageId(audioMessage));
     }
   };
   const handlePlayEnd = () => {

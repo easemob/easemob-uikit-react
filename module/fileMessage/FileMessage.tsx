@@ -12,6 +12,7 @@ import {
   getCurrentUserId,
   getCvsIdFromMessage,
   getMessageChatType,
+  getMessageDisplayStatus,
   getMessageId,
   getMessageTime,
   getThreadId,
@@ -57,7 +58,8 @@ const FileMessage = (props: FileMessageProps) => {
   const filename = body.filename || uiMessage.filename || '';
   const fileLength = body.fileLength || body.fileSize || uiMessage.file_length || 0;
   const fileUrl = body.url || uiMessage.url || '';
-  const { from, reactions, status } = uiMessage;
+  const { from, reactions } = uiMessage;
+  const status = getMessageDisplayStatus(sdkMessage);
   const messageId = getMessageId(sdkMessage);
   const messageTime = getMessageTime(sdkMessage);
   const { getPrefixCls } = React.useContext(ConfigContext);
@@ -99,15 +101,13 @@ const FileMessage = (props: FileMessageProps) => {
       .then(blob => {
         download(blob, filename);
 
-        // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+        // 收到的单聊/群聊文件消息下载时发送已读回执（SDK 0.20+: sendMessageReadReceipts）
         if (
-          conversationType == 'singleChat' &&
+          (conversationType === 'singleChat' || conversationType === 'groupChat') &&
           sdkMessage.from != getCurrentUserId(rootStore.client) &&
-          uiMessage.status != 'read' &&
-          !uiMessage.isChatThread &&
-          sdkMessage.to == getCurrentUserId(rootStore.client)
+          !uiMessage.isChatThread
         ) {
-          rootStore.messageStore.sendReadAck(messageId, sdkMessage.from || '');
+          rootStore.messageStore.sendReadAck(messageId);
         }
       })
       .catch(err => {

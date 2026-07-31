@@ -67,30 +67,32 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       onMessageDelivered: (message: { messageId: string }) => {
         messageStore.updateMessageStatus(message.messageId, 'received');
       },
-      onMessageRead: (messages: readonly { messageId: string }[]) => {
-        messages.forEach(msg => messageStore.updateMessageStatus(msg.messageId, 'read'));
+      // SDK 0.20+: message-level read receipts (replaces onMessageRead / onConversationRead)
+      onMessageReadReceipts: (
+        events: ReadonlyArray<{
+          conversationId: string;
+          conversationType: 'singleChat' | 'groupChat';
+          messageIds: ReadonlyArray<string>;
+          receiptDetails?: ReadonlyArray<{ messageId: string; count: number }>;
+          timestamp?: number;
+        }>,
+      ) => {
+        messageStore.applyMessageReadReceipts(events || []);
       },
-      onConversationRead: (message: ConversationLocator) => {
-        const chatType = message.conversationType || message.chatType;
-        const conversationId = message.conversationId || '';
-        if (chatType === 'singleChat') {
-          setTimeout(() => {
-            rootStore.messageStore.message?.[chatType]?.[conversationId]
-              ?.filter((message: BaseMessageType) => {
-                return (
-                  message.status === 'received' &&
-                  message.type != 'voice' &&
-                  message.type != 'audio' &&
-                  message.type != 'video' &&
-                  message.type != 'file' &&
-                  message.type != 'combine'
-                );
-              })
-              .forEach((receivedMessage: BaseMessageType) => {
-                messageStore.updateMessageStatus(getMessageId(receivedMessage), 'read');
-              });
-          }, 10);
-        }
+      // SDK keeps unreadCount in conversation cache; sync into UIKit store
+      onConversationListUpdate: (payload: {
+        items?: ReadonlyArray<{
+          conversationId: string;
+          conversationType: string;
+          unreadCount: number;
+          isPinned?: boolean;
+          conversationName?: string;
+          conversationAvatar?: string;
+          lastMessage?: any;
+        }>;
+      }) => {
+        if (!payload?.items) return;
+        conversationStore.syncUnreadFromSdkItems(payload.items);
       },
       onMessageRecalled: (message: ConversationLocator & { messageId: string }) => {
         const chatType = message.conversationType || message.chatType || 'singleChat';
@@ -426,14 +428,14 @@ const useEventHandler = (props: ProviderProps, client: any) => {
         if (message.operation === 'setSilentModeForConversation') {
           rootStore.conversationStore.setSilentModeForConversationSync(
             {
-              chatType: (message as any).type,
+              chatType: (message as any).type || message.conversationType,
               conversationId: (message as any).conversationId,
             },
             true,
           );
           rootStore.addressStore.setSilentModeForConversationSync(
             {
-              chatType: (message as any).type,
+              chatType: (message as any).type || message.conversationType,
               conversationId: (message as any).conversationId,
             },
             true,
@@ -441,18 +443,26 @@ const useEventHandler = (props: ProviderProps, client: any) => {
         } else if (message.operation === 'removeSilentModeForConversation') {
           rootStore.conversationStore.setSilentModeForConversationSync(
             {
-              chatType: (message as any).type,
+              chatType: (message as any).type || message.conversationType,
               conversationId: (message as any).conversationId,
             },
             false,
           );
           rootStore.addressStore.setSilentModeForConversationSync(
             {
-              chatType: (message as any).type,
+              chatType: (message as any).type || message.conversationType,
               conversationId: (message as any).conversationId,
             },
             false,
           );
+        } else if (message.operation === 'CONVERSATION_UNREAD_MESSAGE_COUNT_CLEARED') {
+          const chatType = message.conversationType || message.type;
+          const conversationId = message.conversationId;
+          if (chatType && conversationId) {
+            conversationStore.clearUnreadForConversation(chatType, conversationId);
+          }
+        } else if (message.operation === 'ALL_CONVERSATIONS_UNREAD_MESSAGE_COUNT_CLEARED') {
+          conversationStore.clearAllUnreadCounts();
         }
       },
       // Chatroom events (via ChatRoomManager dispatch)

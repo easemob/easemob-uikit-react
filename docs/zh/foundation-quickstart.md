@@ -2,6 +2,13 @@
 
 这份文档只覆盖当前推荐的最短接入路径，目标是尽快搭起一个可运行、可继续扩展的 UIKit 应用。
 
+下一步阅读：
+
+- [三种接入模式](./integration-modes.md)
+- [SDK 5 迁移指南](./sdk5-migration.md)
+- [业务数据接入](./business-data.md)
+- [场景 FAQ](./faq.md)
+
 ## 1. 推荐导入面
 
 优先使用这些稳定入口：
@@ -77,6 +84,20 @@ export default function App() {
 
 旧的 `userInfoProvider` 仍然兼容，但新接入推荐统一改为 `providers.userInfo`。
 
+### 3.1 Client 与登录
+
+Provider 子树内通过 `RootContext.client` 获取 SDK 实例；它在子组件首次 render 时即可用。
+不要在首次 render 直接读取 `rootStore.client`，该字段要到 Provider effect 执行后才赋值。
+
+`client` 已创建不代表已经登录：
+
+- 登录前的业务用户 ID：使用 `initConfig.userId`
+- 登录后的 SDK 用户 ID：使用 `client.getCurrentUserId()`
+- 可以调用联网 API：等待 `rootStore.loginState === true`
+- 联系人、群组和会话完整可用：等待 SDK 同步完成
+
+详见 [Provider - Client 与登录时序](./provider.md#client-与登录时序)。
+
 ## 4. SDK 5 数据模型注意点
 
 新代码请优先使用 SDK 5 原生字段：
@@ -89,6 +110,8 @@ export default function App() {
 - `body.*`
 
 不要把 SDK 5 消息再降回旧字段作为主模型，例如 `id`、`msg`、`chatType`、`time`、`bySelf`。
+
+完整对照、未读清零与已读回执见 [SDK 5 迁移指南](./sdk5-migration.md)。
 
 ## 5. 发布级验证
 

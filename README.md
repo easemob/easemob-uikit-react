@@ -433,6 +433,15 @@ easemob-uikit-web
 
 ## 🔗 参考文档
 
+推荐接入路径（从这里开始）：
+
+- [Foundation Quickstart](./docs/zh/foundation-quickstart.md)
+- [三种接入模式](./docs/zh/integration-modes.md)
+- [SDK 5 迁移指南](./docs/zh/sdk5-migration.md)
+- [业务数据接入](./docs/zh/business-data.md)
+- [场景 FAQ](./docs/zh/faq.md)
+- [Provider 配置](./docs/zh/provider.md)
+
 [其他相关文档](https://github.com/easemob/Easemob-UIKit-web/tree/main/docs/zh)
 
 ## 📁 相关资源

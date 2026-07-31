@@ -252,7 +252,7 @@ const RepliedMsg = (props: RepliedMsgProps) => {
               className="cui-message-base-reply"
               // style={{ flexDirection: 'row' }}
               onlyContent={true}
-              audioMessage={msg as AudioMessageProps['audioMessage']}
+              audioMessage={msg as unknown as AudioMessageProps['audioMessage']}
             ></AudioMessage>
           );
         })();

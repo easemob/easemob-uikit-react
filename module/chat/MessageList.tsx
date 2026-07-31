@@ -39,6 +39,7 @@ import { NoticeMessageBody } from '../noticeMessage/NoticeMessage';
 import {
   getCurrentUserId,
   getCustomEvent,
+  getMessageDisplayStatus,
   getMessageId,
   getMessageTime,
   getTextContent,
@@ -222,12 +223,11 @@ let MessageList: FC<MsgListProps> = props => {
           }
         }
         return (
+          // @ts-expect-error messageProps children type is wider than TextMessageProps
           <TextMessage
             key={getMessageId(message)}
-            //@ts-ignore
-            status={message.status}
-            //@ts-ignore
-            textMessage={message}
+            status={getMessageDisplayStatus(message)}
+            textMessage={message as any}
             renderUserProfile={ctx.renderUserProfile}
             thread={ctx.isThread}
             onOpenThreadPanel={ctx.onOpenThreadPanel || (() => {})}
@@ -245,8 +245,7 @@ let MessageList: FC<MsgListProps> = props => {
         <CombinedMessage
           key={getMessageId(ctx.message)}
           style={ctx.style}
-          //@ts-ignore
-          status={ctx.message.status}
+          status={getMessageDisplayStatus(ctx.message)}
           //@ts-ignore
           combinedMessage={ctx.message}
           renderUserProfile={ctx.renderUserProfile}
@@ -284,8 +283,7 @@ let MessageList: FC<MsgListProps> = props => {
         <RecalledMessage
           key={getMessageId(ctx.message)}
           style={ctx.style}
-          //@ts-ignore
-          status={ctx.message.status}
+          status={getMessageDisplayStatus(ctx.message)}
           //@ts-ignore
           message={ctx.message}
           textMessage={ctx.message as any}
@@ -294,7 +292,7 @@ let MessageList: FC<MsgListProps> = props => {
         </RecalledMessage>
       ),
       custom: ctx => {
-        const message = ctx.message as CustomMessageType;
+        const message = ctx.message as unknown as CustomMessageType;
         if (getCustomEvent(message) === 'userCard') {
           return (
             <UserCardMessage
@@ -438,9 +436,17 @@ let MessageList: FC<MsgListProps> = props => {
         loadMoreItems={loadMore}
         onScroll={handleScroll}
         renderItem={(itemData, index) => {
+          // cmd / 未识别 custom 等无 UI 的消息不创建空 DOM 节点
+          if (itemData?.type === 'cmd') {
+            return null;
+          }
+          const content = renderMsg({ index, style: {} });
+          if (content == null) {
+            return null;
+          }
           return (
             <div key={getMessageId(itemData)} className={`${classString}-msgItem`}>
-              {renderMsg({ index, style: {} })}
+              {content}
             </div>
           );
         }}

@@ -6,13 +6,27 @@ Primary public entry points:
 - `easemob-chat-uikit/component`
 - `easemob-chat-uikit/style.css`
 
-Recommended integration docs:
+Recommended integration docs (start here):
 - `README.md`
 - `docs/zh/foundation-quickstart.md`
+- `docs/zh/integration-modes.md`
+- `docs/zh/sdk5-migration.md`
+- `docs/zh/business-data.md`
+- `docs/zh/faq.md`
 - `docs/zh/provider.md`
 - `docs/zh/userInfo.md`
+
+English stubs (Chinese is source of truth this wave):
+- `docs/en/integration-modes.md`
+- `docs/en/sdk5-migration.md`
 - `docs/en/provider.md`
 - `docs/en/quick_start.md`
+
+Related runtime docs:
+- `docs/zh/store.md`
+- `docs/zh/troubleshooting.md`
+- `docs/zh/Conversation.md`
+- `docs/zh/chat.md`
 
 Key runtime files:
 - `module/store/Provider.tsx`
@@ -30,3 +44,6 @@ Notes:
 - Use SDK 5 native message fields and managers.
 - Avoid internal import paths like `module/store/*` in consumer code.
 - Prefer `Provider.providers.userInfo` and `Provider.providers.groupInfo` for business-owned display data.
+- Unread clear: `clearConversationUnreadMessageCount` (self only; not peer notify).
+- Read receipts: `sendMessageReadReceipts` / `onMessageReadReceipts`; UI status via `sendStatus` + `isPeerRead` / `groupReadCount`.
+- Follow-up change: `uikit-public-store-api` for public/internal Store boundary.

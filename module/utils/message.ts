@@ -6,6 +6,44 @@ export type UIKitMessage = ChatSDK.Message & {
   bySelf?: boolean;
   chatThreadOverview?: unknown;
   isChatThread?: boolean;
+  /** UIKit-only: peer delivery ack received for an outgoing single-chat message. */
+  isDelivered?: boolean;
+};
+
+export type MessageDisplayStatus =
+  | 'sending'
+  | 'sent'
+  | 'received'
+  | 'read'
+  | 'failed'
+  | 'unread'
+  | 'default';
+
+/**
+ * Derive UI message status from SDK 0.20 fields:
+ * - sendStatus: sending | sent | failed
+ * - isPeerRead: single-chat peer read
+ * - groupReadCount: group cumulative read count
+ * - isDelivered: UIKit overlay from onMessageDelivered
+ */
+export const getMessageDisplayStatus = (message?: MessageLike): MessageDisplayStatus => {
+  if (!message) return 'default';
+  const anyMessage = message as AnyMessage;
+  const sendStatus = anyMessage.sendStatus || anyMessage.status;
+
+  if (sendStatus === 'failed') return 'failed';
+  if (sendStatus === 'sending') return 'sending';
+
+  if (anyMessage.isPeerRead === true) return 'read';
+  if (typeof anyMessage.groupReadCount === 'number' && anyMessage.groupReadCount > 0) {
+    return 'read';
+  }
+  // Legacy UIKit status overlay / delivery overlay
+  if (anyMessage.status === 'read') return 'read';
+  if (anyMessage.isDelivered === true || anyMessage.status === 'received') return 'received';
+  if (sendStatus === 'sent' || anyMessage.status === 'sent') return 'sent';
+  if (anyMessage.status === 'unread') return 'unread';
+  return 'default';
 };
 
 type AnyMessage = Record<string, any>;

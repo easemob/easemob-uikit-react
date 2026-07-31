@@ -8,6 +8,18 @@ This repository is a React component library for quickly building IM application
 
 Use this file as the first stop before implementing features. Prefer existing patterns in the nearby component, store, hook, and style files.
 
+## Recommended Integration Path
+
+For consumer-facing guidance (and AI-assisted integration), start here:
+
+1. `docs/zh/foundation-quickstart.md` — shortest working app
+2. `docs/zh/integration-modes.md` — full-page / hooks-store / pure UI
+3. `docs/zh/sdk5-migration.md` — SDK 5 field and API migration
+4. `docs/zh/business-data.md` — `providers.userInfo` / `providers.groupInfo` / custom messages
+5. `docs/zh/faq.md` — common integration scenarios
+
+Machine-readable index: `llms.txt`. Prefer public package imports only; do not tell consumers to import `module/store/*`.
+
 ## Tech Stack
 
 - React 18 + TypeScript.
@@ -69,7 +81,7 @@ The UIKit has three main layers:
 - Initializes i18n resources.
 - Applies theme color generation.
 - Provides `RootContext` values: `rootStore`, `client`, `initConfig`, `providers`, `features`, `theme`, `reactionConfig`, and `presenceMap`.
-- Opens the SDK connection automatically when `initConfig.userId` plus `token` or `password` is provided.
+- Opens the SDK connection automatically when `initConfig.userId` plus `token` is provided. Password login is unsupported on SDK 5.
 
 Most feature components read `RootContext` directly and are wrapped with `observer` when they need reactive MobX rendering.
 

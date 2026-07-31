@@ -17,7 +17,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     initConfig={{
       appKey: 'your app key',
       userId: 'user123',
-      token: 'user_token', // 或使用 password: 'password'
+      token: 'user_token', // SDK 5 仅支持 token 登录
     }}
     providers={{
       userInfo: async userIds => {
@@ -164,39 +164,101 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 ```
 
+## Client 与登录时序
+
+`client` 已创建、IM 已连接、联系人/会话已同步是三个不同阶段：
+
+1. `Provider` 首次渲染时同步执行 `ChatClient.init`，`RootContext.client` 立即可用。
+2. `Provider` 挂载后的 effect 才把实例写入 `rootStore.client`。
+3. 如果配置了 `userId + token`，Provider 随后调用 `client.login({ userId, token })`。
+4. SDK 触发 `onConnected` 后，`rootStore.loginState` 才变为 `true`。
+5. `onSyncDataFinished` 后，联系人、群组和会话等同步数据才完整。
+
+因此，不要在 Provider 子组件的首次 render 中直接访问 `rootStore.client`：
+
+```tsx
+// ❌ 首次 render 时 rootStore.client 仍可能是空对象
+const userId = rootStore.client.getCurrentUserId();
+```
+
+React 组件中优先通过 `RootContext` 获取 client：
+
+```tsx
+import React, { useContext } from 'react';
+import { observer } from 'mobx-react-lite';
+import { RootContext, rootStore } from 'easemob-chat-uikit';
+
+const ClientPanel = observer(() => {
+  const { client, initConfig } = useContext(RootContext);
+
+  // client 首次 render 即可用；登录前 getCurrentUserId() 返回 null
+  const currentUserId = client.getCurrentUserId();
+
+  const loadContacts = async () => {
+    if (!rootStore.loginState) return;
+    await client.contactManager.getContacts();
+  };
+
+  return (
+    <button disabled={!rootStore.loginState} onClick={loadContacts}>
+      {currentUserId || initConfig.userId || '未登录'}
+    </button>
+  );
+});
+```
+
+推荐规则：
+
+- React render、effect 和点击回调：优先使用 `RootContext.client`。
+- 登录前已知的业务用户 ID：使用业务登录状态或 `RootContext.initConfig.userId`。
+- 登录后的 SDK 当前用户：使用 `client.getCurrentUserId()`；未登录时返回 `null`。
+- 需要调用联网 API：等待 `rootStore.loginState === true`。
+- 需要联系人、群组或会话完整数据：还要等待 SDK 同步完成。
+- `rootStore.client` 仅适合确认 Provider 已挂载后的 store/action 内部调用，不建议作为业务组件的 client 来源。
+- 不要使用 SDK 4 的 `client.user`、`client.open()`、`updateUserInfo()` 等接口。
+
 ## 自动登录
 
-如果初始化时已经设置了 `userId` 和 `token`（或 `password`），UIKit 会在 Provider 加载完成后自动登录，当 Provider 被卸载时会自动登出。
+如果初始化时设置了 `userId` 和 `token`，UIKit 会在 Provider 挂载后自动登录。SDK 5 不支持密码登录；Provider 卸载也不会自动登出，需要业务在退出登录时显式调用 `client.logout()`。
 
 ```jsx
 <Provider
   initConfig={{
     appKey: 'your app key',
     userId: 'user123',
-    token: 'user_token', // 使用 token 登录（推荐）
-    // 或使用 password: 'password' // 使用密码登录
+    token: 'user_token',
   }}
 >
   <ChatApp />
 </Provider>
 ```
 
-如果你想自己控制何时登录登出，可以只传入 `appKey`，然后通过 `useClient` hook 获取客户端实例进行登录：
+如果你想自己控制登录和登出，只向 Provider 传入 `appKey`，然后从 `RootContext` 获取客户端：
 
 ```jsx
-import { Provider, useClient } from 'easemob-chat-uikit';
+import React, { useContext } from 'react';
+import { Provider, RootContext } from 'easemob-chat-uikit';
 
 const ChatApp = () => {
-  const client = useClient();
+  const { client } = useContext(RootContext);
 
-  const login = () => {
-    client.open({
-      user: 'user123',
+  const login = async () => {
+    await client.login({
+      userId: 'user123',
       token: 'user_token',
     });
   };
 
-  return <button onClick={login}>登录</button>;
+  const logout = async () => {
+    await client.logout();
+  };
+
+  return (
+    <>
+      <button onClick={login}>登录</button>
+      <button onClick={logout}>退出</button>
+    </>
+  );
 };
 
 <Provider initConfig={{ appKey: 'your app key' }}>
@@ -229,7 +291,7 @@ const ChatApp = () => {
 | `appKey` | `string` | - | 应用的 App Key（必须） |
 | `userId` | `string` | - | 用户 ID，如果提供会自动登录 |
 | `token` | `string` | - | 用户 Token，与 `userId` 一起使用进行自动登录（推荐） |
-| `password` | `string` | - | 用户密码，与 `userId` 一起使用进行自动登录 |
+| `password` | `string` | - | 兼容字段；SDK 5 不支持密码登录，传入时会触发登录错误 |
 | `translationTargetLanguage` | `string` | - | 翻译目标语言，如 'zh'、'en' 等 |
 | `useUserInfo` | `boolean` | - | 是否使用用户信息，启用后会自动获取用户信息 |
 | `msyncUrl` | `string` | - | 自定义消息同步服务地址 |
@@ -598,7 +660,7 @@ export default App;
 
 ## 注意事项
 
-1. **自动登录**：如果提供了 `userId` 和 `token`（或 `password`），UIKit 会自动登录。Provider 卸载时会自动登出。
+1. **自动登录**：提供 `userId` 和 `token` 后 UIKit 会自动登录。SDK 5 不支持密码登录；退出时需显式调用 `client.logout()`。
 
 2. **功能配置优先级**：组件级别的功能配置会覆盖全局配置。
 

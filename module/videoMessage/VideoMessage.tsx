@@ -13,6 +13,7 @@ import {
   getCurrentUserId,
   getCvsIdFromMessage,
   getMessageChatType,
+  getMessageDisplayStatus,
   getMessageId,
   getMessageTime,
   getThreadId,
@@ -59,7 +60,8 @@ const VideoMessage = (props: VideoMessageProps) => {
   const localFile = uiMessage.file as Record<string, any> | undefined;
   const videoUrl = body.url || uiMessage.url || localFile?.url || '';
   const thumbUrl = body.thumbnailUrl || uiMessage.thumb || '';
-  let { bySelf, from, reactions, status } = uiMessage;
+  let { bySelf, from, reactions } = uiMessage;
+  const status = getMessageDisplayStatus(sdkMessage);
   const { pinMessage } = usePinnedMessage({
     conversation: {
       conversationId,
@@ -255,15 +257,13 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handlePlayVideo = () => {
-    // 消息是发给自己的单聊消息，回复read ack， 引用、转发的消息、已经是read状态的消息，不发read ack
+    // 收到的单聊/群聊视频消息播放时发送已读回执（SDK 0.20+: sendMessageReadReceipts）
     if (
-      conversationType == 'singleChat' &&
+      (conversationType === 'singleChat' || conversationType === 'groupChat') &&
       sdkMessage.from != getCurrentUserId(rootStore.client) &&
-      uiMessage.status != 'read' &&
-      !uiMessage.isChatThread &&
-      sdkMessage.to == getCurrentUserId(rootStore.client)
+      !uiMessage.isChatThread
     ) {
-      rootStore.messageStore.sendReadAck(messageId, sdkMessage.from || '');
+      rootStore.messageStore.sendReadAck(messageId);
     }
   };
   const handleClickVideo = (e: React.MouseEvent<HTMLVideoElement>) => {

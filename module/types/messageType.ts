@@ -141,7 +141,16 @@ interface BaseMessage {
   reactions?: Reaction[];
   chatThreadOverview?: ChatThreadOverview;
   onlineState?: ONLINESTATETYPE;
-  status: MessageStatus;
+  /** @deprecated Prefer sendStatus + isPeerRead / groupReadCount / isDelivered */
+  status?: MessageStatus;
+  /** SDK 0.20+: sending | sent | failed */
+  sendStatus?: 'sending' | 'sent' | 'failed';
+  /** SDK 0.20+: whether peer has read an outgoing single-chat message */
+  isPeerRead?: boolean;
+  /** SDK 0.20+: cumulative group read count */
+  groupReadCount?: number;
+  /** UIKit overlay from onMessageDelivered */
+  isDelivered?: boolean;
   bySelf?: boolean;
   chatThread?: {
     parentId?: string;

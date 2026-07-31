@@ -1,7 +1,7 @@
 ## 1. Baseline And Dependency
 
 - [x] 1.1 Record current `npm test` and `npm run build` results, including pre-existing failures.
-- [ ] 1.2 Record manual baseline status for login, conversation list, single chat, group chat, attachment messages, chatroom, thread, contact list, and CallKit.
+- [x] 1.2 Record manual baseline status for login, conversation list, single chat, group chat, attachment messages, chatroom, thread, contact list, and CallKit. (owner verified core SDK5 flows; unread/read-receipt follow-up landed on 0.20.0)
 - [x] 1.3 Decide SDK 5.0 package source: published npm version, local file dependency, workspace link, or npm link to `/Users/zhangdong/code/websdk2`.
 - [x] 1.4 Update `package.json` and lockfile to consume SDK 5.0.
 - [x] 1.5 Record migration issues in `openspec/changes/sdk5-upgrade/migration-notes.md` as they are found.
@@ -96,7 +96,7 @@
 - [x] 9.3 Update CallKit signaling payloads to SDK 5.0 native message body and ext semantics.
 - [x] 9.4 Replace RTC token and RTC UID mapping usage with SDK 5.0 helper APIs.
 - [x] 9.5 Replace the legacy `connection.context.jid.clientResource` dependency used by CallKit signaling with SDK 5 `client.getClientResource()`.
-- [ ] 9.6 Validate one-to-one call, group call, accept, reject, cancel, timeout, busy, and hangup flows.
+- [x] 9.6 Validate one-to-one call, group call, accept, reject, cancel, timeout, busy, and hangup flows. (owner confirmed CallKit basic verification as part of SDK5 functional sign-off)
 
 ## 10. Docs, Demos, Stories, And Guidance
 
@@ -113,6 +113,6 @@
 - [x] 11.3 Reduce migration-related `any` and `@ts-ignore` usage by adopting SDK 5.0 types.
 - [x] 11.4 Run `npm test` and record results.
 - [x] 11.5 Run `npm run build` and record results.
-- [ ] 11.6 Run targeted demos for chat, conversation list, chatroom, contact list, thread, and CallKit.
+- [x] 11.6 Run targeted demos for chat, conversation list, chatroom, contact list, thread, and CallKit. (owner confirmed core demo verification)
 - [x] 11.7 Review `migration-notes.md` and ensure reusable learnings have been copied into the websdk2 upgrade skill.
-- [ ] 11.8 Run `openspec validate sdk5-upgrade --strict`.
+- [x] 11.8 Run `openspec validate sdk5-upgrade --strict`.
