@@ -303,9 +303,17 @@ let ConversationItem: FC<ConversationItemProps> = props => {
   }
 
   lastMsg = renderMessageContent?.(lastMessage as BaseMessageType) ?? lastMsg;
-  if (data.chatType == 'groupChat') {
+  const hasMessagePreview = Array.isArray(lastMsg)
+    ? lastMsg.some(node => node !== '' && node != null)
+    : lastMsg !== '' && lastMsg != null;
+  // 群聊无最后一条消息时不要拼 "发送者: "，否则空昵称会只剩一个冒号
+  if (data.chatType == 'groupChat' && hasMessagePreview) {
+    const formatSenderPrefix = (name?: string) => {
+      const trimmed = (name || '').trim();
+      return trimmed ? `${trimmed}: ` : '';
+    };
     const msgFrom = (lastMessage as BaseMessageType)?.from || '';
-    let from = msgFrom && msgFrom !== currentUserId ? `${msgFrom}: ` : '';
+    let from = msgFrom && msgFrom !== currentUserId ? formatSenderPrefix(msgFrom) : '';
     const groupItem = getGroupItemFromGroupsById(conversationId);
     if (groupItem) {
       const memberIdx = getGroupMemberIndexByUserId(groupItem, String(msgFrom)) ?? -1;
@@ -313,16 +321,18 @@ let ConversationItem: FC<ConversationItemProps> = props => {
       const ease_chat_uikit_user_info = (lastMessage as BaseMessageType)?.ext
         ?.ease_chat_uikit_user_info;
       if (ease_chat_uikit_user_info && ease_chat_uikit_user_info.nickname) {
-        from = `${ease_chat_uikit_user_info.nickname}: `;
+        from = formatSenderPrefix(ease_chat_uikit_user_info.nickname);
       } else if (memberIdx > -1) {
         const memberItem = groupItem?.members?.[memberIdx] || ({} as any);
-        from = `${getGroupMemberNickName(memberItem)}: `;
+        from = formatSenderPrefix(getGroupMemberNickName(memberItem));
       }
     }
-    if (Array.isArray(lastMsg)) {
-      lastMsg = [from, ...Array.from(lastMsg)];
-    } else {
-      lastMsg = [from, lastMsg];
+    if (from) {
+      if (Array.isArray(lastMsg)) {
+        lastMsg = [from, ...Array.from(lastMsg)];
+      } else {
+        lastMsg = [from, lastMsg];
+      }
     }
   }
   const rippleProp = ripple === undefined ? themeRipple : ripple;
