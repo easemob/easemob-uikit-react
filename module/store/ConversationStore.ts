@@ -225,16 +225,22 @@ class ConversationStore {
           name,
           avatarUrl: item.conversationAvatar,
         });
-        return;
+      } else {
+        this.byId[key] = {
+          ...existing,
+          unreadCount,
+          isPinned: item.isPinned ?? existing.isPinned,
+          name,
+          avatarUrl: item.conversationAvatar || existing.avatarUrl,
+          lastMessage: item.lastMessage || existing.lastMessage,
+        };
       }
-      this.byId[key] = {
-        ...existing,
-        unreadCount,
-        isPinned: item.isPinned ?? existing.isPinned,
-        name,
-        avatarUrl: item.conversationAvatar || existing.avatarUrl,
-        lastMessage: item.lastMessage || existing.lastMessage,
-      };
+
+      // Keep addressStore group name in sync when SDK fills conversationName after join.
+      if (chatType === 'groupChat' && name && name !== item.conversationId) {
+        this.rootStore.addressStore?.ensureGroupInList?.(item.conversationId, name);
+        this.rootStore.addressStore?.updateGroupName?.(item.conversationId, name);
+      }
     });
     this.resortIds();
   }

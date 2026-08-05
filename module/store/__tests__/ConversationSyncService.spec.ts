@@ -63,6 +63,41 @@ describe('ConversationSyncService contracts', () => {
     );
   });
 
+  it('falls back to SDK joined group name when addressStore has no group yet', () => {
+    const { service, addConversation, rootStore } = createService();
+    rootStore.client = {
+      chatManager: {
+        getConversationList: () => [
+          {
+            conversationId: 'group-2',
+            conversationType: 'groupChat',
+            conversationName: 'group-2',
+          },
+        ],
+      },
+      groupManager: {
+        getJoinedGroupList: () => [{ groupId: 'group-2', name: 'SDK Group' }],
+      },
+    };
+
+    service.syncOnMessageReceived(
+      {
+        type: 'text',
+        timestamp: 200,
+      } as any,
+      'group-2',
+      'groupChat',
+      'alice',
+    );
+
+    expect(addConversation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'group-2',
+        name: 'SDK Group',
+      }),
+    );
+  });
+
   it('creates a new conversation with zero unread count for the current conversation', () => {
     const { service, addConversation } = createService({
       currentCvs: {

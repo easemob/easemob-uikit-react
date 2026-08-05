@@ -180,6 +180,38 @@ describe('ConversationStore.syncUnreadFromSdkItems', () => {
     expect(store.conversationList.map(item => item.conversationId)).toEqual(['alice']);
   });
 
+  it('updates local group name when SDK later fills conversationName', () => {
+    const { store } = createStore();
+    const ensureGroupInList = vi.fn();
+    const updateGroupName = vi.fn();
+    (store as any).rootStore.addressStore = {
+      groups: [{ groupId: 'g1', groupName: '', name: '' }],
+      ensureGroupInList,
+      updateGroupName,
+    };
+    store.byId.groupChat_g1 = {
+      chatType: 'groupChat',
+      conversationId: 'g1',
+      unreadCount: 0,
+      lastMessage: {},
+      name: 'g1',
+    };
+    store.orderedIds = ['groupChat_g1'];
+
+    store.syncUnreadFromSdkItems([
+      {
+        conversationId: 'g1',
+        conversationType: 'groupChat',
+        unreadCount: 0,
+        conversationName: '新群名称',
+      },
+    ]);
+
+    expect(store.getConversation('groupChat', 'g1')?.name).toBe('新群名称');
+    expect(ensureGroupInList).toHaveBeenCalledWith('g1', '新群名称');
+    expect(updateGroupName).toHaveBeenCalledWith('g1', '新群名称');
+  });
+
   it('keeps local group name when SDK conversationName is the groupId placeholder', () => {
     const { store } = createStore();
     (store as any).rootStore.addressStore = {

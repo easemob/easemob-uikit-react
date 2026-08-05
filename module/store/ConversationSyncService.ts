@@ -17,6 +17,51 @@ class ConversationSyncService {
     this.rootStore = rootStore;
   }
 
+  /**
+   * Resolve display name for a newly created conversation.
+   * Prefer addressStore, then SDK conversation list / joined groups (SDK 0.20.29+ may already
+   * enrich group name after onMembersJoined).
+   */
+  private resolveConversationDisplayName(conversationType: string, conversationId: string): string {
+    if (conversationType === 'groupChat') {
+      const localGroup = this.rootStore.addressStore.groups.find(
+        group => group.groupId === conversationId,
+      );
+      const localName = localGroup?.groupName || localGroup?.name || '';
+      if (localName && localName !== conversationId) {
+        return localName;
+      }
+
+      const client = this.rootStore.client as any;
+      try {
+        const sdkCvs = client?.chatManager
+          ?.getConversationList?.()
+          ?.find(
+            (item: { conversationId?: string; conversationType?: string }) =>
+              item.conversationId === conversationId && item.conversationType === 'groupChat',
+          );
+        const sdkCvsName = sdkCvs?.conversationName || '';
+        if (sdkCvsName && sdkCvsName !== conversationId) {
+          return sdkCvsName;
+        }
+
+        const sdkGroup = client?.groupManager
+          ?.getJoinedGroupList?.()
+          ?.find((group: { groupId?: string }) => group.groupId === conversationId);
+        const sdkGroupName = sdkGroup?.name || '';
+        if (sdkGroupName && sdkGroupName !== conversationId) {
+          return sdkGroupName;
+        }
+      } catch {
+        // ignore SDK read failures; conversation name can catch up via onConversationListUpdate
+      }
+
+      return localName;
+    }
+
+    return '';
+  }
+
   /** Sync conversation list when a non-chatRoom message is received */
   syncOnMessageReceived(
     message: BaseMessageType,
@@ -42,12 +87,7 @@ class ConversationSyncService {
     ) as unknown as Conversation;
 
     if (!cvs) {
-      let name = '';
-      this.rootStore.addressStore.groups.forEach(group => {
-        if (conversationId === group.groupId) {
-          name = group.groupName || group.name || '';
-        }
-      });
+      const name = this.resolveConversationDisplayName(conversationType, conversationId);
       cvs = {
         chatType: conversationType as any,
         conversationId,

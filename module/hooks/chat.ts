@@ -287,6 +287,15 @@ const useEventHandler = (props: ProviderProps, client: any) => {
         const members = (message.members || []).map((member: any) => ({
           member: member.userId,
         }));
+        const currentUserId = getCurrentUserId(client);
+        const isSelfJoined = (message.members || []).some(
+          (member: any) => member.userId === currentUserId,
+        );
+        // Invitee: seed local group + fetch detail; SDK 0.20.29+ also refreshes conversationName.
+        if (isSelfJoined && message.groupId) {
+          addressStore.ensureGroupInList(message.groupId, message.groupName);
+          addressStore.getGroupInfo(message.groupId);
+        }
         addressStore.setGroupMembers(message.groupId, members);
         useGroupMembersAttributes(
           message.groupId,

@@ -106,6 +106,7 @@ class AddressStore {
       deleteContactFromContactList: action,
       deleteContact: action,
       setGroups: action,
+      ensureGroupInList: action,
       setGroupMembers: action,
       setGroupMemberAttributes: action,
       setAppUserInfo: action,
@@ -313,6 +314,25 @@ class AddressStore {
 
   setHasGroupsNext(hasNext: boolean) {
     this.hasGroupsNext = hasNext;
+  }
+
+  /** Ensure a joined group exists locally (e.g. invitee onMembersJoined before getGroupInfo). */
+  ensureGroupInList(groupId: string, groupName?: string) {
+    if (!groupId) return;
+    const idx = getGroupItemIndexFromGroupsById(groupId);
+    if (idx > -1) {
+      if (groupName && !this.groups[idx].groupName && !this.groups[idx].name) {
+        this.groups[idx].groupName = groupName;
+        this.groups[idx].name = groupName;
+      }
+      return;
+    }
+    this.groups.push({
+      groupId,
+      groupName: groupName || '',
+      name: groupName || '',
+      members: [],
+    } as GroupItem);
   }
 
   /** Normalize SDK4/SDK5 group member payloads to MemberItem.userId + role. */
