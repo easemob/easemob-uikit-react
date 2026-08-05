@@ -291,9 +291,17 @@ const useEventHandler = (props: ProviderProps, client: any) => {
         const isSelfJoined = (message.members || []).some(
           (member: any) => member.userId === currentUserId,
         );
-        // Invitee: seed local group + fetch detail; SDK 0.20.29+ also refreshes conversationName.
+        // Self joined: sync ContactList from SDK; payload.groupName is available since SDK 0.20.31.
         if (isSelfJoined && message.groupId) {
+          addressStore.syncJoinedGroupsFromSdk();
           addressStore.ensureGroupInList(message.groupId, message.groupName);
+          if (message.groupName && message.groupName !== message.groupId) {
+            addressStore.updateGroupName(message.groupId, message.groupName);
+            const cvs = conversationStore.getConversation('groupChat', message.groupId);
+            if (cvs && (!cvs.name || cvs.name === message.groupId)) {
+              conversationStore.modifyConversation({ ...cvs, name: message.groupName });
+            }
+          }
           addressStore.getGroupInfo(message.groupId);
         }
         addressStore.setGroupMembers(message.groupId, members);
@@ -301,6 +309,18 @@ const useEventHandler = (props: ProviderProps, client: any) => {
           message.groupId,
           members.map((member: any) => member.member),
         );
+      },
+      onAutoAcceptInvitationFromGroup: (message: any) => {
+        if (!message?.groupId) return;
+        addressStore.syncJoinedGroupsFromSdk();
+        addressStore.ensureGroupInList(message.groupId, message.groupName);
+        addressStore.getGroupInfo(message.groupId);
+      },
+      onRequestToJoinAccepted: (message: any) => {
+        if (!message?.groupId) return;
+        addressStore.syncJoinedGroupsFromSdk();
+        addressStore.ensureGroupInList(message.groupId, message.groupName);
+        addressStore.getGroupInfo(message.groupId);
       },
       onMembersExited: (message: any) => {
         (message.members || []).forEach((member: any) => {

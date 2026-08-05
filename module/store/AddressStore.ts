@@ -107,6 +107,7 @@ class AddressStore {
       deleteContact: action,
       setGroups: action,
       ensureGroupInList: action,
+      syncJoinedGroupsFromSdk: action,
       setGroupMembers: action,
       setGroupMemberAttributes: action,
       setAppUserInfo: action,
@@ -320,19 +321,81 @@ class AddressStore {
   ensureGroupInList(groupId: string, groupName?: string) {
     if (!groupId) return;
     const idx = getGroupItemIndexFromGroupsById(groupId);
+    const resolvedName = groupName && groupName !== groupId ? groupName : undefined;
     if (idx > -1) {
-      if (groupName && !this.groups[idx].groupName && !this.groups[idx].name) {
-        this.groups[idx].groupName = groupName;
-        this.groups[idx].name = groupName;
+      if (
+        resolvedName &&
+        (!this.groups[idx].groupName ||
+          this.groups[idx].groupName === groupId ||
+          !this.groups[idx].name ||
+          this.groups[idx].name === groupId)
+      ) {
+        this.groups[idx].groupName = resolvedName;
+        this.groups[idx].name = resolvedName;
+        this.groups = [...this.groups];
       }
       return;
     }
-    this.groups.push({
-      groupId,
-      groupName: groupName || '',
-      name: groupName || '',
-      members: [],
-    } as GroupItem);
+    this.groups = [
+      ...this.groups,
+      {
+        groupId,
+        groupName: resolvedName || groupName || '',
+        name: resolvedName || groupName || '',
+        members: [],
+      } as GroupItem,
+    ];
+  }
+
+  /**
+   * Upsert local groups from SDK getJoinedGroupList().
+   * ContactList watches addressStore.groups by reference; always reassign the array.
+   */
+  syncJoinedGroupsFromSdk() {
+    const rootStore = getStore();
+    const client = rootStore.client as any;
+    let sdkGroups: any[] = [];
+    try {
+      sdkGroups = client?.groupManager?.getJoinedGroupList?.() || [];
+    } catch (error) {
+      console.warn('[UIKit] syncJoinedGroupsFromSdk failed', error);
+      return;
+    }
+    if (!Array.isArray(sdkGroups) || sdkGroups.length === 0) return;
+
+    const byId = new Map<string, GroupItem>();
+    this.groups.forEach(group => {
+      if (group?.groupId) byId.set(group.groupId, { ...group });
+    });
+
+    sdkGroups.forEach(group => {
+      const groupId = group?.groupId;
+      if (!groupId) return;
+      const existing = byId.get(groupId);
+      const name = group.name || group.groupName || existing?.name || existing?.groupName || '';
+      if (existing) {
+        byId.set(groupId, {
+          ...existing,
+          ...group,
+          groupId,
+          name: name || existing.name,
+          groupName: name || existing.groupName || existing.name,
+          members: existing.members,
+          info: existing.info || group.info,
+          admins: existing.admins || group.admins,
+        });
+        return;
+      }
+      byId.set(groupId, {
+        ...group,
+        groupId,
+        name,
+        groupName: name,
+        members: group.members || [],
+      } as GroupItem);
+    });
+
+    this.groups = Array.from(byId.values());
   }
 
   /** Normalize SDK4/SDK5 group member payloads to MemberItem.userId + role. */
@@ -724,22 +787,31 @@ class AddressStore {
       })
       .then(group => {
         runInAction(() => {
-          const found = this.groups.filter(item => item.groupId === groupId);
-          if (found.length === 0) {
-            this.groups.push({
-              ...group,
-              info: group,
-              groupId,
-              name: group.name || '',
-              groupName: group.name || '',
-            });
+          const idx = getGroupItemIndexFromGroupsById(groupId);
+          if (idx < 0) {
+            this.groups = [
+              ...this.groups,
+              {
+                ...group,
+                info: group,
+                groupId,
+                name: group.name || '',
+                groupName: group.name || '',
+              },
+            ];
           } else {
-            found[0].info = group;
-            found[0].name = group.name || found[0].name;
-            found[0].groupName = group.name || found[0].groupName;
-            if (group.role) {
-              found[0].role = group.role;
-            }
+            const current = this.groups[idx];
+            this.groups = this.groups.map((item, i) =>
+              i === idx
+                ? {
+                    ...item,
+                    info: group,
+                    name: group.name || current.name,
+                    groupName: group.name || current.groupName,
+                    role: group.role || current.role,
+                  }
+                : item,
+            );
           }
         });
 
@@ -922,22 +994,28 @@ class AddressStore {
             initial = pinyin(groupName.substring(0, 1), { toneType: 'none' })[0][0].toUpperCase();
           }
 
-          this.groups.push({
-            disabled: false,
-            groupId: res.groupId || '',
-            initial: initial,
-            name: groupName,
-            groupName: groupName,
-            role: 'owner',
-            members: groupMembers,
-            info: {
+          this.groups = [
+            ...this.groups,
+            {
+              disabled: false,
               groupId: res.groupId || '',
+              initial: initial,
               name: groupName,
+              groupName: groupName,
               role: 'owner',
-              owner: { userId: currentUserId },
+              members: groupMembers,
+              info: {
+                groupId: res.groupId || '',
+                name: groupName,
+                role: 'owner',
+                owner: { userId: currentUserId },
+              },
             },
-          });
+          ];
         });
+
+        // SDK already added the group locally; refresh so ContactList stays aligned.
+        this.syncJoinedGroupsFromSdk();
 
         rootStore.conversationStore.addConversation({
           chatType: 'groupChat',
