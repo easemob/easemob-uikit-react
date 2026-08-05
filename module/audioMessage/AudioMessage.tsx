@@ -123,13 +123,13 @@ const AudioMessage = (props: AudioMessageProps) => {
         });
     }, 10);
 
-    // 收到的单聊/群聊媒体消息播放时发送已读回执（SDK 0.20+: sendMessageReadReceipts）
+    // 单聊语音：点击播放后才发送已读回执
     const currentUserId = getCurrentUserId(rootStore.client);
-    const conversationType = audioMessage.conversationType;
     if (
-      (conversationType === 'singleChat' || conversationType === 'groupChat') &&
+      audioMessage.conversationType === 'singleChat' &&
       audioMessage.from != currentUserId &&
-      !audioMessage.isChatThread
+      !audioMessage.isChatThread &&
+      !audioMessage.isPeerRead
     ) {
       rootStore.messageStore.sendReadAck(getMessageId(audioMessage));
     }

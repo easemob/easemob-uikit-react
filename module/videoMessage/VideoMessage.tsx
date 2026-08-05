@@ -257,11 +257,12 @@ const VideoMessage = (props: VideoMessageProps) => {
   };
 
   const handlePlayVideo = () => {
-    // 收到的单聊/群聊视频消息播放时发送已读回执（SDK 0.20+: sendMessageReadReceipts）
+    // 单聊视频播放时发送已读回执（群聊不发消息级已读回执）
     if (
-      (conversationType === 'singleChat' || conversationType === 'groupChat') &&
+      conversationType === 'singleChat' &&
       sdkMessage.from != getCurrentUserId(rootStore.client) &&
-      !uiMessage.isChatThread
+      !uiMessage.isChatThread &&
+      !sdkMessage.isPeerRead
     ) {
       rootStore.messageStore.sendReadAck(messageId);
     }

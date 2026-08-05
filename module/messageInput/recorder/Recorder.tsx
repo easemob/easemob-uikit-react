@@ -185,7 +185,7 @@ const Recorder = React.forwardRef<RecorderRef, RecorderProps>((props: RecorderPr
           duration: voiceDuration,
           fileLength: voiceFile.size,
           isChatThread,
-          needReadReceipt: route.conversationType !== 'chatRoom',
+          needReadReceipt: route.conversationType === 'singleChat',
         });
         _sendMessage(message);
       });

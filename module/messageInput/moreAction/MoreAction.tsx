@@ -117,7 +117,7 @@ let MoreAction = (props: MoreActionProps) => {
         event: body.event,
         params: body.params,
         isChatThread,
-        needReadReceipt: route.conversationType !== 'chatRoom',
+        needReadReceipt: route.conversationType === 'singleChat',
       });
       messageStore.sendMessage(customMessage);
     });
@@ -251,7 +251,7 @@ let MoreAction = (props: MoreActionProps) => {
           ...route,
           ...option,
           isChatThread,
-          needReadReceipt: route.conversationType !== 'chatRoom',
+          needReadReceipt: route.conversationType === 'singleChat',
         });
         messageStore.sendMessage(imageMessage);
       });
@@ -287,7 +287,7 @@ let MoreAction = (props: MoreActionProps) => {
       body: option,
       isChatThread,
     }).then(route => {
-      const needReadReceipt = route.conversationType !== 'chatRoom';
+      const needReadReceipt = route.conversationType === 'singleChat';
       const fileMessage =
         type === 'video'
           ? client.chatManager.createVideoMessage({

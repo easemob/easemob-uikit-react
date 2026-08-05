@@ -101,11 +101,12 @@ const FileMessage = (props: FileMessageProps) => {
       .then(blob => {
         download(blob, filename);
 
-        // 收到的单聊/群聊文件消息下载时发送已读回执（SDK 0.20+: sendMessageReadReceipts）
+        // 单聊文件下载时发送已读回执（群聊不发消息级已读回执）
         if (
-          (conversationType === 'singleChat' || conversationType === 'groupChat') &&
+          conversationType === 'singleChat' &&
           sdkMessage.from != getCurrentUserId(rootStore.client) &&
-          !uiMessage.isChatThread
+          !uiMessage.isChatThread &&
+          !sdkMessage.isPeerRead
         ) {
           rootStore.messageStore.sendReadAck(messageId);
         }

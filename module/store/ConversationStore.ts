@@ -147,8 +147,8 @@ class ConversationStore {
         }
       });
     }
-    // Notify message senders via message-level read receipts (not via conversation unread clear)
-    if (currentCvs.chatType === 'singleChat' || currentCvs.chatType === 'groupChat') {
+    // Message-level read receipts: single chat only (not via conversation unread clear)
+    if (currentCvs.chatType === 'singleChat') {
       this.rootStore.messageStore
         .sendReadReceiptsForConversation(currentCvs)
         .catch((error: unknown) => {

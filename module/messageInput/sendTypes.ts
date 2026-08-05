@@ -33,6 +33,11 @@ export function toSendMessageRoute(cvs: CurrentConversation): SendMessageRoute {
   };
 }
 
+/** Message-level read receipts are only requested for single chat. */
+export function shouldEnableReadReceipt(conversationType?: string): boolean {
+  return conversationType === 'singleChat';
+}
+
 export async function resolveBeforeSendRoute(
   onBeforeSendMessage: BeforeSendMessage | undefined,
   context: BeforeSendMessageContext,

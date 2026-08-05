@@ -217,8 +217,8 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
         content: textValue,
         ext,
         isChatThread,
-        // Enable message-level read receipts for single/group chat (SDK 0.20+)
-        needReadReceipt: route.conversationType !== 'chatRoom',
+        // Message-level read receipts are single-chat only
+        needReadReceipt: route.conversationType === 'singleChat',
       });
       _sendMessage(message);
     });

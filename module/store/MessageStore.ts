@@ -101,6 +101,8 @@ class MessageStore {
       updateMessageStatus: action,
       applyMessageReadReceipts: action,
       sendReadReceiptsForConversation: action,
+      addHistoryMsgs: action,
+      sendReadAck: action,
       clearMessage: action,
       setRepliedMessage: action,
       addReaction: action,
@@ -344,7 +346,13 @@ class MessageStore {
       }
       debounceTimer = setTimeout(() => {
         this.sendChannelAck(curCvs);
-        this.sendReadAck(messageId);
+        // Voice messages send read receipt only after the user plays them
+        if (
+          curCvs.chatType === 'singleChat' &&
+          !this.isVoiceMessageType((message as ChatSDK.Message).type)
+        ) {
+          this.sendReadAck(messageId);
+        }
       }, 1000);
     }
     const isChatbot = message.from?.includes?.('chatbot_');
@@ -526,36 +534,86 @@ class MessageStore {
     });
   }
 
+  private isVoiceMessageType(type?: string) {
+    return type === 'audio' || type === 'voice';
+  }
+
+  private shouldSendReadReceiptForMessage(msg: ChatSDK.Message, currentUserId: string) {
+    if (!msg?.msgServerId || msg.type === 'cmd') return false;
+    if (this.isVoiceMessageType(msg.type)) return false;
+    if ((msg as any).isChatThread || (msg as any).chatThread) return false;
+    if (msg.direct === 'SEND') return false;
+    if (msg.from === currentUserId) return false;
+    // Local marker: already sent a read receipt for this received message
+    if (msg.isPeerRead === true) return false;
+    return true;
+  }
+
   /**
-   * Send message read receipts for received messages in a conversation (batch, max 50).
-   * Used when opening a conversation so the peer can update isPeerRead / groupReadCount.
+   * Mark received messages as locally receipt-sent via isPeerRead to avoid duplicate sends.
+   */
+  private markLocalReadReceiptSent(
+    conversationType: ChatSDK.ChatConversationType,
+    conversationId: string,
+    messageIds: string[],
+  ) {
+    if (!messageIds.length) return;
+    const idSet = new Set(messageIds);
+    runInAction(() => {
+      const list = this.message[conversationType]?.[conversationId];
+      if (list) {
+        list.forEach((item, index) => {
+          const msg = item as ChatSDK.Message;
+          if (!msg?.msgServerId || !idSet.has(msg.msgServerId)) return;
+          if (msg.direct === 'SEND' || msg.isPeerRead === true) return;
+          const next = { ...msg, isPeerRead: true };
+          list[index] = next;
+          this.message.byId.set(msg.msgServerId, next);
+          if (msg.msgLocalId) this.message.byId.set(msg.msgLocalId, next);
+        });
+      }
+
+      messageIds.forEach(messageId => {
+        const msg = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
+        if (!msg || msg.direct === 'SEND' || msg.isPeerRead === true) return;
+        msg.isPeerRead = true;
+        this.message.byId.set(messageId, msg);
+        if (msg.msgLocalId && msg.msgLocalId !== messageId) {
+          this.message.byId.set(msg.msgLocalId, msg);
+        }
+        if (msg.msgServerId && msg.msgServerId !== messageId) {
+          this.message.byId.set(msg.msgServerId, msg);
+        }
+      });
+    });
+  }
+
+  /**
+   * Send message read receipts for received single-chat messages (batch, max 50).
+   * Skips voice (play-to-ack), already-acked (isPeerRead), and group/chatroom.
    */
   sendReadReceiptsForConversation(cvs: CurrentConversation) {
-    if (!cvs?.conversationId || !cvs?.chatType) return Promise.resolve();
-    if (cvs.chatType !== 'singleChat' && cvs.chatType !== 'groupChat') {
+    if (!cvs?.conversationId || cvs.chatType !== 'singleChat') {
       return Promise.resolve();
     }
     const currentUserId = getCurrentUserId(this.rootStore.client);
-    const list = this.message[cvs.chatType]?.[cvs.conversationId] || [];
+    const list = this.message.singleChat?.[cvs.conversationId] || [];
     const messageIds = list
-      .filter(item => {
-        const msg = item as ChatSDK.Message;
-        if (!msg?.msgServerId || msg.type === 'cmd') return false;
-        if ((msg as any).isChatThread || (msg as any).chatThread) return false;
-        if (msg.direct === 'SEND') return false;
-        if (msg.from === currentUserId) return false;
-        return true;
-      })
+      .filter(item => this.shouldSendReadReceiptForMessage(item as ChatSDK.Message, currentUserId))
       .map(item => (item as ChatSDK.Message).msgServerId)
       .filter(Boolean)
       .slice(-50);
 
     if (messageIds.length === 0) return Promise.resolve();
-    return this.rootStore.client.chatManager.sendMessageReadReceipts({
-      conversationId: cvs.conversationId,
-      conversationType: cvs.chatType,
-      messageIds,
-    });
+    return this.rootStore.client.chatManager
+      .sendMessageReadReceipts({
+        conversationId: cvs.conversationId,
+        conversationType: 'singleChat',
+        messageIds,
+      })
+      .then(() => {
+        this.markLocalReadReceiptSent('singleChat', cvs.conversationId, messageIds);
+      });
   }
 
   addHistoryMsgs(cvs: CurrentConversation, msgs: any) {
@@ -566,6 +624,18 @@ class MessageStore {
       this.message[cvs.chatType][cvs.conversationId] = msgs.concat(
         this.message[cvs.chatType]?.[cvs.conversationId] || [],
       );
+    }
+    // Index history messages so per-message ack (e.g. voice play) can resolve them
+    msgs.forEach((msg: ChatSDK.Message) => {
+      if (!msg) return;
+      if (msg.msgLocalId) this.setKeyValue(msg.msgLocalId, msg);
+      if (msg.msgServerId) this.setKeyValue(msg.msgServerId, msg);
+    });
+    // History pull may introduce unread peer messages; ack them for single chat
+    if (cvs.chatType === 'singleChat') {
+      return this.sendReadReceiptsForConversation(cvs).catch((error: unknown) => {
+        console.error('[UIKit] sendReadReceiptsForConversation after history failed', error);
+      });
     }
   }
 
@@ -1024,7 +1094,7 @@ class MessageStore {
 
   /**
    * Send a message-level read receipt (SDK 0.20+: sendMessageReadReceipts).
-   * `to` is kept for backward-compatible call sites and is unused.
+   * Single chat only. `to` is kept for backward-compatible call sites and is unused.
    */
   sendReadAck(messageId: string, to?: string) {
     if (!messageId) {
@@ -1033,14 +1103,19 @@ class MessageStore {
 
     const message = this.message.byId.get(messageId) as ChatSDK.Message | undefined;
     if (!message?.msgServerId) return;
-    const conversationType = message.conversationType;
-    if (conversationType !== 'singleChat' && conversationType !== 'groupChat') return;
+    if (message.conversationType !== 'singleChat') return;
+    if (message.direct === 'SEND') return;
+    if (message.isPeerRead === true) return;
 
-    return this.rootStore.client.chatManager.sendMessageReadReceipts({
-      conversationId: message.conversationId,
-      conversationType,
-      messageIds: [message.msgServerId],
-    });
+    return this.rootStore.client.chatManager
+      .sendMessageReadReceipts({
+        conversationId: message.conversationId,
+        conversationType: 'singleChat',
+        messageIds: [message.msgServerId],
+      })
+      .then(() => {
+        this.markLocalReadReceiptSent('singleChat', message.conversationId, [message.msgServerId]);
+      });
   }
 
   clear() {
