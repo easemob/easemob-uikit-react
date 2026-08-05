@@ -157,6 +157,35 @@ class ConversationStore {
     }
   };
 
+  /**
+   * Resolve display name from SDK conversation update.
+   * SDK may set conversationName === conversationId as a placeholder; keep local/group name then.
+   */
+  private resolveSyncedConversationName(
+    chatType: ChatType,
+    conversationId: string,
+    conversationName?: string,
+    existingName?: string,
+  ) {
+    const sdkName = conversationName || '';
+    const isPlaceholder = !sdkName || sdkName === conversationId;
+    if (!isPlaceholder) return sdkName;
+
+    if (existingName && existingName !== conversationId) {
+      return existingName;
+    }
+
+    if (chatType === 'groupChat') {
+      const group = this.rootStore.addressStore?.groups?.find(
+        (item: { groupId?: string }) => item.groupId === conversationId,
+      );
+      const groupName = group?.groupName || group?.name;
+      if (groupName) return groupName;
+    }
+
+    return existingName || sdkName || '';
+  }
+
   /** Sync unreadCount (and optional fields) from SDK conversation list updates. */
   syncUnreadFromSdkItems(
     items: ReadonlyArray<{
@@ -180,6 +209,12 @@ class ConversationStore {
       // finishes. Keep local unread at 0 so the conversation list does not flash a badge.
       const unreadCount = isCurrentConversation ? 0 : item.unreadCount ?? 0;
       const existing = this.byId[key];
+      const name = this.resolveSyncedConversationName(
+        chatType,
+        item.conversationId,
+        item.conversationName,
+        existing?.name,
+      );
       if (!existing) {
         this.addConversation({
           chatType,
@@ -187,7 +222,7 @@ class ConversationStore {
           unreadCount,
           lastMessage: item.lastMessage || ({} as any),
           isPinned: item.isPinned,
-          name: item.conversationName,
+          name,
           avatarUrl: item.conversationAvatar,
         });
         return;
@@ -196,7 +231,7 @@ class ConversationStore {
         ...existing,
         unreadCount,
         isPinned: item.isPinned ?? existing.isPinned,
-        name: item.conversationName || existing.name,
+        name,
         avatarUrl: item.conversationAvatar || existing.avatarUrl,
         lastMessage: item.lastMessage || existing.lastMessage,
       };

@@ -138,7 +138,13 @@ const Conversations: FC<ConversationListProps> = props => {
         if (chatType == 'groupChat') {
           groupData.forEach(group => {
             if (conversationId == group.groupId) {
-              renderItem.name = conversationName || group.groupName || group.name;
+              // SDK may use conversationId as placeholder conversationName
+              const hasRealName = !!conversationName && conversationName !== conversationId;
+              renderItem.name =
+                (hasRealName ? conversationName : '') ||
+                group.groupName ||
+                group.name ||
+                conversationName;
               renderItem.avatarUrl = group.avatarUrl;
             }
           });

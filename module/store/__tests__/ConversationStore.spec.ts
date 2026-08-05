@@ -180,6 +180,32 @@ describe('ConversationStore.syncUnreadFromSdkItems', () => {
     expect(store.conversationList.map(item => item.conversationId)).toEqual(['alice']);
   });
 
+  it('keeps local group name when SDK conversationName is the groupId placeholder', () => {
+    const { store } = createStore();
+    (store as any).rootStore.addressStore = {
+      groups: [{ groupId: 'g1', groupName: '我的群', name: '我的群' }],
+    };
+    store.byId.groupChat_g1 = {
+      chatType: 'groupChat',
+      conversationId: 'g1',
+      unreadCount: 0,
+      lastMessage: {},
+      name: '我的群',
+    };
+    store.orderedIds = ['groupChat_g1'];
+
+    store.syncUnreadFromSdkItems([
+      {
+        conversationId: 'g1',
+        conversationType: 'groupChat',
+        unreadCount: 0,
+        conversationName: 'g1',
+      },
+    ]);
+
+    expect(store.getConversation('groupChat', 'g1')?.name).toBe('我的群');
+  });
+
   it('deleteConversation only clears currentCvs when deleting the open conversation', () => {
     const { store } = createStore();
     store.byId.groupChat_g1 = {

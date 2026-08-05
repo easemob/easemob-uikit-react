@@ -110,7 +110,13 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
   const infoData = groupData?.info;
   const owner = infoData?.owner;
   const currentUserId = getCurrentUserId(rootStore.client);
-  const isOwner = owner == currentUserId;
+  // SDK5 owner is GroupUserInfo `{ userId }`; keep string fallback for older local shapes
+  const ownerId = typeof owner === 'string' ? owner : owner?.userId || '';
+  const isOwner =
+    (!!ownerId && ownerId === currentUserId) ||
+    infoData?.role === 'owner' ||
+    groupData?.role === 'owner' ||
+    !!groupData?.members?.some(item => item.userId === currentUserId && item.role === 'owner');
   const groupMembers = groupData?.members;
   const myInfo = groupMembers?.filter(item => item.userId === currentUserId)[0];
   const avatarUrl = groupData?.avatarUrl;
@@ -504,7 +510,7 @@ const GroupDetail: FC<GroupDetailProps> = (props: GroupDetailProps) => {
           }}
           checkable={memberVisible.type == 'transferOwner'}
           groupMembers={groupData?.members}
-          groupId={infoData?.id || ''}
+          groupId={infoData?.groupId || infoData?.id || conversation.conversationId || ''}
           onUserSelect={(
             userInfo: UserInfoData & { type: 'add' | 'delete' },
             selectedUsers: UserInfoData[],

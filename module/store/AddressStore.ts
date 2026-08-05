@@ -315,29 +315,38 @@ class AddressStore {
     this.hasGroupsNext = hasNext;
   }
 
+  /** Normalize SDK4/SDK5 group member payloads to MemberItem.userId + role. */
+  private normalizeGroupMemberEntry(member: any, admins?: string[]): MemberItem | null {
+    const userId = member?.user?.userId || member?.userId || member?.owner || member?.member || '';
+    if (!userId) return null;
+
+    let role: MemberRole = 'member';
+    if (member?.role === 'owner' || member?.role === 'admin' || member?.role === 'member') {
+      role = member.role;
+    } else if (member?.owner && !member?.member && !member?.user && !member?.userId) {
+      // SDK4 shape: { owner: userId }
+      role = 'owner';
+    } else if (admins?.includes(userId)) {
+      role = 'admin';
+    }
+
+    return { userId, role };
+  }
+
   setGroupMembers(
     groupId: string,
-    membersList: { userId?: string; member?: string; owner?: string }[],
+    membersList: Array<
+      | { userId?: string; member?: string; owner?: string; role?: MemberRole }
+      | { user?: { userId?: string }; role?: MemberRole }
+    >,
   ) {
     const idx = getGroupItemIndexFromGroupsById(groupId);
     if (idx > -1) {
-      const currentMembers = this.groups[idx]?.members?.map(item => item.userId);
+      const currentMembers = this.groups[idx]?.members?.map(item => item.userId) || [];
       const filteredMembers = membersList
-        .filter(
-          item => !currentMembers?.find(id => id === ((item as any).owner || (item as any).member)),
-        )
-        .map<MemberItem>(member => {
-          return {
-            userId: (member as any).userId || (member as any).owner || (member as any).member || '',
-            role: this.groups[idx].admins?.includes(
-              (member as any).userId || (member as any).owner || (member as any).member || '',
-            )
-              ? 'admin'
-              : (member as any)?.owner
-              ? 'owner'
-              : 'member',
-          };
-        });
+        .map(member => this.normalizeGroupMemberEntry(member, this.groups[idx].admins))
+        .filter((item): item is MemberItem => Boolean(item?.userId))
+        .filter(item => !currentMembers.includes(item.userId));
       runInAction(() => {
         this.groups[idx].members = [...(this.groups[idx].members || []), ...filteredMembers];
       });
@@ -708,6 +717,9 @@ class AddressStore {
             found[0].info = group;
             found[0].name = group.name || found[0].name;
             found[0].groupName = group.name || found[0].groupName;
+            if (group.role) {
+              found[0].role = group.role;
+            }
           }
         });
 
@@ -896,7 +908,14 @@ class AddressStore {
             initial: initial,
             name: groupName,
             groupName: groupName,
+            role: 'owner',
             members: groupMembers,
+            info: {
+              groupId: res.groupId || '',
+              name: groupName,
+              role: 'owner',
+              owner: { userId: currentUserId },
+            },
           });
         });
 
@@ -976,7 +995,16 @@ class AddressStore {
           }
         });
         if (item.info) {
-          item.info.owner = userId;
+          // Keep SDK5-compatible owner shape while also supporting string compares
+          item.info.owner = { userId };
+        }
+        const currentUserId = getCurrentUserId(getStore().client);
+        if (userId === currentUserId) {
+          item.role = 'owner';
+          if (item.info) item.info.role = 'owner';
+        } else if (item.role === 'owner') {
+          item.role = 'member';
+          if (item.info) item.info.role = 'member';
         }
       }
     });

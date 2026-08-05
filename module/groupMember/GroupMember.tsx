@@ -265,8 +265,9 @@ const GroupMember: FC<GroupMemberProps> = props => {
         {...headerProps}
       ></Header>
       <div className={`${prefixCls}-container`}>
-        {renderData?.map((item: any) => {
-          let name = addressStore.resolveUserInfo(item.userId).nickname;
+        {renderData?.map((item: any, index: number) => {
+          if (!item?.userId) return null;
+          let name = addressStore.resolveUserInfo(item.userId).nickname || item.userId;
           const avatarUrl = addressStore.resolveUserInfo(item.userId).avatarUrl;
           if (item.attributes?.nickName) {
             name = item.attributes?.nickName;
@@ -282,7 +283,7 @@ const GroupMember: FC<GroupMemberProps> = props => {
             <UserItem
               avatarSize={40}
               avatarShape={theme?.avatarShape}
-              key={item.userId}
+              key={`${item.userId}-${index}`}
               data={{ userId: item.userId, nickname: name, avatarUrl: avatarUrl }}
               checkable={checkable}
               disabled={checkedUsers?.some(item2 => item2.userId == item.userId)}
