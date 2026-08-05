@@ -79,7 +79,7 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       ) => {
         messageStore.applyMessageReadReceipts(events || []);
       },
-      // SDK keeps unreadCount in conversation cache; sync into UIKit store
+      // SDK keeps conversation list + unreadCount; sync upserts and removals into UIKit store
       onConversationListUpdate: (payload: {
         items?: ReadonlyArray<{
           conversationId: string;
@@ -90,9 +90,16 @@ const useEventHandler = (props: ProviderProps, client: any) => {
           conversationAvatar?: string;
           lastMessage?: any;
         }>;
+        patch?: {
+          reset?: boolean;
+          removed?: ReadonlyArray<{
+            conversationId: string;
+            conversationType: string;
+          }>;
+        };
       }) => {
-        if (!payload?.items) return;
-        conversationStore.syncUnreadFromSdkItems(payload.items);
+        if (!payload?.items && !payload?.patch?.removed?.length) return;
+        conversationStore.syncFromSdkConversationListUpdate(payload);
       },
       onMessageRecalled: (message: ConversationLocator & { messageId: string }) => {
         const chatType = message.conversationType || message.chatType || 'singleChat';
@@ -307,9 +314,21 @@ const useEventHandler = (props: ProviderProps, client: any) => {
       },
       onUserRemoved: (message: any) => {
         addressStore.removeGroupFromContactList(message.groupId);
+        if (message.groupId) {
+          conversationStore.deleteConversation({
+            chatType: 'groupChat',
+            conversationId: message.groupId,
+          });
+        }
       },
       onGroupDestroyed: (message: any) => {
         addressStore.removeGroupFromContactList(message.groupId);
+        if (message.groupId) {
+          conversationStore.deleteConversation({
+            chatType: 'groupChat',
+            conversationId: message.groupId,
+          });
+        }
       },
       onPresenceStatusChange: (message: any) => {
         if (features?.conversationList?.item?.presence == false) return;

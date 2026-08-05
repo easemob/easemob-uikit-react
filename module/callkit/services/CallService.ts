@@ -1855,7 +1855,8 @@ export class CallService {
       this.onUserPublished?.(userId);
       this.onRemoteUserJoined?.(userId, 'group');
 
-      const hasAudioTrack = this.remoteAudioTracks.has(user.uid);
+      const uidKey = this.toUidKey(user.uid);
+      const hasAudioTrack = this.remoteAudioTracks.has(uidKey);
       const nickname = userId ? this.userInfos[userId]?.nickname : undefined;
       if (!nickname && userId && this.userInfoProvider) {
         const userInfo = await this.userInfoProvider([userId]);
@@ -1911,18 +1912,19 @@ export class CallService {
 
         // 触发回调, 清楚邀请定时器
         this.onUserPublished?.(userId);
+        const uidKey = this.toUidKey(user.uid);
         setTimeout(async () => {
           if (mediaType === 'video') {
             const remoteVideoTrack = user.videoTrack;
             // 🔧 修改：将视频轨道存储到用户专用的Map中
-            this.remoteVideoTracks.set(user.uid, remoteVideoTrack);
+            this.remoteVideoTracks.set(uidKey, remoteVideoTrack);
 
             // 保持向后兼容（为了兼容可能存在的旧代码）
             this.rtc.remoteVideoTrack = remoteVideoTrack;
             this.rtc.remoteUser = user;
 
             // 🔧 获取远程视频流
-            const remoteVideoStream = this.getRemoteVideoStream(user.uid);
+            const remoteVideoStream = this.getRemoteVideoStream(uidKey);
             // logDebug('🎬 获取远程视频流结果:', {
             //   用户ID: user.uid,
             //   视频轨道存在: !!this.remoteVideoTracks.get(user.uid),
@@ -1932,7 +1934,7 @@ export class CallService {
 
             // 创建远程视频信息
             // 🔧 修复：根据音频轨道状态判断静音状态，而不是依赖 joinedMembers
-            const hasAudioTrack = this.remoteAudioTracks.has(user.uid);
+            const hasAudioTrack = this.remoteAudioTracks.has(uidKey);
             const nickname = userId ? this.userInfos[userId]?.nickname : undefined;
             if (!nickname && userId && this.userInfoProvider) {
               const userInfo = await this.userInfoProvider([userId]);
@@ -1970,7 +1972,7 @@ export class CallService {
           if (mediaType === 'audio') {
             const remoteAudioTrack = user.audioTrack;
             // 🔧 修改：将音频轨道存储到用户专用的Map中（使用 uid 作为 key，保持与视频轨道一致）
-            this.remoteAudioTracks.set(user.uid, remoteAudioTrack);
+            this.remoteAudioTracks.set(uidKey, remoteAudioTrack);
 
             // 保持向后兼容
             this.rtc.remoteAudioTrack = remoteAudioTrack;
@@ -2001,7 +2003,7 @@ export class CallService {
 
             // 🔧 修复：在音频事件中，智能判断摄像头状态
             // 如果用户已经有视频轨道，说明摄像头开启；否则检查成员状态
-            const hasVideoTrack = this.remoteVideoTracks.has(user.uid);
+            const hasVideoTrack = this.remoteVideoTracks.has(uidKey);
             const memberCameraStatus = this.getRemoteUserCameraStatus(userId);
             const cameraEnabled = hasVideoTrack || memberCameraStatus;
             logDebug('---->cameraEnabled', hasVideoTrack, memberCameraStatus, cameraEnabled);
@@ -2028,7 +2030,7 @@ export class CallService {
               nickname: this.userInfos[userId]?.nickname || userId,
               avatar: this.userInfos[userId]?.avatarUrl,
               // 保持当前的视频流状态
-              stream: cameraEnabled ? this.getRemoteVideoStream(user.uid) : undefined,
+              stream: cameraEnabled ? this.getRemoteVideoStream(uidKey) : undefined,
               isWaiting: false, // 明确设置不在等待状态
             };
             logDebug('---->updatedVideoInfo user-published', updatedVideoInfo);
@@ -2048,10 +2050,11 @@ export class CallService {
     this.client.on('user-left', (user: any, reason: string) => {
       logDebug('---->user-left', user, reason);
       const userId = this.getUserIdFromUid(user.uid);
+      const uidKey = this.toUidKey(user.uid);
 
       // 🔧 清理离开用户的所有媒体轨道（使用 uid 作为 key）
-      const videoTrack = this.remoteVideoTracks.get(user.uid);
-      const audioTrack = this.remoteAudioTracks.get(user.uid);
+      const videoTrack = this.remoteVideoTracks.get(uidKey);
+      const audioTrack = this.remoteAudioTracks.get(uidKey);
 
       if (videoTrack) {
         try {
@@ -2059,7 +2062,7 @@ export class CallService {
         } catch (error) {
           logWarn(`stop video track error:`, error);
         }
-        this.remoteVideoTracks.delete(user.uid);
+        this.remoteVideoTracks.delete(uidKey);
       }
 
       if (audioTrack) {
@@ -2068,7 +2071,7 @@ export class CallService {
         } catch (error) {
           logWarn(`stop audio track error:`, error);
         }
-        this.remoteAudioTracks.delete(user.uid);
+        this.remoteAudioTracks.delete(uidKey);
       }
 
       // 移除离开的用户
@@ -2083,6 +2086,7 @@ export class CallService {
       this.onUserUnpublished?.(user, mediaType);
 
       const userId = this.getUserIdFromUid(user.uid);
+      const uidKey = this.toUidKey(user.uid);
 
       if (mediaType === 'video') {
         // 停止视频播放
@@ -2091,9 +2095,9 @@ export class CallService {
         }
 
         // 🔧 从Map中清理用户的视频轨道（使用 uid 作为 key）
-        this.remoteVideoTracks.delete(user.uid);
+        this.remoteVideoTracks.delete(uidKey);
         // 🔧 清理缓存的视频流
-        this.remoteVideoStreams.delete(user.uid);
+        this.remoteVideoStreams.delete(uidKey);
 
         // 清理远程视频轨道引用
         if (this.rtc.remoteVideoTrack && this.rtc.remoteUser?.uid === user.uid) {
@@ -2101,7 +2105,7 @@ export class CallService {
         }
         // 创建更新后的视频信息（关闭摄像头，显示头像）
         // 🔧 修复：根据音频轨道状态判断静音状态，而不是依赖 joinedMembers
-        const hasAudioTrack = this.remoteAudioTracks.has(user.uid);
+        const hasAudioTrack = this.remoteAudioTracks.has(uidKey);
         const updatedVideoInfo: VideoWindowProps = {
           id: `remote-${userId}`,
           isLocalVideo: false,
@@ -2127,7 +2131,7 @@ export class CallService {
         }
 
         // 🔧 从Map中清理用户的音频轨道
-        this.remoteAudioTracks.delete(user.uid);
+        this.remoteAudioTracks.delete(uidKey);
         // 🔧 注意：音频停止时不清理视频流缓存，因为用户可能只是静音
 
         // 清理远程音频轨道引用
@@ -2146,7 +2150,7 @@ export class CallService {
         }
 
         // 🔧 修复：在音频停止事件中，智能判断摄像头状态
-        const hasVideoTrack = this.remoteVideoTracks.has(user.uid);
+        const hasVideoTrack = this.remoteVideoTracks.has(uidKey);
         const memberCameraStatus = this.getRemoteUserCameraStatus(userId);
         const cameraEnabled = hasVideoTrack || memberCameraStatus;
 

@@ -110,4 +110,99 @@ describe('ConversationStore.syncUnreadFromSdkItems', () => {
 
     expect(store.getConversation('singleChat', 'bob')?.unreadCount).toBe(3);
   });
+
+  it('removes conversations listed in patch.removed', () => {
+    const { store } = createStore();
+    store.byId.groupChat_g1 = {
+      chatType: 'groupChat',
+      conversationId: 'g1',
+      unreadCount: 2,
+      lastMessage: {},
+    };
+    store.byId.singleChat_alice = {
+      chatType: 'singleChat',
+      conversationId: 'alice',
+      unreadCount: 0,
+      lastMessage: {},
+    };
+    store.orderedIds = ['groupChat_g1', 'singleChat_alice'];
+    store.currentCvs = {
+      chatType: 'singleChat',
+      conversationId: 'alice',
+    };
+
+    store.syncFromSdkConversationListUpdate({
+      items: [
+        {
+          conversationId: 'alice',
+          conversationType: 'singleChat',
+          unreadCount: 0,
+        },
+      ],
+      patch: {
+        removed: [{ conversationId: 'g1', conversationType: 'groupChat' }],
+      },
+    });
+
+    expect(store.getConversation('groupChat', 'g1')).toBeUndefined();
+    expect(store.getConversation('singleChat', 'alice')).toBeTruthy();
+    expect(store.currentCvs.conversationId).toBe('alice');
+  });
+
+  it('on reset drops local conversations missing from items snapshot', () => {
+    const { store } = createStore();
+    store.byId.groupChat_g1 = {
+      chatType: 'groupChat',
+      conversationId: 'g1',
+      unreadCount: 1,
+      lastMessage: {},
+    };
+    store.byId.singleChat_alice = {
+      chatType: 'singleChat',
+      conversationId: 'alice',
+      unreadCount: 0,
+      lastMessage: {},
+    };
+    store.orderedIds = ['groupChat_g1', 'singleChat_alice'];
+
+    store.syncFromSdkConversationListUpdate({
+      items: [
+        {
+          conversationId: 'alice',
+          conversationType: 'singleChat',
+          unreadCount: 0,
+        },
+      ],
+      patch: { reset: true },
+    });
+
+    expect(store.getConversation('groupChat', 'g1')).toBeUndefined();
+    expect(store.conversationList.map(item => item.conversationId)).toEqual(['alice']);
+  });
+
+  it('deleteConversation only clears currentCvs when deleting the open conversation', () => {
+    const { store } = createStore();
+    store.byId.groupChat_g1 = {
+      chatType: 'groupChat',
+      conversationId: 'g1',
+      unreadCount: 0,
+      lastMessage: {},
+    };
+    store.orderedIds = ['groupChat_g1'];
+    store.currentCvs = {
+      chatType: 'singleChat',
+      conversationId: 'alice',
+    };
+
+    store.deleteConversation({
+      chatType: 'groupChat',
+      conversationId: 'g1',
+    });
+
+    expect(store.getConversation('groupChat', 'g1')).toBeUndefined();
+    expect(store.currentCvs).toEqual({
+      chatType: 'singleChat',
+      conversationId: 'alice',
+    });
+  });
 });

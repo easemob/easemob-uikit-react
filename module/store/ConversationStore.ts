@@ -70,6 +70,7 @@ class ConversationStore {
       setCurrentCvs: action,
       setConversation: action,
       syncUnreadFromSdkItems: action,
+      syncFromSdkConversationListUpdate: action,
       clearUnreadForConversation: action,
       clearAllUnreadCounts: action,
       setSearchList: action,
@@ -203,6 +204,61 @@ class ConversationStore {
     this.resortIds();
   }
 
+  /**
+   * Apply SDK `onConversationListUpdate`:
+   * - remove conversations from `patch.removed`
+   * - on `patch.reset`, treat `items` as the authoritative snapshot and drop local extras
+   * - upsert unread/name/avatar/lastMessage from `items`
+   */
+  syncFromSdkConversationListUpdate(payload: {
+    items?: ReadonlyArray<{
+      conversationId: string;
+      conversationType: ChatType | string;
+      unreadCount: number;
+      isPinned?: boolean;
+      conversationName?: string;
+      conversationAvatar?: string;
+      lastMessage?: any;
+    }>;
+    patch?: {
+      reset?: boolean;
+      removed?: ReadonlyArray<{
+        conversationId: string;
+        conversationType: ChatType | string;
+      }>;
+    };
+  }) {
+    const removed = payload.patch?.removed || [];
+    removed.forEach(item => {
+      if (!item?.conversationId || !item?.conversationType) return;
+      this.deleteConversation({
+        chatType: item.conversationType as ChatType,
+        conversationId: item.conversationId,
+      });
+    });
+
+    if (payload.patch?.reset && Array.isArray(payload.items)) {
+      const keep = new Set(
+        payload.items
+          .filter(item => item?.conversationId && item?.conversationType)
+          .map(item => makeKey(String(item.conversationType), item.conversationId)),
+      );
+      [...this.orderedIds].forEach(key => {
+        if (keep.has(key)) return;
+        const cvs = this.byId[key];
+        if (!cvs) return;
+        this.deleteConversation({
+          chatType: cvs.chatType,
+          conversationId: cvs.conversationId,
+        });
+      });
+    }
+
+    if (payload.items) {
+      this.syncUnreadFromSdkItems(payload.items);
+    }
+  }
+
   clearUnreadForConversation(chatType: ChatType, conversationId: string) {
     const key = makeKey(chatType, conversationId);
     const cvs = this.byId[key];
@@ -267,7 +323,12 @@ class ConversationStore {
           cvs.chatType == conversation.chatType && cvs.conversationId == conversation.conversationId
         ),
     );
-    this.setCurrentCvs({} as CurrentConversation);
+    if (
+      this.currentCvs.chatType === conversation.chatType &&
+      this.currentCvs.conversationId === conversation.conversationId
+    ) {
+      this.setCurrentCvs({} as CurrentConversation);
+    }
   }
 
   modifyConversation(conversation: Conversation) {
