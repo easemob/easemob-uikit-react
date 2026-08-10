@@ -32,6 +32,26 @@ export interface MoreActionProps {
 function getInputFile(target: HTMLInputElement): File | undefined {
   return target.files?.[0];
 }
+
+// SDK 要求视频消息的 duration 为正数，元数据不可用时退回 1 秒
+function readVideoDuration(file: File): Promise<number> {
+  return new Promise(resolve => {
+    const video = document.createElement('video');
+    const objectUrl = URL.createObjectURL(file);
+    const finish = (duration: number) => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(duration);
+    };
+    video.onloadedmetadata = () => {
+      finish(Number.isFinite(video.duration) ? Math.max(1, Math.round(video.duration)) : 1);
+    };
+    video.onerror = () => {
+      finish(1);
+    };
+    video.preload = 'metadata';
+    video.src = objectUrl;
+  });
+}
 let MoreAction = (props: MoreActionProps) => {
   const {
     icon,
@@ -265,7 +285,10 @@ let MoreAction = (props: MoreActionProps) => {
     };
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'file' | 'video') => {
+  const handleFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    type: 'file' | 'video',
+  ) => {
     const file = getInputFile(e.target);
     if (!file) {
       return false;
@@ -275,6 +298,13 @@ let MoreAction = (props: MoreActionProps) => {
       return;
     }
 
+    if (type === 'file') {
+      fileEl!.current!.value = '';
+    } else {
+      videoEl!.current!.value = '';
+    }
+
+    const duration = type === 'video' ? await readVideoDuration(file) : 0;
     const option = {
       data: file,
       filename: file.name,
@@ -284,7 +314,7 @@ let MoreAction = (props: MoreActionProps) => {
     resolveBeforeSendRoute(onBeforeSendMessage, {
       kind: type === 'video' ? 'video' : 'file',
       route: toSendMessageRoute(currentCVS),
-      body: option,
+      body: type === 'video' ? { ...option, duration } : option,
       isChatThread,
     }).then(route => {
       const needReadReceipt = route.conversationType === 'singleChat';
@@ -293,7 +323,7 @@ let MoreAction = (props: MoreActionProps) => {
           ? client.chatManager.createVideoMessage({
               ...route,
               ...option,
-              duration: 0,
+              duration,
               isChatThread,
               needReadReceipt,
             })
@@ -305,11 +335,6 @@ let MoreAction = (props: MoreActionProps) => {
             });
       messageStore.sendMessage(fileMessage);
     });
-    if (type === 'file') {
-      fileEl!.current!.value = '';
-    } else {
-      videoEl!.current!.value = '';
-    }
   };
 
   const [menuOpen, setMenuOpen] = useState(false);
