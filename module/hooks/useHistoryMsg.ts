@@ -2,9 +2,19 @@ import { useEffect, useContext, useState } from 'react';
 import { RootContext } from '../store/rootContext';
 import { CurrentConversation } from '../store/ConversationStore';
 import { ChatType } from '../types/messageType';
-import { getCurrentUserId, getMessageConversationId, getMessageId } from '../utils';
+import {
+  getCurrentUserId,
+  getMessageConversationId,
+  getMessageId,
+  getMessageServerId,
+} from '../utils';
 
 const cache: { [key: string]: boolean } = {};
+
+const getHistoryCursor = (message: unknown): string => {
+  const serverId = getMessageServerId(message as any);
+  return /^\d+$/.test(serverId) ? serverId : '';
+};
 
 export function resetCache(chatType: ChatType, conversationId: string) {
   cache[`${chatType}${conversationId}`] = false;
@@ -30,7 +40,7 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
     // 第一次加载过的缓存和加载更多之后的缓存
     if (
       currentChatMsgs.length > 0 &&
-      (cursor === -1 || cursor != getMessageId(currentChatMsgs[0])) &&
+      (cursor === -1 || cursor != getHistoryCursor(currentChatMsgs[0])) &&
       cache[`${cvs.chatType}${cvs.conversationId}`]
     ) {
       return setHistoryMsgs(currentChatMsgs);
@@ -47,11 +57,12 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
 
     if (currentChatMsgs.length > 0) {
       const message = currentChatMsgs.find(msg => {
-        return msg.type !== 'notice' && msg.type !== 'recall';
+        return msg.type !== 'notice' && msg.type !== 'recall' && Boolean(getHistoryCursor(msg));
       });
       if (message) {
-        //@ts-ignore
-        useCursor = getMessageId(message);
+        useCursor = getHistoryCursor(message);
+      } else {
+        useCursor = -1;
       }
     }
 
@@ -99,14 +110,15 @@ const useHistoryMessages = (cvs: CurrentConversation) => {
 
   const loadMore = () => {
     const currentChatMsgs = messageStore.message[cvs.chatType][cvs.conversationId] || [];
-    // @ts-ignore
-    let nextCursor = getMessageId(currentChatMsgs[0]);
-    // let nextCursor = historyMsgs[0]?.mid || historyMsgs[0]?.id || -1;
-    const msg: any = currentChatMsgs[0] || {};
+    const earliestServerMessage = currentChatMsgs.find(msg => Boolean(getHistoryCursor(msg)));
+    let nextCursor: number | string = earliestServerMessage
+      ? getHistoryCursor(earliestServerMessage)
+      : -1;
+    const msg: any = earliestServerMessage || {};
     const userId = getCurrentUserId(rootStore.client);
     const cvsId = getMessageConversationId(msg, userId);
     if (cvs.conversationId != cvsId) {
-      nextCursor = '';
+      nextCursor = -1;
     }
     setCursor(nextCursor);
   };
