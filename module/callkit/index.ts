@@ -11,6 +11,9 @@ export type {
   LayoutMode,
   InvitationInfo,
   InvitationNotificationProps,
+  CallKitRTCProvider,
+  RTCTokenInfo,
+  RTCUidUserIdMap,
 } from './types/index';
 
 export type { CallError, CallErrorCode } from './services/CallError';

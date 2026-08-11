@@ -101,7 +101,15 @@ import ChatroomMember from './chatroomMember';
 import ChatroomMessage from './chatroomMessage';
 
 import CallKit from './callkit';
-import { CallKitProps, CallInfo, CallErrorCode, CallError } from './callkit';
+import {
+  CallKitProps,
+  CallInfo,
+  CallErrorCode,
+  CallError,
+  CallKitRTCProvider,
+  RTCTokenInfo,
+  RTCUidUserIdMap,
+} from './callkit';
 import { CallKitRef } from './callkit/types/index';
 
 export type {
@@ -168,6 +176,9 @@ export type {
   CallInfo,
   CallErrorCode,
   CallError,
+  CallKitRTCProvider,
+  RTCTokenInfo,
+  RTCUidUserIdMap,
   MessageRenderContext,
   MessageRenderer,
   MessageType,

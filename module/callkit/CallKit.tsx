@@ -76,6 +76,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
     // RTC Token 配置
     useRTCToken = true,
+    rtcProvider,
 
     // 铃声相关配置
     outgoingRingtoneSrc,
@@ -748,6 +749,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         encoderConfig,
         // RTC Token 配置
         useRTCToken,
+        rtcProvider,
       };
 
       callServiceRef.current = new CallService(config);
@@ -786,6 +788,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     handleRemoteVideoReady,
     handleTalkingUsersChange,
     handleInvitedUserRemoved, // 🔧 新增：邀请用户被移除回调依赖
+    useRTCToken,
+    rtcProvider,
     // userInfo, // If userInfo is a prop, uncomment and pass it.
   ]);
 

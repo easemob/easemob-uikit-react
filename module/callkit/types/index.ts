@@ -175,6 +175,23 @@ export interface CallKitRef {
   adjustSize: (newSize: { width: number; height: number }) => void; // 动态调整CallKit尺寸
 }
 
+export interface RTCTokenInfo {
+  appId: string;
+  rtcToken: string;
+  rtcUid: number;
+}
+
+export type RTCUidUserIdMap = Record<string, string>;
+
+/**
+ * RTC 数据提供器。方法签名和返回值与 IM SDK 的同名方法保持一致。
+ * 配置某个方法后 CallKit 会优先使用该方法，否则回退到 IM SDK。
+ */
+export interface CallKitRTCProvider {
+  getRTCTokenInfo?: (params: { channelName: string }) => Promise<RTCTokenInfo>;
+  getUserIdsWithRTCUids?: (rtcUids: number[]) => Promise<RTCUidUserIdMap>;
+}
+
 // CallKit主组件属性
 export interface CallKitProps {
   className?: string;
@@ -204,6 +221,7 @@ export interface CallKitProps {
   chatClient?: UIKitChatClient; // 环信 IM 连接
   enableRealCall?: boolean; // 是否启用真实通话功能
   useRTCToken?: boolean; // 是否使用 RTC Token 校验，默认 true；设置为 false 时 join channel 不校验 token
+  rtcProvider?: CallKitRTCProvider; // RTC Token 和 RTC UID 映射提供器，未配置的方法回退到 IM SDK
 
   // 🔧 新增：铃声相关配置
   outgoingRingtoneSrc?: string; // 拨打电话铃声音频文件路径

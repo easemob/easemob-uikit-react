@@ -3,7 +3,12 @@ import AgoraRTC, {
   IAgoraRTCRemoteUser,
   VideoEncoderConfigurationPreset,
 } from 'agora-rtc-sdk-ng';
-import { VideoWindowProps } from '../types/index';
+import type {
+  CallKitRTCProvider,
+  RTCUidUserIdMap,
+  RTCTokenInfo,
+  VideoWindowProps,
+} from '../types/index';
 import CallError from './CallError';
 import { CallTimerService } from './CallTimerService';
 import type { ChatSDK } from 'module/SDK';
@@ -112,6 +117,7 @@ export interface CallServiceConfig {
   onRingtoneEnd?: (type: 'outgoing' | 'incoming') => void;
   // RTC Token configuration
   useRTCToken?: boolean; // Whether to use RTC Token for validation, default true; when false, token will be null in join channel
+  rtcProvider?: CallKitRTCProvider;
 }
 
 export class CallService {
@@ -209,6 +215,7 @@ export class CallService {
 
   // RTC Token configuration
   private useRTCToken: boolean = true; // Default to true, use token validation
+  private rtcProvider?: CallKitRTCProvider;
 
   constructor(config: CallServiceConfig) {
     this.connection = config.connection;
@@ -246,6 +253,7 @@ export class CallService {
     });
     // Initialize RTC token configuration
     this.useRTCToken = config.useRTCToken ?? true;
+    this.rtcProvider = config.rtcProvider;
 
     // Get necessary information from WebIM connection
     this.agoraUid = 0;
@@ -301,10 +309,7 @@ export class CallService {
     return '';
   }
 
-  /**
-   * SDK5: connection.getUserIdsWithRTCUids → Record<uid, userId>
-   * 兼容旧 SDK: connection.getUserIdByRTCUIds → { data: Record<uid, userId> }
-   */
+  /** Provider 优先，否则使用 SDK5 connection.getUserIdsWithRTCUids。 */
   private async resolveUserIdByRtcUid(uid: string | number): Promise<string> {
     const cached = this.getUserIdFromUid(uid);
     if (cached) return cached;
@@ -316,25 +321,42 @@ export class CallService {
 
     try {
       const client = this.connection as any;
-      if (typeof client.getUserIdsWithRTCUids === 'function') {
-        const map = await client.getUserIdsWithRTCUids([numericUid]);
-        const userId = map?.[numericUid] || map?.[String(numericUid)] || '';
-        if (userId) {
-          this.mapUidToUserId(uid, userId);
-          return userId;
-        }
-      } else if (typeof client.getUserIdByRTCUIds === 'function') {
-        const res = await client.getUserIdByRTCUIds([numericUid]);
-        const userId =
-          res?.data?.[numericUid] || res?.data?.[String(numericUid)] || res?.[numericUid] || '';
-        if (userId) {
-          this.mapUidToUserId(uid, userId);
-          return userId;
-        }
+      let map: RTCUidUserIdMap | null | undefined;
+      let source: 'provider' | 'IM SDK';
+
+      if (this.rtcProvider?.getUserIdsWithRTCUids) {
+        source = 'provider';
+        map = await this.rtcProvider.getUserIdsWithRTCUids([numericUid]);
+      } else if (typeof client?.getUserIdsWithRTCUids === 'function') {
+        source = 'IM SDK';
+        map = await client.getUserIdsWithRTCUids([numericUid]);
       } else {
-        logWarn('RTC UID mapping API is not available on chat client');
+        logWarn(
+          'Unable to resolve RTC UID: neither rtcProvider.getUserIdsWithRTCUids nor the IM SDK method is available',
+          { rtcUid: numericUid },
+        );
+        map = null;
+        source = 'IM SDK';
+      }
+
+      if (!map || typeof map !== 'object') {
+        logWarn(`${source} getUserIdsWithRTCUids returned no mapping`, {
+          rtcUid: numericUid,
+          result: map,
+        });
+      } else {
+        const userId = map[numericUid] || map[String(numericUid)] || '';
+        if (userId) {
+          this.mapUidToUserId(uid, userId);
+          return userId;
+        }
+        logWarn(`${source} getUserIdsWithRTCUids did not contain the requested RTC UID`, {
+          rtcUid: numericUid,
+          result: map,
+        });
       }
     } catch (error: any) {
+      logWarn('Failed to resolve IM userId from RTC UID', { rtcUid: numericUid, error });
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
         code: error.type,
@@ -374,16 +396,62 @@ export class CallService {
     return this.connection.chatManager.sendMessage(message);
   }
 
-  // Remove setAccessToken method, get from connection instead
-  async getAccessToken(): Promise<string | null> {
+  // Provider 优先，否则从 IM SDK 获取 RTC 入会信息。
+  async getAccessToken(
+    channelName: string = this.currentCallInfo?.channel || '*',
+  ): Promise<string | null> {
+    this.appId = '';
+    this.agoraUid = 0;
+
     try {
-      const tokenInfo = await this.connection.getRTCTokenInfo({ channelName: '*' });
+      let tokenInfo: RTCTokenInfo | null | undefined;
+      let source: 'provider' | 'IM SDK';
+
+      if (this.rtcProvider?.getRTCTokenInfo) {
+        source = 'provider';
+        tokenInfo = await this.rtcProvider.getRTCTokenInfo({ channelName });
+      } else if (typeof this.connection?.getRTCTokenInfo === 'function') {
+        source = 'IM SDK';
+        tokenInfo = await this.connection.getRTCTokenInfo({ channelName });
+      } else {
+        logWarn(
+          'Unable to get RTC token info: neither rtcProvider.getRTCTokenInfo nor the IM SDK method is available',
+          { channelName },
+        );
+        return null;
+      }
+
+      if (!tokenInfo || typeof tokenInfo !== 'object') {
+        logWarn(`${source} getRTCTokenInfo returned no data`, { channelName, result: tokenInfo });
+        return null;
+      }
+
+      if (!tokenInfo.appId || !Number.isFinite(tokenInfo.rtcUid)) {
+        logWarn(`${source} getRTCTokenInfo returned invalid appId or rtcUid`, {
+          channelName,
+          tokenInfo,
+        });
+        return null;
+      }
+
+      if (this.useRTCToken && !tokenInfo.rtcToken) {
+        logWarn(
+          `${source} getRTCTokenInfo returned no rtcToken while token validation is enabled`,
+          {
+            channelName,
+            tokenInfo,
+          },
+        );
+        return null;
+      }
+
       this.appId = tokenInfo.appId;
       const uid = tokenInfo.rtcUid;
       this.mapUidToUserId(uid, this.getCurrentUserId());
       this.agoraUid = uid;
-      return tokenInfo.rtcToken;
+      return tokenInfo.rtcToken || null;
     } catch (error: any) {
+      logWarn('Failed to get RTC token info', { channelName, error });
       this.onCallError?.({
         errorType: CallErrorType.CHAT,
         code: error.type,
@@ -391,6 +459,14 @@ export class CallService {
       });
       return null;
     }
+  }
+
+  private hasValidRTCJoinInfo(): boolean {
+    return (
+      Boolean(this.appId) &&
+      Number.isFinite(this.agoraUid) &&
+      (!this.useRTCToken || Boolean(this.accessToken))
+    );
   }
 
   // Remove setUserIdMap method, no longer needed
@@ -471,7 +547,16 @@ export class CallService {
       return null;
     }
     // Auto get access token
-    this.accessToken = await this.getAccessToken();
+    this.accessToken = await this.getAccessToken(channel);
+    if (!this.hasValidRTCJoinInfo()) {
+      logError('Cannot start call because valid RTC token info is unavailable', { channel });
+      this.onCallError?.({
+        errorType: CallErrorType.CALLKIT,
+        code: CallErrorCode.CALL_PARAM_ERROR,
+        message: 'Valid RTC token info is unavailable',
+      });
+      return null;
+    }
     // Create call information
     this.currentCallInfo = {
       callId,
@@ -887,9 +972,23 @@ export class CallService {
       return;
     }
 
-    if (!this.accessToken) {
-      // 如果没有token，重新获取
-      this.accessToken = await this.getAccessToken();
+    if (!this.hasValidRTCJoinInfo()) {
+      // RTC 入会信息不完整时重新获取
+      this.accessToken = await this.getAccessToken(this.currentCallInfo.channel);
+    }
+
+    if (!this.hasValidRTCJoinInfo()) {
+      logError('Cannot join channel because valid RTC token info is unavailable', {
+        channel: this.currentCallInfo.channel,
+      });
+      this.onCallError?.({
+        errorType: CallErrorType.CALLKIT,
+        code: CallErrorCode.CALL_PARAM_ERROR,
+        message: 'Valid RTC token info is unavailable',
+      });
+      this.sendHangupMessage();
+      this.hangup(HANGUP_REASON.ABNORMAL_END);
+      return;
     }
 
     // Determine the token to use based on useRTCToken configuration

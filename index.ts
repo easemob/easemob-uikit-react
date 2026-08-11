@@ -60,6 +60,9 @@ import CallKit, {
   LayoutMode,
   InvitationContent,
   CallKitRef,
+  CallKitRTCProvider,
+  RTCTokenInfo,
+  RTCUidUserIdMap,
 } from './module/callkit';
 
 const UIKitProvider = Provider;
@@ -251,6 +254,9 @@ export type {
   VideoWindowProps,
   LayoutMode,
   CallKitRef,
+  CallKitRTCProvider,
+  RTCTokenInfo,
+  RTCUidUserIdMap,
 };
 
 export type { EventHandlerData, EventName };
