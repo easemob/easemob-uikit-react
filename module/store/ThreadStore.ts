@@ -327,10 +327,16 @@ class ThreadStore {
         if (!cursor) {
           list = [];
         }
-        const chatThreadIds = threads?.map((item: ChatSDK.ChatThreadSummary) =>
-          getThreadSummaryId(item),
-        );
+        const chatThreadIds = threads
+          .map((item: ChatSDK.ChatThreadSummary) => getThreadSummaryId(item))
+          .filter((threadId): threadId is string => Boolean(threadId));
         eventHandler.dispatchSuccess('getChatThreads');
+        if (chatThreadIds.length === 0) {
+          runInAction(() => {
+            this.threadList[parentId] = [...list, ...threads];
+          });
+          return null;
+        }
         return this.rootStore.client.chatThreadManager
           .getChatThreadLastMessageList({
             chatThreadIds: chatThreadIds,
