@@ -29,6 +29,12 @@ type PinnedMessageChangedPayload = ConversationLocator & {
   timestamp?: number;
 };
 
+type MessageUpdatedPayload = ConversationLocator & {
+  messageId: string;
+  message: Partial<ChatSDK.Message>;
+  timestamp?: number;
+};
+
 const useEventHandler = (props: ProviderProps, client: any) => {
   const { initConfig, features } = props;
   const rootStore = getStore();
@@ -188,10 +194,17 @@ const useEventHandler = (props: ProviderProps, client: any) => {
         };
         rootStore.messageStore.updateReactions(cvs, data.messageId, data.reactions);
       },
-      onMessageUpdated: (message: { messageId: string; message: Partial<ChatSDK.Message> }) => {
+      onMessageUpdated: (payload: MessageUpdatedPayload) => {
+        console.log('[UIKit] onMessageUpdated', payload);
         getStore().messageStore.modifyLocalMessage(
-          message.messageId,
-          { ...message.message, msgServerId: message.messageId } as ChatSDK.Message,
+          payload.messageId,
+          {
+            ...payload.message,
+            msgServerId: payload.messageId,
+            conversationId: payload.conversationId || payload.message.conversationId,
+            conversationType:
+              payload.conversationType || payload.chatType || payload.message.conversationType,
+          } as ChatSDK.Message,
           true,
         );
       },

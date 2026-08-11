@@ -148,6 +148,38 @@ describe('useEventHandler pinned-message contracts', () => {
     unmount();
   });
 
+  it('keeps the event conversation when applying a remote message edit', () => {
+    const { handlers, unmount } = renderHookHarness();
+
+    handlers.onMessageUpdated({
+      messageId: 'msg-edited',
+      conversationId: 'bob',
+      conversationType: 'singleChat',
+      message: {
+        type: 'text',
+        body: { content: 'updated content' },
+        modifiedInfo: {
+          operationCount: 1,
+          operationTime: 200,
+          operatorId: 'bob',
+        },
+      },
+    });
+
+    expect(mockStore.messageStore.modifyLocalMessage).toHaveBeenCalledWith(
+      'msg-edited',
+      expect.objectContaining({
+        msgServerId: 'msg-edited',
+        conversationId: 'bob',
+        conversationType: 'singleChat',
+        body: { content: 'updated content' },
+      }),
+      true,
+    );
+
+    unmount();
+  });
+
   it('rebuilds chatroom pinned state from the message store for remote pin events', () => {
     const chatRoomMessage = createMessage('msg-room', 'room-1', 'chatRoom');
     mockStore.messageStore.message.chatRoom['room-1'] = [chatRoomMessage];

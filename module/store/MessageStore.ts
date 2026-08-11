@@ -995,7 +995,7 @@ class MessageStore {
     if (conversationType !== 'chatRoom') {
       let cvsId = '';
       if (isReceivedModify) {
-        cvsId = conversationType === 'groupChat' ? msg.to : msg.from || '';
+        cvsId = msg.conversationId || (conversationType === 'groupChat' ? msg.to : msg.from) || '';
       } else {
         cvsId = msg.conversationId || msg.to;
       }
