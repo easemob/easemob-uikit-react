@@ -128,6 +128,7 @@ export class CallService {
   private userId: string;
   private connection: any;
   private accessToken?: string | null;
+  private rtcTokenChannelName: string = '';
   private currentCallInfo: CallInfo | null = null;
   private callStatus: CALL_STATUS = CALL_STATUS.IDLE;
   private callTimer = new CallTimerService();
@@ -402,6 +403,7 @@ export class CallService {
   ): Promise<string | null> {
     this.appId = '';
     this.agoraUid = 0;
+    this.rtcTokenChannelName = '';
 
     try {
       let tokenInfo: RTCTokenInfo | null | undefined;
@@ -409,9 +411,11 @@ export class CallService {
 
       if (this.rtcProvider?.getRTCTokenInfo) {
         source = 'provider';
+        logDebug('Getting RTC token info from provider', { channelName });
         tokenInfo = await this.rtcProvider.getRTCTokenInfo({ channelName });
       } else if (typeof this.connection?.getRTCTokenInfo === 'function') {
         source = 'IM SDK';
+        logDebug('Getting RTC token info from IM SDK', { channelName });
         tokenInfo = await this.connection.getRTCTokenInfo({ channelName });
       } else {
         logWarn(
@@ -449,6 +453,12 @@ export class CallService {
       const uid = tokenInfo.rtcUid;
       this.mapUidToUserId(uid, this.getCurrentUserId());
       this.agoraUid = uid;
+      this.rtcTokenChannelName = channelName;
+      logDebug(`Got valid RTC token info from ${source}`, {
+        channelName,
+        rtcUid: uid,
+        hasToken: Boolean(tokenInfo.rtcToken),
+      });
       return tokenInfo.rtcToken || null;
     } catch (error: any) {
       logWarn('Failed to get RTC token info', { channelName, error });
@@ -461,11 +471,11 @@ export class CallService {
     }
   }
 
-  private hasValidRTCJoinInfo(): boolean {
+  private hasValidRTCJoinInfo(channelName: string = this.currentCallInfo?.channel || ''): boolean {
     return (
       Boolean(this.appId) &&
       Number.isFinite(this.agoraUid) &&
-      (!this.useRTCToken || Boolean(this.accessToken))
+      (!this.useRTCToken || (Boolean(this.accessToken) && this.rtcTokenChannelName === channelName))
     );
   }
 
@@ -548,7 +558,7 @@ export class CallService {
     }
     // Auto get access token
     this.accessToken = await this.getAccessToken(channel);
-    if (!this.hasValidRTCJoinInfo()) {
+    if (!this.hasValidRTCJoinInfo(channel)) {
       logError('Cannot start call because valid RTC token info is unavailable', { channel });
       this.onCallError?.({
         errorType: CallErrorType.CALLKIT,
@@ -972,12 +982,12 @@ export class CallService {
       return;
     }
 
-    if (!this.hasValidRTCJoinInfo()) {
+    if (!this.hasValidRTCJoinInfo(this.currentCallInfo.channel)) {
       // RTC 入会信息不完整时重新获取
       this.accessToken = await this.getAccessToken(this.currentCallInfo.channel);
     }
 
-    if (!this.hasValidRTCJoinInfo()) {
+    if (!this.hasValidRTCJoinInfo(this.currentCallInfo.channel)) {
       logError('Cannot join channel because valid RTC token info is unavailable', {
         channel: this.currentCallInfo.channel,
       });
@@ -1892,9 +1902,11 @@ export class CallService {
     logDebug('---->sendHangupMessage', this.currentCallInfo);
     if (!this.currentCallInfo) return;
     // 群通话：发送群定向消息，给通话中的其他人，单人：发送单聊消息
-    // const to = this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ? this.currentCallInfo.groupId : this.currentCallInfo.calleeUserId || '';
+    const isGroupCall =
+      this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
+      this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI;
     let to = '';
-    if (this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI) {
+    if (isGroupCall) {
       to = this.currentCallInfo.groupId || '';
     } else {
       if (this.currentCallInfo.calleeUserId && this.currentCallInfo.calleeUserId !== this.userId) {
@@ -1906,8 +1918,7 @@ export class CallService {
     if (!to) return logWarn('---->sendHangupMessage to is empty');
     const options: any = {
       conversationId: to,
-      conversationType:
-        this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ? 'groupChat' : 'singleChat',
+      conversationType: isGroupCall ? 'groupChat' : 'singleChat',
       action: 'rtcCall',
       ext: {
         action: 'leaveCall',
@@ -1915,29 +1926,41 @@ export class CallService {
         msgType: 'rtcCallWithAgora',
       },
     };
-    if (
-      this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
-      this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI
-    ) {
-      options.receiverList = this.joinedMembers
+    if (isGroupCall) {
+      const receiverList = this.joinedMembers
         .filter(
           member =>
             this.getUserIdFromUid(member.uid) !== this.userId && this.getUserIdFromUid(member.uid),
         )
         .map(member => this.getUserIdFromUid(member.uid));
+
+      if (receiverList.length === 0) {
+        logDebug('Skip sending group hangup message: no remote participants remain');
+        return;
+      }
+      options.receiverList = [...new Set(receiverList)];
     }
-    const msg = this.connection.chatManager.createCmdMessage(options);
-    this.sendCallMessage(msg)
-      .then(() => {
-        logDebug('---->sendHangupMessage success');
-      })
-      .catch((error: any) => {
-        this.onCallError?.({
-          errorType: CallErrorType.CHAT,
-          code: error.type,
-          message: error.message,
+    try {
+      const msg = this.connection.chatManager.createCmdMessage(options);
+      this.sendCallMessage(msg)
+        .then(() => {
+          logDebug('---->sendHangupMessage success');
+        })
+        .catch((error: any) => {
+          this.onCallError?.({
+            errorType: CallErrorType.CHAT,
+            code: error.type,
+            message: error.message,
+          });
         });
+    } catch (error: any) {
+      logError('Failed to create hangup message:', error);
+      this.onCallError?.({
+        errorType: CallErrorType.CHAT,
+        code: error.type,
+        message: error.message,
       });
+    }
   }
 
   // 添加 Agora RTC 事件监听器

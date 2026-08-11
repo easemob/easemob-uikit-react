@@ -7,6 +7,8 @@ import React, {
   ReactNode,
   forwardRef,
   useImperativeHandle,
+  useMemo,
+  useCallback,
 } from 'react';
 import { createPortal } from 'react-dom';
 import classNames from 'classnames';
@@ -40,7 +42,7 @@ import {
   getMsgSenderNickname,
   getUsersInfo,
 } from '../utils/index';
-import CallKit, { CallKitRef, CallKitProps } from '../callkit';
+import CallKit, { CallKitRef, CallKitProps, CallKitRTCProvider } from '../callkit';
 import { useContacts, useGroups, useUserInfo } from '../hooks/useAddress';
 import { BaseMessageType } from '../baseMessage/BaseMessage';
 import { eventHandler } from '../../eventHandler';
@@ -142,6 +144,41 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   const CVS = rootStore.conversationStore.currentCvs;
   const { suffixIcon, moreAction, ...otherHeaderProps } = headerProps || {};
   const callKitRef = useRef<CallKitRef>(null);
+  const callKitRTCProvider = useMemo<CallKitRTCProvider>(
+    () => ({
+      getRTCTokenInfo: params => rootStore.client.getRTCTokenInfo(params),
+      getUserIdsWithRTCUids: rtcUids => rootStore.client.getUserIdsWithRTCUids(rtcUids),
+    }),
+    [rootStore.client],
+  );
+  const callKitGroupInfoProvider = useCallback(
+    async (groupIds: string[]) =>
+      groupIds.map(groupId => ({
+        groupId,
+        groupName:
+          rootStore.addressStore.groups.find(item => item.groupId === groupId)?.name || groupId,
+        groupAvatar:
+          rootStore.addressStore.groups.find(item => item.groupId === groupId)?.avatarUrl || '',
+      })),
+    [rootStore],
+  );
+  const callKitUserInfoProvider = useCallback(
+    async (userIds: string[]) => {
+      if (rootStore.shouldAutoFetchUserInfo()) {
+        await getUsersInfo({ userIdList: userIds, withPresence: false }).catch(err => {
+          console.warn('get user info failed', err);
+        });
+      }
+      return Promise.all(
+        userIds.map(async userId => ({
+          userId,
+          nickname: rootStore.addressStore.resolveUserInfo(userId).nickname,
+          avatarUrl: rootStore.addressStore.resolveUserInfo(userId).avatarUrl,
+        })),
+      );
+    },
+    [rootStore],
+  );
   useContacts();
   useEffect(() => {
     if (!rootStore.conversationStore.currentCvs.conversationId) {
@@ -624,6 +661,13 @@ let Chat = forwardRef((props: ChatProps, ref) => {
   const [callKitSize, setCallKitSize] = useState(
     isMobile ? { width: width, height: height } : { width: 748, height: 523 },
   );
+  const callKitInitialPosition = useMemo(
+    () => ({
+      left: window.innerWidth - callKitSize.width - 20,
+      top: 21,
+    }),
+    [callKitSize.width],
+  );
 
   // 为 CallKit 创建 Portal 容器，避免随 Chat 容器的 display:none 一起隐藏
   const [callkitContainer, setCallkitContainer] = useState<HTMLElement | null>(null);
@@ -793,6 +837,7 @@ let Chat = forwardRef((props: ChatProps, ref) => {
           <CallKit
             ref={callKitRef}
             chatClient={rootStore.client}
+            rtcProvider={callKitRTCProvider}
             initialSize={callKitSize}
             managedPosition={true}
             resizable={true}
@@ -864,43 +909,13 @@ let Chat = forwardRef((props: ChatProps, ref) => {
               console.log('onEndCallWithReason --->', reason, callInfo);
             }}
             onLayoutModeChange={handleLayoutModeChange}
-            initialPosition={{
-              left: window.innerWidth - callKitSize.width - 20,
-              top: 21,
-            }}
+            initialPosition={callKitInitialPosition}
             showInvitationAvatar={true}
             showInvitationTimer={true}
             autoRejectTime={30}
             backgroundImage={callkit_bg}
-            groupInfoProvider={async groupIds => {
-              return groupIds.map(groupId => {
-                return {
-                  groupId: groupId,
-                  groupName:
-                    rootStore.addressStore.groups.find(item => item.groupId === groupId)?.name ||
-                    groupId,
-                  groupAvatar:
-                    rootStore.addressStore.groups.find(item => item.groupId === groupId)
-                      ?.avatarUrl || '',
-                };
-              });
-            }}
-            userInfoProvider={async userIds => {
-              if (rootStore.shouldAutoFetchUserInfo()) {
-                await getUsersInfo({ userIdList: userIds, withPresence: false }).catch(err => {
-                  console.warn('get user info failed', err);
-                });
-              }
-              return Promise.all(
-                userIds.map(async userId => {
-                  return {
-                    userId: userId,
-                    nickname: rootStore.addressStore.resolveUserInfo(userId).nickname,
-                    avatarUrl: rootStore.addressStore.resolveUserInfo(userId).avatarUrl,
-                  };
-                }),
-              );
-            }}
+            groupInfoProvider={callKitGroupInfoProvider}
+            userInfoProvider={callKitUserInfoProvider}
             onRingtoneStart={() => {
               messageInputRef.current?.stopRecording();
             }}

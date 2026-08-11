@@ -20,7 +20,6 @@ export class MultiPartyLayoutStrategy implements LayoutStrategy {
     if (videoCount === 0) {
       return { rows: 0, cols: 0, itemsPerRow: [], maxCols: 0, mode: LayoutMode.MULTI_PARTY };
     }
-    console.log('containerSize ---->', containerSize);
     // 移动端
     if (containerSize.width < 530) {
       if (videoCount <= 2) {
