@@ -564,7 +564,9 @@ const Thread = (props: ThreadProps) => {
   if (threadMessageProps.customAction?.actions) {
     threadMessageProps.customAction = {
       ...threadMessageProps.customAction,
-      actions: threadMessageProps.customAction.actions.filter(item => item.content !== 'PIN'),
+      actions: threadMessageProps.customAction.actions.filter(
+        item => item.content !== 'PIN' && item.content !== 'Modify',
+      ),
     };
   }
   return (
