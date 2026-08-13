@@ -557,6 +557,16 @@ const Thread = (props: ThreadProps) => {
       ],
     },
   };
+  const threadMessageProps: MsgListProps['messageProps'] = {
+    ...messageProps,
+    ...messageListProps?.messageProps,
+  };
+  if (threadMessageProps.customAction?.actions) {
+    threadMessageProps.customAction = {
+      ...threadMessageProps.customAction,
+      actions: threadMessageProps.customAction.actions.filter(item => item.content !== 'PIN'),
+    };
+  }
   return (
     <div className={classString} style={{ ...style }}>
       <div ref={headerRef}>
@@ -578,9 +588,10 @@ const Thread = (props: ThreadProps) => {
       </div>
       {threadStore.currentThread.creating ? renderCreateForm() : renderOriginalMsg()}
       <MessageList
-        {...{ ...messageProps, ...messageListProps }}
+        {...messageListProps}
         isThread={true}
         conversation={conversation}
+        messageProps={threadMessageProps}
       ></MessageList>
       {showReply && <UnsentRepliedMsg type="summary"></UnsentRepliedMsg>}
       <MessageInput
