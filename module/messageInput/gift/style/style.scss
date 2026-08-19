@@ -68,11 +68,11 @@ $gift-keyboard-prefix-cls: #{$cui-prefix}-giftKeyboard;
     }
 }
 
-.container{
+.cui-container{
     width: 340px;
 }
 
-.content{
+.cui-content{
     width: 340px;
     display: flex;
     flex-flow: wrap;

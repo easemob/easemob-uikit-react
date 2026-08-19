@@ -121,12 +121,12 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   };
   let titleNode;
   if (gifts) {
-    titleNode = <div className="content">{gifts}</div>;
+    titleNode = <div className="cui-content">{gifts}</div>;
   }
 
   const usedGiftConfig = customGiftConfig ? customGiftConfig : giftConfig;
   titleNode = (
-    <div className="content">
+    <div className="cui-content">
       {usedGiftConfig.gifts.map((item, index) => {
         return (
           <Gift
