@@ -184,9 +184,7 @@ const Provider: React.FC<ProviderProps> = props => {
   );
   const { enableUserInfoSync } = normalizedInitConfig;
 
-  const initOptions = useMemo<
-    Omit<ChatSDK.InitConfig, 'managers'> & { managers: typeof UIKitManagers }
-  >(() => {
+  const initOptions = useMemo<ChatSDK.InitConfig & { managers: typeof UIKitManagers }>(() => {
     if (!appKey) {
       throw new Error('Provider initConfig.appKey is required for SDK 5 initialization.');
     }
