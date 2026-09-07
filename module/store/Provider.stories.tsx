@@ -13,7 +13,8 @@ const description = {
     theme: 'Theme configuration for the provider',
     children: 'Child components to be wrapped by the provider',
 
-    initConfig_appKey: 'Application key for initialization',
+    initConfig_appKey: 'Application App Key; exactly one of appKey or appId is required',
+    initConfig_appId: 'Application App ID; exactly one of appKey or appId is required',
     initConfig_userId:
       'User ID for initialization, if uikit internal automatic login is required, it is required to pass in',
     initConfig_token:
@@ -115,7 +116,8 @@ const description = {
     theme: 'Provider 的主题配置',
     children: '由 Provider 包裹的子组件',
 
-    initConfig_appKey: '应用的唯一标识',
+    initConfig_appKey: '应用的 App Key，与 appId 必须且只能传一个',
+    initConfig_appId: '应用的 App ID，与 appKey 必须且只能传一个',
     initConfig_userId: '用户id，如果需要uikit内部自动登录，则需要传入',
     initConfig_token: '用户token，如果需要uikit内部自动登录，则需要传入',
     initConfig_password: '用户密码，如果需要uikit内部自动登录，则需要传入',
@@ -216,7 +218,8 @@ export default {
         type: {
           summary: 'object',
           detail: `{
-    appKey: string; // ${description[lang].initConfig_appKey}
+    appKey?: string; // ${description[lang].initConfig_appKey}
+    appId?: string; // ${description[lang].initConfig_appId}
     userId?: string; // ${description[lang].initConfig_userId}
     token?: string; // ${description[lang].initConfig_token}
     password?: string; // ${description[lang].initConfig_password}

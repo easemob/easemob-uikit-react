@@ -288,7 +288,8 @@ const ChatApp = () => {
 
 | 参数 | 类型 | 默认值 | 描述 |
 | :-- | :-- | :-- | :-- |
-| `appKey` | `string` | - | 应用的 App Key（必须） |
+| `appKey` | `string` | - | 应用的 App Key；与 `appId` 必须且只能传一个 |
+| `appId` | `string` | - | 应用的 App ID；与 `appKey` 必须且只能传一个。App ID 模式使用 DNS 服务发现，不支持同时配置 `restUrl` 或 `msyncUrl` |
 | `userId` | `string` | - | 用户 ID，如果提供会自动登录 |
 | `token` | `string` | - | 用户 Token，与 `userId` 一起使用进行自动登录（推荐） |
 | `password` | `string` | - | 兼容字段；SDK 5 不支持密码登录，传入时会触发登录错误 |

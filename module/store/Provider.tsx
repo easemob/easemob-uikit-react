@@ -38,7 +38,10 @@ export interface UIKitDataProviders {
 }
 
 export interface ProviderInitConfig {
+  /** 应用身份。appKey 和 appId 必须且只能传一个。 */
   appKey?: string;
+  /** 应用 ID。appKey 和 appId 必须且只能传一个。 */
+  appId?: string;
   userId?: string;
   token?: string;
   password?: string;
@@ -165,6 +168,7 @@ const Provider: React.FC<ProviderProps> = props => {
   );
   const {
     appKey,
+    appId,
     msyncUrl,
     restUrl,
     useReplacedMessageContents,
@@ -185,8 +189,14 @@ const Provider: React.FC<ProviderProps> = props => {
   const { enableUserInfoSync } = normalizedInitConfig;
 
   const initOptions = useMemo<ChatSDK.InitConfig & { managers: typeof UIKitManagers }>(() => {
-    if (!appKey) {
-      throw new Error('Provider initConfig.appKey is required for SDK 5 initialization.');
+    if ((!appKey && !appId) || (appKey && appId)) {
+      throw new Error('Provider initConfig must include exactly one of appKey or appId.');
+    }
+
+    if (appId && (restUrl || msyncUrl)) {
+      throw new Error(
+        'Provider initConfig.restUrl and msyncUrl cannot be used with appId initialization.',
+      );
     }
 
     const serviceConfig: ChatSDK.ServiceConfig | undefined =
@@ -200,7 +210,7 @@ const Provider: React.FC<ProviderProps> = props => {
         : undefined;
 
     return {
-      appKey,
+      ...(appId ? { appId } : { appKey: appKey as string }),
       enableDeliveryReceipt: true,
       enableSyncData,
       enableUserInfoSync,
@@ -220,6 +230,7 @@ const Provider: React.FC<ProviderProps> = props => {
       // },
     };
   }, [
+    appId,
     appKey,
     deviceId,
     enableSyncData,
