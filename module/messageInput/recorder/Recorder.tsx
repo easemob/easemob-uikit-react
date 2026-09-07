@@ -26,6 +26,7 @@ export interface RecorderProps {
   isChatThread?: boolean;
   disabled?: boolean;
   disabledTitle?: string; // 已国际化
+  webhookEnv?: string; // 回调路由环境值
 }
 
 export interface RecorderRef {
@@ -56,6 +57,7 @@ const Recorder = React.forwardRef<RecorderRef, RecorderProps>((props: RecorderPr
     className,
     disabled,
     disabledTitle,
+    webhookEnv,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('recorder', customizePrefixCls);
@@ -186,6 +188,7 @@ const Recorder = React.forwardRef<RecorderRef, RecorderProps>((props: RecorderPr
           fileLength: voiceFile.size,
           isChatThread,
           needReadReceipt: route.conversationType === 'singleChat',
+          ...(webhookEnv ? { webhookEnv } : {}),
         });
         _sendMessage(message);
       });

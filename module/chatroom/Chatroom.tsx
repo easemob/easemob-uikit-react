@@ -117,6 +117,7 @@ let Chatroom = (props: ChatroomProps) => {
       ext: {
         chatroom_uikit_userInfo,
       },
+      ...(messageInputProps?.webhookEnv ? { webhookEnv: messageInputProps.webhookEnv } : {}),
     });
     rootStore.messageStore.sendMessage(customMsg);
   };

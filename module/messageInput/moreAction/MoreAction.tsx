@@ -27,6 +27,7 @@ export interface MoreActionProps {
   conversation?: CurrentConversation;
   isChatThread?: boolean;
   onBeforeSendMessage?: BeforeSendMessage;
+  webhookEnv?: string; // 回调路由环境值
 }
 
 function getInputFile(target: HTMLInputElement): File | undefined {
@@ -63,6 +64,7 @@ let MoreAction = (props: MoreActionProps) => {
     style = {},
     itemContainerStyle = {},
     className,
+    webhookEnv,
   } = props;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('moreAction', customizePrefixCls);
@@ -138,6 +140,7 @@ let MoreAction = (props: MoreActionProps) => {
         params: body.params,
         isChatThread,
         needReadReceipt: route.conversationType === 'singleChat',
+        ...(webhookEnv ? { webhookEnv } : {}),
       });
       messageStore.sendMessage(customMessage);
     });
@@ -272,6 +275,7 @@ let MoreAction = (props: MoreActionProps) => {
           ...option,
           isChatThread,
           needReadReceipt: route.conversationType === 'singleChat',
+          ...(webhookEnv ? { webhookEnv } : {}),
         });
         messageStore.sendMessage(imageMessage);
       });
@@ -326,12 +330,14 @@ let MoreAction = (props: MoreActionProps) => {
               duration,
               isChatThread,
               needReadReceipt,
+              ...(webhookEnv ? { webhookEnv } : {}),
             })
           : client.chatManager.createFileMessage({
               ...route,
               ...option,
               isChatThread,
               needReadReceipt,
+              ...(webhookEnv ? { webhookEnv } : {}),
             });
       messageStore.sendMessage(fileMessage);
     });

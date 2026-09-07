@@ -27,6 +27,7 @@ export interface GiftKeyboardProps {
   onBeforeSendMessage?: BeforeSendMessage;
   giftConfig?: typeof giftConfig;
   closeAfterClick?: boolean; // 点击发送之后是否关闭
+  webhookEnv?: string; // 回调路由环境值
 }
 
 const GiftKeyboard = (props: GiftKeyboardProps) => {
@@ -41,6 +42,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
     prefix,
     className,
     closeAfterClick,
+    webhookEnv,
   } = props;
   const { t } = useTranslation();
   const context = useContext(RootContext);
@@ -94,6 +96,7 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
       body: {
         event: 'CHATROOMUIKITGIFT',
         params,
+        ...(webhookEnv ? { webhookEnv } : {}),
       },
     }).then(route => {
       const customMsg = client.chatManager.createCustomMessage({
@@ -124,12 +127,12 @@ const GiftKeyboard = (props: GiftKeyboardProps) => {
   };
   let titleNode;
   if (gifts) {
-    titleNode = <div className="content">{gifts}</div>;
+    titleNode = <div className="cui-content">{gifts}</div>;
   }
 
   const usedGiftConfig = customGiftConfig ? customGiftConfig : giftConfig;
   titleNode = (
-    <div className="content">
+    <div className="cui-content">
       {usedGiftConfig.gifts.map((item, index) => {
         return (
           <Gift

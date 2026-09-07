@@ -39,6 +39,7 @@ export interface TextareaProps {
   onBeforeSendMessage?: BeforeSendMessage;
   onChange?: (value: string) => void;
   onFocus?: () => void;
+  webhookEnv?: string; // 回调路由环境值
 }
 
 export interface ForwardRefProps {
@@ -61,6 +62,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
     style = {},
     onChange,
     onFocus,
+    webhookEnv,
   } = props;
   const { t } = useTranslation();
   const [textValue, setTextValue] = useState('');
@@ -219,6 +221,7 @@ const Textarea = forwardRef<ForwardRefProps, TextareaProps>((props, ref) => {
         isChatThread,
         // Message-level read receipts are single-chat only
         needReadReceipt: route.conversationType === 'singleChat',
+        ...(webhookEnv ? { webhookEnv } : {}),
       });
       _sendMessage(message);
     });
