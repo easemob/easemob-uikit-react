@@ -239,6 +239,7 @@ export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) =>
     to = id;
   }
   const { appUsersInfo, contacts } = getStore().addressStore;
+  const extNickname = msg.ext?.ease_chat_uikit_user_info?.nickname;
   if (chatType === 'groupChat') {
     const group = getGroupItemFromGroupsById(to);
 
@@ -254,12 +255,17 @@ export const getMsgSenderNickname = (msg: BaseMessageType, parentId?: string) =>
     if (memberIndex > -1) {
       const memberItem = group?.members?.[memberIndex];
       if (memberItem) {
-        return getGroupMemberNickName(memberItem) || appUsersInfo?.[from]?.nickname || from;
+        return (
+          getGroupMemberNickName(memberItem) ||
+          extNickname ||
+          appUsersInfo?.[from]?.nickname ||
+          from
+        );
       }
-      return appUsersInfo?.[from]?.nickname || from;
+      return extNickname || appUsersInfo?.[from]?.nickname || from;
     }
 
-    return appUsersInfo?.[from]?.nickname || from;
+    return extNickname || appUsersInfo?.[from]?.nickname || from;
   } else {
     return appUsersInfo?.[from]?.nickname || from;
   }
