@@ -219,7 +219,7 @@ const Provider: React.FC<ProviderProps> = props => {
       useReplacedMessageContents,
       useFixedDeviceId: isFixedDeviceId,
       useCustomAttachmentUpload: useOwnUploadFun,
-      uiKitVersion: '1.6.0',
+      uiKitVersion: '3.0.3',
       managers: UIKitManagers,
       // serviceConfig: {
       //   serverUrls: {
