@@ -24,7 +24,11 @@ import type {
   CallParticipantsChangedPayload,
   CallEndedPayload,
   CallSnapshot,
+  CallParticipant,
 } from 'easemob-websdk';
+import CallRtcService from '../rtc/CallRtcService';
+import CallMediaService from '../rtc/CallMediaService';
+import { diffParticipants, isTerminalParticipant } from '../signaling/participantDiff';
 
 // Call status enum
 export enum CALL_STATUS {
@@ -235,6 +239,9 @@ export class CallService {
   private disposeCallStoreReactions?: () => void;
   private nativeEndRequested = false;
   private invitationTimeoutSeconds = 30;
+  private rtcService: CallRtcService;
+  private mediaService: CallMediaService;
+  private signalingParticipants: CallParticipant[] = [];
 
   constructor(config: CallServiceConfig) {
     this.connection = config.connection;
@@ -284,9 +291,9 @@ export class CallService {
 
     // Initialize Agora RTC client
     AgoraRTC.setLogLevel(4);
-    this.client = AgoraRTC.createClient({ mode: 'live', codec: 'h264' });
-    this.onRtcEngineCreated?.(this.client);
-    this.client.setClientRole('host');
+    this.rtcService = new CallRtcService({ onCreated: config.onRtcEngineCreated });
+    this.client = this.rtcService.client;
+    this.mediaService = new CallMediaService({ encoderConfig: this.encoderConfig });
 
     this.rtc = {
       client: this.client,
@@ -402,25 +409,95 @@ export class CallService {
   }
 
   private handleNativeParticipants(snapshot: CallSnapshot): void {
+    const changes = diffParticipants(this.signalingParticipants, snapshot.participants);
+    this.signalingParticipants = [...snapshot.participants];
     const accepted = snapshot.participants.filter(item => item.state === 'accepted');
-    snapshot.participants.forEach(item => {
-      if (!this.invitedMembers.includes(item.userId)) return;
-      if (
-        item.state === 'rejected' ||
-        item.state === 'busy' ||
-        item.state === 'timeout' ||
-        item.state === 'canceled'
-      ) {
-        this.invitedMembers = this.invitedMembers.filter(userId => userId !== item.userId);
-        const reason = item.state === 'rejected' || item.state === 'busy' ? 'refused' : 'timeout';
-        this.onInvitedUserRemoved?.(item.userId, reason);
-      }
-    });
-    this.joinedMembers = accepted.map(item => ({ userId: item.userId, uid: item.userId }));
+    changes.waiting.forEach(item => this.emitWaitingParticipant(item));
+    changes.accepted.forEach(item => this.emitAcceptedParticipant(item));
+    changes.terminal.forEach(item => this.emitTerminalParticipant(item));
+    changes.removed.forEach(item => this.emitRemovedParticipant(item));
+
+    const previousJoinedByUserId = new Map(
+      this.joinedMembers.map(member => [member.userId || String(member.uid), member]),
+    );
+    this.joinedMembers = accepted.map(
+      item => previousJoinedByUserId.get(item.userId) ?? { userId: item.userId, uid: item.userId },
+    );
+    this.invitedMembers = snapshot.participants
+      .filter(item => item.state === 'pending' || item.state === 'ringing')
+      .map(item => item.userId);
+    if (this.currentCallInfo) {
+      this.currentCallInfo.invitedMembers = [...this.invitedMembers];
+      this.currentCallInfo.joinedMembers = [...this.joinedMembers];
+    }
     if (this.currentCallInfo && accepted.some(item => item.userId !== this.getCurrentUserId())) {
       this.audioService.stop();
       if (this.callStatus !== CALL_STATUS.IN_CALL) void this.joinCall();
     }
+  }
+
+  private emitWaitingParticipant(participant: CallParticipant): void {
+    if (participant.userId === this.getCurrentUserId()) return;
+    this.onRemoteVideoReady?.(this.createParticipantVideo(participant.userId, { isWaiting: true }));
+  }
+
+  private emitAcceptedParticipant(participant: CallParticipant): void {
+    if (participant.userId === this.getCurrentUserId()) return;
+    this.onRemoteUserJoined?.(
+      participant.userId,
+      this.convertCallTypeToString(this.currentCallInfo!.type),
+    );
+    this.onRemoteVideoReady?.(
+      this.createParticipantVideo(participant.userId, { isWaiting: false }),
+    );
+  }
+
+  private emitTerminalParticipant(participant: CallParticipant): void {
+    if (participant.userId === this.getCurrentUserId()) return;
+    if (participant.state === 'left' || participant.state === 'hanguped') {
+      this.onRemoteUserLeft?.(
+        participant.userId,
+        this.convertCallTypeToString(this.currentCallInfo!.type),
+      );
+    } else {
+      const reason =
+        participant.state === 'rejected' || participant.state === 'busy'
+          ? 'refused'
+          : participant.state === 'canceled'
+          ? 'cancelled'
+          : 'timeout';
+      this.onInvitedUserRemoved?.(participant.userId, reason);
+    }
+    this.onRemoteVideoReady?.(this.createParticipantVideo(participant.userId, { removed: true }));
+  }
+
+  private emitRemovedParticipant(participant: CallParticipant): void {
+    if (participant.userId === this.getCurrentUserId() || isTerminalParticipant(participant))
+      return;
+    if (participant.state === 'accepted') {
+      this.onRemoteUserLeft?.(
+        participant.userId,
+        this.convertCallTypeToString(this.currentCallInfo!.type),
+      );
+    } else {
+      this.onInvitedUserRemoved?.(participant.userId, 'cancelled');
+    }
+    this.onRemoteVideoReady?.(this.createParticipantVideo(participant.userId, { removed: true }));
+  }
+
+  private createParticipantVideo(
+    userId: string,
+    state: Pick<VideoWindowProps, 'isWaiting' | 'removed'>,
+  ): VideoWindowProps {
+    return {
+      id: `remote-${userId}`,
+      isLocalVideo: false,
+      muted: Boolean(state.removed),
+      cameraEnabled: false,
+      nickname: this.userInfos[userId]?.nickname || userId,
+      avatar: this.userInfos[userId]?.avatarUrl,
+      ...state,
+    };
   }
 
   setUIdToUserIdMap(uid: string, userId: string) {
@@ -732,9 +809,7 @@ export class CallService {
       this.hasEnteredPreview = true;
       try {
         // Record track Promise being created for race condition handling
-        this.creatingVideoTrack = AgoraRTC.createCameraVideoTrack(
-          this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
-        );
+        this.creatingVideoTrack = this.mediaService.createVideoTrack();
         const localVideoTrack = await this.creatingVideoTrack;
 
         // Check status, if already hung up then immediately clean up resources
@@ -795,7 +870,7 @@ export class CallService {
       try {
         // Create audio track (if not already created)
         if (!this.rtc.localAudioTrack) {
-          const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+          const localAudioTrack = await this.mediaService.createAudioTrack();
           this.rtc.localAudioTrack = localAudioTrack;
         }
 
@@ -935,12 +1010,12 @@ export class CallService {
     if (!isClientConnectedOrConnecting) {
       try {
         try {
-          uid = await this.client.join(
-            this.appId,
-            this.currentCallInfo.channel,
-            tokenToUse,
-            this.agoraUid,
-          );
+          uid = await this.rtcService.join({
+            appId: this.appId,
+            channel: this.currentCallInfo.channel,
+            token: tokenToUse ?? null,
+            uid: this.agoraUid,
+          });
         } catch (error) {
           this.onCallError?.({
             errorType: CallErrorType.RTC,
@@ -1029,7 +1104,7 @@ export class CallService {
     if (!localAudioTrack) {
       logDebug('Creating new local audio track');
       try {
-        localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        localAudioTrack = await this.mediaService.createAudioTrack();
         this.rtc.localAudioTrack = localAudioTrack;
       } catch (error) {
         logError('Failed to create local audio track:', error);
@@ -1057,7 +1132,7 @@ export class CallService {
     ) {
       // 音频通话
       try {
-        await this.client.publish(config);
+        await this.rtcService.publish(config);
       } catch (error) {
         this.onCallError?.({
           errorType: CallErrorType.RTC,
@@ -1110,7 +1185,7 @@ export class CallService {
         }
 
         try {
-          await this.client.publish(config); // 发布音频轨道和可能的视频轨道
+          await this.rtcService.publish(config); // 发布音频轨道和可能的视频轨道
         } catch (error) {
           this.onCallError?.({
             errorType: CallErrorType.RTC,
@@ -1169,9 +1244,7 @@ export class CallService {
             // 没有经过preview = 直接接听，创建默认开启的视频轨道
             logDebug('1v1 video call: direct answer, create default enabled video track');
             try {
-              localVideoTrack = await AgoraRTC.createCameraVideoTrack(
-                this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
-              );
+              localVideoTrack = await this.mediaService.createVideoTrack();
               this.rtc.localVideoTrack = localVideoTrack;
               logDebug('1v1 video call: default video track created successfully');
             } catch (error) {
@@ -1233,7 +1306,7 @@ export class CallService {
         }
 
         try {
-          await this.client.publish(config);
+          await this.rtcService.publish(config);
           logDebug(
             '1v1 video call: successfully published tracks, camera status:',
             finalHasEnabledVideoTrack ? 'enabled' : 'disabled',
@@ -1290,7 +1363,7 @@ export class CallService {
     this.callTimer.start(this.onCallDurationUpdate);
 
     // 确保通话开始时扬声器状态为开启
-    this.speakerEnabled = true;
+    this.audioService.resetSpeaker();
 
     // 被叫方主动检查并订阅已在频道中的远程用户流
     if (
@@ -1328,7 +1401,7 @@ export class CallService {
               // 订阅音频流
               if (remoteUser.hasAudio && remoteUser.audioTrack) {
                 try {
-                  await this.client.subscribe(remoteUser, 'audio');
+                  await this.rtcService.subscribe(remoteUser, 'audio');
                 } catch (error) {
                   this.onCallError?.({
                     errorType: CallErrorType.RTC,
@@ -1340,6 +1413,7 @@ export class CallService {
 
                 // 存储音频轨道
                 this.remoteAudioTracks.set(remoteUser.uid, remoteUser.audioTrack);
+                this.audioService.addRemoteTrack(String(remoteUser.uid), remoteUser.audioTrack);
                 // 播放音频
                 remoteUser.audioTrack.play();
               }
@@ -1347,7 +1421,7 @@ export class CallService {
               // 订阅视频流
               if (remoteUser.hasVideo && remoteUser.videoTrack) {
                 try {
-                  await this.client.subscribe(remoteUser, 'video');
+                  await this.rtcService.subscribe(remoteUser, 'video');
                 } catch (error) {
                   this.onCallError?.({
                     errorType: CallErrorType.RTC,
@@ -1526,7 +1600,7 @@ export class CallService {
 
         // 取消发布所有本地轨道（只有在客户端连接时才取消发布）
         if (tracksToUnpublish.length > 0 && this.client.connectionState === 'CONNECTED') {
-          await this.client.unpublish(tracksToUnpublish);
+          await this.rtcService.unpublish(tracksToUnpublish);
         }
       } catch (error) {
         logError('unpublish error:', error);
@@ -1546,7 +1620,7 @@ export class CallService {
         if (tracksToSafeUnpublish.length > 0) {
           // 🔧 修复：只有在客户端连接时才调用unpublish，避免"haven't joined yet"错误
           if (this.client.connectionState === 'CONNECTED') {
-            await this.client.unpublish(tracksToSafeUnpublish);
+            await this.rtcService.unpublish(tracksToSafeUnpublish);
           }
         }
       } catch (error) {
@@ -1636,6 +1710,7 @@ export class CallService {
       }
     });
     this.remoteAudioTracks.clear();
+    this.audioService.clearRemoteTracks();
 
     // 🔧 清理缓存的远程视频流
     this.remoteVideoStreams.clear();
@@ -1667,7 +1742,7 @@ export class CallService {
         this.client.connectionState === 'CONNECTING'
       ) {
         try {
-          await this.client.leave();
+          await this.rtcService.leave();
         } catch (error) {
           logError('leave error:', error);
         }
@@ -1704,7 +1779,7 @@ export class CallService {
     // 清理本地视频流缓存
     this.localVideoStream = null;
     // 🔧 重置扬声器状态为默认开启
-    this.speakerEnabled = true;
+    this.audioService.resetSpeaker();
     // 🔧 重置preview状态标记
     this.hasEnteredPreview = false;
     // 🔧 重置正在创建的轨道引用
@@ -1712,7 +1787,7 @@ export class CallService {
     this.creatingAudioTrack = null;
 
     this.enableMic = true;
-    this.speakerEnabled = true;
+    this.audioService.resetSpeaker();
 
     // 🔧 清理 UID 映射表，确保第二次通话时重新建立映射
     this.UIdToUserIdMap.clear();
@@ -1720,26 +1795,10 @@ export class CallService {
     // 🔧 清理等待播放的视频轨道
     this.pendingVideoTracks.clear();
     this.callStore?.clear();
+    this.signalingParticipants = [];
 
     // 🔧 强制等待确保所有异步清理完成
     await new Promise(resolve => setTimeout(resolve, 200));
-
-    // 🔧 最终检查：如果客户端仍然连接，强制重新创建客户端
-    if (this.client && this.client.connectionState !== 'DISCONNECTED') {
-      // logDebug('🔧 检测到客户端未完全断开，重新创建客户端...');
-      try {
-        // 销毁旧客户端
-        if (this.client.destroy) {
-          await this.client.destroy();
-        }
-      } catch (error) {
-        logWarn('destroy error:', error);
-      }
-
-      // 重新创建客户端
-      this.client = AgoraRTC.createClient({ mode: 'live', codec: 'h264' });
-      this.client.setClientRole('host');
-    }
   }
 
   private addAgoraRTCListeners() {
@@ -1797,7 +1856,7 @@ export class CallService {
       try {
         // 订阅远程用户流
         try {
-          await this.client.subscribe(user, mediaType);
+          await this.rtcService.subscribe(user, mediaType as 'audio' | 'video');
         } catch (error) {
           this.onCallError?.({
             errorType: CallErrorType.RTC,
@@ -1873,16 +1932,11 @@ export class CallService {
             const remoteAudioTrack = user.audioTrack;
             // 🔧 修改：将音频轨道存储到用户专用的Map中（使用 uid 作为 key，保持与视频轨道一致）
             this.remoteAudioTracks.set(uidKey, remoteAudioTrack);
+            this.audioService.addRemoteTrack(uidKey, remoteAudioTrack);
 
             // 保持向后兼容
             this.rtc.remoteAudioTrack = remoteAudioTrack;
             this.rtc.remoteUser = user;
-
-            // 根据当前扬声器状态设置新音频轨道的音量
-            if (remoteAudioTrack && remoteAudioTrack.setVolume) {
-              const volume = this.speakerEnabled ? 100 : 0;
-              remoteAudioTrack.setVolume(volume);
-            }
 
             // 播放远程音频
             try {
@@ -1972,6 +2026,7 @@ export class CallService {
           logWarn(`stop audio track error:`, error);
         }
         this.remoteAudioTracks.delete(uidKey);
+        this.audioService.removeRemoteTrack(uidKey);
       }
 
       // 移除离开的用户
@@ -2032,6 +2087,7 @@ export class CallService {
 
         // 🔧 从Map中清理用户的音频轨道
         this.remoteAudioTracks.delete(uidKey);
+        this.audioService.removeRemoteTrack(uidKey);
         // 🔧 注意：音频停止时不清理视频流缓存，因为用户可能只是静音
 
         // 清理远程音频轨道引用
@@ -2178,13 +2234,10 @@ export class CallService {
       };
 
       this.onRemoteVideoReady?.(localVideoInfo);
-      if (!this.enableMic) {
-        this.rtc.localAudioTrack = null;
-      }
     } else if (this.enableMic) {
-      this.rtc.localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      this.rtc.localAudioTrack = await this.mediaService.createAudioTrack();
       if (this.callStatus == CALL_STATUS.IN_CALL) {
-        await this.client.publish([this.rtc.localAudioTrack]);
+        await this.rtcService.publish([this.rtc.localAudioTrack]);
       }
 
       const localVideoInfo: VideoWindowProps = {
@@ -2244,7 +2297,7 @@ export class CallService {
           trackConfig.cameraId = this.currentCameraDeviceId;
           logDebug('toggleCamera: using saved device ID:', this.currentCameraDeviceId.slice(0, 8));
         }
-        const localVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
+        const localVideoTrack = await this.mediaService.createVideoTrack(trackConfig.cameraId);
         this.rtc.localVideoTrack = localVideoTrack;
 
         // 🔧 修复：保存当前使用的设备ID（如果之前没有保存过）
@@ -2273,7 +2326,7 @@ export class CallService {
 
         // 验证轨道状态后发布
         if (localVideoTrack.enabled) {
-          await this.client.publish([localVideoTrack]);
+          await this.rtcService.publish([localVideoTrack]);
           logDebug('New video track created successfully and published to channel');
         } else {
           throw new Error('视频轨道创建后仍处于禁用状态');
@@ -2368,7 +2421,7 @@ export class CallService {
           }
           let newVideoTrack;
           try {
-            newVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
+            newVideoTrack = await this.mediaService.createVideoTrack(trackConfig.cameraId);
           } catch (error) {
             // 🔧 修复：如果使用保存的设备ID创建失败，尝试不使用设备ID（可能是设备已移除）
             if (this.currentCameraDeviceId && trackConfig.cameraId) {
@@ -2377,7 +2430,7 @@ export class CallService {
                 error,
               );
               delete trackConfig.cameraId;
-              newVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
+              newVideoTrack = await this.mediaService.createVideoTrack();
               // 清除无效的设备ID
               this.currentCameraDeviceId = null;
             } else {
@@ -2427,7 +2480,7 @@ export class CallService {
             );
           }
 
-          await this.client.publish([this.rtc.localVideoTrack]);
+          await this.rtcService.publish([this.rtc.localVideoTrack]);
           logDebug('Video track successfully published to channel');
         } else {
           logDebug('Video track already published to channel');
@@ -2460,7 +2513,7 @@ export class CallService {
           );
 
           if (isVideoTrackPublished) {
-            await this.client.unpublish([this.rtc.localVideoTrack]);
+            await this.rtcService.unpublish([this.rtc.localVideoTrack]);
           }
         }
 
@@ -2520,7 +2573,7 @@ export class CallService {
           trackConfig.cameraId = this.currentCameraDeviceId;
           logDebug('Preview mode: using saved device ID:', this.currentCameraDeviceId.slice(0, 8));
         }
-        const localVideoTrack = await AgoraRTC.createCameraVideoTrack(trackConfig);
+        const localVideoTrack = await this.mediaService.createVideoTrack(trackConfig.cameraId);
         this.rtc.localVideoTrack = localVideoTrack;
 
         // 🔧 修复：保存当前使用的设备ID（如果之前没有保存过）
@@ -2598,9 +2651,6 @@ export class CallService {
     }
   }
 
-  // 🔧 新增：扬声器状态管理
-  private speakerEnabled: boolean = true; // 内部扬声器状态
-
   // 切换扬声器状态
   toggleSpeaker(): boolean {
     // 没加入之前可以关闭扬声器
@@ -2612,51 +2662,24 @@ export class CallService {
     //   return false;
     // }
 
-    // 切换内部扬声器状态
-    this.speakerEnabled = !this.speakerEnabled;
-    const newSpeakerEnabled = this.speakerEnabled;
-
-    // 控制所有远程音频轨道的音量
-    this.remoteAudioTracks.forEach((audioTrack, userId) => {
-      if (audioTrack && audioTrack.setVolume) {
-        const volume = newSpeakerEnabled ? 100 : 0;
-        audioTrack.setVolume(volume);
-        logDebug(`User ${userId} audio track volume set to:`, volume);
-      }
-    });
-
-    // 注意：不应该控制本地音频轨道的音量，因为这会静音自己的声音
-    // 扬声器控制只影响远程音频轨道的播放音量
-
+    const newSpeakerEnabled = this.audioService.toggleSpeaker();
     logDebug('Speaker status:', newSpeakerEnabled ? 'enabled' : 'disabled');
-
     return newSpeakerEnabled;
   }
 
   // 🔧 新增：获取当前扬声器状态
   isSpeakerEnabled(): boolean {
-    return this.speakerEnabled;
+    return this.audioService.isSpeakerEnabled();
   }
 
   // 🔧 新增：设置扬声器音量
   setSpeakerVolume(volume: number): void {
-    if (volume < 0 || volume > 100) {
+    if (!this.audioService.setSpeakerVolume(volume)) {
       logWarn('Volume value must be between 0-100');
       return;
     }
 
     logDebug('Set speaker volume to:', volume);
-
-    // 设置所有远程音频轨道的音量
-    this.remoteAudioTracks.forEach((audioTrack, userId) => {
-      if (audioTrack && audioTrack.setVolume) {
-        audioTrack.setVolume(volume);
-        logDebug(`User ${userId} audio track volume set to:`, volume);
-      }
-    });
-
-    // 注意：不应该控制本地音频轨道的音量，因为这会静音自己的声音
-    // 扬声器控制只影响远程音频轨道的播放音量
   }
 
   // 获取当前静音状态
@@ -2769,9 +2792,7 @@ export class CallService {
     this.hasEnteredPreview = true;
     logDebug('1v1 video call: start creating preview mode local video track');
     try {
-      const localVideoTrack = await AgoraRTC.createCameraVideoTrack(
-        this.encoderConfig ? { encoderConfig: this.encoderConfig } : undefined,
-      );
+      const localVideoTrack = await this.mediaService.createVideoTrack();
       this.rtc.localVideoTrack = localVideoTrack;
       logDebug('1v1 video call: preview video track created successfully');
 
@@ -3378,13 +3399,13 @@ export class CallService {
             'Clean up preview mode: unpublishing local tracks...',
             tracksToUnpublish.map(t => t.trackMediaType),
           );
-          await this.client.unpublish(tracksToUnpublish);
+          await this.rtcService.unpublish(tracksToUnpublish);
           logDebug('Clean up preview mode: local tracks unpublished');
         }
 
         // 尝试离开频道
         try {
-          await this.client.leave();
+          await this.rtcService.leave();
           logDebug('Clean up preview mode: left RTC channel');
         } catch (error) {
           logDebug('Clean up preview mode: failed to leave channel (may not have joined):', error);
@@ -3410,7 +3431,7 @@ export class CallService {
             '🔧 Safe cleanup preview mode: unpublishing local tracks',
             tracksToSafeUnpublish.map(t => t.trackMediaType),
           );
-          await this.client.unpublish(tracksToSafeUnpublish);
+          await this.rtcService.unpublish(tracksToSafeUnpublish);
         }
       } catch (error) {
         logWarn('❌ Safe cleanup preview mode: failed to unpublish tracks (ignore):', error);
@@ -3484,7 +3505,7 @@ export class CallService {
     }
 
     // 🔧 重置扬声器状态为默认开启
-    this.speakerEnabled = true;
+    this.audioService.resetSpeaker();
 
     // 🔧 修复：只在实际有预览状态时才通知UI清理
     // 避免在不应该有预览的情况下发送错误的local-preview信息
@@ -3603,6 +3624,7 @@ export class CallService {
       // 清理远程轨道映射
       this.remoteVideoTracks.clear();
       this.remoteAudioTracks.clear();
+      this.audioService.clearRemoteTracks();
 
       // 清理UID映射
       this.UIdToUserIdMap.clear();
@@ -3616,13 +3638,14 @@ export class CallService {
       this.callTimer.reset();
       this.joinedMembers = [];
       this.invitedMembers = [];
+      this.signalingParticipants = [];
 
       this.enableMic = true;
-      this.speakerEnabled = true;
+      this.audioService.resetSpeaker();
       // 清理RTC引用
       if (this.rtc.localAudioTrack) {
         try {
-          this.rtc.localAudioTrack.stop();
+          this.mediaService.closeTrack(this.rtc.localAudioTrack);
         } catch (error) {
           logWarn('clean up local audio track failed:', error);
         }
@@ -3631,7 +3654,7 @@ export class CallService {
 
       if (this.rtc.localVideoTrack) {
         try {
-          this.rtc.localVideoTrack.stop();
+          this.mediaService.closeTrack(this.rtc.localVideoTrack);
         } catch (error) {
           logWarn('clean up local video track failed:', error);
         }
@@ -3642,6 +3665,9 @@ export class CallService {
       this.rtc.remoteAudioTrack = null;
       this.rtc.remoteVideoTrack = null;
       this.rtc.remoteUser = null;
+
+      this.audioService.dispose();
+      void this.rtcService.dispose();
 
       return; // 🔧 初始化时直接返回，不执行后续的hangup逻辑
     }
@@ -3655,6 +3681,7 @@ export class CallService {
     this.cachedGroupInfos = {};
     // 清理铃声
     this.audioService.dispose();
+    void this.rtcService.dispose();
   }
 
   // 🔧 新增：设置视频元素准备好回调

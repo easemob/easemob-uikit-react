@@ -415,12 +415,12 @@ interface CallKitExt {
 
 ### Phase 2：拆分 RTC、Media 和 Audio
 
-- [ ] 从 `CallService` 提取 `CallRtcService`。
-- [ ] 提取本地轨道和设备控制到 `CallMediaService`。
-- [ ] 提取铃声和音频自动播放处理到 `CallAudioService`。
-- [ ] 为三者定义明确的 `dispose()`，并保证重复调用安全。
-- [ ] 保持现有视频窗口、mute、camera 和远端订阅行为不变。
-- [ ] 为 RTC join/leave 和轨道清理添加单元测试。
+- [x] 从 `CallService` 提取 `CallRtcService`。
+- [x] 提取本地轨道和设备控制到 `CallMediaService`。
+- [x] 提取铃声、远端音频音量和扬声器控制到 `CallAudioService`。
+- [x] 为三者定义明确的 `dispose()`，并保证重复调用安全。
+- [x] 保持现有视频窗口、mute、camera 和远端订阅行为不变。
+- [x] 为媒体服务和参与者快照 diff 添加单元测试；RTC 真实 join/leave 仍需真实环境验证。
 
 完成标准：旧信令尚未删除时，RTC 和媒体相关行为已不依赖超大 `CallService`。
 
@@ -443,7 +443,7 @@ interface CallKitExt {
 - [ ] 使用 `joinCall()` 接听群呼。
 - [ ] 使用 `leaveCall()` 退出群呼。
 - [ ] 使用 `inviteParticipants()` 继续邀请成员。
-- [ ] 用快照 revision 和完整 participant list 更新成员 UI。
+- [x] 用快照 revision 和完整 participant list 更新成员 UI。
 - [ ] 删除取消单个群成员邀请的按钮、回调和状态。
 - [ ] 将邀请超时映射到 `timeoutSeconds`。
 - [ ] 处理群呼最后成员离开和 `lastLeft` 结束原因。
