@@ -10,10 +10,11 @@ export default defineConfig({
   // 设置基础路径为空，使用相对路径
   base: '',
   build: {
+    target: 'esnext',
     outDir: './dist-demo',
     rollupOptions: {
       input: {
-        'real-call-demo': path.resolve(__dirname, 'demo/callkit/real-call-demo.html'),
+        'call-demo': path.resolve(__dirname, 'demo/callkit/call-demo.html'),
       },
       output: {
         // 确保资源文件路径正确，使用相对路径

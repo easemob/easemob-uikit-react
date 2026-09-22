@@ -1,3 +1,8 @@
+## v2.0.2 2026.9.22
+
+- CallKit demo 支持直接使用 Token 登录，或参考 Web SDK demo 先用密码换取 Token 再登录。
+- 修正 CallKit demo 构建入口，并将构建目标调整为支持呼叫信令所需的 BigInt。
+
 ## v2.0.1 2026.9.22
 
 - 将 Agora RTC 客户端生命周期、频道操作、本地媒体轨道和远端音频控制从 `CallService` 拆分为独立服务。

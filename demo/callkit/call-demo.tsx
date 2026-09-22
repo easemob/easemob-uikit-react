@@ -16,12 +16,16 @@ import Provider from '../../module/store/Provider';
 import rootStore from '../../module/store/index';
 import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './接听电话.mp3';
+import { exchangePasswordForToken } from './login-auth';
+
+const REST_BASE_URL = 'https://a1-hsb.easemob.com';
 
 // 从URL获取参数的工具函数
 const getUrlParams = () => {
   const urlParams = new URLSearchParams(window.location.search);
   return {
     userId: urlParams.get('userId') || '',
+    token: urlParams.get('token') || '',
     password: urlParams.get('password') || '',
     appKey: urlParams.get('appKey') || 'easemob-demo#agora-rtc',
   };
@@ -42,9 +46,11 @@ const RealCallDemo: React.FC = () => {
   const [isLogging, setIsLogging] = useState(false);
   const [loginForm, setLoginForm] = useState({
     userId: urlParams.userId,
+    token: urlParams.token,
     password: urlParams.password,
     appKey: urlParams.appKey,
   });
+  const [authToken, setAuthToken] = useState('');
 
   // 通话状态
   const [isInCall, setIsInCall] = useState(false);
@@ -123,34 +129,46 @@ const RealCallDemo: React.FC = () => {
 
   // 检查是否有URL参数，如果有则自动尝试登录
   useEffect(() => {
-    if (urlParams.userId && urlParams.password) {
-      handleLogin();
+    if (urlParams.userId && (urlParams.token || urlParams.password)) {
+      void handleLogin();
     }
   }, []);
 
   // 处理登录
   const handleLogin = async () => {
-    if (!loginForm.userId || !loginForm.password || !loginForm.appKey) {
+    const userId = loginForm.userId.trim();
+    const token = loginForm.token.trim();
+    const password = loginForm.password.trim();
+    const appKey = loginForm.appKey.trim();
+    if (!userId || (!token && !password) || !appKey) {
       notification.error({
         message: '请填写完整的登录信息',
-        description: '用户ID、密码和AppKey都是必填项',
+        description: 'App Key、用户 ID，以及 Token 或密码均为必填项',
       });
       return;
     }
 
     setIsLogging(true);
     try {
-      // 这里会通过Provider自动处理登录
+      const resolvedToken = token
+        ? token
+        : await exchangePasswordForToken({
+            appKey,
+            userId,
+            password,
+            restBaseUrl: REST_BASE_URL,
+          });
+      setAuthToken(resolvedToken);
       setIsLoggedIn(true);
       notification.success({
-        message: '登录成功',
-        description: `欢迎 ${loginForm.userId}！现在可以进行通话了。`,
+        message: token ? '开始使用 Token 登录' : '密码换取 Token 成功',
+        description: `正在登录 ${userId}，连接成功后即可进行通话。`,
       });
     } catch (error) {
       console.error('Login failed:', error);
       notification.error({
         message: '登录失败',
-        description: '请检查您的登录信息是否正确',
+        description: error instanceof Error ? error.message : '请检查您的登录信息是否正确',
       });
     } finally {
       setIsLogging(false);
@@ -160,6 +178,7 @@ const RealCallDemo: React.FC = () => {
   // 处理登出
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setAuthToken('');
     setIsConfigured(false);
     setTargetUser('');
     notification.info({
@@ -172,7 +191,8 @@ const RealCallDemo: React.FC = () => {
   const updateUrlParams = () => {
     const params = new URLSearchParams();
     if (loginForm.userId) params.set('userId', loginForm.userId);
-    if (loginForm.password) params.set('password', loginForm.password);
+    if (loginForm.token) params.set('token', loginForm.token);
+    else if (loginForm.password) params.set('password', loginForm.password);
     if (loginForm.appKey) params.set('appKey', loginForm.appKey);
 
     const newUrl = `${window.location.pathname}?${params.toString()}`;
@@ -581,12 +601,20 @@ const RealCallDemo: React.FC = () => {
             />
           </div>
           <div style={{ marginBottom: '15px' }}>
+            <label>Token:</label>
+            <Input
+              value={loginForm.token}
+              onChange={e => setLoginForm({ ...loginForm, token: e.target.value })}
+              placeholder="输入 Token；填写后优先使用 Token 登录"
+            />
+          </div>
+          <div style={{ marginBottom: '15px' }}>
             <label>密码:</label>
             <Input
               type="password"
               value={loginForm.password}
               onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
-              placeholder="输入密码"
+              placeholder="未填写 Token 时，使用密码换取 Token"
             />
           </div>
           <Button
@@ -608,7 +636,7 @@ const RealCallDemo: React.FC = () => {
           <code
             style={{ background: '#f1f1f1', padding: '5px', borderRadius: '3px', display: 'block' }}
           >
-            ?userId=your_user_id&password=your_password&appKey=your_app_key
+            ?userId=your_user_id&token=your_token&appKey=your_org%23your_app
           </code>
         </div>
       </div>
@@ -621,12 +649,12 @@ const RealCallDemo: React.FC = () => {
       initConfig={{
         appKey: loginForm.appKey,
         userId: loginForm.userId,
-        password: loginForm.password,
+        token: authToken,
         useUserInfo: true,
         maxMessages: 100,
         isHttpDNS: false,
         msyncUrl: 'wss://im-api-new-hsb.easemob.com/websocket',
-        restUrl: 'https://a1-hsb.easemob.com',
+        restUrl: REST_BASE_URL,
       }}
     >
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
