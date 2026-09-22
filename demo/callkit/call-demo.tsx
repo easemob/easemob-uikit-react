@@ -17,8 +17,10 @@ import rootStore from '../../module/store/index';
 import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './接听电话.mp3';
 import { exchangePasswordForToken } from './login-auth';
+import { resolveCallDemoServiceConfig, type CallDemoServiceMode } from './service-config';
 
-const REST_BASE_URL = 'https://a1-hsb.easemob.com';
+const DEFAULT_REST_URL = 'https://a1-hsb.easemob.com';
+const DEFAULT_MSYNC_URL = 'wss://im-api-new-hsb.easemob.com/websocket';
 
 // 从URL获取参数的工具函数
 const getUrlParams = () => {
@@ -28,6 +30,9 @@ const getUrlParams = () => {
     token: urlParams.get('token') || '',
     password: urlParams.get('password') || '',
     appKey: urlParams.get('appKey') || 'easemob-demo#agora-rtc',
+    serviceMode: urlParams.get('serviceMode') === 'custom' ? 'custom' : 'proxy',
+    restUrl: urlParams.get('restUrl') || DEFAULT_REST_URL,
+    msyncUrl: urlParams.get('msyncUrl') || DEFAULT_MSYNC_URL,
   };
 };
 
@@ -49,8 +54,17 @@ const RealCallDemo: React.FC = () => {
     token: urlParams.token,
     password: urlParams.password,
     appKey: urlParams.appKey,
+    serviceMode: urlParams.serviceMode as CallDemoServiceMode,
+    restUrl: urlParams.restUrl,
+    msyncUrl: urlParams.msyncUrl,
   });
   const [authToken, setAuthToken] = useState('');
+  const serviceConfig = resolveCallDemoServiceConfig({
+    mode: loginForm.serviceMode,
+    origin: window.location.origin,
+    restUrl: loginForm.restUrl,
+    msyncUrl: loginForm.msyncUrl,
+  });
 
   // 通话状态
   const [isInCall, setIsInCall] = useState(false);
@@ -140,10 +154,18 @@ const RealCallDemo: React.FC = () => {
     const token = loginForm.token.trim();
     const password = loginForm.password.trim();
     const appKey = loginForm.appKey.trim();
+    const { restUrl, msyncUrl } = serviceConfig;
     if (!userId || (!token && !password) || !appKey) {
       notification.error({
         message: '请填写完整的登录信息',
         description: 'App Key、用户 ID，以及 Token 或密码均为必填项',
+      });
+      return;
+    }
+    if (!restUrl || !msyncUrl) {
+      notification.error({
+        message: '请填写完整的私有服务地址',
+        description: '自定义私有服务模式需要同时填写 REST 和 MSync WebSocket 地址',
       });
       return;
     }
@@ -156,7 +178,7 @@ const RealCallDemo: React.FC = () => {
             appKey,
             userId,
             password,
-            restBaseUrl: REST_BASE_URL,
+            restBaseUrl: restUrl,
           });
       setAuthToken(resolvedToken);
       setIsLoggedIn(true);
@@ -194,6 +216,11 @@ const RealCallDemo: React.FC = () => {
     if (loginForm.token) params.set('token', loginForm.token);
     else if (loginForm.password) params.set('password', loginForm.password);
     if (loginForm.appKey) params.set('appKey', loginForm.appKey);
+    params.set('serviceMode', loginForm.serviceMode);
+    if (loginForm.serviceMode === 'custom') {
+      if (loginForm.restUrl) params.set('restUrl', loginForm.restUrl);
+      if (loginForm.msyncUrl) params.set('msyncUrl', loginForm.msyncUrl);
+    }
 
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
@@ -585,6 +612,22 @@ const RealCallDemo: React.FC = () => {
         <div style={{ background: '#f8f9fa', padding: '20px', borderRadius: '8px' }}>
           <h3>登录信息</h3>
           <div style={{ marginBottom: '15px' }}>
+            <label>服务环境:</label>
+            <select
+              value={loginForm.serviceMode}
+              onChange={event =>
+                setLoginForm({
+                  ...loginForm,
+                  serviceMode: event.target.value as CallDemoServiceMode,
+                })
+              }
+              style={{ width: '100%', height: '40px', marginTop: '6px', padding: '0 10px' }}
+            >
+              <option value="proxy">本地代理（调试环境）</option>
+              <option value="custom">自定义私有服务</option>
+            </select>
+          </div>
+          <div style={{ marginBottom: '15px' }}>
             <label>App Key:</label>
             <Input
               value={loginForm.appKey}
@@ -592,6 +635,41 @@ const RealCallDemo: React.FC = () => {
               placeholder="输入App Key"
             />
           </div>
+          {loginForm.serviceMode === 'custom' ? (
+            <>
+              <div style={{ marginBottom: '15px' }}>
+                <label>REST 地址:</label>
+                <Input
+                  value={loginForm.restUrl}
+                  onChange={e => setLoginForm({ ...loginForm, restUrl: e.target.value })}
+                  placeholder="例如 https://a1.example.com"
+                />
+              </div>
+              <div style={{ marginBottom: '15px' }}>
+                <label>MSync WebSocket 地址:</label>
+                <Input
+                  value={loginForm.msyncUrl}
+                  onChange={e => setLoginForm({ ...loginForm, msyncUrl: e.target.value })}
+                  placeholder="例如 wss://im.example.com/websocket"
+                />
+              </div>
+            </>
+          ) : (
+            <div
+              style={{
+                marginBottom: '15px',
+                padding: '10px',
+                background: '#e6f7ff',
+                borderRadius: '4px',
+                fontSize: '12px',
+                lineHeight: 1.8,
+              }}
+            >
+              <div>REST: {serviceConfig.restUrl}</div>
+              <div>MSync: {serviceConfig.msyncUrl}</div>
+              <div>Fusion: 由 SDK 通过同源 /ws 连接</div>
+            </div>
+          )}
           <div style={{ marginBottom: '15px' }}>
             <label>用户ID:</label>
             <Input
@@ -636,7 +714,7 @@ const RealCallDemo: React.FC = () => {
           <code
             style={{ background: '#f1f1f1', padding: '5px', borderRadius: '3px', display: 'block' }}
           >
-            ?userId=your_user_id&token=your_token&appKey=your_org%23your_app
+            ?userId=your_user_id&token=your_token&appKey=your_org%23your_app&serviceMode=proxy
           </code>
         </div>
       </div>
@@ -653,8 +731,8 @@ const RealCallDemo: React.FC = () => {
         useUserInfo: true,
         maxMessages: 100,
         isHttpDNS: false,
-        msyncUrl: 'wss://im-api-new-hsb.easemob.com/websocket',
-        restUrl: REST_BASE_URL,
+        msyncUrl: serviceConfig.msyncUrl,
+        restUrl: serviceConfig.restUrl,
       }}
     >
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
@@ -675,7 +753,8 @@ const RealCallDemo: React.FC = () => {
           <div>
             <h2 style={{ margin: 0 }}>CallKit 通话演示</h2>
             <p style={{ margin: 0, color: '#666' }}>
-              当前用户: {loginForm.userId} | App Key: {loginForm.appKey}
+              当前用户: {loginForm.userId} | App Key: {loginForm.appKey} | 服务:
+              {loginForm.serviceMode === 'proxy' ? '本地代理' : '自定义私有服务'}
             </p>
           </div>
           <Button onClick={handleLogout}>登出</Button>

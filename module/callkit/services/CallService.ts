@@ -853,7 +853,7 @@ export class CallService {
           }
         }, 500);
       } catch (error) {
-        logError('Failed to create local video track:', error);
+        logWarn('Local camera unavailable, continue the video call with camera disabled:', error);
         this.creatingVideoTrack = null; // Clear creating reference
 
         // Ensure cleanup of potentially acquired resources even if creation fails
@@ -864,6 +864,18 @@ export class CallService {
             logError('Failed to cleanup leaked track:', cleanupError);
           }
         }
+
+        // 没有摄像头或摄像头不可用时仍允许发起视频呼叫，后续入会只发布音频轨道。
+        // 同步通知 UI，避免预览窗口继续显示为“摄像头已开启”。
+        this.onRemoteVideoReady?.({
+          id: 'local',
+          isLocalVideo: true,
+          muted: false,
+          cameraEnabled: false,
+          nickname: this.userInfos[this.userId]?.nickname || 'Me',
+          avatar: this.userInfos[this.userId]?.avatarUrl,
+          stream: undefined,
+        });
       }
     } else if (callType === CALL_TYPE.VIDEO_MULTI) {
       // Group video call: caller handles audio and video tracks

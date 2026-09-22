@@ -1,3 +1,10 @@
+## v2.0.3 2026.9.22
+
+- CallKit demo 支持配置 AppKey，并可选择本地代理或自定义私有 REST、MSync 服务地址。
+- 增加与 websdk2 demo 一致的 REST、MSync、Fusion WebSocket 开发代理，并支持通过环境变量覆盖代理目标。
+- 修复浏览器没有可用摄像头时视频呼叫输出错误且预览状态不正确的问题；此时呼叫会以摄像头关闭状态继续。
+- 修复 CallKit demo 的生产构建压缩配置。
+
 ## v2.0.2 2026.9.22
 
 - CallKit demo 支持直接使用 Token 登录，或参考 Web SDK demo 先用密码换取 Token 再登录。

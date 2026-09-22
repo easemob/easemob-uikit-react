@@ -1026,6 +1026,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             to: options.to,
             ext: options.ext,
           });
+          if (options.callType === 'video' && !callServiceRef.current.isCameraEnabled()) {
+            setLocalVideo(previous =>
+              previous
+                ? {
+                    ...previous,
+                    cameraEnabled: false,
+                    stream: undefined,
+                  }
+                : previous,
+            );
+          }
           return msg;
         } else {
           onCallError?.(CallError.create(CallErrorCode.CALL_PARAM_ERROR, 'chatClient is required'));

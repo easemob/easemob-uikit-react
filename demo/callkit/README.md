@@ -26,6 +26,30 @@ npm run dev:demo
 
 这将在 `http://localhost:5174` 启动开发服务器。
 
+### 4. 连接私有调试环境
+
+登录页选择“本地代理（调试环境）”后，AppKey 可直接在表单中配置，demo 会使用以下同源地址：
+
+- REST：`http://localhost:5174/rest`
+- MSync：`ws://localhost:5174/websocket`
+- Fusion 呼叫信令：`ws://localhost:5174/ws`（由 SDK 根据 REST 地址派生）
+
+Vite 默认将它们分别代理到与 websdk2 demo 相同的服务：
+
+- REST：`http://127.0.0.1:8082`
+- MSync：`ws://127.0.0.1:4717`
+- Fusion：`ws://127.0.0.1:8081`
+
+可在仓库根目录的 `.env.local` 中覆盖代理目标：
+
+```dotenv
+EASEMOB_DEMO_REST_PROXY_TARGET=http://127.0.0.1:8082
+EASEMOB_DEMO_MSYNC_PROXY_TARGET=ws://127.0.0.1:4717
+EASEMOB_DEMO_FUSION_PROXY_TARGET=ws://127.0.0.1:8081
+```
+
+也可以在登录页选择“自定义私有服务”，直接填写 REST 和 MSync 地址。此方式不经过 Vite 代理，需要服务端允许浏览器跨域访问。
+
 ## 部署步骤
 
 ### 1. 构建项目
@@ -87,7 +111,7 @@ npm run build:demo
 ### URL 参数登录
 
 ```
-https://your-domain.com/real-call-demo.html?userId=your_user_id&password=your_password&appKey=your_app_key
+http://localhost:5174/demo/callkit/call-demo.html?userId=your_user_id&password=your_password&appKey=your_app_key&serviceMode=proxy
 ```
 
 ### 手动登录
