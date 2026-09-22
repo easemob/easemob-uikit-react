@@ -453,27 +453,22 @@ let Chat = forwardRef((props: ChatProps, ref) => {
 
   const startVideoCall = async (type: 'video' | 'group' | 'audio') => {
     if (CVS.chatType === 'groupChat') {
-      const msg = await callKitRef.current?.startGroupCall({
+      await callKitRef.current?.startGroupCall({
         groupId: CVS.conversationId,
+        callType: type === 'audio' ? 'audio' : 'video',
         msg: t('callkit.invitation.groupCallDescription'),
       });
-      if (msg) {
-        rootStore.messageStore.addMessage(msg as ChatSDK.Message, 'groupChat', msg.to!);
-      }
       return;
     }
 
     try {
-      const msg = await callKitRef.current?.startSingleCall({
+      await callKitRef.current?.startSingleCall({
         to: CVS.conversationId,
         callType: type as 'video' | 'audio',
         msg: t(
           `callkit.invitation.${type == 'video' ? 'videoCallDescription' : 'audioCallDescription'}`,
         ),
       });
-      if (msg) {
-        rootStore.messageStore.addMessage(msg as ChatSDK.Message, 'singleChat', msg.to!);
-      }
     } catch (e) {
       console.error(e);
     }
@@ -780,24 +775,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
                 });
               }}
               messageProps={{ ...messageProps, ...messageListProps?.messageProps }}
-              onRtcInviteMessageClick={async message => {
-                if (!callKitRef.current) return;
-                try {
-                  const msg = await callKitRef.current?.startSingleCall({
-                    to: message.from === currentUserId ? message.to! : message.from!,
-                    callType: message.ext?.type == 1 ? 'video' : 'audio',
-                    msg: `邀请你进行${message.ext?.type == 1 ? '视频' : '语音'}通话`,
-                  });
-                  rootStore.messageStore.addMessage(
-                    msg as ChatSDK.Message,
-                    'singleChat',
-                    msg?.to || '',
-                  );
-                  console.log('msg --->', msg);
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
             ></MessageList>
           )}
           {messageInputProps?.enabledTyping && (
@@ -847,67 +824,6 @@ let Chat = forwardRef((props: ChatProps, ref) => {
             enableRingtone={true}
             ringtoneVolume={0.8}
             ringtoneLoop={true}
-            onEndCallWithReason={(reason, callInfo) => {
-              console.log('🚀 onEndCallWithReason 接收到通话结束信22', reason, callInfo);
-              if (!callInfo.inviteMessageId) {
-                return;
-              }
-              if (callInfo.type === 0 || callInfo.type === 1) {
-                let msg = '';
-                switch (reason) {
-                  case 'hangup':
-                    msg = `通话时长${callInfo.duration}`;
-                    break;
-                  case 'noResponse':
-                    msg = '未接听';
-                    break;
-                  case 'remoteNoResponse':
-                    msg = '对方未接听';
-                    break;
-                  case 'cancel':
-                    msg = '已取消';
-                    break;
-                  case 'busy':
-                    msg = '对方正忙';
-                    break;
-                  case 'abnormalEnd':
-                    msg = '通话中断';
-                    break;
-                  case 'remoteCancel':
-                    msg = '对方已取消';
-                    break;
-                  case 'refuse':
-                    msg = '已拒绝';
-                    break;
-                  case 'remoteRefuse':
-                    msg = '对方已拒绝';
-                    break;
-                  case 'handleOnOtherDevice':
-                    msg = '已在其他设备处理';
-                    break;
-                  default:
-                    msg = '通话已结束';
-                    break;
-                }
-                rootStore.messageStore.updateMessage({
-                  messageId: callInfo.inviteMessageId,
-                  chatType: 'singleChat',
-                  to:
-                    callInfo.calleeUserId === currentUserId
-                      ? callInfo.callerUserId!
-                      : callInfo.calleeUserId!,
-                  msg: msg,
-                });
-              } else {
-                rootStore.messageStore.updateMessage({
-                  messageId: callInfo.inviteMessageId,
-                  chatType: 'groupChat',
-                  to: callInfo.groupId!,
-                  msg: `通话已结束`,
-                });
-              }
-              console.log('onEndCallWithReason --->', reason, callInfo);
-            }}
             onLayoutModeChange={handleLayoutModeChange}
             initialPosition={callKitInitialPosition}
             showInvitationAvatar={true}

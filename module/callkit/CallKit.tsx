@@ -16,7 +16,7 @@ import { useInvitationTimers } from './hooks/useInvitationTimers';
 import { FullLayoutManager } from './layouts/FullLayoutManager';
 import InvitationContent from './components/InvitationContent';
 import UserSelect from '../userSelect/UserSelect';
-import type { ChatSDK } from 'module/SDK';
+import type { CallSnapshot } from 'easemob-websdk';
 import {
   CallService,
   CALL_STATUS,
@@ -33,12 +33,13 @@ import type {
 } from './types/index';
 import type { FullLayoutProps } from './types/layout';
 import { LayoutMode } from './types/index';
-import { generateRandomChannel } from './utils/callUtils';
 import { logger, LogLevel } from './utils/logger';
 import './styles/index.scss';
 import CallError, { CallErrorCode } from './services/CallError';
 import { useIsMobile } from '../hooks/useScreen';
 import { getCurrentUserId } from '../utils';
+import rootStore from '../store';
+import CallSignalingService from './signaling/CallSignalingService';
 /**
  * 优化的 FullLayoutManager 组件
  * 使用 React.memo 进行性能优化
@@ -237,29 +238,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const [internalSize, setInternalSize] = React.useState(initialSize);
   const internalRef = React.useRef<HTMLDivElement>(null);
 
-  const { setInvitationTimer, clearInvitationTimer, clearAllInvitationTimers, handleUserJoined } =
+  const { clearInvitationTimer, clearAllInvitationTimers, handleUserJoined } =
     useInvitationTimers();
-
-  const handleInvitationTimeout = React.useCallback(
-    (userId: string) => {
-      if (hasInitialized && callServiceRef.current) {
-        callServiceRef.current.cancelInvitation(userId);
-      }
-      logger.debug('handleInvitationTimeout', userId);
-      setVideos(prevVideos => {
-        const updatedVideos = prevVideos.filter(video => {
-          const videoUserId = video.isLocalVideo
-            ? 'local'
-            : video.id.startsWith('remote-')
-            ? video.id.replace('remote-', '')
-            : video.id;
-          return videoUserId !== userId;
-        });
-        return updatedVideos;
-      });
-    },
-    [hasInitialized],
-  );
 
   const handleInvitedUserRemoved = React.useCallback(
     (userId: string, reason: 'refused' | 'cancelled' | 'timeout') => {
@@ -292,7 +272,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const [isLoadingGroupMembers, setIsLoadingGroupMembers] = React.useState(false);
 
   const groupCallPromiseRef = useRef<{
-    resolve: (msg: ChatSDK.Message | null) => void;
+    resolve: (snapshot: CallSnapshot | null) => void;
     reject: (error: any) => void;
   } | null>(null);
 
@@ -750,6 +730,9 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         // RTC Token 配置
         useRTCToken,
         rtcProvider,
+        callSignaling: new CallSignalingService(chatClient, rootStore.callStore),
+        callStore: rootStore.callStore,
+        invitationTimeoutSeconds: autoRejectTime,
       };
 
       callServiceRef.current = new CallService(config);
@@ -910,9 +893,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       },
       startGroupCall: async (options: {
         groupId: string;
+        callType: 'video' | 'audio';
         msg: string;
         ext?: Record<string, any>;
-      }): Promise<ChatSDK.Message | null> => {
+      }): Promise<CallSnapshot | null> => {
         if (isInCall || callStatus !== 'idle') {
           onCallError?.(
             CallError.create(CallErrorCode.CALL_STATE_ERROR, 'is in call', {
@@ -924,7 +908,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         }
 
         const { groupId, ext } = options;
-        const callType = 'video';
+        const callType = options.callType;
         if (!groupId) {
           onCallError?.(CallError.create(CallErrorCode.CALL_PARAM_ERROR, 'groupId is required'));
           return null;
@@ -932,7 +916,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
         groupCallInviteMsg = options.msg;
 
-        return new Promise<ChatSDK.Message | null>((resolve, reject) => {
+        return new Promise<CallSnapshot | null>((resolve, reject) => {
           groupCallPromiseRef.current = { resolve, reject };
 
           setIsInitiatingGroupCall(true);
@@ -1032,16 +1016,11 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             });
           }
 
-          const callId = generateRandomChannel(10);
-          const channel = generateRandomChannel(8);
-
           const callTypeEnum =
             options.callType === 'video' ? CALL_TYPE.VIDEO_1V1 : CALL_TYPE.AUDIO_1V1;
 
           const msg = await callServiceRef.current.startCall({
             msg: options.msg,
-            callId,
-            channel,
             chatType: 'singleChat',
             callType: callTypeEnum,
             to: options.to,
@@ -2215,8 +2194,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           });
           try {
             const msg = await callServiceRef.current.startCall({
-              callId: generateRandomChannel(10),
-              channel: generateRandomChannel(8),
               chatType: 'groupChat',
               callType: groupCallType === 'video' ? 2 : 3, // VIDEO_MULTI = 2, AUDIO_MULTI = 3
               to: members, // 主要接收者
@@ -2226,12 +2203,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               members,
               msg: groupCallInviteMsg,
               ext,
-            });
-
-            // 为每个邀请的用户设置超时定时器
-            const timeoutMs = autoRejectTime * 1000; // 转换为毫秒
-            selectedUsers.forEach(user => {
-              setInvitationTimer(user.userId, timeoutMs, handleInvitationTimeout);
             });
 
             // 🔧 新增：群组通话发送成功，resolve Promise
@@ -2305,11 +2276,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               }));
 
               setVideos(prevVideos => [...prevVideos, ...newVideoWindows]);
-
-              const timeoutMs = autoRejectTime * 1000;
-              newMembers.forEach(user => {
-                setInvitationTimer(user.userId, timeoutMs, handleInvitationTimeout);
-              });
             } else {
               logger.error('Failed to invite new members');
             }
@@ -2433,9 +2399,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     logger.debug('handleHangup');
     if (hasInitialized && callServiceRef.current) {
       const isInPreviewMode = isShowingPreview && callStatus === 'calling';
-      callServiceRef.current.cancelGroupCall();
       callServiceRef.current.hangup('hangup', isInPreviewMode);
-      callServiceRef.current.sendHangupMessage();
 
       setVideos([]);
       setIsInCall(false);

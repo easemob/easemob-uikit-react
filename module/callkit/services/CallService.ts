@@ -13,9 +13,18 @@ import CallError from './CallError';
 import { CallTimerService } from './CallTimerService';
 import type { ChatSDK } from 'module/SDK';
 import { CallErrorType, CallErrorCode } from './CallError';
-import { e } from 'vitest/dist/index-5aad25c1';
 import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../utils/logger';
-import { RingtoneManager } from '../utils/ringtoneManager';
+import CallAudioService from '../audio/CallAudioService';
+import { reaction } from 'mobx';
+import type CallStore from '../store/CallStore';
+import type CallSignalingService from '../signaling/CallSignalingService';
+import type {
+  CallHandledOnOtherDevicePayload,
+  CallInvitationReceivedPayload,
+  CallParticipantsChangedPayload,
+  CallEndedPayload,
+  CallSnapshot,
+} from 'easemob-websdk';
 
 // Call status enum
 export enum CALL_STATUS {
@@ -52,9 +61,10 @@ export interface CallInfo {
   groupAvatar?: string;
   invitedMembers?: string[]; // Internal use
   joinedMembers?: any[]; // Internal use
-  inviteMessageId?: string; // Invitation message ID
   duration?: string; // Call duration, default 0
   state?: CALL_STATUS; // Call status, default idle
+  kind?: 'single' | 'conference';
+  mediaType?: 'voice' | 'video';
 }
 
 // Hangup reason enum
@@ -118,6 +128,9 @@ export interface CallServiceConfig {
   // RTC Token configuration
   useRTCToken?: boolean; // Whether to use RTC Token for validation, default true; when false, token will be null in join channel
   rtcProvider?: CallKitRTCProvider;
+  callSignaling: CallSignalingService;
+  callStore?: CallStore;
+  invitationTimeoutSeconds?: number;
 }
 
 export class CallService {
@@ -203,7 +216,7 @@ export class CallService {
   private speakingVolumeThreshold: number = 60; // Default threshold 60
 
   // Ringtone manager
-  private ringtoneManager: RingtoneManager;
+  private audioService: CallAudioService;
 
   // Track references being created, for handling race conditions
   private creatingVideoTrack: Promise<any> | null = null;
@@ -217,6 +230,11 @@ export class CallService {
   // RTC Token configuration
   private useRTCToken: boolean = true; // Default to true, use token validation
   private rtcProvider?: CallKitRTCProvider;
+  private callSignaling: CallSignalingService;
+  private callStore?: CallStore;
+  private disposeCallStoreReactions?: () => void;
+  private nativeEndRequested = false;
+  private invitationTimeoutSeconds = 30;
 
   constructor(config: CallServiceConfig) {
     this.connection = config.connection;
@@ -243,7 +261,7 @@ export class CallService {
     // Initialize volume threshold
     this.speakingVolumeThreshold = config.speakingVolumeThreshold ?? 60;
     // Initialize ringtone manager
-    this.ringtoneManager = new RingtoneManager({
+    this.audioService = new CallAudioService({
       outgoingRingtoneSrc: config.outgoingRingtoneSrc,
       incomingRingtoneSrc: config.incomingRingtoneSrc,
       enableRingtone: config.enableRingtone ?? true,
@@ -255,6 +273,9 @@ export class CallService {
     // Initialize RTC token configuration
     this.useRTCToken = config.useRTCToken ?? true;
     this.rtcProvider = config.rtcProvider;
+    this.callSignaling = config.callSignaling;
+    this.callStore = config.callStore;
+    this.invitationTimeoutSeconds = config.invitationTimeoutSeconds ?? 30;
 
     // Get necessary information from WebIM connection
     this.agoraUid = 0;
@@ -277,8 +298,129 @@ export class CallService {
       timer: null,
     };
 
-    // Add message listener
-    this.addMessageListener();
+    this.installNativeCallSignaling();
+  }
+
+  private installNativeCallSignaling(): void {
+    if (!this.callStore) return;
+    const handleInvitation = (payload: CallInvitationReceivedPayload | null): void => {
+      if (payload) void this.handleNativeInvitation(payload);
+    };
+    const handleParticipants = (snapshot: CallSnapshot | null): void => {
+      if (snapshot && snapshot.callId === this.currentCallInfo?.callId) {
+        this.handleNativeParticipants(snapshot);
+      }
+    };
+    const handleEnded = (ended: CallEndedPayload | null): void => {
+      if (ended && ended.callId === this.currentCallInfo?.callId) {
+        this.nativeEndRequested = true;
+        void this.hangup(ended.reason);
+      }
+    };
+    const handleOtherDevice = (payload: CallHandledOnOtherDevicePayload | null): void => {
+      if (payload && payload.callId === this.currentCallInfo?.callId) {
+        this.nativeEndRequested = true;
+        void this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
+      }
+    };
+    this.disposeCallStoreReactions = reaction(
+      () => this.callStore?.invitation ?? null,
+      handleInvitation,
+      { fireImmediately: true },
+    );
+    const disposeParticipants = reaction(
+      () => this.callStore?.snapshot ?? null,
+      handleParticipants,
+    );
+    const disposeEnded = reaction(() => this.callStore?.ended ?? null, handleEnded);
+    const disposeOtherDevice = reaction(
+      () => this.callStore?.handledOnOtherDevice ?? null,
+      handleOtherDevice,
+    );
+    const previousDispose = this.disposeCallStoreReactions;
+    this.disposeCallStoreReactions = () => {
+      previousDispose?.();
+      disposeParticipants();
+      disposeEnded();
+      disposeOtherDevice();
+    };
+  }
+
+  private async handleNativeInvitation(payload: CallInvitationReceivedPayload): Promise<void> {
+    if (payload.callId === this.currentCallInfo?.callId) return;
+    if (this.callStatus !== CALL_STATUS.IDLE) {
+      try {
+        await this.callSignaling.rejectCall(payload.callId, { reason: 'busy' });
+      } catch (error) {
+        logWarn('Failed to reject native call while busy', error);
+      }
+      return;
+    }
+    const type =
+      payload.mediaType === 'video'
+        ? payload.kind === 'conference'
+          ? CALL_TYPE.VIDEO_MULTI
+          : CALL_TYPE.VIDEO_1V1
+        : payload.kind === 'conference'
+        ? CALL_TYPE.AUDIO_MULTI
+        : CALL_TYPE.AUDIO_1V1;
+    this.currentCallInfo = {
+      callId: payload.callId,
+      channel: payload.callId,
+      type,
+      kind: payload.kind,
+      mediaType: payload.mediaType,
+      callerDevId: '',
+      callerUserId: payload.inviter.userId,
+      calleeUserId: this.getCurrentUserId(),
+      groupId: payload.conversationId,
+      invitedMembers: [],
+      joinedMembers: [],
+    };
+    this.callStatus = CALL_STATUS.ALERTING;
+    this.setUserInfo({
+      [payload.inviter.userId]: {
+        nickname: payload.inviter.nickname,
+        avatarUrl: payload.inviter.avatarUrl,
+      },
+    });
+    this.onReceivedCall?.(this.convertCallTypeToString(type), payload.inviter.userId, payload.ext);
+    this.onInvitationReceived?.({
+      id: payload.callId,
+      callId: payload.callId,
+      from: payload.inviter.userId,
+      type: this.convertCallTypeToString(type),
+      channel: payload.callId,
+      callerUserId: payload.inviter.userId,
+      callerName: payload.inviter.nickname || payload.inviter.userId,
+      callerAvatar: payload.inviter.avatarUrl,
+      groupId: payload.conversationId,
+      timestamp: Date.now(),
+    });
+    await this.callSignaling.reportRinging(payload.callId);
+    this.audioService.play('incoming');
+  }
+
+  private handleNativeParticipants(snapshot: CallSnapshot): void {
+    const accepted = snapshot.participants.filter(item => item.state === 'accepted');
+    snapshot.participants.forEach(item => {
+      if (!this.invitedMembers.includes(item.userId)) return;
+      if (
+        item.state === 'rejected' ||
+        item.state === 'busy' ||
+        item.state === 'timeout' ||
+        item.state === 'canceled'
+      ) {
+        this.invitedMembers = this.invitedMembers.filter(userId => userId !== item.userId);
+        const reason = item.state === 'rejected' || item.state === 'busy' ? 'refused' : 'timeout';
+        this.onInvitedUserRemoved?.(item.userId, reason);
+      }
+    });
+    this.joinedMembers = accepted.map(item => ({ userId: item.userId, uid: item.userId }));
+    if (this.currentCallInfo && accepted.some(item => item.userId !== this.getCurrentUserId())) {
+      this.audioService.stop();
+      if (this.callStatus !== CALL_STATUS.IN_CALL) void this.joinCall();
+    }
   }
 
   setUIdToUserIdMap(uid: string, userId: string) {
@@ -384,20 +526,6 @@ export class CallService {
     return this.connection.getClientResource?.() || 'web';
   }
 
-  private createCallCmdMessage(to: string, ext: Record<string, unknown>) {
-    return this.connection.chatManager.createCmdMessage({
-      conversationId: to,
-      conversationType: 'singleChat',
-      action: 'rtcCall',
-      ext,
-    });
-  }
-
-  private sendCallMessage(message: ChatSDK.Message) {
-    return this.connection.chatManager.sendMessage(message);
-  }
-
-  // Provider 优先，否则从 IM SDK 获取 RTC 入会信息。
   async getAccessToken(
     channelName: string = this.currentCallInfo?.channel || '*',
   ): Promise<string | null> {
@@ -521,8 +649,8 @@ export class CallService {
   // Start call
   async startCall(options: {
     msg: string;
-    callId: string;
-    channel: string;
+    callId?: string;
+    channel?: string;
     chatType: string;
     callType: CALL_TYPE;
     to: string | string[];
@@ -556,21 +684,26 @@ export class CallService {
       });
       return null;
     }
-    // Auto get access token
-    this.accessToken = await this.getAccessToken(channel);
-    if (!this.hasValidRTCJoinInfo(channel)) {
-      logError('Cannot start call because valid RTC token info is unavailable', { channel });
-      this.onCallError?.({
-        errorType: CallErrorType.CALLKIT,
-        code: CallErrorCode.CALL_PARAM_ERROR,
-        message: 'Valid RTC token info is unavailable',
-      });
-      return null;
-    }
+    const isConference = callType === CALL_TYPE.VIDEO_MULTI || callType === CALL_TYPE.AUDIO_MULTI;
+    const requestedCallId = callId || `legacy-call-${Date.now()}`;
+    const requestedChannel = channel || requestedCallId;
+    const kind = isConference ? 'conference' : 'single';
+    const mediaType =
+      callType === CALL_TYPE.VIDEO_1V1 || callType === CALL_TYPE.VIDEO_MULTI ? 'video' : 'voice';
+    const nativeSnapshot = await this.callSignaling.createCall({
+      kind,
+      mediaType,
+      targetUserIds: Array.isArray(to) ? to : [to],
+      timeoutSeconds: this.invitationTimeoutSeconds,
+      pushContent: options.msg,
+      conversationId: groupId,
+      ext: options.ext ? JSON.stringify(options.ext) : undefined,
+    });
+    const resolvedCallId = nativeSnapshot.callId;
     // Create call information
     this.currentCallInfo = {
-      callId,
-      channel,
+      callId: resolvedCallId,
+      channel: nativeSnapshot.callId,
       type: callType,
       callerDevId: this.getClientResource() || 'web',
       calleeDevId: '',
@@ -581,6 +714,8 @@ export class CallService {
       groupAvatar,
       invitedMembers: members,
       joinedMembers: [],
+      kind,
+      mediaType,
     };
 
     // Update status
@@ -588,7 +723,7 @@ export class CallService {
     this.invitedMembers = members;
 
     // Play outgoing call ringtone (when initiating call)
-    this.ringtoneManager.playRingtone('outgoing');
+    this.audioService.play('outgoing');
 
     // If 1v1 video call, create local video track for preview (caller)
     // Group video call initiator does not need preview mode, go directly to group video layout
@@ -694,176 +829,13 @@ export class CallService {
       }
     }
 
-    let msg = null;
-    // Send invitation message
-    if (chatType === 'singleChat') {
-      msg = await this.sendInvitationMessage(to, this.currentCallInfo, options.ext, options.msg);
-    } else if (chatType === 'groupChat' && groupId) {
-      // Multi-party call, send invitation to group
-      msg = await this.sendInvitationMessage(
-        members,
-        this.currentCallInfo,
-        options.ext,
-        options.msg,
-      );
+    this.callStore?.setSnapshot(nativeSnapshot);
+    if (kind === 'conference') {
+      await this.joinCall();
     }
-
-    return msg;
+    return nativeSnapshot;
   }
 
-  // Send invitation message
-  private async sendInvitationMessage(
-    to: string | string[],
-    callInfo: CallInfo,
-    ext?: Record<string, any>,
-    text?: string,
-  ) {
-    const inviteExt: any = {
-      action: 'invite',
-      channelName: callInfo.channel,
-      type: callInfo.type,
-      callerDevId: this.getClientResource() || 'web',
-      callId: callInfo.callId,
-      ts: Date.now(),
-      msgType: 'rtcCallWithAgora',
-      callerIMName: this.getCurrentUserId(),
-      calleeIMName: callInfo.type === CALL_TYPE.VIDEO_MULTI ? callInfo.groupId : to,
-      chatType: callInfo.type,
-      em_push_ext: {
-        type: 'call',
-        custom: {
-          action: 'invite',
-          channelName: callInfo.channel,
-          type: callInfo.type,
-          callerDevId: this.getClientResource() || 'web',
-          callId: callInfo.callId,
-          ts: Date.now(),
-          msgType: 'rtcCallWithAgora',
-          callerIMName: this.getCurrentUserId(),
-          calleeIMName: callInfo.type === CALL_TYPE.VIDEO_MULTI ? callInfo.groupId : to,
-          callerNickname: this.userInfos[this.userId]?.nickname || this.getCurrentUserId(),
-          chatType: callInfo.type,
-          ext: ext,
-        },
-      },
-      em_apns_ext: {
-        em_push_type: 'voip',
-      },
-      ext: ext,
-    };
-
-    // Get inviter (self) user information
-    try {
-      if (this.userInfoProvider) {
-        logDebug('Getting inviter user info:', this.userId);
-        const userInfos = await this.userInfoProvider([this.userId]);
-        const myInfo = userInfos.find(user => user.userId === this.userId);
-
-        if (myInfo) {
-          logDebug('Successfully got inviter info:', myInfo);
-          inviteExt.ease_chat_uikit_user_info = {
-            nickname: myInfo.nickname,
-            avatarURL: myInfo.avatarUrl,
-          };
-          inviteExt.em_push_ext.custom.callerNickname = myInfo.nickname;
-          this.setUserInfo({
-            [this.userId]: myInfo,
-          });
-        } else {
-          logWarn('Inviter user info not found');
-        }
-      } else {
-        logWarn('userInfoProvider not configured, cannot get inviter info');
-      }
-    } catch (error) {
-      logError('Failed to fetch inviter info:', error);
-    }
-
-    // 如果是群组通话，添加群组信息
-    if (callInfo.groupId) {
-      let groupAvatar: string | undefined;
-
-      // 先尝试从缓存获取群组头像
-      const cachedGroupInfo = this.cachedGroupInfos[callInfo.groupId];
-      if (cachedGroupInfo?.groupAvatar) {
-        groupAvatar = this.currentCallInfo?.groupAvatar || cachedGroupInfo.groupAvatar;
-        logDebug('Using cached group avatar:', { groupId: callInfo.groupId, groupAvatar });
-      } else if (this.groupInfoProvider) {
-        // 如果缓存中没有，尝试获取群组信息
-        try {
-          logDebug('Getting group info:', callInfo.groupId);
-          const groupInfos = await this.groupInfoProvider([callInfo.groupId]);
-          const groupInfo = groupInfos.find(info => info.groupId === callInfo.groupId);
-
-          if (groupInfo) {
-            logDebug('Successfully got group info:', groupInfo);
-            groupAvatar = this.currentCallInfo?.groupAvatar || groupInfo.groupAvatar;
-
-            // 缓存群组信息
-            this.cachedGroupInfos[callInfo.groupId] = {
-              groupName: groupInfo.groupName || callInfo.groupName,
-              groupAvatar: groupInfo.groupAvatar,
-            };
-            logDebug('Cached group info:', {
-              groupId: callInfo.groupId,
-              cached: this.cachedGroupInfos[callInfo.groupId],
-            });
-          } else {
-            logWarn('Group info not found');
-          }
-        } catch (error) {
-          logError('Failed to fetch group info:', error);
-        }
-      } else {
-        logWarn('groupInfoProvider not configured, cannot get group avatar');
-      }
-
-      inviteExt.callkitGroupInfo = {
-        groupId: callInfo.groupId,
-        groupName: callInfo.groupName,
-        groupAvatar: groupAvatar, // 添加群组头像
-      };
-    }
-
-    // 发送文本消息
-    const option: any = {
-      conversationId: callInfo.type === CALL_TYPE.VIDEO_MULTI ? callInfo.groupId : (to as string),
-      conversationType: callInfo.type === CALL_TYPE.VIDEO_MULTI ? 'groupChat' : 'singleChat',
-      content:
-        text || (callInfo.type === CALL_TYPE.VIDEO_MULTI ? '邀请您进行群组通话' : '邀请您进行通话'),
-      ext: inviteExt,
-    };
-    if (callInfo.type === CALL_TYPE.VIDEO_MULTI) {
-      option.receiverList = to;
-    }
-    if (callInfo.type !== CALL_TYPE.VIDEO_MULTI) {
-      this.timer = setTimeout(() => {
-        logDebug('Invitation timeout, auto hangup');
-        this.hangup(HANGUP_REASON.REMOTE_NO_RESPONSE, true);
-      }, 30000);
-    }
-
-    // TODO: 加状态判断
-    try {
-      const msg = this.connection.chatManager.createTextMessage(option);
-      const sentMessage = await this.sendCallMessage(msg);
-      logDebug('Sending invitation message:', sentMessage);
-      this.currentCallInfo!.inviteMessageId = sentMessage.msgServerId;
-      this.currentCallInfo!.callerUserId = this.getCurrentUserId();
-      this.currentCallInfo!.callId = inviteExt.callId;
-      return sentMessage;
-    } catch (error: any) {
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        code: error.type,
-        message: error.message,
-      });
-      this.currentCallInfo = null;
-      return null;
-    }
-  }
-
-  // 接听通话
   async answerCall(result: boolean) {
     if (this.timer) {
       clearTimeout(this.timer);
@@ -882,18 +854,21 @@ export class CallService {
 
     try {
       // 🔧 停止铃声播放（接听或拒绝时）
-      this.ringtoneManager.stopRingtone();
+      this.audioService.stop();
 
+      const callId = this.currentCallInfo.callId;
       if (result) {
-        // 接听通话 - 发送accept消息
-        this.sendAnswerCallMessage('accept');
-        logDebug('Answer call message sent');
+        if (this.currentCallInfo.kind === 'conference') {
+          await this.callSignaling.joinCall(callId);
+        } else {
+          await this.callSignaling.acceptCall(callId);
+        }
+        this.callStatus = CALL_STATUS.ANSWER_CALL;
+        await this.joinCall();
       } else {
-        // 拒绝通话
-        this.sendAnswerCallMessage('refuse');
-        this.callStatus = CALL_STATUS.IDLE;
-        await this.cleanupPreviewMode(); // 拒绝通话时清理预览模式
-        logDebug('Answer call: refuse message sent and cleanup completed');
+        await this.callSignaling.rejectCall(callId, { reason: 'declined' });
+        await this.cleanupPreviewMode();
+        await this.hangup(HANGUP_REASON.REFUSE);
       }
     } catch (error) {
       logError('answerCall failed:', error);
@@ -906,72 +881,6 @@ export class CallService {
     }
   }
 
-  // 发送响铃消息
-  private sendAlertingMessage() {
-    if (!this.currentCallInfo) return;
-
-    const msg = this.createCallCmdMessage(this.currentCallInfo.callerUserId, {
-      action: 'alert',
-      calleeDevId: this.getClientResource(),
-      callerDevId: this.currentCallInfo.callerDevId,
-      callId: this.currentCallInfo.callId,
-      ts: Date.now(),
-      msgType: 'rtcCallWithAgora',
-    });
-    try {
-      this.sendCallMessage(msg);
-    } catch (error: any) {
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        ...(error as IAgoraRTCError),
-        message: error.message,
-      });
-    }
-    this.callStatus = CALL_STATUS.ALERTING;
-    // 设置超时处理
-    this.timer = setTimeout(() => {
-      logWarn('callee timeout');
-      this.hangup(HANGUP_REASON.REMOTE_NO_RESPONSE);
-    }, 10000);
-  }
-
-  // 发送应答消息
-  private sendAnswerCallMessage(
-    result: 'accept' | 'refuse' | 'busy',
-    targetCallInfo?: {
-      callerUserId: string;
-      callerDevId: string;
-      callId: string;
-    },
-  ) {
-    const callInfo = targetCallInfo || this.currentCallInfo;
-    if (!callInfo) {
-      return;
-    }
-
-    const msg = this.createCallCmdMessage(callInfo.callerUserId, {
-      action: 'answerCall',
-      result: result,
-      callerDevId: callInfo.callerDevId,
-      calleeDevId: this.getClientResource(),
-      callId: callInfo.callId,
-      ts: Date.now(),
-      msgType: 'rtcCallWithAgora',
-    });
-    logDebug('sendAnswerCallMessage msg -->', msg);
-    try {
-      this.sendCallMessage(msg);
-    } catch (error: any) {
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        code: error.type,
-        message: error.message,
-      });
-    }
-    this.callStatus = CALL_STATUS.ANSWER_CALL;
-  }
-
-  // 加入通话
   async joinCall() {
     if (!this.currentCallInfo) {
       logError('No current call info');
@@ -996,7 +905,6 @@ export class CallService {
         code: CallErrorCode.CALL_PARAM_ERROR,
         message: 'Valid RTC token info is unavailable',
       });
-      this.sendHangupMessage();
       this.hangup(HANGUP_REASON.ABNORMAL_END);
       return;
     }
@@ -1049,7 +957,6 @@ export class CallService {
         }
       } catch (error) {
         logError('Failed to join channel:', error);
-        this.sendHangupMessage();
         this.hangup(HANGUP_REASON.ABNORMAL_END);
         return;
       }
@@ -1107,7 +1014,6 @@ export class CallService {
     //     this.rtc.localAudioTrack = localAudioTrack;
     //   } catch (error) {
     //     logError('Failed to create local audio track:', error);
-    //     this.sendHangupMessage();
     //     this.hangup(HANGUP_REASON.ABNORMAL_END);
     //     return;
     //   }
@@ -1127,7 +1033,6 @@ export class CallService {
         this.rtc.localAudioTrack = localAudioTrack;
       } catch (error) {
         logError('Failed to create local audio track:', error);
-        this.sendHangupMessage();
         this.hangup(HANGUP_REASON.ABNORMAL_END);
         return;
       }
@@ -1159,7 +1064,6 @@ export class CallService {
           ...(error as IAgoraRTCError),
         });
         logError('Failed to publish audio:', error);
-        this.sendHangupMessage();
         this.hangup(HANGUP_REASON.ABNORMAL_END);
         return;
       }
@@ -1213,7 +1117,6 @@ export class CallService {
             ...(error as IAgoraRTCError),
           });
           logError('Failed to publish tracks for group call:', error);
-          this.sendHangupMessage();
           this.hangup(HANGUP_REASON.ABNORMAL_END);
           return;
         }
@@ -1543,6 +1446,23 @@ export class CallService {
   async hangup(reason: string = HANGUP_REASON.HANGUP, isCancel: boolean = false) {
     logDebug('hangup method called:', { reason, isCancel, callStatus: this.callStatus });
 
+    const nativeCall = this.callSignaling && this.currentCallInfo;
+    if (nativeCall && !this.nativeEndRequested) {
+      this.nativeEndRequested = true;
+      try {
+        const callId = nativeCall.callId;
+        if (isCancel || reason === HANGUP_REASON.CANCEL || reason === HANGUP_REASON.REMOTE_CANCEL) {
+          await this.callSignaling?.cancelCall(callId);
+        } else if (nativeCall.kind === 'conference') {
+          await this.callSignaling?.leaveCall(callId);
+        } else if (this.callStatus === CALL_STATUS.IN_CALL || reason === HANGUP_REASON.HANGUP) {
+          await this.callSignaling?.terminateCall(callId);
+        }
+      } catch (error) {
+        logWarn('Native call termination failed', error);
+      }
+    }
+
     // 🔧 修复：清理正在创建中的轨道（处理竞态条件）
     if (this.creatingVideoTrack) {
       logDebug('Found video track being created, waiting and cleaning up...');
@@ -1583,7 +1503,7 @@ export class CallService {
     }
 
     // 停止铃声播放（挂断时）
-    this.ringtoneManager.stopRingtone();
+    this.audioService.stop();
 
     // 清理定时器
     if (this.timer) {
@@ -1739,47 +1659,6 @@ export class CallService {
     }
     this.rtc.remoteUser = null;
 
-    // 发送取消消息
-    if (isCancel && this.currentCallInfo) {
-      reason = HANGUP_REASON.CANCEL;
-      if (
-        this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
-        this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI
-      ) {
-        // 🔧 调试：打印已加入的人和已邀请的人
-        logDebug('Group call hangup debug info:', {
-          已加入成员: this.joinedMembers.map(member => ({
-            uid: member.uid,
-            userId: this.getUserIdFromUid(member.uid),
-            nickname: member.nickname || '未知',
-          })),
-          已邀请成员: this.invitedMembers,
-          当前通话信息: this.currentCallInfo,
-        });
-
-        // 🔧 优化：只向未加入的成员发送取消消息
-        const joinedUserIds = this.joinedMembers
-          .map(member => this.getUserIdFromUid(member.uid))
-          .filter(Boolean);
-
-        logDebug('Joined user ID list:', joinedUserIds);
-
-        const membersToCancel = this.invitedMembers.filter(
-          member => !joinedUserIds.includes(member),
-        );
-
-        logDebug('Members to send cancel message to:', membersToCancel);
-
-        // 多人通话：只向未加入的成员发送取消消息
-        logDebug('---->sendCancelMessage3');
-        this.sendCancelMessage(this.currentCallInfo.groupId || '', 'groupChat', membersToCancel);
-      } else {
-        // 一对一通话
-        logDebug('---->sendCancelMessage4');
-        this.sendCancelMessage(this.currentCallInfo.calleeUserId || '', 'singleChat');
-      }
-    }
-
     // 🔧 修复：检查客户端实际连接状态并离开频道
     if (this.client) {
       // 🔧 关键修复：无论callStatus如何，只要客户端已连接就需要离开频道
@@ -1818,6 +1697,7 @@ export class CallService {
     // 🔧 彻底重置所有状态
     this.callStatus = CALL_STATUS.IDLE;
     this.currentCallInfo = null;
+    this.nativeEndRequested = false;
     this.callTimer.reset();
     this.joinedMembers = [];
     this.invitedMembers = [];
@@ -1839,6 +1719,7 @@ export class CallService {
 
     // 🔧 清理等待播放的视频轨道
     this.pendingVideoTracks.clear();
+    this.callStore?.clear();
 
     // 🔧 强制等待确保所有异步清理完成
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -1861,109 +1742,6 @@ export class CallService {
     }
   }
 
-  // 发送取消消息
-  private sendCancelMessage(
-    to: string,
-    chatType: 'singleChat' | 'groupChat',
-    receiverList?: string[],
-  ) {
-    logDebug('---->sendCancelMessage', this.currentCallInfo, to, receiverList);
-    if (!this.currentCallInfo || !to) return;
-    // 改成群通话发送群定向消息
-
-    const msg = this.connection.chatManager.createCmdMessage({
-      conversationId: to,
-      conversationType: chatType,
-      action: 'rtcCall',
-      ext: {
-        action: 'cancelCall',
-        callerDevId: this.currentCallInfo.callerDevId,
-        callId: this.currentCallInfo.callId,
-        ts: Date.now(),
-        msgType: 'rtcCallWithAgora',
-      },
-    });
-    if (receiverList) {
-      msg.receiverList = receiverList;
-    }
-    try {
-      this.sendCallMessage(msg);
-    } catch (error: any) {
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        code: error.type,
-        message: error.message,
-      });
-    }
-  }
-
-  // 发送挂断的信令
-  sendHangupMessage() {
-    logDebug('---->sendHangupMessage', this.currentCallInfo);
-    if (!this.currentCallInfo) return;
-    // 群通话：发送群定向消息，给通话中的其他人，单人：发送单聊消息
-    const isGroupCall =
-      this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI ||
-      this.currentCallInfo.type === CALL_TYPE.AUDIO_MULTI;
-    let to = '';
-    if (isGroupCall) {
-      to = this.currentCallInfo.groupId || '';
-    } else {
-      if (this.currentCallInfo.calleeUserId && this.currentCallInfo.calleeUserId !== this.userId) {
-        to = this.currentCallInfo.calleeUserId;
-      } else {
-        to = this.currentCallInfo.callerUserId;
-      }
-    }
-    if (!to) return logWarn('---->sendHangupMessage to is empty');
-    const options: any = {
-      conversationId: to,
-      conversationType: isGroupCall ? 'groupChat' : 'singleChat',
-      action: 'rtcCall',
-      ext: {
-        action: 'leaveCall',
-        callId: this.currentCallInfo.callId,
-        msgType: 'rtcCallWithAgora',
-      },
-    };
-    if (isGroupCall) {
-      const receiverList = this.joinedMembers
-        .filter(
-          member =>
-            this.getUserIdFromUid(member.uid) !== this.userId && this.getUserIdFromUid(member.uid),
-        )
-        .map(member => this.getUserIdFromUid(member.uid));
-
-      if (receiverList.length === 0) {
-        logDebug('Skip sending group hangup message: no remote participants remain');
-        return;
-      }
-      options.receiverList = [...new Set(receiverList)];
-    }
-    try {
-      const msg = this.connection.chatManager.createCmdMessage(options);
-      this.sendCallMessage(msg)
-        .then(() => {
-          logDebug('---->sendHangupMessage success');
-        })
-        .catch((error: any) => {
-          this.onCallError?.({
-            errorType: CallErrorType.CHAT,
-            code: error.type,
-            message: error.message,
-          });
-        });
-    } catch (error: any) {
-      logError('Failed to create hangup message:', error);
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        code: error.type,
-        message: error.message,
-      });
-    }
-  }
-
-  // 添加 Agora RTC 事件监听器
   private addAgoraRTCListeners() {
     // 监听用户加入
     this.client.on('user-joined', async (user: IAgoraRTCRemoteUser) => {
@@ -2371,452 +2149,6 @@ export class CallService {
       this.onRemoteVideoReady?.(removedVideoInfo);
     }
   }
-  // 添加消息监听器
-  private addMessageListener() {
-    this.connection?.addEventHandler?.('callkit', {
-      onMessage: (message: any) => {
-        if (message.type === 'text' || message.type === 'txt') {
-          logDebug('onMessage (text) message -->', message);
-          if (message.ext && message.ext.action === 'invite') {
-            this.handleInvitationMessage(message);
-          }
-        } else if (message.type === 'cmd') {
-          logDebug('onMessage (cmd) message -->', message);
-          const action = message.body?.action || message.action;
-          if (action === 'rtcCall') {
-            this.handleSignalMessage(message);
-          }
-        }
-      },
-
-      onDisconnected: (e: any) => {
-        if (e) {
-          // 多端被踢下线
-          if (e.type === '206') {
-            // 其他错误码场景下不存在该字段
-            // 当前设备挤下线的新登录设备的自定义扩展信息。
-            logDebug('---->onDisconnected 206');
-            this.hangup(HANGUP_REASON.ABNORMAL_END, true);
-          }
-        }
-      },
-    });
-  }
-
-  // 处理邀请消息
-  private async handleInvitationMessage(message: any) {
-    logDebug('---->handleInvitationMessage message', message);
-    if (message.from === this.getCurrentUserId()) {
-      return; // 忽略自己发送的消息
-    }
-
-    const ext = message.ext;
-
-    // 检查是否忙线
-    if (this.callStatus > CALL_STATUS.IDLE) {
-      const newInvitationInfo = {
-        callerUserId: message.from,
-        callerDevId: ext.callerDevId,
-        callId: ext.callId,
-      };
-      this.sendAnswerCallMessage('busy', newInvitationInfo);
-      return;
-    }
-
-    // 创建通话信息
-    this.currentCallInfo = {
-      callId: ext.callId,
-      channel: ext.channelName,
-      type: ext.type,
-      callerDevId: ext.callerDevId,
-      callerUserId: ext.callerIMName || message.from,
-      calleeUserId: ext.type === CALL_TYPE.VIDEO_MULTI ? ext.groupId : message.to,
-      groupId: ext.callkitGroupInfo?.groupId,
-      groupName: ext.callkitGroupInfo?.groupName,
-      groupAvatar: ext.callkitGroupInfo?.groupAvatar,
-      inviteMessageId: message.id,
-    };
-
-    // 获取主叫方信息：优先 ext（SDK4/UIKit），兼容 SDK5 message.sender
-    const callerUserInfo = ext.ease_chat_uikit_user_info;
-    const sender = message.sender;
-    const callerName = callerUserInfo?.nickname || sender?.nickname || message.from;
-    const callerAvatar =
-      callerUserInfo?.avatarURL || callerUserInfo?.avatarUrl || sender?.avatarUrl;
-    if (callerName || callerAvatar) {
-      const callerUserInfoMap = {
-        [message.from]: {
-          nickname: callerName,
-          avatarUrl: callerAvatar,
-        },
-      };
-      this.setUserInfo(callerUserInfoMap);
-    }
-
-    // 如果是群组通话，缓存群组信息
-    if (ext.callkitGroupInfo?.groupId) {
-      const groupName = ext.callkitGroupInfo?.groupName;
-      const groupAvatar = ext.callkitGroupInfo?.groupAvatar;
-      const groupId = ext.callkitGroupInfo.groupId;
-      // 缓存群组信息，供后续使用
-      if (groupName || groupAvatar) {
-        this.cachedGroupInfos[groupId] = {
-          groupName: groupName,
-          groupAvatar: groupAvatar,
-        };
-      }
-    }
-
-    this.onReceivedCall?.(ext.type, message.from, ext.ext);
-
-    this.sendAlertingMessage();
-    this.ringtoneManager.playRingtone('incoming');
-
-    if (this.userInfoProvider) {
-      // 被邀请方信息
-      const userInfo = await this.userInfoProvider([message.to]);
-      logDebug('Invited user info:', userInfo);
-      if (userInfo) {
-        this.setUserInfo({
-          [message.to]: userInfo[0],
-        });
-      }
-    }
-  }
-
-  // 处理信令消息
-  private handleSignalMessage(message: any) {
-    const ext = message.ext;
-    logDebug('---->cmd ext', ext);
-    switch (ext.action) {
-      case 'alert':
-        this.handleAlertMessage(message);
-        break;
-      case 'confirmRing':
-        this.handleConfirmRingMessage(message);
-        break;
-      case 'answerCall':
-        this.handleAnswerCallMessage(message);
-        break;
-      case 'confirmCallee':
-        this.handleConfirmCalleeMessage(message);
-        break;
-      case 'cancelCall':
-        this.handleCancelCallMessage(message);
-        break;
-      case 'leaveCall':
-        this.handleLeaveCallMessage(message);
-        break;
-      default:
-        this.onCallError?.({
-          errorType: CallErrorType.CALLKIT,
-          code: CallErrorCode.CALL_SIGNALING_ERROR,
-          message: `unexpected action ${ext.action}`,
-        });
-        break;
-    }
-  }
-
-  private async handleAlertMessage(message: any) {
-    const ext = message.ext;
-    this.timer && clearTimeout(this.timer);
-    this.sendConfirmRingMessage(message.from, ext.calleeDevId, ext.callerDevId, ext.callId);
-  }
-
-  // 发送确认响铃消息
-  private sendConfirmRingMessage(
-    to: string,
-    calleeDevId: string,
-    callerDevId: string,
-    callId: string,
-  ) {
-    if (!this.currentCallInfo) return;
-    let status = true;
-    if (callId !== this.currentCallInfo.callId) {
-      logWarn('not current call', callId, this.currentCallInfo.callId);
-      status = false;
-    }
-
-    if (
-      this.callStatus > CALL_STATUS.RECEIVED_CONFIRM_RING &&
-      this.currentCallInfo.type !== CALL_TYPE.VIDEO_MULTI
-    ) {
-      status = false;
-    }
-
-    // 判断这个人如果已经在群通话中，或者已经不在邀请列表中，则status为false
-    if (this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI) {
-      const joinedUserIds = this.joinedMembers.map(member => this.getUserIdFromUid(member.uid));
-      if (joinedUserIds.includes(to)) {
-        logDebug('user already in group call');
-        status = false;
-      }
-      logger.debug('currentCallInfo.invitedMembers', this.currentCallInfo.invitedMembers);
-      if (!this.currentCallInfo.invitedMembers?.includes(to)) {
-        logDebug('user has been removed from group call');
-        status = false;
-      }
-    }
-
-    if (callerDevId !== this.getClientResource()) {
-      return;
-    }
-
-    const msg = this.createCallCmdMessage(to, {
-      action: 'confirmRing',
-      status: status,
-      callerDevId: this.getClientResource(),
-      calleeDevId: calleeDevId,
-      callId: callId,
-      ts: Date.now(),
-      msgType: 'rtcCallWithAgora',
-    });
-    logDebug('---->sendConfirmRingMessage', msg);
-    try {
-      this.sendCallMessage(msg);
-
-      // 对方弹出邀请后，如果30秒内没有响应，则自动挂断
-      if (this.currentCallInfo?.type !== CALL_TYPE.VIDEO_MULTI) {
-        this.timer = setTimeout(() => {
-          logDebug('Invitation timeout, auto hangup');
-          this.hangup(HANGUP_REASON.REMOTE_NO_RESPONSE, true);
-        }, 30000);
-      }
-    } catch (error: any) {
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        code: error.type,
-        message: error.message,
-      });
-    }
-  }
-
-  // 处理确认响铃消息
-  private async handleConfirmRingMessage(message: any) {
-    logDebug('---->handleConfirmRingMessage', message);
-    const ext = message.ext;
-
-    if (ext.calleeDevId !== this.getClientResource()) {
-      return; // 多端情况下的其他设备消息
-    }
-    if (ext.callerDevId !== this.currentCallInfo?.callerDevId) {
-      // 主叫有两个设备
-      return; // 多端情况下的其他设备消息
-    }
-
-    this.timer && clearTimeout(this.timer);
-
-    if (!ext.status || this.callStatus < CALL_STATUS.ALERTING) {
-      logDebug('---->handleConfirmRingMessage 1');
-      this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
-      return;
-    }
-    if (this.callStatus === CALL_STATUS.RECEIVED_CONFIRM_RING) {
-      return;
-    }
-    this.callStatus = CALL_STATUS.RECEIVED_CONFIRM_RING;
-
-    const callType = this.convertCallTypeToString(
-      this.currentCallInfo?.type || CALL_TYPE.AUDIO_1V1,
-    );
-    const inviteInfo: any = {
-      id: ext.callId, // InvitationInfo 需要 id 字段
-      callId: ext.callId,
-      from: message.from,
-      type: callType, // 转换枚举值为字符串
-      channel: ext.channelName,
-      callerDevId: ext.callerDevId,
-      callerUserId: message.from,
-      callerName: this.userInfos[message.from]?.nickname || message.from, // 邀请人昵称
-      callerAvatar: this.userInfos[message.from]?.avatarUrl, // 邀请人头像
-      timestamp: ext.ts || Date.now(), // 邀请时间戳
-    };
-    inviteInfo.groupId = ext.groupId;
-    inviteInfo.groupName = this.currentCallInfo?.groupName;
-    inviteInfo.groupAvatar = this.currentCallInfo?.groupAvatar;
-
-    logDebug('---->inviteInfo', inviteInfo, this.currentCallInfo);
-    // 触发邀请接收回调
-    this.onInvitationReceived?.(inviteInfo);
-    this.timer = setTimeout(() => {
-      // 群组通话进行中，再去邀请别人，超时不挂断
-      if (this.callStatus !== CALL_STATUS.IN_CALL) {
-        logDebug('---->hangup NO_RESPONSE', inviteInfo, this.callStatus);
-        this.hangup(HANGUP_REASON.NO_RESPONSE);
-      }
-    }, 30000);
-  }
-
-  // 处理应答消息
-  private handleAnswerCallMessage(message: any) {
-    const ext = message.ext;
-    if (ext.callId !== this.currentCallInfo?.callId) {
-      logDebug(
-        '---->handleAnswerCallMessage callId not match',
-        ext.callId,
-        this.currentCallInfo?.callId,
-      );
-      return;
-    }
-
-    this.ringtoneManager.stopRingtone();
-    if (this.timer) {
-      clearTimeout(this.timer);
-      this.timer = null;
-    }
-
-    // 如果当前正在通话中，不应该因为其他消息而挂断当前通话
-    if (
-      this.callStatus === CALL_STATUS.IN_CALL &&
-      this.currentCallInfo?.type !== CALL_TYPE.VIDEO_MULTI
-    ) {
-      return;
-    }
-
-    if (ext.callerDevId !== this.getClientResource()) {
-      if (message.from === this.getCurrentUserId()) {
-        // 其他设备处理了
-        const reason =
-          ext.result === 'accept' ? 'accepted on other devices' : 'refused on other devices';
-        logDebug('---->handleAnswerCallMessage 2', reason);
-        this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
-        return;
-      }
-      return;
-    }
-
-    if (ext.result !== 'accept') {
-      const reason = ext.result === 'busy' ? HANGUP_REASON.BUSY : HANGUP_REASON.REMOTE_REFUSE;
-      this.sendConfirmCalleeMessage(message.from, ext.calleeDevId, ext.result);
-
-      // 🔧 修复：多人通话中，单个用户拒绝不应该挂断整个通话
-      if (
-        this.currentCallInfo?.type === CALL_TYPE.VIDEO_MULTI ||
-        this.currentCallInfo?.type === CALL_TYPE.AUDIO_MULTI
-      ) {
-        // 多人通话：只记录拒绝状态，不挂断通话
-        // 从邀请列表中移除拒绝的用户
-        this.invitedMembers = this.invitedMembers.filter(member => member !== message.from);
-        this.currentCallInfo.invitedMembers = this.currentCallInfo.invitedMembers?.filter(
-          member => member !== message.from,
-        );
-
-        // 群组通话，被叫拒绝后，立即从主叫的窗口中移除
-        this.onInvitedUserRemoved?.(message.from, 'refused');
-      } else {
-        // 一对一通话 拒绝则挂断
-        logDebug('---->handleAnswerCallMessage 3', reason);
-        this.hangup(reason);
-      }
-    } else {
-      this.sendConfirmCalleeMessage(message.from, ext.calleeDevId, ext.result);
-    }
-  }
-
-  // 发送确认被叫方消息
-  private sendConfirmCalleeMessage(to: string, calleeDevId: string, result: string) {
-    if (!this.currentCallInfo) return;
-
-    const msg = this.createCallCmdMessage(to, {
-      action: 'confirmCallee',
-      result: result,
-      callerDevId: this.getClientResource(),
-      calleeDevId: calleeDevId,
-      callId: this.currentCallInfo.callId,
-      ts: Date.now(),
-      msgType: 'rtcCallWithAgora',
-    });
-
-    try {
-      this.sendCallMessage(msg);
-    } catch (error: any) {
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        code: error.type,
-        message: error.message,
-      });
-    }
-
-    if (result === 'accept') {
-      // 主叫方接受后，自动加入通话（如果还没有加入的话）
-      if (this.callStatus !== CALL_STATUS.IN_CALL) {
-        this.callStatus = CALL_STATUS.CONFIRM_CALLEE;
-        this.joinCall();
-      }
-    }
-  }
-
-  // 处理确认被叫方消息
-  private handleConfirmCalleeMessage(message: any) {
-    const ext = message.ext;
-
-    // 🔧 修复：防止重复处理confirmCallee消息
-    if (this.callStatus >= CALL_STATUS.CONFIRM_CALLEE) {
-      return;
-    }
-
-    // 当前正在通话中，忽略 confirmCallee 消息，不挂断当前通话
-    if (this.callStatus === CALL_STATUS.IN_CALL) {
-      return;
-    }
-
-    if (ext.callId !== this.currentCallInfo?.callId) {
-      logDebug(
-        '---->handleConfirmCalleeMessage callId not match',
-        ext.callId,
-        this.currentCallInfo?.callId,
-      );
-      return;
-    }
-
-    // 收到其他设备的 confirmCallee 消息，挂断当前通话
-    if (ext.calleeDevId !== this.getClientResource()) {
-      logDebug('---->handleConfirmCalleeMessage 2');
-      this.hangup(HANGUP_REASON.HANDLE_ON_OTHER_DEVICE);
-      return;
-    }
-
-    // 收到拒绝或忙线的 confirmCallee 消息，挂断通话
-    if (ext.result !== 'accept') {
-      const reason = ext.result === 'busy' ? HANGUP_REASON.BUSY : HANGUP_REASON.REFUSE;
-      logDebug('---->handleConfirmCalleeMessage 3', reason);
-      this.hangup(reason);
-      return;
-    }
-
-    if (this.callStatus < CALL_STATUS.CONFIRM_CALLEE) {
-      this.callStatus = CALL_STATUS.CONFIRM_CALLEE;
-    }
-    this.joinCall();
-  }
-
-  // 处理取消消息
-  private handleCancelCallMessage(message: any) {
-    if (message.from === this.getCurrentUserId()) {
-      return; // 忽略自己发送的消息
-    }
-
-    // 🔧 修复：如果当前正在通话中，不应该挂断当前通话
-    if (this.callStatus === CALL_STATUS.IN_CALL) {
-      return;
-    }
-
-    if (this.currentCallInfo && message.from === this.currentCallInfo.callerUserId) {
-      logDebug('---->handleCancelCallMessage 1');
-      this.hangup(HANGUP_REASON.REMOTE_CANCEL);
-    }
-  }
-
-  // 处理离开消息
-  private handleLeaveCallMessage(message: any) {
-    const ext = message.ext;
-    if (ext.callId !== this.currentCallInfo?.callId) {
-      return;
-    }
-    this.handleUserLeft(message.from, HANGUP_REASON.HANGUP);
-  }
-
-  // 切换麦克风状态
   async toggleMute(): Promise<boolean> {
     // if (
     //   this.callStatus < CALL_STATUS.CONFIRM_RING ||
@@ -3786,10 +3118,11 @@ export class CallService {
     }
 
     try {
-      // 更新邀请成员列表, 去重
+      await this.callSignaling.inviteParticipants(this.currentCallInfo.callId, {
+        userIds: newMembers,
+        timeoutSeconds: this.invitationTimeoutSeconds,
+      });
       this.invitedMembers = [...new Set([...this.invitedMembers, ...newMembers])];
-
-      // 更新通话信息
       if (this.currentCallInfo.invitedMembers) {
         this.currentCallInfo.invitedMembers = [
           ...new Set([...this.currentCallInfo.invitedMembers, ...newMembers]),
@@ -3797,115 +3130,11 @@ export class CallService {
       } else {
         this.currentCallInfo.invitedMembers = newMembers;
       }
-
-      // 向新成员发送邀请消息
-      await this.sendInvitationMessage(newMembers, this.currentCallInfo);
-
-      logDebug('Successfully sent invitation to new members:', {
-        newMembers,
-        currentCallInfo: this.currentCallInfo,
-        totalInvitedMembers: this.invitedMembers.length,
-      });
-
       return true;
     } catch (error) {
       logError('add participants failed:', error);
       return false;
     }
-  }
-
-  // 群通话 被邀请人超时了， 发送取消
-  async cancelInvitation(userId: string) {
-    if (!this.currentCallInfo) {
-      logError('cannot cancel invitation: no ongoing call');
-      return false;
-    }
-
-    if (this.callStatus !== CALL_STATUS.IN_CALL) {
-      logError('cannot cancel invitation: not in call');
-      return false;
-    }
-
-    // 只能在多人通话中取消邀请
-    if (
-      this.currentCallInfo.type !== CALL_TYPE.VIDEO_MULTI &&
-      this.currentCallInfo.type !== CALL_TYPE.AUDIO_MULTI
-    ) {
-      logError('cannot cancel invitation: not a multi-party call');
-      return false;
-    }
-
-    try {
-      // 从邀请成员列表中移除
-      this.invitedMembers = this.invitedMembers.filter(member => member !== userId);
-
-      // 🔧 新增：通知CallKit立即移除被取消的用户
-      this.onInvitedUserRemoved?.(userId, 'cancelled');
-
-      // 更新通话信息
-      if (this.currentCallInfo.invitedMembers) {
-        this.currentCallInfo.invitedMembers = this.currentCallInfo.invitedMembers.filter(
-          member => member !== userId,
-        );
-      }
-
-      // 发送取消邀请消息
-      logDebug('---->sendCancelMessage1');
-      await this.sendCancelMessage(this.currentCallInfo.groupId || '', 'groupChat', [userId]);
-
-      return true;
-    } catch (error) {
-      logError('cancel invitation failed:', error);
-      return false;
-    }
-  }
-
-  // 取消群组通话，给每个人都发送 cancel 消息
-  async cancelGroupCall() {
-    if (!this.currentCallInfo) {
-      logError('cannot cancel group call: no ongoing call');
-      return false;
-    }
-
-    // 🔧 调试：打印已加入的人和已邀请的人
-    logDebug('cancelGroupCall debug info:', {
-      已加入成员: this.joinedMembers.map(member => ({
-        uid: member.uid,
-        userId: this.getUserIdFromUid(member.uid),
-        nickname: member.nickname || '未知',
-        videoEnabled: member.videoEnabled,
-        audioEnabled: member.audioEnabled,
-      })),
-      已邀请成员: this.currentCallInfo.invitedMembers,
-      当前通话信息: {
-        callId: this.currentCallInfo.callId,
-        type: this.currentCallInfo.type,
-        groupId: this.currentCallInfo.groupId,
-      },
-    });
-
-    // 🔧 优化：只向未加入的成员发送取消消息
-    const joinedUserIds = this.joinedMembers.map(member => this.getUserIdFromUid(member.uid));
-
-    logDebug('Joined user ID list:', joinedUserIds);
-
-    const membersToCancel =
-      this.currentCallInfo.invitedMembers?.filter(member => !joinedUserIds.includes(member)) || [];
-
-    logDebug('Members to send cancel message to:', membersToCancel);
-
-    // 获取所有成员
-    const members = this.currentCallInfo.invitedMembers;
-    if (membersToCancel.length > 0) {
-      logDebug('---->sendCancelMessage2');
-      await this.sendCancelMessage(
-        this.currentCallInfo.groupId || '',
-        'groupChat',
-        membersToCancel,
-      );
-    }
-
-    return true;
   }
 
   // 更新加入的成员列表
@@ -4356,15 +3585,14 @@ export class CallService {
 
   // 销毁服务
   destroy(isInitializing: boolean = false) {
+    this.disposeCallStoreReactions?.();
+    this.disposeCallStoreReactions = undefined;
     // 🔧 修复：组件初始化时不调用hangup，避免触发麦克风权限请求
     if (!isInitializing) {
       // this.hangup(HANGUP_REASON.HANGUP);
     } else {
       // 🔧 初始化时的清理：只做必要的清理，不调用hangup
       logDebug('Component initialization cleanup, skip hangup call');
-
-      // 清理事件处理器
-      this.connection?.removeEventHandler?.('callkit');
 
       // 清理本地视频流缓存
       this.localVideoStream = null;
@@ -4418,8 +3646,6 @@ export class CallService {
       return; // 🔧 初始化时直接返回，不执行后续的hangup逻辑
     }
 
-    this.connection?.removeEventHandler?.('callkit');
-
     // 最后的媒体轨道清理（不检查权限，避免初始化时请求麦克风权限）
     this.checkAndCleanupAllMediaTracks(false);
 
@@ -4428,7 +3654,7 @@ export class CallService {
     // 清理群组信息缓存
     this.cachedGroupInfos = {};
     // 清理铃声
-    this.ringtoneManager.destroy();
+    this.audioService.dispose();
   }
 
   // 🔧 新增：设置视频元素准备好回调
@@ -4487,6 +3713,6 @@ export class CallService {
     ringtoneVolume?: number;
     ringtoneLoop?: boolean;
   }) {
-    this.ringtoneManager.setConfig(config);
+    this.audioService.setConfig(config);
   }
 }

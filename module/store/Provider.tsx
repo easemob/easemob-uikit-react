@@ -1,6 +1,7 @@
 import React, { useEffect, ReactNode, memo, useMemo } from 'react';
 import { RootProvider } from './rootContext';
 import rootStore from './index';
+import CallSignalingService from '../callkit/signaling/CallSignalingService';
 
 import { ChatClient, UIKitManagers } from '../SDK';
 import type { ChatSDK } from '../SDK';
@@ -245,6 +246,17 @@ const Provider: React.FC<ProviderProps> = props => {
   const client = useMemo(() => {
     return ChatClient.init(initOptions) as UIKitChatClient;
   }, [initOptions]);
+
+  // Must be installed before auto-login so offline invitations cannot be consumed
+  // before CallKit mounts.
+  useEffect(() => {
+    const signaling = new CallSignalingService(client, rootStore.callStore);
+    signaling.start();
+    return () => {
+      signaling.stop();
+      rootStore.callStore.clear();
+    };
+  }, [client]);
 
   useEffect(() => {
     rootStore.setClient(client);

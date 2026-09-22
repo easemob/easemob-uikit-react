@@ -1,7 +1,8 @@
 import CallError from '../services/CallError';
 import { IAgoraRTCError, VideoEncoderConfigurationPreset } from 'agora-rtc-sdk-ng';
 import { CallInfo } from '../services/CallService';
-import type { ChatSDK, UIKitChatClient } from 'module/SDK';
+import type { UIKitChatClient } from 'module/SDK';
+import type { CallSnapshot } from 'easemob-websdk';
 // 视频窗口属性
 export interface VideoWindowProps {
   id: string;
@@ -144,17 +145,17 @@ export interface CallKitRef {
   // 新增：主动发起多人通话方法
   startGroupCall: (options: {
     groupId: string;
-    // callType: 'video' | 'audio';
+    callType: 'video' | 'audio';
     msg: string;
     ext?: Record<string, any>;
-  }) => Promise<ChatSDK.Message | null>; // 发起多人通话，先显示用户选择界面
+  }) => Promise<CallSnapshot | null>; // 发起多人通话，先显示用户选择界面
 
   // 一对一通话方法
   startSingleCall: (options: {
     to: string;
     callType: 'video' | 'audio';
     msg: string;
-  }) => Promise<ChatSDK.Message | null>; // 发起真实通话
+  }) => Promise<CallSnapshot | null>; // 发起真实通话
   answerCall: (result: boolean) => void; // 接听真实通话
   exitCall: (reason?: string) => void; // 挂断真实通话
   setUserInfo: (userInfo: { [key: string]: any }) => void; // 设置用户信息

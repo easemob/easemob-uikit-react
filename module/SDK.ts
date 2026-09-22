@@ -9,6 +9,7 @@ import {
   PushManager,
   UserInfoManager,
 } from 'easemob-websdk';
+import { CallSignalingManager } from 'easemob-websdk/managers/call-signaling';
 import type * as ChatSDK from 'easemob-websdk';
 
 export const UIKitManagers = [
@@ -20,6 +21,7 @@ export const UIKitManagers = [
   PushManager,
   UserInfoManager,
   ChatThreadManager,
+  CallSignalingManager,
 ] as const;
 
 export {
@@ -32,6 +34,7 @@ export {
   PresenceManager,
   PushManager,
   UserInfoManager,
+  CallSignalingManager,
 };
 
 export type UIKitChatClient = ChatClient & {
@@ -43,6 +46,7 @@ export type UIKitChatClient = ChatClient & {
   readonly pushManager: PushManager;
   readonly userInfoManager: UserInfoManager;
   readonly chatThreadManager: ChatThreadManager;
+  readonly callSignalingManager: CallSignalingManager;
 };
 
 export type { ChatSDK };

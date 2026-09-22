@@ -382,6 +382,7 @@ const RealCallDemo: React.FC = () => {
     // 发起群组通话应该先显示用户选择界面，让用户选择要邀请的成员
     callKitRef.current?.startGroupCall({
       groupId: targetUser,
+      callType,
       msg: `邀请加入群组${callType === 'video' ? '视频' : '语音'}通话`,
     });
 

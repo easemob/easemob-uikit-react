@@ -18,6 +18,7 @@ import type { UIKitChatClient } from 'module/SDK';
 import { clearCursor } from '../hooks/useConversation';
 import { clearPageNum as chatroomClearPageNum } from '../hooks/useChatroomMember';
 import { ProviderInitConfig } from '../store/Provider';
+import CallStore from '../callkit/store/CallStore';
 type InitConfig = {
   appKey?: string;
   appId?: string;
@@ -30,6 +31,7 @@ class RootStore {
   pinnedMessagesStore;
   userInfoSyncService;
   conversationSyncService;
+  callStore;
   client: UIKitChatClient;
   userInfoProvider?: AppUserInfoProvider;
   loginState = false;
@@ -43,6 +45,7 @@ class RootStore {
     this.pinnedMessagesStore = new PinnedMessagesStore();
     this.userInfoSyncService = new UserInfoSyncService(this);
     this.conversationSyncService = new ConversationSyncService(this);
+    this.callStore = new CallStore();
     makeObservable(this, {
       client: observable,
       loginState: observable,
@@ -80,6 +83,7 @@ class RootStore {
     this.conversationStore.clear();
     this.threadStore.clear();
     this.pinnedMessagesStore.clear();
+    this.callStore.clear();
     clearCursor();
     chatroomClearPageNum();
   }
