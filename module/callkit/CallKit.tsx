@@ -357,7 +357,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       });
 
       // 同步 CallService 的初始状态
-      if (hasInitialized && callServiceRef.current) {
+      if (callServiceRef.current) {
         setRealCallMuted(callServiceRef.current.isMuted());
         setRealCallCameraEnabled(callServiceRef.current.isCameraEnabled());
         // 🔧 确保扬声器状态始终为开启，避免被叫接听时状态异常
@@ -366,7 +366,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       onCallStartRef.current?.(videos);
     },
-    [hasInitialized, syncCallerTargetFromInvitation],
+    [syncCallerTargetFromInvitation],
   );
 
   const handleCallEnd = React.useCallback(
@@ -441,23 +441,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       initialPosition,
     ],
   );
-  const handleInvitationReceived = React.useCallback((invitation: any) => {
-    setInvitation(invitation);
-    setCallStatus('ringing');
-    setIsMinimized(false);
-  }, []);
-
-  const handleUserPublished = React.useCallback(
-    (userId: string) => {
-      if (userId) {
-        handleUserJoined(userId);
-      }
-
-      if (callStatus === 'calling' || callStatus === 'idle') {
-        setCallStatus('connected');
-      }
+  const handleInvitationReceived = React.useCallback(
+    (invitation: InvitationInfo) => {
+      const incomingCallMode = invitation.type === 'group' ? 'group' : invitation.type;
+      setInvitation(invitation);
+      setCallMode(incomingCallMode);
+      setCallStatus('ringing');
+      setIsShowingPreview(true);
+      setIsMinimized(false);
+      syncCallerTargetFromInvitation(invitation);
     },
-    [handleUserJoined],
+    [syncCallerTargetFromInvitation],
   );
 
   // 使用 ref 存储最新的状态，避免回调函数重新创建
@@ -465,6 +459,20 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const isInCallRef = useRef(isInCall);
   const callModeRef = useRef(callMode);
   const isMinimizedRef = useRef(isMinimized);
+  const callStatusRef = useRef(callStatus);
+
+  const handleUserPublished = React.useCallback(
+    (userId: string) => {
+      if (userId) {
+        handleUserJoined(userId);
+      }
+
+      if (callStatusRef.current === 'calling' || callStatusRef.current === 'idle') {
+        setCallStatus('connected');
+      }
+    },
+    [handleUserJoined],
+  );
 
   // 更新状态引用
   React.useEffect(() => {
@@ -472,7 +480,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     isInCallRef.current = isInCall;
     callModeRef.current = callMode;
     isMinimizedRef.current = isMinimized;
-  }, [isShowingPreview, isInCall, callMode, isMinimized]);
+    callStatusRef.current = callStatus;
+  }, [isShowingPreview, isInCall, callMode, isMinimized, callStatus]);
 
   const fetchGroupMembers = React.useCallback(
     async (groupId: string, context: string = 'General') => {
@@ -735,7 +744,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         invitationTimeoutSeconds: autoRejectTime,
       };
 
-      callServiceRef.current = new CallService(config);
+      const callService = new CallService(config);
+      callServiceRef.current = callService;
 
       (window as any).callService = callServiceRef.current;
 
@@ -755,12 +765,14 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       setHasInitialized(true);
       return () => {
-        (window as any).callService = null;
-        callServiceRef.current?.destroy(true);
+        if (callServiceRef.current === callService) {
+          (window as any).callService = null;
+          callServiceRef.current = null;
+        }
+        callService.destroy(true);
       };
     }
   }, [
-    hasInitialized,
     chatClient,
     handleCallStart,
     handleInvitationReceived,
