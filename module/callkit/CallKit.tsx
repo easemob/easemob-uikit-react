@@ -39,6 +39,7 @@ import CallError, { CallErrorCode } from './services/CallError';
 import { useIsMobile } from '../hooks/useScreen';
 import { getCurrentUserId } from '../utils';
 import rootStore from '../store';
+import { RootContext } from '../store/rootContext';
 import CallSignalingService from './signaling/CallSignalingService';
 /**
  * 优化的 FullLayoutManager 组件
@@ -73,7 +74,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     screenSharing = false,
 
     // 通话相关配置
-    chatClient,
+    chatClient: chatClientProp,
 
     // RTC Token 配置
     useRTCToken = true,
@@ -166,11 +167,23 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
     encoderConfig,
   } = props;
+  const providerContext = React.useContext(RootContext);
+  const providerChatClient = providerContext.client?.callSignalingManager
+    ? providerContext.client
+    : undefined;
+  const chatClient = chatClientProp ?? providerChatClient;
   const { getPrefixCls } = React.useContext(ConfigContext);
   const prefixCls = getPrefixCls('callkit', prefix);
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const localUserId = React.useMemo(() => getCurrentUserId(chatClient), [chatClient]);
+  React.useEffect(() => {
+    logger.log('[call-debug] CallKit resolved chat client', {
+      source: chatClientProp ? 'prop' : providerChatClient ? 'provider-context' : 'missing',
+      hasClient: Boolean(chatClient),
+      hasCallSignalingManager: Boolean(chatClient?.callSignalingManager),
+    });
+  }, [chatClient, chatClientProp, providerChatClient]);
   // 设置标题的默认值，支持用户自定义
   const finalUserSelectTitle = userSelectTitle || t('callkit.userselect.addParticipants');
   const finalInitiateGroupCallTitle =
@@ -444,10 +457,15 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const handleInvitationReceived = React.useCallback(
     (invitation: InvitationInfo) => {
       const incomingCallMode = invitation.type === 'group' ? 'group' : invitation.type;
+      logger.log('[call-debug] CallKit invitation callback received', {
+        callId: invitation.id,
+        type: invitation.type,
+        incomingCallMode,
+      });
       setInvitation(invitation);
       setCallMode(incomingCallMode);
       setCallStatus('ringing');
-      setIsShowingPreview(true);
+      setIsShowingPreview(false);
       setIsMinimized(false);
       syncCallerTargetFromInvitation(invitation);
     },
@@ -747,6 +765,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       const callService = new CallService(config);
       callServiceRef.current = callService;
 
+      logger.log('[call-debug] CallKit CallService mounted', {
+        localUserId,
+      });
+
       (window as any).callService = callServiceRef.current;
 
       if (localUserId) {
@@ -765,6 +787,10 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
       setHasInitialized(true);
       return () => {
+        logger.log('[call-debug] CallKit CallService cleanup', {
+          localUserId,
+          ownsCurrentService: callServiceRef.current === callService,
+        });
         if (callServiceRef.current === callService) {
           (window as any).callService = null;
           callServiceRef.current = null;
@@ -904,7 +930,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         }
       },
       startGroupCall: async (options: {
-        groupId: string;
+        groupId?: string;
+        userIds?: string[];
         callType: 'video' | 'audio';
         msg: string;
         ext?: Record<string, any>;
@@ -921,6 +948,70 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
 
         const { groupId, ext } = options;
         const callType = options.callType;
+        if (options.userIds !== undefined) {
+          const userIds = [...new Set(options.userIds.map(id => id.trim()))].filter(
+            id => id && id !== getCurrentUserId(chatClient),
+          );
+          if (!userIds.length || !callServiceRef.current || !chatClient) {
+            onCallError?.(
+              CallError.create(
+                CallErrorCode.CALL_PARAM_ERROR,
+                !userIds.length
+                  ? 'userIds must contain at least one other IM user'
+                  : 'chatClient is required',
+              ),
+            );
+            return null;
+          }
+          setCallMode('group');
+          setGroupId(groupId || '');
+          setGroupCallType(callType);
+          setCallerTargetInfo({ targetGroupId: groupId });
+          setCallStatus('calling');
+          setIsShowingPreview(false);
+          setIsUserSelectVisible(false);
+          setIsInitiatingGroupCall(false);
+          setVideos(
+            userIds.map(userId => ({
+              id: `remote-${userId}`,
+              isLocalVideo: false,
+              nickname: userId,
+              muted: true,
+              cameraEnabled: false,
+              isWaiting: true,
+            })),
+          );
+          try {
+            const snapshot = await callServiceRef.current.startCall({
+              chatType: 'groupChat',
+              callType: callType === 'video' ? CALL_TYPE.VIDEO_MULTI : CALL_TYPE.AUDIO_MULTI,
+              to: userIds,
+              members: userIds,
+              groupId,
+              msg: options.msg,
+              ext,
+            });
+            if (!snapshot) {
+              setCallStatus('idle');
+              setVideos([]);
+              setCallerTargetInfo(null);
+            }
+            return snapshot;
+          } catch (error) {
+            setCallStatus('idle');
+            setIsInCall(false);
+            setVideos([]);
+            setCallerTargetInfo(null);
+            onCallError?.(
+              CallError.create(
+                CallErrorCode.CALL_SIGNALING_ERROR,
+                error instanceof Error ? error.message : String(error),
+                error,
+              ),
+            );
+            return null;
+          }
+        }
         if (!groupId) {
           onCallError?.(CallError.create(CallErrorCode.CALL_PARAM_ERROR, 'groupId is required'));
           return null;
@@ -1031,13 +1122,43 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           const callTypeEnum =
             options.callType === 'video' ? CALL_TYPE.VIDEO_1V1 : CALL_TYPE.AUDIO_1V1;
 
-          const msg = await callServiceRef.current.startCall({
-            msg: options.msg,
-            chatType: 'singleChat',
-            callType: callTypeEnum,
-            to: options.to,
-            ext: options.ext,
-          });
+          let msg: CallSnapshot | null;
+          try {
+            msg = await callServiceRef.current.startCall({
+              msg: options.msg,
+              chatType: 'singleChat',
+              callType: callTypeEnum,
+              to: options.to,
+              ext: options.ext,
+            });
+          } catch (error) {
+            setCallStatus('idle');
+            setIsShowingPreview(false);
+            setIsInCall(false);
+            setLocalVideo(null);
+            setCallerTargetInfo(null);
+            setVideos([]);
+            onCallError?.(
+              CallError.create(
+                CallErrorCode.CALL_SIGNALING_ERROR,
+                error instanceof Error ? error.message : String(error),
+                error,
+              ),
+            );
+            return null;
+          }
+          if (!msg) {
+            setCallStatus('idle');
+            setIsShowingPreview(false);
+            setLocalVideo(null);
+            setCallerTargetInfo(null);
+            return null;
+          }
+          // 上一通话的清理回调可能在等待 startCall 时把 UI 复位；创建成功后恢复呼叫页面。
+          if (callServiceRef.current.getCallStatus() === CALL_STATUS.INVITING) {
+            setCallStatus('calling');
+            setIsShowingPreview(true);
+          }
           if (options.callType === 'video' && !callServiceRef.current.isCameraEnabled()) {
             setLocalVideo(previous =>
               previous
@@ -1087,7 +1208,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             }
           }
 
-          callServiceRef.current.answerCall(result);
+          await callServiceRef.current.answerCall(result);
         }
       },
 
@@ -1222,7 +1343,13 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   }, [onInvitationAccept, onInvitationReject, onCallStart, onEndCallWithReason, notificationApi]);
 
   React.useEffect(() => {
-    if (invitation) {
+    if (invitation && callStatus === 'ringing' && !isShowingPreview) {
+      logger.log('[call-debug] CallKit showing invitation notification', {
+        callId: invitation.id,
+        callStatus,
+        isShowingPreview,
+        hasInitialized,
+      });
       const handleAccept = async (invitationData: any) => {
         notificationApiRef.current.destroy(invitationNotificationKey);
 
@@ -1262,7 +1389,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             await callServiceRef.current.answerCall(true);
           } catch (error) {
             logger.error('Auto answer call failed:', error);
+            setIsShowingPreview(true);
+            onCallError?.(
+              CallError.create(
+                CallErrorCode.CALL_SIGNALING_ERROR,
+                error instanceof Error ? error.message : String(error),
+                error,
+              ),
+            );
+            return;
           }
+          if (callServiceRef.current.getCallStatus() !== CALL_STATUS.IN_CALL) return;
         }
 
         setCallStatus('connected');
@@ -1324,6 +1461,17 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         }
       };
 
+      const handleTimeout = async () => {
+        notificationApiRef.current.destroy(invitationNotificationKey);
+        if (callServiceRef.current) {
+          await callServiceRef.current.hangup('timeout');
+        } else {
+          setInvitation(null);
+          setCallStatus('idle');
+          setIsShowingPreview(false);
+        }
+      };
+
       notificationApiRef.current.open({
         key: invitationNotificationKey,
         message: '',
@@ -1333,6 +1481,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               invitation={invitation}
               onAccept={handleAccept}
               onReject={handleReject}
+              onTimeout={handleTimeout}
               acceptText={acceptText}
               rejectText={rejectText}
               showAvatar={showInvitationAvatar}
@@ -1352,11 +1501,20 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         },
       });
     } else {
+      if (invitation)
+        logger.log('[call-debug] CallKit invitation notification hidden', {
+          callId: invitation.id,
+          callStatus,
+          isShowingPreview,
+          hasInitialized,
+        });
       // 隐藏邀请通知
       notificationApiRef.current.destroy(invitationNotificationKey);
     }
   }, [
     invitation,
+    callStatus,
+    isShowingPreview,
     invitationCustomContent,
     acceptText,
     rejectText,
@@ -1996,7 +2154,16 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           await callServiceRef.current.answerCall(true);
         } catch (error) {
           logger.error('Preview mode auto answer failed:', error);
+          onCallError?.(
+            CallError.create(
+              CallErrorCode.CALL_SIGNALING_ERROR,
+              error instanceof Error ? error.message : String(error),
+              error,
+            ),
+          );
+          return;
         }
+        if (callServiceRef.current.getCallStatus() !== CALL_STATUS.IN_CALL) return;
       }
 
       setIsShowingPreview(false);
@@ -2055,20 +2222,15 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     setWebimGroupMembers([]);
     setIsLoadingGroupMembers(false);
     setIsUserSelectVisible(false);
-
-    if (invitation) {
-      onInvitationRejectRef.current?.(invitation);
-    }
-
-    if (callServiceRef.current) {
-      callServiceRef.current.answerCall(false);
-      callServiceRef.current.hangup('refuse');
-    }
   };
 
   const handleAddParticipant = async (e: React.MouseEvent) => {
     e?.preventDefault?.();
     e?.stopPropagation?.();
+    if (onAddParticipant) {
+      onAddParticipant(e);
+      return;
+    }
     if (
       effectiveGroupMembers.length === 0 &&
       chatClient &&
@@ -2178,7 +2340,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
               id: 'local',
               isLocalVideo: true,
               muted: false,
-              cameraEnabled: false, // 🔧 修改：群通话发起方默认摄像头关闭
+              cameraEnabled: false, // 创建轨道后由服务回调更新摄像头状态
               nickname: t('callkit.localUser.me') as string,
               avatar: undefined, // 不使用假数据，让组件显示默认图标
             },
@@ -2691,6 +2853,21 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     ],
   );
 
+  const isCallPageVisible =
+    callStatus === 'calling' ||
+    callStatus === 'connected' ||
+    (callStatus === 'ringing' && isShowingPreview);
+
+  React.useEffect(() => {
+    logger.log('[call-debug] CallKit page visibility state', {
+      callId: invitation?.id,
+      callStatus,
+      isShowingPreview,
+      isInCall,
+      isCallPageVisible,
+    });
+  }, [callStatus, invitation, isCallPageVisible, isInCall, isShowingPreview]);
+
   const currentParticipants = React.useMemo(() => {
     if (isInitiatingGroupCall && localUserId) {
       const currentUser = effectiveGroupMembers.find(member => member.userId === localUserId);
@@ -2746,9 +2923,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       />
 
       {/* 根据呼叫状态显示界面 */}
-      {(callStatus === 'calling' ||
-        callStatus === 'connected' ||
-        (callStatus === 'ringing' && isShowingPreview)) && (
+      {isCallPageVisible && (
         <div
           ref={managedPosition ? internalRef : containerRef}
           className={containerClass}

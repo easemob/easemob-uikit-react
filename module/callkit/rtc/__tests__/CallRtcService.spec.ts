@@ -35,4 +35,15 @@ describe('CallRtcService', () => {
     expect(client.leave).toHaveBeenCalledOnce();
     expect(client.removeAllListeners).toHaveBeenCalledOnce();
   });
+
+  it('passes IM userId strings to Agora without numeric conversion', async () => {
+    const client = createClient();
+    vi.mocked(client.join).mockResolvedValue('00123');
+    const service = new CallRtcService({ createClient: vi.fn(() => client) });
+
+    await expect(
+      service.join({ appId: 'app', channel: 'call', token: null, uid: '00123' }),
+    ).resolves.toBe('00123');
+    expect(client.join).toHaveBeenCalledWith('app', 'call', null, '00123');
+  });
 });

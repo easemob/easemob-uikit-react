@@ -12,6 +12,7 @@ interface InvitationContentProps {
   invitation: InvitationInfo;
   onAccept: (invitation: InvitationInfo) => void;
   onReject: (invitation: InvitationInfo) => void;
+  onTimeout?: (invitation: InvitationInfo) => void;
   acceptText?: string;
   rejectText?: string;
   showAvatar?: boolean;
@@ -33,6 +34,7 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
   invitation,
   onAccept,
   onReject,
+  onTimeout,
   acceptText,
   rejectText,
   showAvatar = true,
@@ -102,8 +104,8 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
     const timer = setInterval(() => {
       setRemainingTime(prev => {
         if (prev <= 1) {
-          // 时间到了，自动拒绝
-          onReject(invitation);
+          // 区分超时与用户主动拒绝。
+          (onTimeout ?? onReject)(invitation);
           return 0;
         }
         return prev - 1;
@@ -111,7 +113,7 @@ const InvitationContent: React.FC<InvitationContentProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [showTimer, autoRejectTime, onReject, invitation]);
+  }, [showTimer, autoRejectTime, onReject, onTimeout, invitation]);
 
   // 处理接听
   const handleAccept = (e: React.MouseEvent) => {

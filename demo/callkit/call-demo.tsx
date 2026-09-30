@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
 import { useNotification } from '../../component/notification';
 import Button from '../../component/button';
@@ -8,12 +8,14 @@ import {
   InvitationInfo,
   LayoutMode,
   CallKitRef,
+  CallKitRTCProvider,
 } from '../../module/callkit/types';
 import { Icon } from '../../component/icon/Icon';
 import Input from '../../component/input';
 import '../../component/style/index.scss';
 import Provider from '../../module/store/Provider';
 import rootStore from '../../module/store/index';
+import { eventHandler } from '../../eventHandler';
 import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './接听电话.mp3';
 import { exchangePasswordForToken } from './login-auth';
@@ -21,6 +23,7 @@ import { resolveCallDemoServiceConfig, type CallDemoServiceMode } from './servic
 
 const DEFAULT_REST_URL = 'https://a1-hsb.easemob.com';
 const DEFAULT_MSYNC_URL = 'wss://im-api-new-hsb.easemob.com/websocket';
+const DEMO_RTC_APP_ID = '94bcf24825644c26b7f1872c5a0f5084';
 
 // 从URL获取参数的工具函数
 const getUrlParams = () => {
@@ -49,6 +52,8 @@ const RealCallDemo: React.FC = () => {
   // 登录相关状态
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
+  const loginPendingRef = useRef(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [loginForm, setLoginForm] = useState({
     userId: urlParams.userId,
     token: urlParams.token,
@@ -59,6 +64,15 @@ const RealCallDemo: React.FC = () => {
     msyncUrl: urlParams.msyncUrl,
   });
   const [authToken, setAuthToken] = useState('');
+  const rtcProvider = useMemo<CallKitRTCProvider>(
+    () => ({
+      getRTCTokenInfo: async () => ({
+        appId: DEMO_RTC_APP_ID,
+        rtcToken: '',
+      }),
+    }),
+    [],
+  );
   const serviceConfig = resolveCallDemoServiceConfig({
     mode: loginForm.serviceMode,
     origin: window.location.origin,
@@ -79,6 +93,12 @@ const RealCallDemo: React.FC = () => {
 
   // 配置状态
   const [targetUser, setTargetUser] = useState('');
+  const [groupUserIds, setGroupUserIds] = useState('');
+  const [additionalUserIds, setAdditionalUserIds] = useState('');
+  const [isGroupCall, setIsGroupCall] = useState(false);
+  const [isStartingGroupCall, setIsStartingGroupCall] = useState(false);
+  const [isInvitingParticipants, setIsInvitingParticipants] = useState(false);
+  const additionalUsersInputRef = useRef<HTMLInputElement>(null);
   const [isConfigured, setIsConfigured] = useState(false);
 
   // 背景选择状态
@@ -141,6 +161,35 @@ const RealCallDemo: React.FC = () => {
     });
   };
 
+  // Provider 的 open 事件在 SDK login 完成后触发，拿到 token 尚不代表登录成功。
+  useEffect(() => {
+    const handlerId = 'call-demo-login';
+    eventHandler.addEventHandler(handlerId, {
+      onError: () => {},
+      open: {
+        success: () => {
+          if (!loginPendingRef.current) return;
+          loginPendingRef.current = false;
+          setIsLogging(false);
+          setIsLoggedIn(true);
+          notification.success({ message: 'IM 登录成功' });
+        },
+        error: error => {
+          if (!loginPendingRef.current) return;
+          loginPendingRef.current = false;
+          setIsLogging(false);
+          setIsLoggedIn(false);
+          setAuthToken('');
+          notification.error({
+            message: 'IM 登录失败',
+            description: error instanceof Error ? error.message : String(error),
+          });
+        },
+      },
+    });
+    return () => eventHandler.removeEventHandler(handlerId);
+  }, [notification]);
+
   // 检查是否有URL参数，如果有则自动尝试登录
   useEffect(() => {
     if (urlParams.userId && (urlParams.token || urlParams.password)) {
@@ -150,6 +199,7 @@ const RealCallDemo: React.FC = () => {
 
   // 处理登录
   const handleLogin = async () => {
+    if (loginPendingRef.current) return;
     const userId = loginForm.userId.trim();
     const token = loginForm.token.trim();
     const password = loginForm.password.trim();
@@ -170,6 +220,7 @@ const RealCallDemo: React.FC = () => {
       return;
     }
 
+    loginPendingRef.current = true;
     setIsLogging(true);
     try {
       const resolvedToken = token
@@ -181,32 +232,42 @@ const RealCallDemo: React.FC = () => {
             restBaseUrl: restUrl,
           });
       setAuthToken(resolvedToken);
-      setIsLoggedIn(true);
-      notification.success({
-        message: token ? '开始使用 Token 登录' : '密码换取 Token 成功',
-        description: `正在登录 ${userId}，连接成功后即可进行通话。`,
-      });
     } catch (error) {
+      loginPendingRef.current = false;
+      setIsLogging(false);
       console.error('Login failed:', error);
       notification.error({
         message: '登录失败',
         description: error instanceof Error ? error.message : '请检查您的登录信息是否正确',
       });
-    } finally {
-      setIsLogging(false);
     }
   };
 
   // 处理登出
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    setAuthToken('');
-    setIsConfigured(false);
-    setTargetUser('');
-    notification.info({
-      message: '已登出',
-      description: '您已成功登出系统',
-    });
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await rootStore.client.logout();
+      rootStore.setLoginState(false);
+      rootStore.clear();
+      setIsLoggedIn(false);
+      setAuthToken('');
+      setIsConfigured(false);
+      setTargetUser('');
+      setIsInCall(false);
+      setHasInvitation(false);
+      setIsGroupCall(false);
+      setAdditionalUserIds('');
+      notification.info({ message: '已登出' });
+    } catch (error) {
+      notification.error({
+        message: '登出失败',
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   // 更新URL参数
@@ -360,14 +421,6 @@ const RealCallDemo: React.FC = () => {
 
   // 配置完成
   const handleConfigSubmit = () => {
-    if (!targetUser) {
-      notification.error({
-        message: '请填写目标用户',
-        description: '请输入要通话的用户ID,或群组 ID',
-      });
-      return;
-    }
-
     // 设置用户信息
     callKitRef.current?.setUserInfo({
       demo_user: {
@@ -385,7 +438,7 @@ const RealCallDemo: React.FC = () => {
   };
 
   // 发起视频通话
-  const handleStartVideoCall = () => {
+  const handleStartVideoCall = async () => {
     if (!targetUser) {
       notification.error({
         message: '请输入目标用户',
@@ -393,19 +446,20 @@ const RealCallDemo: React.FC = () => {
       return;
     }
 
-    callKitRef.current?.startSingleCall({
+    const call = await callKitRef.current?.startSingleCall({
       to: targetUser,
       callType: 'video',
       msg: '邀请你进行视频通话',
     });
 
+    if (!call) return;
     notification.info({
       message: '正在发起视频通话...',
     });
   };
 
   // 发起语音通话
-  const handleStartAudioCall = () => {
+  const handleStartAudioCall = async () => {
     if (!targetUser) {
       notification.error({
         message: '请输入目标用户',
@@ -413,29 +467,75 @@ const RealCallDemo: React.FC = () => {
       return;
     }
 
-    callKitRef.current?.startSingleCall({
+    const call = await callKitRef.current?.startSingleCall({
       to: targetUser,
       callType: 'audio',
       msg: '邀请你进行语音通话',
     });
 
+    if (!call) return;
     notification.info({
       message: '正在发起语音通话...',
     });
   };
 
   // 发起群组通话
-  const handleStartGroupCall = (callType: 'video' | 'audio') => {
-    // 发起群组通话应该先显示用户选择界面，让用户选择要邀请的成员
-    callKitRef.current?.startGroupCall({
-      groupId: targetUser,
-      callType,
-      msg: `邀请加入群组${callType === 'video' ? '视频' : '语音'}通话`,
-    });
+  const parseUserIds = (value: string) =>
+    [...new Set(value.split(/[\s,，;；]+/).filter(Boolean))]
+      .filter(userId => userId !== loginForm.userId);
 
-    notification.info({
-      message: `正在发起群组${callType === 'video' ? '视频' : '语音'}通话...`,
-    });
+  const handleStartGroupCall = async (callType: 'video' | 'audio') => {
+    const userIds = parseUserIds(groupUserIds);
+    if (!userIds.length) {
+      notification.error({ message: '请至少填写一个其他用户的 IM userId' });
+      return;
+    }
+    setIsStartingGroupCall(true);
+    setIsGroupCall(true);
+    try {
+      const call = await callKitRef.current?.startGroupCall({
+        userIds,
+        callType,
+        msg: `邀请加入多人${callType === 'video' ? '视频' : '语音'}通话`,
+      });
+      if (!call) {
+        setIsGroupCall(false);
+        return;
+      }
+      notification.success({ message: `已向 ${userIds.length} 位用户发出通话邀请` });
+    } catch (error) {
+      setIsGroupCall(false);
+      notification.error({ message: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setIsStartingGroupCall(false);
+    }
+  };
+
+  const handleInviteParticipants = async () => {
+    const joinedIds = new Set(
+      (callKitRef.current?.getJoinedMembers() || []).map(member =>
+        String(member.userId || member.uid),
+      ),
+    );
+    const userIds = parseUserIds(additionalUserIds).filter(userId => !joinedIds.has(userId));
+    if (!userIds.length) {
+      notification.error({ message: '请填写尚未加入通话的其他用户的 IM userId' });
+      return;
+    }
+    setIsInvitingParticipants(true);
+    try {
+      const invited = await callKitRef.current?.addParticipants(userIds);
+      if (!invited) {
+        notification.error({ message: '邀请失败，请确认多人通话仍在进行且用户 ID 正确' });
+        return;
+      }
+      setAdditionalUserIds('');
+      notification.success({ message: `已向 ${userIds.length} 位用户追加邀请` });
+    } catch (error) {
+      notification.error({ message: error instanceof Error ? error.message : String(error) });
+    } finally {
+      setIsInvitingParticipants(false);
+    }
   };
 
   // 接听邀请
@@ -443,10 +543,8 @@ const RealCallDemo: React.FC = () => {
     console.log('接听邀请:', invitationData);
     setHasInvitation(false);
     setIsInCall(true);
+    setIsGroupCall(invitationData.type === 'group');
     startTimer();
-
-    // 接听真实通话
-    callKitRef.current?.answerCall(true);
 
     notification.success({
       message: `已接听${invitationData.type === 'video' ? '视频' : '语音'}通话`,
@@ -457,9 +555,6 @@ const RealCallDemo: React.FC = () => {
   const handleRejectInvitation = (invitationData: InvitationInfo) => {
     console.log('拒绝邀请:', invitationData);
     setHasInvitation(false);
-
-    // 拒绝真实通话
-    callKitRef.current?.answerCall(false);
 
     notification.info({
       message: '已拒绝通话邀请',
@@ -512,6 +607,7 @@ const RealCallDemo: React.FC = () => {
   const handleCallStart = (videos: VideoWindowProps[]) => {
     console.log('通话开始:', videos);
     setIsInCall(true);
+    setHasInvitation(false);
     startTimer();
     notification.success({
       message: `通话已开始，共${videos.length}位参与者`,
@@ -522,6 +618,9 @@ const RealCallDemo: React.FC = () => {
   const handleCallEnd = () => {
     console.log('通话结束');
     setIsInCall(false);
+    setHasInvitation(false);
+    setIsGroupCall(false);
+    setAdditionalUserIds('');
     stopTimer();
     notification.info({
       message: '通话已结束',
@@ -600,7 +699,7 @@ const RealCallDemo: React.FC = () => {
   };
 
   // 如果未登录，显示登录界面
-  if (!isLoggedIn) {
+  if (!authToken) {
     return (
       <div style={{ padding: '20px', maxWidth: '500px', margin: '0 auto' }}>
         {contextHolder}
@@ -721,7 +820,7 @@ const RealCallDemo: React.FC = () => {
     );
   }
 
-  // 已登录，显示通话界面
+  // 先挂载 Provider 建立 IM 连接，登录成功后再挂载 CallKit。
   return (
     <Provider
       initConfig={{
@@ -735,6 +834,12 @@ const RealCallDemo: React.FC = () => {
         restUrl: serviceConfig.restUrl,
       }}
     >
+      {!isLoggedIn ? (
+        <div style={{ padding: '40px', textAlign: 'center' }}>
+          {contextHolder}
+          正在连接 IM 服务，请稍候…
+        </div>
+      ) : (
       <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         {contextHolder}
 
@@ -757,7 +862,9 @@ const RealCallDemo: React.FC = () => {
               {loginForm.serviceMode === 'proxy' ? '本地代理' : '自定义私有服务'}
             </p>
           </div>
-          <Button onClick={handleLogout}>登出</Button>
+          <Button onClick={handleLogout} disabled={isLoggingOut}>
+            {isLoggingOut ? '登出中…' : '登出'}
+          </Button>
         </div>
 
         {/* 状态信息 */}
@@ -793,10 +900,10 @@ const RealCallDemo: React.FC = () => {
                 <Input
                   value={targetUser}
                   onChange={e => setTargetUser(e.target.value)}
-                  placeholder="输入目标, 或群组 ID"
+                  placeholder="单人通话的目标 IM userId（多人通话可留空）"
                 />
                 <p style={{ marginTop: '10px', color: '#666', fontSize: '12px' }}>
-                  必须点击完成配置才能发起通话，对方也必须完成配置才能收到邀请。
+                  对方需登录同一个 IM 应用。多人通话在下方单独填写成员 userId。
                 </p>
               </div>
             </div>
@@ -924,18 +1031,56 @@ const RealCallDemo: React.FC = () => {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <h3>发起群组通话</h3>
+              <h3>发起多人通话</h3>
+              <Input
+                aria-label="多人通话成员 userId"
+                value={groupUserIds}
+                onChange={e => setGroupUserIds(e.target.value)}
+                placeholder="例如 alice, bob, charlie"
+                disabled={isInCall || isStartingGroupCall}
+                style={{ width: '100%', marginBottom: '10px' }}
+              />
+              <p>填写真实的 IM userId，用逗号、空格或分号分隔。无需填写群 ID。</p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <Button
                   type="primary"
                   onClick={() => handleStartGroupCall('video')}
-                  disabled={hasInvitation || isInCall}
+                  disabled={hasInvitation || isInCall || isStartingGroupCall}
                   style={{ backgroundColor: '#52c41a' }}
                 >
                   <Icon type="VIDEO_CAMERA" />
-                  发起群组视频通话
+                  发起多人视频通话
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={() => handleStartGroupCall('audio')}
+                  disabled={hasInvitation || isInCall || isStartingGroupCall}
+                >
+                  <Icon type="MIC_ON" />
+                  发起多人语音通话
                 </Button>
               </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <h3>通话中继续邀请</h3>
+              <Input
+                ref={additionalUsersInputRef}
+                aria-label="追加邀请 userId"
+                value={additionalUserIds}
+                onChange={e => setAdditionalUserIds(e.target.value)}
+                placeholder="例如 david, emma"
+                disabled={!isInCall || !isGroupCall || isInvitingParticipants}
+                style={{ width: '100%', marginBottom: '10px' }}
+              />
+              <p>多人通话接通后，填写要追加邀请的 IM userId。对方收到来电后需点击接听。</p>
+              <Button
+                type="primary"
+                onClick={handleInviteParticipants}
+                disabled={!isInCall || !isGroupCall || isInvitingParticipants}
+              >
+                {isInvitingParticipants ? '正在邀请...' : '邀请加入当前通话'}
+              </Button>
             </div>
 
             {/* 当前状态 */}
@@ -987,8 +1132,9 @@ const RealCallDemo: React.FC = () => {
 
         {/* CallKit 组件 */}
         <CallKit
-          chatClient={isConfigured ? rootStore.client : undefined}
           ref={callKitRef}
+          rtcProvider={rtcProvider}
+          useRTCToken={false}
           // 基础配置
           layoutMode={LayoutMode.MULTI_PARTY}
           aspectRatio={1}
@@ -1020,7 +1166,17 @@ const RealCallDemo: React.FC = () => {
           // onHangup={handleHangup}
           onInvitationAccept={handleAcceptInvitation}
           onInvitationReject={handleRejectInvitation}
-          onCallEnd={handleCallEnd}
+          onEndCallWithReason={handleCallEnd}
+          onCallStart={handleCallStart}
+          onReceivedCall={callType => {
+            setHasInvitation(true);
+            setIsGroupCall(callType === 'group');
+          }}
+          onAddParticipant={() => {
+            additionalUsersInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            additionalUsersInputRef.current?.focus();
+          }}
+          onCallError={error => notification.error({ message: error.message })}
           // 真实通话配置
           // enableRealCall={isConfigured}
           // 群组成员选择相关
@@ -1082,6 +1238,7 @@ const RealCallDemo: React.FC = () => {
           // }}
         />
       </div>
+      )}
     </Provider>
   );
 };

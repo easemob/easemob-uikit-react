@@ -3,12 +3,7 @@ import AgoraRTC, {
   IAgoraRTCRemoteUser,
   VideoEncoderConfigurationPreset,
 } from 'agora-rtc-sdk-ng';
-import type {
-  CallKitRTCProvider,
-  RTCUidUserIdMap,
-  RTCTokenInfo,
-  VideoWindowProps,
-} from '../types/index';
+import type { CallKitRTCProvider, RTCTokenInfo, VideoWindowProps } from '../types/index';
 import CallError from './CallError';
 import { CallTimerService } from './CallTimerService';
 import type { ChatSDK } from 'module/SDK';
@@ -81,6 +76,7 @@ export enum HANGUP_REASON {
   BUSY = 'busy', // Busy
   NO_RESPONSE = 'noResponse', // No response (timeout)
   REMOTE_NO_RESPONSE = 'remoteNoResponse', // Remote no response
+  TIMEOUT = 'timeout', // Server timeout
   HANDLE_ON_OTHER_DEVICE = 'handleOnOtherDevice', // Handled on other device
   ABNORMAL_END = 'abnormalEnd', // Abnormal end
 }
@@ -141,11 +137,13 @@ export class CallService {
   private client: any;
   private rtc: any;
   private appId: string;
-  private agoraUid: number;
+  private agoraUid: string;
   private userId: string;
   private connection: any;
   private accessToken?: string | null;
   private rtcTokenChannelName: string = '';
+  private joiningCall?: Promise<void>;
+  private endingCall?: Promise<void>;
   private currentCallInfo: CallInfo | null = null;
   private callStatus: CALL_STATUS = CALL_STATUS.IDLE;
   private callTimer = new CallTimerService();
@@ -227,8 +225,6 @@ export class CallService {
   private encoderConfig?: VideoEncoderConfigurationPreset;
   private creatingAudioTrack: Promise<any> | null = null;
 
-  private UIdToUserIdMap: Map<string, string> = new Map();
-
   private enableMic: boolean = true;
 
   // RTC Token configuration
@@ -239,6 +235,7 @@ export class CallService {
   private disposeCallStoreReactions?: () => void;
   private nativeEndRequested = false;
   private invitationTimeoutSeconds = 30;
+  private outgoingTimeoutCheck?: ReturnType<typeof setTimeout>;
   private rtcService: CallRtcService;
   private mediaService: CallMediaService;
   private signalingParticipants: CallParticipant[] = [];
@@ -285,7 +282,7 @@ export class CallService {
     this.invitationTimeoutSeconds = config.invitationTimeoutSeconds ?? 30;
 
     // Get necessary information from WebIM connection
-    this.agoraUid = 0;
+    this.agoraUid = '';
     this.appId = '';
     this.userId = this.getCurrentUserId();
 
@@ -306,11 +303,24 @@ export class CallService {
     };
 
     this.installNativeCallSignaling();
+    // Provider 会提前监听以接收登录阶段的离线邀请；CallService 同时持有独立监听，
+    // 确保组件挂载后不依赖 Provider effect 的生命周期转发事件。
+    this.callSignaling.start();
+    logger.log('[call-debug] CallService signaling ready', {
+      userId: this.userId,
+      hasCallStore: Boolean(this.callStore),
+      callStatus: this.callStatus,
+    });
   }
 
   private installNativeCallSignaling(): void {
     if (!this.callStore) return;
     const handleInvitation = (payload: CallInvitationReceivedPayload | null): void => {
+      logger.log('[call-debug] CallService store invitation reaction', {
+        callId: payload?.callId,
+        callStatus: this.callStatus,
+        currentCallId: this.currentCallInfo?.callId,
+      });
       if (payload) void this.handleNativeInvitation(payload);
     };
     const handleParticipants = (snapshot: CallSnapshot | null): void => {
@@ -353,9 +363,68 @@ export class CallService {
     };
   }
 
+  private clearOutgoingTimeoutCheck(): void {
+    if (this.outgoingTimeoutCheck) clearTimeout(this.outgoingTimeoutCheck);
+    this.outgoingTimeoutCheck = undefined;
+  }
+
+  private scheduleOutgoingTimeoutCheck(callId: string, delayMs: number): void {
+    this.clearOutgoingTimeoutCheck();
+    this.outgoingTimeoutCheck = setTimeout(async () => {
+      this.outgoingTimeoutCheck = undefined;
+      if (this.currentCallInfo?.callId !== callId || this.callStatus !== CALL_STATUS.INVITING)
+        return;
+      try {
+        const snapshot = await this.callSignaling.syncCall(callId);
+        if (this.currentCallInfo?.callId !== callId || this.callStatus !== CALL_STATUS.INVITING)
+          return;
+        logger.log('[call-debug] outgoing timeout snapshot', {
+          callId,
+          lifecycle: snapshot.lifecycle,
+          endReason: snapshot.endReason,
+          revision: snapshot.revision,
+        });
+        if (snapshot.lifecycle === 'ended') {
+          this.nativeEndRequested = true;
+          await this.hangup(snapshot.endReason || HANGUP_REASON.TIMEOUT);
+          return;
+        }
+        if (
+          snapshot.participants.some(
+            member => member.userId !== this.getCurrentUserId() && member.state === 'accepted',
+          )
+        ) {
+          return;
+        }
+      } catch (error) {
+        logWarn('Failed to check outgoing call timeout; will retry', error);
+      }
+      if (this.currentCallInfo?.callId === callId && this.callStatus === CALL_STATUS.INVITING) {
+        this.scheduleOutgoingTimeoutCheck(callId, 5000);
+      }
+    }, delayMs);
+  }
+
   private async handleNativeInvitation(payload: CallInvitationReceivedPayload): Promise<void> {
-    if (payload.callId === this.currentCallInfo?.callId) return;
+    logger.log('[call-debug] CallService handle invitation enter', {
+      callId: payload.callId,
+      callStatus: this.callStatus,
+      currentCallId: this.currentCallInfo?.callId,
+      kind: payload.kind,
+      mediaType: payload.mediaType,
+    });
+    if (payload.callId === this.currentCallInfo?.callId) {
+      logger.log('[call-debug] CallService invitation ignored as duplicate', {
+        callId: payload.callId,
+      });
+      return;
+    }
     if (this.callStatus !== CALL_STATUS.IDLE) {
+      logger.log('[call-debug] CallService invitation rejected as busy', {
+        callId: payload.callId,
+        callStatus: this.callStatus,
+        currentCallId: this.currentCallInfo?.callId,
+      });
       try {
         await this.callSignaling.rejectCall(payload.callId, { reason: 'busy' });
       } catch (error) {
@@ -404,11 +473,30 @@ export class CallService {
       groupId: payload.conversationId,
       timestamp: Date.now(),
     });
+    logger.log('[call-debug] CallService invitation callback dispatched', {
+      callId: payload.callId,
+      callStatus: this.callStatus,
+      hasCallback: Boolean(this.onInvitationReceived),
+    });
     await this.callSignaling.reportRinging(payload.callId);
+    logger.log('[call-debug] CallService ringing reported', {
+      callId: payload.callId,
+    });
     this.audioService.play('incoming');
   }
 
   private handleNativeParticipants(snapshot: CallSnapshot): void {
+    const self = snapshot.participants.find(item => item.userId === this.getCurrentUserId());
+    if (self && !['pending', 'ringing', 'accepted'].includes(self.state) && this.currentCallInfo) {
+      logger.log('[call-debug] CallService local participant finished', {
+        callId: snapshot.callId,
+        revision: snapshot.revision,
+        participantState: self.state,
+      });
+      this.nativeEndRequested = true;
+      void this.hangup(self.state === 'timeout' ? HANGUP_REASON.TIMEOUT : self.state);
+      return;
+    }
     const changes = diffParticipants(this.signalingParticipants, snapshot.participants);
     this.signalingParticipants = [...snapshot.participants];
     const accepted = snapshot.participants.filter(item => item.state === 'accepted');
@@ -430,9 +518,18 @@ export class CallService {
       this.currentCallInfo.invitedMembers = [...this.invitedMembers];
       this.currentCallInfo.joinedMembers = [...this.joinedMembers];
     }
-    if (this.currentCallInfo && accepted.some(item => item.userId !== this.getCurrentUserId())) {
+    // 主叫等待对端接听后入会。被叫只能由 answerCall 在用户接听后入会，
+    // reportRinging 的快照中主叫已是 accepted，不能据此替被叫自动接听。
+    if (
+      snapshot.lifecycle === 'open' &&
+      !this.nativeEndRequested &&
+      this.currentCallInfo?.kind === 'single' &&
+      this.currentCallInfo.callerUserId === this.getCurrentUserId() &&
+      this.callStatus === CALL_STATUS.INVITING &&
+      accepted.some(item => item.userId !== this.getCurrentUserId())
+    ) {
       this.audioService.stop();
-      if (this.callStatus !== CALL_STATUS.IN_CALL) void this.joinCall();
+      void this.joinCall();
     }
   }
 
@@ -500,99 +597,8 @@ export class CallService {
     };
   }
 
-  setUIdToUserIdMap(uid: string, userId: string) {
-    this.mapUidToUserId(uid, userId);
-  }
-
   private toUidKey(uid: string | number): string {
     return String(uid);
-  }
-
-  private getUserIdFromUid(uid: string | number): string {
-    return this.UIdToUserIdMap.get(this.toUidKey(uid)) || '';
-  }
-
-  private mapUidToUserId(uid: string | number, userId: string) {
-    this.UIdToUserIdMap.set(this.toUidKey(uid), userId);
-  }
-
-  /** 1v1 场景：映射失败时回退到通话对端 IM userId */
-  private get1v1PeerUserId(): string {
-    if (!this.currentCallInfo) return '';
-    const { type, callerUserId, calleeUserId } = this.currentCallInfo;
-    if (type === CALL_TYPE.VIDEO_MULTI || type === CALL_TYPE.AUDIO_MULTI) {
-      return '';
-    }
-    const selfId = this.getCurrentUserId();
-    if (callerUserId && callerUserId !== selfId) return callerUserId;
-    if (calleeUserId && calleeUserId !== selfId) return calleeUserId;
-    return '';
-  }
-
-  /** Provider 优先，否则使用 SDK5 connection.getUserIdsWithRTCUids。 */
-  private async resolveUserIdByRtcUid(uid: string | number): Promise<string> {
-    const cached = this.getUserIdFromUid(uid);
-    if (cached) return cached;
-
-    const numericUid = typeof uid === 'number' ? uid : Number(uid);
-    if (!Number.isFinite(numericUid)) {
-      return this.get1v1PeerUserId();
-    }
-
-    try {
-      const client = this.connection as any;
-      let map: RTCUidUserIdMap | null | undefined;
-      let source: 'provider' | 'IM SDK';
-
-      if (this.rtcProvider?.getUserIdsWithRTCUids) {
-        source = 'provider';
-        map = await this.rtcProvider.getUserIdsWithRTCUids([numericUid]);
-      } else if (typeof client?.getUserIdsWithRTCUids === 'function') {
-        source = 'IM SDK';
-        map = await client.getUserIdsWithRTCUids([numericUid]);
-      } else {
-        logWarn(
-          'Unable to resolve RTC UID: neither rtcProvider.getUserIdsWithRTCUids nor the IM SDK method is available',
-          { rtcUid: numericUid },
-        );
-        map = null;
-        source = 'IM SDK';
-      }
-
-      if (!map || typeof map !== 'object') {
-        logWarn(`${source} getUserIdsWithRTCUids returned no mapping`, {
-          rtcUid: numericUid,
-          result: map,
-        });
-      } else {
-        const userId = map[numericUid] || map[String(numericUid)] || '';
-        if (userId) {
-          this.mapUidToUserId(uid, userId);
-          return userId;
-        }
-        logWarn(`${source} getUserIdsWithRTCUids did not contain the requested RTC UID`, {
-          rtcUid: numericUid,
-          result: map,
-        });
-      }
-    } catch (error: any) {
-      logWarn('Failed to resolve IM userId from RTC UID', { rtcUid: numericUid, error });
-      this.onCallError?.({
-        errorType: CallErrorType.CHAT,
-        code: error.type,
-        message: error.message,
-      });
-    }
-
-    const fallbackUserId = this.get1v1PeerUserId();
-    if (fallbackUserId) {
-      logDebug('Fallback to 1v1 peer userId for RTC uid mapping:', {
-        uid,
-        fallbackUserId,
-      });
-      this.mapUidToUserId(uid, fallbackUserId);
-    }
-    return fallbackUserId;
   }
 
   private getCurrentUserId(): string {
@@ -607,7 +613,7 @@ export class CallService {
     channelName: string = this.currentCallInfo?.channel || '*',
   ): Promise<string | null> {
     this.appId = '';
-    this.agoraUid = 0;
+    this.agoraUid = '';
     this.rtcTokenChannelName = '';
 
     try {
@@ -617,7 +623,10 @@ export class CallService {
       if (this.rtcProvider?.getRTCTokenInfo) {
         source = 'provider';
         logDebug('Getting RTC token info from provider', { channelName });
-        tokenInfo = await this.rtcProvider.getRTCTokenInfo({ channelName });
+        tokenInfo = await this.rtcProvider.getRTCTokenInfo({
+          channelName,
+          userId: this.getCurrentUserId(),
+        });
       } else if (typeof this.connection?.getRTCTokenInfo === 'function') {
         source = 'IM SDK';
         logDebug('Getting RTC token info from IM SDK', { channelName });
@@ -635,8 +644,9 @@ export class CallService {
         return null;
       }
 
-      if (!tokenInfo.appId || !Number.isFinite(tokenInfo.rtcUid)) {
-        logWarn(`${source} getRTCTokenInfo returned invalid appId or rtcUid`, {
+      const uid = this.getCurrentUserId();
+      if (!tokenInfo.appId || !uid) {
+        logWarn(`${source} getRTCTokenInfo returned invalid appId or current IM userId`, {
           channelName,
           tokenInfo,
         });
@@ -655,8 +665,6 @@ export class CallService {
       }
 
       this.appId = tokenInfo.appId;
-      const uid = tokenInfo.rtcUid;
-      this.mapUidToUserId(uid, this.getCurrentUserId());
       this.agoraUid = uid;
       this.rtcTokenChannelName = channelName;
       logDebug(`Got valid RTC token info from ${source}`, {
@@ -679,12 +687,11 @@ export class CallService {
   private hasValidRTCJoinInfo(channelName: string = this.currentCallInfo?.channel || ''): boolean {
     return (
       Boolean(this.appId) &&
-      Number.isFinite(this.agoraUid) &&
+      Boolean(this.agoraUid) &&
+      this.agoraUid === this.getCurrentUserId() &&
       (!this.useRTCToken || (Boolean(this.accessToken) && this.rtcTokenChannelName === channelName))
     );
   }
-
-  // Remove setUserIdMap method, no longer needed
 
   // Set user information
   setUserInfo(userInfo: { [key: string]: any }) {
@@ -738,6 +745,7 @@ export class CallService {
     members?: string[]; // Member list for multi-party calls
     ext?: Record<string, any>;
   }) {
+    if (this.endingCall) await this.endingCall;
     const {
       callId,
       channel,
@@ -784,7 +792,7 @@ export class CallService {
       type: callType,
       callerDevId: this.getClientResource() || 'web',
       calleeDevId: '',
-      callerUserId: this.getCurrentUserId(), // Use agoraUid as IM name
+      callerUserId: this.getCurrentUserId(),
       calleeUserId: callType === CALL_TYPE.VIDEO_MULTI ? groupId : (to as string),
       groupId,
       groupName,
@@ -798,6 +806,12 @@ export class CallService {
     // Update status
     this.callStatus = CALL_STATUS.INVITING;
     this.invitedMembers = members;
+    if (!isConference) {
+      this.scheduleOutgoingTimeoutCheck(
+        resolvedCallId,
+        this.invitationTimeoutSeconds * 1000 + 1000,
+      );
+    }
 
     // Play outgoing call ringtone (when initiating call)
     this.audioService.play('outgoing');
@@ -885,6 +899,7 @@ export class CallService {
           const localAudioTrack = await this.mediaService.createAudioTrack();
           this.rtc.localAudioTrack = localAudioTrack;
         }
+        await this.createLocalVideoTrackForGroupCall();
 
         // Check if video track already exists (may be created in preview mode)
         const hasExistingVideoTrack = Boolean(
@@ -924,6 +939,14 @@ export class CallService {
   }
 
   async answerCall(result: boolean) {
+    logger.log('[call-debug] CallService answer requested', {
+      accept: result,
+      callId: this.currentCallInfo?.callId,
+      callStatus: this.callStatus,
+      isAnswering: this.isAnswering,
+      nativeEndRequested: this.nativeEndRequested,
+      endingCall: Boolean(this.endingCall),
+    });
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -945,20 +968,68 @@ export class CallService {
 
       const callId = this.currentCallInfo.callId;
       if (result) {
-        if (this.currentCallInfo.kind === 'conference') {
-          await this.callSignaling.joinCall(callId);
-        } else {
-          await this.callSignaling.acceptCall(callId);
-        }
+        // 接听邀请统一用 acceptCall；joinCall 用于主动加入已有的多人通话。
+        await this.callSignaling.acceptCall(callId);
         this.callStatus = CALL_STATUS.ANSWER_CALL;
         await this.joinCall();
       } else {
-        await this.callSignaling.rejectCall(callId, { reason: 'declined' });
-        await this.cleanupPreviewMode();
-        await this.hangup(HANGUP_REASON.REFUSE);
+        let rejectError: unknown;
+        try {
+          await this.callSignaling.rejectCall(callId, { reason: 'declined' });
+          this.nativeEndRequested = true;
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          if (message.toLowerCase().includes('call invalid state')) {
+            logWarn('Call was already ended while rejecting; continue local cleanup', {
+              callId,
+              message,
+            });
+          } else {
+            rejectError = error;
+          }
+        }
+
+        try {
+          await this.cleanupPreviewMode();
+        } finally {
+          await this.hangup(HANGUP_REASON.REFUSE);
+        }
+
+        if (rejectError) {
+          throw rejectError;
+        }
       }
     } catch (error) {
       logError('answerCall failed:', error);
+      logger.warn('[call-debug] CallService answer failed state', {
+        accept: result,
+        callId: this.currentCallInfo?.callId,
+        callStatus: this.callStatus,
+        nativeEndRequested: this.nativeEndRequested,
+        code: (error as { code?: number })?.code,
+        details: (error as { details?: unknown })?.details,
+      });
+      if (result && this.currentCallInfo) {
+        try {
+          const snapshot = await this.callSignaling.syncCall(this.currentCallInfo.callId);
+          const participant = snapshot.participants.find(
+            item => item.userId === this.getCurrentUserId(),
+          );
+          logger.warn('[call-debug] answer failed server snapshot', {
+            callId: snapshot.callId,
+            kind: snapshot.kind,
+            mediaType: snapshot.mediaType,
+            lifecycle: snapshot.lifecycle,
+            endReason: snapshot.endReason,
+            revision: snapshot.revision,
+            participantState: participant?.state,
+            participantDevice: participant?.deviceUuid,
+            participant,
+          });
+        } catch (syncError) {
+          logWarn('Failed to query call state after answer failure', syncError);
+        }
+      }
       throw error;
     } finally {
       // 🔧 重置标记：在短暂延迟后重置，允许新的通话
@@ -969,6 +1040,17 @@ export class CallService {
   }
 
   async joinCall() {
+    if (this.joiningCall) return this.joiningCall;
+    const request = this.performJoinCall();
+    this.joiningCall = request;
+    try {
+      await request;
+    } finally {
+      if (this.joiningCall === request) this.joiningCall = undefined;
+    }
+  }
+
+  private async performJoinCall() {
     if (!this.currentCallInfo) {
       logError('No current call info');
       return;
@@ -1158,6 +1240,7 @@ export class CallService {
       // 视频通话
 
       if (this.currentCallInfo.type === CALL_TYPE.VIDEO_MULTI) {
+        if (!this.rtc.localVideoTrack) await this.createLocalVideoTrackForGroupCall();
         // 群组视频通话：检查是否已有视频轨道（预览模式下可能已创建）
         const hasExistingVideoTrack = Boolean(
           this.rtc.localVideoTrack && this.rtc.localVideoTrack.enabled,
@@ -1513,23 +1596,36 @@ export class CallService {
         } else {
           logDebug('No remote users found yet');
         }
-
-        // 最终调用 onCallStart
-        this.onCallStart?.(videos);
       };
 
       // 延迟执行，确保 Agora SDK 有足够时间同步远程用户信息
       // setTimeout(checkAndSubscribeRemoteUsers, 1000);
-    } else {
-      // 非多人通话或已有多个视频，直接调用onCallStart
-      this.onCallStart?.(videos);
     }
 
+    // 入会和发布成功即通知 UI，不等待其他成员或远程流。
+    this.onCallStart?.(videos);
     logDebug('Successfully joined call:', uid);
   }
 
   // 挂断通话
   async hangup(reason: string = HANGUP_REASON.HANGUP, isCancel: boolean = false) {
+    this.clearOutgoingTimeoutCheck();
+    if (this.endingCall) return this.endingCall;
+    const endReason =
+      reason === HANGUP_REASON.NO_RESPONSE || reason === HANGUP_REASON.REMOTE_NO_RESPONSE
+        ? HANGUP_REASON.TIMEOUT
+        : reason;
+    const request = this.performHangup(endReason, isCancel);
+    this.endingCall = request;
+    try {
+      await request;
+    } finally {
+      if (this.endingCall === request) this.endingCall = undefined;
+    }
+  }
+
+  private async performHangup(reason: string, isCancel: boolean) {
+    const endingCallId = this.currentCallInfo?.callId;
     logDebug('hangup method called:', { reason, isCancel, callStatus: this.callStatus });
 
     const nativeCall = this.callSignaling && this.currentCallInfo;
@@ -1537,14 +1633,29 @@ export class CallService {
       this.nativeEndRequested = true;
       try {
         const callId = nativeCall.callId;
-        if (isCancel || reason === HANGUP_REASON.CANCEL || reason === HANGUP_REASON.REMOTE_CANCEL) {
+        const isUnansweredOutgoing =
+          nativeCall.kind === 'single' &&
+          nativeCall.callerUserId === this.getCurrentUserId() &&
+          this.callStatus === CALL_STATUS.INVITING;
+        if (reason === HANGUP_REASON.TIMEOUT) {
+          // 超时由服务端结束；本地计时先到时仅查询快照，不发送取消、拒绝或结束请求。
+          await this.callSignaling.syncCall(callId);
+        } else if (
+          isCancel ||
+          isUnansweredOutgoing ||
+          reason === HANGUP_REASON.CANCEL ||
+          reason === HANGUP_REASON.REMOTE_CANCEL
+        ) {
           await this.callSignaling?.cancelCall(callId);
+        } else if (this.callStatus === CALL_STATUS.ALERTING) {
+          await this.callSignaling?.rejectCall(callId, { reason: 'declined' });
         } else if (nativeCall.kind === 'conference') {
           await this.callSignaling?.leaveCall(callId);
-        } else if (this.callStatus === CALL_STATUS.IN_CALL || reason === HANGUP_REASON.HANGUP) {
+        } else {
           await this.callSignaling?.terminateCall(callId);
         }
       } catch (error) {
+        this.nativeEndRequested = false;
         logWarn('Native call termination failed', error);
       }
     }
@@ -1697,6 +1808,7 @@ export class CallService {
 
     // 🔧 额外检查：强制等待一段时间后再次检查，确保异步清理完成
     setTimeout(async () => {
+      if (this.currentCallInfo && this.currentCallInfo.callId !== endingCallId) return;
       try {
         await this.checkAndCleanupAllMediaTracks(true); // 🔧 通话结束时进行完整的权限检查
       } catch (err) {
@@ -1801,13 +1913,16 @@ export class CallService {
     this.enableMic = true;
     this.audioService.resetSpeaker();
 
-    // 🔧 清理 UID 映射表，确保第二次通话时重新建立映射
-    this.UIdToUserIdMap.clear();
-
     // 🔧 清理等待播放的视频轨道
     this.pendingVideoTracks.clear();
     this.callStore?.clear();
     this.signalingParticipants = [];
+    logger.log('[call-debug] CallService local cleanup complete', {
+      endingCallId,
+      callStatus: this.callStatus,
+      currentCallId: undefined,
+      nativeEndRequested: this.nativeEndRequested,
+    });
 
     // 🔧 强制等待确保所有异步清理完成
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -1820,8 +1935,8 @@ export class CallService {
       this.updateJoinedMember(user, '', true);
       // 触发回调, 清楚邀请定时器
 
-      // 获取用户ID映射（SDK5 getUserIdsWithRTCUids + 1v1 fallback）
-      const userId = await this.resolveUserIdByRtcUid(user.uid);
+      // RTC UID 直接使用 IM userId
+      const userId = this.toUidKey(user.uid);
       // 触发回调, 清楚邀请定时器
       this.onUserPublished?.(userId);
       this.onRemoteUserJoined?.(userId, 'group');
@@ -1877,8 +1992,8 @@ export class CallService {
           throw error;
         }
 
-        // 获取用户ID映射（SDK5 getUserIdsWithRTCUids + 1v1 fallback）
-        const userId = await this.resolveUserIdByRtcUid(user.uid);
+        // RTC UID 直接使用 IM userId
+        const userId = this.toUidKey(user.uid);
         // this.onRemoteUserJoined?.(userId, mediaType as 'video' | 'audio' | 'group');
 
         // 触发回调, 清楚邀请定时器
@@ -2015,7 +2130,7 @@ export class CallService {
     // 监听远程用户离开
     this.client.on('user-left', (user: any, reason: string) => {
       logDebug('---->user-left', user, reason);
-      const userId = this.getUserIdFromUid(user.uid);
+      const userId = this.toUidKey(user.uid);
       const uidKey = this.toUidKey(user.uid);
 
       // 🔧 清理离开用户的所有媒体轨道（使用 uid 作为 key）
@@ -2052,7 +2167,7 @@ export class CallService {
       // 触发回调
       this.onUserUnpublished?.(user, mediaType);
 
-      const userId = this.getUserIdFromUid(user.uid);
+      const userId = this.toUidKey(user.uid);
       const uidKey = this.toUidKey(user.uid);
 
       if (mediaType === 'video') {
@@ -2147,7 +2262,7 @@ export class CallService {
     this.client.on('volume-indicator', (volumes: any[]) => {
       const talkingUsers = volumes
         .filter(volume => volume.level > this.speakingVolumeThreshold)
-        .map(volume => this.getUserIdFromUid(volume.uid));
+        .map(volume => this.toUidKey(volume.uid));
 
       const localTalkingUsers = [...talkingUsers];
       if (this.isMuted()) {
@@ -2165,13 +2280,8 @@ export class CallService {
     this.client.on('network-quality', (quality: any) => {
       // 同时获取订阅的其他人的网络质量
       const others = this.client.getRemoteNetworkQuality(this.agoraUid);
-      // others: {[uid]: {quality}} 转成 {[userId]: {quality}}
-      const others2: any = Object.keys(others).reduce((acc: any, uid: string) => {
-        const userId = this.getUserIdFromUid(uid);
-        acc[userId || ''] = others[uid];
-        return acc;
-      }, {});
-      others2[this.userId] = quality;
+      // 远端 UID 已是 IM userId。
+      const others2 = { ...others, [this.userId]: quality };
       this.onNetworkQualityChange?.(others2);
     });
   }
@@ -2834,7 +2944,7 @@ export class CallService {
     }
   }
 
-  // 为群组视频通话准备本地视频状态（供UI显示使用）
+  // 创建群组视频轨道并更新本地预览；入会时发布该轨道。
   async createLocalVideoTrackForGroupCall(): Promise<boolean> {
     // 🔧 修复：只处理群组视频通话，不处理1v1视频通话
     if (
@@ -2850,26 +2960,35 @@ export class CallService {
       return false;
     }
 
-    // 🔧 重要改动：群组通话默认不创建视频轨道，避免触发摄像头
-    // 只有用户主动点击开启摄像头时才会在toggleCamera中创建轨道
-    logDebug('Group call: prepare local video status (do not create actual track)');
-
-    // 创建本地视频信息供UI显示（摄像头关闭状态）
-    const localVideoInfo: VideoWindowProps = {
+    const callId = this.currentCallInfo.callId;
+    if (!this.rtc.localVideoTrack) {
+      try {
+        this.creatingVideoTrack ??= this.mediaService.createVideoTrack();
+        const track = await this.creatingVideoTrack;
+        if (this.currentCallInfo?.callId !== callId) {
+          this.mediaService.closeTrack(track);
+          return false;
+        }
+        this.rtc.localVideoTrack = track;
+      } catch (error) {
+        logWarn('Group camera unavailable, continue with audio only:', error);
+        this.onCallError?.({ errorType: CallErrorType.RTC, ...(error as IAgoraRTCError) });
+        return false;
+      } finally {
+        this.creatingVideoTrack = null;
+      }
+    }
+    const cameraEnabled = Boolean(this.rtc.localVideoTrack.enabled);
+    this.onRemoteVideoReady?.({
       id: 'local',
       isLocalVideo: true,
-      muted: false,
-      cameraEnabled: false, // 🔧 默认摄像头关闭，不创建轨道
-      nickname: this.userInfos[this.userId]?.nickname || '我',
+      muted: this.isMuted(),
+      cameraEnabled,
+      nickname: this.userInfos[this.userId]?.nickname || this.userId,
       avatar: this.userInfos[this.userId]?.avatarUrl,
-      stream: undefined,
-    };
-
-    // 通知UI显示本地视频（关闭状态）
-    this.onRemoteVideoReady?.(localVideoInfo);
-
-    logDebug('Group call: local video status set to disabled, waiting for user to manually enable');
-    return true;
+      stream: cameraEnabled ? this.getOrCreateLocalVideoStream() : undefined,
+    });
+    return cameraEnabled;
   }
 
   // 处理从最小化恢复时重新播放本地视频
@@ -3332,53 +3451,13 @@ export class CallService {
     tryPlayVideo();
   }
 
-  // 🔧 新增：获取指定用户的视频轨道
+  // RTC 轨道以 IM userId 为键，无需 UID 映射。
   getRemoteVideoTrack(userId: string): any {
-    // 首先尝试直接用 userId 查找（可能是 uid）
-    let track = this.remoteVideoTracks.get(userId);
-    if (track) {
-      return track;
-    }
-
-    // 如果直接查找失败，通过 UIdToUserIdMap 反向查找对应的 uid
-    for (const [uid, mappedUserId] of this.UIdToUserIdMap.entries()) {
-      if (mappedUserId === userId) {
-        track = this.remoteVideoTracks.get(uid) || this.remoteVideoTracks.get(Number(uid) as any);
-        if (track) {
-          logDebug(`Found user ${userId} video track through mapping, uid: ${uid}`);
-          return track;
-        }
-      }
-    }
-
-    logDebug(`Video track not found for user ${userId}`, {
-      直接查找: this.remoteVideoTracks.has(userId),
-      UIdToUserIdMap: Array.from(this.UIdToUserIdMap.entries()),
-      所有远程轨道: Array.from(this.remoteVideoTracks.entries()),
-    });
-    return null;
+    return this.remoteVideoTracks.get(userId) ?? null;
   }
 
-  // 🔧 新增：获取指定用户的音频轨道
   getRemoteAudioTrack(userId: string): any {
-    // 首先尝试直接用 userId 查找（可能是 uid）
-    let track = this.remoteAudioTracks.get(userId);
-    if (track) {
-      return track;
-    }
-
-    // 如果直接查找失败，通过 UIdToUserIdMap 反向查找对应的 uid
-    for (const [uid, mappedUserId] of this.UIdToUserIdMap.entries()) {
-      if (mappedUserId === userId) {
-        track = this.remoteAudioTracks.get(uid) || this.remoteAudioTracks.get(Number(uid) as any);
-        if (track) {
-          logDebug(`Found user ${userId} audio track through mapping, uid: ${uid}`);
-          return track;
-        }
-      }
-    }
-
-    return null;
+    return this.remoteAudioTracks.get(userId) ?? null;
   }
 
   // 🔧 新增：获取所有远程视频轨道信息（用于调试）
@@ -3392,7 +3471,7 @@ export class CallService {
 
     // 🔧 修复：完整清理预览模式下的所有轨道
     if (
-      this.client &&
+      this.client?.connectionState === 'CONNECTED' &&
       (this.callStatus === CALL_STATUS.ALERTING || this.callStatus === CALL_STATUS.IN_CALL)
     ) {
       try {
@@ -3428,7 +3507,10 @@ export class CallService {
     }
 
     // 🔧 安全清理：确保轨道在关闭前被取消发布（不受callStatus限制）
-    if (this.client && (this.rtc.localAudioTrack || this.rtc.localVideoTrack)) {
+    if (
+      this.client?.connectionState === 'CONNECTED' &&
+      (this.rtc.localAudioTrack || this.rtc.localVideoTrack)
+    ) {
       try {
         const tracksToSafeUnpublish = [];
         if (this.rtc.localAudioTrack) {
@@ -3618,6 +3700,13 @@ export class CallService {
 
   // 销毁服务
   destroy(isInitializing: boolean = false) {
+    this.clearOutgoingTimeoutCheck();
+    logger.log('[call-debug] CallService destroy', {
+      isInitializing,
+      callStatus: this.callStatus,
+      currentCallId: this.currentCallInfo?.callId,
+    });
+    this.callSignaling.stop();
     this.disposeCallStoreReactions?.();
     this.disposeCallStoreReactions = undefined;
     // 🔧 修复：组件初始化时不调用hangup，避免触发麦克风权限请求
@@ -3637,9 +3726,6 @@ export class CallService {
       this.remoteVideoTracks.clear();
       this.remoteAudioTracks.clear();
       this.audioService.clearRemoteTracks();
-
-      // 清理UID映射
-      this.UIdToUserIdMap.clear();
 
       // 清理等待播放的轨道
       this.pendingVideoTracks.clear();

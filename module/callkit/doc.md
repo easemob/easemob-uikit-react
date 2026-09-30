@@ -1,227 +1,112 @@
 # Web CallKit：自定义 RTC 凭证接入
 
-## 概述
+## 用户 ID
 
-CallKit 默认通过传入的 IM SDK 客户端获取 RTC 入会信息和 RTC UID 映射：
+CallKit 使用当前登录的 IM `userId` 作为 RTC 字符串 UID。数字形式的 IM ID（如 `"00123"`）也保持字符串，不转换为数字。远端 RTC UID 直接用于用户资料查询、媒体轨道、音量和网络质量事件，无需维护 ID 映射。
 
-- `chatClient.getRTCTokenInfo({ channelName })`：获取声网 App ID、RTC Token 和本端 RTC UID；
-- `chatClient.getUserIdsWithRTCUids(rtcUids)`：将远端 RTC UID 映射为 IM `userId`，用于显示用户昵称和头像等业务信息。
+同一 RTC 频道的所有端必须使用字符串 UID；移动端应以 User Account 方式加入频道。
 
-如果应用使用自有的声网项目，或希望由业务服务端签发 RTC Token、维护 RTC UID 与 IM 用户 ID 的关系，可以为 `CallKit` 传入 `rtcProvider`。`rtcProvider` 的类型为公开导出的 `CallKitRTCProvider`。
-
-```tsx
-import type { CallKitRTCProvider, RTCTokenInfo, RTCUidUserIdMap } from 'easemob-chat-uikit';
-```
-
-> **注意：** 这是 Web CallKit 的组件级配置。请勿使用移动端文档中的 `CallTokenProvider`、`getAppId`、`getRTCToken` 或 `getRelations`：这些都不是本组件库提供的 API。也无需在业务代码中手动创建 `CallService`。
-
-## API
+## RTC provider
 
 ```ts
 interface RTCTokenInfo {
   appId: string;
   rtcToken: string;
-  rtcUid: number;
+  /** 已弃用，CallKit 忽略此字段，直接使用登录中的 IM userId。 */
+  rtcUid?: string | number;
 }
-
-type RTCUidUserIdMap = Record<string, string>;
 
 interface CallKitRTCProvider {
-  getRTCTokenInfo?: (params: { channelName: string }) => Promise<RTCTokenInfo>;
-  getUserIdsWithRTCUids?: (rtcUids: number[]) => Promise<RTCUidUserIdMap>;
+  getRTCTokenInfo?: (params: {
+    channelName: string;
+    userId: string;
+  }) => Promise<RTCTokenInfo>;
+  /** 已弃用，CallKit 不再调用 UID 映射方法。 */
+  getUserIdsWithRTCUids?: (rtcUids: number[]) => Promise<Record<string, string>>;
 }
 ```
 
-两个方法都是可选的，可以只替换其中一个数据来源：
+`rtcProvider` 是 CallKit 组件级配置。未配置 `getRTCTokenInfo` 时，CallKit 调用 IM 客户端的 `getRTCTokenInfo({ channelName })` 获取凭证。无论凭证来源如何，入会 UID 始终使用当前 IM userId。
 
-| 方法 | 用途 | 未提供时的行为 |
-| --- | --- | --- |
-| `getRTCTokenInfo` | 为当前通话频道返回 RTC 入会凭证。 | 调用 `chatClient.getRTCTokenInfo({ channelName })`。 |
-| `getUserIdsWithRTCUids` | 将远端 RTC UID 批量映射为 IM `userId`。 | 调用 `chatClient.getUserIdsWithRTCUids(rtcUids)`。 |
+启用 Token 校验时，服务端必须按实际频道名和 IM userId **字符串账号**签发 RTC Token（使用 User Account 的 Token 接口）。原来按数字 UID 签发的 Token 需要同步更新；返回的数字 `rtcUid` 不会改变 CallKit 的入会账号。
 
-当某个 provider 方法已提供时，CallKit 会优先使用它，而不会再调用该方法对应的 IM SDK 接口。`getRTCTokenInfo` 抛出异常、返回空值或返回不合法数据时，通话无法发起或加入频道；`getUserIdsWithRTCUids` 失败时，远端 UID 无法通过 IM SDK 再次查询（仅一对一通话会尝试使用邀请中的对端用户 ID 兜底）。因此请在服务端响应和前端转换处完成必要的校验与错误处理。
-
-### `getRTCTokenInfo`
-
-CallKit 在发起通话或接听后加入频道前调用该方法，并将实际的 `channelName` 传入。业务服务端应按这个频道名和当前 IM 用户签发凭证。
-
-返回值要求如下：
-
-- `appId`：非空字符串，且必须是签发该 `rtcToken` 的声网项目 App ID。
-- `rtcUid`：有限数字，并且必须与 Token 中的 UID 一致。对于同一 IM 用户，建议在业务侧保持稳定的 RTC UID 映射。
-- `rtcToken`：当 `useRTCToken`（默认 `true`）开启时必须为非空字符串；当 `useRTCToken={false}` 时可以为空，CallKit 会以 `null` Token 加入频道。仅在声网项目允许不校验 Token 的场景使用后者。
-
-当前 provider 返回值中不包含 `expiration` 字段，CallKit 也不会依据该字段自动续期。请保证服务端签发的 Token 在预期通话时长内有效；如需 Token 续期，请结合实际 RTC 生命周期和声网 SDK 的续期能力在应用侧设计相应流程。
-
-### `getUserIdsWithRTCUids`
-
-远端用户进入频道后，CallKit 会按需调用该方法，以便把 RTC 层的 UID 关联到 IM 用户资料。返回值的键是 RTC UID 的字符串形式，值是对应的 IM `userId`：
-
-```ts
-{
-  '10001': 'alice',
-  '10002': 'bob',
-}
-```
-
-接口参数是 UID 数组，服务端可以批量查询和返回映射。缺少映射会导致对应远端用户无法关联到业务用户资料；在一对一通话中，CallKit 会尽力使用邀请中的对端用户 ID 作为兜底，但多人通话应始终返回完整映射。
-
-## 接入步骤
-
-### 1. 在服务端提供 RTC 数据接口
-
-不要在浏览器中生成声网 Token，也不要将声网 App Certificate 暴露给前端。建议让前端只请求业务服务端：
-
-```text
-POST /api/rtc/token
-{ "userId": "alice", "channelName": "call_channel" }
-
-=> { "appId": "your-agora-app-id", "rtcToken": "...", "rtcUid": 10001 }
-
-POST /api/rtc/user-ids
-{ "rtcUids": [10001, 10002] }
-
-=> { "10001": "alice", "10002": "bob" }
-```
-
-服务端需要验证当前请求者的身份和通话权限，并确保：Token 中的频道、UID 与返回的 `channelName`、`rtcUid` 一致；UID 映射只返回调用方有权获知的用户数据。
-
-### 2. 创建 `CallKitRTCProvider`
-
-下面示例假定应用已拥有可信的业务登录态，`currentUserId` 是当前已登录的 IM 用户 ID。接口字段名可按服务端实际响应调整，但最终必须转换为 `RTCTokenInfo` 和 `RTCUidUserIdMap`。
+### 无 Token 校验的 demo
 
 ```tsx
 import React from 'react';
-import type { CallKitRTCProvider, RTCTokenInfo, RTCUidUserIdMap } from 'easemob-chat-uikit';
+import { CallKit } from 'easemob-chat-uikit';
+import type { CallKitRTCProvider } from 'easemob-chat-uikit';
 
-function useCallKitRTCProvider(currentUserId: string): CallKitRTCProvider {
-  return React.useMemo(
-    () => ({
-      async getRTCTokenInfo({ channelName }): Promise<RTCTokenInfo> {
-        const response = await fetch('/api/rtc/token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ userId: currentUserId, channelName }),
-        });
+const rtcProvider: CallKitRTCProvider = {
+  getRTCTokenInfo: async () => ({
+    appId: 'your-agora-app-id',
+    rtcToken: '',
+  }),
+};
 
-        if (!response.ok) {
-          throw new Error(`获取 RTC Token 失败：${response.status}`);
-        }
-
-        const data = (await response.json()) as RTCTokenInfo;
-        if (!data.appId || !Number.isFinite(data.rtcUid) || !data.rtcToken) {
-          throw new Error('RTC Token 接口返回的数据不完整');
-        }
-
-        return {
-          appId: data.appId,
-          rtcToken: data.rtcToken,
-          rtcUid: data.rtcUid,
-        };
-      },
-
-      async getUserIdsWithRTCUids(rtcUids): Promise<RTCUidUserIdMap> {
-        const response = await fetch('/api/rtc/user-ids', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ rtcUids }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`查询 RTC UID 映射失败：${response.status}`);
-        }
-
-        return (await response.json()) as RTCUidUserIdMap;
-      },
-    }),
-    [currentUserId],
-  );
+function CallKitLayer() {
+  return <CallKit rtcProvider={rtcProvider} useRTCToken={false} />;
 }
 ```
 
-如果你的 IM 服务仍负责 UID 映射，只需提供 `getRTCTokenInfo`；省略 `getUserIdsWithRTCUids` 后，CallKit 会继续使用 IM SDK 的映射接口。
+将组件放在已登录的 UIKit `Provider` 内。声网项目关闭 Token 校验时，返回空字符串并设置 `useRTCToken={false}`，CallKit 以 `null` Token 加入频道。
 
-### 3. 将 provider 传给 `CallKit`
-
-`CallKit` 必须使用 `Provider` 创建的 IM 客户端。下面通过公开导出的 `RootContext` 获取该客户端，避免依赖仓库内部模块路径。
+### 使用业务服务端 Token
 
 ```tsx
-import React from 'react';
-import { CallKit, Provider, RootContext } from 'easemob-chat-uikit';
-import type { CallKitRef } from 'easemob-chat-uikit';
-import 'easemob-chat-uikit/style.css';
+const rtcProvider: CallKitRTCProvider = {
+  async getRTCTokenInfo({ channelName, userId }) {
+    const response = await fetch('/api/rtc/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ channelName, userId }),
+    });
+    if (!response.ok) throw new Error('获取 RTC Token 失败');
+    const data = await response.json();
+    if (!data.appId || !data.rtcToken) throw new Error('RTC 凭证不完整');
+    return { appId: data.appId, rtcToken: data.rtcToken };
+  },
+};
 
-function CallKitLayer({ currentUserId }: { currentUserId: string }) {
-  const { client } = React.useContext(RootContext);
-  const callKitRef = React.useRef<CallKitRef>(null);
-  const rtcProvider = useCallKitRTCProvider(currentUserId);
-
-  return (
-    <CallKit
-      ref={callKitRef}
-      chatClient={client}
-      rtcProvider={rtcProvider}
-      onCallError={error => {
-        console.error('CallKit 通话失败', error);
-      }}
-    />
-  );
-}
-
-export default function App() {
-  const currentUserId = 'alice';
-
-  return (
-    <Provider
-      initConfig={{
-        appKey: 'your-org#your-app',
-        userId: currentUserId,
-        token: 'your-im-token',
-      }}
-    >
-      <CallKitLayer currentUserId={currentUserId} />
-    </Provider>
-  );
-}
+<CallKit rtcProvider={rtcProvider} />;
 ```
 
-`Provider` 会使用 `initConfig.userId` 和 `initConfig.token` 登录 IM；这份 IM Token 与 RTC Token 是两套独立凭证。CallKit 在需要加入 RTC 频道时才会调用 `rtcProvider`，无需在登录成功后手动预取或初始化 RTC 服务。
+服务端验证当前登录用户，并按 `channelName` 和 `userId` 签发凭证。不要把 App Certificate 放在浏览器中。IM 登录 Token 与 RTC Token 是独立凭证。
 
-### 4. 发起通话
-
-自定义 RTC provider 不改变 CallKit 的通话 API。通过组件 ref 发起一对一通话即可：
-
-```tsx
-await callKitRef.current?.startSingleCall({
-  to: 'bob',
-  callType: 'video',
-  msg: '邀请你进行视频通话',
-});
-```
-
-发起方会使用新建的频道名调用 `getRTCTokenInfo`；被叫方接受邀请并加入同一频道前也会调用该方法。因此，服务端必须能够针对任意有效频道为每位参与者返回相匹配的 App ID、Token 和 UID。
+Provider 应保持引用稳定（例如定义在组件外或使用 `useMemo`）。CallKit 在加入频道前获取凭证，无需业务代码手动初始化 RTC。
 
 ## 常见问题
 
 | 现象 | 排查方向 |
 | --- | --- |
-| 收到 `Valid RTC token info is unavailable` 错误 | 检查 `getRTCTokenInfo` 是否成功返回非空 `appId`、有限数字 `rtcUid`，以及在 `useRTCToken` 为 `true` 时返回非空 `rtcToken`。 |
-| 能发送通话邀请但无法进入频道 | 确认 Token 的 App ID、频道名和 UID 与返回数据一致，并检查 Token 是否已过期。 |
-| 多人通话中远端用户只有 UID，昵称或头像没有正确显示 | 实现 `getUserIdsWithRTCUids`，并确保返回对象以 UID 的字符串作为键、IM `userId` 作为值。 |
-| 配置了 provider 后仍然请求 IM SDK 的 RTC 接口 | 确认传给 `CallKit` 的 `rtcProvider` 中包含对应方法；只配置一个方法时，另一个方法仍会按设计回退到 IM SDK。 |
+| `Valid RTC token info is unavailable` | 检查已登录的 IM userId、非空 appId，以及开启校验时的非空 rtcToken。 |
+| 有邀请但无法进入频道 | 确认 Token 按当前 IM userId 字符串账号、实际频道和 App ID 签发。 |
+| 远端昵称或头像不正确 | RTC UID 已是 IM userId，检查 `userInfoProvider` 返回的业务资料。 |
+| 仍请求 IM SDK 的 RTC 凭证接口 | 配置 `rtcProvider.getRTCTokenInfo`；UID 映射接口已不再使用。 |
 
-## RTC 数据来源模式
+## 多人通话与追加邀请
 
-CallKit 以传入的 `chatClient` 为基础工作。未配置 `rtcProvider` 时，UIKit 会通过该 IM SDK 客户端自动获取 RTC 数据；需要使用自有声网项目或业务服务端 Token 时，再按需覆写相应方法。
+`startGroupCall` 有两种入口：
 
-| 配置项 | 默认 UIKit / IM SDK 模式 | 自定义 `CallKitRTCProvider` 模式 |
-| --- | --- | --- |
-| 适用场景 | 使用环信 IM SDK 提供的 RTC 凭证与 UID 映射。 | 使用自有声网项目，或由业务服务端签发 RTC Token、维护 UID 映射。 |
-| 组件配置 | `<CallKit chatClient={client} />` | `<CallKit chatClient={client} rtcProvider={rtcProvider} />` |
-| 入会凭证 | UIKit 调用 `chatClient.getRTCTokenInfo({ channelName })`。 | `rtcProvider.getRTCTokenInfo({ channelName })` 返回 `{ appId, rtcToken, rtcUid }`。 |
-| UID → IM 用户 ID | UIKit 调用 `chatClient.getUserIdsWithRTCUids(rtcUids)`。 | `rtcProvider.getUserIdsWithRTCUids(rtcUids)` 返回 `{ [rtcUid]: userId }`。 |
-| 需要自行维护的数据 | 无。 | 声网 App ID、RTC Token、RTC UID，以及 RTC UID 与 IM `userId` 的映射。 |
+- 传入 `groupId`：打开 CallKit 内置成员选择器，读取该 IM 群的成员；列表为空时使用联系人列表。搜索不会按任意 userId 查询所有 IM 用户。
+- 传入 `userIds`：跳过选择器，直接邀请这些 IM 用户。`groupId` 可省略，此时不绑定 IM 群。
 
-`CallKitRTCProvider` 的两个方法可独立配置。例如，只提供 `getRTCTokenInfo` 时，Token 由业务服务端获取，而 UID 映射仍由 IM SDK 获取；未提供的方法始终按默认模式回退到 `chatClient`。
+```tsx
+await callKitRef.current?.startGroupCall({
+  userIds: ['alice', 'bob', 'charlie'],
+  callType: 'video',
+  msg: '邀请加入多人通话',
+});
+
+// 多人通话进行中：发送邀请，其他用户接听后才加入。
+const invited = await callKitRef.current?.addParticipants(['david', 'emma']);
+```
+
+传入 `userIds` 时会去掉空值、重复项和自己，至少需要一个其他用户。参与者应使用同一个 IM 应用中的真实 userId。一对一通话不支持 `addParticipants`。
+
+通话页面的添加成员按钮默认也会打开内置选择器。传入 `onAddParticipant` 可以接管该按钮，展示自己的输入框或选择器，再通过 `addParticipants(userIds)` 发出邀请。
+
+当前 demo 在“发起多人通话”和“通话中继续邀请”区域提供输入框，支持逗号、空格和分号分隔；添加成员按钮会定位到追加邀请输入框。
+
+多人视频通话在发起或接听时创建摄像头轨道并发布，已有轨道会保留其开关状态。摄像头不可用时通过 `onCallError` 通知，仍可加入通话并发送音频。多人语音通话不会开启摄像头。

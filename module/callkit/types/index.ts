@@ -144,11 +144,13 @@ export interface CallKitRef {
 
   // 新增：主动发起多人通话方法
   startGroupCall: (options: {
-    groupId: string;
+    groupId?: string;
+    /** 直接邀请这些 IM userId；提供时跳过内置成员选择器。 */
+    userIds?: string[];
     callType: 'video' | 'audio';
     msg: string;
     ext?: Record<string, any>;
-  }) => Promise<CallSnapshot | null>; // 发起多人通话，先显示用户选择界面
+  }) => Promise<CallSnapshot | null>; // 未提供 userIds 时按 groupId 显示成员选择器
 
   // 一对一通话方法
   startSingleCall: (options: {
@@ -179,17 +181,19 @@ export interface CallKitRef {
 export interface RTCTokenInfo {
   appId: string;
   rtcToken: string;
-  rtcUid: number;
+  /** @deprecated CallKit 直接使用当前 IM userId 作为 RTC UID，此字段不再使用。 */
+  rtcUid?: string | number;
 }
 
 export type RTCUidUserIdMap = Record<string, string>;
 
 /**
- * RTC 数据提供器。方法签名和返回值与 IM SDK 的同名方法保持一致。
- * 配置某个方法后 CallKit 会优先使用该方法，否则回退到 IM SDK。
+ * RTC 凭证提供器。Token 必须使用当前 IM userId 作为字符串账号签发。
+ * 未配置 getRTCTokenInfo 时回退到 IM SDK。
  */
 export interface CallKitRTCProvider {
-  getRTCTokenInfo?: (params: { channelName: string }) => Promise<RTCTokenInfo>;
+  getRTCTokenInfo?: (params: { channelName: string; userId: string }) => Promise<RTCTokenInfo>;
+  /** @deprecated RTC UID 与 IM userId 相同，CallKit 不再调用此方法。 */
   getUserIdsWithRTCUids?: (rtcUids: number[]) => Promise<RTCUidUserIdMap>;
 }
 
@@ -222,7 +226,7 @@ export interface CallKitProps {
   chatClient?: UIKitChatClient; // 环信 IM 连接
   enableRealCall?: boolean; // 是否启用真实通话功能
   useRTCToken?: boolean; // 是否使用 RTC Token 校验，默认 true；设置为 false 时 join channel 不校验 token
-  rtcProvider?: CallKitRTCProvider; // RTC Token 和 RTC UID 映射提供器，未配置的方法回退到 IM SDK
+  rtcProvider?: CallKitRTCProvider; // RTC 凭证提供器，未配置时回退到 IM SDK
 
   // 🔧 新增：铃声相关配置
   outgoingRingtoneSrc?: string; // 拨打电话铃声音频文件路径
@@ -293,7 +297,7 @@ export interface CallKitProps {
   onCameraFlip?: (deviceId: string, success: boolean) => void;
   onScreenShareToggle?: (sharing: boolean) => void;
   onHangup?: () => void;
-  onAddParticipant?: (event: React.MouseEvent) => void;
+  onAddParticipant?: (event: React.MouseEvent) => void; // 提供时接管添加成员按钮，替代内置选择器
   onInvitationAccept?: (invitation: InvitationInfo) => void;
   onInvitationReject?: (invitation: InvitationInfo) => void;
 
