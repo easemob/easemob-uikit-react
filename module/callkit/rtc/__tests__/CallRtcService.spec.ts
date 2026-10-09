@@ -4,6 +4,7 @@ import { CallRtcService } from '../CallRtcService';
 const createClient = (connectionState: IAgoraRTCClient['connectionState'] = 'DISCONNECTED') =>
   ({
     connectionState,
+    localTracks: [],
     setClientRole: vi.fn(),
     join: vi.fn().mockResolvedValue(1001),
     leave: vi.fn().mockResolvedValue(undefined),
@@ -34,6 +35,25 @@ describe('CallRtcService', () => {
 
     expect(client.leave).toHaveBeenCalledOnce();
     expect(client.removeAllListeners).toHaveBeenCalledOnce();
+  });
+
+  it('leaves while reconnecting so previously published tracks are released', async () => {
+    const client = createClient('RECONNECTING');
+    const service = new CallRtcService({ createClient: vi.fn(() => client) });
+
+    await service.leave();
+
+    expect(client.leave).toHaveBeenCalledOnce();
+  });
+
+  it('clears leftover tracks even if the client reports disconnected', async () => {
+    const client = createClient();
+    (client.localTracks as unknown[]).push({ trackMediaType: 'video' });
+    const service = new CallRtcService({ createClient: vi.fn(() => client) });
+
+    await service.leave();
+
+    expect(client.leave).toHaveBeenCalledOnce();
   });
 
   it('passes IM userId strings to Agora without numeric conversion', async () => {

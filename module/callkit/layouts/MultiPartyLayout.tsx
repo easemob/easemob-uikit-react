@@ -543,6 +543,7 @@ const MainVideoLayoutContent: React.FC<MainVideoLayoutContentProps> = ({
             }}
           >
             <div
+              data-callkit-no-drag
               style={{
                 display: 'flex',
                 gap: `${gap}px`, // 每个窗口有2px border，所以gap要减去4px
@@ -655,6 +656,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
           // 主视频窗口：点击回到网格，hover显示CHEVRON_4_CLUSTER
           return (
             <div
+              data-callkit-no-drag
               style={{
                 width: '100%',
                 height: '100%',
@@ -699,6 +701,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
           // 缩略图：只保留点击功能，不显示hover图标
           return (
             <div
+              data-callkit-no-drag
               style={{
                 width: '100%',
                 height: '100%',
@@ -715,6 +718,7 @@ export const MultiPartyLayout: React.FC<MultiPartyLayoutProps> = ({
       // 网格模式：添加 hover 图标
       return (
         <div
+          data-callkit-no-drag
           style={{
             width: '100%',
             height: '100%',

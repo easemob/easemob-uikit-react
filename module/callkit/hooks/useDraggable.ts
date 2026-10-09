@@ -43,10 +43,12 @@ export const useDraggable = (options: DraggableOptions = {}) => {
   // 检查是否点击在拖动区域内
   const isInDragArea = useCallback(
     (target: EventTarget | null): boolean => {
-      if (!dragHandle || !containerRef?.current) return true;
-
       const element = target as HTMLElement;
       if (!element) return false;
+
+      // 视频画面的点击用于切换布局，不应启动窗口拖动。
+      if (element.closest('[data-callkit-no-drag]')) return false;
+      if (!dragHandle || !containerRef?.current) return true;
 
       // 检查是否点击在指定的拖动手柄区域内
       const dragHandleElement = containerRef.current.querySelector(dragHandle);
@@ -82,7 +84,7 @@ export const useDraggable = (options: DraggableOptions = {}) => {
 
   const handleMouseDown = useCallback(
     (event: MouseEvent) => {
-      if (!enabled || !containerRef?.current) return;
+      if (!enabled || !containerRef?.current || event.button !== 0) return;
 
       // 如果点击在调整大小区域，不处理拖动
       if (isInResizeArea(event)) return;
@@ -142,6 +144,17 @@ export const useDraggable = (options: DraggableOptions = {}) => {
     (event: MouseEvent) => {
       if (!isDraggingRef.current || !dragStartRef.current || !containerRef?.current) return;
 
+      // 鼠标抬起事件可能在布局切换或窗口失焦时丢失，不能继续跟随鼠标。
+      if ((event.buttons & 1) === 0) {
+        isDraggingRef.current = false;
+        dragStartRef.current = null;
+        hasDraggedRef.current = false;
+        setState({ isDragging: false, dragOffset: { x: 0, y: 0 } });
+        document.body.style.userSelect = '';
+        containerRef.current.classList.remove('cui-callkit-dragging');
+        return;
+      }
+
       event.preventDefault();
 
       const deltaX = event.clientX - dragStartRef.current.x;
@@ -155,6 +168,8 @@ export const useDraggable = (options: DraggableOptions = {}) => {
       ) {
         hasDraggedRef.current = true;
       }
+
+      if (!hasDraggedRef.current) return;
 
       const newPosition = {
         x: dragStartRef.current.elementX + deltaX,

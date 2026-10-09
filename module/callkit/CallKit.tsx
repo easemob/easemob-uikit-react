@@ -1300,7 +1300,8 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           element.style.height = `${newSize.height}px`;
 
           const left = Math.max(0, (window.innerWidth - newSize.width) / 2);
-          const top = Math.max(0, window.scrollY + (window.innerHeight - newSize.height) / 2);
+          // fixed 定位使用视口坐标，页面滚动量不能加到 top 上。
+          const top = Math.max(0, (window.innerHeight - newSize.height) / 2);
           element.style.left = `${isMobile ? 0 : left}px`;
           element.style.top = `${isMobile ? 0 : top}px`;
 

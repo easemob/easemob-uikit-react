@@ -1143,7 +1143,7 @@ const RealCallDemo: React.FC = () => {
           managedPosition={true}
           initialPosition={{
             left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
-            top: Math.max(0, window.scrollY + (window.innerHeight - callKitSize.height) / 2),
+            top: Math.max(0, (window.innerHeight - callKitSize.height) / 2),
           }}
           initialSize={callKitSize}
           resizable={true}

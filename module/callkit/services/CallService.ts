@@ -413,6 +413,20 @@ export class CallService {
       kind: payload.kind,
       mediaType: payload.mediaType,
     });
+    if (this.endingCall) {
+      // A conference can invite the same user again while the previous local call is
+      // still cleaning up. Let that cleanup finish before claiming the new invitation.
+      await this.endingCall.catch(error => {
+        logWarn('Previous call cleanup failed before handling invitation', error);
+      });
+      if (this.callStore && this.callStore.invitation !== payload) {
+        // The previous call cleanup clears the store. Restore the latest invitation
+        // so its reaction handles it after the old call has become idle.
+        if (this.callStore.invitation) return;
+        this.callStore.setInvitation(payload);
+        return;
+      }
+    }
     if (payload.callId === this.currentCallInfo?.callId) {
       logger.log('[call-debug] CallService invitation ignored as duplicate', {
         callId: payload.callId,
@@ -1092,6 +1106,22 @@ export class CallService {
 
     // 重新添加事件监听器
     this.addAgoraRTCListeners();
+
+    // A previous call may have ended while Agora was reconnecting. Leave its
+    // channel before publishing tracks for this new call.
+    if (
+      this.client &&
+      (this.client.connectionState !== 'DISCONNECTED' || this.client.localTracks?.length)
+    ) {
+      try {
+        await this.rtcService.leave();
+      } catch (error) {
+        logError('Failed to leave previous RTC channel before joining:', error);
+        this.onCallError?.({ errorType: CallErrorType.RTC, ...(error as IAgoraRTCError) });
+        void this.hangup(HANGUP_REASON.ABNORMAL_END);
+        return;
+      }
+    }
 
     // 🔧 检查客户端连接状态 - 修复：同时检查CONNECTING和CONNECTED状态
     const isClientConnectedOrConnecting =
@@ -1858,18 +1888,13 @@ export class CallService {
     }
     this.rtc.remoteUser = null;
 
-    // 🔧 修复：检查客户端实际连接状态并离开频道
+    // Leave also while Agora is reconnecting so its published tracks do not
+    // remain attached to this client when the next invitation is accepted.
     if (this.client) {
-      // 🔧 关键修复：无论callStatus如何，只要客户端已连接就需要离开频道
-      if (
-        this.client.connectionState === 'CONNECTED' ||
-        this.client.connectionState === 'CONNECTING'
-      ) {
-        try {
-          await this.rtcService.leave();
-        } catch (error) {
-          logError('leave error:', error);
-        }
+      try {
+        await this.rtcService.leave();
+      } catch (error) {
+        logError('leave error:', error);
       }
 
       // 移除 Agora RTC 事件监听器（在离开频道后）

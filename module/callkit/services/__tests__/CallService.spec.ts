@@ -286,6 +286,46 @@ describe('CallService incoming call lifecycle', () => {
     ],
   });
 
+  it('accepts a new invitation for the same conference after the previous hangup finishes', async () => {
+    const store = new CallStore();
+    const { service, callSignaling, onInvitationReceived } = createService('bob', false, store);
+    let finishHangup!: () => void;
+    const endingCall = new Promise<void>(resolve => {
+      finishHangup = resolve;
+    });
+    Object.assign(service, {
+      currentCallInfo: { callId: 'incoming', kind: 'conference' },
+      callStatus: CALL_STATUS.IN_CALL,
+      endingCall,
+    });
+    callSignaling.reportRinging.mockResolvedValue(snapshot('conference'));
+    callSignaling.acceptCall.mockResolvedValue(snapshot('conference', true));
+    const invitation = {
+      callId: 'incoming',
+      kind: 'conference' as const,
+      mediaType: 'voice' as const,
+      inviter: { userId: 'alice' },
+    };
+
+    store.setInvitation(invitation);
+    expect(onInvitationReceived).not.toHaveBeenCalled();
+
+    // The previous hangup clears the store before the new invitation is handled.
+    store.clear();
+    Object.assign(service, {
+      currentCallInfo: null,
+      callStatus: CALL_STATUS.IDLE,
+      endingCall: undefined,
+    });
+    finishHangup();
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    expect(onInvitationReceived).toHaveBeenCalledOnce();
+
+    expect(store.invitation).toEqual(invitation);
+    await service.answerCall(true);
+    expect(callSignaling.acceptCall).toHaveBeenCalledWith('incoming');
+  });
+
   it.each(['single', 'conference'] as const)(
     'keeps a %s incoming call ringing until the callee accepts',
     async kind => {
@@ -505,6 +545,61 @@ describe('CallService incoming call lifecycle', () => {
     resolveToken({ appId: 'app', rtcToken: '' });
     await Promise.all([first, second]);
     expect(client.join).toHaveBeenCalledOnce();
+  });
+
+  it('leaves a stale RTC channel before publishing for a new invitation', async () => {
+    const { service, client } = createService('bob');
+    Object.assign(service, {
+      currentCallInfo: {
+        callId: 'next-call',
+        channel: 'next-call',
+        kind: 'conference',
+        type: CALL_TYPE.AUDIO_MULTI,
+      },
+      callStatus: CALL_STATUS.ALERTING,
+    });
+    Object.assign(client, {
+      connectionState: 'RECONNECTING',
+      localTracks: [{ trackMediaType: 'video' }],
+    });
+    const rtcService = (service as any).rtcService;
+    rtcService.leave.mockImplementation(async () => {
+      Object.assign(client, { connectionState: 'DISCONNECTED', localTracks: [] });
+    });
+
+    await service.joinCall();
+
+    expect(rtcService.leave).toHaveBeenCalledOnce();
+    expect(client.join).toHaveBeenCalledOnce();
+    expect(rtcService.leave.mock.invocationCallOrder[0]).toBeLessThan(
+      client.join.mock.invocationCallOrder[0],
+    );
+    expect(rtcService.publish).toHaveBeenCalledOnce();
+  });
+
+  it('leaves the RTC channel when hanging up during Agora reconnection', async () => {
+    const { service, client, callSignaling } = createService('bob');
+    Object.assign(service, {
+      currentCallInfo: {
+        callId: 'old-call',
+        channel: 'old-call',
+        kind: 'conference',
+        type: CALL_TYPE.VIDEO_MULTI,
+      },
+      callStatus: CALL_STATUS.IN_CALL,
+    });
+    Object.assign(client, { connectionState: 'RECONNECTING' });
+    vi.spyOn(service as any, 'checkAndCleanupAllMediaTracks').mockResolvedValue(undefined);
+
+    const hangup = service.hangup();
+    for (let i = 0; i < 20; i++) {
+      await Promise.resolve();
+      vi.advanceTimersByTime(100);
+    }
+    await hangup;
+
+    expect(callSignaling.leaveCall).toHaveBeenCalledWith('old-call');
+    expect((service as any).rtcService.leave).toHaveBeenCalledOnce();
   });
 
   it.each([

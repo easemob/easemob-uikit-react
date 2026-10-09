@@ -34,10 +34,7 @@ export class CallRtcService {
   }
 
   async leave(): Promise<void> {
-    if (
-      this.client.connectionState === 'CONNECTED' ||
-      this.client.connectionState === 'CONNECTING'
-    ) {
+    if (this.client.connectionState !== 'DISCONNECTED' || this.client.localTracks?.length) {
       await this.client.leave();
     }
   }
