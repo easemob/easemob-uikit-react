@@ -20,6 +20,8 @@ import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './接听电话.mp3';
 import { exchangePasswordForToken } from './login-auth';
 import { resolveCallDemoServiceConfig, type CallDemoServiceMode } from './service-config';
+import AudioTranscriptionExperiment from './AudioTranscriptionExperiment';
+import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 
 const DEFAULT_REST_URL = 'https://a1-hsb.easemob.com';
 const DEFAULT_MSYNC_URL = 'wss://im-api-new-hsb.easemob.com/websocket';
@@ -45,6 +47,7 @@ const getUrlParams = () => {
 const RealCallDemo: React.FC = () => {
   const [notification, contextHolder] = useNotification();
   const callKitRef = useRef<CallKitRef>(null);
+  const [experimentRtcClient, setExperimentRtcClient] = useState<IAgoraRTCClient | null>(null);
 
   // 从URL获取初始参数
   const urlParams = getUrlParams();
@@ -1131,9 +1134,11 @@ const RealCallDemo: React.FC = () => {
         )}
 
         {/* CallKit 组件 */}
+        <AudioTranscriptionExperiment client={experimentRtcClient} isInCall={isInCall} />
         <CallKit
           ref={callKitRef}
           rtcProvider={rtcProvider}
+          onRtcEngineCreated={setExperimentRtcClient}
           useRTCToken={false}
           // 基础配置
           layoutMode={LayoutMode.MULTI_PARTY}

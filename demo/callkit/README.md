@@ -26,6 +26,8 @@ npm run dev:demo
 
 这将在 `http://localhost:5174` 启动开发服务器。
 
+通话中播放固定语音并在接收端转写的实验步骤见 [远端语音转文字实验](./audio-transcription-experiment.md)。该实验需要另外启动本机 ASR 服务。
+
 ### 4. 连接私有调试环境
 
 登录页选择“本地代理（调试环境）”后，AppKey 可直接在表单中配置，demo 会使用以下同源地址：
