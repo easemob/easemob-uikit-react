@@ -1,5 +1,6 @@
 import { vi } from 'vitest';
 import { CallService, CALL_STATUS, CALL_TYPE, HANGUP_REASON } from '../CallService';
+import { CALL_RTC_EVENT } from '../../signaling/CallSignalingService';
 import type { CallKitRTCProvider } from '../../types';
 import CallStore from '../../store/CallStore';
 import type { CallSnapshot } from 'easemob-websdk';
@@ -175,6 +176,78 @@ describe('CallService IM userId as RTC UID', () => {
     expect(service.getRemoteAudioTrack('bob')).toBeNull();
     expect(fixture.getUserIdsWithRTCUids).not.toHaveBeenCalled();
     expect(fixture.connection.getUserIdsWithRTCUids).not.toHaveBeenCalled();
+  });
+});
+
+describe('conference video after a participant rejoins', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
+    vi.clearAllMocks();
+  });
+
+  it('keeps an already subscribed video when signaling marks the participant accepted', () => {
+    const { service, client, onRemoteVideoReady } = createService();
+    const stream = {} as MediaStream;
+    const videoTrack = {
+      getMediaStream: () => stream,
+      getMediaStreamTrack: () => ({ readyState: 'live' }),
+    };
+    Object.assign(client, {
+      remoteUsers: [{ uid: 'bob', hasVideo: true, videoTrack }],
+    });
+    Object.assign(service, {
+      currentCallInfo: { callId: 'call', type: CALL_TYPE.VIDEO_MULTI },
+      callStatus: CALL_STATUS.IN_CALL,
+    });
+    (service as any).remoteVideoTracks.set('bob', videoTrack);
+    (service as any).emitAcceptedParticipant({ userId: 'bob', state: 'accepted' });
+    expect(onRemoteVideoReady).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'remote-bob', cameraEnabled: true, stream }),
+    );
+  });
+
+  it('subscribes to an existing Agora video if the publication event was missed', async () => {
+    const { service, client, onRemoteVideoReady } = createService();
+    const stream = {} as MediaStream;
+    const videoTrack = {
+      getMediaStream: () => stream,
+      getMediaStreamTrack: () => ({ readyState: 'live' }),
+    };
+    Object.assign(client, {
+      remoteUsers: [{ uid: 'bob', hasVideo: true, videoTrack }],
+    });
+    Object.assign(service, {
+      currentCallInfo: { callId: 'call', type: CALL_TYPE.VIDEO_MULTI },
+      callStatus: CALL_STATUS.IN_CALL,
+    });
+    (service as any).emitAcceptedParticipant({ userId: 'bob', state: 'accepted' });
+    vi.advanceTimersByTime(1500);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect((service as any).rtcService.subscribe).toHaveBeenCalledWith(
+      (client as any).remoteUsers[0],
+      'video',
+    );
+    expect(onRemoteVideoReady).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 'remote-bob', cameraEnabled: true, stream }),
+    );
+  });
+
+  it('drops the old stream when signaling reports that a participant left', () => {
+    const { service } = createService();
+    Object.assign(service, {
+      currentCallInfo: { callId: 'call', type: CALL_TYPE.VIDEO_MULTI },
+      callStatus: CALL_STATUS.IN_CALL,
+    });
+    (service as any).remoteVideoTracks.set('bob', { stop: vi.fn() });
+    (service as any).remoteVideoStreams.set('bob', {});
+    (service as any).pendingVideoTracks.set('remote-bob', {});
+    (service as any).emitTerminalParticipant({ userId: 'bob', state: 'left' });
+    expect((service as any).remoteVideoTracks.has('bob')).toBe(false);
+    expect((service as any).remoteVideoStreams.has('bob')).toBe(false);
+    expect((service as any).pendingVideoTracks.has('remote-bob')).toBe(false);
   });
 });
 
@@ -603,6 +676,56 @@ describe('CallService incoming call lifecycle', () => {
   });
 
   it.each([
+    ['before another member accepts', undefined, false, 'cancelCall', 'leaveCall'],
+    ['after another member accepts', 2, false, 'leaveCall', 'cancelCall'],
+    [
+      'after a member leaves with a stale establishment timestamp',
+      undefined,
+      true,
+      'leaveCall',
+      'cancelCall',
+    ],
+  ] as const)(
+    'ends a conference %s with %s',
+    async (_phase, establishedAt, memberLeft, operation, other) => {
+      const store = new CallStore();
+      const call = snapshot('conference');
+      store.setSnapshot({
+        ...call,
+        establishedAt,
+        participants: memberLeft
+          ? [
+              { userId: 'alice', state: 'accepted' },
+              { userId: 'bob', state: 'left', acceptedAt: 2 },
+            ]
+          : call.participants,
+      });
+      const { service, callSignaling } = createService('alice', false, store);
+      Object.assign(service, {
+        currentCallInfo: {
+          callId: 'incoming',
+          channel: 'incoming',
+          kind: 'conference',
+          callerUserId: 'alice',
+          type: CALL_TYPE.AUDIO_MULTI,
+        },
+        callStatus: CALL_STATUS.IN_CALL,
+      });
+      vi.spyOn(service as any, 'checkAndCleanupAllMediaTracks').mockResolvedValue(undefined);
+
+      const hangup = service.hangup();
+      for (let i = 0; i < 20; i++) {
+        await Promise.resolve();
+        vi.advanceTimersByTime(100);
+      }
+      await hangup;
+
+      expect(callSignaling[operation]).toHaveBeenCalledWith('incoming');
+      expect(callSignaling[other]).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
     ['alice', CALL_STATUS.INVITING, HANGUP_REASON.NO_RESPONSE, 'syncCall'],
     ['alice', CALL_STATUS.INVITING, HANGUP_REASON.TIMEOUT, 'syncCall'],
     ['alice', CALL_STATUS.INVITING, HANGUP_REASON.ABNORMAL_END, 'cancelCall'],
@@ -701,6 +824,73 @@ describe('CallService incoming call lifecycle', () => {
     expect(service.getCallStatus()).toBe(CALL_STATUS.INVITING);
   });
 
+  it('sends a call record text message with the record ext', async () => {
+    const { service, connection, callSignaling } = createService('alice');
+    const onCallRecordMessage = vi.fn();
+    const createTextMessage = vi.fn(option => ({ ...option, type: 'text', msgLocalId: 'local-1' }));
+    const sendMessage = vi
+      .fn()
+      .mockResolvedValueOnce({
+        type: 'text',
+        msgLocalId: 'local-1',
+        msgServerId: 'server-1',
+        conversationId: 'bob',
+        conversationType: 'singleChat',
+        direct: 'SEND',
+      })
+      .mockRejectedValueOnce(new Error('network'));
+    Object.assign(connection, { chatManager: { createTextMessage, sendMessage } });
+    Object.assign(service, { onCallRecordMessage });
+    callSignaling.createCall.mockResolvedValue(snapshot('single'));
+
+    await service.startCall({
+      to: 'bob',
+      msg: '邀请您进行语音通话',
+      chatType: 'singleChat',
+      callType: CALL_TYPE.AUDIO_1V1,
+    });
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+
+    expect(createTextMessage).toHaveBeenCalledWith({
+      conversationId: 'bob',
+      conversationType: 'singleChat',
+      content: '邀请您进行语音通话',
+      ext: {
+        ecukRecordVersion: 1,
+        ecukRecordCallId: 'incoming',
+        ecukRecordMediaType: 0,
+        ecukRecordEndReason: -1,
+        ecukRecordDurationMs: 0,
+        ecukRecordFinal: false,
+      },
+    });
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(onCallRecordMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ msgServerId: 'server-1' }),
+    );
+  });
+
+  it('does not retry a call record message when sending fails', async () => {
+    const { service, connection, callSignaling } = createService('alice');
+    const onCallRecordMessage = vi.fn();
+    const createTextMessage = vi.fn(option => ({ ...option, type: 'text', msgLocalId: 'local-1' }));
+    const sendMessage = vi.fn().mockRejectedValue(new Error('network'));
+    Object.assign(connection, { chatManager: { createTextMessage, sendMessage } });
+    Object.assign(service, { onCallRecordMessage });
+    callSignaling.createCall.mockResolvedValue(snapshot('single'));
+
+    await service.startCall({
+      to: 'bob',
+      msg: '邀请您进行语音通话',
+      chatType: 'singleChat',
+      callType: CALL_TYPE.AUDIO_1V1,
+    });
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    expect(onCallRecordMessage).not.toHaveBeenCalled();
+  });
+
   it('creates a conference for explicit users without an IM group and invites more users', async () => {
     const { service, callSignaling, onCallStart } = createService('alice');
     callSignaling.createCall.mockResolvedValue({
@@ -732,6 +922,47 @@ describe('CallService incoming call lifecycle', () => {
       userIds: ['david', 'emma'],
       timeoutSeconds: 30,
     });
+  });
+
+  it('reports microphone, camera and camera-switch RTC events', async () => {
+    const { service, callSignaling } = createService('alice');
+    const reportRtcEvent = vi.fn().mockResolvedValue(undefined);
+    Object.assign(callSignaling, { reportRtcEvent });
+    Object.assign(service, {
+      currentCallInfo: { callId: 'incoming' },
+      callStatus: CALL_STATUS.INVITING,
+      rtc: {
+        localAudioTrack: { enabled: true, setEnabled: vi.fn() },
+        localVideoTrack: {
+          enabled: true,
+          close: vi.fn(),
+          getMediaStreamTrack: () => ({ stop: vi.fn() }),
+        },
+      },
+    });
+
+    const openedVideoTrack = {
+      enabled: true,
+      close: vi.fn(),
+      setDevice: vi.fn().mockResolvedValue(undefined),
+      getMediaStreamTrack: () => ({ getSettings: () => ({ deviceId: 'camera-1' }), stop: vi.fn() }),
+    };
+    (service as any).mediaService.createVideoTrack.mockResolvedValue(openedVideoTrack);
+
+    await expect(service.toggleMute()).resolves.toBe(false);
+    await expect(service.toggleMute()).resolves.toBe(true);
+    await expect(service.toggleCamera()).resolves.toBe(false);
+    await expect(service.toggleCamera()).resolves.toBe(true);
+    await expect(service.flipCamera('camera-2')).resolves.toBe(true);
+
+    expect(reportRtcEvent.mock.calls.map(([, params]) => params.event)).toEqual([
+      CALL_RTC_EVENT.microphoneOff,
+      CALL_RTC_EVENT.microphoneOn,
+      CALL_RTC_EVENT.cameraOff,
+      CALL_RTC_EVENT.cameraOn,
+      CALL_RTC_EVENT.switchCamera,
+    ]);
+    expect(reportRtcEvent).toHaveBeenCalledWith('incoming', { event: CALL_RTC_EVENT.switchCamera });
   });
 
   it('does not add users to a single call', async () => {

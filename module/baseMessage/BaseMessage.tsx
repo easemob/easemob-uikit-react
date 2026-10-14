@@ -32,6 +32,7 @@ import { EmojiConfig } from '../messageInput/emoji/Emoji';
 import { RootContext } from '../store/rootContext';
 import { use } from 'i18next';
 import { useIsMobile } from '../hooks/useScreen';
+import { getCallRecordIcon, isCallRecordMessage } from '../utils/callRecord';
 interface CustomAction {
   visible: boolean;
   icon?: ReactNode;
@@ -165,17 +166,7 @@ const canModifyMessage = (message: BaseMessageType) => {
   }
 };
 
-const getRtcMsgIcon = (message: BaseMessageType) => {
-  if (message?.ext?.rtcIsEnd || !message?.msgServerId) {
-    if (message?.ext?.type === 0) {
-      return 'PHONE_HANG';
-    } else {
-      return 'VIDEO_CAMERA';
-    }
-  } else {
-    return 'PHONE_PICK';
-  }
-};
+const getRtcMsgIcon = (message: BaseMessageType) => getCallRecordIcon(message);
 
 // 全局状态：当前打开的菜单
 let currentOpenMenuId: string | null = null;
@@ -410,7 +401,7 @@ let BaseMessage = (props: BaseMessageProps) => {
   };
 
   let isRtcInviteMessage = false;
-  if (message?.type === 'text' && message?.ext?.msgType === 'rtcCallWithAgora') {
+  if ((message?.type === 'text' || message?.type === 'txt') && isCallRecordMessage(message)) {
     isRtcInviteMessage = true;
   }
   const contentNode = hasBubble ? (

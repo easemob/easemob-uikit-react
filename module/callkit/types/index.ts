@@ -148,7 +148,8 @@ export interface CallKitRef {
     /** 直接邀请这些 IM userId；提供时跳过内置成员选择器。 */
     userIds?: string[];
     callType: 'video' | 'audio';
-    msg: string;
+    /** 通话记录文本。留空时按当前语言使用内置邀请文案。 */
+    msg?: string;
     ext?: Record<string, any>;
   }) => Promise<CallSnapshot | null>; // 未提供 userIds 时按 groupId 显示成员选择器
 
@@ -156,7 +157,9 @@ export interface CallKitRef {
   startSingleCall: (options: {
     to: string;
     callType: 'video' | 'audio';
-    msg: string;
+    /** 通话记录文本。留空时按当前语言使用内置邀请文案。 */
+    msg?: string;
+    ext?: Record<string, any>;
   }) => Promise<CallSnapshot | null>; // 发起真实通话
   answerCall: (result: boolean) => void; // 接听真实通话
   exitCall: (reason?: string) => void; // 挂断真实通话

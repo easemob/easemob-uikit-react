@@ -56,6 +56,21 @@ describe('CallSignalingService', () => {
     expect(store.snapshot).toBe(result);
   });
 
+  it('reports an RTC event and stores the returned snapshot', async () => {
+    const manager = {
+      reportRtcEvent: vi.fn().mockResolvedValue(result),
+      addEventHandler: vi.fn(),
+      removeEventHandler: vi.fn(),
+    };
+    const store = new CallStore();
+    const service = new CallSignalingService({ callSignalingManager: manager } as any, store);
+
+    await expect(service.reportRtcEvent(result.callId, { event: 1 })).resolves.toBe(result);
+
+    expect(manager.reportRtcEvent).toHaveBeenCalledWith(result.callId, { event: 1 });
+    expect(store.snapshot).toBe(result);
+  });
+
   it('uses independent event handlers for Provider and CallService lifecycles', () => {
     const handlers = new Map<string, Record<string, (payload: any) => void>>();
     const manager = {

@@ -9,6 +9,7 @@ import type {
   InviteParticipantsParams,
   JoinCallParams,
   RejectCallParams,
+  ReportRtcEventParams,
 } from 'easemob-websdk';
 import CallStore from '../store/CallStore';
 import { logger } from '../utils/logger';
@@ -26,6 +27,15 @@ export interface CallSignalingServiceOptions {
 }
 
 let eventHandlerSequence = 0;
+
+/** SDK `reportRtcEvent` 的 event 取值。 */
+export const CALL_RTC_EVENT = {
+  microphoneOn: 1,
+  microphoneOff: 2,
+  cameraOn: 3,
+  cameraOff: 4,
+  switchCamera: 5,
+} as const;
 
 /** UIKit adapter for the SDK-native Fusion call signaling manager. */
 export class CallSignalingService {
@@ -162,6 +172,10 @@ export class CallSignalingService {
 
   syncCall(callId: string): Promise<CallSnapshot> {
     return this.capture(this.client.callSignalingManager.getCallSnapshot(callId));
+  }
+
+  reportRtcEvent(callId: string, params: ReportRtcEventParams): Promise<CallSnapshot> {
+    return this.capture(this.client.callSignalingManager.reportRtcEvent(callId, params));
   }
 
   private async capture(request: Promise<CallSnapshot>): Promise<CallSnapshot> {

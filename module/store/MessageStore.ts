@@ -27,6 +27,13 @@ import {
 } from '../utils/index';
 
 import { resetCache } from '../hooks/useHistoryMsg';
+import i18n from 'i18next';
+import {
+  applyStoredCallRecord,
+  isCallRecordExt,
+  isLegacyRtcInvite,
+  type CallRecordPatch,
+} from '../utils/callRecord';
 let debounceTimer: any = null;
 export interface Message {
   singleChat: { [key: string]: (ChatSDK.Message | NoticeMessageBody)[] };
@@ -99,6 +106,8 @@ class MessageStore {
       modifyMessage: action,
       sendChannelAck: action,
       updateMessageStatus: action,
+      patchCallRecord: action,
+      applyStoredCallRecords: action,
       applyMessageReadReceipts: action,
       sendReadReceiptsForConversation: action,
       addHistoryMsgs: action,
@@ -157,6 +166,55 @@ class MessageStore {
     } else {
       this.message[chatType][to].push(message);
     }
+  }
+
+  patchCallRecord(callId: string, patch: CallRecordPatch, content?: string) {
+    if (!callId) return;
+    const apply = (message: ChatSDK.Message) => {
+      if (message.ext?.ecukRecordCallId !== callId) return message;
+      const next = {
+        ...message,
+        ext: {
+          ...(message.ext || {}),
+          ecukRecordEndReason: patch.endReason,
+          ecukRecordDurationMs: patch.durationMs,
+          ecukRecordFinal: patch.final,
+        },
+        body: patch.final && content ? { ...(message.body || {}), content } : message.body,
+      } as ChatSDK.Message;
+      const id = getMessageId(next);
+      if (id) this.message.byId.set(id, next);
+      if (next.msgLocalId) this.message.byId.set(next.msgLocalId, next);
+      if (next.msgServerId) this.message.byId.set(next.msgServerId, next);
+      return next;
+    };
+    runInAction(() => {
+      (['singleChat', 'groupChat'] as const).forEach(chatType => {
+        const bucket = this.message[chatType];
+        Object.keys(bucket).forEach(conversationId => {
+          bucket[conversationId] = (bucket[conversationId] || []).map(item =>
+            apply(item as ChatSDK.Message),
+          );
+        });
+      });
+    });
+  }
+
+  applyStoredCallRecords() {
+    const userId = getCurrentUserId(this.rootStore.client);
+    const translate = i18n.t.bind(i18n);
+    runInAction(() => {
+      (['singleChat', 'groupChat'] as const).forEach(chatType => {
+        const bucket = this.message[chatType];
+        Object.keys(bucket).forEach(conversationId => {
+          bucket[conversationId] = (bucket[conversationId] || []).map(item => {
+            const message = item as ChatSDK.Message;
+            applyStoredCallRecord(message, userId, translate);
+            return message;
+          });
+        });
+      });
+    });
   }
 
   // internal use
@@ -328,10 +386,12 @@ class MessageStore {
     const conversationType = this.getSdkConversationType(message);
     const currentUserId = getCurrentUserId(this.rootStore.client);
     const messageId = getMessageId(message);
-    // rtc invite message
-    if (
+    if (isCallRecordExt(message.ext)) {
+      applyStoredCallRecord(message, currentUserId, i18n.t.bind(i18n));
+      if (messageId && this.message.byId.has(messageId)) return;
+    } else if (
       (message.type === 'txt' || message.type === 'text') &&
-      message.ext?.msgType === 'rtcCallWithAgora'
+      isLegacyRtcInvite(message.ext)
     ) {
       message.ext.rtcIsEnd = false;
     }
@@ -626,8 +686,10 @@ class MessageStore {
       );
     }
     // Index history messages so per-message ack (e.g. voice play) can resolve them
+    const userId = getCurrentUserId(this.rootStore.client);
     msgs.forEach((msg: ChatSDK.Message) => {
       if (!msg) return;
+      applyStoredCallRecord(msg, userId, i18n.t.bind(i18n));
       if (msg.msgLocalId) this.setKeyValue(msg.msgLocalId, msg);
       if (msg.msgServerId) this.setKeyValue(msg.msgServerId, msg);
     });

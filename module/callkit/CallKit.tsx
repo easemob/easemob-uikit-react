@@ -37,7 +37,8 @@ import { logger, LogLevel } from './utils/logger';
 import './styles/index.scss';
 import CallError, { CallErrorCode } from './services/CallError';
 import { useIsMobile } from '../hooks/useScreen';
-import { getCurrentUserId } from '../utils';
+import { getCurrentUserId, getMessageId } from '../utils';
+import { recoverUnfinishedCallRecords } from '../utils/callRecord';
 import rootStore from '../store';
 import { RootContext } from '../store/rootContext';
 import CallSignalingService from './signaling/CallSignalingService';
@@ -760,7 +761,30 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         callSignaling: new CallSignalingService(chatClient, rootStore.callStore),
         callStore: rootStore.callStore,
         invitationTimeoutSeconds: autoRejectTime,
+        onCallRecordMessage: message => {
+          const messageId = getMessageId(message);
+          if (messageId && rootStore.messageStore.message.byId.has(messageId)) return;
+          const chatType = message.conversationType === 'groupChat' ? 'groupChat' : 'singleChat';
+          rootStore.messageStore.addMessage(message, chatType, message.conversationId);
+          if (message.msgLocalId)
+            rootStore.messageStore.message.byId.set(message.msgLocalId, message);
+          if (message.msgServerId)
+            rootStore.messageStore.message.byId.set(message.msgServerId, message);
+        },
+        onCallRecordPatch: (callId, patch, content) => {
+          rootStore.messageStore.patchCallRecord(callId, patch, content);
+        },
       };
+      const recoveredFlag = 'easemob.uikit.callRecord.recovered';
+      if (typeof sessionStorage === 'undefined' || !sessionStorage.getItem(recoveredFlag)) {
+        recoverUnfinishedCallRecords(getCurrentUserId(chatClient));
+        try {
+          sessionStorage?.setItem(recoveredFlag, '1');
+        } catch {
+          // 会话标记写失败时，下次进入仍会再尝试收尾未完成记录。
+        }
+      }
+      rootStore.messageStore.applyStoredCallRecords();
 
       const callService = new CallService(config);
       callServiceRef.current = callService;
@@ -933,7 +957,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         groupId?: string;
         userIds?: string[];
         callType: 'video' | 'audio';
-        msg: string;
+        msg?: string;
         ext?: Record<string, any>;
       }): Promise<CallSnapshot | null> => {
         if (isInCall || callStatus !== 'idle') {
@@ -1017,7 +1041,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           return null;
         }
 
-        groupCallInviteMsg = options.msg;
+        groupCallInviteMsg = options.msg || '';
 
         return new Promise<CallSnapshot | null>((resolve, reject) => {
           groupCallPromiseRef.current = { resolve, reject };
@@ -1055,7 +1079,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
       startSingleCall: async (options: {
         to: string;
         callType: 'video' | 'audio';
-        msg: string;
+        msg?: string;
         ext?: Record<string, any>;
       }) => {
         if (isInCall || callStatus !== 'idle') {
@@ -2565,8 +2589,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   const handleCameraFlip = React.useCallback(
     async (deviceId: string) => {
       if (hasInitialized && callServiceRef.current) {
-        callServiceRef.current.flipCamera(deviceId);
-        const success = await callServiceRef.current?.flipCamera(deviceId);
+        const success = await callServiceRef.current.flipCamera(deviceId);
         onCameraFlip?.(deviceId, success);
       }
     },

@@ -27,6 +27,7 @@ import {
 import { convertToMessage } from '../messageInput/textarea/util';
 import Icon from '../../component/icon';
 import { useTranslation } from 'react-i18next';
+import { getCallRecordShownText } from '../utils/callRecord';
 import Textarea from '../messageInput/textarea';
 import { ForwardRefProps } from '../messageInput/textarea/Textarea';
 import { observer } from 'mobx-react-lite';
@@ -189,7 +190,7 @@ let TextMessage = (props: TextMessageProps) => {
   const messageId = getMessageId(sdkMessage);
   const messageTime = getMessageTime(sdkMessage);
   let { bySelf, from, reactions } = uiMessage;
-  let msg = getTextContent(sdkMessage);
+  let msg = getCallRecordShownText(sdkMessage, t) || getTextContent(sdkMessage);
   const classString = classNames(prefixCls, className);
   const textareaRef = useRef<ForwardRefProps>(null);
   const context = React.useContext(RootContext);
@@ -527,13 +528,6 @@ let TextMessage = (props: TextMessageProps) => {
     };
   }, [msg, currentIndex]);
 
-  if (
-    sdkMessage.ext?.msgType === 'rtcCallWithAgora' &&
-    !sdkMessage.msgServerId &&
-    sdkMessage.ext.rtcIsEnd == undefined
-  ) {
-    msg = '通话已结束';
-  }
   return (
     <>
       {onlyContent ? (

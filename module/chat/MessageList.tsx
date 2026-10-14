@@ -44,6 +44,7 @@ import {
   getMessageTime,
   getTextContent,
 } from '../utils';
+import { getGroupCallRecordNoticeText, isCallRecordMessage } from '../utils/callRecord';
 // 消息渲染器的参数类型
 export type MessageListItem = ChatSDK.Message | NoticeMessageBody;
 
@@ -196,17 +197,9 @@ let MessageList: FC<MsgListProps> = props => {
         const message = ctx.message as ChatSDK.Message;
         // 处理 RTC 邀请消息
         if (message?.conversationType === 'groupChat') {
-          const isRtcInviteMessage = message?.ext?.msgType === 'rtcCallWithAgora';
+          const isRtcInviteMessage = isCallRecordMessage(message);
           if (isRtcInviteMessage) {
-            let msg = '';
-            if (
-              message.ext.rtcIsEnd ||
-              (!message.msgServerId && message.ext.rtcIsEnd == undefined)
-            ) {
-              msg = '通话已结束';
-            } else {
-              msg = getTextContent(message);
-            }
+            const msg = getGroupCallRecordNoticeText(message, t);
             return (
               <NoticeMessage
                 noticeMessage={
@@ -233,7 +226,7 @@ let MessageList: FC<MsgListProps> = props => {
             onOpenThreadPanel={ctx.onOpenThreadPanel || (() => {})}
             {...memoProps.messageProps}
             onClick={msg => {
-              const isRtcInviteMessage = message?.ext?.msgType === 'rtcCallWithAgora';
+              const isRtcInviteMessage = isCallRecordMessage(message);
               isRtcInviteMessage && ctx.onRtcInviteMessageClick?.(message);
               memoProps.messageProps?.onClick?.(msg);
               return true;
@@ -308,7 +301,7 @@ let MessageList: FC<MsgListProps> = props => {
         return null;
       },
     };
-  }, [isThread, messageProps, renderUserProfile, onRtcInviteMessageClick]);
+  }, [isThread, messageProps, renderUserProfile, onRtcInviteMessageClick, t]);
 
   // 合并默认渲染器和自定义渲染器
   const mergedRenderers = useMemo(() => {

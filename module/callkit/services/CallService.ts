@@ -12,7 +12,7 @@ import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../uti
 import CallAudioService from '../audio/CallAudioService';
 import { reaction } from 'mobx';
 import type CallStore from '../store/CallStore';
-import type CallSignalingService from '../signaling/CallSignalingService';
+import CallSignalingService, { CALL_RTC_EVENT } from '../signaling/CallSignalingService';
 import type {
   CallHandledOnOtherDevicePayload,
   CallInvitationReceivedPayload,
@@ -24,6 +24,17 @@ import type {
 import CallRtcService from '../rtc/CallRtcService';
 import CallMediaService from '../rtc/CallMediaService';
 import { diffParticipants, isTerminalParticipant } from '../signaling/participantDiff';
+import i18n from 'i18next';
+import {
+  buildCallRecordExt,
+  callTypeToRecordMediaType,
+  formatCallRecordFinalText,
+  resolveCallRecordContent,
+  resolveCallRecordDurationMs,
+  saveCallRecordPatch,
+  toCallRecordEndReason,
+  type CallRecordPatch,
+} from '../../utils/callRecord';
 
 // Call status enum
 export enum CALL_STATUS {
@@ -131,6 +142,10 @@ export interface CallServiceConfig {
   callSignaling: CallSignalingService;
   callStore?: CallStore;
   invitationTimeoutSeconds?: number;
+  /** 通话记录发送成功后插入本地消息列表。失败不回调。 */
+  onCallRecordMessage?: (message: ChatSDK.Message) => void;
+  /** 只更新本地通话记录，不修改服务端消息。 */
+  onCallRecordPatch?: (callId: string, patch: CallRecordPatch, content?: string) => void;
 }
 
 export class CallService {
@@ -236,6 +251,12 @@ export class CallService {
   private nativeEndRequested = false;
   private invitationTimeoutSeconds = 30;
   private outgoingTimeoutCheck?: ReturnType<typeof setTimeout>;
+  private onCallRecordMessage?: (message: ChatSDK.Message) => void;
+  private onCallRecordPatch?: (callId: string, patch: CallRecordPatch, content?: string) => void;
+  private recordDurationTimer?: ReturnType<typeof setInterval>;
+  private recordConnectedAtMs?: number;
+  private recordContent = '';
+  private recordMediaType: 0 | 1 | 2 = 0;
   private rtcService: CallRtcService;
   private mediaService: CallMediaService;
   private signalingParticipants: CallParticipant[] = [];
@@ -280,6 +301,8 @@ export class CallService {
     this.callSignaling = config.callSignaling;
     this.callStore = config.callStore;
     this.invitationTimeoutSeconds = config.invitationTimeoutSeconds ?? 30;
+    this.onCallRecordMessage = config.onCallRecordMessage;
+    this.onCallRecordPatch = config.onCallRecordPatch;
 
     // Get necessary information from WebIM connection
     this.agoraUid = '';
@@ -558,13 +581,96 @@ export class CallService {
       participant.userId,
       this.convertCallTypeToString(this.currentCallInfo!.type),
     );
-    this.onRemoteVideoReady?.(
-      this.createParticipantVideo(participant.userId, { isWaiting: false }),
+    const currentRemote = this.client?.remoteUsers?.find(
+      (user: IAgoraRTCRemoteUser) => this.toUidKey(user.uid) === participant.userId,
     );
+    const currentTrack = this.remoteVideoTracks.get(participant.userId);
+    const stream =
+      currentRemote?.hasVideo && currentRemote.videoTrack === currentTrack
+        ? this.getRemoteVideoStream(participant.userId)
+        : undefined;
+    this.onRemoteVideoReady?.({
+      ...this.createParticipantVideo(participant.userId, { isWaiting: false }),
+      muted: !this.remoteAudioTracks.has(participant.userId),
+      cameraEnabled: Boolean(stream),
+      stream,
+    });
+    if (this.currentCallInfo?.type === CALL_TYPE.VIDEO_MULTI) {
+      this.recoverAcceptedParticipantVideo(participant.userId, this.currentCallInfo.callId);
+    }
+  }
+
+  private recoverAcceptedParticipantVideo(userId: string, callId: string): void {
+    // A participant can be accepted before Agora reports a new publication. In
+    // particular, the same UID can leave and rejoin while the caller stays in
+    // the channel. Check the remote user list after the normal event has had a
+    // chance to arrive, so a missed publication cannot leave an avatar forever.
+    let recovered = false;
+    let subscribing = false;
+    for (const delay of [1500, 4000, 8000]) {
+      setTimeout(async () => {
+        if (
+          recovered ||
+          subscribing ||
+          this.currentCallInfo?.callId !== callId ||
+          this.callStatus !== CALL_STATUS.IN_CALL
+        ) {
+          return;
+        }
+        const remoteUser = this.client?.remoteUsers?.find(
+          (user: IAgoraRTCRemoteUser) => this.toUidKey(user.uid) === userId,
+        );
+        const existingTrack = this.remoteVideoTracks.get(userId);
+        const mediaTrack = existingTrack?.getMediaStreamTrack?.();
+        if (
+          remoteUser?.hasVideo &&
+          existingTrack &&
+          remoteUser.videoTrack === existingTrack &&
+          mediaTrack?.readyState !== 'ended'
+        ) {
+          const stream = this.getRemoteVideoStream(userId);
+          if (stream) {
+            recovered = true;
+            this.onRemoteVideoReady?.({
+              ...this.createParticipantVideo(userId, { isWaiting: false }),
+              muted: !this.remoteAudioTracks.has(userId),
+              cameraEnabled: true,
+              stream,
+            });
+            return;
+          }
+        }
+        if (!remoteUser?.hasVideo) return;
+        try {
+          subscribing = true;
+          await this.rtcService.subscribe(remoteUser, 'video');
+          const videoTrack = remoteUser.videoTrack;
+          if (!videoTrack || this.currentCallInfo?.callId !== callId) return;
+          this.remoteVideoStreams.delete(userId);
+          this.remoteVideoTracks.set(userId, videoTrack);
+          const stream = this.getRemoteVideoStream(userId);
+          if (stream) recovered = true;
+          this.onRemoteVideoReady?.({
+            ...this.createParticipantVideo(userId, { isWaiting: false }),
+            muted: !this.remoteAudioTracks.has(userId),
+            cameraEnabled: true,
+            stream,
+          });
+          if (!stream) this.playRemoteVideoToExistingElements(videoTrack, userId);
+        } catch (error) {
+          logWarn(`Failed to recover remote video for ${userId}`, error);
+        } finally {
+          subscribing = false;
+        }
+      }, delay);
+    }
   }
 
   private emitTerminalParticipant(participant: CallParticipant): void {
     if (participant.userId === this.getCurrentUserId()) return;
+    this.remoteVideoTracks.delete(participant.userId);
+    this.remoteVideoStreams.delete(participant.userId);
+    this.pendingVideoTracks.delete(`remote-${participant.userId}`);
     if (participant.state === 'left' || participant.state === 'hanguped') {
       this.onRemoteUserLeft?.(
         participant.userId,
@@ -746,7 +852,7 @@ export class CallService {
 
   // Start call
   async startCall(options: {
-    msg: string;
+    msg?: string;
     callId?: string;
     channel?: string;
     chatType: string;
@@ -820,6 +926,9 @@ export class CallService {
     // Update status
     this.callStatus = CALL_STATUS.INVITING;
     this.invitedMembers = members;
+    this.recordMediaType = callTypeToRecordMediaType(callType);
+    this.recordContent = resolveCallRecordContent(options.msg, this.recordMediaType);
+    void this.sendCallRecordMessages(this.recordTargets(options.groupId, to));
     if (!isConference) {
       this.scheduleOutgoingTimeoutCheck(
         resolvedCallId,
@@ -1485,6 +1594,8 @@ export class CallService {
     logDebug('Join call:', this.currentCallInfo, this.userInfos);
     // 更新状态
     this.callStatus = CALL_STATUS.IN_CALL;
+    this.recordConnectedAtMs = Date.now();
+    this.startRecordDurationUpdates();
     this.callTimer.start(this.onCallDurationUpdate);
 
     // 确保通话开始时扬声器状态为开启
@@ -1637,15 +1748,146 @@ export class CallService {
     logDebug('Successfully joined call:', uid);
   }
 
+  private stopRecordDurationUpdates() {
+    if (this.recordDurationTimer) {
+      clearInterval(this.recordDurationTimer);
+      this.recordDurationTimer = undefined;
+    }
+  }
+
+  private startRecordDurationUpdates() {
+    this.stopRecordDurationUpdates();
+    this.recordDurationTimer = setInterval(() => {
+      if (!this.currentCallInfo || this.callStatus !== CALL_STATUS.IN_CALL) return;
+      const durationMs = this.recordConnectedAtMs ? Date.now() - this.recordConnectedAtMs : 0;
+      this.publishCallRecordPatch(this.currentCallInfo.callId, {
+        endReason: -1,
+        durationMs,
+        final: false,
+      });
+    }, 5000);
+  }
+
+  private publishCallRecordPatch(callId: string, patch: CallRecordPatch, content?: string) {
+    saveCallRecordPatch(this.getCurrentUserId(), callId, patch);
+    this.onCallRecordPatch?.(callId, patch, content);
+  }
+
+  private finalizeCallRecord(reason: string) {
+    this.stopRecordDurationUpdates();
+    const callInfo = this.currentCallInfo;
+    if (!callInfo) return;
+    const wasConnected = this.callStatus === CALL_STATUS.IN_CALL;
+    const snapshot =
+      this.callStore?.snapshot?.callId === callInfo.callId ? this.callStore.snapshot : undefined;
+    const self = snapshot?.participants.find(item => item.userId === this.getCurrentUserId());
+    const durationMs = resolveCallRecordDurationMs({
+      wasConnected,
+      connectedAtMs: this.recordConnectedAtMs,
+      acceptedAt: self?.acceptedAt,
+      leftAt: self?.leftAt,
+      establishedAt: snapshot?.establishedAt,
+      endedAt: snapshot?.endedAt,
+    });
+    const endReason = toCallRecordEndReason(reason, {
+      wasConnected,
+      isCaller: callInfo.callerUserId === this.getCurrentUserId(),
+    });
+    const patch = { endReason, durationMs, final: true as const };
+    this.publishCallRecordPatch(
+      callInfo.callId,
+      patch,
+      formatCallRecordFinalText(
+        {
+          ecukRecordEndReason: endReason,
+          ecukRecordDurationMs: durationMs,
+        },
+        i18n.t.bind(i18n),
+      ),
+    );
+    this.recordConnectedAtMs = undefined;
+  }
+
+  private recordTargets(groupId: string | undefined, to: string | string[]) {
+    if (this.recordMediaType === 2 && groupId) {
+      return [{ conversationId: groupId, conversationType: 'groupChat' as const }];
+    }
+    return (Array.isArray(to) ? to : [to])
+      .filter(Boolean)
+      .map(conversationId => ({ conversationId, conversationType: 'singleChat' as const }));
+  }
+
+  private async sendCallRecordMessages(
+    targets: Array<{ conversationId: string; conversationType: 'singleChat' | 'groupChat' }>,
+  ) {
+    const callId = this.currentCallInfo?.callId;
+    const chatManager = this.connection?.chatManager;
+    if (
+      !callId ||
+      !targets.length ||
+      !chatManager?.createTextMessage ||
+      !chatManager?.sendMessage
+    ) {
+      logger.log('[call-record] skip invite text message', {
+        callId,
+        targetCount: targets.length,
+        hasChatManager: Boolean(chatManager),
+        hasCreateTextMessage: Boolean(chatManager?.createTextMessage),
+        hasSendMessage: Boolean(chatManager?.sendMessage),
+      });
+      return;
+    }
+    logger.log('[call-record] sending invite text message after createCall', {
+      callId,
+      content: this.recordContent,
+      targets,
+    });
+    const ext = buildCallRecordExt(callId, this.recordMediaType);
+    for (const target of targets) {
+      try {
+        const message = chatManager.createTextMessage({
+          conversationId: target.conversationId,
+          conversationType: target.conversationType,
+          content: this.recordContent,
+          ext: { ...ext },
+        });
+        const sent = (await chatManager.sendMessage(message)) || message;
+        if (!sent.direct) sent.direct = 'SEND';
+        saveCallRecordPatch(this.getCurrentUserId(), callId, {
+          endReason: -1,
+          durationMs: 0,
+          final: false,
+        });
+        this.onCallRecordMessage?.(sent);
+        logger.log('[call-record] invite text message sent', {
+          callId,
+          conversationId: target.conversationId,
+          conversationType: target.conversationType,
+          content: this.recordContent,
+          msgLocalId: sent.msgLocalId,
+          msgServerId: sent.msgServerId,
+        });
+      } catch (error) {
+        logger.log('[call-record] invite text message send failed', {
+          callId,
+          conversationId: target.conversationId,
+          conversationType: target.conversationType,
+          error,
+        });
+      }
+    }
+  }
+
   // 挂断通话
   async hangup(reason: string = HANGUP_REASON.HANGUP, isCancel: boolean = false) {
     this.clearOutgoingTimeoutCheck();
     if (this.endingCall) return this.endingCall;
+    const recordReason = reason;
     const endReason =
       reason === HANGUP_REASON.NO_RESPONSE || reason === HANGUP_REASON.REMOTE_NO_RESPONSE
         ? HANGUP_REASON.TIMEOUT
         : reason;
-    const request = this.performHangup(endReason, isCancel);
+    const request = this.performHangup(endReason, isCancel, recordReason);
     this.endingCall = request;
     try {
       await request;
@@ -1654,8 +1896,9 @@ export class CallService {
     }
   }
 
-  private async performHangup(reason: string, isCancel: boolean) {
+  private async performHangup(reason: string, isCancel: boolean, recordReason = reason) {
     const endingCallId = this.currentCallInfo?.callId;
+    this.finalizeCallRecord(recordReason);
     logDebug('hangup method called:', { reason, isCancel, callStatus: this.callStatus });
 
     const nativeCall = this.callSignaling && this.currentCallInfo;
@@ -1667,12 +1910,28 @@ export class CallService {
           nativeCall.kind === 'single' &&
           nativeCall.callerUserId === this.getCurrentUserId() &&
           this.callStatus === CALL_STATUS.INVITING;
+        const snapshot = this.callStore?.snapshot;
+        const hasAcceptedInvitee = snapshot?.participants.some(
+          participant =>
+            participant.userId !== nativeCall.callerUserId &&
+            (participant.state === 'accepted' ||
+              participant.state === 'left' ||
+              participant.state === 'hanguped' ||
+              participant.acceptedAt !== undefined),
+        );
+        const isUnestablishedConference =
+          nativeCall.kind === 'conference' &&
+          nativeCall.callerUserId === this.getCurrentUserId() &&
+          snapshot?.callId === callId &&
+          !snapshot.establishedAt &&
+          !hasAcceptedInvitee;
         if (reason === HANGUP_REASON.TIMEOUT) {
           // 超时由服务端结束；本地计时先到时仅查询快照，不发送取消、拒绝或结束请求。
           await this.callSignaling.syncCall(callId);
         } else if (
           isCancel ||
           isUnansweredOutgoing ||
+          isUnestablishedConference ||
           reason === HANGUP_REASON.CANCEL ||
           reason === HANGUP_REASON.REMOTE_CANCEL
         ) {
@@ -2170,6 +2429,8 @@ export class CallService {
         }
         this.remoteVideoTracks.delete(uidKey);
       }
+      this.remoteVideoStreams.delete(uidKey);
+      this.pendingVideoTracks.delete(`remote-${uidKey}`);
 
       if (audioTrack) {
         try {
@@ -2352,6 +2613,14 @@ export class CallService {
       this.onRemoteVideoReady?.(removedVideoInfo);
     }
   }
+  private reportRtcEvent(event: number) {
+    const callId = this.currentCallInfo?.callId;
+    if (!callId) return;
+    void this.callSignaling.reportRtcEvent?.(callId, { event })?.catch(error => {
+      logWarn('reportRtcEvent failed', { callId, event, error });
+    });
+  }
+
   async toggleMute(): Promise<boolean> {
     // if (
     //   this.callStatus < CALL_STATUS.CONFIRM_RING ||
@@ -2400,7 +2669,10 @@ export class CallService {
       this.onRemoteVideoReady?.(localVideoInfo);
     }
 
-    return this.enableMic; // 返回muted状态（与enabled相反）
+    this.reportRtcEvent(
+      this.enableMic ? CALL_RTC_EVENT.microphoneOn : CALL_RTC_EVENT.microphoneOff,
+    );
+    return this.enableMic; // 返回麦克风是否开启
   }
 
   // 切换摄像头状态
@@ -2496,6 +2768,7 @@ export class CallService {
         };
 
         this.onRemoteVideoReady?.(localVideoInfo);
+        this.reportRtcEvent(CALL_RTC_EVENT.cameraOn);
         return true;
       } catch (error) {
         logError('创建本地视频轨道失败:', error);
@@ -2702,6 +2975,7 @@ export class CallService {
     };
 
     this.onRemoteVideoReady?.(localVideoInfo);
+    this.reportRtcEvent(actualCameraEnabled ? CALL_RTC_EVENT.cameraOn : CALL_RTC_EVENT.cameraOff);
 
     return actualCameraEnabled;
   }
@@ -2757,6 +3031,7 @@ export class CallService {
 
         this.onRemoteVideoReady?.(localVideoInfo);
         logDebug('Preview mode: camera enabled');
+        this.reportRtcEvent(CALL_RTC_EVENT.cameraOn);
         return true;
       } catch (error) {
         logError('createCameraVideoTrack failed:', error);
@@ -2790,6 +3065,7 @@ export class CallService {
 
         this.onRemoteVideoReady?.(localVideoInfo);
         logDebug('Preview mode: camera disabled');
+        this.reportRtcEvent(CALL_RTC_EVENT.cameraOff);
         return false;
       } catch (error) {
         logError('close camera failed:', error);
@@ -2884,6 +3160,7 @@ export class CallService {
       this.onRemoteVideoReady?.(localVideoInfo);
 
       logDebug('flipCamera: notified UI with new video stream');
+      this.reportRtcEvent(CALL_RTC_EVENT.switchCamera);
 
       return true;
     } catch (error) {
@@ -3300,6 +3577,14 @@ export class CallService {
         timeoutSeconds: this.invitationTimeoutSeconds,
       });
       this.invitedMembers = [...new Set([...this.invitedMembers, ...newMembers])];
+      if (!this.currentCallInfo.groupId) {
+        void this.sendCallRecordMessages(
+          newMembers.filter(Boolean).map(conversationId => ({
+            conversationId,
+            conversationType: 'singleChat' as const,
+          })),
+        );
+      }
       if (this.currentCallInfo.invitedMembers) {
         this.currentCallInfo.invitedMembers = [
           ...new Set([...this.currentCallInfo.invitedMembers, ...newMembers]),
