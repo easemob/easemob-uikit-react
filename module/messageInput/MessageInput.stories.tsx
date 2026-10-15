@@ -3,6 +3,7 @@ import { StoryFn, Meta } from '@storybook/react';
 
 import MessageInput from './index';
 import Provider from '../store/Provider';
+import Icon from '../../component/icon';
 
 // 添加中文和英文的描述
 const lang = import.meta.env.VITE_CUSTOM_VAR as 'en' | 'zh';
@@ -144,7 +145,7 @@ export default {
       control: 'object',
       description: description[lang].customActions,
       table: {
-        type: { summary: 'Action[]' },
+        type: { summary: 'CustomAction[]' },
         defaultValue: {
           summary:
             '[{ content: "FILE" }, { content: "IMAGE" }, { content: "VIDEO" }, { content: "CARD" }]',
@@ -206,4 +207,36 @@ export const Dark = {
 
 export const Square = {
   render: SquareTemplate,
+};
+
+// 自定义图标示例
+const CustomIconTemplate: StoryFn<typeof MessageInput> = args => (
+  <Provider initConfig={{ appKey: 'z#b' }}>
+    <MessageInput
+      {...args}
+      conversation={{ chatType: 'singleChat', conversationId: 'zd2' }}
+      customActions={[
+        {
+          content: '收藏',
+          icon: <Icon type="STAR" />,
+          onClick: () => console.log('收藏'),
+        },
+        {
+          content: '大图标',
+          icon: <Icon type="STAR" />,
+          iconSize: 24,
+          onClick: () => console.log('大图标'),
+        },
+        {
+          content: '默认尺寸',
+          // 不传icon，使用默认 PLUS_CIRCLE 图标
+          onClick: () => console.log('默认'),
+        },
+      ]}
+    />
+  </Provider>
+);
+
+export const CustomIcon = {
+  render: CustomIconTemplate,
 };

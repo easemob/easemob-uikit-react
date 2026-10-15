@@ -52,6 +52,7 @@ export interface ConversationItemProps {
     visible?: boolean;
     icon?: ReactNode;
     actions: Array<{
+      icon?: ReactNode;
       content: ReactNode;
       onClick?: (cvs: ConversationData[0]) => void | Promise<boolean>;
     }>;
@@ -278,6 +279,7 @@ let ConversationItem: FC<ConversationItemProps> = props => {
                 item.onClick?.(data);
               }}
             >
+              {item.icon || null}
               {item.content}
             </li>
           );
