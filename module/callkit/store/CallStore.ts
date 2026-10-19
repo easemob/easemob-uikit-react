@@ -42,9 +42,7 @@ export class CallStore {
   }
 
   setSnapshot(snapshot: CallSnapshot): void {
-    if (this.snapshot && this.snapshot.callId === snapshot.callId) {
-      if (BigInt(snapshot.revision) < BigInt(this.snapshot.revision)) return;
-    }
+    // The SDK has already merged server revisions before publishing this state.
     this.snapshot = snapshot;
   }
 
@@ -53,7 +51,6 @@ export class CallStore {
     this.setSnapshot({
       ...this.snapshot,
       participants: payload.participants,
-      revision: payload.revision,
     });
   }
 

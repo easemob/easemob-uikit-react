@@ -19,26 +19,43 @@ import { eventHandler } from '../../eventHandler';
 import outgoingRingtone from './拨打电话.mp3';
 import incomingRingtone from './接听电话.mp3';
 import { exchangePasswordForToken } from './login-auth';
-import { resolveCallDemoServiceConfig, type CallDemoServiceMode } from './service-config';
+import { readCustomLogin, saveCustomLogin, type CallDemoLoginForm } from './login-storage';
+import {
+  deriveCallDemoFusionUrl,
+  resolveCallDemoServiceConfig,
+  type CallDemoServiceMode,
+} from './service-config';
 import AudioTranscriptionExperiment from './AudioTranscriptionExperiment';
+import VideoColorExperiment from './VideoColorExperiment';
 import type { IAgoraRTCClient } from 'agora-rtc-sdk-ng';
 
 const DEFAULT_REST_URL = 'https://a1-hsb.easemob.com';
 const DEFAULT_MSYNC_URL = 'wss://im-api-new-hsb.easemob.com/websocket';
-const DEMO_RTC_APP_ID = '94bcf24825644c26b7f1872c5a0f5084';
 
-// 从URL获取参数的工具函数
-const getUrlParams = () => {
+// URL 参数优先，其次回填上次成功登录的自定义服务配置。
+const getInitialLoginForm = (): CallDemoLoginForm => {
   const urlParams = new URLSearchParams(window.location.search);
-  return {
-    userId: urlParams.get('userId') || '',
-    token: urlParams.get('token') || '',
-    password: urlParams.get('password') || '',
-    appKey: urlParams.get('appKey') || 'easemob-demo#agora-rtc',
-    serviceMode: urlParams.get('serviceMode') === 'custom' ? 'custom' : 'proxy',
-    restUrl: urlParams.get('restUrl') || DEFAULT_REST_URL,
-    msyncUrl: urlParams.get('msyncUrl') || DEFAULT_MSYNC_URL,
+  const form: CallDemoLoginForm = readCustomLogin() || {
+    userId: '', token: '', password: '',
+    appKey: 'easemob#dutest01',
+    serviceMode: 'proxy',
+    restUrl: DEFAULT_REST_URL,
+    msyncUrl: DEFAULT_MSYNC_URL,
+    rtcAppId: '',
   };
+  // URL 指定账号时，不混用另一个已保存账号的凭证。
+  if (['userId', 'token', 'password'].some(key => urlParams.has(key))) {
+    form.userId = urlParams.get('userId') || '';
+    form.token = urlParams.get('token') || '';
+    form.password = urlParams.get('password') || '';
+  }
+  for (const key of ['appKey', 'restUrl', 'msyncUrl', 'rtcAppId'] as const) {
+    if (urlParams.has(key)) form[key] = urlParams.get(key) || '';
+  }
+  if (urlParams.has('serviceMode')) {
+    form.serviceMode = urlParams.get('serviceMode') === 'custom' ? 'custom' : 'proxy';
+  }
+  return form;
 };
 
 // 设置全局rootStore引用
@@ -49,32 +66,25 @@ const RealCallDemo: React.FC = () => {
   const callKitRef = useRef<CallKitRef>(null);
   const [experimentRtcClient, setExperimentRtcClient] = useState<IAgoraRTCClient | null>(null);
 
-  // 从URL获取初始参数
-  const urlParams = getUrlParams();
-
   // 登录相关状态
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isLogging, setIsLogging] = useState(false);
   const loginPendingRef = useRef(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [loginForm, setLoginForm] = useState({
-    userId: urlParams.userId,
-    token: urlParams.token,
-    password: urlParams.password,
-    appKey: urlParams.appKey,
-    serviceMode: urlParams.serviceMode as CallDemoServiceMode,
-    restUrl: urlParams.restUrl,
-    msyncUrl: urlParams.msyncUrl,
-  });
+  const [loginForm, setLoginForm] = useState<CallDemoLoginForm>(getInitialLoginForm);
+  const pendingLoginFormRef = useRef<CallDemoLoginForm | null>(null);
   const [authToken, setAuthToken] = useState('');
-  const rtcProvider = useMemo<CallKitRTCProvider>(
-    () => ({
-      getRTCTokenInfo: async () => ({
-        appId: DEMO_RTC_APP_ID,
-        rtcToken: '',
-      }),
-    }),
-    [],
+  const rtcProvider = useMemo<CallKitRTCProvider | undefined>(
+    () =>
+      loginForm.rtcAppId.trim()
+        ? {
+            getRTCTokenInfo: async () => ({
+              appId: loginForm.rtcAppId.trim(),
+              rtcToken: '',
+            }),
+          }
+        : undefined,
+    [loginForm.rtcAppId],
   );
   const serviceConfig = resolveCallDemoServiceConfig({
     mode: loginForm.serviceMode,
@@ -172,6 +182,8 @@ const RealCallDemo: React.FC = () => {
       open: {
         success: () => {
           if (!loginPendingRef.current) return;
+          if (pendingLoginFormRef.current) saveCustomLogin(pendingLoginFormRef.current);
+          pendingLoginFormRef.current = null;
           loginPendingRef.current = false;
           setIsLogging(false);
           setIsLoggedIn(true);
@@ -179,6 +191,7 @@ const RealCallDemo: React.FC = () => {
         },
         error: error => {
           if (!loginPendingRef.current) return;
+          pendingLoginFormRef.current = null;
           loginPendingRef.current = false;
           setIsLogging(false);
           setIsLoggedIn(false);
@@ -195,7 +208,8 @@ const RealCallDemo: React.FC = () => {
 
   // 检查是否有URL参数，如果有则自动尝试登录
   useEffect(() => {
-    if (urlParams.userId && (urlParams.token || urlParams.password)) {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('userId') && (urlParams.get('token') || urlParams.get('password'))) {
       void handleLogin();
     }
   }, []);
@@ -217,13 +231,26 @@ const RealCallDemo: React.FC = () => {
     }
     if (!restUrl || !msyncUrl) {
       notification.error({
-        message: '请填写完整的私有服务地址',
-        description: '自定义私有服务模式需要同时填写 REST 和 MSync WebSocket 地址',
+        message: '请填写完整的服务地址',
+        description: '自定义服务直连需要同时填写 REST 和 MSync WebSocket 地址',
       });
       return;
     }
 
+    if (!/^https?:\/\//.test(restUrl) || !/^wss?:\/\//.test(msyncUrl)) {
+      notification.error({
+        message: '服务地址格式错误',
+        description: 'REST 使用 http:// 或 https://，MSync 使用 ws:// 或 wss://',
+      });
+      return;
+    }
+    if (loginForm.rtcAppId.trim() && !/^[a-f\d]{32}$/i.test(loginForm.rtcAppId.trim())) {
+      notification.error({ message: '请填写有效的 RTC App ID（32 位十六进制字符）' });
+      return;
+    }
+
     loginPendingRef.current = true;
+    pendingLoginFormRef.current = { ...loginForm };
     setIsLogging(true);
     try {
       const resolvedToken = token
@@ -237,6 +264,7 @@ const RealCallDemo: React.FC = () => {
       setAuthToken(resolvedToken);
     } catch (error) {
       loginPendingRef.current = false;
+      pendingLoginFormRef.current = null;
       setIsLogging(false);
       console.error('Login failed:', error);
       notification.error({
@@ -281,6 +309,7 @@ const RealCallDemo: React.FC = () => {
     else if (loginForm.password) params.set('password', loginForm.password);
     if (loginForm.appKey) params.set('appKey', loginForm.appKey);
     params.set('serviceMode', loginForm.serviceMode);
+    params.set('rtcAppId', loginForm.rtcAppId.trim());
     if (loginForm.serviceMode === 'custom') {
       if (loginForm.restUrl) params.set('restUrl', loginForm.restUrl);
       if (loginForm.msyncUrl) params.set('msyncUrl', loginForm.msyncUrl);
@@ -726,7 +755,7 @@ const RealCallDemo: React.FC = () => {
               style={{ width: '100%', height: '40px', marginTop: '6px', padding: '0 10px' }}
             >
               <option value="proxy">本地代理（调试环境）</option>
-              <option value="custom">自定义私有服务</option>
+              <option value="custom">自定义服务（直连，可用于正式环境）</option>
             </select>
           </div>
           <div style={{ marginBottom: '15px' }}>
@@ -755,6 +784,11 @@ const RealCallDemo: React.FC = () => {
                   placeholder="例如 wss://im.example.com/websocket"
                 />
               </div>
+              <div style={{ marginBottom: '15px', fontSize: '12px', lineHeight: 1.8 }}>
+                <div>浏览器直接访问服务，不经过本地 forward 或 Vite 的 IM 代理。</div>
+                <div>Fusion 信令地址：{deriveCallDemoFusionUrl(serviceConfig.restUrl) || '请填写有效的 REST 地址'}</div>
+                <div>Fusion 由 SDK 根据 REST 域名派生，服务端需支持此 /ws 入口；REST 需允许页面跨域访问。</div>
+              </div>
             </>
           ) : (
             <div
@@ -772,6 +806,17 @@ const RealCallDemo: React.FC = () => {
               <div>Fusion: 由 SDK 通过同源 /ws 连接</div>
             </div>
           )}
+          <div style={{ marginBottom: '15px' }}>
+            <label>RTC App ID（选填）:</label>
+            <Input
+              value={loginForm.rtcAppId}
+              onChange={e => setLoginForm({ ...loginForm, rtcAppId: e.target.value })}
+              placeholder="留空时由 IM SDK 自动获取"
+            />
+            <div style={{ fontSize: '12px', marginTop: '6px' }}>
+              留空时通过 IM SDK 获取 RTC App ID 和 Token。填写时双方使用同一个 RTC 项目，并使用无 RTC Token 模式。
+            </div>
+          </div>
           <div style={{ marginBottom: '15px' }}>
             <label>用户ID:</label>
             <Input
@@ -862,7 +907,7 @@ const RealCallDemo: React.FC = () => {
             <h2 style={{ margin: 0 }}>CallKit 通话演示</h2>
             <p style={{ margin: 0, color: '#666' }}>
               当前用户: {loginForm.userId} | App Key: {loginForm.appKey} | 服务:
-              {loginForm.serviceMode === 'proxy' ? '本地代理' : '自定义私有服务'}
+              {loginForm.serviceMode === 'proxy' ? '本地代理' : '自定义服务直连'}
             </p>
           </div>
           <Button onClick={handleLogout} disabled={isLoggingOut}>
@@ -1135,11 +1180,12 @@ const RealCallDemo: React.FC = () => {
 
         {/* CallKit 组件 */}
         <AudioTranscriptionExperiment client={experimentRtcClient} isInCall={isInCall} />
+        <VideoColorExperiment client={experimentRtcClient} isInCall={isInCall} />
         <CallKit
           ref={callKitRef}
           rtcProvider={rtcProvider}
           onRtcEngineCreated={setExperimentRtcClient}
-          useRTCToken={false}
+          useRTCToken={!rtcProvider}
           // 基础配置
           layoutMode={LayoutMode.MULTI_PARTY}
           aspectRatio={1}

@@ -1,4 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
+import { loadEnv } from 'vite';
+
+// Load local E2E settings before resolving test and web server configuration.
+const localEnv = loadEnv('e2e', __dirname, ['EASEMOB_', 'E2E_', 'CALLKIT_', 'HF_HOME']);
+for (const [key, value] of Object.entries(localEnv)) {
+  if (process.env[key] === undefined) {
+    process.env[key] = value;
+  }
+}
 
 const baseURL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:5175';
 
@@ -9,10 +18,15 @@ export default defineConfig({
   workers: 1,
   fullyParallel: false,
   forbidOnly: Boolean(process.env.CI),
-  reporter: 'list',
+  outputDir: 'test-results/artifacts',
+  reporter: [
+    ['list'],
+    ['json', { outputFile: 'test-results/results.json' }],
+    ['html', { open: 'never' }],
+  ],
   use: {
     baseURL,
-    headless: true,
+    headless: false,
     permissions: ['camera', 'microphone'],
     trace: 'off',
     screenshot: 'off',

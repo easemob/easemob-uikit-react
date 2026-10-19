@@ -9,13 +9,15 @@ import type {
   InviteParticipantsParams,
   JoinCallParams,
   RejectCallParams,
-  ReportRtcEventParams,
 } from 'easemob-websdk';
 import CallStore from '../store/CallStore';
 import { logger } from '../utils/logger';
 
 export interface CallSignalingServiceClient {
   readonly callSignalingManager: CallSignalingManager;
+  getCurrentUserId?: () => string | null;
+  addEventHandler?: (id: string, handlers: { onConnected: () => void }) => void;
+  removeEventHandler?: (id: string) => void;
 }
 
 export interface CallSignalingServiceOptions {
@@ -28,15 +30,6 @@ export interface CallSignalingServiceOptions {
 
 let eventHandlerSequence = 0;
 
-/** SDK `reportRtcEvent` 的 event 取值。 */
-export const CALL_RTC_EVENT = {
-  microphoneOn: 1,
-  microphoneOff: 2,
-  cameraOn: 3,
-  cameraOff: 4,
-  switchCamera: 5,
-} as const;
-
 /** UIKit adapter for the SDK-native Fusion call signaling manager. */
 export class CallSignalingService {
   private readonly client: CallSignalingServiceClient;
@@ -45,6 +38,12 @@ export class CallSignalingService {
   private readonly eventHandlerId: string;
   private started = false;
   private lastCallId?: string;
+  private readonly pendingLeaves = new Map<string, string | null | undefined>();
+  private leaveRetryTimer?: ReturnType<typeof setTimeout>;
+  private flushingLeaves = false;
+  private readonly onOnline = (): void => {
+    void this.flushPendingLeaves();
+  };
 
   constructor(
     client: CallSignalingServiceClient,
@@ -75,7 +74,7 @@ export class CallSignalingService {
         logger.log('[call-debug] signaling adapter received invitation', {
           eventHandlerId: this.eventHandlerId,
           callId: payload.callId,
-          kind: payload.kind,
+          callType: payload.callType,
           mediaType: payload.mediaType,
         });
         this.store.setInvitation(payload);
@@ -99,6 +98,8 @@ export class CallSignalingService {
       },
     });
     this.started = true;
+    this.client.addEventHandler?.(this.eventHandlerId, { onConnected: this.onOnline });
+    if (typeof window !== 'undefined') window.addEventListener('online', this.onOnline);
   }
 
   stop(): void {
@@ -113,6 +114,71 @@ export class CallSignalingService {
     });
     this.client.callSignalingManager.removeEventHandler(this.eventHandlerId);
     this.started = false;
+    this.client.removeEventHandler?.(this.eventHandlerId);
+    if (typeof window !== 'undefined') window.removeEventListener('online', this.onOnline);
+    if (this.leaveRetryTimer) clearTimeout(this.leaveRetryTimer);
+    this.leaveRetryTimer = undefined;
+    this.pendingLeaves.clear();
+  }
+
+  /** Keep an offline conference hangup until this same login can notify the server. */
+  deferLeaveCall(callId: string): void {
+    if (!this.started) return;
+    this.pendingLeaves.set(callId, this.client.getCurrentUserId?.());
+    logger.log('[call-debug] deferred conference leave queued', { callId });
+    void this.flushPendingLeaves();
+  }
+
+  private async flushPendingLeaves(): Promise<void> {
+    if (!this.started || this.flushingLeaves || !this.pendingLeaves.size) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return;
+    if (this.leaveRetryTimer) clearTimeout(this.leaveRetryTimer);
+    this.leaveRetryTimer = undefined;
+    this.flushingLeaves = true;
+    try {
+      for (const [callId, userId] of this.pendingLeaves) {
+        if (!this.started) break;
+        if (this.client.getCurrentUserId?.() !== userId) {
+          logger.log('[call-debug] deferred conference leave discarded after account change', {
+            callId,
+          });
+          this.pendingLeaves.delete(callId);
+          continue;
+        }
+        try {
+          // Do not capture this old snapshot: local hangup has already cleared the UI,
+          // and a different call may now own the store.
+          await this.client.callSignalingManager.leaveCall(callId);
+          this.pendingLeaves.delete(callId);
+          logger.log('[call-debug] deferred conference leave completed', { callId });
+        } catch (error) {
+          const { code, details } = (error ?? {}) as {
+            code?: number;
+            details?: { stage?: string; operation?: string };
+          };
+          // Business failures are terminal; transport/readiness failures can recover.
+          // Code 1701 is also used by socket failures, so the code alone is ambiguous.
+          if (
+            details?.operation === 'leaveCall' &&
+            !details.stage &&
+            code !== undefined &&
+            code >= 1700 &&
+            code < 1800
+          ) {
+            this.pendingLeaves.delete(callId);
+          }
+          logger.warn('[call-debug] deferred conference leave failed', { callId, code });
+        }
+      }
+    } finally {
+      this.flushingLeaves = false;
+      if (this.started && this.pendingLeaves.size) {
+        this.leaveRetryTimer = setTimeout(() => {
+          this.leaveRetryTimer = undefined;
+          void this.flushPendingLeaves();
+        }, 2000);
+      }
+    }
   }
 
   async createCall(request: CreateCallRequest): Promise<CallSnapshot> {
@@ -166,16 +232,12 @@ export class CallSignalingService {
     return this.capture(this.client.callSignalingManager.leaveCall(callId));
   }
 
-  terminateCall(callId: string): Promise<CallSnapshot> {
-    return this.capture(this.client.callSignalingManager.terminateCall(callId));
+  hangup(callId: string): Promise<CallSnapshot> {
+    return this.capture(this.client.callSignalingManager.hangup(callId));
   }
 
   syncCall(callId: string): Promise<CallSnapshot> {
     return this.capture(this.client.callSignalingManager.getCallSnapshot(callId));
-  }
-
-  reportRtcEvent(callId: string, params: ReportRtcEventParams): Promise<CallSnapshot> {
-    return this.capture(this.client.callSignalingManager.reportRtcEvent(callId, params));
   }
 
   private async capture(request: Promise<CallSnapshot>): Promise<CallSnapshot> {

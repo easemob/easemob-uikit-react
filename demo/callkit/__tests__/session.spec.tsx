@@ -4,13 +4,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatClient } from '../../../module/SDK';
 import RealCallDemo from '../call-demo';
 import { CallService } from '../../../module/callkit/services/CallService';
+import { CALL_DEMO_LOGIN_STORAGE_KEY } from '../login-storage';
+import rootStore from '../../../module/store';
 
 describe('Call demo IM session', () => {
   beforeEach(() => {
+    window.localStorage.removeItem(CALL_DEMO_LOGIN_STORAGE_KEY);
     window.location.href = 'http://localhost:5174/?userId=alice&token=demo-token';
   });
   afterEach(() => {
     cleanup();
+    window.localStorage.removeItem(CALL_DEMO_LOGIN_STORAGE_KEY);
     vi.restoreAllMocks();
     window.location.href = 'http://localhost:5174/';
   });
@@ -49,14 +53,64 @@ describe('Call demo IM session', () => {
     expect(screen.queryByText('登出')).toBeNull();
   });
 
-  it('enables the invite controls after joining a conference and submits entered users', async () => {
+  it('saves custom inputs only after IM login succeeds and prefills without auto-login', async () => {
+    // 此处验证表单存储，复用已有客户端，避免 SDK 单例限制不同的测试服务配置。
+    vi.spyOn(ChatClient, 'init').mockReturnValue(rootStore.client);
+    const saved = {
+      serviceMode: 'custom', appKey: 'demo#app', restUrl: 'https://rest.example.com',
+      msyncUrl: 'wss://msync.example.com/websocket', userId: 'alice',
+      token: 'demo-token', password: 'demo-password', rtcAppId: 'a'.repeat(32),
+    };
+    window.location.href = `http://localhost:5174/?${new URLSearchParams(saved)}`;
+    let finishLogin!: () => void;
+    const login = vi.spyOn(ChatClient.prototype, 'login').mockImplementation(
+      () => new Promise<void>(resolve => { finishLogin = resolve; }),
+    );
+    render(<RealCallDemo />);
+    await waitFor(() => expect(login).toHaveBeenCalledOnce());
+    expect(window.localStorage.getItem(CALL_DEMO_LOGIN_STORAGE_KEY)).toBeNull();
+    await act(async () => { finishLogin(); });
+    expect(JSON.parse(window.localStorage.getItem(CALL_DEMO_LOGIN_STORAGE_KEY)!)).toEqual(saved);
+
+    cleanup();
+    window.location.href = 'http://localhost:5174/';
+    render(<RealCallDemo />);
+    expect((screen.getByRole('combobox') as HTMLSelectElement).value).toBe('custom');
+    for (const value of [saved.appKey, saved.restUrl, saved.msyncUrl, saved.userId,
+      saved.token, saved.password, saved.rtcAppId]) {
+      expect(screen.getByDisplayValue(value)).toBeTruthy();
+    }
+    expect(screen.getByText('登录')).toBeTruthy();
+    expect(login).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the previous custom login when a URL-specified account fails to log in', async () => {
+    vi.spyOn(ChatClient, 'init').mockReturnValue(rootStore.client);
+    const previous = JSON.stringify({
+      serviceMode: 'custom', appKey: 'demo#app', restUrl: 'https://rest.example.com',
+      msyncUrl: 'wss://msync.example.com/websocket', userId: 'bob',
+      token: 'previous-token', password: 'previous-password', rtcAppId: 'a'.repeat(32),
+    });
+    window.localStorage.setItem(CALL_DEMO_LOGIN_STORAGE_KEY, previous);
+    window.location.href = 'http://localhost:5174/?userId=alice&token=invalid-token';
+    const login = vi.spyOn(ChatClient.prototype, 'login').mockRejectedValue(new Error('invalid token'));
+    render(<RealCallDemo />);
+    await waitFor(() => expect(screen.getByText('IM 登录失败')).toBeTruthy());
+    expect(login).toHaveBeenCalledWith(expect.objectContaining({ userId: 'alice', token: 'invalid-token' }));
+    expect(window.localStorage.getItem(CALL_DEMO_LOGIN_STORAGE_KEY)).toBe(previous);
+    expect((screen.getByPlaceholderText('未填写 Token 时，使用密码换取 Token') as HTMLInputElement).value).toBe('');
+  });
+
+  it('uses IM SDK RTC credentials when App ID is blank and enables conference invitations', async () => {
     vi.spyOn(ChatClient.prototype, 'login').mockResolvedValue(undefined);
     vi.spyOn(ChatClient.prototype, 'getCurrentUserId').mockReturnValue('alice');
     vi.spyOn(CallService.prototype, 'startCall').mockImplementation(async function (this: CallService) {
+      expect((this as any).rtcProvider).toBeUndefined();
+      expect((this as any).useRTCToken).toBe(true);
       (this as any).onCallStart?.([{ id: 'local', isLocalVideo: true, cameraEnabled: false }]);
       return {
-        callId: 'conference', kind: 'conference', mediaType: 'video', lifecycle: 'open',
-        revision: '1', createdAt: 1, creatorUserId: 'alice',
+        callId: 'conference', callType: 'conference', mediaType: 'video', lifecycle: 'open',
+
         participants: [{ userId: 'alice', state: 'accepted' }],
       };
     });

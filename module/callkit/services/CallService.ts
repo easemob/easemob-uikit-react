@@ -12,7 +12,7 @@ import { logger, logError, logWarn, logInfo, logDebug, logVerbose } from '../uti
 import CallAudioService from '../audio/CallAudioService';
 import { reaction } from 'mobx';
 import type CallStore from '../store/CallStore';
-import CallSignalingService, { CALL_RTC_EVENT } from '../signaling/CallSignalingService';
+import CallSignalingService from '../signaling/CallSignalingService';
 import type {
   CallHandledOnOtherDevicePayload,
   CallInvitationReceivedPayload,
@@ -20,6 +20,7 @@ import type {
   CallEndedPayload,
   CallSnapshot,
   CallParticipant,
+  CallType,
 } from 'easemob-websdk';
 import CallRtcService from '../rtc/CallRtcService';
 import CallMediaService from '../rtc/CallMediaService';
@@ -73,7 +74,7 @@ export interface CallInfo {
   joinedMembers?: any[]; // Internal use
   duration?: string; // Call duration, default 0
   state?: CALL_STATUS; // Call status, default idle
-  kind?: 'single' | 'conference';
+  callType?: CallType;
   mediaType?: 'voice' | 'video';
 }
 
@@ -405,7 +406,6 @@ export class CallService {
           callId,
           lifecycle: snapshot.lifecycle,
           endReason: snapshot.endReason,
-          revision: snapshot.revision,
         });
         if (snapshot.lifecycle === 'ended') {
           this.nativeEndRequested = true;
@@ -433,7 +433,7 @@ export class CallService {
       callId: payload.callId,
       callStatus: this.callStatus,
       currentCallId: this.currentCallInfo?.callId,
-      kind: payload.kind,
+      callType: payload.callType,
       mediaType: payload.mediaType,
     });
     if (this.endingCall) {
@@ -471,17 +471,17 @@ export class CallService {
     }
     const type =
       payload.mediaType === 'video'
-        ? payload.kind === 'conference'
+        ? payload.callType === 'conference'
           ? CALL_TYPE.VIDEO_MULTI
           : CALL_TYPE.VIDEO_1V1
-        : payload.kind === 'conference'
+        : payload.callType === 'conference'
         ? CALL_TYPE.AUDIO_MULTI
         : CALL_TYPE.AUDIO_1V1;
     this.currentCallInfo = {
       callId: payload.callId,
       channel: payload.callId,
       type,
-      kind: payload.kind,
+      callType: payload.callType,
       mediaType: payload.mediaType,
       callerDevId: '',
       callerUserId: payload.inviter.userId,
@@ -527,7 +527,6 @@ export class CallService {
     if (self && !['pending', 'ringing', 'accepted'].includes(self.state) && this.currentCallInfo) {
       logger.log('[call-debug] CallService local participant finished', {
         callId: snapshot.callId,
-        revision: snapshot.revision,
         participantState: self.state,
       });
       this.nativeEndRequested = true;
@@ -560,7 +559,7 @@ export class CallService {
     if (
       snapshot.lifecycle === 'open' &&
       !this.nativeEndRequested &&
-      this.currentCallInfo?.kind === 'single' &&
+      this.currentCallInfo?.callType === 'single' &&
       this.currentCallInfo.callerUserId === this.getCurrentUserId() &&
       this.callStatus === CALL_STATUS.INVITING &&
       accepted.some(item => item.userId !== this.getCurrentUserId())
@@ -892,11 +891,11 @@ export class CallService {
     const isConference = callType === CALL_TYPE.VIDEO_MULTI || callType === CALL_TYPE.AUDIO_MULTI;
     const requestedCallId = callId || `legacy-call-${Date.now()}`;
     const requestedChannel = channel || requestedCallId;
-    const kind = isConference ? 'conference' : 'single';
+    const nativeCallType = isConference ? 'conference' : 'single';
     const mediaType =
       callType === CALL_TYPE.VIDEO_1V1 || callType === CALL_TYPE.VIDEO_MULTI ? 'video' : 'voice';
     const nativeSnapshot = await this.callSignaling.createCall({
-      kind,
+      callType: nativeCallType,
       mediaType,
       targetUserIds: Array.isArray(to) ? to : [to],
       timeoutSeconds: this.invitationTimeoutSeconds,
@@ -919,7 +918,7 @@ export class CallService {
       groupAvatar,
       invitedMembers: members,
       joinedMembers: [],
-      kind,
+      callType: nativeCallType,
       mediaType,
     };
 
@@ -1055,7 +1054,7 @@ export class CallService {
     }
 
     this.callStore?.setSnapshot(nativeSnapshot);
-    if (kind === 'conference') {
+    if (nativeCallType === 'conference') {
       await this.joinCall();
     }
     return nativeSnapshot;
@@ -1140,11 +1139,10 @@ export class CallService {
           );
           logger.warn('[call-debug] answer failed server snapshot', {
             callId: snapshot.callId,
-            kind: snapshot.kind,
+            callType: snapshot.callType,
             mediaType: snapshot.mediaType,
             lifecycle: snapshot.lifecycle,
             endReason: snapshot.endReason,
-            revision: snapshot.revision,
             participantState: participant?.state,
             participantDevice: participant?.deviceUuid,
             participant,
@@ -1155,10 +1153,8 @@ export class CallService {
       }
       throw error;
     } finally {
-      // 🔧 重置标记：在短暂延迟后重置，允许新的通话
-      setTimeout(() => {
-        this.isAnswering = false;
-      }, 1000); // 1秒后重置标记
+      // The operation has completed; a new invitation may already be answerable.
+      this.isAnswering = false;
     }
   }
 
@@ -1907,7 +1903,7 @@ export class CallService {
       try {
         const callId = nativeCall.callId;
         const isUnansweredOutgoing =
-          nativeCall.kind === 'single' &&
+          nativeCall.callType === 'single' &&
           nativeCall.callerUserId === this.getCurrentUserId() &&
           this.callStatus === CALL_STATUS.INVITING;
         const snapshot = this.callStore?.snapshot;
@@ -1920,7 +1916,7 @@ export class CallService {
               participant.acceptedAt !== undefined),
         );
         const isUnestablishedConference =
-          nativeCall.kind === 'conference' &&
+          nativeCall.callType === 'conference' &&
           nativeCall.callerUserId === this.getCurrentUserId() &&
           snapshot?.callId === callId &&
           !snapshot.establishedAt &&
@@ -1938,10 +1934,14 @@ export class CallService {
           await this.callSignaling?.cancelCall(callId);
         } else if (this.callStatus === CALL_STATUS.ALERTING) {
           await this.callSignaling?.rejectCall(callId, { reason: 'declined' });
-        } else if (nativeCall.kind === 'conference') {
-          await this.callSignaling?.leaveCall(callId);
+        } else if (nativeCall.callType === 'conference') {
+          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+            this.callSignaling.deferLeaveCall(callId);
+          } else {
+            await this.callSignaling?.leaveCall(callId);
+          }
         } else {
-          await this.callSignaling?.terminateCall(callId);
+          await this.callSignaling?.hangup(callId);
         }
       } catch (error) {
         this.nativeEndRequested = false;
@@ -2613,13 +2613,6 @@ export class CallService {
       this.onRemoteVideoReady?.(removedVideoInfo);
     }
   }
-  private reportRtcEvent(event: number) {
-    const callId = this.currentCallInfo?.callId;
-    if (!callId) return;
-    void this.callSignaling.reportRtcEvent?.(callId, { event })?.catch(error => {
-      logWarn('reportRtcEvent failed', { callId, event, error });
-    });
-  }
 
   async toggleMute(): Promise<boolean> {
     // if (
@@ -2668,10 +2661,6 @@ export class CallService {
       };
       this.onRemoteVideoReady?.(localVideoInfo);
     }
-
-    this.reportRtcEvent(
-      this.enableMic ? CALL_RTC_EVENT.microphoneOn : CALL_RTC_EVENT.microphoneOff,
-    );
     return this.enableMic; // 返回麦克风是否开启
   }
 
@@ -2768,7 +2757,6 @@ export class CallService {
         };
 
         this.onRemoteVideoReady?.(localVideoInfo);
-        this.reportRtcEvent(CALL_RTC_EVENT.cameraOn);
         return true;
       } catch (error) {
         logError('创建本地视频轨道失败:', error);
@@ -2975,7 +2963,6 @@ export class CallService {
     };
 
     this.onRemoteVideoReady?.(localVideoInfo);
-    this.reportRtcEvent(actualCameraEnabled ? CALL_RTC_EVENT.cameraOn : CALL_RTC_EVENT.cameraOff);
 
     return actualCameraEnabled;
   }
@@ -3031,7 +3018,6 @@ export class CallService {
 
         this.onRemoteVideoReady?.(localVideoInfo);
         logDebug('Preview mode: camera enabled');
-        this.reportRtcEvent(CALL_RTC_EVENT.cameraOn);
         return true;
       } catch (error) {
         logError('createCameraVideoTrack failed:', error);
@@ -3065,7 +3051,6 @@ export class CallService {
 
         this.onRemoteVideoReady?.(localVideoInfo);
         logDebug('Preview mode: camera disabled');
-        this.reportRtcEvent(CALL_RTC_EVENT.cameraOff);
         return false;
       } catch (error) {
         logError('close camera failed:', error);
@@ -3160,7 +3145,6 @@ export class CallService {
       this.onRemoteVideoReady?.(localVideoInfo);
 
       logDebug('flipCamera: notified UI with new video stream');
-      this.reportRtcEvent(CALL_RTC_EVENT.switchCamera);
 
       return true;
     } catch (error) {

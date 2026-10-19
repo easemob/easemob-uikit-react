@@ -1,39 +1,212 @@
 # CallKit 真实环境端到端测试
 
-这些用例启动 `demo/callkit/call-demo.html`。无需账号的用例先检查 Chromium 虚拟摄像头和麦克风能否取流；提供两个真实 IM 账号后，其他用例会通过真实呼叫信令与 Agora RTC 建立通话。音频用例会确认服务端通话已结束，然后才运行共用账号的视频用例；视频用例覆盖 B 断网挂断、恢复网络、A 再次邀请、B 接听的流程。
+这些用例启动 `demo/callkit/call-demo.html`。无需账号的用例先检查 Chromium 虚拟摄像头和麦克风能否取流；提供两个真实 IM 账号后，基础通话用例会通过真实呼叫信令与 Agora RTC 建立通话；新增多人用例使用 A、B、C 三个账号，四人接力邀请再使用 D。音频用例会确认服务端通话已结束，然后才运行共用账号的视频用例；视频用例覆盖 B 断网挂断、恢复网络、A 再次邀请、B 接听的流程。
 
 准备两个可登录同一应用的账号，以及可访问的 REST、MSync、Fusion 和 Agora 服务。默认在独立的 5175 端口启动全新的本地 `dev:demo`，避免复用手工运行的 5174 服务及其过期的 Vite 依赖缓存；服务使用 `vite.demo.config.ts` 中的代理目标。可以通过 `EASEMOB_DEMO_REST_PROXY_TARGET`、`EASEMOB_DEMO_MSYNC_PROXY_TARGET`、`EASEMOB_DEMO_FUSION_PROXY_TARGET` 指向联调服务。
 
 ```bash
 npx playwright install chromium
-export EASEMOB_APPKEY='org#app'
-export EASEMOB_USERID='caller'
-export EASEMOB_TOKEN='caller-token'
-export EASEMOB_SECOND_USERID='callee'
-export EASEMOB_SECOND_TOKEN='callee-token'
+cp .env.e2e.example .env.e2e.local
+```
+
+在工程根目录的 `.env.e2e.local` 中填写 `EASEMOB_APPKEY` 及 A、B、C、D 四个账号的用户 ID 和 Token 或密码；每个账号的 Token 和密码选择一项填写即可。该文件已加入 Git 忽略规则，不会提交凭证；`.env.e2e.example` 仅作为无凭证的共享模板。已有本地文件时无需重新复制，以免覆盖配置。
+
+所有 e2e 命令都会在加载 Playwright 配置时自动读取该文件，无需手动 `export` 或 `source`。终端中已有的环境变量优先，可用于临时覆盖配置。模板中也列出了可选的代理地址、已有 demo 地址及 ASR 配置。填写后直接运行：
+
+```bash
 npm run test:e2e:callkit
 ```
+
+RTC App ID 默认留空，由 IM SDK 获取 App ID 和 Token。如果测试环境尚未开通 RTC 凭证接口，可在 `.env.e2e.local` 设置 `EASEMOB_RTC_APP_ID`，用例会自动填写到 demo；该 RTC 项目必须允许无 Token 模式，双方共用同一配置。本机沙箱的 RTC 凭证接口返回 403，目前显式配置此前验证通过的 RTC 项目。
 
 也可以用 `EASEMOB_PASSWORD`、`EASEMOB_SECOND_PASSWORD` 代替 Token。若已在另一个终端启动 demo，可设置 `E2E_BASE_URL=http://127.0.0.1:5174`，测试不会再启动服务器。SDK 重新构建后，请重启手动启动的 demo 服务，使 Vite 加载新的 `dist`。未提供双账号凭证时，仅真实通话用例会跳过。
 
 虚拟设备验证浏览器取流、轨道发布、远端视频显示及重入流程；它不能证明真实摄像头、麦克风和扬声器在不同设备上的画质、音质或兼容性。测试仅运行 Chromium，其他浏览器和真机仍需单独验证。
 
-真实呼叫用例失败时，`test-results/` 会保存 A、B 两端的 `caller-call-state.json`、`callee-call-state.json` 和页面截图。状态文件记录通话 ID、成员和设备状态、信令连接状态及相关日志，不包含登录 Token。音频邀请未显示时，还会保存 `callee-offline-probe.json`，用于判断离线队列是否能补出邀请；`caller-cleanup.json` 记录失败后取消未建立通话的结果。
+真实呼叫用例失败时，`test-results/artifacts/` 会保存 A、B 两端的 `caller-call-state.json`、`callee-call-state.json` 和页面截图。状态文件记录通话 ID、成员和设备状态、信令连接状态及相关日志，不包含登录 Token。音频邀请未显示时，还会保存 `callee-offline-probe.json`，用于判断离线队列是否能补出邀请；`caller-cleanup.json` 记录失败后取消未建立通话的结果。
+
+## 语音识别模型与 Python 环境
+
+ASR 默认使用工程内的固定目录，不依赖 `/tmp`。本机已有环境和模型已迁入；以下命令仅用于新机器首次安装，在工程根目录执行：
+
+```bash
+python3 -m venv .local/callkit/venv
+.local/callkit/venv/bin/python -m pip install faster-whisper 'av<19'
+HF_HOME="$PWD/.local/callkit/hf" .local/callkit/venv/bin/python demo/callkit/asr-server.py
+```
+
+首次启动下载模型，之后复用 `.local/callkit/hf/` 中的缓存。当前 `base` 模型约 141 MB，Python 环境及依赖约 214 MB。`.local/` 已被 Git 忽略，不会提交。测试会自动使用 `.local/callkit/venv/bin/python` 和 `.local/callkit/hf`，在 ASR 服务未启动时启动它，测试后只关闭自己启动的进程。手动启动可使用上面的第三条命令。
+
+如需其他目录或模型，在 `.env.e2e.local` 设置 `CALLKIT_ASR_PYTHON`、`HF_HOME`、`CALLKIT_ASR_MODEL`。移动整个工程后，建议重新创建虚拟环境；模型缓存可以保留。
+
+## 提交测试结果数据
+
+默认同时输出终端列表、JSON 数据和 HTML 报告，不需要额外传 `--reporter`。例如：
+
+```bash
+npm run test:e2e:callkit -- --grep 'changing color frames'
+```
+
+- `test-results/results.json`：可提交或导入其他系统的 Playwright JSON 报告，包含用例标题、执行状态、重试记录、耗时、失败原因、执行步骤和附件数据或路径。汇总数据位于 `stats`，用例位于 `suites` 的嵌套结构中；`expected`、`unexpected`、`flaky`、`skipped` 分别表示符合预期、未符合预期、不稳定和跳过数量。
+- `test-results/artifacts/`：用例生成的文件附件和诊断文件。视频颜色比例及阈值在 `rtc-video-colors.json` 附件中，语音识别文字和匹配结果在 `rtc-transcription.json` 附件中；内存附件也会随 JSON 报告输出。相关阶段未执行时不会生成对应媒体数据。
+- `playwright-report/`：供本机浏览的 HTML 报告，不是提交结构化数据所必需的。
+
+只提交统计和执行记录时，提交 `test-results/results.json`；需要录音、截图等完整证据时，将 `test-results/` 整个目录一起打包。每次运行会更新结果文件并清理附件输出目录，请在下一次运行前保存需要的结果。JSON 附件中的文件路径对应本机路径，交给其他系统时应与附件目录一起映射。
+
+注意：命令行 `--reporter` 会覆盖默认配置。建议省略该参数；需要自定义时，同时指定 JSON 路径，例如 `PLAYWRIGHT_JSON_OUTPUT_FILE=test-results/results.json npm run test:e2e:callkit -- --reporter=list,json,html`。只传 `--reporter=list,html` 不会生成新的 JSON 结果。生成 JSON 后再用 `npx playwright show-report` 查看 HTML 即可。
+
+## CallKit 演示用例
+
+配置 A、B 两个账号后，可单独运行视频呼叫演示用例。三条演示用例均已启用，`@demo` 会依次执行主叫取消、被叫拒绝和接通挂断后的再次视频呼叫。这些用例不依赖 ASR、额外账号或断网模拟；使用真实信令和 RTC，保留正常断言，不自动重试掩盖失败。
+
+```bash
+npm run test:e2e:callkit -- --grep @demo --headed
+```
+
+| 场景 | 自动验证 |
+| --- | --- |
+| 主叫取消后再次视频呼叫 | B 收到来电，A 取消，双方恢复空闲；A 再次呼叫并接通 |
+| 被叫拒绝后再次视频呼叫 | B 拒绝来电，双方恢复空闲；A 再次呼叫并接通 |
+| 接通挂断后反向视频呼叫 | A 呼叫 B，接通后 B 挂断；B 再呼叫 A 并接通 |
+
+再次呼叫保持原浏览器和登录会话，不通过刷新页面清除残留状态。接通后检查双方 RTC 连接、音视频轨道发布和远端视频；结束后检查界面可再次呼叫、RTC 退出、本地轨道清理及服务端通话结束。报告附带来电、再次接通和结束后的双方截图；失败时另存状态日志。
+
+运行结束后使用 `npx playwright show-report` 查看步骤和截图。浏览器使用虚拟摄像头与麦克风，这组用例不评价真实设备的画质、音质。首次演示前先不带 `--headed` 运行一遍，确认环境和账号可用。
+
+## 远端视频画面颜色校验
+
+无需准备视频素材或额外识图服务。demo 的“远端视频颜色实验”通过 Canvas 实时生成测试源，替换发送端已发布视频轨道的媒体输入，经真实 RTC 传到接收端；停止测试时恢复原摄像头输入。
+
+```bash
+npm run test:e2e:callkit -- --grep 'changing color frames' --headed
+```
+
+该用例使用 A、B 两个账号，独立于原有真实通话串行组运行，流程如下：
+
+1. 发起并接通视频通话，确认双方音视频发布和远端视频就绪。
+2. A 开始发送黑色测试画面，B 从自己的远端 `<video>` 读取解码后的帧，确认测试源已到达。
+3. A 依次切换红、绿、蓝、红；每次都轮询等待 B 的远端帧匹配后再切换下一种颜色，不使用固定网络延迟假设。
+4. 每帧缩放为 320×180，采样中心 160×90 区域，排除边缘和顶部标签；目标颜色像素比例必须大于 80%。彩色像素要求对应通道大于 100 且大于另外两通道的 1.5 倍，黑色像素要求三个通道都小于 40，允许 RTC 编解码造成一定偏差。
+5. 停止测试源后，检查发送端恢复原摄像头轨道；挂断后检查双方空闲和服务端通话结束。
+
+HTML 报告保存五张接收端帧图片 `remote-frame-*.png` 和统计文件 `rtc-video-colors.json`；失败时保存最后采集到的远端帧及双方状态。像素分析不读取发送端 Canvas 或本地预览，验证的是接收端实际收到的媒体内容。多次颜色变化可以发现黑屏、错误画面或冻结在某一颜色的问题，但不测量帧率、延迟或真实摄像头画质。
+
+手工演示也可以在视频接通后点击“开始发送测试视频”，逐个点击颜色按钮，观察另一端视频窗口，最后点击“停止测试视频”恢复摄像头。
 
 ## 呼叫信令 API 用例
 
 `npm run test:e2e:call-signaling` 运行 [call-signaling.spec.ts](./call-signaling.spec.ts) 中的 29 个测试。它复用上面的 A、B 账号配置，通过真实 IM 和 Fusion 服务验证 SDK 呼叫信令，不启动 Agora RTC，也不挂载 CallKit。C、D 账号用于三人会议、追加邀请和非参与者操作：
 
-`npm run test:e2e:all` 会顺序运行本目录全部 33 个测试（CallKit 4 个，加信令 29 个）。
+`npm run test:e2e:all` 会发现本目录全部 46 个测试（CallKit 17 个，加信令 29 个）；三条 CallKit 演示用例均已启用。
 
 ```bash
-export EASEMOB_THIRD_USERID='third'
-export EASEMOB_THIRD_TOKEN='third-token'
-export EASEMOB_FOURTH_USERID='fourth'
-export EASEMOB_FOURTH_TOKEN='fourth-token'
 npm run test:e2e:call-signaling
 ```
 
 也可用 `EASEMOB_THIRD_PASSWORD`、`EASEMOB_FOURTH_PASSWORD` 代替 Token。B 的双设备场景用两个独立浏览器上下文登录同一账号。缺少 C 或 D 时，只跳过对应的用例。由于所有用例共用账号，保持单 worker 运行；测试结束会结束仍在进行中的呼叫并关闭浏览器上下文。
 
 [覆盖清单](./call-signaling-coverage.md) 将原设计文档的 56 项与现有 Web 自动化逐项对应。移动端系统通知场景需要 Android/iOS 真机与推送证书，不能由浏览器验证。
+
+## 目前状况
+
+截至 2026-10-19，当前有 46 条 Web 端到端用例：29 条信令 API 用例、17 条 CallKit 用例。CallKit 包含原有 8 条用例和新增 9 条多人真实音视频用例，新增用例统一使用中文标题、CK-M 编号、中文注释与步骤，方便统计汇报。测试收集数不等于实际通过数，真实执行情况见报告及本文末尾记录。
+
+### 信令联调情况
+
+联调过程中已记录以下问题，修复和复测状态需结合对应问题记录确认：
+
+1. 抢接竞态：多设备同时接听都成功。
+2. 多设备挂断场景缺少 `handle_on_other_device` 事件。
+3. 错误码与设计不一致：设计预期返回 `1706`，实际返回 `1707`。具体场景和当前断言见 [覆盖清单](./call-signaling-coverage.md)。
+
+### CallKit 原有的 8 个场景
+
+实现位于 [callkit.spec.ts](./callkit.spec.ts)。除虚拟设备检查外，其余用例均使用 A、B 两个真实 IM 账号，经过真实呼叫信令和 Agora RTC 服务；不会模拟服务端成功响应。
+
+| 场景 | 主要验证内容 | 能发现的问题 |
+| --- | --- | --- |
+| 1. 浏览器摄像头、麦克风取流 | 虚拟音视频轨道处于 `live` 状态，视频宽度大于 0；无需账号 | 浏览器媒体权限、虚拟设备或取流环境不可用 |
+| 2. 主叫取消后再次视频呼叫 | B 显示来电，A 在接听前取消；双方恢复空闲，再次呼叫后双方发布音视频并显示远端视频 | 来电弹窗残留、取消后仍占线、再次呼叫失败 |
+| 3. 被叫拒绝后再次视频呼叫 | B 拒绝来电；双方恢复空闲，A 再次呼叫并接通视频 | 拒绝状态不同步、界面未复位、拒绝后无法接听新来电 |
+| 4. 视频接通挂断后反向呼叫 | A 呼叫 B，接通后 B 挂断；保持登录，由 B 反向呼叫 A 并接通 | 挂断后 RTC 或本地轨道未清理、角色切换后无法再次通话 |
+| 5. 会议语音接通与结束 | 通过多人语音入口让 A、B 两人入会，验证成员接听、离开及最终服务端通话结束 | 会议邀请或成员状态不同步、通话未正确结束；三人及以上媒体由新增 CK-M01～CK-M09 覆盖 |
+| 6. 远端语音录制与转文字 | A 将固定语音注入 RTC，B 录制订阅到的远端音频并交给本地 ASR；录音大于 44,100 字节，识别结果与原文至少有 7 个按顺序重合的字 | 界面已接通但远端未收到有效语音、远端录制或转写链路异常 |
+| 7. 视频断网挂断与重新入会 | B 断网时挂断，恢复网络后 A 在原会议中再次邀请 B；验证 B 重新接听、A 再次显示远端视频，且未出现 `CAN_NOT_PUBLISH_MULTIPLE_VIDEO_TRACKS` | 断网离会状态未同步、旧视频轨道残留、再次入会时重复发布视频轨道 |
+| 8. 远端视频颜色变化 | A 生成黑、红、绿、蓝、红画面，通过真实 RTC 发送；B 读取远端视频帧，逐阶段断言中心区域目标颜色占比超过 80%，最后恢复摄像头并挂断 | 远端黑屏、接收到错误画面、画面冻结或源切换未生效 |
+
+场景 2～4 使用 `@demo` 标记，检查双方 RTC 连接和音视频轨道发布，并在每次结束后确认界面可再次呼叫、RTC 已断开、本地音视频轨道引用及发布列表已清空、服务端通话已结束。再次呼叫使用同一浏览器和登录会话，能够检查上一通状态是否影响下一通。
+
+### 验证状态与覆盖边界
+
+- 2026-10-16，使用完成 API Review 调整的 SDK `10.0.0` 和 `.env.e2e.local` 中的沙箱直连配置执行 `npm run test:e2e:callkit`：**8 条全部通过，0 失败、0 跳过，耗时约 2.2 分钟**。最新 JSON 结果在 `test-results/results.json`，HTML 报告在 `playwright-report/`；后续运行会覆盖对应结果。
+- 三条 `@demo` 用例均已恢复执行，并在这一轮全部通过。修复了拒绝操作完成后仍保留一秒接听锁、导致快速重拨时接听点击被忽略的问题。
+- 远端视频颜色变化（17.8 秒）、会议语音（12.2 秒）、远端语音转文字（28.3 秒）和视频断网重入（16.6 秒）均在这一轮经过真实信令及 RTC 服务验证通过。
+- 断网会议挂断会先清理本地 RTC，联网后由同一登录会话补发 `leaveCall`。补发不把旧通话快照写回界面；停止适配器或切换账号时丢弃未发送请求。重连就绪失败允许重试，服务端业务终态不重复请求；区分 SDK 连接错误与呼叫业务错误复用的 `1701` 错误码。
+- CallKit 与 demo 定向单测共 11 个文件、82 条通过，覆盖离线清理、恢复网络重试、账号隔离、旧快照隔离、拒绝后立即接听及新版 API 适配。每次回归结果仍应以对应环境的最新报告为准；缺少账号时跳过不能算通过。本轮未重新运行 29 条信令 API 用例，已完成全部 37 条用例的收集检查。
+- 当前媒体输入使用虚拟摄像头、麦克风、固定语音文件和 Canvas 测试画面。原视频用例检查视频尺寸或轨道存活，新增颜色用例检查分阶段内容变化，均不评价帧率或清晰度；语音转写验证内容可达，不评价延迟、音质或真实扬声器播放效果。
+- 新增多人用例覆盖静音/恢复、摄像头开关、三人和四人媒体、接力邀请、成员离开及异常退出。后续仍需补充无人接听超时、忙线、多设备 UI 联动，以及其他浏览器、真机、完整网络中断与弱网质量测试。信令层覆盖协议场景，不代表对应界面和媒体行为也已覆盖。
+
+### 自动化用例的收益
+
+- **减少重复操作**：自动完成双账号登录、拨打、接听、挂断和再次呼叫，减少人工切换窗口和配合操作；具体节省时间需在稳定运行后测量。
+- **验证真实媒体链路**：除呼叫状态外，还检查 RTC 连接、轨道发布和远端视频；语音用例进一步用接收端录音及文字断言证明内容经过通话传输到达远端。
+- **防止问题反复出现**：将取消、拒绝、挂断和断网重入变成可重复执行的回归步骤，在 SDK、CallKit 或服务升级后及时发现状态残留和媒体重入问题。
+- **提供可查看的证据**：`@demo` 用例保存关键步骤的双方截图；语音用例保存远端录音和识别结果；失败时保存双方状态、信令与 RTC 日志，辅助判断问题发生在哪一层。
+- **支持演示和后续回归**：通过 `--headed` 展示自动操作，通过 `--reporter=list,html` 展示步骤、截图和断言结果；信令层与 CallKit 层分别维护覆盖，避免重复验证相同协议细节。
+
+### 呼叫信令 API Review 适配
+
+通话类型统一使用 `callType: CallType`，追加邀请事件使用 `inviteeIds`，他设备拒绝处理为 `declined`；一对一结束使用 `hangup`，会议退出仍使用 `leaveCall`。公开快照和事件不再含 `revision`，版本排序与去重由 SDK 内部处理。`reportRtcEvent` 暂为 SDK 私有能力，信令 E2E 不再调用该方法；CallKit 的麦克风和摄像头操作也不再上报 RTC 事件。
+
+
+## 多人真实音视频用例（2026-10-19 新增）
+
+以下 9 条用例位于 [callkit.spec.ts](./callkit.spec.ts) 的 `CallKit 多人真实音视频 @conference` 组，使用独立测试上下文和真实信令、RTC 服务。用例相互独立，一条失败不会让后面的用例因串行组而全部跳过；不自动重试掩盖失败。
+
+| 编号 | 中文场景 | 验证与收益 |
+| --- | --- | --- |
+| CK-M01 | 三人同时受邀入会，双向音视频正常并依次离会 | A 一次邀请 B、C；三端都收到另外两人的音视频；最终服务端会议结束，覆盖最基本多人闭环 |
+| CK-M02 | 成员接力邀请，从两人扩展为四人视频会议 | A 邀请 B，B 邀请 C，C 邀请 D；四端始终同一会议，验证普通成员邀请权限和跨成员邀请链路 |
+| CK-M03 | 发起人先离会，其他成员继续视频通话 | A 退出后 B、C 仍在原会议，音视频继续；防止把“发起人离开”错误处理为结束整场 |
+| CK-M04 | 普通成员离会后重新受邀加入，不残留重复轨道 | C 离开后 A、B 继续，B 再邀请 C；保持登录和会议 ID，验证本地资源清理与重复入会 |
+| CK-M05 | 追加邀请被拒绝后，由另一成员再次邀请并接通 | C 拒绝 A 的邀请后，A、B 继续；改由 B 邀请 C 并接通，发现拒绝残留或邀请人切换问题 |
+| CK-M06 | 成员静音再恢复，远端音频状态同步且视频不中断 | 操作 CallKit 实际控制按钮，检查另外两端的音频发布状态变化及视频新帧；防止只改变图标或误停视频 |
+| CK-M07 | 成员关闭再开启摄像头，音频保持且画面恢复 | 两端看到 C 停止发布视频、保留音频，重新开启后持续收到新帧；验证多方订阅恢复 |
+| CK-M08 | 成员信令短暂断线后恢复，原会议及音视频保持 | 切断 B 的真实 Fusion 连接并暂时阻止重连，确认断链后恢复新代次握手；会议 ID 不变，无重复音视频发布 |
+| CK-M09 | 成员异常掉线后自动清理远端媒体，其他成员继续通话 | C 的 Chromium 渲染进程崩溃，不调用离会；等待真实 RTC 离线事件，A、B 清理 C 的媒体并持续通话，另存信令快照核对服务端状态 |
+
+### 运行与汇报数据
+
+沿用 `.env.e2e.local`。三人场景需要 A、B、C，接力邀请需要再配置 D；缺少账号会明确跳过，不能当作通过。账号应属于同一个 App Key，并且彼此不同。
+
+```bash
+# 全部新增多人场景，终端、JSON、HTML 报告沿用默认配置
+npm run test:e2e:callkit -- --grep @conference
+
+# 日常演示：正常场景，排除故障注入
+npm run test:e2e:callkit -- --grep @conference --grep-invert @fault
+
+# 专门运行断线恢复和异常掉线
+npm run test:e2e:callkit -- --grep 'CK-M08|CK-M09'
+
+# 单独展示四人接力邀请
+npm run test:e2e:callkit -- --grep CK-M02
+```
+
+每条用例不仅检查页面“通话中”，还核对同一会议 ID、成员状态、RTC 连接、每个远端用户的音视频订阅、本地音视频各只有一条发布轨道，以及远端 `<video>` 实际解码帧数继续增长。成员离开后检查剩余 RTC 用户集合，防止幽灵成员。最后逐一离会，并检查服务端通话结束。
+
+`test-results/results.json` 可按 `CK-M01`～`CK-M09` 标题统计通过、失败、跳过、耗时及中文步骤。成功关键阶段保存各端截图，每条保存 `conference-A/B/C/D-call-state.json`；故障场景另有 `信令断线恢复.json`、`异常掉线检测.json`。清理失败单独生成附件，并使原本成功的用例失败，避免静默留下账号占用。
+
+### 断线测试的含义与边界
+
+- CK-M08 只中断 Fusion WebSocket，帧仍来自真实服务器；不会伪造业务响应或 RTC 回调。它证明信令恢复与媒体状态保持，不能代表完整断网时 WebRTC UDP/TCP 的恢复能力。浏览器 `setOffline` 不能作为 RTC 传输已中断的充分证据。
+- CK-M09 通过渲染进程崩溃制造无法主动离会的持续掉线，等待真实 `user-left` 事件，并记录原因和发现时间；采用最长 120 秒的状态轮询，实际判定时间由 RTC 服务决定，不将固定等待时间作为成功依据。
+- **RTC 自动清理远端媒体与信令 participant 自动变为 `left` 是两件事。** `异常掉线检测.json` 保留故障后的服务端快照；即使 RTC 已移除 C，也不会据此声称信令自动离会成功。当前 CallKit 不调用 SDK 私有 `reportRtcEvent`，不能预设 RTC 检测结果会同步到信令服务端。
+- 故障观测结束后，CK-M09 才重新登录 C，并通过真实 SDK 补发必要的离会请求，防止影响下一条用例。这是清理步骤，不计入“自动识别离开”的结果。
+
+### 本轮验证记录
+
+- 2026-10-19，沿用本机 `.env.e2e.local` 的沙箱直连及四账号配置，使用当前 UIKit 安装的 SDK `10.0.2` 执行 `npm run test:e2e:callkit -- --grep @conference`：**9 条全部通过，0 失败、0 跳过，无自动重试，耗时约 4.8 分钟**。
+- CK-M01～CK-M09 均经过真实 IM、Fusion 与 Agora RTC；不依赖 ASR 服务。新增用例的最终 JSON 在 `test-results/results.json`，HTML 在 `playwright-report/`，各端状态与截图在 `test-results/artifacts/`。这是本轮 9 条新增用例的结果，未重新执行原有 8 条 CallKit 和 29 条信令用例。
+- 本轮确认：C 异常退出后 RTC 会发出 `ServerTimeOut` 并移除远端媒体，A、B 继续通话；故障观测时服务端快照中 C 仍为 `accepted`。因此“媒体自动清理”已验证，“信令自动标记离开”尚未实现为本用例的通过条件。后续若补齐服务端状态联动，应另加信令终态断言。
+- 新增测试与整个 E2E 文件通过定向 TypeScript 检查；完整测试收集为 46 条（CallKit 17 条、信令 29 条）。

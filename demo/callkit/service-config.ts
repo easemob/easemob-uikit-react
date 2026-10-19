@@ -12,6 +12,18 @@ export interface ResolveCallDemoServiceConfigOptions {
   msyncUrl: string;
 }
 
+// SDK 5 derives the Fusion endpoint from the REST authority, ignoring its path.
+export const deriveCallDemoFusionUrl = (restUrl: string): string => {
+  try {
+    const url = new URL('/ws', restUrl);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    return url.toString();
+  } catch {
+    return '';
+  }
+};
+
 export const resolveCallDemoServiceConfig = (
   options: ResolveCallDemoServiceConfigOptions,
 ): CallDemoServiceConfig => {

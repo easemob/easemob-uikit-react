@@ -50,7 +50,19 @@ EASEMOB_DEMO_MSYNC_PROXY_TARGET=ws://127.0.0.1:4717
 EASEMOB_DEMO_FUSION_PROXY_TARGET=ws://127.0.0.1:8081
 ```
 
-也可以在登录页选择“自定义私有服务”，直接填写 REST 和 MSync 地址。此方式不经过 Vite 代理，需要服务端允许浏览器跨域访问。
+### 5. 直连正式环境
+
+运行 `npm run dev:demo` 打开页面，在登录页选择“自定义服务（直连，可用于正式环境）”，填写：
+
+- 正式环境对应的 App Key、用户 ID 和 IM Token（或密码）。
+- 正式 REST 地址（`https://...`）和 MSync WebSocket 地址（`wss://.../websocket`）。原有预填地址不代表你的正式环境，请按实际部署替换。
+- RTC App ID 选填，默认留空，通过 IM SDK 获取 RTC App ID 和 Token。手动填写时会覆盖 SDK 获取方式，双方需使用同一个允许无 RTC Token 模式的 RTC 项目。
+
+此模式由浏览器直连服务，不需要启动本地 forward，IM 请求不经过 Vite 代理。`dev:demo` 仍需运行以提供网页；语音识别实验另需本机 ASR 服务。
+
+登录页展示实际的 Fusion 地址。当前 SDK 根据 REST 的域名和端口派生 Fusion，例如 `https://rest.example.com/api` 对应 `wss://rest.example.com/ws`，不能在 demo 单独指定另一个 Fusion 域名。正式服务需提供这个入口，且支持当前 SDK 的呼叫信令协议；REST 需允许浏览器从 demo 页面跨域访问。单纯 IM 登录成功不代表呼叫信令已就绪，建议用两个窗口登录不同账号，分别验证来电、接听、远端音视频和挂断。
+
+这一阶段只调整 demo；E2E 的 `.env.e2e.local` 服务环境和测试用例保持原配置，待手动验证后再切换。
 
 ## 部署步骤
 

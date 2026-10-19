@@ -51,7 +51,7 @@ Web SDK 已提供原生 `CallSignalingManager`。本次迁移使用 Fusion 呼�
 - 不兼容旧版基于 `ext.action = rtcCall` 的信令。
 - 不支持取消指定群成员的未处理邀请。
 - 不实现浏览器整页刷新后的进行中通话恢复。
-- 在 SDK 未明确 RTC event 整数协议前，不接入 `reportRtcEvent()`。
+- `reportRtcEvent()` 是 SDK 预留私有能力，UIKit 不调用；麦克风、摄像头和切换摄像头只执行本地 RTC 操作。
 
 ## 4. SDK 能力映射
 
@@ -63,7 +63,7 @@ Web SDK 已提供原生 `CallSignalingManager`。本次迁移使用 Fusion 呼�
 | 群呼加入 | `joinCall()` |
 | 拒绝或主动忙线 | `rejectCall({ reason: 'declined' \| 'busy' })` |
 | 主叫在接听前取消呼叫 | `cancelCall()` |
-| 单呼接通后挂断 | `terminateCall()` |
+| 单呼接通后挂断 | `hangup()` |
 | 群呼成员退出 | `leaveCall()` |
 | 群呼追加邀请 | `inviteParticipants()` |
 | 成员接听、拒绝、超时、离开 | `onParticipantsChanged` |
@@ -74,7 +74,7 @@ Web SDK 已提供原生 `CallSignalingManager`。本次迁移使用 Fusion 呼�
 
 CallKit 模式映射：
 
-| CallKit 模式 | `kind` | `mediaType` |
+| CallKit 模式 | `callType` | `mediaType` |
 | --- | --- | --- |
 | `AUDIO_1V1` | `single` | `voice` |
 | `VIDEO_1V1` | `single` | `video` |
@@ -248,7 +248,7 @@ Coordinator 不解析普通聊天消息。
 ### 7.1 主叫发起单呼
 
 1. 校验当前没有活动呼叫。
-2. 调用 `createCall({ kind: 'single', ... })`。
+2. 调用 `createCall({ callType: 'single', ... })`。
 3. 将返回的 `CallSnapshot` 写入 Store。
 4. 设置 `callId = snapshot.callId`、`channel = snapshot.callId`。
 5. 显示呼出 UI 并播放呼出铃声。
@@ -272,7 +272,7 @@ Manager 的自动忙线作为主要保护；CallStore 仍只允许一个本地�
 
 1. 保留现有群成员选择 UI。
 2. 用户确认后调用
-   `createCall({ kind: 'conference', targetUserIds, conversationId: groupId })`。
+   `createCall({ callType: 'conference', targetUserIds, conversationId: groupId })`。
 3. 以返回的 callId 作为 Agora channel。
 4. 主叫创建呼叫成功后立即加入 RTC。
 5. 参与者状态完全由 `onParticipantsChanged` 的完整列表驱动。
@@ -306,7 +306,7 @@ Manager 的自动忙线作为主要保护；CallStore 仍只允许一个本地�
 | --- | --- |
 | 主叫在单呼接听前取消 | `cancelCall()` |
 | 被叫拒绝未接来电 | `rejectCall()` |
-| 已接通单呼任一方挂断 | `terminateCall()` |
+| 已接通单呼任一方挂断 | `hangup()` |
 | 群呼成员退出 | `leaveCall()` |
 | 服务端通知整场结束 | 不再发命令，只执行本地清理 |
 
@@ -330,7 +330,7 @@ Manager 的自动忙线作为主要保护；CallStore 仍只允许一个本地�
 ```ts
 interface CallInfo {
   callId: string;
-  kind: 'single' | 'conference';
+  callType: 'single' | 'conference';
   mediaType: 'voice' | 'video';
   role: 'caller' | 'callee';
   conversationId?: string;
@@ -439,11 +439,11 @@ interface CallKitExt {
 
 ### Phase 4：迁移群呼
 
-- [ ] 使用 `createCall(kind: 'conference')` 发起群呼。
+- [ ] 使用 `createCall(callType: 'conference')` 发起群呼。
 - [ ] 使用 `joinCall()` 接听群呼。
 - [ ] 使用 `leaveCall()` 退出群呼。
 - [ ] 使用 `inviteParticipants()` 继续邀请成员。
-- [x] 用快照 revision 和完整 participant list 更新成员 UI。
+- [x] 使用 SDK 已完成版本合并的快照和完整 participant list 更新成员 UI。
 - [ ] 删除取消单个群成员邀请的按钮、回调和状态。
 - [ ] 将邀请超时映射到 `timeoutSeconds`。
 - [ ] 处理群呼最后成员离开和 `lastLeft` 结束原因。
@@ -499,7 +499,7 @@ interface CallKitExt {
 ### 11.1 单元测试
 
 - `CallStore`
-  - revision 新旧判断；
+  - 接收 SDK 合并后的公开状态；
   - participant 完整列表替换；
   - 非当前 callId 事件忽略；
   - reset 幂等。
@@ -580,7 +580,7 @@ interface CallKitExt {
 ### 快照乱序
 
 风险：较旧 participant 事件覆盖新状态。  
-控制：按十进制字符串安全比较 uint64 revision，拒绝旧 revision。
+控制：SDK 内部使用 uint64 revision 拒绝旧版本；UIKit 接收 SDK 已完成合并的公开快照和事件，不再读取 revision。
 
 ### 群呼 API 契约误用
 

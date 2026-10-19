@@ -3,11 +3,11 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 type Account = { userId: string; token?: string; password?: string };
 type Snapshot = {
   callId: string;
-  kind: string;
+  callType: string;
   mediaType: string;
   lifecycle: string;
   endReason?: string;
-  revision: string;
+
   establishedAt?: number;
   conversationId?: string;
   ext?: string;
@@ -203,15 +203,15 @@ async function cleanup(clients: Client[], callIds: string[]): Promise<void> {
     const result = await command(owner, 'getCallSnapshot', callId).catch(() => null);
     if (!result?.ok || result.value.lifecycle !== 'open') continue;
     const method =
-      result.value.kind === 'single'
+      result.value.callType === 'single'
         ? result.value.establishedAt
-          ? 'terminateCall'
+          ? 'hangup'
           : 'cancelCall'
         : result.value.establishedAt
         ? 'leaveCall'
         : 'cancelCall';
     await command(owner, method, callId).catch(() => undefined);
-    if (result.value.kind === 'conference') {
+    if (result.value.callType === 'conference') {
       for (const client of clients.filter(client => client !== owner)) {
         if (
           !client.page.isClosed() &&
@@ -250,19 +250,19 @@ async function withClients(
 async function create(
   a: Client,
   ids: string[],
-  kind: 'single' | 'conference',
+  callType: 'single' | 'conference',
   mediaType: 'voice' | 'video',
   targets: string[],
   options: Record<string, unknown> = {},
 ) {
   const snapshot = await success(a, 'createCall', {
-    kind,
+    callType,
     mediaType,
     targetUserIds: targets,
     ...options,
   });
   ids.push(snapshot.callId);
-  expect(snapshot).toMatchObject({ kind, mediaType, lifecycle: 'open' });
+  expect(snapshot).toMatchObject({ callType, mediaType, lifecycle: 'open' });
   return snapshot;
 }
 
@@ -276,7 +276,7 @@ test.describe('real call signaling API', () => {
         expect(participant(created, A.account.userId).state).toBe('accepted');
         expect(participant(created, B.account.userId).state).toBe('pending');
         expect((await waitEvent(B, 'invitation', created.callId)).payload).toMatchObject({
-          kind: 'single',
+          callType: 'single',
           mediaType,
         });
         await success(B, 'reportRinging', created.callId);
@@ -284,7 +284,7 @@ test.describe('real call signaling API', () => {
         const accepted = await success(B, 'acceptCall', created.callId);
         expect(participant(accepted, B.account.userId).state).toBe('accepted');
         expect(accepted.establishedAt).toBeGreaterThan(0);
-        const ended = await success(A, 'terminateCall', created.callId);
+        const ended = await success(A, 'hangup', created.callId);
         expect(ended).toMatchObject({ lifecycle: 'ended', endReason: 'hangup' });
         expect((await waitEvent(B, 'ended', created.callId)).payload.reason).toBe('hangup');
       });
@@ -298,7 +298,7 @@ test.describe('real call signaling API', () => {
       expect(participant(await success(B, 'acceptCall', call.callId), B.account.userId).state).toBe(
         'accepted',
       );
-      expect((await success(B, 'terminateCall', call.callId)).endReason).toBe('hangup');
+      expect((await success(B, 'hangup', call.callId)).endReason).toBe('hangup');
       expect((await waitEvent(A, 'ended', call.callId)).payload.reason).toBe('hangup');
     });
   });
@@ -367,8 +367,8 @@ test.describe('real call signaling API', () => {
       const cancel = await command(A, 'cancelCall', call.callId);
       expect(cancel.ok).toBe(false);
       expect((await success(A, 'getCallSnapshot', call.callId)).lifecycle).toBe('open');
-      await success(A, 'terminateCall', call.callId);
-      const again = await command(A, 'terminateCall', call.callId);
+      await success(A, 'hangup', call.callId);
+      const again = await command(A, 'hangup', call.callId);
       // The server checks the actor's participant state (now hanguped) before
       // returning a terminal-call code, so a repeated terminate returns 1707.
       expect(again).toMatchObject({ ok: false, error: { code: 1707 } });
@@ -417,26 +417,22 @@ test.describe('real call signaling API', () => {
         ),
       ).toHaveLength(0);
       await B.context.setOffline(true);
-      await success(A, 'terminateCall', call.callId);
+      await success(A, 'hangup', call.callId);
       await B.context.setOffline(false);
       expect((await waitEvent(B, 'ended', call.callId)).payload.reason).toBe('hangup');
     });
   });
 
-  test('F-02/F-10/F-11 server errors, RTC report and authoritative snapshot', async ({
+  test('F-02/F-11 server errors and authoritative snapshot', async ({
     browser,
   }) => {
     await withClients(browser, ['B', 'A'], async ({ A, B }, ids) => {
       const missing = await command(A, 'acceptCall', 'ffffffffffffffffffffffffffffffff');
       expect(missing).toMatchObject({ ok: false, error: { code: 1701 } });
       const call = await create(A, ids, 'single', 'voice', [B.account.userId]);
-      const reported = await success(A, 'reportRtcEvent', call.callId, {
-        event: 1,
-        targetUserId: B.account.userId,
-      });
-      expect(reported).toMatchObject({ callId: call.callId, lifecycle: 'open' });
       const synced = await success(A, 'getCallSnapshot', call.callId);
-      expect(BigInt(synced.revision)).toBeGreaterThanOrEqual(BigInt(call.revision));
+      expect(synced).toMatchObject({ callId: call.callId, callType: 'single', lifecycle: 'open' });
+      expect(synced).not.toHaveProperty('revision');
     });
   });
 
@@ -448,11 +444,11 @@ test.describe('real call signaling API', () => {
           error: { code: 110 },
         });
       }
-      const base = { kind: 'single', mediaType: 'voice', targetUserIds: [accounts.B.userId] };
+      const base = { callType: 'single', mediaType: 'voice', targetUserIds: [accounts.B.userId] };
       const invalid = [
         { ...base, targetUserIds: [accounts.B.userId, accounts.C.userId] },
-        { ...base, kind: 'conference', targetUserIds: [] },
-        { ...base, kind: undefined },
+        { ...base, callType: 'conference', targetUserIds: [] },
+        { ...base, callType: undefined },
         { ...base, mediaType: undefined },
         { ...base, timeoutSeconds: 0 },
         { ...base, timeoutSeconds: -1 },
@@ -502,7 +498,7 @@ test.describe('real call signaling API', () => {
       await waitEvent(B, 'invitation', first.callId);
       await success(B, 'acceptCall', first.callId);
       const second = await command(C, 'createCall', {
-        kind: 'single',
+        callType: 'single',
         mediaType: 'voice',
         targetUserIds: [B.account.userId],
       });
@@ -531,7 +527,7 @@ test.describe('real call signaling API', () => {
       const B = await login(browser, accounts.B);
       clients.push(B);
       const invitation = await waitEvent(B, 'invitation', call.callId);
-      expect(invitation.payload.kind).toBe('single');
+      expect(invitation.payload.callType).toBe('single');
     } finally {
       await cleanup(clients, ids);
     }
@@ -597,7 +593,7 @@ test.describe('real call signaling API', () => {
         error: { code: 201 },
       });
       const priorEvents = (await events(B)).length;
-      await success(A, 'terminateCall', call.callId);
+      await success(A, 'hangup', call.callId);
       await B.page.waitForTimeout(1000);
       expect((await events(B)).length).toBe(priorEvents);
     });
@@ -656,7 +652,7 @@ test.describe('multiple devices call signaling API', () => {
   });
 
   for (const [reason, handleType, endReason] of [
-    ['declined', 'rejected', 'rejected'],
+    ['declined', 'declined', 'rejected'],
     ['busy', 'busy', 'busy'],
   ] as const) {
     test(`C-03/C-04 ${reason} on B1 notifies B2 and ends the call`, async ({ browser }) => {
@@ -780,7 +776,7 @@ test.describe('conference signaling API', () => {
       const call = await create(A, ids, 'conference', 'voice', [B.account.userId]);
       await waitEvent(B, 'invitation', call.callId);
       await success(B, 'acceptCall', call.callId);
-      expect(await command(A, 'terminateCall', call.callId)).toMatchObject({
+      expect(await command(A, 'hangup', call.callId)).toMatchObject({
         ok: false,
         error: { code: 110 },
       });
@@ -810,7 +806,7 @@ test.describe('conference signaling API', () => {
       const call = await create(A, ids, 'conference', 'voice', [B.account.userId]);
       await waitEvent(B, 'invitation', call.callId);
       await success(B, 'acceptCall', call.callId);
-      const result = await command(C, 'terminateCall', call.callId);
+      const result = await command(C, 'hangup', call.callId);
       expect(result.ok).toBe(false);
       expect((result as Extract<Result, { ok: false }>).error.code).not.toBe(110);
       expect((await success(A, 'getCallSnapshot', call.callId)).lifecycle).toBe('open');
@@ -838,7 +834,7 @@ test.describe('conference invitation signaling API', () => {
       await success(A, 'inviteParticipants', call.callId, { userIds: [D.account.userId] });
       await waitEvent(D, 'invitation', call.callId);
       const invited = await waitEvent(B, 'invited', call.callId);
-      expect(invited.payload.invitedUserIds).toContain(D.account.userId);
+      expect(invited.payload.inviteeIds).toContain(D.account.userId);
       expect(
         (await events(D)).filter(
           event => event.name === 'invited' && event.payload.callId === call.callId,

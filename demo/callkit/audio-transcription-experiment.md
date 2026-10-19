@@ -7,9 +7,9 @@
 需要两位可正常登录 CallKit demo、可接通 RTC 的账号，以及 Python 环境。先安装本机识别依赖：
 
 ```bash
-python3 -m venv /tmp/callkit-asr-venv
-/tmp/callkit-asr-venv/bin/python -m pip install faster-whisper 'av<19'
-HF_HOME=/tmp/callkit-hf /tmp/callkit-asr-venv/bin/python demo/callkit/asr-server.py
+python3 -m venv .local/callkit/venv
+.local/callkit/venv/bin/python -m pip install faster-whisper 'av<19'
+HF_HOME="$PWD/.local/callkit/hf" .local/callkit/venv/bin/python demo/callkit/asr-server.py
 ```
 
 首次启动会下载 `base` 模型。可用 `CALLKIT_ASR_MODEL=small` 选择准确率更高、下载与运行开销也更大的模型。服务只监听 `127.0.0.1:8765`，`http://127.0.0.1:8765/health` 可检查是否就绪。
@@ -34,4 +34,4 @@ HF_HOME=/tmp/callkit-hf /tmp/callkit-asr-venv/bin/python demo/callkit/asr-server
 npm run test:e2e:callkit -- --grep 'callee transcribes speech sent through an RTC audio call'
 ```
 
-用例会在服务未运行时自动启动 `asr-server.py`，测试后清理自己启动的进程；Playwright 配置会在独立的 5175 端口启动 demo 服务。默认使用 `/tmp/callkit-asr-venv/bin/python`，其他 Python 环境可通过 `CALLKIT_ASR_PYTHON` 指定，但该环境须已安装 `faster-whisper` 和 `av<19`。首次运行可能需要下载 `base` 模型。用例通过真实 RTC 音轨传输固定语音，要求识别结果与原文至少有 7 个按顺序重合的字，并把被叫录音和识别结果分别保存到测试附件 `callee-remote-audio.wav` 与 `rtc-transcription.json`。
+用例会在服务未运行时自动启动 `asr-server.py`，测试后清理自己启动的进程；Playwright 配置会在独立的 5175 端口启动 demo 服务。默认使用 `.local/callkit/venv/bin/python`，模型缓存在 `.local/callkit/hf`，这些本机文件已被 Git 忽略。其他 Python 环境可通过 `CALLKIT_ASR_PYTHON` 指定，但该环境须已安装 `faster-whisper` 和 `av<19`；缓存路径可通过 `HF_HOME` 指定。首次运行可能需要下载 `base` 模型。用例通过真实 RTC 音轨传输固定语音，要求识别结果与原文至少有 7 个按顺序重合的字，并把被叫录音和识别结果分别保存到测试附件 `callee-remote-audio.wav` 与 `rtc-transcription.json`。

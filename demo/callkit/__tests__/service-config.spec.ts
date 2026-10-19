@@ -1,5 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCallDemoServiceConfig } from '../service-config';
+import { deriveCallDemoFusionUrl, resolveCallDemoServiceConfig } from '../service-config';
+
+describe('deriveCallDemoFusionUrl', () => {
+  it('从正式 REST 域名生成加密的 Fusion 地址，忽略 REST 路径', () => {
+    expect(deriveCallDemoFusionUrl('https://rest.example.com/api/')).toBe(
+      'wss://rest.example.com/ws',
+    );
+  });
+
+  it('保留本地代理端口', () => {
+    expect(deriveCallDemoFusionUrl('http://localhost:5174/rest')).toBe(
+      'ws://localhost:5174/ws',
+    );
+  });
+
+  it('输入无效时不展示错误的信令地址', () => {
+    expect(deriveCallDemoFusionUrl('')).toBe('');
+    expect(deriveCallDemoFusionUrl('wss://rest.example.com')).toBe('');
+  });
+});
 
 describe('resolveCallDemoServiceConfig', () => {
   it('开发代理模式使用当前页面同源的 REST 和 MSync 地址', () => {

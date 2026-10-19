@@ -16,3 +16,4 @@ agora-chat-uikit-*
 playwright-report/
 test-results/
 .env.e2e.local
+.local/

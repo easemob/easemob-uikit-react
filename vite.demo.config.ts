@@ -55,6 +55,11 @@ export default defineConfig(({ mode }) => {
       },
     ],
     envPrefix: ['VITE_', 'EASEMOB_'],
+    optimizeDeps: {
+      esbuildOptions: {
+        target: 'esnext',
+      },
+    },
     // 设置基础路径为空，使用相对路径
     base: '',
     build: {

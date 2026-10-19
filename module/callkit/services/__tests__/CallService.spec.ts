@@ -1,6 +1,5 @@
 import { vi } from 'vitest';
 import { CallService, CALL_STATUS, CALL_TYPE, HANGUP_REASON } from '../CallService';
-import { CALL_RTC_EVENT } from '../../signaling/CallSignalingService';
 import type { CallKitRTCProvider } from '../../types';
 import CallStore from '../../store/CallStore';
 import type { CallSnapshot } from 'easemob-websdk';
@@ -28,7 +27,8 @@ const createService = (userId = 'alice', useRTCToken = false, callStore?: CallSt
     cancelCall: vi.fn(),
     rejectCall: vi.fn(),
     leaveCall: vi.fn(),
-    terminateCall: vi.fn(),
+    deferLeaveCall: vi.fn(),
+    hangup: vi.fn(),
     createCall: vi.fn(),
     syncCall: vi.fn(),
     inviteParticipants: vi.fn(),
@@ -261,11 +261,11 @@ describe('outgoing single call timeout reconciliation', () => {
 
   const pendingCall: CallSnapshot = {
     callId: 'outgoing',
-    kind: 'single',
+    callType: 'single',
     mediaType: 'voice',
     lifecycle: 'open',
     creatorUserId: 'alice',
-    revision: '2',
+
     createdAt: 1,
     participants: [
       { userId: 'alice', state: 'accepted' },
@@ -280,7 +280,7 @@ describe('outgoing single call timeout reconciliation', () => {
       ...pendingCall,
       lifecycle: 'ended',
       endReason: 'timeout',
-      revision: '3',
+
       participants: [pendingCall.participants[0], { userId: 'bob', state: 'timeout' }],
     });
     const hangup = vi.spyOn(service, 'hangup').mockResolvedValue(undefined);
@@ -305,7 +305,7 @@ describe('outgoing single call timeout reconciliation', () => {
     callSignaling.createCall.mockResolvedValue(pendingCall);
     callSignaling.syncCall.mockResolvedValue({
       ...pendingCall,
-      revision: '3',
+
       participants: [pendingCall.participants[0], { userId: 'bob', state: 'accepted' }],
     });
     const hangup = vi.spyOn(service, 'hangup').mockResolvedValue(undefined);
@@ -331,7 +331,7 @@ describe('outgoing single call timeout reconciliation', () => {
       chatType: 'singleChat',
       callType: CALL_TYPE.AUDIO_1V1,
     });
-    Object.assign(service, { currentCallInfo: { callId: 'next-call', kind: 'single' } });
+    Object.assign(service, { currentCallInfo: { callId: 'next-call', callType: 'single' } });
     vi.advanceTimersByTime(31_000);
     expect(callSignaling.syncCall).not.toHaveBeenCalled();
   });
@@ -345,13 +345,13 @@ describe('CallService incoming call lifecycle', () => {
     vi.clearAllMocks();
   });
 
-  const snapshot = (kind: 'single' | 'conference', accepted = false): CallSnapshot => ({
+  const snapshot = (callType: 'single' | 'conference', accepted = false): CallSnapshot => ({
     callId: 'incoming',
-    kind,
+    callType,
     mediaType: 'voice',
     lifecycle: 'open',
     creatorUserId: 'alice',
-    revision: accepted ? '2' : '1',
+
     createdAt: 1,
     participants: [
       { userId: 'alice', state: 'accepted' },
@@ -367,7 +367,7 @@ describe('CallService incoming call lifecycle', () => {
       finishHangup = resolve;
     });
     Object.assign(service, {
-      currentCallInfo: { callId: 'incoming', kind: 'conference' },
+      currentCallInfo: { callId: 'incoming', callType: 'conference' },
       callStatus: CALL_STATUS.IN_CALL,
       endingCall,
     });
@@ -375,7 +375,7 @@ describe('CallService incoming call lifecycle', () => {
     callSignaling.acceptCall.mockResolvedValue(snapshot('conference', true));
     const invitation = {
       callId: 'incoming',
-      kind: 'conference' as const,
+      callType: 'conference' as const,
       mediaType: 'voice' as const,
       inviter: { userId: 'alice' },
     };
@@ -399,19 +399,38 @@ describe('CallService incoming call lifecycle', () => {
     expect(callSignaling.acceptCall).toHaveBeenCalledWith('incoming');
   });
 
+  it('accepts the next call immediately after rejection finishes without a cooldown', async () => {
+    const { service, callSignaling } = createService('bob');
+    vi.spyOn(service, 'cleanupPreviewMode').mockResolvedValue(undefined);
+    vi.spyOn(service, 'hangup').mockResolvedValue(undefined);
+    vi.spyOn(service, 'joinCall').mockResolvedValue(undefined);
+    Object.assign(service, {
+      currentCallInfo: { callId: 'rejected', callType: 'single' },
+      callStatus: CALL_STATUS.ALERTING,
+    });
+    await service.answerCall(false);
+    Object.assign(service, {
+      currentCallInfo: { callId: 'next-call', callType: 'single' },
+      callStatus: CALL_STATUS.ALERTING,
+    });
+    await service.answerCall(true);
+    expect(callSignaling.rejectCall).toHaveBeenCalledWith('rejected', { reason: 'declined' });
+    expect(callSignaling.acceptCall).toHaveBeenCalledWith('next-call');
+  });
+
   it.each(['single', 'conference'] as const)(
     'keeps a %s incoming call ringing until the callee accepts',
-    async kind => {
+    async callType => {
       const store = new CallStore();
       const fixture = createService('bob', false, store);
       const { service, client, callSignaling, rtcProvider, onInvitationReceived } = fixture;
       Object.assign(service, { currentCallInfo: null, callStatus: CALL_STATUS.IDLE });
       callSignaling.reportRinging.mockImplementation(async () => {
-        store.setSnapshot(snapshot(kind));
+        store.setSnapshot(snapshot(callType));
         return store.snapshot;
       });
       const accept = async () => {
-        store.setSnapshot(snapshot(kind, true));
+        store.setSnapshot(snapshot(callType, true));
         return store.snapshot;
       };
       callSignaling.acceptCall.mockImplementation(accept);
@@ -419,7 +438,7 @@ describe('CallService incoming call lifecycle', () => {
 
       store.setInvitation({
         callId: 'incoming',
-        kind,
+        callType,
         mediaType: 'voice',
         inviter: { userId: 'alice' },
       });
@@ -452,7 +471,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'incoming',
         channel: 'incoming',
-        kind: 'conference',
+        callType: 'conference',
         type: CALL_TYPE.VIDEO_MULTI,
       },
       callStatus: CALL_STATUS.ALERTING,
@@ -473,7 +492,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'incoming',
         channel: 'incoming',
-        kind: 'conference',
+        callType: 'conference',
         type: CALL_TYPE.VIDEO_MULTI,
       },
       callStatus: CALL_STATUS.ALERTING,
@@ -481,7 +500,7 @@ describe('CallService incoming call lifecycle', () => {
     const hangup = vi.spyOn(service, 'hangup').mockResolvedValue(undefined);
     store.setSnapshot({
       ...snapshot('conference'),
-      revision: '3',
+
       participants: [
         { userId: 'alice', state: 'accepted' },
         { userId: 'bob', state: 'timeout' },
@@ -530,7 +549,7 @@ describe('CallService incoming call lifecycle', () => {
           currentCallInfo: {
             callId: 'incoming',
             channel: 'incoming',
-            kind: 'conference',
+            callType: 'conference',
             type: CALL_TYPE.VIDEO_MULTI,
           },
           callStatus: CALL_STATUS.ALERTING,
@@ -568,7 +587,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'incoming',
         channel: 'incoming',
-        kind: 'conference',
+        callType: 'conference',
         type: CALL_TYPE.VIDEO_MULTI,
       },
       callStatus: CALL_STATUS.ALERTING,
@@ -591,7 +610,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'incoming',
         channel: 'incoming',
-        kind: 'single',
+        callType: 'single',
         callerUserId: 'alice',
         type: CALL_TYPE.AUDIO_1V1,
       },
@@ -626,7 +645,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'next-call',
         channel: 'next-call',
-        kind: 'conference',
+        callType: 'conference',
         type: CALL_TYPE.AUDIO_MULTI,
       },
       callStatus: CALL_STATUS.ALERTING,
@@ -656,7 +675,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'old-call',
         channel: 'old-call',
-        kind: 'conference',
+        callType: 'conference',
         type: CALL_TYPE.VIDEO_MULTI,
       },
       callStatus: CALL_STATUS.IN_CALL,
@@ -673,6 +692,36 @@ describe('CallService incoming call lifecycle', () => {
 
     expect(callSignaling.leaveCall).toHaveBeenCalledWith('old-call');
     expect((service as any).rtcService.leave).toHaveBeenCalledOnce();
+  });
+
+  it('cleans up an offline conference locally and defers its server leave', async () => {
+    const online = vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    const { service, callSignaling } = createService('bob');
+    Object.assign(service, {
+      currentCallInfo: {
+        callId: 'offline-call',
+        channel: 'offline-call',
+        callType: 'conference',
+        type: CALL_TYPE.VIDEO_MULTI,
+      },
+      callStatus: CALL_STATUS.IN_CALL,
+    });
+    vi.spyOn(service as any, 'checkAndCleanupAllMediaTracks').mockResolvedValue(undefined);
+    try {
+      const ending = service.hangup();
+      for (let index = 0; index < 20; index++) {
+        await Promise.resolve();
+        vi.advanceTimersByTime(100);
+      }
+      await ending;
+      expect(callSignaling.deferLeaveCall).toHaveBeenCalledWith('offline-call');
+      expect(callSignaling.leaveCall).not.toHaveBeenCalled();
+      expect(service.getCallStatus()).toBe(CALL_STATUS.IDLE);
+      expect(service.getCurrentCallInfo()).toBeNull();
+      expect((service as any).rtcService.leave).toHaveBeenCalledOnce();
+    } finally {
+      online.mockRestore();
+    }
   });
 
   it.each([
@@ -705,7 +754,7 @@ describe('CallService incoming call lifecycle', () => {
         currentCallInfo: {
           callId: 'incoming',
           channel: 'incoming',
-          kind: 'conference',
+          callType: 'conference',
           callerUserId: 'alice',
           type: CALL_TYPE.AUDIO_MULTI,
         },
@@ -730,7 +779,7 @@ describe('CallService incoming call lifecycle', () => {
     ['alice', CALL_STATUS.INVITING, HANGUP_REASON.TIMEOUT, 'syncCall'],
     ['alice', CALL_STATUS.INVITING, HANGUP_REASON.ABNORMAL_END, 'cancelCall'],
     ['bob', CALL_STATUS.ALERTING, HANGUP_REASON.NO_RESPONSE, 'syncCall'],
-    ['alice', CALL_STATUS.IN_CALL, HANGUP_REASON.ABNORMAL_END, 'terminateCall'],
+    ['alice', CALL_STATUS.IN_CALL, HANGUP_REASON.ABNORMAL_END, 'hangup'],
   ] as const)(
     'releases the native slot when %s ends in state %s',
     async (userId, status, reason, operation) => {
@@ -739,7 +788,7 @@ describe('CallService incoming call lifecycle', () => {
         currentCallInfo: {
           callId: 'old-call',
           channel: 'old-call',
-          kind: 'single',
+          callType: 'single',
           callerUserId: 'alice',
           type: CALL_TYPE.AUDIO_1V1,
         },
@@ -760,7 +809,7 @@ describe('CallService incoming call lifecycle', () => {
       if (operation === 'syncCall') {
         expect(callSignaling.cancelCall).not.toHaveBeenCalled();
         expect(callSignaling.rejectCall).not.toHaveBeenCalled();
-        expect(callSignaling.terminateCall).not.toHaveBeenCalled();
+        expect(callSignaling.hangup).not.toHaveBeenCalled();
         expect(onCallEnd).toHaveBeenCalledWith('timeout', expect.anything());
       }
     },
@@ -773,7 +822,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'old-call',
         channel: 'old-call',
-        kind: 'single',
+        callType: 'single',
         callerUserId: 'alice',
         type: CALL_TYPE.AUDIO_1V1,
       },
@@ -789,7 +838,7 @@ describe('CallService incoming call lifecycle', () => {
     expect(callSignaling.syncCall).not.toHaveBeenCalled();
     expect(callSignaling.cancelCall).not.toHaveBeenCalled();
     expect(callSignaling.rejectCall).not.toHaveBeenCalled();
-    expect(callSignaling.terminateCall).not.toHaveBeenCalled();
+    expect(callSignaling.hangup).not.toHaveBeenCalled();
   });
 
   it('waits for old call cleanup before creating another call', async () => {
@@ -798,7 +847,7 @@ describe('CallService incoming call lifecycle', () => {
       currentCallInfo: {
         callId: 'old-call',
         channel: 'old-call',
-        kind: 'single',
+        callType: 'single',
         callerUserId: 'alice',
         type: CALL_TYPE.AUDIO_1V1,
       },
@@ -909,7 +958,7 @@ describe('CallService incoming call lifecycle', () => {
     });
     expect(callSignaling.createCall).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: 'conference',
+        callType: 'conference',
         mediaType: 'voice',
         targetUserIds: ['bob', 'charlie'],
         conversationId: undefined,
@@ -924,7 +973,7 @@ describe('CallService incoming call lifecycle', () => {
     });
   });
 
-  it('reports microphone, camera and camera-switch RTC events', async () => {
+  it('keeps microphone and camera controls working without reporting RTC events', async () => {
     const { service, callSignaling } = createService('alice');
     const reportRtcEvent = vi.fn().mockResolvedValue(undefined);
     Object.assign(callSignaling, { reportRtcEvent });
@@ -955,14 +1004,7 @@ describe('CallService incoming call lifecycle', () => {
     await expect(service.toggleCamera()).resolves.toBe(true);
     await expect(service.flipCamera('camera-2')).resolves.toBe(true);
 
-    expect(reportRtcEvent.mock.calls.map(([, params]) => params.event)).toEqual([
-      CALL_RTC_EVENT.microphoneOff,
-      CALL_RTC_EVENT.microphoneOn,
-      CALL_RTC_EVENT.cameraOff,
-      CALL_RTC_EVENT.cameraOn,
-      CALL_RTC_EVENT.switchCamera,
-    ]);
-    expect(reportRtcEvent).toHaveBeenCalledWith('incoming', { event: CALL_RTC_EVENT.switchCamera });
+    expect(reportRtcEvent).not.toHaveBeenCalled();
   });
 
   it('does not add users to a single call', async () => {
