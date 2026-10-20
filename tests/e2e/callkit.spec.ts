@@ -1241,6 +1241,86 @@ async function expectVideoAdvancing(page: Page, userId: string): Promise<void> {
     .toBeGreaterThan(Math.max(0, before));
 }
 
+type VideoColor = 'red' | 'green' | 'blue';
+const videoColorLabels: Record<VideoColor, string> = { red: '红色', green: '绿色', blue: '蓝色' };
+
+/** 只替换本端摄像头输入，视频仍由真实 RTC 发布、传输、订阅并解码。 */
+async function sendConferenceColor(peer: ConferencePeer, color: VideoColor): Promise<void> {
+  const start = peer.page.getByRole('button', { name: '开始发送测试视频', exact: true });
+  if (await start.isEnabled()) {
+    await start.click();
+    await expect(peer.page.getByLabel('视频测试状态')).toHaveText('正在发送黑色测试画面');
+  }
+  await peer.page
+    .getByRole('button', { name: `发送${videoColorLabels[color]}画面`, exact: true })
+    .click();
+  await expect(peer.page.getByLabel('视频测试状态')).toHaveText(
+    `正在发送${videoColorLabels[color]}测试画面`,
+  );
+}
+
+/** 从指定接收者的远端 video 取像素；不能用发送 canvas 或整页截图代替媒体断言。 */
+async function expectConferenceColor(
+  receiver: ConferencePeer,
+  sender: ConferencePeer,
+  color: VideoColor,
+  info: TestInfo,
+  stage: string,
+): Promise<void> {
+  let latest: Awaited<ReturnType<typeof sampleRemoteVideo>> = null;
+  const name = `${stage}-${sender.account.userId}-to-${receiver.account.userId}`;
+  try {
+    await expect
+      .poll(
+        async () => {
+          latest = await sampleRemoteVideo(receiver.page, sender.account.userId);
+          return latest?.ratios[color] ?? 0;
+        },
+        { timeout: 30_000, intervals: [100, 250, 500], message: `${name} 应收到${color}新画面` },
+      )
+      .toBeGreaterThan(0.8);
+    await expectVideoAdvancing(receiver.page, sender.account.userId);
+  } finally {
+    const frame = latest as Awaited<ReturnType<typeof sampleRemoteVideo>>;
+    await info.attach(`${name}.json`, {
+      body: JSON.stringify({
+        sender: sender.account.userId,
+        receiver: receiver.account.userId,
+        expectedColor: color,
+        threshold: 0.8,
+        observedAt: Date.now(),
+        frame: frame && { width: frame.width, height: frame.height, ratios: frame.ratios },
+      }),
+      contentType: 'application/json',
+    });
+    if (frame) {
+      await info.attach(`${name}.png`, {
+        body: Buffer.from(frame.png, 'base64'),
+        contentType: 'image/png',
+      });
+    }
+  }
+}
+
+/** 每轮三人的颜色互不相同，逐一验证六条接收链路，轮换颜色排除冻结帧和串流。 */
+async function expectConferenceColorMatrix(
+  peers: ConferencePeer[],
+  colors: VideoColor[],
+  info: TestInfo,
+  stage: string,
+): Promise<void> {
+  expect(colors).toHaveLength(peers.length);
+  expect(new Set(colors).size).toBe(peers.length);
+  for (const [index, peer] of peers.entries()) await sendConferenceColor(peer, colors[index]);
+  for (const [index, sender] of peers.entries()) {
+    for (const receiver of peers) {
+      if (receiver !== sender) {
+        await expectConferenceColor(receiver, sender, colors[index], info, stage);
+      }
+    }
+  }
+}
+
 async function startConference(
   harness: ConferenceHarness,
   invitees: ConferenceRole[],
@@ -1554,6 +1634,7 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
     'CK-M08 成员信令短暂断线后恢复，原会议及音视频保持 @fault',
     async ({ conference }, info) => {
       const [a, b, c] = await joinThree(conference);
+      await expectConferenceColorMatrix([a, b, c], ['red', 'green', 'blue'], info, '信令断线前');
       const before = await signalingConnection(b);
       try {
         await test.step('切断 B 的 Fusion，确认连接确实失效，其他成员继续通话', async () => {
@@ -1571,6 +1652,12 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
             .toMatchObject({ ready: true });
           expect((await signalingConnection(b)).generation).toBeGreaterThan(before.generation);
           await expectConference([a, b, c], conference.callId!);
+          await expectConferenceColorMatrix(
+            [a, b, c],
+            ['green', 'blue', 'red'],
+            info,
+            '信令恢复后新画面',
+          );
         });
         await info.attach('信令断线恢复.json', {
           body: JSON.stringify({
@@ -1590,7 +1677,7 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
   // CK-M09：真正崩溃 C 的渲染进程，不发送 leaveCall，不手工触发 user-left；等待真实 RTC 离线通知与媒体清理。
   // RTC 清理不等同信令 participant 自动 left；服务端快照单独记录，避免把两种结果混作“自动离会成功”。
   conferenceTest(
-    'CK-M09 成员异常掉线后自动清理远端媒体，其他成员继续通话 @fault',
+    'CK-M09 成员异常掉线后 RTC 自动清理远端媒体，其他成员继续通话 @fault',
     async ({ conference, browser }, info) => {
       conferenceTest.setTimeout(240_000);
       const [a, b, c] = await joinThree(conference);
@@ -1612,10 +1699,12 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
         );
         return { startedAt: Date.now() };
       });
+      let faultStartedAt = 0;
       try {
         await test.step('C 渲染进程崩溃，模拟无法主动离会的持续掉线', async () => {
           const cdp = await c.context.newCDPSession(c.page);
           const crashed = c.page.waitForEvent('crash');
+          faultStartedAt = Date.now();
           void cdp.send('Page.crash').catch(() => undefined);
           await crashed;
           // 崩溃页面不能再截图或 evaluate；上下文关闭不调用 CallKit 的 hangup。
@@ -1631,7 +1720,9 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
                       window as typeof window & {
                         __conferenceDepartures?: { userId: string; reason: string }[];
                       }
-                    ).__conferenceDepartures?.some(event => event.userId === id),
+                    ).__conferenceDepartures?.some(
+                      event => event.userId === id && event.reason === 'ServerTimeOut',
+                    ),
                   c.account.userId,
                 ),
               { timeout: 120_000 },
@@ -1659,12 +1750,20 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
         );
         const departures = await a.page.evaluate(
           () =>
-            (window as typeof window & { __conferenceDepartures?: unknown }).__conferenceDepartures,
+            (
+              window as typeof window & {
+                __conferenceDepartures?: { userId: string; reason: string; at: number }[];
+              }
+            ).__conferenceDepartures ?? [],
         );
         await info.attach('异常掉线检测.json', {
           body: JSON.stringify(
             {
               ...events,
+              faultStartedAt,
+              rtcDetectionElapsedMs: departures.find(event => event.userId === c.account.userId)
+                ? departures.find(event => event.userId === c.account.userId)!.at - faultStartedAt
+                : null,
               observedAt: Date.now(),
               rtcDepartures: departures,
               serverSnapshot: server,
@@ -1700,6 +1799,121 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
             const snapshot = await manager.getCallSnapshot(callId);
             if (snapshot.lifecycle === 'open') await manager.leaveCall(callId);
           }, conference.callId!);
+        }
+      }
+    },
+  );
+
+  // CK-M10：三人各发不同颜色的动态视频，并轮换三轮；每个人都要实际收到其他两人的正确新画面。
+  // 同时检查六条接收链路的像素和解码帧增长，发现黑屏、冻结帧、错绑用户或视频串流。
+  conferenceTest(
+    'CK-M10 三人分别发送动态视频，各端收到每位成员的正确画面 @content',
+    async ({ conference }, info) => {
+      const peers = await joinThree(conference);
+      const rounds: VideoColor[][] = [
+        ['red', 'green', 'blue'],
+        ['green', 'blue', 'red'],
+        ['blue', 'red', 'green'],
+      ];
+      for (const [index, colors] of rounds.entries()) {
+        await test.step(`第 ${index + 1} 轮轮换三人颜色，逐一校验六条真实 RTC 视频链路`, () =>
+          expectConferenceColorMatrix(peers, colors, info, `多人画面第${index + 1}轮`));
+      }
+      await conferenceEvidence(conference, info, '三人真实视频内容验证');
+    },
+  );
+
+  // CK-M11：暂停 B 的视频 RTP 编码发送，确认远端确实收不到新画面，再恢复同一发送器。
+  // 这是媒体发送中断，不等同整机断网；不调用离会/重入、不伪造远端回调、不重新发布视频。
+  conferenceTest(
+    'CK-M11 成员视频 RTP 发送中断后恢复，其他成员收到正确的新画面 @fault @content',
+    async ({ conference }, info) => {
+      const [a, b, c] = await joinThree(conference);
+      await expectConferenceColorMatrix([a, b, c], ['red', 'green', 'blue'], info, '媒体中断前');
+      const observations: unknown[] = [];
+      const setVideoSending = (active: boolean) =>
+        b.page.evaluate(async enabled => {
+          const service = (
+            window as typeof window & {
+              callService: {
+                client: {
+                  localTracks: {
+                    trackMediaType: string;
+                    getRTCRtpTransceiver(): RTCRtpTransceiver | undefined;
+                  }[];
+                };
+              };
+            }
+          ).callService;
+          const sender = service.client.localTracks
+            .find(track => track.trackMediaType === 'video')
+            ?.getRTCRtpTransceiver()?.sender;
+          if (!sender) throw new Error('未找到当前已发布视频的真实 RTP 发送器');
+          const parameters = sender.getParameters();
+          if (!parameters.encodings.length)
+            throw new Error('视频 RTP 编码参数为空，无法注入媒体中断');
+          for (const encoding of parameters.encodings) encoding.active = enabled;
+          await sender.setParameters(parameters);
+          return sender.getParameters().encodings.map(encoding => encoding.active);
+        }, active);
+      try {
+        await test.step('暂停 B 视频 RTP 发送，确认 A、C 收不到新颜色，其他链路仍正常', async () => {
+          expect(await setVideoSending(false)).toEqual([false]);
+          // 排空已发送的包，再改变源画面；不能仅凭设置成功就认为故障生效。
+          await delay(2000);
+          await sendConferenceColor(b, 'red');
+          await sendConferenceColor(a, 'blue');
+          const until = Date.now() + 3000;
+          while (Date.now() < until) {
+            for (const receiver of [a, c]) {
+              const frame = await sampleRemoteVideo(receiver.page, b.account.userId);
+              observations.push({
+                at: Date.now(),
+                receiver: receiver.account.userId,
+                ratios: frame?.ratios,
+              });
+              expect(frame, '断流时保留最后一个已解码画面').not.toBeNull();
+              expect(
+                frame!.ratios.green,
+                'B 源已变红但远端仍为绿色，证明新视频确实未传递',
+              ).toBeGreaterThan(0.8);
+            }
+            await delay(250);
+          }
+          await expectConferenceColor(c, a, 'blue', info, '其他成员视频保持正常');
+          await expectConferenceColor(b, a, 'blue', info, '故障成员仍正常接收视频');
+        });
+        await test.step('恢复同一视频 RTP 发送器，不重新入会，两端收到断流期间产生的新红色画面', async () => {
+          expect(await setVideoSending(true)).toEqual([true]);
+          await expectConference([a, b, c], conference.callId!);
+          await expectConferenceColor(a, b, 'red', info, '视频发送恢复后');
+          await expectConferenceColor(c, b, 'red', info, '视频发送恢复后');
+        });
+        await test.step('恢复后再次轮换所有成员画面，排除冻结帧或用户串流', async () => {
+          await expectConferenceColorMatrix(
+            [a, b, c],
+            ['green', 'blue', 'red'],
+            info,
+            '媒体恢复后再次换色',
+          );
+        });
+        await conferenceEvidence(conference, info, '视频RTP发送恢复后');
+      } finally {
+        try {
+          await setVideoSending(true);
+        } finally {
+          await info.attach('视频RTP发送中断观测.json', {
+            body: JSON.stringify(
+              {
+                fault: 'RTCRtpSender encoding.active=false',
+                scope: '仅 B 视频上行；不代表设备完整断网或 RTC 自动重连',
+                observations,
+              },
+              null,
+              2,
+            ),
+            contentType: 'application/json',
+          });
         }
       }
     },
