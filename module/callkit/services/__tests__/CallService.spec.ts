@@ -414,7 +414,7 @@ describe('CallService incoming call lifecycle', () => {
       callStatus: CALL_STATUS.ALERTING,
     });
     await service.answerCall(true);
-    expect(callSignaling.rejectCall).toHaveBeenCalledWith('rejected', { reason: 'declined' });
+    expect(callSignaling.rejectCall).toHaveBeenCalledWith('rejected', 'declined');
     expect(callSignaling.acceptCall).toHaveBeenCalledWith('next-call');
   });
 

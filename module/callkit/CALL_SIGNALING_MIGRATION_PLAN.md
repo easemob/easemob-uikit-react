@@ -61,7 +61,7 @@ Web SDK 已提供原生 `CallSignalingManager`。本次迁移使用 Fusion 呼�
 | 发送响铃与 confirmRing | `reportRinging()`；删除 confirmRing |
 | 单呼接听 | `acceptCall()` |
 | 群呼加入 | `joinCall()` |
-| 拒绝或主动忙线 | `rejectCall({ reason: 'declined' \| 'busy' })` |
+| 拒绝或主动忙线 | `rejectCall(callId, 'declined' \| 'busy')` |
 | 主叫在接听前取消呼叫 | `cancelCall()` |
 | 单呼接通后挂断 | `hangup()` |
 | 群呼成员退出 | `leaveCall()` |
@@ -262,7 +262,7 @@ Coordinator 不解析普通聊天消息。
 2. 立即调用 `reportRinging(callId)`。
 3. 显示来电 UI 并播放来电铃声。
 4. 用户接听：调用 `acceptCall(callId)`，成功后加入 RTC。
-5. 用户拒绝：调用 `rejectCall(callId, { reason: 'declined' })`。
+5. 用户拒绝：调用 `rejectCall(callId, 'declined')`。
 6. 收到 `onHandledOnOtherDevice` 时关闭当前设备的来电 UI。
 7. 收到 `onCallEnded` 时执行统一清理。
 

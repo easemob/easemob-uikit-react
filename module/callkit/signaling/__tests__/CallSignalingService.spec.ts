@@ -90,6 +90,23 @@ describe('offline conference leave recovery', () => {
 });
 
 describe('CallSignalingService', () => {
+  it('passes direct reject reasons and join ext to the SDK', async () => {
+    const manager = {
+      rejectCall: vi.fn().mockResolvedValue(result),
+      joinCall: vi.fn().mockResolvedValue(result),
+    };
+    const service = new CallSignalingService(
+      { callSignalingManager: manager } as any,
+      new CallStore(),
+    );
+    await service.rejectCall(result.callId);
+    expect(manager.rejectCall).toHaveBeenLastCalledWith(result.callId, 'declined');
+    await service.rejectCall(result.callId, 'busy');
+    expect(manager.rejectCall).toHaveBeenLastCalledWith(result.callId, 'busy');
+    await service.joinCall(result.callId, '中文😀');
+    expect(manager.joinCall).toHaveBeenLastCalledWith(result.callId, '中文😀');
+  });
+
   it('registers before login and stores incoming invitations', () => {
     let handlers: Record<string, (payload: any) => void> = {};
     const manager = {

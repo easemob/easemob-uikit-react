@@ -463,7 +463,7 @@ export class CallService {
         currentCallId: this.currentCallInfo?.callId,
       });
       try {
-        await this.callSignaling.rejectCall(payload.callId, { reason: 'busy' });
+        await this.callSignaling.rejectCall(payload.callId, 'busy');
       } catch (error) {
         logWarn('Failed to reject native call while busy', error);
       }
@@ -1097,7 +1097,7 @@ export class CallService {
       } else {
         let rejectError: unknown;
         try {
-          await this.callSignaling.rejectCall(callId, { reason: 'declined' });
+          await this.callSignaling.rejectCall(callId, 'declined');
           this.nativeEndRequested = true;
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error);
@@ -1933,7 +1933,7 @@ export class CallService {
         ) {
           await this.callSignaling?.cancelCall(callId);
         } else if (this.callStatus === CALL_STATUS.ALERTING) {
-          await this.callSignaling?.rejectCall(callId, { reason: 'declined' });
+          await this.callSignaling?.rejectCall(callId, 'declined');
         } else if (nativeCall.callType === 'conference') {
           if (typeof navigator !== 'undefined' && navigator.onLine === false) {
             this.callSignaling.deferLeaveCall(callId);

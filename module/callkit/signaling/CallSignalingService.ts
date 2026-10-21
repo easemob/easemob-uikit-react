@@ -7,8 +7,7 @@ import type {
   CallSnapshot,
   CreateCallRequest,
   InviteParticipantsParams,
-  JoinCallParams,
-  RejectCallParams,
+  CallRejectReason,
 } from 'easemob-websdk';
 import CallStore from '../store/CallStore';
 import { logger } from '../utils/logger';
@@ -212,8 +211,8 @@ export class CallSignalingService {
     return this.capture(this.client.callSignalingManager.acceptCall(callId));
   }
 
-  rejectCall(callId: string, params?: RejectCallParams): Promise<CallSnapshot> {
-    return this.capture(this.client.callSignalingManager.rejectCall(callId, params));
+  rejectCall(callId: string, reason: CallRejectReason = 'declined'): Promise<CallSnapshot> {
+    return this.capture(this.client.callSignalingManager.rejectCall(callId, reason));
   }
 
   cancelCall(callId: string): Promise<CallSnapshot> {
@@ -224,8 +223,8 @@ export class CallSignalingService {
     return this.capture(this.client.callSignalingManager.inviteParticipants(callId, params));
   }
 
-  joinCall(callId: string, params?: JoinCallParams): Promise<CallSnapshot> {
-    return this.capture(this.client.callSignalingManager.joinCall(callId, params));
+  joinCall(callId: string, ext?: string): Promise<CallSnapshot> {
+    return this.capture(this.client.callSignalingManager.joinCall(callId, ext));
   }
 
   leaveCall(callId: string): Promise<CallSnapshot> {
