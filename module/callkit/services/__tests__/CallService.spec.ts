@@ -34,7 +34,11 @@ const createService = (userId = 'alice', useRTCToken = false, callStore?: CallSt
     inviteParticipants: vi.fn(),
   };
   const userInfoProvider = vi.fn(async (ids: string[]) => ids.map(id => ({ userId: id })));
-  const connection = { getCurrentUserId: () => userId, getUserIdsWithRTCUids: vi.fn() };
+  const connection = {
+    getCurrentUserId: () => userId,
+    getClientResource: () => 'local-device',
+    getUserIdsWithRTCUids: vi.fn(),
+  };
   const service = new CallService({
     connection,
     callSignaling: callSignaling as any,
@@ -355,7 +359,7 @@ describe('CallService incoming call lifecycle', () => {
     createdAt: 1,
     participants: [
       { userId: 'alice', state: 'accepted' },
-      { userId: 'bob', state: accepted ? 'accepted' : 'ringing' },
+      { userId: 'bob', state: accepted ? 'accepted' : 'ringing', deviceUuid: 'local-device' },
     ],
   });
 
@@ -483,6 +487,64 @@ describe('CallService incoming call lifecycle', () => {
     expect(client.join).not.toHaveBeenCalled();
     expect(service.getCallStatus()).toBe(CALL_STATUS.ALERTING);
     expect(callSignaling.syncCall).toHaveBeenCalledWith('incoming');
+  });
+
+  it('joins RTC when an accept response is lost but the snapshot confirms acceptance', async () => {
+    const { service, callSignaling } = createService('bob');
+    Object.assign(service, {
+      currentCallInfo: { callId: 'incoming', callType: 'single', type: CALL_TYPE.AUDIO_1V1 },
+      callStatus: CALL_STATUS.ALERTING,
+    });
+    callSignaling.acceptCall.mockRejectedValue(new Error('response timeout'));
+    callSignaling.syncCall.mockResolvedValue(snapshot('single', true));
+    const joinCall = vi.spyOn(service, 'joinCall').mockResolvedValue(undefined);
+
+    await service.answerCall(true);
+
+    expect(callSignaling.syncCall).toHaveBeenCalledWith('incoming');
+    expect(joinCall).toHaveBeenCalledOnce();
+    expect(service.getCallStatus()).toBe(CALL_STATUS.ANSWER_CALL);
+  });
+
+  it('does not enter RTC when another device accepted the same call', async () => {
+    const { service, client, callSignaling } = createService('bob');
+    Object.assign(service, {
+      currentCallInfo: { callId: 'incoming', callType: 'single', type: CALL_TYPE.AUDIO_1V1 },
+      callStatus: CALL_STATUS.ALERTING,
+    });
+    const error = new Error('call already handled on another device');
+    callSignaling.acceptCall.mockRejectedValue(error);
+    callSignaling.syncCall.mockResolvedValue({
+      ...snapshot('single', true),
+      participants: [
+        { userId: 'alice', state: 'accepted' },
+        { userId: 'bob', state: 'accepted', deviceUuid: 'other-device' },
+      ],
+    });
+    const joinCall = vi.spyOn(service, 'joinCall').mockResolvedValue(undefined);
+
+    await expect(service.answerCall(true)).rejects.toBe(error);
+
+    expect(joinCall).not.toHaveBeenCalled();
+    expect(client.join).not.toHaveBeenCalled();
+    expect(service.getCallStatus()).toBe(CALL_STATUS.ALERTING);
+  });
+
+  it('keeps RTC and the call active when hangup was not processed', async () => {
+    const { service, callSignaling, onCallEnd } = createService('bob');
+    Object.assign(service, {
+      currentCallInfo: { callId: 'incoming', callType: 'single', type: CALL_TYPE.AUDIO_1V1 },
+      callStatus: CALL_STATUS.IN_CALL,
+    });
+    callSignaling.hangup.mockRejectedValue(new Error('response timeout'));
+    callSignaling.syncCall.mockResolvedValue(snapshot('single', true));
+
+    await expect(service.hangup()).rejects.toThrow('response timeout');
+
+    expect((service as any).rtcService.leave).not.toHaveBeenCalled();
+    expect(service.getCallStatus()).toBe(CALL_STATUS.IN_CALL);
+    expect(service.getCurrentCallInfo()?.callId).toBe('incoming');
+    expect(onCallEnd).not.toHaveBeenCalled();
   });
 
   it('cleans up a timed out self without ending the ongoing conference', async () => {

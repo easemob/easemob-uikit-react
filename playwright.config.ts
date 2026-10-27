@@ -26,7 +26,7 @@ export default defineConfig({
   ],
   use: {
     baseURL,
-    headless: false,
+    headless: true,
     permissions: ['camera', 'microphone'],
     trace: 'off',
     screenshot: 'off',

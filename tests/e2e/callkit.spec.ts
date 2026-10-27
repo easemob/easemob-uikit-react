@@ -117,7 +117,19 @@ async function startAsrServer(): Promise<() => Promise<void>> {
 }
 
 function normalizeSpeech(value: string): string {
-  return value.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  // The ASR model may transcribe this fixed Mandarin sentence in Traditional Chinese.
+  const traditionalToSimplified: Record<string, string> = {
+    現: '现',
+    開: '开',
+    語: '语',
+    話: '话',
+    測: '测',
+    試: '试',
+  };
+  return Array.from(value.normalize('NFKC').toLowerCase())
+    .map(character => traditionalToSimplified[character] ?? character)
+    .join('')
+    .replace(/[^\p{L}\p{N}]/gu, '');
 }
 
 function matchingCharacters(expected: string, actual: string): number {
@@ -144,8 +156,20 @@ async function openDemo(
   testInfo: TestInfo,
   name: string,
   fusionFault?: FusionFault,
+  rtcAppIdOverride?: string,
+  restoredDeviceResource?: string,
 ): Promise<{ context: BrowserContext; page: Page }> {
   const context = await browser.newContext({ baseURL, permissions: ['camera', 'microphone'] });
+  if (restoredDeviceResource) {
+    await context.addInitScript(resource => {
+      // Fixed-device login prefixes this stored ID with "webim_" for clientResource.
+      const deviceUuid = resource.replace(/^webim_/, '');
+      localStorage.setItem(
+        'websdk2:device-info',
+        JSON.stringify({ deviceId: deviceUuid, deviceName: 'webim', deviceUuid }),
+      );
+    }, restoredDeviceResource);
+  }
   const page = await context.newPage();
   if (fusionFault) await fusionFault.install(page);
   page.setDefaultTimeout(30_000);
@@ -173,10 +197,13 @@ async function openDemo(
   });
   try {
     for (let attempt = 0; attempt < 3; attempt++) {
-      await page.goto('/demo/callkit/call-demo.html', {
-        waitUntil: 'domcontentloaded',
-        timeout: 20_000,
-      });
+      await page.goto(
+        `/demo/callkit/call-demo.html?useFixedDeviceId=${restoredDeviceResource ? 'true' : 'false'}`,
+        {
+          waitUntil: 'domcontentloaded',
+          timeout: 20_000,
+        },
+      );
       try {
         await page.getByPlaceholder('输入App Key').waitFor({ state: 'visible', timeout: 15_000 });
         break;
@@ -201,10 +228,9 @@ async function openDemo(
         .fill(process.env.EASEMOB_WS_URL ?? '');
     }
     await page.getByPlaceholder('输入App Key').fill(appKey!);
-    if (process.env.EASEMOB_RTC_APP_ID?.trim()) {
-      await page
-        .getByPlaceholder('留空时由 IM SDK 自动获取')
-        .fill(process.env.EASEMOB_RTC_APP_ID.trim());
+    const rtcAppId = rtcAppIdOverride ?? process.env.EASEMOB_RTC_APP_ID?.trim();
+    if (rtcAppId) {
+      await page.getByPlaceholder('留空时由 IM SDK 自动获取').fill(rtcAppId);
     }
     await page.getByPlaceholder('输入用户ID,或群组 ID').fill(account.userId);
     if (account.token) {
@@ -214,6 +240,9 @@ async function openDemo(
     }
     await page.getByRole('button', { name: '登录', exact: true }).click();
     await expect(page.getByRole('button', { name: /^登出/ })).toBeVisible();
+    expect(await page.evaluate(() => (window as any).rootStore.initConfig.isFixedDeviceId)).toBe(
+      Boolean(restoredDeviceResource),
+    );
     await page.getByRole('button', { name: '完成配置' }).click();
     // IM login, CallKit listener registration, and the Fusion gateway handshake
     // finish independently. The callee must be ready before the caller sends an invite.
@@ -408,6 +437,158 @@ async function attachCallState(testInfo: TestInfo, name: string, page: Page): Pr
     .catch(() => undefined);
 }
 
+// Scoped diagnostics for the offline-invitation and response-timeout cases.
+// Keep the event order in the browser so a late SDK notification can be
+// distinguished from a local UI transition without changing the assertions.
+async function installCallTrace(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const state = window as any;
+    const manager = state.rootStore.client.callSignalingManager;
+    const records: Record<string, unknown>[] = [];
+    const summarize = (value: any) =>
+      value
+        ? {
+            callId: value.callId,
+            lifecycle: value.lifecycle,
+            endReason: value.endReason,
+            participants: value.participants?.map((item: any) => ({
+              userId: item.userId,
+              state: item.state,
+            })),
+          }
+        : null;
+    const record = (event: string, details: Record<string, unknown> = {}) => {
+      records.push({ at: Date.now(), elapsed: Math.round(performance.now()), event, ...details });
+      if (records.length > 400) records.shift();
+    };
+    state.__e2eCallTrace = { records, record, summarize };
+    for (const method of [
+      'createCall',
+      'acceptCall',
+      'cancelCall',
+      'hangup',
+      'leaveCall',
+      'rejectCall',
+      'getCallSnapshot',
+    ]) {
+      const original = manager[method].bind(manager);
+      manager[method] = (...args: any[]) => {
+        const arg = args[0];
+        const target = typeof arg === 'string' ? arg : undefined;
+        record('sdk.request', { method, callId: target });
+        try {
+          return Promise.resolve(original(...args)).then(
+            result => {
+              record('sdk.resolve', { method, snapshot: summarize(result) });
+              return result;
+            },
+            error => {
+              record('sdk.reject', {
+                method,
+                code: error?.code,
+                message: String(error?.message ?? error).slice(0, 240),
+              });
+              throw error;
+            },
+          );
+        } catch (error: any) {
+          record('sdk.throw', { method, message: String(error?.message ?? error).slice(0, 240) });
+          throw error;
+        }
+      };
+    }
+    manager.addEventHandler('e2e-call-trace', {
+      onInvitationReceived: (payload: any) =>
+        record('signal.invitation', { callId: payload.callId }),
+      onParticipantsChanged: (payload: any) =>
+        record('signal.participants', { snapshot: summarize(payload) }),
+      onHandledOnOtherDevice: (payload: any) =>
+        record('signal.other-device', { callId: payload.callId }),
+      onCallEnded: (payload: any) =>
+        record('signal.ended', { callId: payload.callId, reason: payload.reason }),
+    });
+    state.callService?.client?.on?.('user-left', (user: any, reason: string) => {
+      record('rtc.user-left', { userId: String(user?.uid), reason });
+    });
+    const service = state.callService;
+    if (service?.handleUserLeft) {
+      const original = service.handleUserLeft.bind(service);
+      service.handleUserLeft = (userId: string, reason: string) => {
+        record('service.remote-left', { userId, reason });
+        return original(userId, reason);
+      };
+    }
+    if (service?.hangup) {
+      const original = service.hangup.bind(service);
+      service.hangup = (...args: unknown[]) => {
+        record('service.hangup', {
+          reason: args[0],
+          isCancel: args[1],
+          caller: new Error().stack
+            ?.split('\n')
+            .slice(2, 5)
+            .map(line => line.trim()),
+        });
+        return original(...args);
+      };
+    }
+    let previous = '';
+    const sample = () => {
+      const snapshot = state.rootStore.callStore.snapshot;
+      const view = {
+        store: summarize(snapshot),
+        invitationCallId: state.rootStore.callStore.invitation?.callId ?? null,
+        serviceStatus: state.callService?.getCallStatus?.() ?? null,
+        serviceCallId: state.callService?.getCurrentCallInfo?.()?.callId ?? null,
+        acceptButton: Boolean(document.querySelector('.cui-callkit-invitation-accept-btn')),
+        hangupButton: Boolean(document.querySelector('.cui-call-controls-button-hangup')),
+        inCallButton: Array.from(document.querySelectorAll('button')).some(
+          button => button.textContent?.trim() === '结束通话',
+        ),
+      };
+      const key = JSON.stringify(view);
+      if (key !== previous) {
+        previous = key;
+        record('state.change', view);
+      }
+    };
+    sample();
+    state.__e2eCallTrace.timer = window.setInterval(sample, 50);
+  });
+}
+
+async function saveCallTrace(
+  testInfo: TestInfo,
+  name: string,
+  page: Page | undefined,
+  callId?: string,
+): Promise<void> {
+  if (!page || page.isClosed()) return;
+  const data = await page
+    .evaluate(async id => {
+      const state = window as any;
+      const trace = state.__e2eCallTrace;
+      if (!trace) return { error: 'trace was not installed' };
+      window.clearInterval(trace.timer);
+      const snapshotId = id ?? state.rootStore?.callStore?.snapshot?.callId;
+      let serverSnapshot: unknown = null;
+      if (snapshotId) {
+        try {
+          serverSnapshot = trace.summarize(
+            await state.rootStore.client.callSignalingManager.getCallSnapshot(snapshotId),
+          );
+        } catch (error: any) {
+          serverSnapshot = { error: String(error?.message ?? error).slice(0, 240) };
+        }
+      }
+      return { callId: snapshotId ?? null, serverSnapshot, records: trace.records };
+    }, callId)
+    .catch(error => ({ error: String(error) }));
+  const outputPath = testInfo.outputPath(`${name}-call-trace.json`);
+  await mkdir(dirname(outputPath), { recursive: true });
+  await writeFile(outputPath, JSON.stringify(data, null, 2));
+}
+
 async function expectInCall(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: '结束通话' })).toBeVisible();
 }
@@ -434,24 +615,52 @@ async function expectServerCallEnded(page: Page, callId: string): Promise<void> 
     .toBe('ended');
 }
 
-async function endCallIfPresent(page: Page): Promise<void> {
-  if (page.isClosed()) return;
+type CallCleanupAttempt = {
+  path: 'closed' | 'service' | 'button' | 'none';
+  serviceError?: string;
+  buttonError?: string;
+};
+
+async function endCallIfPresent(page: Page): Promise<CallCleanupAttempt> {
+  if (page.isClosed()) return { path: 'closed' };
   const button = page.getByRole('button', { name: '结束通话' });
-  if (await button.isVisible().catch(() => false)) {
-    const handled = await page
-      .evaluate(async () => {
-        const service = (
-          window as typeof window & {
-            callService?: { hangup?: () => Promise<void> };
-          }
-        ).callService;
-        if (!service?.hangup) return false;
-        await service.hangup();
-        return true;
-      })
-      .catch(() => false);
-    if (!handled) await button.click({ timeout: 2000 }).catch(() => undefined);
+  let handled = false;
+  let serviceError: string | undefined;
+  let buttonError: string | undefined;
+  try {
+    handled = await page.evaluate(async () => {
+      const service = (
+        window as typeof window & {
+          callService?: {
+            getCurrentCallInfo?: () => { callId?: string } | null;
+            hangup?: () => Promise<void>;
+          };
+        }
+      ).callService;
+      if (!service?.hangup || !service.getCurrentCallInfo?.()?.callId) return false;
+      await service.hangup();
+      return true;
+    });
+  } catch (error) {
+    serviceError = String(error);
   }
+  if (handled) return { path: 'service' };
+  try {
+    if (await button.isVisible()) {
+      await button.click({ timeout: 2000 });
+      if (serviceError) console.warn('[callkit e2e cleanup] service hangup failed:', serviceError);
+      return { path: 'button', ...(serviceError ? { serviceError } : {}) };
+    }
+  } catch (error) {
+    buttonError = String(error);
+  }
+  if (serviceError || buttonError)
+    console.warn('[callkit e2e cleanup] failed:', { serviceError, buttonError });
+  return {
+    path: 'none',
+    ...(serviceError ? { serviceError } : {}),
+    ...(buttonError ? { buttonError } : {}),
+  };
 }
 
 async function cancelUnestablishedConference(testInfo: TestInfo, page: Page): Promise<void> {
@@ -921,6 +1130,851 @@ test.describe('CallKit presentation @demo', () => {
   }
 });
 
+test.describe('客户规范：一对一媒体控制', () => {
+  test.skip(!hasAccounts, '需要 A、B 两个真实账号');
+
+  test('1V1-12 静音与摄像头开关只影响对应媒体', async ({ browser }, testInfo) => {
+    const a = await openDemo(browser, caller, testInfo, '1v1-media-A');
+    let b: DemoClient | undefined;
+    try {
+      b = await openDemo(browser, callee, testInfo, '1v1-media-B');
+      const callId = await inviteVideo(a, b, callee.userId);
+      await acceptVideo(a, b, caller.userId, callee.userId);
+      await a.page
+        .locator('.cui-call-controls')
+        .getByRole('button', { name: /^(静音|Mute)$/ })
+        .click();
+      await expectRemotePublication(b.page, caller.userId, 'audio', false);
+      await expectVideoAdvancing(b.page, caller.userId);
+      await a.page
+        .locator('.cui-call-controls')
+        .getByRole('button', { name: /^(取消静音|Unmute)$/ })
+        .click();
+      await expectRemotePublication(b.page, caller.userId, 'audio', true);
+      await a.page
+        .locator('.cui-call-controls')
+        .getByRole('button', { name: /^(关闭摄像头|Turn off camera)$/ })
+        .click();
+      await expectRemotePublication(b.page, caller.userId, 'video', false);
+      await expectRemotePublication(b.page, caller.userId, 'audio', true);
+      await a.page
+        .locator('.cui-call-controls')
+        .getByRole('button', { name: /^(开启摄像头|Turn on camera)$/ })
+        .click();
+      await expectRemotePublication(b.page, caller.userId, 'video', true);
+      await expectVideoAdvancing(b.page, caller.userId);
+      for (const page of [a.page, b.page]) {
+        await expectInCall(page);
+        await waitForParticipant(page, caller.userId, 'accepted');
+        await waitForParticipant(page, callee.userId, 'accepted');
+      }
+      await a.page.getByRole('button', { name: '结束通话', exact: true }).click();
+      await Promise.all([expectCallIdle(a.page), expectCallIdle(b.page)]);
+      await expectServerCallEnded(a.page, callId);
+    } finally {
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+
+  test('ISO-01 呼叫记录以文本消息写入主叫会话', async ({ browser }, testInfo) => {
+    const a = await openDemo(browser, caller, testInfo, 'call-isolation-A');
+    let b: DemoClient | undefined;
+    const callRecords = (page: Page, peerId: string, callId: string) =>
+      page.evaluate(
+        ({ peerId, callId }) =>
+          ((window as any).rootStore.messageStore.message.singleChat?.[peerId] ?? [])
+            .filter((message: any) => message.ext?.ecukRecordCallId === callId)
+            .map((message: any) => ({
+              type: message.type,
+              bodyType: message.body?.type,
+              content: message.body?.content,
+              serverId: message.msgServerId,
+              ext: message.ext,
+            })),
+        { peerId, callId },
+      );
+    try {
+      b = await openDemo(browser, callee, testInfo, 'call-isolation-B');
+      const callId = await inviteVideo(a, b, callee.userId);
+      await acceptVideo(a, b, caller.userId, callee.userId);
+      await b.page.getByRole('button', { name: '结束通话', exact: true }).click();
+      await Promise.all([expectCallIdle(a.page), expectCallIdle(b.page)]);
+      await expectServerCallEnded(a.page, callId);
+      await expect
+        .poll(async () => (await callRecords(a.page, callee.userId, callId)).length)
+        .toBe(1);
+      await expect
+        .poll(
+          async () => (await callRecords(a.page, callee.userId, callId))[0]?.ext?.ecukRecordFinal,
+        )
+        .toBe(true);
+      const [record] = await callRecords(a.page, callee.userId, callId);
+      expect(record.ext).toMatchObject({
+        ecukRecordVersion: 1,
+        ecukRecordCallId: callId,
+        ecukRecordMediaType: 1,
+        ecukRecordFinal: true,
+      });
+      expect(record.type === 'text' || record.bodyType === 'text').toBe(true);
+      expect(record.content).toBeTruthy();
+    } finally {
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+});
+
+test.describe('客户规范：账号隔离', () => {
+  test.skip(!hasAccounts, '需要 A、B 两个真实账号');
+
+  test('ACCT-01 通话中登出清理界面媒体并拒绝后续操作', async ({ browser }, testInfo) => {
+    const a = await openDemo(browser, caller, testInfo, 'logout-in-call-A');
+    let b: DemoClient | undefined;
+    try {
+      b = await openDemo(browser, callee, testInfo, 'logout-in-call-B');
+      const callId = await inviteVideo(a, b, callee.userId);
+      await acceptVideo(a, b, caller.userId, callee.userId);
+      await a.page.getByRole('button', { name: /^登出/ }).click();
+      await expect(a.page.getByRole('button', { name: '登录', exact: true })).toBeVisible();
+      await expect(a.page.locator('.cui-callkit-invitation-accept-btn')).toHaveCount(0);
+      await expect(a.page.getByRole('button', { name: '结束通话', exact: true })).toHaveCount(0);
+      const local = await a.page.evaluate(() => ({
+        tracks: (window as any).callService?.client?.localTracks?.length ?? 0,
+        activeCall: (window as any).callService?.getCurrentCallInfo?.() ?? null,
+      }));
+      expect(local.tracks).toBe(0);
+      expect(local.activeCall).toBeNull();
+      const attempt = await a.page.evaluate(async id => {
+        try {
+          await (window as any).rootStore.client.callSignalingManager.hangup(id);
+          return { ok: true };
+        } catch (error) {
+          return { ok: false, code: (error as { code?: number }).code };
+        }
+      }, callId);
+      expect(attempt).toMatchObject({ ok: false, code: 201 });
+      await endCallIfPresent(b.page);
+    } finally {
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+
+  test('ACCT-02 同一页面切换账号不继承旧账号来电', async ({ browser }, testInfo) => {
+    test.skip(!hasAccount(third), '需要 C 账号');
+    const a = await openDemo(browser, caller, testInfo, 'account-switch-A');
+    let b: DemoClient | undefined;
+    try {
+      b = await openDemo(browser, callee, testInfo, 'account-switch-B');
+      const oldCallId = await inviteVideo(b, a, caller.userId);
+      await expect(a.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+      await a.page.getByRole('button', { name: /^登出/ }).click();
+      await expect(a.page.getByRole('button', { name: '登录', exact: true })).toBeVisible();
+      await a.page.getByPlaceholder('输入用户ID,或群组 ID').fill(third.userId);
+      await a.page
+        .getByPlaceholder('输入 Token；填写后优先使用 Token 登录')
+        .fill(third.token ?? '');
+      await a.page
+        .getByPlaceholder('未填写 Token 时，使用密码换取 Token')
+        .fill(third.password ?? '');
+      await a.page.getByRole('button', { name: '登录', exact: true }).click();
+      await expect(a.page.getByRole('button', { name: /^登出/ })).toBeVisible();
+      await a.page.getByRole('button', { name: '完成配置' }).click();
+      await a.page.waitForFunction(
+        () =>
+          (window as any).rootStore?.client?.callSignalingManager?.controller?.getState?.() ===
+          'ready',
+        undefined,
+        { timeout: 45_000 },
+      );
+      await expect(a.page.locator('.cui-callkit-invitation-accept-btn')).toHaveCount(0);
+      await expectCallIdle(a.page);
+      await expect(a.page.getByText(`当前用户: ${third.userId}`, { exact: false })).toBeVisible();
+      const state = await a.page.evaluate(() => ({
+        callId: (window as any).rootStore.callStore.snapshot?.callId ?? null,
+        invitationId: (window as any).rootStore.callStore.invitation?.callId ?? null,
+        rtcTracks: (window as any).callService?.client?.localTracks?.length ?? 0,
+      }));
+      expect(state.callId).not.toBe(oldCallId);
+      expect(state.invitationId).not.toBe(oldCallId);
+      expect(state.rtcTracks).toBe(0);
+    } finally {
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+});
+
+test.describe('客户规范：多设备 CallKit 观察', () => {
+  test.skip(!hasAccounts, '需要 A、B 两个真实账号，B 同时登录两个浏览器上下文');
+
+  async function openThree(browser: Browser, info: TestInfo) {
+    const clients: DemoClient[] = [];
+    try {
+      const b = await openDemo(browser, callee, info, 'device-B');
+      clients.push(b);
+      const b2 = await openDemo(browser, callee, info, 'device-B2');
+      clients.push(b2);
+      const a = await openDemo(browser, caller, info, 'device-A');
+      clients.push(a);
+      return { a, b, b2, clients };
+    } catch (error) {
+      await Promise.allSettled(clients.map(client => client.context.close()));
+      throw error;
+    }
+  }
+
+  async function closeThree(clients: DemoClient[], info: TestInfo): Promise<void> {
+    const callerPage = clients.at(-1)?.page;
+    const callId = await callerPage
+      ?.evaluate(
+        () =>
+          (window as any).rootStore.callStore.snapshot?.callId ??
+          (window as any).callService?.getCurrentCallInfo?.()?.callId,
+      )
+      .catch(error => `read-call-id failed: ${String(error)}`);
+    const attempts = await Promise.allSettled(clients.map(client => endCallIfPresent(client.page)));
+    const snapshot =
+      callId && !callId.startsWith('read-call-id failed:') && callerPage && !callerPage.isClosed()
+        ? await callerPage
+            .evaluate(
+              id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+              callId,
+            )
+            .catch(error => ({ error: String(error) }))
+        : undefined;
+    const cleanupPath = info.outputPath('device-cleanup.json');
+    await writeFile(
+      cleanupPath,
+      JSON.stringify({
+        callId,
+        attempts: attempts.map(result =>
+          result.status === 'fulfilled' ? result.value : { error: String(result.reason) },
+        ),
+        serverSnapshot: snapshot,
+      }, null, 2),
+    );
+    await info.attach('device-cleanup.json', { path: cleanupPath, contentType: 'application/json' });
+    await Promise.allSettled(clients.map(client => client.context.close()));
+  }
+
+  test('MD-01 同账号两台设备同时看到同一来电', async ({ browser }, info) => {
+    const { a, b, b2, clients } = await openThree(browser, info);
+    try {
+      const callId = await inviteVideo(a, b, callee.userId);
+      await expect(b2.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+      const state = await Promise.all(
+        [b, b2].map(client =>
+          client.page.evaluate(() => ({
+            callId: (window as any).rootStore.callStore.invitation?.callId,
+            type: (window as any).rootStore.callStore.invitation?.mediaType,
+          })),
+        ),
+      );
+      for (const item of state) expect(item).toMatchObject({ callId, type: 'video' });
+      const snapshot = await a.page.evaluate(
+        id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+        callId,
+      );
+      expect(
+        snapshot.participants.filter((item: { userId: string }) => item.userId === callee.userId),
+      ).toHaveLength(1);
+      expect(['pending', 'ringing']).toContain(
+        snapshot.participants.find((item: { userId: string }) => item.userId === callee.userId)
+          ?.state,
+      );
+    } finally {
+      await closeThree(clients, info);
+    }
+  });
+
+  test('MD-02 一台接听后另一台停止来电且不发布媒体', async ({ browser }, info) => {
+    const { a, b, b2, clients } = await openThree(browser, info);
+    try {
+      const callId = await inviteVideo(a, b, callee.userId);
+      await expect(b2.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+      await b2.page.locator('.cui-callkit-invitation-accept-btn').click();
+      await Promise.all([expectInCall(a.page), expectInCall(b2.page), expectCallIdle(b.page)]);
+      await expect(b.page.locator('.cui-callkit-invitation-accept-btn')).toHaveCount(0);
+      const snapshot = await a.page.evaluate(
+        id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+        callId,
+      );
+      const b2Device = await b2.page.evaluate(
+        () => (window as any).rootStore.client.callSignalingManager.sessionDevice,
+      );
+      expect(
+        snapshot.participants.find((item: { userId: string }) => item.userId === callee.userId),
+      ).toMatchObject({ state: 'accepted', deviceUuid: b2Device });
+      expect(
+        await b.page.evaluate(() => (window as any).callService?.client?.localTracks?.length ?? 0),
+      ).toBe(0);
+      await expectRemotePublication(a.page, callee.userId, 'video', true);
+    } finally {
+      await closeThree(clients, info);
+    }
+  });
+
+  for (const reason of ['declined', 'busy'] as const) {
+    test(`MD-03 一台${reason}后另一台停止振铃并按具体原因结束`, async ({ browser }, info) => {
+      const { a, b, b2, clients } = await openThree(browser, info);
+      try {
+        const callId = await inviteVideo(a, b, callee.userId);
+        await expect(b2.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+        if (reason === 'declined')
+          await b2.page.locator('.cui-callkit-invitation-reject-btn').click();
+        else
+          await b2.page.evaluate(
+            id => (window as any).rootStore.client.callSignalingManager.rejectCall(id, 'busy'),
+            callId,
+          );
+        await Promise.all([
+          expectCallIdle(a.page),
+          expectCallIdle(b.page),
+          expectCallIdle(b2.page),
+        ]);
+        await expect(b.page.locator('.cui-callkit-invitation-accept-btn')).toHaveCount(0);
+        const snapshot = await a.page.evaluate(
+          id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+          callId,
+        );
+        expect(snapshot).toMatchObject({
+          lifecycle: 'ended',
+          endReason: reason === 'declined' ? 'rejected' : 'busy',
+        });
+      } finally {
+        await closeThree(clients, info);
+      }
+    });
+  }
+
+  test('MD-04 两台同时接听只有一台进入并发布媒体', async ({ browser }, info) => {
+    const { a, b, b2, clients } = await openThree(browser, info);
+    try {
+      const callId = await inviteVideo(a, b, callee.userId);
+      await expect(b2.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+      await Promise.all(
+        [b, b2].map(client =>
+          client.page
+            .locator('.cui-callkit-invitation-accept-btn')
+            .evaluate(button => (button as HTMLButtonElement).click()),
+        ),
+      );
+      await expect
+        .poll(async () => {
+          const statuses = await Promise.all(
+            [b, b2].map(client =>
+              client.page.evaluate(() => (window as any).callService?.getCallStatus?.()),
+            ),
+          );
+          return statuses.filter(status => status === 7).length;
+        })
+        .toBe(1);
+      const statuses = await Promise.all(
+        [b, b2].map(client =>
+          client.page.evaluate(() => (window as any).callService?.getCallStatus?.()),
+        ),
+      );
+      const winner = statuses[0] === 7 ? b : b2;
+      const loser = winner === b ? b2 : b;
+      await expectInCall(winner.page);
+      await expectCallIdle(loser.page);
+      expect(
+        await loser.page.evaluate(
+          () => (window as any).callService?.client?.localTracks?.length ?? 0,
+        ),
+      ).toBe(0);
+      await expectRemotePublication(a.page, callee.userId, 'video', true);
+      const snapshot = await a.page.evaluate(
+        id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+        callId,
+      );
+      const winnerDevice = await winner.page.evaluate(
+        () => (window as any).rootStore.client.callSignalingManager.sessionDevice,
+      );
+      expect(
+        snapshot.participants.filter((item: { userId: string }) => item.userId === callee.userId),
+      ).toHaveLength(1);
+      expect(
+        snapshot.participants.find((item: { userId: string }) => item.userId === callee.userId),
+      ).toMatchObject({ state: 'accepted', deviceUuid: winnerDevice });
+    } finally {
+      await Promise.allSettled([
+        attachCallState(info, 'device-A', a.page),
+        attachCallState(info, 'device-B', b.page),
+        attachCallState(info, 'device-B2', b2.page),
+      ]);
+      await closeThree(clients, info);
+    }
+  });
+});
+
+test.describe('客户规范：离线邀请界面', () => {
+  test.skip(!hasAccounts, '需要 A、B 两个真实账号');
+
+  test('OFF-02 恢复就绪后仍有效的邀请只出现一次', async ({ browser }, info) => {
+    const a = await openDemo(browser, caller, info, 'offline-valid-A');
+    let b: DemoClient | undefined;
+    try {
+      const baseline = await openDemo(browser, callee, info, 'offline-baseline-B');
+      await baseline.page.getByRole('button', { name: /^登出/ }).click();
+      await baseline.context.close();
+      await a.page.getByPlaceholder('输入目标用户ID').fill(callee.userId);
+      await a.page.getByRole('button', { name: '发起视频通话', exact: true }).click();
+      await waitForCreatedCall(a.page);
+      const callId = await a.page.evaluate(
+        () => (window as any).rootStore.callStore.snapshot.callId,
+      );
+      b = await openDemo(browser, callee, info, 'offline-valid-B');
+      const snapshot = await b.page.evaluate(
+        id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+        callId,
+      );
+      expect(snapshot.lifecycle).toBe('open');
+      expect(['pending', 'ringing']).toContain(
+        snapshot.participants.find((item: { userId: string }) => item.userId === callee.userId)
+          ?.state,
+      );
+      await expect(b.page.locator('.cui-callkit-invitation-accept-btn')).toHaveCount(1);
+      expect(
+        await b.page.evaluate(() => (window as any).rootStore.callStore.invitation?.callId),
+      ).toBe(callId);
+      // ISO-01 covers the normal text call record. Its unread effect is not a
+      // signaling invitation count and depends on conversation sync timing.
+    } finally {
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+
+  test('OFF-03 离线期间已取消的邀请不会在登录后出现', async ({ browser }, info) => {
+    const a = await openDemo(browser, caller, info, 'offline-canceled-A');
+    let b: DemoClient | undefined;
+    let callId: string | undefined;
+    try {
+      await installCallTrace(a.page);
+      await a.page.getByPlaceholder('输入目标用户ID').fill(callee.userId);
+      await a.page.getByRole('button', { name: '发起视频通话', exact: true }).click();
+      await waitForCreatedCall(a.page);
+      const createdCallId = await a.page.evaluate(
+        () => (window as any).rootStore.callStore.snapshot.callId,
+      );
+      callId = createdCallId;
+      await a.page.locator('.cui-call-controls-button-hangup').click();
+      // The click schedules an asynchronous cancellation. Wait for CallKit to
+      // finish it before querying the completed call and logging B in.
+      await expectCallIdle(a.page);
+      await expectServerCallEnded(a.page, createdCallId);
+      b = await openDemo(browser, callee, info, 'offline-canceled-B');
+      await installCallTrace(b.page);
+      const snapshot = await b.page.evaluate(
+        id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+        createdCallId,
+      );
+      expect(snapshot).toMatchObject({ lifecycle: 'ended', endReason: 'canceled' });
+      await expect(b.page.locator('.cui-callkit-invitation-accept-btn')).toHaveCount(0);
+      await expectCallIdle(b.page);
+    } finally {
+      await Promise.allSettled([
+        saveCallTrace(info, 'offline-canceled-A', a.page, callId),
+        saveCallTrace(info, 'offline-canceled-B', b?.page, callId),
+      ]);
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+});
+
+test.describe('客户规范：连续点击', () => {
+  test.skip(!hasAccounts, '需要 A、B 两个真实账号');
+
+  async function countPublicCalls(page: Page, method: string): Promise<void> {
+    await page.evaluate(name => {
+      const state = window as any;
+      const manager = state.rootStore.client.callSignalingManager;
+      const original = manager[name].bind(manager);
+      state.__customerCallCounts ??= {};
+      state.__customerCallCounts[name] = 0;
+      manager[name] = (...args: unknown[]) => {
+        state.__customerCallCounts[name]++;
+        return original(...args);
+      };
+    }, method);
+  }
+
+  async function fastDoubleClick(page: Page, selector: string): Promise<void> {
+    await page.evaluate(css => {
+      const button = document.querySelector<HTMLButtonElement>(css);
+      if (!button) throw new Error(`找不到连续点击目标：${css}`);
+      button.click();
+      button.click();
+    }, selector);
+  }
+
+  test('RACE-01 连续点击接听只接入一次', async ({ browser }, testInfo) => {
+    const a = await openDemo(browser, caller, testInfo, 'rapid-accept-A');
+    let b: DemoClient | undefined;
+    try {
+      b = await openDemo(browser, callee, testInfo, 'rapid-accept-B');
+      const callId = await inviteVideo(a, b, callee.userId);
+      await countPublicCalls(b.page, 'acceptCall');
+      await fastDoubleClick(b.page, '.cui-callkit-invitation-accept-btn');
+      await Promise.all([expectInCall(a.page), expectInCall(b.page)]);
+      expect(await b.page.evaluate(() => (window as any).__customerCallCounts.acceptCall)).toBe(1);
+      await waitForParticipant(a.page, callee.userId, 'accepted');
+      const snapshot = await a.page.evaluate(
+        id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+        callId,
+      );
+      expect(
+        snapshot.participants.filter((item: { userId: string }) => item.userId === callee.userId),
+      ).toHaveLength(1);
+      await expectRemotePublication(a.page, callee.userId, 'video', true);
+    } finally {
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+
+  test('RACE-01 连续点击挂断只结束一次', async ({ browser }, testInfo) => {
+    const a = await openDemo(browser, caller, testInfo, 'rapid-hangup-A');
+    let b: DemoClient | undefined;
+    try {
+      b = await openDemo(browser, callee, testInfo, 'rapid-hangup-B');
+      const callId = await inviteVideo(a, b, callee.userId);
+      await acceptVideo(a, b, caller.userId, callee.userId);
+      await countPublicCalls(b.page, 'hangup');
+      await fastDoubleClick(b.page, '.cui-call-controls-button-hangup');
+      await Promise.all([expectCallIdle(a.page), expectCallIdle(b.page)]);
+      expect(await b.page.evaluate(() => (window as any).__customerCallCounts.hangup)).toBe(1);
+      await expectServerCallEnded(a.page, callId);
+    } finally {
+      await Promise.allSettled([endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a.context.close(), b?.context.close()]);
+    }
+  });
+
+  test('RACE-01 连续点击追加邀请只通知一次', async ({ browser }, testInfo) => {
+    test.skip(!hasAccount(third), '需要 C 账号');
+    const peers: DemoClient[] = [];
+    try {
+      const a = await openDemo(browser, caller, testInfo, 'rapid-invite-A');
+      peers.push(a);
+      const b = await openDemo(browser, callee, testInfo, 'rapid-invite-B');
+      peers.push(b);
+      const c = await openDemo(browser, third, testInfo, 'rapid-invite-C');
+      peers.push(c);
+      await a.page.getByRole('textbox', { name: '多人通话成员 userId' }).fill(callee.userId);
+      await a.page.getByRole('button', { name: '发起多人视频通话' }).click();
+      await waitForCreatedCall(a.page);
+      const callId = await a.page.evaluate(
+        () => (window as any).rootStore.callStore.snapshot.callId,
+      );
+      await b.page.locator('.cui-callkit-invitation-accept-btn').click();
+      await Promise.all([expectInCall(a.page), expectInCall(b.page)]);
+      await a.page.getByRole('textbox', { name: '追加邀请 userId' }).fill(third.userId);
+      await c.page.evaluate(() => {
+        const state = window as any;
+        state.__raceInvitations = [];
+        state.rootStore.client.callSignalingManager.addEventHandler('race-invite-observer', {
+          onInvitationReceived: (event: { callId: string }) =>
+            state.__raceInvitations.push(event.callId),
+        });
+      });
+      await countPublicCalls(a.page, 'inviteParticipants');
+      await a.page.getByRole('button', { name: '邀请加入当前通话' }).evaluate(button => {
+        (button as HTMLButtonElement).click();
+        (button as HTMLButtonElement).click();
+      });
+      await expect(c.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+      const snapshot = await a.page.evaluate(
+        id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+        callId,
+      );
+      const memberCount = snapshot.participants.filter(
+        (item: { userId: string }) => item.userId === third.userId,
+      ).length;
+      const requestCount = await a.page.evaluate(
+        () => (window as any).__customerCallCounts.inviteParticipants,
+      );
+      const invitationCount = await c.page.evaluate(
+        id =>
+          (window as any).__raceInvitations.filter((received: string) => received === id).length,
+        callId,
+      );
+      expect({ requestCount, memberCount, invitationCount }).toEqual({
+        requestCount: 1,
+        memberCount: 1,
+        invitationCount: 1,
+      });
+    } finally {
+      await Promise.allSettled(peers.map(peer => endCallIfPresent(peer.page)));
+      await Promise.allSettled(peers.map(peer => peer.context.close()));
+    }
+  });
+});
+
+test.describe('客户规范：媒体失败恢复', () => {
+  test.skip(!hasAccounts, '需要 A、B 两个真实账号');
+
+  test('RTC-01 信令接听成功但媒体加入失败时可见错误，结束后重试', async ({ browser }, testInfo) => {
+    let a: DemoClient | undefined;
+    let b: DemoClient | undefined;
+    try {
+      a = await openDemo(
+        browser,
+        caller,
+        testInfo,
+        'invalid-rtc-A',
+        undefined,
+        'ffffffffffffffffffffffffffffffff',
+      );
+      b = await openDemo(browser, callee, testInfo, 'invalid-rtc-B');
+      const failedCallId = await inviteVideo(a, b, callee.userId);
+      await b.page.locator('.cui-callkit-invitation-accept-btn').click();
+      await waitForParticipant(b.page, callee.userId, 'accepted');
+      await expect(
+        a.page
+          .locator('.cui-notification-notice-error')
+          .filter({ hasText: /媒体|音视频|RTC|Agora|加入|发布|失败/i })
+          .first(),
+      ).toBeVisible();
+      expect(await a.page.evaluate(() => (window as any).callService?.getCallStatus?.())).not.toBe(
+        7,
+      );
+      await endCallIfPresent(b.page);
+      await expectServerCallEnded(b.page, failedCallId);
+      await expectCallIdle(a.page);
+      await expectCallIdle(b.page);
+      const oldTracks = await a.page.evaluate(
+        () => (window as any).callService?.client?.localTracks?.length ?? 0,
+      );
+      expect(oldTracks).toBe(0);
+      await a.context.close();
+      a = await openDemo(browser, caller, testInfo, 'retry-rtc-A');
+      const retryCallId = await inviteVideo(a, b, callee.userId);
+      expect(retryCallId).not.toBe(failedCallId);
+      await acceptVideo(a, b, caller.userId, callee.userId);
+      await a.page.getByRole('button', { name: '结束通话', exact: true }).click();
+      await Promise.all([expectCallIdle(a.page), expectCallIdle(b.page)]);
+      await expectServerCallEnded(a.page, retryCallId);
+    } finally {
+      await Promise.allSettled([a && endCallIfPresent(a.page), b && endCallIfPresent(b.page)]);
+      await Promise.allSettled([a?.context.close(), b?.context.close()]);
+    }
+  });
+});
+
+test.describe('客户规范：请求响应超时', () => {
+  test.skip(!hasAccounts, '需要 A、B 两个真实账号');
+
+  async function loseNextResponse(
+    page: Page,
+    method: 'acceptCall' | 'cancelCall' | 'hangup',
+    processed: boolean,
+  ): Promise<void> {
+    await page.evaluate(
+      ({ method, processed }) => {
+        const manager = (window as any).rootStore.client.callSignalingManager;
+        const original = manager[method].bind(manager);
+        let once = true;
+        manager[method] = async (...args: unknown[]) => {
+          if (!once) return original(...args);
+          once = false;
+          const trace = (window as any).__e2eCallTrace;
+          trace?.record('fault.inject', { method, processed, callId: args[0] });
+          if (processed) {
+            const result = await original(...args);
+            trace?.record('fault.server-processed', {
+              method,
+              snapshot: trace.summarize(result),
+            });
+          }
+          await new Promise(resolve => setTimeout(resolve, 700));
+          trace?.record('fault.response-timeout', { method, processed, callId: args[0] });
+          throw new Error(`E2E ${method} response timeout`);
+        };
+      },
+      { method, processed },
+    );
+  }
+
+  for (const method of ['acceptCall', 'cancelCall', 'hangup'] as const) {
+    for (const processed of [false, true]) {
+      test(`WN-03 ${method} ${processed ? '服务端已处理' : '请求未到达'}时响应超时`, async ({
+        browser,
+      }, info) => {
+        const a = await openDemo(browser, caller, info, `timeout-${method}-A`);
+        let b: DemoClient | undefined;
+        let callId: string | undefined;
+        try {
+          b = await openDemo(browser, callee, info, `timeout-${method}-B`);
+          await Promise.all([installCallTrace(a.page), installCallTrace(b.page)]);
+          const invitedCallId = await inviteVideo(a, b, callee.userId);
+          callId = invitedCallId;
+          const beforeFault = await a.page.evaluate(
+            id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+            invitedCallId,
+          );
+          expect(
+            ['pending', 'ringing'],
+            `WN-03 前置条件：B 必须可接听；实际快照 ${JSON.stringify(beforeFault)}`,
+          ).toContain(
+            beforeFault.participants.find(
+              (item: { userId: string }) => item.userId === callee.userId,
+            )?.state,
+          );
+          if (method === 'hangup') await acceptVideo(a, b, caller.userId, callee.userId);
+          const actor = method === 'acceptCall' ? b : a;
+          await loseNextResponse(actor.page, method, processed);
+          if (method === 'acceptCall')
+            await b.page.locator('.cui-callkit-invitation-accept-btn').click();
+          else await a.page.locator('.cui-call-controls-button-hangup').click();
+          await actor.page.waitForTimeout(900);
+          if (method === 'acceptCall') {
+            await expect(actor.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+          } else if (method === 'cancelCall') {
+            await expect(actor.page.locator('.cui-call-controls-button-hangup')).toBeVisible();
+          } else {
+            await expectInCall(actor.page);
+          }
+          const snapshot = await a.page.evaluate(
+            id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+            invitedCallId,
+          );
+          if (processed && method === 'acceptCall') {
+            expect(snapshot.lifecycle).toBe('open');
+            expect(
+              snapshot.participants.find(
+                (item: { userId: string }) => item.userId === callee.userId,
+              )?.state,
+            ).toBe('accepted');
+            await Promise.all([expectInCall(a.page), expectInCall(b.page)]);
+          } else if (processed) {
+            expect(snapshot).toMatchObject({
+              lifecycle: 'ended',
+              endReason: method === 'cancelCall' ? 'canceled' : 'hangup',
+            });
+            await Promise.all([expectCallIdle(a.page), expectCallIdle(b.page)]);
+          } else {
+            expect(snapshot.lifecycle).toBe('open');
+            if (method === 'acceptCall')
+              expect(['pending', 'ringing']).toContain(
+                snapshot.participants.find(
+                  (item: { userId: string }) => item.userId === callee.userId,
+                )?.state,
+              );
+            if (method === 'hangup') await expectInCall(b.page);
+          }
+        } finally {
+          await Promise.allSettled([
+            saveCallTrace(info, `timeout-${method}-A`, a.page, callId),
+            saveCallTrace(info, `timeout-${method}-B`, b?.page, callId),
+          ]);
+          const attempts = await Promise.allSettled([
+            endCallIfPresent(a.page),
+            b && endCallIfPresent(b.page),
+          ]);
+          const snapshot = callId
+            ? await a.page
+                .evaluate(
+                  id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+                  callId,
+                )
+                .catch(error => ({ error: String(error) }))
+            : undefined;
+          const cleanupPath = info.outputPath(`timeout-${method}-cleanup.json`);
+          await writeFile(
+            cleanupPath,
+            JSON.stringify({
+              callId,
+              attempts: attempts.map(result =>
+                result.status === 'fulfilled' ? result.value : { error: String(result.reason) },
+              ),
+              serverSnapshot: snapshot,
+            }, null, 2),
+          );
+          await info.attach(`timeout-${method}-cleanup.json`, {
+            path: cleanupPath,
+            contentType: 'application/json',
+          });
+          await Promise.allSettled([a.context.close(), b?.context.close()]);
+        }
+      });
+    }
+  }
+});
+
+test.describe('客户规范：多人语音反复进出', () => {
+  test.skip(!hasAccounts || !hasAccount(third), '需要 A、B、C 三个真实账号');
+
+  test('CONF-17 三人语音会议反复进出后全部离会', async ({ browser }, testInfo) => {
+    const peers: { role: string; page: Page; context: BrowserContext; account: Account }[] = [];
+    let callId = '';
+    try {
+      for (const [role, account] of [
+        ['A', caller],
+        ['B', callee],
+        ['C', third],
+      ] as const) {
+        const client = await openDemo(browser, account, testInfo, `voice-${role}`);
+        peers.push({ role, account, ...client });
+      }
+      const [a, b, c] = peers;
+      await a.page
+        .getByRole('textbox', { name: '多人通话成员 userId' })
+        .fill([callee.userId, third.userId].join(','));
+      await a.page.getByRole('button', { name: '发起多人语音通话' }).click();
+      await waitForCreatedCall(a.page);
+      callId = await a.page.evaluate(() => (window as any).rootStore.callStore.snapshot.callId);
+      for (const invited of [b, c]) {
+        await expect(invited.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+        await invited.page.locator('.cui-callkit-invitation-accept-btn').click();
+        await expectInCall(invited.page);
+      }
+      for (const peer of peers) {
+        await expectInCall(peer.page);
+        for (const remote of peers.filter(item => item !== peer)) {
+          await expectRemotePublication(peer.page, remote.account.userId, 'audio', true);
+        }
+      }
+      for (const leaving of [b, c, b, c]) {
+        await leaving.page.getByRole('button', { name: '结束通话', exact: true }).click();
+        await expectCallIdle(leaving.page);
+        await waitForParticipant(a.page, leaving.account.userId, 'left');
+        await a.page.getByRole('textbox', { name: '追加邀请 userId' }).fill(leaving.account.userId);
+        await a.page.getByRole('button', { name: '邀请加入当前通话' }).click();
+        await expect(leaving.page.locator('.cui-callkit-invitation-accept-btn')).toBeVisible();
+        await leaving.page.locator('.cui-callkit-invitation-accept-btn').click();
+        await expectInCall(leaving.page);
+        await waitForParticipant(a.page, leaving.account.userId, 'accepted');
+        await expectRemotePublication(a.page, leaving.account.userId, 'audio', true);
+        for (const peer of peers) {
+          const tracks = await peer.page.evaluate(() => ({
+            callId: (window as any).rootStore.callStore.snapshot?.callId,
+            local:
+              (window as any).callService?.client?.localTracks?.map(
+                (track: { trackMediaType: string }) => track.trackMediaType,
+              ) ?? [],
+          }));
+          expect(tracks.callId).toBe(callId);
+          expect(tracks.local.filter((kind: string) => kind === 'audio')).toHaveLength(1);
+          expect(tracks.local.filter((kind: string) => kind === 'video')).toHaveLength(0);
+        }
+      }
+      for (const peer of [b, c, a]) {
+        await peer.page.getByRole('button', { name: '结束通话', exact: true }).click();
+        await expectCallIdle(peer.page);
+      }
+      await expectServerCallEnded(a.page, callId);
+    } finally {
+      await Promise.allSettled(peers.map(peer => endCallIfPresent(peer.page)));
+      await Promise.allSettled(peers.map(peer => peer.context.close()));
+    }
+  });
+});
+
 test.describe.serial('CallKit real IM and RTC', () => {
   test.skip(!hasAccounts, '需要设置 EASEMOB_APPKEY、两位用户 ID 以及各自的 Token 或密码');
 
@@ -1257,6 +2311,22 @@ async function sendConferenceColor(peer: ConferencePeer, color: VideoColor): Pro
   await expect(peer.page.getByLabel('视频测试状态')).toHaveText(
     `正在发送${videoColorLabels[color]}测试画面`,
   );
+  await expect
+    .poll(() =>
+      peer.page.evaluate(() => {
+        const canvas = document.querySelector<HTMLCanvasElement>(
+          'canvas[aria-label="发送端测试视频源"]',
+        );
+        const pixel = canvas?.getContext('2d')?.getImageData(320, 180, 1, 1).data;
+        if (!pixel) return null;
+        const [red, green, blue] = pixel;
+        if (red > 100 && red > green * 1.5 && red > blue * 1.5) return 'red';
+        if (green > 100 && green > red * 1.5 && green > blue * 1.5) return 'green';
+        if (blue > 100 && blue > red * 1.5 && blue > green * 1.5) return 'blue';
+        return 'other';
+      }),
+    )
+    .toBe(color);
 }
 
 /** 从指定接收者的远端 video 取像素；不能用发送 canvas 或整页截图代替媒体断言。 */
@@ -1282,6 +2352,40 @@ async function expectConferenceColor(
     await expectVideoAdvancing(receiver.page, sender.account.userId);
   } finally {
     const frame = latest as Awaited<ReturnType<typeof sampleRemoteVideo>>;
+    const mismatch = !frame || frame.ratios[color] <= 0.8;
+    const media = mismatch
+      ? await Promise.all([
+          sender.page.evaluate(() => {
+            const track = (window as any).callService?.client?.localTracks?.find(
+              (item: { trackMediaType: string }) => item.trackMediaType === 'video',
+            );
+            return {
+              status: document.querySelector('[aria-label="视频测试状态"]')?.textContent,
+              publishedTrackId: track?.getMediaStreamTrack?.()?.id,
+              senderTrackId: track?.getRTCRtpTransceiver?.()?.sender?.track?.id,
+            };
+          }),
+          receiver.page.evaluate(userId => {
+            const video = Array.from(document.querySelectorAll('video')).find(
+              element =>
+                element.closest('[data-video-id]')?.getAttribute('data-video-id') ===
+                `remote-${userId}`,
+            );
+            const remote = (window as any).callService?.client?.remoteUsers?.find(
+              (item: { uid: string | number }) => String(item.uid) === userId,
+            );
+            return {
+              videoId: video?.closest('[data-video-id]')?.getAttribute('data-video-id'),
+              dataset: video?.dataset,
+              elementTrackIds: Array.from(
+                (video?.srcObject as MediaStream | null)?.getTracks() ?? [],
+                track => track.id,
+              ),
+              remoteTrackId: remote?.videoTrack?.getMediaStreamTrack?.()?.id,
+            };
+          }, sender.account.userId),
+        ])
+      : undefined;
     await info.attach(`${name}.json`, {
       body: JSON.stringify({
         sender: sender.account.userId,
@@ -1290,6 +2394,7 @@ async function expectConferenceColor(
         threshold: 0.8,
         observedAt: Date.now(),
         frame: frame && { width: frame.width, height: frame.height, ratios: frame.ratios },
+        ...(media ? { senderMedia: media[0], receiverMedia: media[1] } : {}),
       }),
       contentType: 'application/json',
     });
@@ -1699,6 +2804,9 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
         );
         return { startedAt: Date.now() };
       });
+      const crashedDeviceResource = await c.page.evaluate(() =>
+        (window as any).rootStore.client.getClientResource(),
+      );
       let faultStartedAt = 0;
       try {
         await test.step('C 渲染进程崩溃，模拟无法主动离会的持续掉线', async () => {
@@ -1778,8 +2886,21 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
       } finally {
         // 若网关未自动把 C 标记 left，用真实账号重新登录后补发离会，仅用于清理，不能算进自动离线检测结果。
         if (c.page.isClosed()) {
-          const replacement = await openDemo(browser, c.account, info, 'conference-C-cleanup');
+          const replacement = await openDemo(
+            browser,
+            c.account,
+            info,
+            'conference-C-cleanup',
+            undefined,
+            undefined,
+            crashedDeviceResource,
+          );
           conference.peers.set('C', { ...replacement, account: c.account });
+          expect(
+            await replacement.page.evaluate(() =>
+              (window as any).rootStore.client.getClientResource(),
+            ),
+          ).toBe(crashedDeviceResource);
           await replacement.page.evaluate(async callId => {
             const manager = (
               window as typeof window & {
@@ -1882,6 +3003,19 @@ conferenceTest.describe('CallKit 多人真实音视频 @conference', () => {
           }
           await expectConferenceColor(c, a, 'blue', info, '其他成员视频保持正常');
           await expectConferenceColor(b, a, 'blue', info, '故障成员仍正常接收视频');
+          for (const observer of [a, c]) {
+            await waitForParticipant(observer.page, b.account.userId, 'accepted');
+            const snapshot = await observer.page.evaluate(
+              id => (window as any).rootStore.client.callSignalingManager.getCallSnapshot(id),
+              conference.callId!,
+            );
+            const member = snapshot.participants.find(
+              (item: { userId: string }) => item.userId === b.account.userId,
+            );
+            expect(snapshot.lifecycle).toBe('open');
+            expect(member?.state).toBe('accepted');
+            expect(member?.leftAt).toBeUndefined();
+          }
         });
         await test.step('恢复同一视频 RTP 发送器，不重新入会，两端收到断流期间产生的新红色画面', async () => {
           expect(await setVideoSending(true)).toEqual([true]);

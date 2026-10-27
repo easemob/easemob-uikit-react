@@ -1376,8 +1376,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
         hasInitialized,
       });
       const handleAccept = async (invitationData: any) => {
-        notificationApiRef.current.destroy(invitationNotificationKey);
-
         // 根据邀请类型设置正确的通话模式
         const currentCallMode = invitationData.type === 'group' ? 'group' : invitationData.type;
         setCallMode(currentCallMode);
@@ -1414,7 +1412,6 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
             await callServiceRef.current.answerCall(true);
           } catch (error) {
             logger.error('Auto answer call failed:', error);
-            setIsShowingPreview(true);
             onCallError?.(
               CallError.create(
                 CallErrorCode.CALL_SIGNALING_ERROR,
@@ -1427,6 +1424,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
           if (callServiceRef.current.getCallStatus() !== CALL_STATUS.IN_CALL) return;
         }
 
+        notificationApiRef.current.destroy(invitationNotificationKey);
         setCallStatus('connected');
         setIsInCall(true);
         setInvitation(null);
@@ -2604,11 +2602,28 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
     [onScreenShareToggle],
   );
 
-  const handleHangup = React.useCallback(() => {
+  const hangupPendingRef = React.useRef(false);
+  const handleHangup = React.useCallback(async () => {
     logger.debug('handleHangup');
+    if (hangupPendingRef.current) return;
     if (hasInitialized && callServiceRef.current) {
-      const isInPreviewMode = isShowingPreview && callStatus === 'calling';
-      callServiceRef.current.hangup('hangup', isInPreviewMode);
+      hangupPendingRef.current = true;
+      try {
+        const isInPreviewMode = isShowingPreview && callStatus === 'calling';
+        await callServiceRef.current.hangup('hangup', isInPreviewMode);
+      } catch (error) {
+        logger.error('Call termination failed:', error);
+        onCallError?.(
+          CallError.create(
+            CallErrorCode.CALL_SIGNALING_ERROR,
+            error instanceof Error ? error.message : String(error),
+            error,
+          ),
+        );
+        return;
+      } finally {
+        hangupPendingRef.current = false;
+      }
 
       setVideos([]);
       setIsInCall(false);
@@ -2649,6 +2664,7 @@ const CallKit = forwardRef<CallKitRef, CallKitProps>((props, ref) => {
   }, [
     hasInitialized,
     onHangup,
+    onCallError,
     isShowingPreview,
     callStatus,
     managedPosition,

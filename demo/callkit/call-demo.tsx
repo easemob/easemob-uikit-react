@@ -36,7 +36,9 @@ const DEFAULT_MSYNC_URL = 'wss://im-api-new-hsb.easemob.com/websocket';
 const getInitialLoginForm = (): CallDemoLoginForm => {
   const urlParams = new URLSearchParams(window.location.search);
   const form: CallDemoLoginForm = readCustomLogin() || {
-    userId: '', token: '', password: '',
+    userId: '',
+    token: '',
+    password: '',
     appKey: 'easemob#dutest01',
     serviceMode: 'proxy',
     restUrl: DEFAULT_REST_URL,
@@ -62,6 +64,9 @@ const getInitialLoginForm = (): CallDemoLoginForm => {
 (window as any).rootStore = rootStore;
 
 const RealCallDemo: React.FC = () => {
+  const demoParams = new URLSearchParams(window.location.search);
+  const deviceId = demoParams.get('deviceId') || undefined;
+  const isFixedDeviceId = demoParams.get('useFixedDeviceId') !== 'false';
   const [notification, contextHolder] = useNotification();
   const callKitRef = useRef<CallKitRef>(null);
   const [experimentRtcClient, setExperimentRtcClient] = useState<IAgoraRTCClient | null>(null);
@@ -111,6 +116,7 @@ const RealCallDemo: React.FC = () => {
   const [isGroupCall, setIsGroupCall] = useState(false);
   const [isStartingGroupCall, setIsStartingGroupCall] = useState(false);
   const [isInvitingParticipants, setIsInvitingParticipants] = useState(false);
+  const invitingParticipantsRef = useRef(false);
   const additionalUsersInputRef = useRef<HTMLInputElement>(null);
   const [isConfigured, setIsConfigured] = useState(false);
 
@@ -513,8 +519,9 @@ const RealCallDemo: React.FC = () => {
 
   // 发起群组通话
   const parseUserIds = (value: string) =>
-    [...new Set(value.split(/[\s,，;；]+/).filter(Boolean))]
-      .filter(userId => userId !== loginForm.userId);
+    [...new Set(value.split(/[\s,，;；]+/).filter(Boolean))].filter(
+      userId => userId !== loginForm.userId,
+    );
 
   const handleStartGroupCall = async (callType: 'video' | 'audio') => {
     const userIds = parseUserIds(groupUserIds);
@@ -544,6 +551,7 @@ const RealCallDemo: React.FC = () => {
   };
 
   const handleInviteParticipants = async () => {
+    if (invitingParticipantsRef.current) return;
     const joinedIds = new Set(
       (callKitRef.current?.getJoinedMembers() || []).map(member =>
         String(member.userId || member.uid),
@@ -554,6 +562,7 @@ const RealCallDemo: React.FC = () => {
       notification.error({ message: '请填写尚未加入通话的其他用户的 IM userId' });
       return;
     }
+    invitingParticipantsRef.current = true;
     setIsInvitingParticipants(true);
     try {
       const invited = await callKitRef.current?.addParticipants(userIds);
@@ -566,6 +575,7 @@ const RealCallDemo: React.FC = () => {
     } catch (error) {
       notification.error({ message: error instanceof Error ? error.message : String(error) });
     } finally {
+      invitingParticipantsRef.current = false;
       setIsInvitingParticipants(false);
     }
   };
@@ -786,8 +796,14 @@ const RealCallDemo: React.FC = () => {
               </div>
               <div style={{ marginBottom: '15px', fontSize: '12px', lineHeight: 1.8 }}>
                 <div>浏览器直接访问服务，不经过本地 forward 或 Vite 的 IM 代理。</div>
-                <div>Fusion 信令地址：{deriveCallDemoFusionUrl(serviceConfig.restUrl) || '请填写有效的 REST 地址'}</div>
-                <div>Fusion 由 SDK 根据 REST 域名派生，服务端需支持此 /ws 入口；REST 需允许页面跨域访问。</div>
+                <div>
+                  Fusion 信令地址：
+                  {deriveCallDemoFusionUrl(serviceConfig.restUrl) || '请填写有效的 REST 地址'}
+                </div>
+                <div>
+                  Fusion 由 SDK 根据 REST 域名派生，服务端需支持此 /ws 入口；REST
+                  需允许页面跨域访问。
+                </div>
               </div>
             </>
           ) : (
@@ -814,7 +830,8 @@ const RealCallDemo: React.FC = () => {
               placeholder="留空时由 IM SDK 自动获取"
             />
             <div style={{ fontSize: '12px', marginTop: '6px' }}>
-              留空时通过 IM SDK 获取 RTC App ID 和 Token。填写时双方使用同一个 RTC 项目，并使用无 RTC Token 模式。
+              留空时通过 IM SDK 获取 RTC App ID 和 Token。填写时双方使用同一个 RTC 项目，并使用无
+              RTC Token 模式。
             </div>
           </div>
           <div style={{ marginBottom: '15px' }}>
@@ -873,6 +890,8 @@ const RealCallDemo: React.FC = () => {
     <Provider
       initConfig={{
         appKey: loginForm.appKey,
+        deviceId,
+        isFixedDeviceId,
         userId: loginForm.userId,
         token: authToken,
         useUserInfo: true,
@@ -888,407 +907,412 @@ const RealCallDemo: React.FC = () => {
           正在连接 IM 服务，请稍候…
         </div>
       ) : (
-      <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
-        {contextHolder}
+        <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+          {contextHolder}
 
-        {/* 用户信息和登出 */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px',
-            padding: '15px',
-            background: '#e6f7ff',
-            borderRadius: '8px',
-          }}
-        >
-          <div>
-            <h2 style={{ margin: 0 }}>CallKit 通话演示</h2>
-            <p style={{ margin: 0, color: '#666' }}>
-              当前用户: {loginForm.userId} | App Key: {loginForm.appKey} | 服务:
-              {loginForm.serviceMode === 'proxy' ? '本地代理' : '自定义服务直连'}
-            </p>
-          </div>
-          <Button onClick={handleLogout} disabled={isLoggingOut}>
-            {isLoggingOut ? '登出中…' : '登出'}
-          </Button>
-        </div>
-
-        {/* 状态信息 */}
-        <div style={{ marginBottom: '20px' }}>
-          <h3>当前状态</h3>
-          <ul>
-            <li>通话状态: {isInCall ? '通话中' : '空闲'}</li>
-            <li>邀请状态: {hasInvitation ? '有邀请' : '无邀请'}</li>
-            <li>通话时长: {callDuration}</li>
-            <li>配置状态: {isConfigured ? '已配置' : '未配置'}</li>
-            <li>布局模式: {currentLayoutMode === 'main' ? '主视频模式' : '网格模式'}</li>
-            <li>
-              CallKit尺寸: {callKitSize.width} x {callKitSize.height}
-            </li>
-          </ul>
-        </div>
-
-        {/* 配置面板 */}
-        {!isConfigured && (
+          {/* 用户信息和登出 */}
           <div
             style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
               marginBottom: '20px',
-              padding: '20px',
-              backgroundColor: '#f5f5f5',
+              padding: '15px',
+              background: '#e6f7ff',
               borderRadius: '8px',
-              border: '1px solid #d9d9d9',
             }}
           >
-            <h3>配置信息</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
-              <div>
-                <label>目标用户:</label>
-                <Input
-                  value={targetUser}
-                  onChange={e => setTargetUser(e.target.value)}
-                  placeholder="单人通话的目标 IM userId（多人通话可留空）"
-                />
-                <p style={{ marginTop: '10px', color: '#666', fontSize: '12px' }}>
-                  对方需登录同一个 IM 应用。多人通话在下方单独填写成员 userId。
-                </p>
-              </div>
+            <div>
+              <h2 style={{ margin: 0 }}>CallKit 通话演示</h2>
+              <p style={{ margin: 0, color: '#666' }}>
+                当前用户: {loginForm.userId} | App Key: {loginForm.appKey} | 服务:
+                {loginForm.serviceMode === 'proxy' ? '本地代理' : '自定义服务直连'}
+              </p>
             </div>
-            <Button type="primary" onClick={handleConfigSubmit} style={{ marginTop: '15px' }}>
-              完成配置
+            <Button onClick={handleLogout} disabled={isLoggingOut}>
+              {isLoggingOut ? '登出中…' : '登出'}
             </Button>
           </div>
-        )}
 
-        {/* 背景选择面板 */}
-        {isConfigured && (
-          <div
-            style={{
-              marginBottom: '20px',
-              padding: '20px',
-              backgroundColor: '#f0f8ff',
-              borderRadius: '8px',
-              border: '1px solid #b3d9ff',
-            }}
-          >
-            <h3>背景选择</h3>
-            <p style={{ marginBottom: '15px', color: '#666', fontSize: '14px' }}>
-              选择通话界面的背景图片
-            </p>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: '15px',
-                maxWidth: '600px',
-              }}
-            >
-              {backgroundOptions.map(option => (
-                <div
-                  key={option.id}
-                  style={{
-                    cursor: 'pointer',
-                    border:
-                      selectedBackground === option.id ? '3px solid #1890ff' : '2px solid #d9d9d9',
-                    borderRadius: '8px',
-                    padding: '8px',
-                    backgroundColor: 'white',
-                    transition: 'all 0.2s ease',
-                    textAlign: 'center',
-                  }}
-                  onClick={() => handleBackgroundChange(option.id)}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.transform = 'scale(1.05)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                  }}
-                >
-                  <img
-                    src={option.thumbnail}
-                    alt={option.name}
-                    style={{
-                      width: '100%',
-                      height: '80px',
-                      objectFit: 'cover',
-                      borderRadius: '4px',
-                      marginBottom: '8px',
-                    }}
-                  />
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: selectedBackground === option.id ? '#1890ff' : '#666',
-                      fontWeight: selectedBackground === option.id ? 'bold' : 'normal',
-                    }}
-                  >
-                    {option.name}
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* 状态信息 */}
+          <div style={{ marginBottom: '20px' }}>
+            <h3>当前状态</h3>
+            <ul>
+              <li>通话状态: {isInCall ? '通话中' : '空闲'}</li>
+              <li>邀请状态: {hasInvitation ? '有邀请' : '无邀请'}</li>
+              <li>通话时长: {callDuration}</li>
+              <li>配置状态: {isConfigured ? '已配置' : '未配置'}</li>
+              <li>布局模式: {currentLayoutMode === 'main' ? '主视频模式' : '网格模式'}</li>
+              <li>
+                CallKit尺寸: {callKitSize.width} x {callKitSize.height}
+              </li>
+            </ul>
           </div>
-        )}
 
-        {/* 通话控制面板 */}
-        {isConfigured && (
-          <>
+          {/* 配置面板 */}
+          {!isConfigured && (
             <div
               style={{
                 marginBottom: '20px',
-                padding: '15px',
-                backgroundColor: '#e6f7ff',
+                padding: '20px',
+                backgroundColor: '#f5f5f5',
                 borderRadius: '8px',
+                border: '1px solid #d9d9d9',
               }}
             >
-              <h3>通话控制</h3>
-              <div>
-                <label>目标用户:</label>
-                <Input
-                  value={targetUser}
-                  onChange={e => setTargetUser(e.target.value)}
-                  placeholder="输入目标用户ID"
-                />
-                <p style={{ marginTop: '10px', color: '#666', fontSize: '12px' }}>
-                  通话ID和频道名称将自动生成，无需手动配置
-                </p>
+              <h3>配置信息</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+                <div>
+                  <label>目标用户:</label>
+                  <Input
+                    value={targetUser}
+                    onChange={e => setTargetUser(e.target.value)}
+                    placeholder="单人通话的目标 IM userId（多人通话可留空）"
+                  />
+                  <p style={{ marginTop: '10px', color: '#666', fontSize: '12px' }}>
+                    对方需登录同一个 IM 应用。多人通话在下方单独填写成员 userId。
+                  </p>
+                </div>
               </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <h3>发起一对一通话</h3>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <Button
-                  type="primary"
-                  onClick={handleStartVideoCall}
-                  disabled={hasInvitation || isInCall}
-                >
-                  <Icon type="VIDEO_CAMERA" />
-                  发起视频通话
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={handleStartAudioCall}
-                  disabled={hasInvitation || isInCall}
-                >
-                  <Icon type="MIC_ON" />
-                  发起语音通话
-                </Button>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <h3>发起多人通话</h3>
-              <Input
-                aria-label="多人通话成员 userId"
-                value={groupUserIds}
-                onChange={e => setGroupUserIds(e.target.value)}
-                placeholder="例如 alice, bob, charlie"
-                disabled={isInCall || isStartingGroupCall}
-                style={{ width: '100%', marginBottom: '10px' }}
-              />
-              <p>填写真实的 IM userId，用逗号、空格或分号分隔。无需填写群 ID。</p>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                <Button
-                  type="primary"
-                  onClick={() => handleStartGroupCall('video')}
-                  disabled={hasInvitation || isInCall || isStartingGroupCall}
-                  style={{ backgroundColor: '#52c41a' }}
-                >
-                  <Icon type="VIDEO_CAMERA" />
-                  发起多人视频通话
-                </Button>
-                <Button
-                  type="primary"
-                  onClick={() => handleStartGroupCall('audio')}
-                  disabled={hasInvitation || isInCall || isStartingGroupCall}
-                >
-                  <Icon type="MIC_ON" />
-                  发起多人语音通话
-                </Button>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <h3>通话中继续邀请</h3>
-              <Input
-                ref={additionalUsersInputRef}
-                aria-label="追加邀请 userId"
-                value={additionalUserIds}
-                onChange={e => setAdditionalUserIds(e.target.value)}
-                placeholder="例如 david, emma"
-                disabled={!isInCall || !isGroupCall || isInvitingParticipants}
-                style={{ width: '100%', marginBottom: '10px' }}
-              />
-              <p>多人通话接通后，填写要追加邀请的 IM userId。对方收到来电后需点击接听。</p>
-              <Button
-                type="primary"
-                onClick={handleInviteParticipants}
-                disabled={!isInCall || !isGroupCall || isInvitingParticipants}
-              >
-                {isInvitingParticipants ? '正在邀请...' : '邀请加入当前通话'}
+              <Button type="primary" onClick={handleConfigSubmit} style={{ marginTop: '15px' }}>
+                完成配置
               </Button>
             </div>
+          )}
 
-            {/* 当前状态 */}
-            <div style={{ marginBottom: '20px' }}>
-              <h3>当前状态</h3>
-              <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-                <div>
-                  <strong>邀请状态:</strong> {hasInvitation ? '有邀请' : '无邀请'}
-                </div>
-                <div>
-                  <strong>通话状态:</strong> {isInCall ? '通话中' : '未通话'}
-                </div>
-                <div>
-                  <strong>通话时长:</strong> {callDuration}
-                </div>
+          {/* 背景选择面板 */}
+          {isConfigured && (
+            <div
+              style={{
+                marginBottom: '20px',
+                padding: '20px',
+                backgroundColor: '#f0f8ff',
+                borderRadius: '8px',
+                border: '1px solid #b3d9ff',
+              }}
+            >
+              <h3>背景选择</h3>
+              <p style={{ marginBottom: '15px', color: '#666', fontSize: '14px' }}>
+                选择通话界面的背景图片
+              </p>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                  gap: '15px',
+                  maxWidth: '600px',
+                }}
+              >
+                {backgroundOptions.map(option => (
+                  <div
+                    key={option.id}
+                    style={{
+                      cursor: 'pointer',
+                      border:
+                        selectedBackground === option.id
+                          ? '3px solid #1890ff'
+                          : '2px solid #d9d9d9',
+                      borderRadius: '8px',
+                      padding: '8px',
+                      backgroundColor: 'white',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'center',
+                    }}
+                    onClick={() => handleBackgroundChange(option.id)}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    <img
+                      src={option.thumbnail}
+                      alt={option.name}
+                      style={{
+                        width: '100%',
+                        height: '80px',
+                        objectFit: 'cover',
+                        borderRadius: '4px',
+                        marginBottom: '8px',
+                      }}
+                    />
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: selectedBackground === option.id ? '#1890ff' : '#666',
+                        fontWeight: selectedBackground === option.id ? 'bold' : 'normal',
+                      }}
+                    >
+                      {option.name}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
+          )}
 
-            {/* 通话控制按钮 */}
-            {isInCall && (
-              <div style={{ marginBottom: '20px' }}>
+          {/* 通话控制面板 */}
+          {isConfigured && (
+            <>
+              <div
+                style={{
+                  marginBottom: '20px',
+                  padding: '15px',
+                  backgroundColor: '#e6f7ff',
+                  borderRadius: '8px',
+                }}
+              >
                 <h3>通话控制</h3>
+                <div>
+                  <label>目标用户:</label>
+                  <Input
+                    value={targetUser}
+                    onChange={e => setTargetUser(e.target.value)}
+                    placeholder="输入目标用户ID"
+                  />
+                  <p style={{ marginTop: '10px', color: '#666', fontSize: '12px' }}>
+                    通话ID和频道名称将自动生成，无需手动配置
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <h3>发起一对一通话</h3>
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                  <Button onClick={() => handleMuteToggle(!muted)}>
-                    <Icon type={muted ? 'MIC_OFF' : 'MIC_ON'} />
-                    {muted ? '取消静音' : '静音'}
+                  <Button
+                    type="primary"
+                    onClick={handleStartVideoCall}
+                    disabled={hasInvitation || isInCall}
+                  >
+                    <Icon type="VIDEO_CAMERA" />
+                    发起视频通话
                   </Button>
-                  <Button onClick={() => handleCameraToggle(!cameraEnabled)}>
-                    <Icon type={cameraEnabled ? 'VIDEO_CAMERA' : 'VIDEO_CAMERA_SLASH'} />
-                    {cameraEnabled ? '关闭摄像头' : '开启摄像头'}
-                  </Button>
-                  <Button onClick={() => handleSpeakerToggle(!speakerEnabled)}>
-                    <Icon type={speakerEnabled ? 'SPEAKER_WAVE_2' : 'SPEAKER_X_MARK'} />
-                    {speakerEnabled ? '关闭扬声器' : '开启扬声器'}
-                  </Button>
-                  <Button onClick={() => handleScreenShareToggle(!screenSharing)}>
-                    <Icon type="ARROW_RIGHT_SQUARE_FILL" />
-                    {screenSharing ? '停止共享' : '屏幕共享'}
-                  </Button>
-                  <Button type="primary" onClick={handleHangup}>
-                    <Icon type="PHONE_PICK" />
-                    结束通话
+                  <Button
+                    type="primary"
+                    onClick={handleStartAudioCall}
+                    disabled={hasInvitation || isInCall}
+                  >
+                    <Icon type="MIC_ON" />
+                    发起语音通话
                   </Button>
                 </div>
               </div>
-            )}
-          </>
-        )}
 
-        {/* CallKit 组件 */}
-        <AudioTranscriptionExperiment client={experimentRtcClient} isInCall={isInCall} />
-        <VideoColorExperiment client={experimentRtcClient} isInCall={isInCall} />
-        <CallKit
-          ref={callKitRef}
-          rtcProvider={rtcProvider}
-          onRtcEngineCreated={setExperimentRtcClient}
-          useRTCToken={!rtcProvider}
-          // 基础配置
-          layoutMode={LayoutMode.MULTI_PARTY}
-          aspectRatio={1}
-          gap={6}
-          // 位置和大小管理
-          managedPosition={true}
-          initialPosition={{
-            left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
-            top: Math.max(0, (window.innerHeight - callKitSize.height) / 2),
-          }}
-          initialSize={callKitSize}
-          resizable={true}
-          draggable={true}
-          // 邀请相关配置
-          showInvitationAvatar={true}
-          showInvitationTimer={true}
-          autoRejectTime={30}
-          // 控制按钮 去掉
-          // showControls={true}
-          // muted={muted}
-          // cameraEnabled={cameraEnabled}
-          // speakerEnabled={speakerEnabled}
-          // screenSharing={screenSharing}
-          // 事件回调
-          // onMuteToggle={handleMuteToggle}
-          // onCameraToggle={handleCameraToggle}
-          // onSpeakerToggle={handleSpeakerToggle}
-          // onScreenShareToggle={handleScreenShareToggle}
-          // onHangup={handleHangup}
-          onInvitationAccept={handleAcceptInvitation}
-          onInvitationReject={handleRejectInvitation}
-          onEndCallWithReason={handleCallEnd}
-          onCallStart={handleCallStart}
-          onReceivedCall={callType => {
-            setHasInvitation(true);
-            setIsGroupCall(callType === 'group');
-          }}
-          onAddParticipant={() => {
-            additionalUsersInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            additionalUsersInputRef.current?.focus();
-          }}
-          onCallError={error => notification.error({ message: error.message })}
-          // 真实通话配置
-          // enableRealCall={isConfigured}
-          // 群组成员选择相关
-          // groupMembers={mockGroupMembers}
-          userSelectTitle="邀请群组成员" // 默认值
-          // 其他
-          // callDuration={callDuration}
-          userInfoProvider={mockGroupMemberProvider}
-          groupInfoProvider={async (groupIds: string[]) => {
-            // 批量获取群组信息
-            return [
-              {
-                groupId: '286421473624065',
-                groupName: 'zd 测试多人通话',
-                groupAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user1',
-              },
-            ];
-          }}
-          backgroundImage={backgroundOptions[selectedBackground].url}
-          onLayoutModeChange={handleLayoutModeChange} // 默认值
-          // 🔧 新增：音量指示器配置示例
-          // speakingVolumeThreshold={30} // 设置音量阈值为30，比默认的60更敏感
-          // onCallStart={videos => {
-          //   console.log('通话开始:', videos);
-          //   notification.success({
-          //     message: '通话已开始',
-          //     description: `共 ${videos.length} 个参与者`,
-          //   });
-          // }}
-          outgoingRingtoneSrc={outgoingRingtone} // 铃声文件路径
-          incomingRingtoneSrc={incomingRingtone} // 铃声文件路径
-          // enableRingtone={true} // 启用铃声
-          // ringtoneVolume={0.8} // 音量 80%
-          // ringtoneLoop={true} // 循环播放
-          // customIcons={{
-          //   controls: {
-          //     hangup: <div>123</div>,
-          //     micOn: <div>micOn</div>,
-          //     micOff: <div>micOff</div>,
-          //     cameraOn: <div>cameraOn</div>,
-          //     cameraOff: <div>cameraOff</div>,
-          //     speakerOn: <div>speakerOn</div>,
-          //     speakerOff: <div>speakerOff</div>,
-          //     accept: <div>accept</div>,
-          //     reject: <div>reject</div>,
-          //     // screenShareOn: <div>screenShareOn</div>,
-          //     // screenShareOff: <div>screenShareOff</div>,
-          //   },
-          //   header: {
-          //     back: <div>back</div>,
-          //     title: <div>title</div>,
-          //     close: <div>close</div>,
+              <div style={{ marginBottom: '20px' }}>
+                <h3>发起多人通话</h3>
+                <Input
+                  aria-label="多人通话成员 userId"
+                  value={groupUserIds}
+                  onChange={e => setGroupUserIds(e.target.value)}
+                  placeholder="例如 alice, bob, charlie"
+                  disabled={isInCall || isStartingGroupCall}
+                  style={{ width: '100%', marginBottom: '10px' }}
+                />
+                <p>填写真实的 IM userId，用逗号、空格或分号分隔。无需填写群 ID。</p>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <Button
+                    type="primary"
+                    onClick={() => handleStartGroupCall('video')}
+                    disabled={hasInvitation || isInCall || isStartingGroupCall}
+                    style={{ backgroundColor: '#52c41a' }}
+                  >
+                    <Icon type="VIDEO_CAMERA" />
+                    发起多人视频通话
+                  </Button>
+                  <Button
+                    type="primary"
+                    onClick={() => handleStartGroupCall('audio')}
+                    disabled={hasInvitation || isInCall || isStartingGroupCall}
+                  >
+                    <Icon type="MIC_ON" />
+                    发起多人语音通话
+                  </Button>
+                </div>
+              </div>
 
-          //     fullscreen: <div>fullscreen</div>,
-          //     exitFullscreen: <div>exitFullscreen</div>,
-          //     minimize: <div>minimize</div>,
-          //     addParticipant: <div>addParticipant</div>,
-          //   },
-          // }}
-        />
-      </div>
+              <div style={{ marginBottom: '20px' }}>
+                <h3>通话中继续邀请</h3>
+                <Input
+                  ref={additionalUsersInputRef}
+                  aria-label="追加邀请 userId"
+                  value={additionalUserIds}
+                  onChange={e => setAdditionalUserIds(e.target.value)}
+                  placeholder="例如 david, emma"
+                  disabled={!isInCall || !isGroupCall || isInvitingParticipants}
+                  style={{ width: '100%', marginBottom: '10px' }}
+                />
+                <p>多人通话接通后，填写要追加邀请的 IM userId。对方收到来电后需点击接听。</p>
+                <Button
+                  type="primary"
+                  onClick={handleInviteParticipants}
+                  disabled={!isInCall || !isGroupCall || isInvitingParticipants}
+                >
+                  {isInvitingParticipants ? '正在邀请...' : '邀请加入当前通话'}
+                </Button>
+              </div>
+
+              {/* 当前状态 */}
+              <div style={{ marginBottom: '20px' }}>
+                <h3>当前状态</h3>
+                <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+                  <div>
+                    <strong>邀请状态:</strong> {hasInvitation ? '有邀请' : '无邀请'}
+                  </div>
+                  <div>
+                    <strong>通话状态:</strong> {isInCall ? '通话中' : '未通话'}
+                  </div>
+                  <div>
+                    <strong>通话时长:</strong> {callDuration}
+                  </div>
+                </div>
+              </div>
+
+              {/* 通话控制按钮 */}
+              {isInCall && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h3>通话控制</h3>
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                    <Button onClick={() => handleMuteToggle(!muted)}>
+                      <Icon type={muted ? 'MIC_OFF' : 'MIC_ON'} />
+                      {muted ? '取消静音' : '静音'}
+                    </Button>
+                    <Button onClick={() => handleCameraToggle(!cameraEnabled)}>
+                      <Icon type={cameraEnabled ? 'VIDEO_CAMERA' : 'VIDEO_CAMERA_SLASH'} />
+                      {cameraEnabled ? '关闭摄像头' : '开启摄像头'}
+                    </Button>
+                    <Button onClick={() => handleSpeakerToggle(!speakerEnabled)}>
+                      <Icon type={speakerEnabled ? 'SPEAKER_WAVE_2' : 'SPEAKER_X_MARK'} />
+                      {speakerEnabled ? '关闭扬声器' : '开启扬声器'}
+                    </Button>
+                    <Button onClick={() => handleScreenShareToggle(!screenSharing)}>
+                      <Icon type="ARROW_RIGHT_SQUARE_FILL" />
+                      {screenSharing ? '停止共享' : '屏幕共享'}
+                    </Button>
+                    <Button type="primary" onClick={handleHangup}>
+                      <Icon type="PHONE_PICK" />
+                      结束通话
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* CallKit 组件 */}
+          <AudioTranscriptionExperiment client={experimentRtcClient} isInCall={isInCall} />
+          <VideoColorExperiment client={experimentRtcClient} isInCall={isInCall} />
+          <CallKit
+            ref={callKitRef}
+            rtcProvider={rtcProvider}
+            onRtcEngineCreated={setExperimentRtcClient}
+            useRTCToken={!rtcProvider}
+            // 基础配置
+            layoutMode={LayoutMode.MULTI_PARTY}
+            aspectRatio={1}
+            gap={6}
+            // 位置和大小管理
+            managedPosition={true}
+            initialPosition={{
+              left: Math.max(0, (window.innerWidth - callKitSize.width) / 2),
+              top: Math.max(0, (window.innerHeight - callKitSize.height) / 2),
+            }}
+            initialSize={callKitSize}
+            resizable={true}
+            draggable={true}
+            // 邀请相关配置
+            showInvitationAvatar={true}
+            showInvitationTimer={true}
+            autoRejectTime={30}
+            // 控制按钮 去掉
+            // showControls={true}
+            // muted={muted}
+            // cameraEnabled={cameraEnabled}
+            // speakerEnabled={speakerEnabled}
+            // screenSharing={screenSharing}
+            // 事件回调
+            // onMuteToggle={handleMuteToggle}
+            // onCameraToggle={handleCameraToggle}
+            // onSpeakerToggle={handleSpeakerToggle}
+            // onScreenShareToggle={handleScreenShareToggle}
+            // onHangup={handleHangup}
+            onInvitationAccept={handleAcceptInvitation}
+            onInvitationReject={handleRejectInvitation}
+            onEndCallWithReason={handleCallEnd}
+            onCallStart={handleCallStart}
+            onReceivedCall={callType => {
+              setHasInvitation(true);
+              setIsGroupCall(callType === 'group');
+            }}
+            onAddParticipant={() => {
+              additionalUsersInputRef.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+              });
+              additionalUsersInputRef.current?.focus();
+            }}
+            onCallError={error => notification.error({ message: error.message })}
+            // 真实通话配置
+            // enableRealCall={isConfigured}
+            // 群组成员选择相关
+            // groupMembers={mockGroupMembers}
+            userSelectTitle="邀请群组成员" // 默认值
+            // 其他
+            // callDuration={callDuration}
+            userInfoProvider={mockGroupMemberProvider}
+            groupInfoProvider={async (groupIds: string[]) => {
+              // 批量获取群组信息
+              return [
+                {
+                  groupId: '286421473624065',
+                  groupName: 'zd 测试多人通话',
+                  groupAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=user1',
+                },
+              ];
+            }}
+            backgroundImage={backgroundOptions[selectedBackground].url}
+            onLayoutModeChange={handleLayoutModeChange} // 默认值
+            // 🔧 新增：音量指示器配置示例
+            // speakingVolumeThreshold={30} // 设置音量阈值为30，比默认的60更敏感
+            // onCallStart={videos => {
+            //   console.log('通话开始:', videos);
+            //   notification.success({
+            //     message: '通话已开始',
+            //     description: `共 ${videos.length} 个参与者`,
+            //   });
+            // }}
+            outgoingRingtoneSrc={outgoingRingtone} // 铃声文件路径
+            incomingRingtoneSrc={incomingRingtone} // 铃声文件路径
+            // enableRingtone={true} // 启用铃声
+            // ringtoneVolume={0.8} // 音量 80%
+            // ringtoneLoop={true} // 循环播放
+            // customIcons={{
+            //   controls: {
+            //     hangup: <div>123</div>,
+            //     micOn: <div>micOn</div>,
+            //     micOff: <div>micOff</div>,
+            //     cameraOn: <div>cameraOn</div>,
+            //     cameraOff: <div>cameraOff</div>,
+            //     speakerOn: <div>speakerOn</div>,
+            //     speakerOff: <div>speakerOff</div>,
+            //     accept: <div>accept</div>,
+            //     reject: <div>reject</div>,
+            //     // screenShareOn: <div>screenShareOn</div>,
+            //     // screenShareOff: <div>screenShareOff</div>,
+            //   },
+            //   header: {
+            //     back: <div>back</div>,
+            //     title: <div>title</div>,
+            //     close: <div>close</div>,
+
+            //     fullscreen: <div>fullscreen</div>,
+            //     exitFullscreen: <div>exitFullscreen</div>,
+            //     minimize: <div>minimize</div>,
+            //     addParticipant: <div>addParticipant</div>,
+            //   },
+            // }}
+          />
+        </div>
       )}
     </Provider>
   );

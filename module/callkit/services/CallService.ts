@@ -1091,7 +1091,29 @@ export class CallService {
       const callId = this.currentCallInfo.callId;
       if (result) {
         // 接听邀请统一用 acceptCall；joinCall 用于主动加入已有的多人通话。
-        await this.callSignaling.acceptCall(callId);
+        try {
+          await this.callSignaling.acceptCall(callId);
+        } catch (error) {
+          // A lost response does not mean the server rejected the answer.
+          // Only this device may enter RTC after an uncertain accept response.
+          let accepted = false;
+          try {
+            const snapshot = await this.callSignaling.syncCall(callId);
+            const localDeviceUuid = this.connection.getClientResource?.();
+            accepted =
+              snapshot.lifecycle === 'open' &&
+              !!localDeviceUuid &&
+              snapshot.participants.some(
+                participant =>
+                  participant.userId === this.getCurrentUserId() &&
+                  participant.state === 'accepted' &&
+                  participant.deviceUuid === localDeviceUuid,
+              );
+          } catch (syncError) {
+            logWarn('Failed to reconcile uncertain accept response', syncError);
+          }
+          if (!accepted) throw error;
+        }
         this.callStatus = CALL_STATUS.ANSWER_CALL;
         await this.joinCall();
       } else {
@@ -1894,7 +1916,6 @@ export class CallService {
 
   private async performHangup(reason: string, isCancel: boolean, recordReason = reason) {
     const endingCallId = this.currentCallInfo?.callId;
-    this.finalizeCallRecord(recordReason);
     logDebug('hangup method called:', { reason, isCancel, callStatus: this.callStatus });
 
     const nativeCall = this.callSignaling && this.currentCallInfo;
@@ -1944,10 +1965,35 @@ export class CallService {
           await this.callSignaling?.hangup(callId);
         }
       } catch (error) {
-        this.nativeEndRequested = false;
         logWarn('Native call termination failed', error);
+        const currentSnapshot = this.callStore?.snapshot;
+        let confirmedEnded =
+          this.callStore?.ended?.callId === endingCallId ||
+          Boolean(
+            currentSnapshot &&
+              currentSnapshot.callId === endingCallId &&
+              currentSnapshot.lifecycle === 'ended',
+          );
+        if (!confirmedEnded && endingCallId) {
+          try {
+            const snapshot = await this.callSignaling.syncCall(endingCallId);
+            const self = snapshot.participants.find(
+              participant => participant.userId === this.getCurrentUserId(),
+            );
+            confirmedEnded =
+              snapshot.lifecycle === 'ended' || (self ? isTerminalParticipant(self) : false);
+          } catch (syncError) {
+            logWarn('Failed to reconcile uncertain termination response', syncError);
+          }
+        }
+        if (!confirmedEnded) {
+          this.nativeEndRequested = false;
+          throw error;
+        }
       }
     }
+
+    this.finalizeCallRecord(recordReason);
 
     // 🔧 修复：清理正在创建中的轨道（处理竞态条件）
     if (this.creatingVideoTrack) {
