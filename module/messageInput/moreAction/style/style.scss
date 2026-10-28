@@ -41,4 +41,27 @@ $moreAction-prefix-cls: #{$cui-prefix}-moreAction;
         justify-content: center;
         align-items: center;
     }
+
+    // 自定义图标容器样式（自适应图标尺寸）
+    &-custom-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        flex-shrink: 0;
+        // 最小尺寸保持与默认一致
+        min-width: 18px;
+        min-height: 18px;
+    }
+
+    // 默认图标样式（未传入自定义 icon 时）
+    &-default-icon {
+        width: 18px;
+        height: 18px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
 }
